@@ -2,7 +2,8 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
-export const BASE_URL = 'https://mab-zuyh.onrender.com';
+export const BASE_URL = 'http://15.206.67.102:3000';
+// export const BASE_URL = 'https://mab-zuyh.onrender.com';
 // export const BASE_URL = 'https://api.mabicons.com/';
 // export const BASE_URL = 'http://13.233.131.230:3000';
 // Create axios instance with specific headers
