@@ -205,6 +205,9 @@ const Login = () => {
       case 'bdExecutive':
         navigate('/bd-dashboard');
         break;
+      case 'kamDashboard':
+        navigate('/kam-dashboard');
+        break;
       default:
         navigate('/employee-dashboard');
     }
@@ -288,6 +291,7 @@ const Login = () => {
                   <option value="employee">👤 Employee</option>
                   <option value="teamLeader">👥 Team Leader</option>
                   <option value="bdExecutive">💼 BD Executive</option>
+                  <option value="kamDashboard">🔑 Key Account Manager</option>
                   <option value="admin">⚡ Admin</option>
                   <option value="superAdmin">👑 Super Admin</option>
                 </select>

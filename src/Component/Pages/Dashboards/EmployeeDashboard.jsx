@@ -1,21 +1,19 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
-import { FiHome, FiUsers, FiBarChart2, FiCheckSquare, FiPieChart, FiSettings, FiSearch, FiBell, FiSun, FiMoon, FiUserPlus, FiFolder, FiMessageSquare, FiInbox, FiTrendingUp, FiEdit2, FiTrash2, FiCalendar } from 'react-icons/fi';
-import { useSpring, animated } from 'react-spring';
-import TaskTab from './Tabs/TaskTab';
-import { getEmployeeTasks, getAllNotifications, markNotificationRead, deleteNotification } from '../service/api';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  FiHome,
+  FiCheckSquare,
+  FiUserPlus,
+  FiSearch,
+  FiBell,
+  FiSettings,
+} from 'react-icons/fi';
 import { jwtDecode } from 'jwt-decode';
-import { updateEmployee } from '../service/api';
-import OnboardingTab from './Tabs/OnboardingTab'; // Add this import
 
-const modules = [
-  { name: 'Team Performance', icon: FiUsers, value: '92%', change: '+5.2%' },
-  { name: 'Active Members', icon: FiUserPlus, value: '42', change: '+2.4%' },
-  { name: 'Pending Tasks', icon: FiCheckSquare, value: '18', change: '-3.1%' },
-  { name: 'Team Efficiency', icon: FiTrendingUp, value: '87%', change: '+7.8%' },
-];
+import TaskTab from './Tabs/TaskTab';
+import OnboardingTab from './Tabs/OnboardingTab';
+import { getEmployeeTasks, getAllNotifications } from '../service/api';
+import logo from '../../../assets/images/ERP LOGO.png';
+import taskErrorIllustration from '../../../assets/images/a-cheerful-professional-with-a-tidy-desk-and-an-op.svg';
 
 const sidebarItems = [
   { name: 'Dashboard', icon: FiHome },
@@ -24,694 +22,215 @@ const sidebarItems = [
 ];
 
 const Dashboard = () => {
-  const [activeModule, setActiveModule] = useState(modules[0]);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [activeSidebarItem, setActiveSidebarItem] = useState('Dashboard');
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [profileImageUrl, setProfileImageUrl] = useState(null); // Initialize profileImageUrl state
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
-    const [profileImage, setProfileImage] = useState(null);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [updateFormData, setUpdateFormData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  
-  // Safe token decoding with error handling
-  let token = localStorage.getItem('token');
-  let decoded = null;
-  let employeeId = null;
-  try {
-    if (token) {
-      decoded = jwtDecode(token);
-      employeeId = decoded.id || 'mock-user-123';
-    }
-  } catch (error) {
-    console.error('Error decoding token:', error);
-    employeeId = 'mock-user-123';
-  }
-  
-  const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (updateFormData.newPassword !== updateFormData.confirmPassword) {
-      alert("New password and confirm password do not match.");
-      return;
-    }
 
+  const fetchEmployeeTasks = useCallback(async () => {
     try {
-      const result = await updateEmployee(employeeId, updateFormData.newPassword);
-      console.log("Password changed successfully:", result);
-      alert("Password changed successfully!");
-      
-      setUpdateFormData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-    } catch (error) {
-      console.error("Error changing password:", error);
-      alert("Failed to change password. Please try again.");
-    }
-  };
-  const handleProfileImageUpload = async () => {
-    if (!profileImage) {
-      alert("Please select an image to upload.");
-      return;
-    }
+      setIsLoading(true);
+      setError(null);
 
-    // Logic to upload the image goes here
-    console.log("Uploading image:", profileImage);
-    // Reset the profile image after upload
-    setProfileImage(null);
-  };
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+      const decoded = jwtDecode(token);
+      const employeeId = decoded?.id;
+      if (!employeeId) {
+        throw new Error('Employee ID not found in token');
+      }
+
+      const response = await getEmployeeTasks(employeeId);
+      setTasks(response?.tasks || []);
+    } catch {
+      setError('Failed to fetch tasks. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEmployeeTasks();
+  }, [fetchEmployeeTasks]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const token = localStorage.getItem('token');
+        if (!token) return;
+
         const decoded = jwtDecode(token);
-        const userId = decoded.id;
+        const userId = decoded?.id;
+        if (!userId) return;
+
         const response = await getAllNotifications(userId);
-        setNotifications(response.data);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
+        setNotifications(response?.data || []);
+      } catch {
+        setNotifications([]);
       }
     };
 
     fetchNotifications();
   }, []);
 
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-  };
-
-  const handleMarkAsRead = async (notificationId) => {
-    try {
-      await markNotificationRead(notificationId);
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification._id === notificationId
-            ? { ...notification, status: 'read' }
-            : notification
-        )
-      );
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-  };
-
-  const handleDeleteNotification = async (notificationId) => {
-    try {
-      await deleteNotification(notificationId);
-      setNotifications(prev =>
-        prev.filter(notification => notification._id !== notificationId)
-      );
-    } catch (error) {
-      console.error('Failed to delete notification:', error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchEmployeeTasks = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const token = localStorage.getItem('token');
-        const decoded = jwtDecode(token);
-        const employeeId = decoded.id;
-  
-        const response = await getEmployeeTasks(employeeId);
-        setTasks(response.tasks || []);
-      } catch (err) {
-        console.error('Error fetching tasks:', err);
-        setError('Failed to fetch tasks. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
-    fetchEmployeeTasks();
-  }, []);
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 },
-    transition: { duration: 0.3 }
-  };
-
-  const staggerChildren = {
-    animate: {
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const particlesInit = useCallback(async engine => {
-    await loadFull(engine);
-  }, []);
-
-  const particlesLoaded = useCallback(async container => {
-    await console.log(container);
-  }, []);
-
-  const particlesOptions = {
-    particles: {
-      number: {
-        value: 80,
-        density: {
-          enable: true,
-          value_area: 800
-        }
-      },
-      color: {
-        value: isDarkMode ? "#ffffff" : "#000000"
-      },
-      shape: {
-        type: "circle",
-        stroke: {
-          width: 0,
-          color: "#000000"
-        },
-        polygon: {
-          nb_sides: 5
-        }
-      },
-      opacity: {
-        value: 0.5,
-        random: false,
-        anim: {
-          enable: false,
-          speed: 1,
-          opacity_min: 0.1,
-          sync: false
-        }
-      },
-      size: {
-        value: 3,
-        random: true,
-        anim: {
-          enable: false,
-          speed: 40,
-          size_min: 0.1,
-          sync: false
-        }
-      },
-      line_linked: {
-        enable: true,
-        distance: 150,
-        color: isDarkMode ? "#ffffff" : "#000000",
-        opacity: 0.4,
-        width: 1
-      },
-      move: {
-        enable: true,
-        speed: 2,
-        direction: "none",
-        random: false,
-        straight: false,
-        out_mode: "out",
-        bounce: false,
-        attract: {
-          enable: false,
-          rotateX: 600,
-          rotateY: 1200
-        }
-      }
-    }
-  };
-
-  const handleTabChange = (tabName) => {
-    setActiveSidebarItem(tabName);
-    setActiveTab(tabName);
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
   };
 
-  const renderTasks = () => {
+  const renderDashboardState = () => {
     if (isLoading) {
       return (
-        <div className="flex justify-center items-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+        <div className="rounded-2xl border border-[#dfdbea] bg-white/85 min-h-[520px] flex items-center justify-center">
+          <div className="h-10 w-10 border-4 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
         </div>
       );
     }
-  
+
     if (error) {
       return (
-        <div className="text-center p-8 text-red-500">
-          {error}
+        <div className="rounded-2xl border border-[#dfdbea] bg-white/85 min-h-[520px] px-8 py-10 shadow-[0_16px_40px_rgba(31,41,55,0.08)]">
+          <div className="h-full flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-16">
+            <div className="text-center lg:text-left">
+              <h2 className="text-3xl font-semibold text-slate-700">Failed to fetch tasks.</h2>
+              <p className="mt-3 text-2xl text-slate-500">Please try again later.</p>
+              <button
+                onClick={fetchEmployeeTasks}
+                className="mt-6 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-blue-500 to-blue-700 px-8 py-3 text-2xl font-medium text-white shadow-md hover:opacity-95"
+              >
+                Retry
+              </button>
+            </div>
+
+            <img
+              src={taskErrorIllustration}
+              alt="Task fetch error"
+              className="w-full max-w-[390px] opacity-95"
+            />
+          </div>
         </div>
       );
     }
-  
-    if (!tasks || tasks.length === 0) {
+
+    if (!tasks.length) {
       return (
-        <div className="text-center p-8 text-gray-500">
-          No tasks found.
+        <div className="rounded-2xl border border-[#dfdbea] bg-white/85 min-h-[520px] flex items-center justify-center">
+          <p className="text-3xl text-slate-500">No tasks found.</p>
         </div>
       );
     }
-  
-    return tasks.map((task) => (
-      <motion.div
-        key={task._id}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`${
-          isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-        } rounded-xl p-6 transition-all duration-300 hover:shadow-md`}
-      >
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              {task.title}
-            </h4>
-            <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>
-              {task.description}
-            </p>
-            {task.client && (
-              <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
-                Client: {task.client.name}
-              </p>
-            )}
-          </div>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            task.priority === 'High' 
-              ? 'bg-red-100 text-red-600' 
-              : task.priority === 'Medium'
-              ? 'bg-yellow-100 text-yellow-600'
-              : 'bg-green-100 text-green-600'
-          }`}>
-            {task.priority}
-          </span>
+
+    return (
+      <div className="rounded-2xl border border-[#dfdbea] bg-white/85 min-h-[520px] p-8">
+        <h2 className="text-3xl font-semibold text-slate-700 mb-6">My Tasks</h2>
+        <div className="space-y-4">
+          {tasks.slice(0, 8).map((task, index) => (
+            <div key={task._id || index} className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xl font-semibold text-slate-700">{task.title || 'Task'}</p>
+              <p className="text-base text-slate-500 mt-1">{task.description || 'No description available'}</p>
+            </div>
+          ))}
         </div>
-        
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <span className={`flex items-center ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            } text-sm`}>
-              <FiCheckSquare className="mr-2" />
-              {task.status}
-            </span>
-            <span className={`flex items-center ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            } text-sm`}>
-              <FiCalendar className="mr-2" />
-              Due: {new Date(task.dueDate).toLocaleDateString()}
-            </span>
-          </div>
-        </div>
-      </motion.div>
-    ));
+      </div>
+    );
   };
 
-  const modalRef = useRef(null); // Create a ref for the modal
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setIsProfileModalOpen(false); // Close the modal if clicked outside
-      }
-    };
-
-    // Add event listener for clicks
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      // Cleanup the event listener on component unmount
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
-      <div className="flex">
-        <motion.aside
-          initial={{ x: -300 }}
-          animate={{ x: 0 }}
-          transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
-          className={`w-64 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} h-screen fixed left-0 top-0 overflow-y-auto transition-all duration-300 ease-in-out`}
-        >
-          <div className="p-6">
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>CRM Pro</h1>
+    <div className="min-h-screen bg-[#f2f0fa] p-2 md:p-3">
+      <div className="relative flex min-h-[calc(100vh-1rem)] md:min-h-[calc(100vh-1.5rem)] overflow-hidden rounded-2xl border border-[#dcd8ed] bg-[#f7f5fc]">
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#d9d2fb]/70 via-[#ebe7ff]/35 to-transparent" />
+        <div className="absolute -bottom-10 left-10 h-44 w-96 rounded-full bg-[#e7e0ff]/60 blur-2xl" />
+        <div className="absolute -bottom-14 right-24 h-52 w-[28rem] rounded-full bg-[#d6d0ff]/50 blur-2xl" />
+
+        <aside className="relative z-10 w-[270px] border-r border-[#e0dcec] bg-gradient-to-b from-[#f4f1fd] via-[#f2effb] to-[#ddd5fa]/45 p-5 flex flex-col">
+          <div className="flex items-center gap-3 pb-6 pt-1 px-1">
+            <img src={logo} alt="CRM Pro" className="h-8 w-8 object-contain" />
+            <h1 className="text-[24px] leading-none font-semibold text-slate-700">CRM Pro</h1>
           </div>
-          <nav className="mt-8">
+
+          <nav className="space-y-2">
             {sidebarItems.map((item) => (
-              <a
+              <button
                 key={item.name}
-                href="#"
-                onClick={() => handleTabChange(item.name)}
-                className={`flex items-center px-6 py-4 ${
-                  isDarkMode
-                    ? 'text-gray-300 hover:bg-gray-800'
-                    : 'text-gray-600 hover:bg-gray-200'
-                } transition-colors duration-200 ${
-                  activeSidebarItem === item.name
-                    ? isDarkMode
-                      ? 'bg-gray-800 text-white'
-                      : 'bg-gray-200 text-black'
-                    : ''
+                onClick={() => setActiveTab(item.name)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
+                  activeTab === item.name ? 'bg-[#ece5ff] text-slate-700' : 'text-slate-600 hover:bg-white/45'
                 }`}
               >
-                <item.icon className={`mr-4 text-xl ${
-                  activeSidebarItem === item.name
-                    ? 'text-purple-500'
-                    : isDarkMode
-                      ? 'text-gray-400'
-                      : 'text-gray-500'
-                }`} />
-                <span className="font-medium">{item.name}</span>
-              </a>
+                <item.icon className="h-5 w-5" />
+                <span className="text-lg leading-none font-medium">{item.name}</span>
+              </button>
             ))}
           </nav>
-          <div className="p-6">
-            <button
-              onClick={handleLogout}
-              className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full"
-            >
-              Logout
-            </button>
-          </div>
-        </motion.aside>
 
-        <main className="flex-1 ml-64">
-          <motion.div
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
-            className={`sticky top-0 z-10 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} shadow-sm`}
+          <button
+            onClick={handleLogout}
+            className="mt-8 w-[155px] rounded-full bg-[#f13737] hover:bg-[#e53131] text-white py-3 text-[20px] leading-none font-medium"
           >
-            <div className="flex justify-between items-center p-4">
-              <div className="relative">
-                
+            Logout
+          </button>
+        </aside>
+
+        <main className="relative z-10 flex-1 p-5 md:p-6">
+          <div className="max-w-[1600px] mx-auto">
+            <div className="mb-5 flex items-center justify-between gap-4 border-b border-[#e8e4f3] pb-4">
+              <div className="relative flex-1 max-w-3xl">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-full rounded-xl border border-[#e4dfef] bg-[#f2eff8] py-3 pl-10 pr-4 text-base leading-none text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                />
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               </div>
-              <div className="flex items-center space-x-4">
-                <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700">
-                  {isDarkMode ? <FiSun className="text-yellow-800" /> : <FiMoon className="text-gray-800" />}
-                </button>
+
+              <div className="flex items-center gap-2 md:gap-3 text-slate-600 relative">
                 <button
-                  onClick={toggleNotifications}
-                  className={`p-2 rounded-full ${
-                    isDarkMode ? 'hover:bg-gray-200' : 'hover:bg-gray-200'
-                  }`}
+                  onClick={() => setShowNotifications((prev) => !prev)}
+                  className="relative rounded-full p-2 hover:bg-white/60"
                 >
-                  <FiBell className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`} />
+                  <FiBell className="h-5 w-5" />
+                  {!!notifications.find((item) => item.status === 'unread') && (
+                    <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-500" />
+                  )}
                 </button>
-                
-                <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold" onClick={() => setIsProfileModalOpen(true)}>
-                  p 
+                <button className="rounded-full p-2 hover:bg-white/60">
+                  <FiBell className="h-5 w-5" />
+                </button>
+                <button className="rounded-full p-2 hover:bg-white/60">
+                  <FiSettings className="h-5 w-5" />
+                </button>
+                <div className="h-11 w-11 rounded-full bg-violet-400 text-white flex items-center justify-center font-bold text-sm">
+                  p
                 </div>
-              </div>
-            </div>
-          </motion.div>
 
-          {showNotifications && (
-            <div className="absolute top-0 right-0 mt-16 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-50 border border-gray-100 dark:border-gray-700">
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                    Notifications
-                  </h3>
-                  <span className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20 rounded-full">
-                    {notifications.filter(n => n.status === 'unread').length} New
-                  </span>
-                </div>
-              </div>
-
-              {/* Notification List */}
-              <div className="max-h-[400px] overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <FiBell className="w-12 h-12 text-gray-400" />
-                    <p className="mt-2 text-gray-500">No notifications yet</p>
+                {showNotifications && (
+                  <div className="absolute top-14 right-0 w-80 rounded-xl border border-slate-200 bg-white shadow-xl p-4 z-20">
+                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Notifications</h3>
+                    <div className="max-h-64 overflow-auto space-y-2">
+                      {notifications.length ? (
+                        notifications.slice(0, 6).map((item) => (
+                          <div key={item._id} className="rounded-lg bg-slate-50 p-2">
+                            <p className="text-xs text-slate-700">{item.message}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-500">No notifications yet</p>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <ul className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {notifications.map((notification) => (
-                      <li
-                        key={notification._id}
-                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 ${
-                          notification.status === 'unread'
-                            ? 'bg-blue-50/50 dark:bg-blue-900/10'
-                            : ''
-                        }`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium ${
-                              isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                            }`}>
-                              {notification.message}
-                            </p>
-                            <div className="mt-1 flex items-center gap-2">
-                              <span className="text-xs text-gray-500">
-                                {new Date(notification.createdAt).toLocaleString()}
-                              </span>
-                              {notification.status === 'unread' && (
-                                <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {notification.status === 'unread' && (
-                              <button
-                                onClick={() => handleMarkAsRead(notification._id)}
-                                className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                              >
-                                Mark as Read
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDeleteNotification(notification._id)}
-                              className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
                 )}
               </div>
-
-              {/* Footer */}
-              {notifications.length > 0 && (
-                <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 rounded-b-xl">
-                  <button
-                    className="text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    onClick={() => {
-                      /* Handle clear all notifications */
-                    }}
-                  >
-                    Clear all notifications
-                  </button>
-                </div>
-              )}
             </div>
-          )}
-          {isProfileModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <motion.div 
-                ref={modalRef} // Attach the ref to the modal
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className={`${
-                  isDarkMode ? 'bg-gray-800' : 'bg-white'
-                } rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl`}
-              >
-                {/* Header */}
-                <div className="flex justify-between items-center mb-6 border-b pb-4">
-                  <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                    Profile Details
-                  </h2>
-                  <button
-                    onClick={() => setIsProfileModalOpen(false)}
-                    className="text-gray-500 hover:text-gray-700 text-xl font-bold"
-                  >
-                    ×
-                  </button>
-                </div>
 
-                {/* Profile Section */}
-                <div className="grid grid-cols-3 gap-6 mb-6">
-                  {/* Profile Image Column */}
-                  <div className="col-span-1 flex flex-col items-center space-y-4">
-                    {profileImageUrl ? (
-                      <div className="relative">
-                        <img
-                          src={profileImageUrl}
-                          alt="Profile"
-                          className="w-32 h-32 rounded-full object-cover border-4 border-purple-500"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-32 h-32 rounded-full bg-purple-500 flex items-center justify-center text-white text-3xl font-bold">
-                        {/* Placeholder for initials or default text */}
-                        {/* <span>No Image</span> */}
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        setProfileImage(e.target.files[0]);
-                        setProfileImageUrl(URL.createObjectURL(e.target.files[0])); // Set the image URL for preview
-                      }}
-                      className="hidden"
-                      id="profile-image-input"
-                    />
-                    <label
-                      htmlFor="profile-image-input"
-                      className={`cursor-pointer px-4 py-2 rounded-full text-sm font-semibold ${
-                        isDarkMode 
-                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                          : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
-                      }`}
-                    >
-                      Choose Image
-                    </label>
-                    {profileImage && (
-                      <button
-                        onClick={handleProfileImageUpload}
-                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-sm"
-                      >
-                        Upload Image
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Password Change Column */}
-                  <div className="col-span-2">
-                    <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                      Change Password
-                    </h3>
-                    <form onSubmit={handleUpdateSubmit} className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4 items-center">
-                        <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Current Password
-                        </label>
-                        <input
-                          type="password"
-                          value={updateFormData.currentPassword}
-                          onChange={(e) => setUpdateFormData(prev => ({
-                            ...prev,
-                            currentPassword: e.target.value
-                          }))}
-                          className={`col-span-2 p-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
-                              : 'bg-white border-gray-300'
-                          }`}
-                          required
-                        />
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 items-center">
-                        <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          New Password
-                        </label>
-                        <input
-                          type="password"
-                          value={updateFormData.newPassword}
-                          onChange={(e) => setUpdateFormData(prev => ({
-                            ...prev,
-                            newPassword: e.target.value
-                          }))}
-                          className={`col-span-2 p-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
-                              : 'bg-white border-gray-300'
-                          }`}
-                          required
-                        />
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 items-center">
-                        <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Confirm Password
-                        </label>
-                        <input
-                          type="password"
-                          value={updateFormData.confirmPassword}
-                          onChange={(e) => setUpdateFormData(prev => ({
-                            ...prev,
-                            confirmPassword: e.target.value
-                          }))}
-                          className={`col-span-2 p-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
-                              : 'bg-white border-gray-300'
-                          }`}
-                          required
-                        />
-                      </div>
-                      <div className="flex justify-end space-x-3 mt-6">
-                        <button
-                          type="button"
-                          onClick={() => setIsProfileModalOpen(false)}
-                          className={`px-4 py-2 rounded-full ${
-                            isDarkMode 
-                              ? 'bg-gray-700 hover:bg-gray-600' 
-                              : 'bg-gray-200 hover:bg-gray-300'
-                          }`}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full"
-                        >
-                          Update Password
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          )}
-          
-
-          {activeTab === 'Dashboard' && (
-            <motion.div className="p-8" variants={staggerChildren} initial="initial" animate="animate">
-              <motion.div variants={fadeInUp} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-8 rounded-2xl shadow-lg`}>
-                <div className="flex justify-between items-center mb-8">
-                  <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    My Tasks
-                  </h3>
-                </div>
-
-                <div className="grid gap-6">
-                  {renderTasks()}
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {activeTab === 'My Tasks' && (
-            <TaskTab isDarkMode={isDarkMode} />
-          )}
-          {activeTab === 'Onboarding' && (
-            <OnboardingTab isDarkMode={isDarkMode} />
-          )}
-          
+            {activeTab === 'Dashboard' && renderDashboardState()}
+            {activeTab === 'My Tasks' && <TaskTab isDarkMode={false} />}
+            {activeTab === 'Onboarding' && <OnboardingTab isDarkMode={false} />}
+          </div>
         </main>
       </div>
     </div>

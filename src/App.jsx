@@ -13,6 +13,7 @@ import TeamleaderDashboard from './Component/Pages/Dashboards/TeamleaderDashboar
 import SuperAdminDashboard from './Component/Pages/Dashboards/SuperAdmindashboard'
 import EmployeeDashboard from './Component/Pages/Dashboards/EmployeeDashboard'
 import BdDashboard from './Component/Pages/Dashboards/BdDashboard'
+import KamDashboard from './Component/Pages/Dashboards/KamDashboard'
 import ResetPassword from './Component/Pages/reset_password'
 import ForgotPassword from './Component/Pages/forgetpassword'
 import ClientLogin from './Component/Pages/ClientLogin'
@@ -30,8 +31,8 @@ function App() {
       <Route path='/reset-password' element={<ResetPassword />} />
       <Route path='/client-login' element={<ClientLogin />} />
       <Route path='/bd-dashboard' element={<BdDashboard />} />
-      
-      
+      <Route path='/kam-dashboard' element={<KamDashboard />} />
+
       <Route path='/document-upload' element={<DocumentUploadForm />} />
       <Route path='/admin-dashboard' element={<ClientDashboard />} />
       <Route path='/client-dashboard' element={<CustomerDashboard />} />

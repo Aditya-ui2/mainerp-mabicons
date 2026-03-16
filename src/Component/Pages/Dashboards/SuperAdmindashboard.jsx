@@ -1,11 +1,21 @@
-import React, { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
-import { FiHome, FiUsers, FiBarChart2, FiCheckSquare, FiPieChart, FiSettings, FiSearch, FiBell, FiSun, FiMoon, FiUserPlus, FiFolder, FiDollarSign, FiTrendingUp, FiTarget, FiPhoneCall } from 'react-icons/fi';
+import {
+  FiHome,
+  FiUsers,
+  FiSettings,
+  FiSearch,
+  FiBell,
+  FiUserPlus,
+  FiFolder,
+  FiBarChart2,
+  FiBriefcase,
+  FiChevronRight,
+  FiMoreHorizontal,
+  FiDollarSign,
+} from 'react-icons/fi';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { useSpring, animated } from 'react-spring';
 import CustomersTab from './Tabs/CustomersTab';
 import TeamTabs from './Tabs/Teamtabs';
 import TaskTab from './Tabs/TaskTab';
@@ -15,23 +25,79 @@ import { createAdmin, createBDExecutive } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const modules = [
-  { name: 'Total Customers', icon: FiUsers, value: '0', change: '0%' },
-  { name: 'Team Members', icon: FiUserPlus, value: '0', change: '0%' },
-  { name: 'Active Projects', icon: FiFolder, value: '0', change: '0%' },
-  { name: 'Tasks Completed', icon: FiCheckSquare, value: '0', change: '0%' },
+const summaryCards = [
+  {
+    name: 'Total Customers',
+    icon: FiUsers,
+    value: '1,248',
+    change: '↑ 12% this month',
+    changeColor: 'text-green-600',
+    iconBg: 'bg-indigo-100 text-indigo-600',
+  },
+  {
+    name: 'Revenue',
+    icon: FiDollarSign,
+    value: '$5,320',
+    change: '↑ 8.5% this month',
+    changeColor: 'text-green-600',
+    iconBg: 'bg-emerald-100 text-emerald-600',
+  },
+  {
+    name: 'Active Projects',
+    icon: FiFolder,
+    value: '5',
+    change: '↑ 2 this week',
+    changeColor: 'text-amber-600',
+    iconBg: 'bg-amber-100 text-amber-600',
+  },
+  {
+    name: 'Team Members',
+    icon: FiUserPlus,
+    value: '12',
+    change: '↑ 3 this week',
+    changeColor: 'text-indigo-600',
+    iconBg: 'bg-violet-100 text-violet-600',
+  },
 ];
 
 const sidebarItems = [
-  { name: 'Dashboard', icon: FiHome },
-  { name: 'Customers', icon: FiUsers },
-  { name: 'Manage Admins', icon: FiUserPlus },
-  { name: 'Business Development', icon: FiTrendingUp },
+  { name: 'Dashboard', tab: 'Dashboard', icon: FiHome },
+  { name: 'Customers', tab: 'Customers', icon: FiUsers },
+  { name: 'Team', tab: 'Team', icon: FiUserPlus },
+  { name: 'Reports', tab: 'Reports', icon: FiBarChart2, showDot: true },
+  { name: 'Projects', tab: 'Business Development', icon: FiBriefcase },
+  { name: 'Settings', tab: 'Manage Admins', icon: FiSettings },
 ];
 
+const recentActivities = [
+  { title: 'John Doe', detail: 'was added as a new customer', time: '3 hours ago', color: 'bg-green-500', iconEl: '+' },
+  { title: 'New project ·\u200bWebsite Redesign', detail: 'created', time: '2 hours ago', color: 'bg-amber-500', iconEl: '📁' },
+  { title: 'Task', detail: '"Follow up with Tesla" completed', time: '3 hours ago', color: 'bg-cyan-500', iconEl: '✓' },
+  { title: 'Invoice #0256', detail: 'was generated', time: '5 hours ago', color: 'bg-indigo-500', iconEl: '📄' },
+  { title: 'Emma Smith', detail: 'changed her status to Lead', time: '1 day ago', color: 'bg-yellow-400', iconEl: '↗' },
+];
+
+const customerRows = [
+  { name: 'John Doe', sub: 'Te a 0', company: 'Tesla', companyIcon: '📍', status: 'Converted', avatar: 'JD', avatarGrad: 'from-violet-400 to-indigo-500' },
+  { name: 'Emma Smith', sub: 'Hopee', company: 'Apple', companyIcon: '🍎', status: 'Lead', avatar: 'ES', avatarGrad: 'from-pink-400 to-rose-500' },
+  { name: 'Alex Johnson', sub: 'Serogi', company: 'Google', companyIcon: '🔴', status: 'Active', avatar: 'AJ', avatarGrad: 'from-cyan-400 to-blue-500' },
+  { name: 'Sarah Williams', sub: 'W 1no:1301', company: 'Microsoft', companyIcon: '🪟', status: 'Lead', avatar: 'SW', avatarGrad: 'from-blue-400 to-indigo-500' },
+];
+
+const compactCustomers = [
+  { name: 'John Doe', sub: 'Ta Lh', status: 'Converted', avatar: 'JD', avatarGrad: 'from-violet-400 to-indigo-500' },
+  { name: 'Emma Smith', sub: 'Seip or', status: 'Lead', avatar: 'ES', avatarGrad: 'from-pink-400 to-rose-500' },
+  { name: 'Alex Johnson', sub: 'lyopee', status: 'Active', avatar: 'AJ', avatarGrad: 'from-cyan-400 to-blue-500' },
+];
+
+const statusBadge = {
+  Converted: 'bg-emerald-100 text-emerald-700',
+  Lead: 'bg-amber-100 text-amber-700',
+  Active: 'bg-green-100 text-green-700',
+};
+
 const Dashboard = () => {
-  const [activeModule, setActiveModule] = useState(modules[0]);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [chartRange, setChartRange] = useState('Monthly');
   const [activeSidebarItem, setActiveSidebarItem] = useState('Dashboard');
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isCreateAdminModalOpen, setIsCreateAdminModalOpen] = useState(false);
@@ -39,6 +105,8 @@ const Dashboard = () => {
   const [newAdminData, setNewAdminData] = useState({
     name: '',
     email: '',
+    password: '',
+    role: '',
   });
   const [newBDData, setNewBDData] = useState({
     name: '',
@@ -51,19 +119,38 @@ const Dashboard = () => {
   const [createAdminError, setCreateAdminError] = useState(null);
   const [createAdminSuccess, setCreateAdminSuccess] = useState(false);
   const [createBDError, setCreateBDError] = useState(null);
-  const [createBDSuccess, setCreateBDSuccess] = useState(false);
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+  const chartRangeData = {
+    Monthly: {
+      labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+      data: [7000, 11000, 10800, 11200, 13200, 17000, 18200, 25000],
+    },
+    Weekly: {
+      labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+      data: [4800, 6200, 5900, 7400],
+    },
+    Daily: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      data: [850, 940, 790, 1020, 1180, 680, 760],
+    },
+  };
+
+  const selectedChartRange = chartRangeData[chartRange];
 
   const chartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: selectedChartRange.labels,
     datasets: [
       {
-        label: 'Sales',
-        data: [12000, 19000, 15000, 22000, 18000, 25000],
-        borderColor: isDarkMode ? '#fff' : '#000',
-        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        tension: 0.4,
+        label: 'Revenue',
+        data: selectedChartRange.data,
+        borderColor: '#6366F1',
+        backgroundColor: 'rgba(99, 102, 241, 0.12)',
+        fill: true,
+        tension: 0.45,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#8B5CF6',
+        pointBorderWidth: 2,
+        pointRadius: 4,
       },
     ],
   };
@@ -74,187 +161,30 @@ const Dashboard = () => {
       legend: {
         display: false,
       },
+      tooltip: {
+        backgroundColor: '#111827',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+      },
     },
     scales: {
       x: {
         grid: {
-          display: false,
+          color: '#F1F5F9',
         },
+        ticks: { color: '#6B7280' },
       },
       y: {
         grid: {
-          color: isDarkMode ? '#333' : '#e0e0e0',
+          color: '#EEF2FF',
         },
+        ticks: { color: '#6B7280' },
       },
     },
   };
 
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 },
-    transition: { duration: 0.3 }
-  };
-
-  const staggerChildren = {
-    animate: {
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const particlesInit = useCallback(async engine => {
-    await loadFull(engine);
-  }, []);
-
-  const particlesLoaded = useCallback(async container => {
-    await console.log(container);
-  }, []);
-
-  const particlesOptions = {
-    particles: {
-      number: {
-        value: 80,
-        density: {
-          enable: true,
-          value_area: 800
-        }
-      },
-      color: {
-        value: isDarkMode ? "#ffffff" : "#000000"
-      },
-      shape: {
-        type: "circle",
-        stroke: {
-          width: 0,
-          color: "#000000"
-        },
-        polygon: {
-          nb_sides: 5
-        }
-      },
-      opacity: {
-        value: 0.5,
-        random: false,
-        anim: {
-          enable: false,
-          speed: 1,
-          opacity_min: 0.1,
-          sync: false
-        }
-      },
-      size: {
-        value: 3,
-        random: true,
-        anim: {
-          enable: false,
-          speed: 40,
-          size_min: 0.1,
-          sync: false
-        }
-      },
-      line_linked: {
-        enable: true,
-        distance: 150,
-        color: isDarkMode ? "#ffffff" : "#000000",
-        opacity: 0.4,
-        width: 1
-      },
-      move: {
-        enable: true,
-        speed: 2,
-        direction: "none",
-        random: false,
-        straight: false,
-        out_mode: "out",
-        bounce: false,
-        attract: {
-          enable: false,
-          rotateX: 600,
-          rotateY: 1200
-        }
-      }
-    },
-    interactivity: {
-      detect_on: "canvas",
-      events: {
-        onhover: {
-          enable: true,
-          mode: "repulse"
-        },
-        onclick: {
-          enable: true,
-          mode: "push"
-        },
-        resize: true
-      },
-      modes: {
-        grab: {
-          distance: 400,
-          line_linked: {
-            opacity: 1
-          }
-        },
-        bubble: {
-          distance: 400,
-          size: 40,
-          duration: 2,
-          opacity: 8,
-          speed: 3
-        },
-        repulse: {
-          distance: 200,
-          duration: 0.4
-        },
-        push: {
-          particles_nb: 4
-        },
-        remove: {
-          particles_nb: 2
-        }
-      }
-    },
-    retina_detect: true
-  };
-
-  const generateSpringProps = (idx) => {
-    const randomX = Math.random() * 100;
-    const randomY = Math.random() * 100;
-    
-    const springConfig = {
-      from: { transform: `translate(${randomX}vw, ${randomY}vh)` },
-      to: async (next) => {
-        while (true) {
-          await next({ transform: `translate(${randomX + 5}vw, ${randomY + 5}vh)` });
-          await next({ transform: `translate(${randomX}vw, ${randomY}vh)` });
-        }
-      },
-      config: { duration: 20000 + idx * 2000 },
-    };
-    
-    return useSpring(springConfig);
-  };
-
-  const circles = Array.from({ length: 5 }).map((_, index) => {
-    const springProps = generateSpringProps(index);
-    return (
-      <animated.div
-        key={index}
-        style={{
-          position: 'fixed',
-          width: `${20 + index * 10}px`,
-          height: `${20 + index * 10}px`,
-          borderRadius: '50%',
-          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)',
-          ...springProps,
-        }}
-      />
-    );
-  });
-
-  const handleTabChange = (tabName) => {
-    setActiveSidebarItem(tabName);
+  const handleTabChange = (sidebarName, tabName) => {
+    setActiveSidebarItem(sidebarName);
     setActiveTab(tabName);
   };
 
@@ -266,7 +196,7 @@ const Dashboard = () => {
     try {
       await createAdmin(newAdminData);
       setCreateAdminSuccess(true);
-      setNewAdminData({ name: '', email: '' });
+      setNewAdminData({ name: '', email: '', password: '', role: '' });
       setTimeout(() => {
         setIsCreateAdminModalOpen(false);
         setCreateAdminSuccess(false);
@@ -279,11 +209,9 @@ const Dashboard = () => {
   const handleCreateBDExecutive = async (e) => {
     e.preventDefault();
     setCreateBDError(null);
-    setCreateBDSuccess(false);
 
     try {
       await createBDExecutive(newBDData);
-      setCreateBDSuccess(true);
       setIsCreateBDModalOpen(false);
       setNewBDData({
         name: '',
@@ -306,123 +234,195 @@ const Dashboard = () => {
     }));
   };
 
-  const quickActions = [
-    {
-      name: 'Add Customer',
-      icon: FiUsers,
-      action: () => console.log('Add Customer clicked')
-    },
-    {
-      name: 'Create Admin',
-      icon: FiUserPlus,
-      action: () => setIsCreateAdminModalOpen(true)
-    },
-    {
-      name: 'Create BD User',
-      icon: FiTrendingUp,
-      action: () => handleTabChange('Business Development')
-    }
-  ];
-
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
         return (
-          <motion.div 
-            className="p-8"
-            variants={staggerChildren}
-            initial="initial"
-            animate="animate"
-          >
-            {/* Modules */}
-            <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" variants={staggerChildren}>
-              <AnimatePresence>
-                {modules.map((module) => (
-                  <motion.div
-                    key={module.name}
-                    variants={fadeInUp}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`${
-                      isDarkMode ? 'bg-gray-800' : 'bg-white'
-                    } p-6 rounded-xl shadow-lg cursor-pointer ${
-                      activeModule.name === module.name ? 'ring-2 ring-gray-500' : ''
-                    }`}
-                    onClick={() => setActiveModule(module)}
-                  >
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold">{module.name}</h3>
-                      <module.icon className="text-2xl" style={{ color: module.color }} />
-                    </div>
-                    <p className="text-3xl font-bold mb-2">{module.value}</p>
-                    <p className={`text-sm ${module.change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
-                      {module.change}
-                    </p>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Chart */}
-            <motion.div
-              variants={fadeInUp}
-              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-lg mb-8`}
-            >
-              <h3 className="text-xl font-semibold mb-4">Sales Overview</h3>
-              <Line data={chartData} options={chartOptions} />
-            </motion.div>
-
-            {/* Recent Activities and Quick Actions */}
-            <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-8" variants={staggerChildren}>
-              {/* Recent Activities */}
-              <motion.div
-                variants={fadeInUp}
-                className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-lg`}
-              >
-                <h3 className="text-xl font-semibold mb-4">Recent Activities</h3>
-                <ul className="space-y-4">
-                  <li className="text-center text-gray-500">No recent activities</li>
-                </ul>
-              </motion.div>
-
-              {/* Quick Actions */}
-              <motion.div
-                variants={fadeInUp}
-                className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 rounded-xl shadow-lg`}
-              >
-                <h3 className="text-xl font-semibold mb-6">Quick Actions</h3>
-                <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-4" variants={staggerChildren}>
-                  {quickActions.map((action) => (
-                    <motion.button
-                      key={action.name}
-                      variants={fadeInUp}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`w-full py-4 px-6 ${
-                        isDarkMode 
-                          ? 'bg-white text-black hover:bg-gray-200' 
-                          : 'bg-black text-white hover:bg-gray-800'
-                      } rounded-lg transition-colors duration-200 flex items-center justify-center shadow-md`}
-                      onClick={action.action}
+          <div className="space-y-6">
+            <section className="rounded-[28px] px-6 md:px-8 py-7 text-white bg-gradient-to-r from-indigo-600 via-violet-500 to-fuchsia-400 relative overflow-hidden">
+              <div className="absolute right-24 -top-16 h-48 w-48 rounded-full bg-white/15" />
+              <div className="absolute -right-16 -bottom-20 h-56 w-56 rounded-full bg-white/15" />
+              <div className="absolute left-1/2 top-8 h-36 w-72 -translate-x-1/2 rounded-[999px] bg-white/10 blur-sm" />
+              <div className="flex items-center justify-between gap-4 relative z-10">
+                <div>
+                  <h1 className="text-3xl font-bold leading-tight">Welcome back, Abhinav 👋</h1>
+                  <p className="mt-1 text-indigo-100 text-sm">Here&apos;s your business performance today</p>
+                </div>
+                <div className="rounded-2xl bg-white/20 backdrop-blur-sm px-3 py-2 flex items-center gap-4">
+                  {['Monthly', 'Weekly', 'Daily'].map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setChartRange(range)}
+                      className="flex items-center gap-2 text-sm transition"
                     >
-                      <action.icon className="mr-3 text-xl" />
-                      <span className="text-lg font-medium">{action.name}</span>
-                    </motion.button>
+                      <span className={`h-3.5 w-3.5 rounded-full border ${chartRange === range ? 'bg-indigo-600 border-indigo-500' : 'bg-violet-200/80 border-violet-200/80'}`} />
+                      <span className={chartRange === range ? 'font-semibold text-white' : 'text-white/80'}>{range}</span>
+                    </button>
                   ))}
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          </motion.div>
+                </div>
+              </div>
+            </section>
+
+            <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 -mt-10 relative z-10 px-1">
+              {summaryCards.map((card) => (
+                <div key={card.name} className="bg-white rounded-2xl p-5 shadow-[0_14px_30px_rgba(99,102,241,0.08)] border border-slate-100/80">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-500 text-sm">{card.name}</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-1">{card.value}</p>
+                    </div>
+                    <span className={`h-12 w-12 rounded-full flex items-center justify-center ${card.iconBg}`}>
+                      <card.icon className="text-xl" />
+                    </span>
+                  </div>
+                  <p className={`mt-3 text-sm font-semibold ${card.changeColor}`}>{card.change}</p>
+                </div>
+              ))}
+            </section>
+
+            <section className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+              <div className="xl:col-span-2 space-y-5">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[31px] leading-none font-semibold text-slate-800">Sales Overview</h3>
+                    <div className="flex items-center gap-2 text-sm">
+                      {['Monthly', 'Weekly', 'Daily'].map((period) => (
+                        <button
+                          key={period}
+                          onClick={() => setChartRange(period)}
+                          className={`px-3 py-1 rounded-full transition ${
+                            chartRange === period ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:bg-slate-100'
+                          }`}
+                        >
+                          {period}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="h-[280px]">
+                    <Line data={chartData} options={chartOptions} />
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[31px] leading-none font-semibold text-slate-800">Recent Customers</h3>
+                    <button className="text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+                      View All
+                      <FiChevronRight />
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[640px]">
+                      <tbody>
+                        {customerRows.map((customer) => (
+                          <tr key={customer.name} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                            <td className="py-3 pr-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`h-10 w-10 rounded-full bg-gradient-to-br ${customer.avatarGrad} text-white flex items-center justify-center text-xs font-semibold flex-shrink-0`}>
+                                  {customer.avatar}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-slate-800 text-sm leading-tight">{customer.name}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">{customer.sub}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 pr-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-base leading-none">{customer.companyIcon}</span>
+                                <span className="text-slate-600 text-sm">{customer.company}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 pr-4">
+                              <span className={`px-4 py-1.5 rounded-full text-xs font-semibold ${statusBadge[customer.status]}`}>
+                                {customer.status}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`h-1.5 w-1.5 rounded-full ${
+                                  customer.status === 'Converted' ? 'bg-emerald-500' :
+                                  customer.status === 'Active' ? 'bg-green-500' : 'bg-amber-500'
+                                }`} />
+                                <span className="text-xs text-slate-500">{customer.status}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 text-right text-slate-400">
+                              <FiChevronRight className="inline" />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[34px] leading-none font-semibold text-slate-800">Recent Activity</h3>
+                    <FiMoreHorizontal className="text-slate-400" />
+                  </div>
+                  <ul className="space-y-4">
+                    {recentActivities.map((activity) => (
+                      <li key={`${activity.title}-${activity.time}`} className="flex items-start gap-3">
+                        <span className={`h-8 w-8 rounded-full ${activity.color} text-white text-sm flex items-center justify-center mt-0.5 flex-shrink-0`}>
+                          {activity.iconEl}
+                        </span>
+                        <div>
+                          <p className="text-slate-700 text-sm">
+                            <span className="font-semibold">{activity.title}</span>{' '}{activity.detail}
+                          </p>
+                          <p className="text-xs text-slate-400 mt-0.5">{activity.time}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[34px] leading-none font-semibold text-slate-800">Recent Customers</h3>
+                    <FiMoreHorizontal className="text-slate-400" />
+                  </div>
+                  <div className="space-y-3">
+                    {compactCustomers.map((customer) => (
+                      <div key={customer.name} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-9 w-9 rounded-full bg-gradient-to-br ${customer.avatarGrad} text-white flex items-center justify-center text-xs font-semibold flex-shrink-0`}>
+                            {customer.avatar}
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-800 text-sm leading-tight">{customer.name}</p>
+                            <p className="text-xs text-slate-400">{customer.sub}</p>
+                          </div>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge[customer.status]}`}>
+                          {customer.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         );
       case 'Customers':
-        return <CustomersTab isDarkMode={isDarkMode} />;
+        return <CustomersTab isDarkMode={false} />;
+      case 'Team':
+        return <TeamTabs isDarkMode={false} />;
+      case 'Reports':
+        return <TaskTab isDarkMode={false} />;
       case 'Manage Admins':
-        return <AdminTab isDarkMode={isDarkMode} />;
+        return <AdminTab isDarkMode={false} />;
       case 'Business Development':
         return (
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Business Development</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Business Development</h2>
               <button
                 onClick={() => setIsCreateBDModalOpen(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center gap-2"
@@ -440,99 +440,78 @@ const Dashboard = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900 text-white' : 'bg-gray-50'}`}>
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {circles}
-      </div>
-      <Particles
-        id="tsparticles"
-        init={particlesInit}
-        loaded={particlesLoaded}
-        options={particlesOptions}
-        className="absolute inset-0 z-0"
-      />
-      <div className="flex relative z-10">
+    <div className="min-h-screen bg-[#f3f4fb] p-2 md:p-3">
+      <div className="flex rounded-2xl overflow-hidden border border-slate-200/80 bg-[#f7f8fc] min-h-[calc(100vh-1rem)] md:min-h-[calc(100vh-1.5rem)]">
         {/* Sidebar */}
-        <motion.aside
-          initial={{ x: -300 }}
-          animate={{ x: 0 }}
-          transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
-          className={`w-64 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} h-screen fixed left-0 top-0 overflow-y-auto transition-all duration-300 ease-in-out`}
-        >
+        <aside className="w-64 bg-[#f8f8fd] border-r border-slate-200 h-auto flex flex-col shrink-0">
           <div className="p-6">
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>CRM Pro</h1>
+            <h1 className="text-[37px] font-bold text-slate-800 flex items-center gap-3 leading-none">
+              <span className="h-8 w-8 rounded-xl bg-indigo-500 text-white flex items-center justify-center">
+                <FiHome className="text-sm" />
+              </span>
+              CRM Pro
+            </h1>
           </div>
-          <nav className="mt-8">
+          <nav className="mt-2 px-3 space-y-1.5 flex-1">
             {sidebarItems.map((item) => (
-              <a
+              <button
                 key={item.name}
-                href="#"
-                onClick={() => handleTabChange(item.name)}
-                className={`flex items-center px-6 py-4 ${
-                  isDarkMode
-                    ? 'text-gray-300 hover:bg-gray-800'
-                    : 'text-gray-600 hover:bg-gray-200'
-                } transition-colors duration-200 ${
+                onClick={() => handleTabChange(item.name, item.tab)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${
                   activeSidebarItem === item.name
-                    ? isDarkMode
-                      ? 'bg-gray-800 text-white'
-                      : 'bg-gray-200 text-black'
-                    : ''
+                    ? 'bg-indigo-100/80 text-indigo-700'
+                    : 'text-slate-500 hover:bg-slate-100/80 hover:text-slate-700'
                 }`}
               >
-                <item.icon className={`mr-4 text-xl ${
-                  activeSidebarItem === item.name
-                    ? 'text-purple-500'
-                    : isDarkMode
-                      ? 'text-gray-400'
-                      : 'text-gray-500'
-                }`} />
-                <span className="font-medium">{item.name}</span>
-              </a>
+                <span className="flex items-center gap-3 font-medium text-[20px] leading-none">
+                  <item.icon className={`text-lg ${activeSidebarItem === item.name ? 'text-indigo-600' : 'text-slate-500'}`} />
+                  {item.name}
+                </span>
+                {item.showDot && <span className={`h-2 w-2 rounded-full ${activeSidebarItem === item.name ? 'bg-indigo-400' : 'bg-slate-400'}`} />}
+                {!item.showDot && item.name === 'Settings' && <FiChevronRight className="text-sm text-slate-400" />}
+              </button>
             ))}
           </nav>
-        </motion.aside>
+          <div className="px-3 py-4">
+            <button className="w-full flex items-center gap-2 px-4 py-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors text-sm">
+              <FiChevronRight className="rotate-180 text-base" />
+              <FiChevronRight className="-ml-3 text-base" />
+            </button>
+          </div>
+        </aside>
 
         {/* Main content */}
-        <main className="flex-1 ml-64">
+        <main className="flex-1 p-5 md:p-6">
           {/* Sticky Top bar */}
-          <motion.div
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
-            className={`sticky top-0 z-10 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} shadow-sm`}
-          >
-            <div className="flex justify-between items-center p-4">
-              <div className="relative">
+          <div className="sticky top-0 z-20 mb-6">
+            <div className="bg-[#f7f8fc] rounded-2xl p-2 flex items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-3xl">
                 <input
                   type="text"
                   placeholder="Search..."
-                  className={`pl-10 pr-4 py-2 rounded-full ${
-                    isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#f0f1f7] text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 />
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
-              <div className="flex items-center space-x-4">
-                <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
-                  {isDarkMode ? <FiSun className="text-yellow-400" /> : <FiMoon className="text-gray-600" />}
-                </button>
-                <button className={`p-2 rounded-full ${
-                  isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'
-                }`}>
-                  <FiBell />
-                </button>
-                <button className={`p-2 rounded-full ${
-                  isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'
-                }`}>
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="relative">
+                  <button className="p-2.5 rounded-full hover:bg-slate-100 text-slate-600">
+                    <FiBell />
+                  </button>
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-green-500 border-2 border-white" />
+                </div>
+                <button className="p-2.5 rounded-full hover:bg-slate-100 text-slate-600">
                   <FiSettings />
                 </button>
-                <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
-                  RC
+                <div className="flex items-center gap-2 rounded-full bg-white px-2 py-1 border border-slate-200">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
+                    RC
+                  </div>
+                  <span className="text-xs text-slate-500 font-semibold pr-1">RC</span>
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Dashboard content */}
           {renderContent()}
@@ -546,96 +525,68 @@ const Dashboard = () => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className={`${
-              isDarkMode ? 'bg-gray-800' : 'bg-white'
-            } rounded-lg p-6 w-full max-w-md mx-4 shadow-xl`}
+            className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl"
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">Create New Admin</h2>
               <button
                 onClick={() => setIsCreateAdminModalOpen(false)}
-                className={`p-2 rounded-full ${
-                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                }`}
+                className="p-2 rounded-full hover:bg-gray-100"
               >
               </button>
             </div>
 
             <form onSubmit={handleCreateAdmin} className="space-y-4">
               <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                }`}>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
                   Full Name
                 </label>
                 <input
                   type="text"
                   value={newAdminData.name}
                   onChange={(e) => setNewAdminData(prev => ({ ...prev, name: e.target.value }))}
-                  className={`w-full p-2 rounded border ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
+                  className="w-full p-2 rounded border bg-white border-gray-300"
                   placeholder="Enter full name"
                   required
                 />
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                }`}>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
                   Email Address
                 </label>
                 <input
                   type="email"
                   value={newAdminData.email}
                   onChange={(e) => setNewAdminData(prev => ({ ...prev, email: e.target.value }))}
-                  className={`w-full p-2 rounded border ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
+                  className="w-full p-2 rounded border bg-white border-gray-300"
                   placeholder="Enter email address"
                   required
                 />
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                }`}>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
                   Password
                 </label>
                 <input
                   type="password"
                   value={newAdminData.password}
                   onChange={(e) => setNewAdminData(prev => ({ ...prev, password: e.target.value }))}
-                  className={`w-full p-2 rounded border ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
+                  className="w-full p-2 rounded border bg-white border-gray-300"
                   placeholder="Enter password"
                   required
                 />
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                }`}>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
                   Role
                 </label>
                 <select
                   value={newAdminData.role}
                   onChange={(e) => setNewAdminData(prev => ({ ...prev, role: e.target.value }))}
-                  className={`w-full p-2 rounded border ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
+                  className="w-full p-2 rounded border bg-white border-gray-300"
                   required
                 >
                   <option value="">Select role</option>
@@ -660,9 +611,7 @@ const Dashboard = () => {
                 <button
                   type="button"
                   onClick={() => setIsCreateAdminModalOpen(false)}
-                  className={`px-4 py-2 rounded ${
-                    isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                  }`}
+                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
                 >
                   Cancel
                 </button>
@@ -675,7 +624,7 @@ const Dashboard = () => {
               </div>
             </form>
           </motion.div>
-        </div>  
+        </div>
       )}
 
       {/* Create BD Executive Modal */}
@@ -691,73 +640,73 @@ const Dashboard = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md"
+              className="bg-white rounded-lg p-6 w-full max-w-md"
             >
-              <h2 className="text-2xl font-bold mb-4 dark:text-white">Create BD Executive</h2>
+              <h2 className="text-2xl font-bold mb-4">Create BD Executive</h2>
               <form onSubmit={handleCreateBDExecutive} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
                   <input
                     type="text"
                     name="name"
                     value={newBDData.name}
                     onChange={handleBDInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
                   <input
                     type="email"
                     name="email"
                     value={newBDData.email}
                     onChange={handleBDInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                  <label className="block text-sm font-medium text-gray-700">Password</label>
                   <input
                     type="password"
                     name="password"
                     value={newBDData.password}
                     onChange={handleBDInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
+                  <label className="block text-sm font-medium text-gray-700">Phone</label>
                   <input
                     type="tel"
                     name="phone"
                     value={newBDData.phone}
                     onChange={handleBDInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Target Revenue</label>
+                  <label className="block text-sm font-medium text-gray-700">Target Revenue</label>
                   <input
                     type="number"
                     name="targetRevenue"
                     value={newBDData.targetRevenue}
                     onChange={handleBDInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Target Leads</label>
+                  <label className="block text-sm font-medium text-gray-700">Target Leads</label>
                   <input
                     type="number"
                     name="targetLeads"
                     value={newBDData.targetLeads}
                     onChange={handleBDInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -770,7 +719,7 @@ const Dashboard = () => {
                   <button
                     type="button"
                     onClick={() => setIsCreateBDModalOpen(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                   >
                     Cancel
                   </button>
