@@ -1,0 +1,69 @@
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+/* body{
+  background-color: black;
+}  */
+@keyframes meteor {
+  0% {
+    transform: rotate(205deg) translateX(0);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(205deg) translateX(-400px);
+    opacity: 0;
+  }
+}
+
+.meteor {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background-color: white;
+  opacity: 0;
+  transform-origin: 100% 100%;
+  animation: meteor linear infinite;
+}
+
+.meteor::before {
+  content: '';
+  position: absolute;
+  width: 50px;
+  height: 1px;
+  background: linear-gradient(90deg, white, transparent);
+  transform: translateX(-50px) rotateZ(45deg);
+}
+
+/* Dark mode styles */
+.dark body {
+  background-color: #212121;
+  color: #e2e8f0;
+}
+
+.dark .meteor {
+  background-color: #4a5568;
+}
+
+.dark .meteor::before {
+  background: linear-gradient(90deg, #4a5568, transparent);
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 1s ease-out forwards;
+}

@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.tree-menu {
+    @apply list-none p-0;
+  }
+  
+  .tree-item {
+    @apply mb-1;
+  }
+  
+  .level-1 {
+    @apply ml-4;
+  }
+  
+  .level-2 {
+    @apply ml-8;
+  }
+  
+  .level-3 {
+    @apply ml-12;
+  }
+
+
+
+
+  :root {
+    --bg-modal: #ffffff;
+    --text-primary: #333333;
+    --bg-input: #f3f4f6;
+    --border-color: #e5e7eb;
+  }
+  
+  .dark {
+    --bg-modal: #1f2937;
+    --text-primary: #ffffff;
+    --bg-input: #374151;
+    --border-color: #4b5563;
+  }
