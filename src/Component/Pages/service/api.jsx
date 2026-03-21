@@ -2270,21 +2270,21 @@ export const getSharePointFolders = async () => {
     return response.data;
   } catch (error) {
     console.error('Failed to fetch folders:', error);
-    throw error.response?.data || { message: 'Failed to fetch SharePoint folders' };
+    throw error.response?.data || { message: 'Failed to fetch S3 folders' };
   }
 };
 
-// Search SharePoint directly
-export const searchSharePointResumes = async (query) => {
+// Search S3 directly
+export const searchS3Resumes = async (query) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/api/resumebank/search-sharepoint?query=${encodeURIComponent(query)}`, {
+    const response = await axiosInstance.get(`/api/resumebank/search-s3?query=${encodeURIComponent(query)}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to search SharePoint:', error);
-    throw error.response?.data || { message: 'Failed to search SharePoint' };
+    console.error('Failed to search S3:', error);
+    throw error.response?.data || { message: 'Failed to search S3' };
   }
 };
 
@@ -2391,7 +2391,7 @@ const api = {
   assignResumesToPosition,
   getResumeDownloadUrl,
   getSharePointFolders,
-  searchSharePointResumes,
+  searchS3Resumes,
 };
 
 export default api;

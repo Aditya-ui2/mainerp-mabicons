@@ -34,7 +34,7 @@ import {
   sendInterviewReminder,
   cancelInterview as cancelInterviewAPI,
   updateInterviewStatus 
-} from '../service/api';
+} from '../../../service/api';
 
 /* ── Generate unique Google Meet link ── */
 const generateMeetLink = () => {

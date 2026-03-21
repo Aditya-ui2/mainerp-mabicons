@@ -11,7 +11,7 @@ import {
   FiThumbsDown,
   FiMinus,
 } from 'react-icons/fi';
-import { submitInterviewFeedback, getInterviewFeedbackForm } from '../service/api';
+import { submitInterviewFeedback, getInterviewFeedbackForm } from '../../../service/api';
 
 /* ── Rating Slider Component ── */
 const RatingSlider = ({ label, description, value, onChange, icon: Icon, color, isDarkMode }) => {

@@ -10,7 +10,7 @@ import {
   bulkUpdateResumeStatus,
   assignResumesToPosition,
   getResumeDownloadUrl,
-} from '../../service/api';
+} from '../../../service/api';
 
 const ResumeBankTab = () => {
   // State
@@ -230,7 +230,7 @@ const ResumeBankTab = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Resume Bank</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage {stats?.total?.toLocaleString() || 0} resumes from SharePoint
+            Manage {stats?.total?.toLocaleString() || 0} resumes from AWS S3
           </p>
         </div>
         <button
@@ -251,7 +251,7 @@ const ResumeBankTab = () => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Sync from SharePoint
+              Sync from S3
             </>
           )}
         </button>
@@ -397,7 +397,7 @@ const ResumeBankTab = () => {
               ) : resumes.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
-                    No resumes found. Click "Sync from SharePoint" to import resumes.
+                    No resumes found. Click "Sync from S3" to import resumes.
                   </td>
                 </tr>
               ) : (
