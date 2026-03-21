@@ -192,7 +192,7 @@ const ResumeBankTab = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedResumes(resumes.map(r => r._id));
+      setSelectedResumes(resumes.map(r => r.id));
     } else {
       setSelectedResumes([]);
     }
@@ -402,18 +402,18 @@ const ResumeBankTab = () => {
                 </tr>
               ) : (
                 resumes.map((resume) => (
-                  <tr key={resume._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr key={resume.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
-                        checked={selectedResumes.includes(resume._id)}
-                        onChange={() => handleSelectResume(resume._id)}
+                        checked={selectedResumes.includes(resume.id)}
+                        onChange={() => handleSelectResume(resume.id)}
                         className="rounded"
                       />
                     </td>
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => handleToggleStar(resume._id, resume.isStarred)}
+                        onClick={() => handleToggleStar(resume.id, resume.isStarred)}
                         className="text-xl hover:scale-110 transition-transform"
                       >
                         {resume.isStarred ? '⭐' : '☆'}
@@ -455,7 +455,7 @@ const ResumeBankTab = () => {
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleDownload(resume._id)}
+                          onClick={() => handleDownload(resume.id)}
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                           title="Download"
                         >
@@ -464,7 +464,7 @@ const ResumeBankTab = () => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleViewDetails(resume._id)}
+                          onClick={() => handleViewDetails(resume.id)}
                           className="p-1 text-gray-600 hover:bg-gray-50 rounded"
                           title="View Details"
                         >
@@ -611,7 +611,7 @@ const ResumeDetailModal = ({ resume, onClose, onUpdate, statusOptions }) => {
       skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
       tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean)
     };
-    onUpdate(resume._id, updateData);
+    onUpdate(resume.id, updateData);
   };
 
   return (

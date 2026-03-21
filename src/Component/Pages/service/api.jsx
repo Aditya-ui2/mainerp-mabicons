@@ -109,6 +109,23 @@ export const employeeLogin = async (credentials) => {
   }
 };
 
+export const departmentTeamLogin = async (credentials) => {
+  try {
+    const response = await axiosInstance.post('/department/login', credentials, {
+      headers: {
+        'Referer': 'http://localhost:5173/',
+        'Origin': 'http://localhost:5173'
+      }
+    });
+    if (response.data.token) {
+      saveToken(response.data.token, response.data.user?.department === 'HR Operations' ? 'hrOperations' : 'hrRecruitment');
+    }
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 // Update the clientSignup function
 export const clientSignup = async (clientData) => {
   try {
@@ -2294,6 +2311,7 @@ const api = {
   adminLogin,
   teamLeaderLogin,
   employeeLogin,
+  departmentTeamLogin,
   clientSignup,
   clientLogin,
   createAdmin,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
-import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin } from './service/api';
+import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin, departmentTeamLogin } from './service/api';
 import { FiMail, FiEye, FiEyeOff, FiSun, FiMoon } from 'react-icons/fi';
 
 const BackgroundAnimation = () => (
@@ -185,71 +185,67 @@ const Login = () => {
     e.preventDefault();
     
     const emailLower = email.toLowerCase().trim();
-    const user = USER_CREDENTIALS[emailLower];
+    const credentials = { email: emailLower, password };
 
-    // Validate credentials
-    if (!user) {
-      setToastMessage("Invalid email address. Please use your Mabicons email.");
-      setShowToast(true);
-      setIsError(true);
-      return;
-    }
+    try {
+      let response;
+      let userType;
+      let destination;
 
-    if (user.password !== password) {
-      setToastMessage("Invalid password. Please try again.");
-      setShowToast(true);
-      setIsError(true);
-      return;
-    }
-
-    setToastMessage(`Welcome, ${user.name}!`);
-    setShowToast(true);
-    setIsError(false);
-
-    const userType = user.role;
-    const department = user.department;
-
-    // Create a proper mock JWT token for development (header.payload.signature)
-    const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-    const payload = btoa(JSON.stringify({ 
-      id: "mock-user-123", 
-      email: emailLower, 
-      role: userType, 
-      department: department,
-      name: user.name,
-      iat: Math.floor(Date.now() / 1000) 
-    }));
-    const signature = btoa("mock-signature");
-    const mockToken = `${header}.${payload}.${signature}`;
-    
-    localStorage.setItem('token', mockToken);
-    localStorage.setItem('userType', userType);
-
-    // Navigate based on detected user type
-    setTimeout(() => {
-      switch (userType) {
-        case 'superAdmin':
-          navigate('/superadmin-dashboard');
-          break;
-        case 'admin':
-          navigate('/admin-dashboard');
-          break;
-        case 'teamLeader':
-          navigate('/teamleader-dashboard');
-          break;
-        case 'bdExecutive':
-          navigate('/bd-dashboard');
-          break;
-        case 'hrOperations':
-          navigate('/kam-operations-dashboard');
-          break;
-        case 'hrRecruitment':
-          navigate('/kam-recruitment-dashboard');
-          break;
-        default:
-          navigate('/employee-dashboard');
+      // Check if it's a department team login (HR Operations or HR Recruitment)
+      if (emailLower.includes('operation') || emailLower.includes('recruitment')) {
+        response = await departmentTeamLogin(credentials);
+        userType = response.user?.department === 'HR Operations' ? 'hrOperations' : 'hrRecruitment';
+        destination = userType === 'hrOperations' ? '/kam-operations-dashboard' : '/kam-recruitment-dashboard';
+      } else if (emailLower.includes('superadmin')) {
+        response = await superAdminLogin(credentials);
+        userType = 'superAdmin';
+        destination = '/superadmin-dashboard';
+      } else if (emailLower.includes('admin')) {
+        response = await adminLogin(credentials);
+        userType = 'admin';
+        destination = '/admin-dashboard';
+      } else if (emailLower.includes('teamleader')) {
+        response = await teamLeaderLogin(credentials);
+        userType = 'teamLeader';
+        destination = '/teamleader-dashboard';
+      } else if (emailLower.includes('bd')) {
+        response = await bdExecutiveLogin(credentials);
+        userType = 'bdExecutive';
+        destination = '/bd-dashboard';
+      } else {
+        response = await employeeLogin(credentials);
+        userType = 'employee';
+        destination = '/employee-dashboard';
       }
-    }, 1500);
+
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('userType', userType);
+        if (response.user) {
+          localStorage.setItem('userName', response.user.name);
+          localStorage.setItem('userEmail', response.user.email);
+          if (response.user.department) {
+            localStorage.setItem('department', response.user.department);
+          }
+        }
+
+        setToastMessage(`Welcome, ${response.user?.name || 'User'}!`);
+        setShowToast(true);
+        setIsError(false);
+
+        setTimeout(() => {
+          navigate(destination);
+        }, 1500);
+      } else {
+        throw new Error('No token received');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setToastMessage(error.message || 'Login failed. Please check your credentials.');
+      setShowToast(true);
+      setIsError(true);
+    }
   };
 
   const toggleDarkMode = () => {
