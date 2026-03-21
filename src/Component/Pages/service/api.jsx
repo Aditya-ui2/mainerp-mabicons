@@ -2218,6 +2218,24 @@ export const syncResumesFromSharePoint = async (data = {}) => {
   }
 };
 
+// Sync resumes from SharePoint
+export const syncResumesFromSharePointDrive = async (data = {}) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/api/resumebank/sync-sharepoint', data, {
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 300000
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to sync from SharePoint:', error);
+    throw error.response?.data || { message: 'Failed to sync resumes from SharePoint' };
+  }
+};
+
 // Star/unstar resumes
 export const toggleStarResumes = async (resumeIds, isStarred) => {
   try {

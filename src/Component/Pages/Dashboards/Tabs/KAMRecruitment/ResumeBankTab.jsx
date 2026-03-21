@@ -6,6 +6,7 @@ import {
   getResumeDetails,
   updateResumeDetails,
   syncResumesFromSharePoint,
+  syncResumesFromSharePointDrive,
   toggleStarResumes,
   bulkUpdateResumeStatus,
   assignResumesToPosition,
@@ -19,6 +20,8 @@ const ResumeBankTab = () => {
   const [roleTypes, setRoleTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncSource, setSyncSource] = useState(null); // 's3' or 'sharepoint'
+  const [showSyncMenu, setShowSyncMenu] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [selectedResumes, setSelectedResumes] = useState([]);
   const [selectedResume, setSelectedResume] = useState(null);
@@ -101,19 +104,26 @@ const ResumeBankTab = () => {
   }, [fetchResumes]);
 
   // Handlers
-  const handleSync = async () => {
+  const handleSync = async (source = 's3') => {
     try {
       setSyncing(true);
-      await syncResumesFromSharePoint({});
+      setSyncSource(source);
+      setShowSyncMenu(false);
+      if (source === 'sharepoint') {
+        await syncResumesFromSharePointDrive({});
+      } else {
+        await syncResumesFromSharePoint({});
+      }
       await fetchStats();
       await fetchRoleTypes();
       await fetchResumes();
-      alert('Resumes synced successfully!');
+      alert(`Resumes synced successfully from ${source === 'sharepoint' ? 'SharePoint' : 'S3'}!`);
     } catch (error) {
       console.error('Sync failed:', error);
       alert('Failed to sync resumes: ' + (error.message || 'Unknown error'));
     } finally {
       setSyncing(false);
+      setSyncSource(null);
     }
   };
 
@@ -252,31 +262,59 @@ const ResumeBankTab = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Resume Bank</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage {stats?.total?.toLocaleString() || 0} resumes from AWS S3
+            Manage {stats?.total?.toLocaleString() || 0} resumes from AWS S3 & SharePoint
           </p>
         </div>
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-        >
+        <div className="relative">
           {syncing ? (
-            <>
+            <button disabled className="px-4 py-2 bg-blue-600 text-white rounded-lg opacity-50 flex items-center gap-2">
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Syncing...
-            </>
+              Syncing from {syncSource === 'sharepoint' ? 'SharePoint' : 'S3'}...
+            </button>
           ) : (
             <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Sync from S3
+              <button
+                onClick={() => setShowSyncMenu(!showSyncMenu)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Sync Resumes
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showSyncMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50">
+                  <button
+                    onClick={() => handleSync('s3')}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg flex items-center gap-3"
+                  >
+                    <span className="text-orange-500 text-lg">☁️</span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white">Sync from AWS S3</p>
+                      <p className="text-xs text-gray-500">Import from S3 bucket</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleSync('sharepoint')}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-lg flex items-center gap-3 border-t dark:border-gray-700"
+                  >
+                    <span className="text-blue-500 text-lg">📁</span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white">Sync from SharePoint</p>
+                      <p className="text-xs text-gray-500">Import from SharePoint drive</p>
+                    </div>
+                  </button>
+                </div>
+              )}
             </>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -419,7 +457,7 @@ const ResumeBankTab = () => {
               ) : resumes.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
-                    No resumes found. Click "Sync from S3" to import resumes.
+                    No resumes found. Click "Sync Resumes" to import from S3 or SharePoint.
                   </td>
                 </tr>
               ) : (
