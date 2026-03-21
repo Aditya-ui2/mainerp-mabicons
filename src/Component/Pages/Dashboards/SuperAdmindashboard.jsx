@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   FiHome,
   FiUsers,
@@ -13,6 +14,9 @@ import {
   FiChevronRight,
   FiMoreHorizontal,
   FiDollarSign,
+  FiLogOut,
+  FiUser,
+  FiX,
 } from 'react-icons/fi';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
@@ -21,74 +25,47 @@ import TeamTabs from './Tabs/Teamtabs';
 import TaskTab from './Tabs/TaskTab';
 import AdminTab from './Tabs/AdminTab';
 import BdTab from './Tabs/BdTab';
-import { createAdmin, createBDExecutive } from '../service/api';
+import SettingsTab from './Tabs/SettingsTab';
+import { createAdmin, createBDExecutive, getAllClients, getAllTasks, getAllNotifications, markNotificationRead, markAllNotificationsRead, logout } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const summaryCards = [
+// Summary cards template - values will be populated from API
+const summaryCardsTemplate = [
   {
-    name: 'Total Customers',
-    icon: FiUsers,
-    value: '1,248',
-    change: '↑ 12% this month',
+    name: 'Total Employees',
+    icon: FiUserPlus,
+    key: 'totalEmployees',
     changeColor: 'text-green-600',
     iconBg: 'bg-indigo-100 text-indigo-600',
   },
   {
-    name: 'Revenue',
-    icon: FiDollarSign,
-    value: '$5,320',
-    change: '↑ 8.5% this month',
-    changeColor: 'text-green-600',
-    iconBg: 'bg-emerald-100 text-emerald-600',
-  },
-  {
-    name: 'Active Projects',
-    icon: FiFolder,
-    value: '5',
-    change: '↑ 2 this week',
+    name: 'Total Clients',
+    icon: FiUsers,
+    key: 'totalClients',
     changeColor: 'text-amber-600',
     iconBg: 'bg-amber-100 text-amber-600',
-  },
-  {
-    name: 'Team Members',
-    icon: FiUserPlus,
-    value: '12',
-    change: '↑ 3 this week',
-    changeColor: 'text-indigo-600',
-    iconBg: 'bg-violet-100 text-violet-600',
   },
 ];
 
 const sidebarItems = [
   { name: 'Dashboard', tab: 'Dashboard', icon: FiHome },
-  { name: 'Customers', tab: 'Customers', icon: FiUsers },
-  { name: 'Team', tab: 'Team', icon: FiUserPlus },
-  { name: 'Reports', tab: 'Reports', icon: FiBarChart2, showDot: true },
-  { name: 'Projects', tab: 'Business Development', icon: FiBriefcase },
-  { name: 'Settings', tab: 'Manage Admins', icon: FiSettings },
+  { name: 'Clients', tab: 'Customers', icon: FiUsers },
+  { name: 'Employee Work', tab: 'Reports', icon: FiBarChart2 },
+  { name: 'Add Admin', tab: 'Manage Admins', icon: FiUserPlus },
 ];
 
-const recentActivities = [
-  { title: 'John Doe', detail: 'was added as a new customer', time: '3 hours ago', color: 'bg-green-500', iconEl: '+' },
-  { title: 'New project ·\u200bWebsite Redesign', detail: 'created', time: '2 hours ago', color: 'bg-amber-500', iconEl: '📁' },
-  { title: 'Task', detail: '"Follow up with Tesla" completed', time: '3 hours ago', color: 'bg-cyan-500', iconEl: '✓' },
-  { title: 'Invoice #0256', detail: 'was generated', time: '5 hours ago', color: 'bg-indigo-500', iconEl: '📄' },
-  { title: 'Emma Smith', detail: 'changed her status to Lead', time: '1 day ago', color: 'bg-yellow-400', iconEl: '↗' },
+// Status badge styles
+const avatarGradients = [
+  'from-violet-400 to-indigo-500',
+  'from-pink-400 to-rose-500',
+  'from-cyan-400 to-blue-500',
+  'from-blue-400 to-indigo-500',
+  'from-emerald-400 to-teal-500',
 ];
 
-const customerRows = [
-  { name: 'John Doe', sub: 'Te a 0', company: 'Tesla', companyIcon: '📍', status: 'Converted', avatar: 'JD', avatarGrad: 'from-violet-400 to-indigo-500' },
-  { name: 'Emma Smith', sub: 'Hopee', company: 'Apple', companyIcon: '🍎', status: 'Lead', avatar: 'ES', avatarGrad: 'from-pink-400 to-rose-500' },
-  { name: 'Alex Johnson', sub: 'Serogi', company: 'Google', companyIcon: '🔴', status: 'Active', avatar: 'AJ', avatarGrad: 'from-cyan-400 to-blue-500' },
-  { name: 'Sarah Williams', sub: 'W 1no:1301', company: 'Microsoft', companyIcon: '🪟', status: 'Lead', avatar: 'SW', avatarGrad: 'from-blue-400 to-indigo-500' },
-];
-
-const compactCustomers = [
-  { name: 'John Doe', sub: 'Ta Lh', status: 'Converted', avatar: 'JD', avatarGrad: 'from-violet-400 to-indigo-500' },
-  { name: 'Emma Smith', sub: 'Seip or', status: 'Lead', avatar: 'ES', avatarGrad: 'from-pink-400 to-rose-500' },
-  { name: 'Alex Johnson', sub: 'lyopee', status: 'Active', avatar: 'AJ', avatarGrad: 'from-cyan-400 to-blue-500' },
-];
+const getAvatarGradient = (index) => avatarGradients[index % avatarGradients.length];
+const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'NA';
 
 const statusBadge = {
   Converted: 'bg-emerald-100 text-emerald-700',
@@ -97,11 +74,28 @@ const statusBadge = {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [chartRange, setChartRange] = useState('Monthly');
   const [activeSidebarItem, setActiveSidebarItem] = useState('Dashboard');
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isCreateAdminModalOpen, setIsCreateAdminModalOpen] = useState(false);
   const [isCreateBDModalOpen, setIsCreateBDModalOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const profileMenuRef = useRef(null);
+  const notificationRef = useRef(null);
+  
+  // API Data States
+  const [customers, setCustomers] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [summaryData, setSummaryData] = useState({
+    totalEmployees: 0,
+    totalClients: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('Admin');
+  
   const [newAdminData, setNewAdminData] = useState({
     name: '',
     email: '',
@@ -119,6 +113,112 @@ const Dashboard = () => {
   const [createAdminError, setCreateAdminError] = useState(null);
   const [createAdminSuccess, setCreateAdminSuccess] = useState(false);
   const [createBDError, setCreateBDError] = useState(null);
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch customers
+        const customersRes = await getAllClients();
+        const customersData = customersRes.clients || customersRes || [];
+        setCustomers(customersData);
+        
+        // Fetch tasks
+        const tasksRes = await getAllTasks();
+        const tasksData = tasksRes.tasks || tasksRes || [];
+        setTasks(tasksData);
+        
+        // Fetch notifications
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          try {
+            const notificationsRes = await getAllNotifications(userId);
+            setNotifications(notificationsRes.notifications || notificationsRes || []);
+          } catch (err) {
+            console.log('No notifications found');
+            setNotifications([]);
+          }
+        }
+        
+        // Calculate summary data
+        // Count employees from tasks assignees or team data
+        const employeeCount = tasksData.reduce((acc, task) => {
+          if (task.assignedUserId && !acc.includes(task.assignedUserId)) {
+            acc.push(task.assignedUserId);
+          }
+          return acc;
+        }, []).length;
+        
+        setSummaryData({
+          totalEmployees: employeeCount || 0,
+          totalClients: customersData.length,
+        });
+        
+        // Get user name from token
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const decoded = JSON.parse(atob(token.split('.')[1]));
+            setUserName(decoded.name || decoded.email?.split('@')[0] || 'Admin');
+          } catch (e) {
+            setUserName('Admin');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleMarkNotificationRead = async (notificationId) => {
+    try {
+      await markNotificationRead(notificationId);
+      setNotifications(prev => prev.map(n => 
+        n._id === notificationId ? { ...n, isRead: true } : n
+      ));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      try {
+        await markAllNotificationsRead(userId);
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      } catch (error) {
+        console.error('Error marking all as read:', error);
+      }
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const chartRangeData = {
     Monthly: {
@@ -245,9 +345,9 @@ const Dashboard = () => {
               <div className="absolute left-1/2 top-8 h-36 w-72 -translate-x-1/2 rounded-[999px] bg-white/10 blur-sm" />
               <div className="flex items-center justify-between gap-4 relative z-10">
                 <div>
-                  <h1 className="text-3xl font-bold leading-tight">Welcome back, Abhinav 👋</h1>
+                  <h1 className="text-3xl font-bold leading-tight">Welcome back, {userName} 👋</h1>
                   <p className="mt-1 text-indigo-100 text-sm">Here&apos;s your business performance today</p>
-                </div>
+                </div>  
                 <div className="rounded-2xl bg-white/20 backdrop-blur-sm px-3 py-2 flex items-center gap-4">
                   {['Monthly', 'Weekly', 'Daily'].map((range) => (
                     <button
@@ -264,18 +364,17 @@ const Dashboard = () => {
             </section>
 
             <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 -mt-10 relative z-10 px-1">
-              {summaryCards.map((card) => (
+              {summaryCardsTemplate.map((card) => (
                 <div key={card.name} className="bg-white rounded-2xl p-5 shadow-[0_14px_30px_rgba(99,102,241,0.08)] border border-slate-100/80">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-500 text-sm">{card.name}</p>
-                      <p className="text-3xl font-bold text-slate-900 mt-1">{card.value}</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-1">{loading ? '...' : summaryData[card.key]}</p>
                     </div>
                     <span className={`h-12 w-12 rounded-full flex items-center justify-center ${card.iconBg}`}>
                       <card.icon className="text-xl" />
                     </span>
                   </div>
-                  <p className={`mt-3 text-sm font-semibold ${card.changeColor}`}>{card.change}</p>
                 </div>
               ))}
             </section>
@@ -284,7 +383,7 @@ const Dashboard = () => {
               <div className="xl:col-span-2 space-y-5">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[31px] leading-none font-semibold text-slate-800">Sales Overview</h3>
+                    <h3 className="text-[31px] leading-none font-semibold text-slate-800">Tasks Overview</h3>
                     <div className="flex items-center gap-2 text-sm">
                       {['Monthly', 'Weekly', 'Daily'].map((period) => (
                         <button
@@ -307,7 +406,7 @@ const Dashboard = () => {
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[31px] leading-none font-semibold text-slate-800">Recent Customers</h3>
-                    <button className="text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+                    <button onClick={() => handleTabChange('Customers', 'Customers')} className="text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
                       View All
                       <FiChevronRight />
                     </button>
@@ -315,38 +414,30 @@ const Dashboard = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[640px]">
                       <tbody>
-                        {customerRows.map((customer) => (
-                          <tr key={customer.name} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                        {loading ? (
+                          <tr><td colSpan={4} className="text-center py-8 text-slate-500">Loading...</td></tr>
+                        ) : customers.length === 0 ? (
+                          <tr><td colSpan={4} className="text-center py-8 text-slate-500">No customers found</td></tr>
+                        ) : customers.slice(0, 4).map((customer, index) => (
+                          <tr key={customer._id || index} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
                             <td className="py-3 pr-4">
                               <div className="flex items-center gap-3">
-                                <div className={`h-10 w-10 rounded-full bg-gradient-to-br ${customer.avatarGrad} text-white flex items-center justify-center text-xs font-semibold flex-shrink-0`}>
-                                  {customer.avatar}
+                                <div className={`h-10 w-10 rounded-full bg-gradient-to-br ${getAvatarGradient(index)} text-white flex items-center justify-center text-xs font-semibold flex-shrink-0`}>
+                                  {getInitials(customer.name)}
                                 </div>
                                 <div>
                                   <p className="font-semibold text-slate-800 text-sm leading-tight">{customer.name}</p>
-                                  <p className="text-xs text-slate-400 mt-0.5">{customer.sub}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">{customer.email}</p>
                                 </div>
                               </div>
                             </td>
                             <td className="py-3 pr-4">
-                              <div className="flex items-center gap-2">
-                                <span className="text-base leading-none">{customer.companyIcon}</span>
-                                <span className="text-slate-600 text-sm">{customer.company}</span>
-                              </div>
+                              <span className="text-slate-600 text-sm">{customer.companyName || 'N/A'}</span>
                             </td>
                             <td className="py-3 pr-4">
-                              <span className={`px-4 py-1.5 rounded-full text-xs font-semibold ${statusBadge[customer.status]}`}>
-                                {customer.status}
+                              <span className={`px-4 py-1.5 rounded-full text-xs font-semibold ${customer.isVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                {customer.isVerified ? 'Verified' : 'Pending'}
                               </span>
-                            </td>
-                            <td className="py-3 pr-2">
-                              <div className="flex items-center gap-1.5">
-                                <span className={`h-1.5 w-1.5 rounded-full ${
-                                  customer.status === 'Converted' ? 'bg-emerald-500' :
-                                  customer.status === 'Active' ? 'bg-green-500' : 'bg-amber-500'
-                                }`} />
-                                <span className="text-xs text-slate-500">{customer.status}</span>
-                              </div>
                             </td>
                             <td className="py-3 text-right text-slate-400">
                               <FiChevronRight className="inline" />
@@ -362,20 +453,27 @@ const Dashboard = () => {
               <div className="space-y-5">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[34px] leading-none font-semibold text-slate-800">Recent Activity</h3>
+                    <h3 className="text-[34px] leading-none font-semibold text-slate-800">Recent Tasks</h3>
                     <FiMoreHorizontal className="text-slate-400" />
                   </div>
                   <ul className="space-y-4">
-                    {recentActivities.map((activity) => (
-                      <li key={`${activity.title}-${activity.time}`} className="flex items-start gap-3">
-                        <span className={`h-8 w-8 rounded-full ${activity.color} text-white text-sm flex items-center justify-center mt-0.5 flex-shrink-0`}>
-                          {activity.iconEl}
+                    {loading ? (
+                      <li className="text-center py-4 text-slate-500">Loading...</li>
+                    ) : tasks.length === 0 ? (
+                      <li className="text-center py-4 text-slate-500">No tasks found</li>
+                    ) : tasks.slice(0, 5).map((task, index) => (
+                      <li key={task._id || index} className="flex items-start gap-3">
+                        <span className={`h-8 w-8 rounded-full ${
+                          task.status === 'Completed' || task.status === 'completed' ? 'bg-green-500' :
+                          task.status === 'In Progress' || task.status === 'active' ? 'bg-amber-500' : 'bg-cyan-500'
+                        } text-white text-sm flex items-center justify-center mt-0.5 flex-shrink-0`}>
+                          {task.status === 'Completed' || task.status === 'completed' ? '✓' : '📋'}
                         </span>
                         <div>
                           <p className="text-slate-700 text-sm">
-                            <span className="font-semibold">{activity.title}</span>{' '}{activity.detail}
+                            <span className="font-semibold">{task.title}</span>{' '}<span className="text-slate-500">- {task.status}</span>
                           </p>
-                          <p className="text-xs text-slate-400 mt-0.5">{activity.time}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}</p>
                         </div>
                       </li>
                     ))}
@@ -388,19 +486,23 @@ const Dashboard = () => {
                     <FiMoreHorizontal className="text-slate-400" />
                   </div>
                   <div className="space-y-3">
-                    {compactCustomers.map((customer) => (
-                      <div key={customer.name} className="flex items-center justify-between">
+                    {loading ? (
+                      <div className="text-center py-4 text-slate-500">Loading...</div>
+                    ) : customers.length === 0 ? (
+                      <div className="text-center py-4 text-slate-500">No customers found</div>
+                    ) : customers.slice(0, 3).map((customer, index) => (
+                      <div key={customer._id || index} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className={`h-9 w-9 rounded-full bg-gradient-to-br ${customer.avatarGrad} text-white flex items-center justify-center text-xs font-semibold flex-shrink-0`}>
-                            {customer.avatar}
+                          <div className={`h-9 w-9 rounded-full bg-gradient-to-br ${getAvatarGradient(index)} text-white flex items-center justify-center text-xs font-semibold flex-shrink-0`}>
+                            {getInitials(customer.name)}
                           </div>
                           <div>
                             <p className="font-medium text-slate-800 text-sm leading-tight">{customer.name}</p>
-                            <p className="text-xs text-slate-400">{customer.sub}</p>
+                            <p className="text-xs text-slate-400">{customer.companyName || customer.email}</p>
                           </div>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge[customer.status]}`}>
-                          {customer.status}
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${customer.isVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {customer.isVerified ? 'Verified' : 'Pending'}
                         </span>
                       </div>
                     ))}
@@ -434,6 +536,8 @@ const Dashboard = () => {
             <BdTab />
           </div>
         );
+      case 'Settings':
+        return <SettingsTab />;
       default:
         return null;
     }
@@ -444,13 +548,10 @@ const Dashboard = () => {
       <div className="flex rounded-2xl overflow-hidden border border-slate-200/80 bg-[#f7f8fc] min-h-[calc(100vh-1rem)] md:min-h-[calc(100vh-1.5rem)]">
         {/* Sidebar */}
         <aside className="w-64 bg-[#f8f8fd] border-r border-slate-200 h-auto flex flex-col shrink-0">
-          <div className="p-6">
-            <h1 className="text-[37px] font-bold text-slate-800 flex items-center gap-3 leading-none">
-              <span className="h-8 w-8 rounded-xl bg-indigo-500 text-white flex items-center justify-center">
-                <FiHome className="text-sm" />
-              </span>
-              CRM Pro
-            </h1>
+          <div className="p-4">
+            <div className="flex items-center justify-center">
+              <img src="/ERP LOGO.png" alt="ERP Logo" className="h-14 w-auto object-contain" />
+            </div>
           </div>
           <nav className="mt-2 px-3 space-y-1.5 flex-1">
             {sidebarItems.map((item) => (
@@ -494,20 +595,112 @@ const Dashboard = () => {
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
               <div className="flex items-center gap-2 md:gap-3">
-                <div className="relative">
-                  <button className="p-2.5 rounded-full hover:bg-slate-100 text-slate-600">
+                {/* Notifications */}
+                <div className="relative" ref={notificationRef}>
+                  <button 
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="p-2.5 rounded-full hover:bg-slate-100 text-slate-600 relative"
+                  >
                     <FiBell />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </button>
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-green-500 border-2 border-white" />
+                  
+                  {/* Notifications Dropdown */}
+                  <AnimatePresence>
+                    {showNotifications && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50"
+                      >
+                        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                          <h3 className="font-semibold text-slate-800">Notifications</h3>
+                          {unreadCount > 0 && (
+                            <button 
+                              onClick={handleMarkAllRead}
+                              className="text-xs text-indigo-600 hover:text-indigo-700"
+                            >
+                              Mark all read
+                            </button>
+                          )}
+                        </div>
+                        <div className="max-h-80 overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <div className="p-4 text-center text-slate-500">No notifications</div>
+                          ) : notifications.slice(0, 5).map((notification, index) => (
+                            <div 
+                              key={notification._id || index}
+                              onClick={() => handleMarkNotificationRead(notification._id)}
+                              className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer ${!notification.isRead ? 'bg-indigo-50/50' : ''}`}
+                            >
+                              <p className="text-sm text-slate-700">{notification.message || notification.title}</p>
+                              <p className="text-xs text-slate-400 mt-1">
+                                {notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() : 'Just now'}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <button className="p-2.5 rounded-full hover:bg-slate-100 text-slate-600">
-                  <FiSettings />
-                </button>
-                <div className="flex items-center gap-2 rounded-full bg-white px-2 py-1 border border-slate-200">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
-                    RC
-                  </div>
-                  <span className="text-xs text-slate-500 font-semibold pr-1">RC</span>
+                
+                {/* Profile Menu */}
+                <div className="relative" ref={profileMenuRef}>
+                  <button 
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center gap-2 rounded-full bg-white px-2 py-1 border border-slate-200 hover:border-slate-300 transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
+                      {getInitials(userName)}
+                    </div>
+                  </button>
+                  
+                  {/* Profile Dropdown */}
+                  <AnimatePresence>
+                    {showProfileMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50"
+                      >
+                        <div className="p-3 border-b border-slate-100">
+                          <p className="font-semibold text-slate-800">{userName}</p>
+                          <p className="text-xs text-slate-500">Super Admin</p>
+                        </div>
+                        <div className="p-2">
+                          <button 
+                            onClick={() => handleTabChange('Settings', 'Settings')}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                          >
+                            <FiUser className="text-lg" />
+                            Profile
+                          </button>
+                          <button 
+                            onClick={() => handleTabChange('Settings', 'Settings')}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                          >
+                            <FiSettings className="text-lg" />
+                            Settings
+                          </button>
+                          <hr className="my-2 border-slate-100" />
+                          <button 
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <FiLogOut className="text-lg" />
+                            Logout
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             </div>

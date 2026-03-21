@@ -97,9 +97,10 @@ function About() {
       >
              <Typography
         variant="h1"
-        className="text-[#2D3748] text-4xl font-bold mb-16 text-center max-w-lg"
+        className="text-[#2D3748] text-4xl font-bold mb-16 text-center mx-auto"
       >
         Welcome to Mabicons Solutions
+        <br />
         Your Partner in Success
       </Typography>
 

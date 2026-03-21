@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin } from './service/api';
-import { FiMail, FiEye, FiEyeOff, FiChevronDown, FiSun, FiMoon } from 'react-icons/fi';
+import { FiMail, FiEye, FiEyeOff, FiSun, FiMoon } from 'react-icons/fi';
 
 const BackgroundAnimation = () => (
   <div className="relative w-full h-full">
@@ -159,6 +159,17 @@ const Rocket = ({ isDarkMode }) => (
   </motion.div>
 );
 
+// Predefined user credentials for Mabicons ERP
+const USER_CREDENTIALS = {
+  'superadmin.mabicons@gmail.com': { password: 'SuperAdmin@123', role: 'superAdmin', department: null, name: 'Super Admin' },
+  'admin.mabicons@gmail.com': { password: 'Admin@123', role: 'admin', department: null, name: 'Admin' },
+  'operation.mabicons@gmail.com': { password: 'Operation@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations)' },
+  'recruitment.mabicons@gmail.com': { password: 'Recruitment@123', role: 'hrRecruitment', department: 'HR Recruitment', name: 'Sachin (HR Recruitment)' },
+  'employee.mabicons@gmail.com': { password: 'Employee@123', role: 'employee', department: null, name: 'Employee' },
+  'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
+  'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
+};
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -167,22 +178,45 @@ const Login = () => {
   const [showToast, setShowToast] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [userType, setUserType] = useState('employee');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setToastMessage("Launching your cosmic journey!");
+    
+    const emailLower = email.toLowerCase().trim();
+    const user = USER_CREDENTIALS[emailLower];
+
+    // Validate credentials
+    if (!user) {
+      setToastMessage("Invalid email address. Please use your Mabicons email.");
+      setShowToast(true);
+      setIsError(true);
+      return;
+    }
+
+    if (user.password !== password) {
+      setToastMessage("Invalid password. Please try again.");
+      setShowToast(true);
+      setIsError(true);
+      return;
+    }
+
+    setToastMessage(`Welcome, ${user.name}!`);
     setShowToast(true);
     setIsError(false);
+
+    const userType = user.role;
+    const department = user.department;
 
     // Create a proper mock JWT token for development (header.payload.signature)
     const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
     const payload = btoa(JSON.stringify({ 
       id: "mock-user-123", 
-      email, 
+      email: emailLower, 
       role: userType, 
+      department: department,
+      name: user.name,
       iat: Math.floor(Date.now() / 1000) 
     }));
     const signature = btoa("mock-signature");
@@ -191,26 +225,31 @@ const Login = () => {
     localStorage.setItem('token', mockToken);
     localStorage.setItem('userType', userType);
 
-    // Direct navigation based on user type
-    switch (userType) {
-      case 'superAdmin':
-        navigate('/superadmin-dashboard');
-        break;
-      case 'admin':
-        navigate('/admin-dashboard');
-        break;
-      case 'teamLeader':
-        navigate('/teamleader-dashboard');
-        break;
-      case 'bdExecutive':
-        navigate('/bd-dashboard');
-        break;
-      case 'kamDashboard':
-        navigate('/kam-dashboard');
-        break;
-      default:
-        navigate('/employee-dashboard');
-    }
+    // Navigate based on detected user type
+    setTimeout(() => {
+      switch (userType) {
+        case 'superAdmin':
+          navigate('/superadmin-dashboard');
+          break;
+        case 'admin':
+          navigate('/admin-dashboard');
+          break;
+        case 'teamLeader':
+          navigate('/teamleader-dashboard');
+          break;
+        case 'bdExecutive':
+          navigate('/bd-dashboard');
+          break;
+        case 'hrOperations':
+          navigate('/kam-operations-dashboard');
+          break;
+        case 'hrRecruitment':
+          navigate('/kam-recruitment-dashboard');
+          break;
+        default:
+          navigate('/employee-dashboard');
+      }
+    }, 1500);
   };
 
   const toggleDarkMode = () => {
@@ -269,36 +308,6 @@ const Login = () => {
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 Please sign in to your account
               </p>
-            </div>
-
-            {/* Login Type Selector */}
-            <div className="mb-6">
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Login As
-              </label>
-              <div className="relative">
-                <select
-                  className={`w-full px-4 py-3 rounded-xl appearance-none ${
-                    isDarkMode 
-                      ? 'bg-gray-700 text-white border-gray-600' 
-                      : 'bg-gray-50 text-gray-900 border-gray-200'
-                  } border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
-                  value={userType}
-                  onChange={(e) => setUserType(e.target.value)}
-                >
-                  <option value="employee">👤 Employee</option>
-                  <option value="teamLeader">👥 Team Leader</option>
-                  <option value="bdExecutive">💼 BD Executive</option>
-                  <option value="kamDashboard">🔑 Key Account Manager</option>
-                  <option value="admin">⚡ Admin</option>
-                  <option value="superAdmin">👑 Super Admin</option>
-                </select>
-                <div className="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <FiChevronDown className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
-                </div>
-              </div>
             </div>
 
             {/* Email Field */}

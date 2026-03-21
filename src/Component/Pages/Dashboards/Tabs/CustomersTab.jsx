@@ -40,7 +40,17 @@ const CustomersTab = ({ isDarkMode }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [assigneeOptions, setAssigneeOptions] = useState([]);
-  const decoded = jwtDecode(localStorage.getItem("token"));
+  
+  // Safely decode token
+  const getDecodedToken = () => {
+    try {
+      const token = localStorage.getItem("token");
+      return token ? jwtDecode(token) : null;
+    } catch (e) {
+      console.error("Error decoding token:", e);
+      return null;
+    }
+  };
 
   // Add new state for customer details modal
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -62,12 +72,25 @@ const CustomersTab = ({ isDarkMode }) => {
 
   useEffect(() => {
     fetchCustomers();
-    fetchAssigneeOptions();
-    console.log(assigneeOptions);
+    // Only fetch assignee options if user is not SuperAdmin
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        if (decoded.role !== 'SuperAdmin') {
+          fetchAssigneeOptions();
+        }
+      } catch (e) {
+        console.error("Error decoding token:", e);
+      }
+    }
   }, []);
 
   const fetchAssigneeOptions = async () => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const decoded = jwtDecode(token);
       const response = await getAdminHierarchy(decoded.id);
       if (response.adminHierarchy && response.adminHierarchy.teamLeaders) {
         setAssigneeOptions(response.adminHierarchy.teamLeaders);
@@ -103,9 +126,9 @@ const CustomersTab = ({ isDarkMode }) => {
     try {
       const response = await getAllClients();
       // Check if response.data exists and contains the clients array
-      const clientsData = response.data?.clients || [];
+      const clientsData = response?.data?.clients || response?.clients || [];
       const formattedCustomers = clientsData.map((client) => ({
-        id: client._id,
+        id: client.id || client._id,
         name: client.name,
         company: client.companyName || "N/A",
         email: client.email,
@@ -119,6 +142,7 @@ const CustomersTab = ({ isDarkMode }) => {
       }));
       setCustomers(formattedCustomers);
     } catch (err) {
+      console.error("Error fetching customers:", err);
       setError(err.message || "Failed to fetch Clients");
     } finally {
       setIsLoading(false);

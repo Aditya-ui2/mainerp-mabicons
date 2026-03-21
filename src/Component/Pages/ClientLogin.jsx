@@ -23,14 +23,18 @@ const ClientLogin = () => {
     try {
       const response = await clientLogin({ email, password });
       
-      // Store token in localStorage if rememberMe is checked
+      // Token is already saved by clientLogin → saveToken
+      // Extra save for rememberMe backward compat
       if (rememberMe && response.token) {
         localStorage.setItem('token', response.token);
       }
       
       navigate('/client-dashboard');
     } catch (error) {
-      setToastMessage(error.message || "Invalid credentials!");
+      const msg = error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')
+        ? 'Server is not responding. Please try again later.'
+        : error?.message || 'Invalid credentials!';
+      setToastMessage(msg);
       setShowToast(true);
       setIsError(true);
     }

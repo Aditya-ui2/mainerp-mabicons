@@ -7,16 +7,19 @@ import Home from './Component/Pages/Home'
 import Login from './Component/Pages/Login'
 import SignUp from './Component/Pages/SignUp'
 import DocumentUploadForm from './Component/Pages/DocumentUpload'
-import ClientDashboard from './Component/Pages/Dashboards/ClientDashboard'
+import AdminDashboard from './Component/Pages/Dashboards/AdminDashboardNew'
 import CustomerDashboard from './Component/Pages/Dashboards/CustomerDashboard'
-import TeamleaderDashboard from './Component/Pages/Dashboards/TeamleaderDashboard'
-import SuperAdminDashboard from './Component/Pages/Dashboards/SuperAdmindashboard'
-import EmployeeDashboard from './Component/Pages/Dashboards/EmployeeDashboard'
-import BdDashboard from './Component/Pages/Dashboards/BdDashboard'
-import KamDashboard from './Component/Pages/Dashboards/KamDashboard'
+import TeamleaderDashboard from './Component/Pages/Dashboards/TeamLeaderDashboardNew'
+import SuperAdminDashboard from './Component/Pages/Dashboards/SuperAdminDashboardNew'
+import EmployeeDashboard from './Component/Pages/Dashboards/EmployeeDashboardNew'
+import BdDashboard from './Component/Pages/Dashboards/BDDashboardNew'
+import HROperationsDashboard from './Component/Pages/Dashboards/HROperationsDashboardNew'
+import HRRecruitmentDashboard from './Component/Pages/Dashboards/HRRecruitmentDashboardNew'
+import ClientModularDashboard from './Component/Pages/Dashboards/ClientModularDashboard'
 import ResetPassword from './Component/Pages/reset_password'
 import ForgotPassword from './Component/Pages/forgetpassword'
 import ClientLogin from './Component/Pages/ClientLogin'
+import DepartmentProtectedRoute from './Component/Pages/DepartmentProtectedRoute'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -31,11 +34,23 @@ function App() {
       <Route path='/reset-password' element={<ResetPassword />} />
       <Route path='/client-login' element={<ClientLogin />} />
       <Route path='/bd-dashboard' element={<BdDashboard />} />
-      <Route path='/kam-dashboard' element={<KamDashboard />} />
+      
+      {/* Department Protected Routes */}
+      <Route path='/kam-operations-dashboard' element={
+        <DepartmentProtectedRoute allowedDepartment="HR Operations">
+          <HROperationsDashboard />
+        </DepartmentProtectedRoute>
+      } />
+      <Route path='/kam-recruitment-dashboard' element={
+        <DepartmentProtectedRoute allowedDepartment="HR Recruitment">
+          <HRRecruitmentDashboard />
+        </DepartmentProtectedRoute>
+      } />
 
       <Route path='/document-upload' element={<DocumentUploadForm />} />
-      <Route path='/admin-dashboard' element={<ClientDashboard />} />
-      <Route path='/client-dashboard' element={<CustomerDashboard />} />
+      <Route path='/admin-dashboard' element={<AdminDashboard />} />
+      <Route path='/client-dashboard' element={<ClientModularDashboard />} />
+      <Route path='/client-dashboard-legacy' element={<CustomerDashboard />} />
       <Route path='/teamleader-dashboard' element={<TeamleaderDashboard />} />
       <Route path='/superadmin-dashboard' element={<SuperAdminDashboard />} />
       <Route path='/employee-dashboard' element={<EmployeeDashboard />} />

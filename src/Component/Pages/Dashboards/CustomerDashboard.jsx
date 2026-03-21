@@ -37,6 +37,9 @@ import {
 import Timeline from "../../../components/Timeline";
 import ChatWindow from "../../../components/ChatWindow";
 import DocumentUpload from "../../../components/DocumentUpload";
+import TaskProgressSection from "../../../components/TaskProgressSection";
+import WorkTimeline from "../../../components/WorkTimeline";
+import ServiceAgreementCard from "../../../components/ServiceAgreementCard";
 import { NavbarWithSearch } from "../../../components/Navbar";
 import { KeyIcon, PencilIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { jwtDecode } from "jwt-decode";
@@ -1943,6 +1946,30 @@ const CustomerDashboard = () => {
               icon={ExclamationCircleIcon}
             />
           </div>
+        </div>
+
+        {/* Service Agreement Section */}
+        <div className="mb-10">
+          <ServiceAgreementCard 
+            clientData={clientData}
+            isDarkMode={false}
+          />
+        </div>
+
+        {/* Task Progress & Timeline Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          {/* Task Progress Section */}
+          <TaskProgressSection
+            tasks={clientData?.tasks || []}
+            isDarkMode={false}
+          />
+
+          {/* Work Timeline */}
+          <WorkTimeline
+            tasks={clientData?.tasks || []}
+            activities={[]}
+            isDarkMode={false}
+          />
         </div>
 
         {/* Calendar Section */}
