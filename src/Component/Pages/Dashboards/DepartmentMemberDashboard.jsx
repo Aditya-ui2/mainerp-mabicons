@@ -5,6 +5,15 @@ import {
   FiActivity,
   FiUser,
   FiBarChart2,
+  FiCalendar,
+  FiClock,
+  FiMessageCircle,
+  FiFileText,
+  FiBell,
+  FiFolder,
+  FiBook,
+  FiDollarSign,
+  FiRepeat,
 } from 'react-icons/fi';
 import AdminLayout from './AdminLayout';
 import { getAllNotifications, markNotificationRead } from '../service/api';
@@ -12,6 +21,17 @@ import { getAllNotifications, markNotificationRead } from '../service/api';
 // Lazy load tab components
 const MyTasksTab = lazy(() => import('./Tabs/Common/MyTasksTab'));
 const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
+const MyProfileTab = lazy(() => import('./Tabs/Common/MyProfileTab'));
+const LeaveRequestTab = lazy(() => import('./Tabs/Common/LeaveRequestTab'));
+const AttendanceTab = lazy(() => import('./Tabs/Common/AttendanceTab'));
+const PerformanceStatsTab = lazy(() => import('./Tabs/Common/PerformanceStatsTab'));
+const TeamChatTab = lazy(() => import('./Tabs/Common/TeamChatTab'));
+const CalendarTab = lazy(() => import('./Tabs/Common/CalendarTab'));
+const DailyReportTab = lazy(() => import('./Tabs/Common/DailyReportTab'));
+const AnnouncementsTab = lazy(() => import('./Tabs/Common/AnnouncementsTab'));
+const DocumentsTab = lazy(() => import('./Tabs/Common/DocumentsTab'));
+const TrainingTab = lazy(() => import('./Tabs/Common/TrainingTab'));
+const PayslipsTab = lazy(() => import('./Tabs/Common/PayslipsTab'));
 
 // Tab Loader Skeleton
 const TabLoader = () => (
@@ -39,6 +59,27 @@ const sidebarConfig = [
     items: [
       { id: 0, title: 'My Tasks', icon: FiCheckSquare },
       { id: 1, title: 'Activity Feed', icon: FiActivity },
+      { id: 2, title: 'Daily Report', icon: FiFileText },
+      { id: 3, title: 'Calendar', icon: FiCalendar },
+    ]
+  },
+  {
+    heading: 'PERSONAL',
+    items: [
+      { id: 4, title: 'My Profile', icon: FiUser },
+      { id: 5, title: 'Attendance', icon: FiClock },
+      { id: 6, title: 'Leave Requests', icon: FiCalendar },
+      { id: 7, title: 'Performance', icon: FiBarChart2 },
+    ]
+  },
+  {
+    heading: 'DEPARTMENT',
+    items: [
+      { id: 8, title: 'Team Chat', icon: FiMessageCircle },
+      { id: 9, title: 'Announcements', icon: FiBell },
+      { id: 10, title: 'Documents', icon: FiFolder },
+      { id: 11, title: 'Training', icon: FiBook },
+      { id: 12, title: 'Payslips', icon: FiDollarSign },
     ]
   },
 ];
@@ -115,6 +156,28 @@ const DepartmentMemberDashboard = () => {
               return <MyTasksTab />;
             case 'Activity Feed':
               return <ActivityFeedTab department={department} />;
+            case 'Daily Report':
+              return <DailyReportTab />;
+            case 'Calendar':
+              return <CalendarTab />;
+            case 'My Profile':
+              return <MyProfileTab />;
+            case 'Attendance':
+              return <AttendanceTab />;
+            case 'Leave Requests':
+              return <LeaveRequestTab />;
+            case 'Performance':
+              return <PerformanceStatsTab />;
+            case 'Team Chat':
+              return <TeamChatTab department={department} />;
+            case 'Announcements':
+              return <AnnouncementsTab department={department} />;
+            case 'Documents':
+              return <DocumentsTab department={department} />;
+            case 'Training':
+              return <TrainingTab />;
+            case 'Payslips':
+              return <PayslipsTab />;
             default:
               // Dashboard Overview - Welcome + Quick Stats
               return (
@@ -138,50 +201,38 @@ const DepartmentMemberDashboard = () => {
                   </div>
 
                   {/* Quick Action Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <button
-                      onClick={() => setActiveTab('My Tasks')}
-                      className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="p-4 rounded-xl"
-                          style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
-                        >
-                          <FiCheckSquare style={{ width: '28px', height: '28px', color: '#fff' }} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {[
+                      { tab: 'My Tasks', icon: FiCheckSquare, label: 'My Tasks', desc: 'View and manage your assigned tasks', gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)' },
+                      { tab: 'Activity Feed', icon: FiActivity, label: 'Activity Feed', desc: 'See recent department activities', gradient: 'linear-gradient(135deg, #10b981, #059669)' },
+                      { tab: 'Daily Report', icon: FiFileText, label: 'Daily Report', desc: 'Submit your daily updates', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+                      { tab: 'Attendance', icon: FiClock, label: 'Attendance', desc: 'Check in/out and track hours', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
+                      { tab: 'Team Chat', icon: FiMessageCircle, label: 'Team Chat', desc: 'Chat with your team members', gradient: 'linear-gradient(135deg, #ec4899, #db2777)' },
+                      { tab: 'Leave Requests', icon: FiCalendar, label: 'Leave Requests', desc: 'Apply for and track leaves', gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)' },
+                    ].map((card) => (
+                      <button
+                        key={card.tab}
+                        onClick={() => setActiveTab(card.tab)}
+                        className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="p-4 rounded-xl"
+                            style={{ background: card.gradient }}
+                          >
+                            <card.icon style={{ width: '28px', height: '28px', color: '#fff' }} />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                              {card.label}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {card.desc}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                            My Tasks
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            View and manage your assigned tasks
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveTab('Activity Feed')}
-                      className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="p-4 rounded-xl"
-                          style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
-                        >
-                          <FiActivity style={{ width: '28px', height: '28px', color: '#fff' }} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">
-                            Activity Feed
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            See recent department activities
-                          </p>
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    ))}
                   </div>
                 </div>
               );
