@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiDollarSign, FiDownload, FiCalendar, FiCheckCircle, FiClock } from 'react-icons/fi';
-import { getMyPayslips } from '../../service/api';
+import { getMyPayslips } from '../../../service/api';
 
 const PayslipsTab = () => {
   const [payslips, setPayslips] = useState([]);

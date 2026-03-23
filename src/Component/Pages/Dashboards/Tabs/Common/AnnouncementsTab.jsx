@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiBell, FiPlus, FiTrash2, FiX, FiAlertCircle, FiInfo, FiAlertTriangle, FiPin } from 'react-icons/fi';
-import { getAnnouncements, createAnnouncement, deleteAnnouncement } from '../../service/api';
+import { getAnnouncements, createAnnouncement, deleteAnnouncement } from '../../../service/api';
 
 const priorityConfig = {
   low: { color: '#10b981', bg: '#d1fae5', icon: FiInfo, label: 'Low' },

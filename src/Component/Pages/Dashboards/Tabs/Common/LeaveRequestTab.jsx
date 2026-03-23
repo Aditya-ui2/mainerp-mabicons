@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiCalendar, FiPlus, FiX, FiClock, FiCheckCircle, FiXCircle, FiSend } from 'react-icons/fi';
-import { getMyLeaves, applyLeave } from '../../service/api';
+import { getMyLeaves, applyLeave } from '../../../service/api';
 
 const LeaveRequestTab = () => {
   const [leaves, setLeaves] = useState([]);

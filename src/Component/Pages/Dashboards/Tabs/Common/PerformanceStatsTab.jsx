@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiTrendingUp, FiCheckCircle, FiClock, FiTarget, FiAward, FiZap, FiBarChart2 } from 'react-icons/fi';
-import { getPerformanceStats } from '../../service/api';
+import { getPerformanceStats } from '../../../service/api';
 
 const PerformanceStatsTab = () => {
   const [stats, setStats] = useState(null);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiFileText, FiPlus, FiCheckCircle, FiAlertCircle, FiSmile, FiMeh, FiFrown, FiSend } from 'react-icons/fi';
-import { submitDailyReport, getMyReports } from '../../service/api';
+import { submitDailyReport, getMyReports } from '../../../service/api';
 
 const moodConfig = {
   great: { icon: FiSmile, color: '#10b981', label: 'Great' },

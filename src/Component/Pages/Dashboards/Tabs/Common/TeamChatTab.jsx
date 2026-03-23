@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FiSend, FiMessageCircle, FiUser } from 'react-icons/fi';
-import { getChatMessages, sendChatMessage } from '../../service/api';
+import { getChatMessages, sendChatMessage } from '../../../service/api';
 
 const TeamChatTab = ({ department }) => {
   const [messages, setMessages] = useState([]);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiFolder, FiUpload, FiTrash2, FiFile, FiDownload, FiX, FiSearch } from 'react-icons/fi';
-import { getDeptDocuments, uploadDeptDocument, deleteDeptDocument } from '../../service/api';
+import { getDeptDocuments, uploadDeptDocument, deleteDeptDocument } from '../../../service/api';
 
 const categoryColors = {
   policy: '#6366f1', template: '#10b981', guide: '#3b82f6', form: '#f59e0b', other: '#6b7280',

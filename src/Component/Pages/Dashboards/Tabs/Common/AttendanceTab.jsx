@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiClock, FiLogIn, FiLogOut, FiCheckCircle, FiXCircle, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { checkIn, checkOut, getMyAttendance } from '../../service/api';
+import { checkIn, checkOut, getMyAttendance } from '../../../service/api';
 
 const AttendanceTab = () => {
   const [records, setRecords] = useState([]);

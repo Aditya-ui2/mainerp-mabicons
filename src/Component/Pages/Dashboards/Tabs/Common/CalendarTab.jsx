@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiChevronLeft, FiChevronRight, FiCheckCircle, FiClock, FiSun } from 'react-icons/fi';
-import { getCalendarEvents } from '../../service/api';
+import { getCalendarEvents } from '../../../service/api';
 
 const CalendarTab = () => {
   const [events, setEvents] = useState({ tasks: [], leaves: [], attendance: [] });

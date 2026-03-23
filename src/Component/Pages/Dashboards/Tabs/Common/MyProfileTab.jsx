@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiUser, FiMail, FiPhone, FiBriefcase, FiEdit3, FiSave, FiX, FiMapPin, FiCalendar, FiShield } from 'react-icons/fi';
-import { getMyProfile, updateMyProfile } from '../../service/api';
+import { getMyProfile, updateMyProfile } from '../../../service/api';
 
 const MyProfileTab = () => {
   const [profile, setProfile] = useState(null);

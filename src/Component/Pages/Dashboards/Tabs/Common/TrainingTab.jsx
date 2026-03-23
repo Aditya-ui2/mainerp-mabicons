@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiBook, FiCheckCircle, FiClock, FiPlay, FiAward } from 'react-icons/fi';
-import { getMyTrainings, updateTraining } from '../../service/api';
+import { getMyTrainings, updateTraining } from '../../../service/api';
 
 const statusConfig = {
   'not-started': { color: '#6b7280', bg: '#f3f4f6', icon: FiClock, label: 'Not Started' },
