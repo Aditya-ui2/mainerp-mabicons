@@ -14,7 +14,7 @@ const PerformanceStatsTab = () => {
     try {
       setLoading(true);
       const res = await getPerformanceStats(period);
-      setStats(res.data);
+      setStats(res.stats);
     } catch {
       // silent
     } finally {

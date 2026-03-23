@@ -14,7 +14,7 @@ const CalendarTab = () => {
     try {
       setLoading(true);
       const res = await getCalendarEvents(month, year);
-      setEvents(res.data || { tasks: [], leaves: [], attendance: [] });
+      setEvents(res.events || { tasks: [], leaves: [], attendance: [] });
     } catch { /* ignore */ } finally {
       setLoading(false);
     }

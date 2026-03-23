@@ -22,7 +22,7 @@ const AttendanceTab = () => {
     try {
       setLoading(true);
       const res = await getMyAttendance(month, year);
-      const data = res.data || [];
+      const data = res.records || [];
       setRecords(data);
       const today = new Date().toISOString().split('T')[0];
       const todayRec = data.find(r => r.date === today);

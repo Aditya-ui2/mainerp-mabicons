@@ -22,7 +22,7 @@ const LeaveRequestTab = () => {
     try {
       setLoading(true);
       const res = await getMyLeaves();
-      setLeaves(res.data || []);
+      setLeaves(res.leaves || []);
     } catch (err) {
       showToast(err.message || 'Failed to load leaves', 'error');
     } finally {

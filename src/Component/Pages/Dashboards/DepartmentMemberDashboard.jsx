@@ -80,7 +80,6 @@ const sidebarConfig = [
     heading: 'DEPARTMENT',
     items: [
       { id: 8, title: 'Team Chat', icon: FiMessageCircle },
-      { id: 9, title: 'Announcements', icon: FiBell },
       { id: 10, title: 'Documents', icon: FiFolder },
       { id: 11, title: 'Training', icon: FiBook },
       { id: 12, title: 'Payslips', icon: FaIndianRupeeSign },

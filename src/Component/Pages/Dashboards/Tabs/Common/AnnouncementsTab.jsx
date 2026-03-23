@@ -29,7 +29,7 @@ const AnnouncementsTab = ({ department, isHead = false }) => {
     try {
       setLoading(true);
       const res = await getAnnouncements(department);
-      setAnnouncements(res.data || []);
+      setAnnouncements(res.announcements || []);
     } catch { /* ignore */ } finally {
       setLoading(false);
     }

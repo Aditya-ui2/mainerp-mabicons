@@ -24,11 +24,11 @@ const MyProfileTab = () => {
     try {
       setLoading(true);
       const res = await getMyProfile();
-      setProfile(res.data);
+      setProfile(res.member);
       setForm({
-        phone: res.data.phone || '',
-        address: res.data.address || '',
-        emergencyContact: res.data.emergencyContact || '',
+        phone: res.member.phone || '',
+        address: res.member.address || '',
+        emergencyContact: res.member.emergencyContact || '',
       });
     } catch (err) {
       showToast(err.message || 'Failed to load profile', 'error');

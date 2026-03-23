@@ -35,7 +35,7 @@ const TeamChatTab = ({ department }) => {
   const fetchMessages = async () => {
     try {
       const res = await getChatMessages(department);
-      setMessages(res.data || []);
+      setMessages(res.messages || []);
     } catch { /* ignore */ } finally {
       setLoading(false);
     }

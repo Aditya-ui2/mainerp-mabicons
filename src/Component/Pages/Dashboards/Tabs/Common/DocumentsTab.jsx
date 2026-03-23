@@ -27,7 +27,7 @@ const DocumentsTab = ({ department, isHead = false }) => {
     try {
       setLoading(true);
       const res = await getDeptDocuments(department);
-      setDocs(res.data || []);
+      setDocs(res.documents || []);
     } catch { /* ignore */ } finally {
       setLoading(false);
     }

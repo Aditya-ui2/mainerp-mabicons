@@ -25,7 +25,7 @@ const TrainingTab = () => {
     try {
       setLoading(true);
       const res = await getMyTrainings();
-      setTrainings(res.data || []);
+      setTrainings(res.trainings || []);
     } catch { /* ignore */ } finally {
       setLoading(false);
     }

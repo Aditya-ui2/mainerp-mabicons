@@ -35,7 +35,7 @@ const DailyReportTab = () => {
     try {
       setLoading(true);
       const res = await getMyReports();
-      setReports(res.data || []);
+      setReports(res.reports || []);
     } catch (err) {
       showToast(err.message || 'Failed to load reports', 'error');
     } finally {

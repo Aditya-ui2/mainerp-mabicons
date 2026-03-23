@@ -14,7 +14,7 @@ const PayslipsTab = () => {
     try {
       setLoading(true);
       const res = await getMyPayslips();
-      setPayslips(res.data || []);
+      setPayslips(res.payslips || []);
     } catch { /* ignore */ } finally {
       setLoading(false);
     }
