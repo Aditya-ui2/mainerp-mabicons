@@ -12,9 +12,9 @@ import {
   FiBell,
   FiFolder,
   FiBook,
-  FiDollarSign,
   FiRepeat,
 } from 'react-icons/fi';
+import { FaIndianRupeeSign } from 'react-icons/fa6';
 import AdminLayout from './AdminLayout';
 import { getAllNotifications, markNotificationRead } from '../service/api';
 
@@ -79,7 +79,7 @@ const sidebarConfig = [
       { id: 9, title: 'Announcements', icon: FiBell },
       { id: 10, title: 'Documents', icon: FiFolder },
       { id: 11, title: 'Training', icon: FiBook },
-      { id: 12, title: 'Payslips', icon: FiDollarSign },
+      { id: 12, title: 'Payslips', icon: FaIndianRupeeSign },
     ]
   },
 ];

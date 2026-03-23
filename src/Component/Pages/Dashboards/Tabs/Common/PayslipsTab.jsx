@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiDollarSign, FiDownload, FiCalendar, FiCheckCircle, FiClock } from 'react-icons/fi';
+import { FiDownload, FiCalendar, FiCheckCircle, FiClock } from 'react-icons/fi';
+import { FaIndianRupeeSign } from 'react-icons/fa6';
 import { getMyPayslips } from '../../../service/api';
 
 const PayslipsTab = () => {
@@ -57,7 +58,7 @@ const PayslipsTab = () => {
         </div>
       ) : payslips.length === 0 ? (
         <div className="text-center py-16">
-          <FiDollarSign style={{ width: '48px', height: '48px', color: '#d1d5db', margin: '0 auto' }} />
+          <FaIndianRupeeSign style={{ width: '48px', height: '48px', color: '#d1d5db', margin: '0 auto' }} />
           <p className="text-gray-400 mt-3 font-medium">No payslips available yet</p>
         </div>
       ) : (
