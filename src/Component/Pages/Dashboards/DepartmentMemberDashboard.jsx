@@ -127,12 +127,12 @@ const DepartmentMemberDashboard = () => {
         getMyDepartmentTasks(),
         getMyDepartmentStats(),
       ]);
+      if (statsRes.status === 'fulfilled' && statsRes.value.stats) {
+        const s = statsRes.value.stats;
+        setDashStats({ totalTasks: s.total, completed: s.completed, inProgress: s.inProgress, pending: s.pending });
+      }
       if (tasksRes.status === 'fulfilled') {
-        const tasks = tasksRes.value.data || [];
-        const completed = tasks.filter(t => t.status === 'done' || t.status === 'completed').length;
-        const inProgress = tasks.filter(t => t.status === 'in-progress').length;
-        const pending = tasks.filter(t => t.status === 'todo' || t.status === 'pending').length;
-        setDashStats({ totalTasks: tasks.length, completed, inProgress, pending });
+        const tasks = tasksRes.value.tasks || [];
         setRecentTasks(tasks.slice(0, 5));
       }
     } catch { /* silent */ }
@@ -269,14 +269,13 @@ const DepartmentMemberDashboard = () => {
                         <div className="divide-y divide-gray-50">
                           {recentTasks.map((task, idx) => {
                             const statusMap = {
-                              'todo': { label: 'To Do', bg: '#fef3c7', color: '#f59e0b' },
-                              'pending': { label: 'Pending', bg: '#fef3c7', color: '#f59e0b' },
-                              'in-progress': { label: 'In Progress', bg: '#dbeafe', color: '#3b82f6' },
-                              'done': { label: 'Done', bg: '#d1fae5', color: '#10b981' },
-                              'completed': { label: 'Completed', bg: '#d1fae5', color: '#10b981' },
+                              'Pending': { label: 'Pending', bg: '#fef3c7', color: '#f59e0b' },
+                              'In Progress': { label: 'In Progress', bg: '#dbeafe', color: '#3b82f6' },
+                              'Completed': { label: 'Completed', bg: '#d1fae5', color: '#10b981' },
+                              'Overdue': { label: 'Overdue', bg: '#fee2e2', color: '#ef4444' },
                             };
-                            const priorityColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
-                            const sc = statusMap[task.status] || statusMap.pending;
+                            const priorityColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981', High: '#ef4444', Medium: '#f59e0b', Low: '#10b981' };
+                            const sc = statusMap[task.status] || statusMap['Pending'];
                             return (
                               <div key={task.id || idx} className="p-5 flex items-center justify-between hover:bg-gray-50">
                                 <div className="flex items-center gap-4">
