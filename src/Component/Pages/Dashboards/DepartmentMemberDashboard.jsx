@@ -266,12 +266,14 @@ const DepartmentMemberDashboard = () => {
                   {/* Stat Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {[
-                      { key: 'total', title: 'Total Tasks', value: dashStats.totalTasks, icon: FiCheckSquare, color: 'blue', filter: 'all', sparkline: [3, 5, 4, 7, 6, 8, dashStats.totalTasks || 1] },
-                      { key: 'completed', title: 'Completed', value: dashStats.completed, icon: FiTarget, color: 'green', filter: 'Completed', sparkline: [1, 2, 3, 2, 4, 3, dashStats.completed || 1] },
-                      { key: 'inprogress', title: 'In Progress', value: dashStats.inProgress, icon: FiTrendingUp, color: 'purple', filter: 'In Progress', sparkline: [2, 1, 3, 2, 3, 4, dashStats.inProgress || 1] },
-                      { key: 'pending', title: 'Pending', value: dashStats.pending, icon: FiClock, color: 'yellow', filter: 'Pending', sparkline: [4, 3, 5, 4, 3, 2, dashStats.pending || 1] },
-                    ].map((card) => {
-                      const bd = getBreakdown(card.filter, weekOffset);
+                      { key: 'total', title: 'Total Tasks', value: dashStats.totalTasks, icon: FiCheckSquare, color: 'blue', filter: 'all' },
+                      { key: 'completed', title: 'Completed', value: dashStats.completed, icon: FiTarget, color: 'green', filter: 'Completed' },
+                      { key: 'inprogress', title: 'In Progress', value: dashStats.inProgress, icon: FiTrendingUp, color: 'purple', filter: 'In Progress' },
+                      { key: 'pending', title: 'Pending', value: dashStats.pending, icon: FiClock, color: 'yellow', filter: 'Pending' },
+                    ].filter(card => card.value > 0 || card.key === 'total').map((card) => {
+                      const bd = getBreakdown(card.filter, 0);
+                      const sparkline = bd.dayCounts.length ? bd.dayCounts : [card.value || 1];
+                      const bdHover = getBreakdown(card.filter, weekOffset);
                       const colorMap = { blue: '#3b82f6', green: '#10b981', purple: '#8b5cf6', yellow: '#f59e0b' };
                       const accent = colorMap[card.color] || '#6366f1';
                       return (
@@ -287,7 +289,7 @@ const DepartmentMemberDashboard = () => {
                             value={card.value}
                             icon={card.icon}
                             color={card.color}
-                            sparklineData={card.sparkline}
+                            sparklineData={sparkline}
                           />
                           {hoveredCard === card.key && (
                             <div
@@ -306,7 +308,7 @@ const DepartmentMemberDashboard = () => {
                                   >
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                                   </button>
-                                  <span className="text-[11px] font-semibold text-gray-600">{bd.weekLabel}</span>
+                                  <span className="text-[11px] font-semibold text-gray-600">{bdHover.weekLabel}</span>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); if (weekOffset < 0) setWeekOffset(prev => prev + 1); }}
                                     className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700"
@@ -316,13 +318,13 @@ const DepartmentMemberDashboard = () => {
                                   </button>
                                 </div>
                                 <div className="flex items-end justify-between gap-1" style={{ height: '56px' }}>
-                                  {bd.dayDates.map((day, i) => {
-                                    const maxVal = Math.max(...bd.dayCounts, 1);
-                                    const h = Math.max((bd.dayCounts[i] / maxVal) * 40, 4);
+                                  {bdHover.dayDates.map((day, i) => {
+                                    const maxVal = Math.max(...bdHover.dayCounts, 1);
+                                    const h = Math.max((bdHover.dayCounts[i] / maxVal) * 40, 4);
                                     return (
                                       <div key={i} className="flex flex-col items-center gap-0.5 flex-1">
-                                        <span className="text-[9px] font-bold" style={{ color: bd.dayCounts[i] > 0 ? accent : '#d1d5db' }}>{bd.dayCounts[i]}</span>
-                                        <div className="w-full rounded-sm" style={{ height: `${h}px`, background: bd.dayCounts[i] > 0 ? accent : '#e5e7eb', opacity: bd.dayCounts[i] > 0 ? 1 : 0.4 }} />
+                                        <span className="text-[9px] font-bold" style={{ color: bdHover.dayCounts[i] > 0 ? accent : '#d1d5db' }}>{bdHover.dayCounts[i]}</span>
+                                        <div className="w-full rounded-sm" style={{ height: `${h}px`, background: bdHover.dayCounts[i] > 0 ? accent : '#e5e7eb', opacity: bdHover.dayCounts[i] > 0 ? 1 : 0.4 }} />
                                         <span className="text-[9px] text-gray-500 font-semibold">{day.name}</span>
                                         <span className="text-[8px] text-gray-400">{day.date}</span>
                                       </div>
@@ -332,10 +334,10 @@ const DepartmentMemberDashboard = () => {
                               </div>
                               <div className="divide-y divide-gray-100 mt-1">
                                 {[
-                                  { label: 'This Week', val: bd.weekTotal },
-                                  { label: 'This Month', val: bd.thisMonth },
-                                  { label: 'This Year', val: bd.thisYear },
-                                  { label: 'All Time', val: bd.total },
+                                  { label: 'This Week', val: bdHover.weekTotal },
+                                  { label: 'This Month', val: bdHover.thisMonth },
+                                  { label: 'This Year', val: bdHover.thisYear },
+                                  { label: 'All Time', val: bdHover.total },
                                 ].map((row) => (
                                   <div key={row.label} className="flex items-center justify-between px-4 py-2">
                                     <span className="text-xs text-gray-500 font-medium">{row.label}</span>
