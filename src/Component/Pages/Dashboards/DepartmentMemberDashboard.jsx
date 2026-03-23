@@ -179,7 +179,15 @@ const DepartmentMemberDashboard = () => {
     const thisMonth = filtered.filter(t => new Date(t.createdAt) >= monthAgo).length;
     const thisYear = filtered.filter(t => new Date(t.createdAt) >= yearAgo).length;
     const total = filtered.length;
-    return { thisWeek, thisMonth, thisYear, total };
+
+    // Day-wise breakdown for current week
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    filtered.filter(t => new Date(t.createdAt) >= weekAgo).forEach(t => {
+      dayCounts[new Date(t.createdAt).getDay()]++;
+    });
+
+    return { thisWeek, thisMonth, thisYear, total, days, dayCounts };
   };
 
   const breadcrumbs = [
@@ -262,20 +270,37 @@ const DepartmentMemberDashboard = () => {
                           />
                           {hoveredCard === card.key && (
                             <div
-                              className="absolute left-1/2 -translate-x-1/2 z-50 w-64 rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+                              className="absolute left-1/2 -translate-x-1/2 z-50 w-72 rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
                               style={{ top: '105%', background: '#fff' }}
                             >
                               <div className="px-4 py-3 text-white text-sm font-bold" style={{ background: accent }}>
                                 {card.title} Breakdown
                               </div>
-                              <div className="divide-y divide-gray-100">
+                              {/* Day-wise bar chart */}
+                              <div className="px-4 pt-3 pb-1">
+                                <p className="text-[10px] text-gray-400 font-semibold uppercase mb-2">This Week by Day</p>
+                                <div className="flex items-end justify-between gap-1" style={{ height: '48px' }}>
+                                  {bd.days.map((day, i) => {
+                                    const maxVal = Math.max(...bd.dayCounts, 1);
+                                    const h = Math.max((bd.dayCounts[i] / maxVal) * 40, 4);
+                                    return (
+                                      <div key={day} className="flex flex-col items-center gap-0.5 flex-1">
+                                        <span className="text-[9px] font-bold" style={{ color: bd.dayCounts[i] > 0 ? accent : '#d1d5db' }}>{bd.dayCounts[i]}</span>
+                                        <div className="w-full rounded-sm" style={{ height: `${h}px`, background: bd.dayCounts[i] > 0 ? accent : '#e5e7eb', opacity: bd.dayCounts[i] > 0 ? 1 : 0.4 }} />
+                                        <span className="text-[9px] text-gray-400 font-medium">{day}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              <div className="divide-y divide-gray-100 mt-1">
                                 {[
                                   { label: 'This Week', val: bd.thisWeek },
                                   { label: 'This Month', val: bd.thisMonth },
                                   { label: 'This Year', val: bd.thisYear },
                                   { label: 'All Time', val: bd.total },
                                 ].map((row) => (
-                                  <div key={row.label} className="flex items-center justify-between px-4 py-2.5">
+                                  <div key={row.label} className="flex items-center justify-between px-4 py-2">
                                     <span className="text-xs text-gray-500 font-medium">{row.label}</span>
                                     <span className="text-sm font-bold" style={{ color: accent }}>{row.val}</span>
                                   </div>
