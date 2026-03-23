@@ -13,10 +13,14 @@ import {
   FiFolder,
   FiBook,
   FiRepeat,
+  FiTarget,
+  FiTrendingUp,
+  FiAward,
+  FiUserPlus,
 } from 'react-icons/fi';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
-import AdminLayout from './AdminLayout';
-import { getAllNotifications, markNotificationRead } from '../service/api';
+import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
+import { getAllNotifications, markNotificationRead, getMyDepartmentTasks, getMyDepartmentStats } from '../service/api';
 
 // Lazy load tab components
 const MyTasksTab = lazy(() => import('./Tabs/Common/MyTasksTab'));
@@ -90,6 +94,8 @@ const DepartmentMemberDashboard = () => {
   const [userInfo, setUserInfo] = useState({ name: 'Team Member', role: 'Team Member' });
   const [department, setDepartment] = useState('');
   const [notifications, setNotifications] = useState([]);
+  const [dashStats, setDashStats] = useState({ totalTasks: 0, completed: 0, inProgress: 0, pending: 0 });
+  const [recentTasks, setRecentTasks] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -100,7 +106,6 @@ const DepartmentMemberDashboard = () => {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
         const rawName = decoded.name || decoded.email?.split('@')[0] || 'Team Member';
-        // Strip parenthetical role from name if present (e.g. "Sachin (HR Head)" → "Sachin")
         const cleanName = rawName.replace(/\s*\(.*?\)\s*$/, '').trim();
         setUserInfo({
           name: cleanName,
@@ -114,7 +119,25 @@ const DepartmentMemberDashboard = () => {
         console.log('Token decode error');
       }
     }
+    fetchDashboardData();
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [tasksRes, statsRes] = await Promise.allSettled([
+        getMyDepartmentTasks(),
+        getMyDepartmentStats(),
+      ]);
+      if (tasksRes.status === 'fulfilled') {
+        const tasks = tasksRes.value.data || [];
+        const completed = tasks.filter(t => t.status === 'done' || t.status === 'completed').length;
+        const inProgress = tasks.filter(t => t.status === 'in-progress').length;
+        const pending = tasks.filter(t => t.status === 'todo' || t.status === 'pending').length;
+        setDashStats({ totalTasks: tasks.length, completed, inProgress, pending });
+        setRecentTasks(tasks.slice(0, 5));
+      }
+    } catch { /* silent */ }
+  };
 
   const fetchNotifications = async (userId) => {
     try {
@@ -179,60 +202,145 @@ const DepartmentMemberDashboard = () => {
             case 'Payslips':
               return <PayslipsTab />;
             default:
-              // Dashboard Overview - Welcome + Quick Stats
+              // Dashboard Overview - Rich layout matching Head dashboard
               return (
                 <div className="space-y-8">
                   {/* Welcome Banner */}
-                  <div
-                    className="rounded-2xl p-8 text-white relative overflow-hidden shadow-lg"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7)' }}
-                  >
+                  <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-700 rounded-2xl p-8 text-white relative overflow-hidden shadow-lg">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4" />
                     <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-white/10 rounded-full translate-y-1/2" />
                     <div className="relative z-10">
                       <h1 className="text-3xl lg:text-4xl font-bold">Welcome, {userInfo.name} 👋</h1>
-                      <p className="mt-2 text-lg" style={{ color: 'rgba(255,255,255,0.8)' }}>
-                        {department} - {userInfo.role}
-                      </p>
-                      <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                        Check your assigned tasks and stay on top of your work
-                      </p>
+                      <p className="mt-2 text-lg text-purple-100">{department} - {userInfo.role}</p>
+                      <p className="mt-1 text-sm text-purple-200">Check your assigned tasks and stay on top of your work</p>
                     </div>
                   </div>
 
-                  {/* Quick Action Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {[
-                      { tab: 'My Tasks', icon: FiCheckSquare, label: 'My Tasks', desc: 'View and manage your assigned tasks', gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)' },
-                      { tab: 'Activity Feed', icon: FiActivity, label: 'Activity Feed', desc: 'See recent department activities', gradient: 'linear-gradient(135deg, #10b981, #059669)' },
-                      { tab: 'Daily Report', icon: FiFileText, label: 'Daily Report', desc: 'Submit your daily updates', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
-                      { tab: 'Attendance', icon: FiClock, label: 'Attendance', desc: 'Check in/out and track hours', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
-                      { tab: 'Team Chat', icon: FiMessageCircle, label: 'Team Chat', desc: 'Chat with your team members', gradient: 'linear-gradient(135deg, #ec4899, #db2777)' },
-                      { tab: 'Leave Requests', icon: FiCalendar, label: 'Leave Requests', desc: 'Apply for and track leaves', gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)' },
-                    ].map((card) => (
-                      <button
-                        key={card.tab}
-                        onClick={() => setActiveTab(card.tab)}
-                        className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className="p-4 rounded-xl"
-                            style={{ background: card.gradient }}
-                          >
-                            <card.icon style={{ width: '28px', height: '28px', color: '#fff' }} />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                              {card.label}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              {card.desc}
-                            </p>
-                          </div>
+                  {/* Stat Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <StatCard
+                      title="Total Tasks"
+                      value={dashStats.totalTasks}
+                      icon={FiCheckSquare}
+                      color="blue"
+                      sparklineData={[3, 5, 4, 7, 6, 8, dashStats.totalTasks || 1]}
+                    />
+                    <StatCard
+                      title="Completed"
+                      value={dashStats.completed}
+                      icon={FiTarget}
+                      color="green"
+                      sparklineData={[1, 2, 3, 2, 4, 3, dashStats.completed || 1]}
+                    />
+                    <StatCard
+                      title="In Progress"
+                      value={dashStats.inProgress}
+                      icon={FiTrendingUp}
+                      color="purple"
+                      sparklineData={[2, 1, 3, 2, 3, 4, dashStats.inProgress || 1]}
+                    />
+                    <StatCard
+                      title="Pending"
+                      value={dashStats.pending}
+                      icon={FiClock}
+                      color="yellow"
+                      sparklineData={[4, 3, 5, 4, 3, 2, dashStats.pending || 1]}
+                    />
+                  </div>
+
+                  {/* Stats Bar */}
+                  <StatsBar stats={[
+                    { label: 'Completion Rate', value: dashStats.totalTasks > 0 ? `${Math.round((dashStats.completed / dashStats.totalTasks) * 100)}%` : '0%', percentage: dashStats.totalTasks > 0 ? `${Math.round((dashStats.completed / dashStats.totalTasks) * 100)}%` : '0%', color: 'bg-green-500' },
+                    { label: 'In Progress', value: String(dashStats.inProgress), percentage: dashStats.totalTasks > 0 ? `${Math.round((dashStats.inProgress / dashStats.totalTasks) * 100)}%` : '0%', color: 'bg-blue-500' },
+                    { label: 'Pending Tasks', value: String(dashStats.pending), percentage: dashStats.totalTasks > 0 ? `${Math.round((dashStats.pending / dashStats.totalTasks) * 100)}%` : '0%', color: 'bg-yellow-500' },
+                    { label: 'Total Assigned', value: String(dashStats.totalTasks), percentage: '100%', color: 'bg-purple-500' },
+                    { label: 'Productivity', value: dashStats.totalTasks > 0 ? `${Math.round(((dashStats.completed + dashStats.inProgress) / dashStats.totalTasks) * 100)}%` : '0%', percentage: dashStats.totalTasks > 0 ? `${Math.round(((dashStats.completed + dashStats.inProgress) / dashStats.totalTasks) * 100)}%` : '0%', color: 'bg-teal-500' },
+                  ]} />
+
+                  {/* Two Column Layout */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Recent Tasks */}
+                    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                      <div className="p-5 border-b border-gray-100">
+                        <h3 className="font-bold text-lg text-gray-900">Recent Tasks</h3>
+                      </div>
+                      {recentTasks.length === 0 ? (
+                        <div className="p-8 text-center text-gray-400">No tasks assigned yet</div>
+                      ) : (
+                        <div className="divide-y divide-gray-50">
+                          {recentTasks.map((task, idx) => {
+                            const statusMap = {
+                              'todo': { label: 'To Do', bg: '#fef3c7', color: '#f59e0b' },
+                              'pending': { label: 'Pending', bg: '#fef3c7', color: '#f59e0b' },
+                              'in-progress': { label: 'In Progress', bg: '#dbeafe', color: '#3b82f6' },
+                              'done': { label: 'Done', bg: '#d1fae5', color: '#10b981' },
+                              'completed': { label: 'Completed', bg: '#d1fae5', color: '#10b981' },
+                            };
+                            const priorityColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
+                            const sc = statusMap[task.status] || statusMap.pending;
+                            return (
+                              <div key={task.id || idx} className="p-5 flex items-center justify-between hover:bg-gray-50">
+                                <div className="flex items-center gap-4">
+                                  <div
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold"
+                                    style={{ background: priorityColors[task.priority] || '#6366f1' }}
+                                  >
+                                    {(task.title || 'T')[0].toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-gray-900">{task.title}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {task.dueDate ? `Due: ${new Date(task.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : 'No due date'}
+                                      {task.priority && <span className="capitalize"> • {task.priority}</span>}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span
+                                  className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                  style={{ background: sc.bg, color: sc.color }}
+                                >
+                                  {sc.label}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
-                      </button>
-                    ))}
+                      )}
+                      <div className="p-4 bg-gray-50 text-center">
+                        <button
+                          onClick={() => setActiveTab('My Tasks')}
+                          className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                        >
+                          View All Tasks
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="bg-white rounded-2xl shadow-sm p-6">
+                      <h3 className="font-bold text-lg text-gray-900 mb-5">Quick Actions</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { tab: 'My Tasks', icon: FiCheckSquare, label: 'View Tasks', hoverBorder: 'hover:border-blue-300', hoverBg: 'hover:bg-blue-50/50', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+                          { tab: 'Attendance', icon: FiClock, label: 'Mark Attendance', hoverBorder: 'hover:border-emerald-300', hoverBg: 'hover:bg-emerald-50/50', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+                          { tab: 'Daily Report', icon: FiFileText, label: 'Submit Report', hoverBorder: 'hover:border-violet-300', hoverBg: 'hover:bg-violet-50/50', iconBg: 'bg-violet-100', iconColor: 'text-violet-600' },
+                          { tab: 'Leave Requests', icon: FiCalendar, label: 'Apply Leave', hoverBorder: 'hover:border-amber-300', hoverBg: 'hover:bg-amber-50/50', iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+                          { tab: 'Team Chat', icon: FiMessageCircle, label: 'Team Chat', hoverBorder: 'hover:border-rose-300', hoverBg: 'hover:bg-rose-50/50', iconBg: 'bg-rose-100', iconColor: 'text-rose-600' },
+                          { tab: 'Performance', icon: FiBarChart2, label: 'View Performance', hoverBorder: 'hover:border-cyan-300', hoverBg: 'hover:bg-cyan-50/50', iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+                        ].map((action) => (
+                          <button
+                            key={action.tab}
+                            onClick={() => setActiveTab(action.tab)}
+                            className={`flex items-center gap-3 p-3.5 rounded-xl border border-gray-200 ${action.hoverBorder} ${action.hoverBg} transition-all duration-200 text-left group`}
+                          >
+                            <div className={`p-2 rounded-lg ${action.iconBg} ${action.iconColor} group-hover:scale-105 transition-transform`}>
+                              <action.icon style={{ width: '20px', height: '20px' }} />
+                            </div>
+                            <span className="text-sm font-semibold text-gray-700">{action.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
