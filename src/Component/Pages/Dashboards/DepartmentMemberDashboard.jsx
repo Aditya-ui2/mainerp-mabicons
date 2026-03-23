@@ -98,6 +98,7 @@ const DepartmentMemberDashboard = () => {
   const [allTasks, setAllTasks] = useState([]);
   const [taskFilter, setTaskFilter] = useState('all');
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [weekOffset, setWeekOffset] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -168,26 +169,46 @@ const DepartmentMemberDashboard = () => {
   };
 
   // Compute time-based breakdowns for hover popups
-  const getBreakdown = (statusFilter) => {
+  const getBreakdown = (statusFilter, offset = 0) => {
     const now = new Date();
-    const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
     const monthAgo = new Date(now); monthAgo.setMonth(now.getMonth() - 1);
     const yearAgo = new Date(now); yearAgo.setFullYear(now.getFullYear() - 1);
 
     const filtered = statusFilter === 'all' ? allTasks : allTasks.filter(t => t.status === statusFilter);
-    const thisWeek = filtered.filter(t => new Date(t.createdAt) >= weekAgo).length;
-    const thisMonth = filtered.filter(t => new Date(t.createdAt) >= monthAgo).length;
-    const thisYear = filtered.filter(t => new Date(t.createdAt) >= yearAgo).length;
     const total = filtered.length;
 
-    // Day-wise breakdown for current week
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
-    filtered.filter(t => new Date(t.createdAt) >= weekAgo).forEach(t => {
-      dayCounts[new Date(t.createdAt).getDay()]++;
-    });
+    // Compute the week range based on offset (0 = current week, -1 = last week, etc.)
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - dayOfWeek + (offset * 7));
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+    weekEnd.setHours(0, 0, 0, 0);
 
-    return { thisWeek, thisMonth, thisYear, total, days, dayCounts };
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayDates = [];
+    const dayCounts = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      dayDates.push({ name: dayNames[d.getDay()], date: d.getDate(), month: d.toLocaleString('en-IN', { month: 'short' }) });
+      const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999);
+      dayCounts.push(filtered.filter(t => { const c = new Date(t.createdAt); return c >= dayStart && c <= dayEnd; }).length);
+    }
+
+    const weekTotal = dayCounts.reduce((a, b) => a + b, 0);
+    const thisMonth = filtered.filter(t => new Date(t.createdAt) >= monthAgo).length;
+    const thisYear = filtered.filter(t => new Date(t.createdAt) >= yearAgo).length;
+
+    // Week label
+    const wStart = new Date(weekStart);
+    const wEnd = new Date(weekStart); wEnd.setDate(wStart.getDate() + 6);
+    const weekLabel = `${wStart.getDate()} ${wStart.toLocaleString('en-IN', { month: 'short' })} - ${wEnd.getDate()} ${wEnd.toLocaleString('en-IN', { month: 'short' })}`;
+
+    return { weekTotal, thisMonth, thisYear, total, dayDates, dayCounts, weekLabel };
   };
 
   const breadcrumbs = [
@@ -250,7 +271,7 @@ const DepartmentMemberDashboard = () => {
                       { key: 'inprogress', title: 'In Progress', value: dashStats.inProgress, icon: FiTrendingUp, color: 'purple', filter: 'In Progress', sparkline: [2, 1, 3, 2, 3, 4, dashStats.inProgress || 1] },
                       { key: 'pending', title: 'Pending', value: dashStats.pending, icon: FiClock, color: 'yellow', filter: 'Pending', sparkline: [4, 3, 5, 4, 3, 2, dashStats.pending || 1] },
                     ].map((card) => {
-                      const bd = getBreakdown(card.filter);
+                      const bd = getBreakdown(card.filter, weekOffset);
                       const colorMap = { blue: '#3b82f6', green: '#10b981', purple: '#8b5cf6', yellow: '#f59e0b' };
                       const accent = colorMap[card.color] || '#6366f1';
                       return (
@@ -258,8 +279,8 @@ const DepartmentMemberDashboard = () => {
                           key={card.key}
                           className="cursor-pointer relative"
                           onClick={() => { setTaskFilter(card.filter); setActiveTab('My Tasks'); }}
-                          onMouseEnter={() => setHoveredCard(card.key)}
-                          onMouseLeave={() => setHoveredCard(null)}
+                          onMouseEnter={() => { setHoveredCard(card.key); setWeekOffset(0); }}
+                          onMouseLeave={() => { setHoveredCard(null); setWeekOffset(0); }}
                         >
                           <StatCard
                             title={card.title}
@@ -270,24 +291,40 @@ const DepartmentMemberDashboard = () => {
                           />
                           {hoveredCard === card.key && (
                             <div
-                              className="absolute left-1/2 -translate-x-1/2 z-50 w-72 rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+                              className="absolute left-1/2 -translate-x-1/2 z-50 w-80 rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
                               style={{ top: '105%', background: '#fff' }}
                             >
                               <div className="px-4 py-3 text-white text-sm font-bold" style={{ background: accent }}>
                                 {card.title} Breakdown
                               </div>
-                              {/* Day-wise bar chart */}
+                              {/* Week navigation + Day-wise bar chart */}
                               <div className="px-4 pt-3 pb-1">
-                                <p className="text-[10px] text-gray-400 font-semibold uppercase mb-2">This Week by Day</p>
-                                <div className="flex items-end justify-between gap-1" style={{ height: '48px' }}>
-                                  {bd.days.map((day, i) => {
+                                <div className="flex items-center justify-between mb-2">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setWeekOffset(prev => prev - 1); }}
+                                    className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                                  </button>
+                                  <span className="text-[11px] font-semibold text-gray-600">{bd.weekLabel}</span>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); if (weekOffset < 0) setWeekOffset(prev => prev + 1); }}
+                                    className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                                    style={{ opacity: weekOffset >= 0 ? 0.3 : 1 }}
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                  </button>
+                                </div>
+                                <div className="flex items-end justify-between gap-1" style={{ height: '56px' }}>
+                                  {bd.dayDates.map((day, i) => {
                                     const maxVal = Math.max(...bd.dayCounts, 1);
                                     const h = Math.max((bd.dayCounts[i] / maxVal) * 40, 4);
                                     return (
-                                      <div key={day} className="flex flex-col items-center gap-0.5 flex-1">
+                                      <div key={i} className="flex flex-col items-center gap-0.5 flex-1">
                                         <span className="text-[9px] font-bold" style={{ color: bd.dayCounts[i] > 0 ? accent : '#d1d5db' }}>{bd.dayCounts[i]}</span>
                                         <div className="w-full rounded-sm" style={{ height: `${h}px`, background: bd.dayCounts[i] > 0 ? accent : '#e5e7eb', opacity: bd.dayCounts[i] > 0 ? 1 : 0.4 }} />
-                                        <span className="text-[9px] text-gray-400 font-medium">{day}</span>
+                                        <span className="text-[9px] text-gray-500 font-semibold">{day.name}</span>
+                                        <span className="text-[8px] text-gray-400">{day.date}</span>
                                       </div>
                                     );
                                   })}
@@ -295,7 +332,7 @@ const DepartmentMemberDashboard = () => {
                               </div>
                               <div className="divide-y divide-gray-100 mt-1">
                                 {[
-                                  { label: 'This Week', val: bd.thisWeek },
+                                  { label: 'This Week', val: bd.weekTotal },
                                   { label: 'This Month', val: bd.thisMonth },
                                   { label: 'This Year', val: bd.thisYear },
                                   { label: 'All Time', val: bd.total },
