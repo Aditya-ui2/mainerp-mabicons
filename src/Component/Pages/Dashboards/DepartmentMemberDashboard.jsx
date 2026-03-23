@@ -95,6 +95,7 @@ const DepartmentMemberDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [dashStats, setDashStats] = useState({ totalTasks: 0, completed: 0, inProgress: 0, pending: 0 });
   const [recentTasks, setRecentTasks] = useState([]);
+  const [taskFilter, setTaskFilter] = useState('all');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -175,7 +176,7 @@ const DepartmentMemberDashboard = () => {
         {(() => {
           switch (activeTab) {
             case 'My Tasks':
-              return <MyTasksTab />;
+              return <MyTasksTab initialFilter={taskFilter} />;
             case 'Activity Feed':
               return <ActivityFeedTab department={department} />;
             case 'Daily Report':
@@ -217,34 +218,42 @@ const DepartmentMemberDashboard = () => {
 
                   {/* Stat Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <StatCard
-                      title="Total Tasks"
-                      value={dashStats.totalTasks}
-                      icon={FiCheckSquare}
-                      color="blue"
-                      sparklineData={[3, 5, 4, 7, 6, 8, dashStats.totalTasks || 1]}
-                    />
-                    <StatCard
-                      title="Completed"
-                      value={dashStats.completed}
-                      icon={FiTarget}
-                      color="green"
-                      sparklineData={[1, 2, 3, 2, 4, 3, dashStats.completed || 1]}
-                    />
-                    <StatCard
-                      title="In Progress"
-                      value={dashStats.inProgress}
-                      icon={FiTrendingUp}
-                      color="purple"
-                      sparklineData={[2, 1, 3, 2, 3, 4, dashStats.inProgress || 1]}
-                    />
-                    <StatCard
-                      title="Pending"
-                      value={dashStats.pending}
-                      icon={FiClock}
-                      color="yellow"
-                      sparklineData={[4, 3, 5, 4, 3, 2, dashStats.pending || 1]}
-                    />
+                    <div className="cursor-pointer" onClick={() => { setTaskFilter('all'); setActiveTab('My Tasks'); }}>
+                      <StatCard
+                        title="Total Tasks"
+                        value={dashStats.totalTasks}
+                        icon={FiCheckSquare}
+                        color="blue"
+                        sparklineData={[3, 5, 4, 7, 6, 8, dashStats.totalTasks || 1]}
+                      />
+                    </div>
+                    <div className="cursor-pointer" onClick={() => { setTaskFilter('Completed'); setActiveTab('My Tasks'); }}>
+                      <StatCard
+                        title="Completed"
+                        value={dashStats.completed}
+                        icon={FiTarget}
+                        color="green"
+                        sparklineData={[1, 2, 3, 2, 4, 3, dashStats.completed || 1]}
+                      />
+                    </div>
+                    <div className="cursor-pointer" onClick={() => { setTaskFilter('In Progress'); setActiveTab('My Tasks'); }}>
+                      <StatCard
+                        title="In Progress"
+                        value={dashStats.inProgress}
+                        icon={FiTrendingUp}
+                        color="purple"
+                        sparklineData={[2, 1, 3, 2, 3, 4, dashStats.inProgress || 1]}
+                      />
+                    </div>
+                    <div className="cursor-pointer" onClick={() => { setTaskFilter('Pending'); setActiveTab('My Tasks'); }}>
+                      <StatCard
+                        title="Pending"
+                        value={dashStats.pending}
+                        icon={FiClock}
+                        color="yellow"
+                        sparklineData={[4, 3, 5, 4, 3, 2, dashStats.pending || 1]}
+                      />
+                    </div>
                   </div>
 
                   {/* Stats Bar */}

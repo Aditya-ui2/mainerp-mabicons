@@ -141,11 +141,15 @@ const StatusFilterDropdown = ({ filterStatus, setFilterStatus }) => {
   );
 };
 
-const MyTasksTab = () => {
+const MyTasksTab = ({ initialFilter = 'all' }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState(initialFilter);
+
+  useEffect(() => {
+    setFilterStatus(initialFilter);
+  }, [initialFilter]);
   const [expandedTask, setExpandedTask] = useState(null);
   const [commentText, setCommentText] = useState('');
   const [updatingTaskId, setUpdatingTaskId] = useState(null);
