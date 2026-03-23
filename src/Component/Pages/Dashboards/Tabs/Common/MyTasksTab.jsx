@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiCheckSquare,
@@ -13,6 +13,7 @@ import {
   FiSend,
   FiChevronDown,
   FiChevronUp,
+  FiFilter,
 } from 'react-icons/fi';
 import {
   getMyDepartmentTasks,
@@ -50,6 +51,93 @@ const PriorityBadge = ({ priority }) => {
       <FiFlag style={{ width: '12px', height: '12px' }} />
       {priority}
     </span>
+  );
+};
+
+const statusOptions = [
+  { value: 'all', label: 'All Status', dot: '#6366f1' },
+  { value: 'Pending', label: 'Pending', dot: '#f59e0b' },
+  { value: 'In Progress', label: 'In Progress', dot: '#3b82f6' },
+  { value: 'Completed', label: 'Completed', dot: '#10b981' },
+  { value: 'Overdue', label: 'Overdue', dot: '#ef4444' },
+];
+
+const StatusFilterDropdown = ({ filterStatus, setFilterStatus }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const selected = statusOptions.find(o => o.value === filterStatus) || statusOptions[0];
+
+  return (
+    <div ref={ref} style={{ position: 'relative', minWidth: '160px' }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '10px 16px', borderRadius: '12px',
+          border: '2px solid #e5e7eb', background: '#fff',
+          cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+          color: '#374151', width: '100%', justifyContent: 'space-between',
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FiFilter style={{ width: '16px', height: '16px', color: '#6b7280' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: selected.dot }}></span>
+          {selected.label}
+        </span>
+        <FiChevronDown style={{ width: '16px', height: '16px', color: '#9ca3af', transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'rotate(0)' }} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+              background: '#fff', borderRadius: '12px',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06)',
+              border: '1px solid #e5e7eb', overflow: 'hidden',
+              zIndex: 50, minWidth: '180px',
+            }}
+          >
+            {statusOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => { setFilterStatus(option.value); setOpen(false); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '10px 16px', width: '100%',
+                  background: filterStatus === option.value ? '#f0f4ff' : 'transparent',
+                  border: 'none', cursor: 'pointer', fontSize: '13px',
+                  fontWeight: filterStatus === option.value ? 600 : 400,
+                  color: filterStatus === option.value ? '#4338ca' : '#374151',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => { if (filterStatus !== option.value) e.currentTarget.style.background = '#f9fafb'; }}
+                onMouseLeave={(e) => { if (filterStatus !== option.value) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: option.dot, flexShrink: 0 }}></span>
+                <span style={{ flex: 1, textAlign: 'left' }}>{option.label}</span>
+                {filterStatus === option.value && (
+                  <FiCheckCircle style={{ width: '14px', height: '14px', color: '#4338ca' }} />
+                )}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
@@ -185,17 +273,7 @@ const MyTasksTab = () => {
             className="w-full rounded-xl border-2 border-gray-200 py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300"
           />
         </div>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-xl border-2 border-gray-200 px-4 py-3 text-sm font-medium cursor-pointer focus:ring-2 focus:ring-blue-500/50"
-        >
-          <option value="all">All Status</option>
-          <option value="Pending">Pending</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-          <option value="Overdue">Overdue</option>
-        </select>
+        <StatusFilterDropdown filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
       </div>
 
       {/* Task List */}
