@@ -195,8 +195,16 @@ const Login = () => {
       // Check if it's a department team login (HR Operations or HR Recruitment)
       if (emailLower.includes('operation') || emailLower.includes('recruitment')) {
         response = await departmentTeamLogin(credentials);
-        userType = response.user?.department === 'HR Operations' ? 'hrOperations' : 'hrRecruitment';
-        destination = userType === 'hrOperations' ? '/kam-operations-dashboard' : '/kam-recruitment-dashboard';
+        const dept = response.user?.department;
+        const role = response.user?.role;
+        
+        if (role === 'Department Head') {
+          userType = dept === 'HR Operations' ? 'hrOperations' : 'hrRecruitment';
+          destination = dept === 'HR Operations' ? '/kam-operations-dashboard' : '/kam-recruitment-dashboard';
+        } else {
+          userType = 'departmentMember';
+          destination = '/department-member-dashboard';
+        }
       } else if (emailLower.includes('superadmin')) {
         response = await superAdminLogin(credentials);
         userType = 'superAdmin';
@@ -214,9 +222,25 @@ const Login = () => {
         userType = 'bdExecutive';
         destination = '/bd-dashboard';
       } else {
-        response = await employeeLogin(credentials);
-        userType = 'employee';
-        destination = '/employee-dashboard';
+        // Try employee login first, fallback to department team login
+        try {
+          response = await employeeLogin(credentials);
+          userType = 'employee';
+          destination = '/employee-dashboard';
+        } catch (empError) {
+          // If employee login fails, try department team login (for team members without keyword in email)
+          response = await departmentTeamLogin(credentials);
+          const dept = response.user?.department;
+          const role = response.user?.role;
+          
+          if (role === 'Department Head') {
+            userType = dept === 'HR Operations' ? 'hrOperations' : 'hrRecruitment';
+            destination = dept === 'HR Operations' ? '/kam-operations-dashboard' : '/kam-recruitment-dashboard';
+          } else {
+            userType = 'departmentMember';
+            destination = '/department-member-dashboard';
+          }
+        }
       }
 
       if (response.token) {

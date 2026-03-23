@@ -2877,6 +2877,38 @@ export const getDepartmentStats = async (department) => {
   }
 };
 
+// Get my tasks (for logged-in team member)
+export const getMyDepartmentTasks = async (status = null) => {
+  try {
+    const token = localStorage.getItem('token');
+    const params = {};
+    if (status) params.status = status;
+
+    const response = await axiosInstance.get('/department/my-tasks', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my tasks:', error);
+    throw error.response?.data || { message: 'Failed to fetch tasks' };
+  }
+};
+
+// Get my stats (for logged-in team member)
+export const getMyDepartmentStats = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/my-stats', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my stats:', error);
+    throw error.response?.data || { message: 'Failed to fetch stats' };
+  }
+};
+
 
 
 

@@ -15,6 +15,7 @@ import EmployeeDashboard from './Component/Pages/Dashboards/EmployeeDashboardNew
 import BdDashboard from './Component/Pages/Dashboards/BDDashboardNew'
 import HROperationsDashboard from './Component/Pages/Dashboards/HROperationsDashboardNew'
 import HRRecruitmentDashboard from './Component/Pages/Dashboards/HRRecruitmentDashboardNew'
+import DepartmentMemberDashboard from './Component/Pages/Dashboards/DepartmentMemberDashboard'
 import ClientModularDashboard from './Component/Pages/Dashboards/ClientModularDashboard'
 import ResetPassword from './Component/Pages/reset_password'
 import ForgotPassword from './Component/Pages/forgetpassword'
@@ -44,6 +45,11 @@ function App() {
       <Route path='/kam-recruitment-dashboard' element={
         <DepartmentProtectedRoute allowedDepartment="HR Recruitment">
           <HRRecruitmentDashboard />
+        </DepartmentProtectedRoute>
+      } />
+      <Route path='/department-member-dashboard' element={
+        <DepartmentProtectedRoute allowedDepartment="Both">
+          <DepartmentMemberDashboard />
         </DepartmentProtectedRoute>
       } />
 

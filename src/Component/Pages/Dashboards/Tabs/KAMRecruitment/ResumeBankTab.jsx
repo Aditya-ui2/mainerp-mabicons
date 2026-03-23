@@ -1,5 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+  FiRefreshCw,
+  FiChevronDown,
+  FiDownload,
+  FiEye,
+  FiStar,
+  FiFileText,
+  FiFile,
+  FiX,
+  FiLoader,
+  FiDatabase,
+  FiClock,
+  FiCheckCircle,
+  FiUsers,
+} from 'react-icons/fi';
+import {
   getResumeBankStats,
   getResumeRoleTypes,
   getResumeBankResumes,
@@ -45,13 +60,13 @@ const ResumeBankTab = () => {
   ];
 
   const statusColors = {
-    'Available': 'bg-green-100 text-green-800',
-    'Shortlisted': 'bg-blue-100 text-blue-800',
-    'Contacted': 'bg-yellow-100 text-yellow-800',
-    'Interview Scheduled': 'bg-purple-100 text-purple-800',
-    'Hired': 'bg-emerald-100 text-emerald-800',
-    'Rejected': 'bg-red-100 text-red-800',
-    'Not Interested': 'bg-gray-100 text-gray-800'
+    'Available': { backgroundColor: '#dcfce7', color: '#166534' },
+    'Shortlisted': { backgroundColor: '#dbeafe', color: '#1e40af' },
+    'Contacted': { backgroundColor: '#fef9c3', color: '#854d0e' },
+    'Interview Scheduled': { backgroundColor: '#ede9fe', color: '#6b21a8' },
+    'Hired': { backgroundColor: '#d1fae5', color: '#065f46' },
+    'Rejected': { backgroundColor: '#fee2e2', color: '#991b1b' },
+    'Not Interested': { backgroundColor: '#f3f4f6', color: '#374151' }
   };
 
   // Fetch data
@@ -262,31 +277,25 @@ const ResumeBankTab = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Resume Bank</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage {stats?.total?.toLocaleString() || 0} resumes from AWS S3 & SharePoint
+            Manage {stats?.total?.toLocaleString() || 0} resumes from SharePoint
           </p>
         </div>
         <div className="relative">
           {syncing ? (
-            <button disabled className="px-4 py-2 bg-blue-600 text-white rounded-lg opacity-50 flex items-center gap-2">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+            <button disabled className="px-4 py-2 rounded-lg opacity-50 flex items-center gap-2" style={{ backgroundColor: '#2563eb', color: '#fff' }}>
+              <FiLoader className="animate-spin" size={20} />
               Syncing from {syncSource === 'sharepoint' ? 'SharePoint' : 'S3'}...
             </button>
           ) : (
             <>
               <button
                 onClick={() => setShowSyncMenu(!showSyncMenu)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                className="px-4 py-2 rounded-lg flex items-center gap-2"
+                style={{ backgroundColor: '#2563eb', color: '#fff' }}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Sync Resumes
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <FiRefreshCw size={18} />
+                Refresh Resumes
+                <FiChevronDown size={16} />
               </button>
               {showSyncMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50">
@@ -319,19 +328,82 @@ const ResumeBankTab = () => {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total Resumes</p>
-            <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.total?.toLocaleString()}</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+          {/* Total Resumes */}
+          <div
+            className="relative overflow-hidden rounded-2xl p-5"
+            style={{
+              background: 'var(--bg-modal, #fff)',
+              border: '1px solid var(--border-color, #e5e7eb)',
+              boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.15)'
+            }}
+          >
+            <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
+              <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}></div>
+            </div>
+            <div className="relative flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Total Resumes</p>
+                <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  {stats.total?.toLocaleString()}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.3)' }}>
+                <FiDatabase size={20} color="#ffffff" />
+              </div>
+            </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Recently Added</p>
-            <p className="text-2xl font-bold text-blue-600">{stats.recentlyAdded?.toLocaleString()}</p>
+
+          {/* Recently Added */}
+          <div
+            className="relative overflow-hidden rounded-2xl p-5"
+            style={{
+              background: 'var(--bg-modal, #fff)',
+              border: '1px solid var(--border-color, #e5e7eb)',
+              boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.15)'
+            }}
+          >
+            <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
+              <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #3b82f6, #4f46e5)' }}></div>
+            </div>
+            <div className="relative flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Recently Added</p>
+                <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #3b82f6, #4f46e5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  {stats.recentlyAdded?.toLocaleString()}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #3b82f6, #4f46e5)', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}>
+                <FiClock size={20} color="#ffffff" />
+              </div>
+            </div>
           </div>
+
+          {/* Status cards */}
           {stats.byStatus && Object.entries(stats.byStatus).slice(0, 4).map(([status, count]) => (
-            <div key={status} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500 dark:text-gray-400">{status}</p>
-              <p className="text-2xl font-bold text-gray-800 dark:text-white">{count?.toLocaleString()}</p>
+            <div
+              key={status}
+              className="relative overflow-hidden rounded-2xl p-5"
+              style={{
+                background: 'var(--bg-modal, #fff)',
+                border: '1px solid var(--border-color, #e5e7eb)',
+                boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.15)'
+              }}
+            >
+              <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
+                <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)' }}></div>
+              </div>
+              <div className="relative flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>{status}</p>
+                  <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    {count?.toLocaleString()}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)' }}>
+                  <FiCheckCircle size={20} color="#ffffff" />
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -447,9 +519,9 @@ const ResumeBankTab = () => {
               {loading ? (
                 <tr>
                   <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
-                    <svg className="animate-spin h-8 w-8 mx-auto text-blue-500" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <svg className="animate-spin mx-auto" style={{ width: 32, height: 32, color: '#3b82f6' }} viewBox="0 0 24 24">
+                      <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                     <p className="mt-2">Loading resumes...</p>
                   </td>
@@ -474,16 +546,14 @@ const ResumeBankTab = () => {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleToggleStar(resume.id, resume.isStarred)}
-                        className="text-xl hover:scale-110 transition-transform"
+                        className="hover:scale-110 transition-transform"
                       >
-                        {resume.isStarred ? '⭐' : '☆'}
+                        <FiStar size={18} style={{ color: resume.isStarred ? '#eab308' : '#9ca3af', fill: resume.isStarred ? '#eab308' : 'none' }} />
                       </button>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">
-                          {resume.fileType === 'pdf' ? '📄' : '📃'}
-                        </span>
+                        {resume.fileType === 'pdf' ? <FiFileText size={18} style={{ color: '#ef4444' }} /> : <FiFile size={18} style={{ color: '#6b7280' }} />}
                         <button
                           onClick={() => handlePreviewResume(resume.id, resume.fileName)}
                           className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate max-w-[200px] text-left"
@@ -509,7 +579,7 @@ const ResumeBankTab = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs ${statusColors[resume.status] || 'bg-gray-100'}`}>
+                      <span className="px-2 py-1 rounded-full text-xs font-medium" style={statusColors[resume.status] || { backgroundColor: '#f3f4f6', color: '#374151' }}>
                         {resume.status}
                       </span>
                     </td>
@@ -520,32 +590,19 @@ const ResumeBankTab = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleDownload(resume.id)}
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          className="p-1 rounded hover:opacity-80"
                           title="Download"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
+                          <FiDownload size={18} style={{ color: '#2563eb' }} />
                         </button>
                         <button
                           onClick={() => handlePreviewResume(resume.id, resume.fileName)}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
+                          className="p-1 rounded hover:opacity-80"
                           title="Preview Resume"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
+                          <FiEye size={18} style={{ color: '#16a34a' }} />
                         </button>
-                        <button
-                          onClick={() => handleViewDetails(resume.id)}
-                          className="p-1 text-gray-600 hover:bg-gray-50 rounded"
-                          title="Edit Details"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
+
                       </div>
                     </td>
                   </tr>
@@ -605,12 +662,9 @@ const ResumeBankTab = () => {
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleSyncRole(role.name); }}
-                      className="text-blue-500 hover:text-blue-700"
                       title={`Sync ${role.name}`}
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
+                      <FiRefreshCw size={14} style={{ color: '#3b82f6' }} />
                     </button>
                   </div>
                 </div>
@@ -655,20 +709,18 @@ const ResumeBankTab = () => {
                   href={previewUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1"
+                  style={{ backgroundColor: '#2563eb', color: '#fff' }}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
+                  <FiDownload size={16} />
                   Download
                 </a>
                 <button
                   onClick={() => { setShowPreviewModal(false); setPreviewUrl(null); }}
-                  className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="p-1"
+                  style={{ color: '#6b7280' }}
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <FiX size={24} />
                 </button>
               </div>
             </div>
@@ -681,9 +733,7 @@ const ResumeBankTab = () => {
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full gap-4">
-                  <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+                  <FiFileText size={64} style={{ color: '#9ca3af' }} />
                   <p className="text-gray-500 dark:text-gray-400">Preview not available for this file type</p>
                   <a
                     href={previewUrl}
@@ -753,9 +803,7 @@ const ResumeDetailModal = ({ resume, onClose, onUpdate, statusOptions }) => {
               <p className="text-sm text-gray-500">{resume.roleType}</p>
             </div>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <FiX size={24} />
             </button>
           </div>
 
