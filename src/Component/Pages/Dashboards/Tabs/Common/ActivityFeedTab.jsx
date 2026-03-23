@@ -28,7 +28,7 @@ const ActivityTypeIcon = ({ type }) => {
     general: FiActivity,
   };
   const Icon = icons[type] || icons.general;
-  return <Icon className="w-4 h-4" />;
+  return <Icon style={{width:'16px',height:'16px'}} />;
 };
 
 const getActionColor = (action) => {
@@ -131,7 +131,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-            <FiActivity className="w-6 h-6 text-white" />
+            <FiActivity style={{width:'24px',height:'24px',color:'#fff'}} />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Activity Feed</h2>
@@ -145,7 +145,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
           disabled={refreshing}
           className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
         >
-          <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <FiRefreshCw style={{width:'16px',height:'16px'}} className={refreshing ? 'animate-spin' : ''} />
           Refresh
         </motion.button>
       </div>
@@ -170,7 +170,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
       {/* Activity List */}
       {filteredActivities.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
-          <FiActivity size={48} className="mx-auto mb-3 opacity-30" />
+          <FiActivity style={{width:'48px',height:'48px',margin:'0 auto 12px',opacity:0.3}} />
           <p className="font-medium">No activities found</p>
           <p className="text-sm mt-1">Activity will appear here as your team works</p>
         </div>
