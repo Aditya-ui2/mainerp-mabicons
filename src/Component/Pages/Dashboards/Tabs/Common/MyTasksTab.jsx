@@ -83,7 +83,7 @@ const MyTasksTab = () => {
     try {
       setUpdatingTaskId(taskId);
       await updateDepartmentTask(taskId, { status: newStatus });
-      setTasks(tasks.map(t => t._id === taskId ? { ...t, status: newStatus, ...(newStatus === 'Completed' ? { completedAt: new Date().toISOString() } : {}) } : t));
+      setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus, ...(newStatus === 'Completed' ? { completedAt: new Date().toISOString() } : {}) } : t));
     } catch (error) {
       console.error('Error updating status:', error);
     } finally {
@@ -209,11 +209,11 @@ const MyTasksTab = () => {
         <div className="space-y-3">
           {filteredTasks.map((task, idx) => {
             const daysInfo = getDaysLeft(task.dueDate);
-            const isExpanded = expandedTask === task._id;
+            const isExpanded = expandedTask === task.id;
 
             return (
               <motion.div
-                key={task._id}
+                key={task.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.04 }}
@@ -275,8 +275,8 @@ const MyTasksTab = () => {
                       {task.status !== 'Completed' && (
                         <select
                           value={task.status}
-                          onChange={(e) => handleStatusChange(task._id, e.target.value)}
-                          disabled={updatingTaskId === task._id}
+                          onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                          disabled={updatingTaskId === task.id}
                           className="text-xs px-3 py-2 rounded-lg border border-gray-200 bg-white font-medium cursor-pointer disabled:opacity-50"
                         >
                           <option value="Pending">Pending</option>
@@ -284,13 +284,13 @@ const MyTasksTab = () => {
                           <option value="Completed">Mark Complete</option>
                         </select>
                       )}
-                      {updatingTaskId === task._id && (
+                      {updatingTaskId === task.id && (
                         <FiLoader className="w-4 h-4 animate-spin text-blue-500" />
                       )}
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setExpandedTask(isExpanded ? null : task._id)}
+                        onClick={() => setExpandedTask(isExpanded ? null : task.id)}
                         className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
                       >
                         {isExpanded ? <FiChevronUp className="w-4 h-4" /> : <FiChevronDown className="w-4 h-4" />}
@@ -335,16 +335,16 @@ const MyTasksTab = () => {
                           <div className="flex gap-2">
                             <input
                               type="text"
-                              value={expandedTask === task._id ? commentText : ''}
+                              value={expandedTask === task.id ? commentText : ''}
                               onChange={(e) => setCommentText(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && handleAddComment(task._id)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleAddComment(task.id)}
                               placeholder="Add a comment..."
                               className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300"
                             />
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => handleAddComment(task._id)}
+                              onClick={() => handleAddComment(task.id)}
                               className="px-4 py-2 rounded-lg text-white text-sm font-medium"
                               style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
                             >
