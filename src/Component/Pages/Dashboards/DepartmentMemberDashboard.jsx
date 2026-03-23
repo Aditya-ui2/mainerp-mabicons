@@ -95,7 +95,9 @@ const DepartmentMemberDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [dashStats, setDashStats] = useState({ totalTasks: 0, completed: 0, inProgress: 0, pending: 0 });
   const [recentTasks, setRecentTasks] = useState([]);
+  const [allTasks, setAllTasks] = useState([]);
   const [taskFilter, setTaskFilter] = useState('all');
+  const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -134,6 +136,7 @@ const DepartmentMemberDashboard = () => {
       }
       if (tasksRes.status === 'fulfilled') {
         const tasks = tasksRes.value.tasks || [];
+        setAllTasks(tasks);
         setRecentTasks(tasks.slice(0, 5));
       }
     } catch { /* silent */ }
@@ -162,6 +165,21 @@ const DepartmentMemberDashboard = () => {
         setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
       } catch (e) { /* ignore */ }
     }
+  };
+
+  // Compute time-based breakdowns for hover popups
+  const getBreakdown = (statusFilter) => {
+    const now = new Date();
+    const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
+    const monthAgo = new Date(now); monthAgo.setMonth(now.getMonth() - 1);
+    const yearAgo = new Date(now); yearAgo.setFullYear(now.getFullYear() - 1);
+
+    const filtered = statusFilter === 'all' ? allTasks : allTasks.filter(t => t.status === statusFilter);
+    const thisWeek = filtered.filter(t => new Date(t.createdAt) >= weekAgo).length;
+    const thisMonth = filtered.filter(t => new Date(t.createdAt) >= monthAgo).length;
+    const thisYear = filtered.filter(t => new Date(t.createdAt) >= yearAgo).length;
+    const total = filtered.length;
+    return { thisWeek, thisMonth, thisYear, total };
   };
 
   const breadcrumbs = [
@@ -218,42 +236,59 @@ const DepartmentMemberDashboard = () => {
 
                   {/* Stat Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div className="cursor-pointer" onClick={() => { setTaskFilter('all'); setActiveTab('My Tasks'); }}>
-                      <StatCard
-                        title="Total Tasks"
-                        value={dashStats.totalTasks}
-                        icon={FiCheckSquare}
-                        color="blue"
-                        sparklineData={[3, 5, 4, 7, 6, 8, dashStats.totalTasks || 1]}
-                      />
-                    </div>
-                    <div className="cursor-pointer" onClick={() => { setTaskFilter('Completed'); setActiveTab('My Tasks'); }}>
-                      <StatCard
-                        title="Completed"
-                        value={dashStats.completed}
-                        icon={FiTarget}
-                        color="green"
-                        sparklineData={[1, 2, 3, 2, 4, 3, dashStats.completed || 1]}
-                      />
-                    </div>
-                    <div className="cursor-pointer" onClick={() => { setTaskFilter('In Progress'); setActiveTab('My Tasks'); }}>
-                      <StatCard
-                        title="In Progress"
-                        value={dashStats.inProgress}
-                        icon={FiTrendingUp}
-                        color="purple"
-                        sparklineData={[2, 1, 3, 2, 3, 4, dashStats.inProgress || 1]}
-                      />
-                    </div>
-                    <div className="cursor-pointer" onClick={() => { setTaskFilter('Pending'); setActiveTab('My Tasks'); }}>
-                      <StatCard
-                        title="Pending"
-                        value={dashStats.pending}
-                        icon={FiClock}
-                        color="yellow"
-                        sparklineData={[4, 3, 5, 4, 3, 2, dashStats.pending || 1]}
-                      />
-                    </div>
+                    {[
+                      { key: 'total', title: 'Total Tasks', value: dashStats.totalTasks, icon: FiCheckSquare, color: 'blue', filter: 'all', sparkline: [3, 5, 4, 7, 6, 8, dashStats.totalTasks || 1] },
+                      { key: 'completed', title: 'Completed', value: dashStats.completed, icon: FiTarget, color: 'green', filter: 'Completed', sparkline: [1, 2, 3, 2, 4, 3, dashStats.completed || 1] },
+                      { key: 'inprogress', title: 'In Progress', value: dashStats.inProgress, icon: FiTrendingUp, color: 'purple', filter: 'In Progress', sparkline: [2, 1, 3, 2, 3, 4, dashStats.inProgress || 1] },
+                      { key: 'pending', title: 'Pending', value: dashStats.pending, icon: FiClock, color: 'yellow', filter: 'Pending', sparkline: [4, 3, 5, 4, 3, 2, dashStats.pending || 1] },
+                    ].map((card) => {
+                      const bd = getBreakdown(card.filter);
+                      const colorMap = { blue: '#3b82f6', green: '#10b981', purple: '#8b5cf6', yellow: '#f59e0b' };
+                      const accent = colorMap[card.color] || '#6366f1';
+                      return (
+                        <div
+                          key={card.key}
+                          className="cursor-pointer relative"
+                          onClick={() => { setTaskFilter(card.filter); setActiveTab('My Tasks'); }}
+                          onMouseEnter={() => setHoveredCard(card.key)}
+                          onMouseLeave={() => setHoveredCard(null)}
+                        >
+                          <StatCard
+                            title={card.title}
+                            value={card.value}
+                            icon={card.icon}
+                            color={card.color}
+                            sparklineData={card.sparkline}
+                          />
+                          {hoveredCard === card.key && (
+                            <div
+                              className="absolute left-1/2 -translate-x-1/2 z-50 w-64 rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+                              style={{ top: '105%', background: '#fff' }}
+                            >
+                              <div className="px-4 py-3 text-white text-sm font-bold" style={{ background: accent }}>
+                                {card.title} Breakdown
+                              </div>
+                              <div className="divide-y divide-gray-100">
+                                {[
+                                  { label: 'This Week', val: bd.thisWeek },
+                                  { label: 'This Month', val: bd.thisMonth },
+                                  { label: 'This Year', val: bd.thisYear },
+                                  { label: 'All Time', val: bd.total },
+                                ].map((row) => (
+                                  <div key={row.label} className="flex items-center justify-between px-4 py-2.5">
+                                    <span className="text-xs text-gray-500 font-medium">{row.label}</span>
+                                    <span className="text-sm font-bold" style={{ color: accent }}>{row.val}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="px-4 py-2 text-center" style={{ background: '#f9fafb' }}>
+                                <span className="text-[10px] text-gray-400">Click to view details</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Stats Bar */}
