@@ -120,13 +120,13 @@ const AdminLayout = ({
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/10 transition-all duration-200 group"
           >
-            <FiMenu className="w-5 h-5 group-hover:text-blue-400 transition-colors" />
+            <FiMenu style={{width:'20px',height:'20px'}} className="group-hover:text-blue-400 transition-colors" />
           </button>
           <button
             onClick={() => setMobileSidebarOpen(false)}
             className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <FiX className="w-5 h-5" />
+            <FiX style={{width:'20px',height:'20px'}} />
           </button>
         </div>
 
@@ -142,7 +142,7 @@ const AdminLayout = ({
               }
             `}
           >
-            <FiHome className="w-5 h-5 flex-shrink-0" />
+            <FiHome style={{width:'20px',height:'20px',flexShrink:0}} />
             {!sidebarCollapsed && <span className="font-medium">Dashboard</span>}
           </button>
         </div>
@@ -186,14 +186,14 @@ const AdminLayout = ({
                       `}
                     >
                       <div className="flex items-center gap-3">
-                        <Icon className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-blue-400' : 'group-hover:text-blue-400'}`} />
+                        <Icon style={{width:'20px',height:'20px',flexShrink:0}} className={`transition-colors ${isActive ? 'text-blue-400' : 'group-hover:text-blue-400'}`} />
                         {!sidebarCollapsed && (
                           <span className="text-sm font-medium">{item.title}</span>
                         )}
                       </div>
                       {hasSubmenu && !sidebarCollapsed && (
                         <FiChevronDown
-                          className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                          style={{width:'16px',height:'16px',transition:'transform 0.2s',transform:isExpanded?'rotate(180deg)':'rotate(0)'}}
                         />
                       )}
                     </button>
@@ -250,7 +250,7 @@ const AdminLayout = ({
                 className="p-2 rounded-xl hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all duration-200 hover:scale-105"
                 title="Logout"
               >
-                <FiLogOut className="w-4 h-4" />
+                <FiLogOut style={{width:'16px',height:'16px'}} />
               </button>
             </div>
           ) : (
@@ -263,7 +263,7 @@ const AdminLayout = ({
                 className="p-2 rounded-xl hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all duration-200"
                 title="Logout"
               >
-                <FiLogOut className="w-4 h-4" />
+                <FiLogOut style={{width:'16px',height:'16px'}} />
               </button>
             </div>
           )}
@@ -280,14 +280,14 @@ const AdminLayout = ({
               onClick={() => setMobileSidebarOpen(true)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600"
             >
-              <FiMenu className="w-5 h-5" />
+              <FiMenu style={{width:'20px',height:'20px'}} />
             </button>
             
             {/* Breadcrumbs */}
             <nav className="hidden sm:flex items-center gap-2 text-sm">
               {breadcrumbs.map((crumb, idx) => (
                 <span key={idx} className="flex items-center gap-2">
-                  {idx > 0 && <FiChevronRight className="w-4 h-4 text-gray-400" />}
+                  {idx > 0 && <FiChevronRight style={{width:'16px',height:'16px',color:'#9ca3af'}} />}
                   <span
                     className={`${idx === breadcrumbs.length - 1 ? 'text-gray-900 font-medium' : 'text-blue-600 hover:text-blue-700 cursor-pointer'}`}
                     onClick={() => crumb.path && navigate(crumb.path)}
@@ -303,7 +303,7 @@ const AdminLayout = ({
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2">
-              <FiSearch className="w-4 h-4 text-gray-400" />
+              <FiSearch style={{width:'16px',height:'16px',color:'#9ca3af'}} />
               <input
                 type="text"
                 placeholder="Search..."
@@ -316,10 +316,10 @@ const AdminLayout = ({
             {/* View Toggle */}
             <div className="hidden lg:flex items-center gap-1 bg-gray-100 rounded-lg p-1">
               <button className="p-1.5 rounded bg-white shadow-sm">
-                <FiGrid className="w-4 h-4 text-gray-600" />
+                <FiGrid style={{width:'16px',height:'16px',color:'#4b5563'}} />
               </button>
               <button className="p-1.5 rounded hover:bg-gray-200">
-                <FiList className="w-4 h-4 text-gray-400" />
+                <FiList style={{width:'16px',height:'16px',color:'#9ca3af'}} />
               </button>
             </div>
 
@@ -329,7 +329,7 @@ const AdminLayout = ({
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-600"
               >
-                <FiBell className="w-5 h-5" />
+                <FiBell style={{width:'20px',height:'20px'}} />
                 {unreadNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                     {unreadNotifications > 9 ? '9+' : unreadNotifications}
@@ -354,7 +354,7 @@ const AdminLayout = ({
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="p-8 text-center text-gray-500">
-                          <FiBell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <FiBell style={{width:'32px',height:'32px',margin:'0 auto 8px',opacity:0.5}} />
                           <p className="text-sm">No notifications yet</p>
                         </div>
                       ) : (
@@ -407,11 +407,11 @@ const AdminLayout = ({
                     </div>
                     <div className="py-2">
                       <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                        <FiUser className="w-4 h-4" />
+                        <FiUser style={{width:'16px',height:'16px'}} />
                         My Profile
                       </button>
                       <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                        <FiSettings className="w-4 h-4" />
+                        <FiSettings style={{width:'16px',height:'16px'}} />
                         Settings
                       </button>
                     </div>
@@ -420,7 +420,7 @@ const AdminLayout = ({
                         onClick={handleLogout}
                         className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3"
                       >
-                        <FiLogOut className="w-4 h-4" />
+                        <FiLogOut style={{width:'16px',height:'16px'}} />
                         Logout
                       </button>
                     </div>
