@@ -58,8 +58,11 @@ const DepartmentMemberDashboard = () => {
     if (token) {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
+        const rawName = decoded.name || decoded.email?.split('@')[0] || 'Team Member';
+        // Strip parenthetical role from name if present (e.g. "Sachin (HR Head)" → "Sachin")
+        const cleanName = rawName.replace(/\s*\(.*?\)\s*$/, '').trim();
         setUserInfo({
-          name: decoded.name || decoded.email?.split('@')[0] || 'Team Member',
+          name: cleanName,
           role: decoded.role || 'Team Member'
         });
         if (decoded.department) {
