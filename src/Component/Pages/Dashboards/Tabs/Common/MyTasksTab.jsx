@@ -309,7 +309,7 @@ const MyTasksTab = () => {
       {/* Search & Filter */}
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <FiSearch style={{ width: '20px', height: '20px', color: '#9ca3af', position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
             value={searchTerm}
@@ -324,7 +324,7 @@ const MyTasksTab = () => {
       {/* Task List */}
       {filteredTasks.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
-          <FiCheckSquare size={48} className="mx-auto mb-3 opacity-30" />
+          <FiCheckSquare style={{ width: '48px', height: '48px', margin: '0 auto 12px', opacity: 0.3 }} />
           <p className="font-medium">{tasks.length === 0 ? 'No tasks assigned yet' : 'No tasks match your filters'}</p>
           <p className="text-sm mt-1">Tasks assigned by your team head will appear here</p>
         </div>
@@ -408,7 +408,7 @@ const MyTasksTab = () => {
                         </select>
                       )}
                       {updatingTaskId === task.id && (
-                        <FiLoader className="w-4 h-4 animate-spin text-blue-500" />
+                        <FiLoader style={{ width: '16px', height: '16px', color: '#3b82f6', animation: 'spin 1s linear infinite' }} />
                       )}
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -416,7 +416,7 @@ const MyTasksTab = () => {
                         onClick={() => setExpandedTask(isExpanded ? null : task.id)}
                         className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
                       >
-                        {isExpanded ? <FiChevronUp className="w-4 h-4" /> : <FiChevronDown className="w-4 h-4" />}
+                        {isExpanded ? <FiChevronUp style={{ width: '16px', height: '16px' }} /> : <FiChevronDown style={{ width: '16px', height: '16px' }} />}
                       </motion.button>
                     </div>
                   </div>

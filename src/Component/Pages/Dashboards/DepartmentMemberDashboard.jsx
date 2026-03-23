@@ -7,6 +7,7 @@ import {
   FiBarChart2,
 } from 'react-icons/fi';
 import AdminLayout from './AdminLayout';
+import { getAllNotifications, markNotificationRead } from '../service/api';
 
 // Lazy load tab components
 const MyTasksTab = lazy(() => import('./Tabs/Common/MyTasksTab'));
@@ -47,6 +48,7 @@ const DepartmentMemberDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [userInfo, setUserInfo] = useState({ name: 'Team Member', role: 'Team Member' });
   const [department, setDepartment] = useState('');
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -63,11 +65,37 @@ const DepartmentMemberDashboard = () => {
         if (decoded.department) {
           setDepartment(decoded.department);
         }
+        fetchNotifications(decoded.id || decoded.userId);
       } catch (e) {
         console.log('Token decode error');
       }
     }
   }, []);
+
+  const fetchNotifications = async (userId) => {
+    try {
+      const res = await getAllNotifications(userId);
+      const notifs = (res.data || []).map(n => ({
+        id: n.id,
+        text: n.message,
+        time: new Date(n.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        read: n.status === 'read',
+        type: n.type,
+      }));
+      setNotifications(notifs);
+    } catch (e) {
+      console.log('Notification fetch error');
+    }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.read) {
+      try {
+        await markNotificationRead(notif.id);
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+      } catch (e) { /* ignore */ }
+    }
+  };
 
   const breadcrumbs = [
     { label: 'Home', path: '/' },
@@ -168,6 +196,8 @@ const DepartmentMemberDashboard = () => {
       dashboardTitle={`${department || 'Department'} - Member`}
       breadcrumbs={breadcrumbs}
       userInfo={userInfo}
+      notifications={notifications}
+      onNotificationClick={handleNotificationClick}
     >
       {renderContent()}
     </AdminLayout>

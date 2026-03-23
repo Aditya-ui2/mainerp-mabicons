@@ -18,6 +18,7 @@ import {
   FiDatabase,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
+import { getAllNotifications, markNotificationRead } from '../service/api';
 
 // Lazy load Recruitment Tab Components
 const KamOverviewTab = lazy(() => import('./Tabs/KAMRecruitment/KamOverviewTab'));
@@ -94,6 +95,7 @@ const HRRecruitmentDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: 'HR Recruitment', role: 'HR Recruitment Head' });
+  const [notifications, setNotifications] = useState([]);
 
   // Summary stats
   const [stats, setStats] = useState({
@@ -112,11 +114,37 @@ const HRRecruitmentDashboard = () => {
           name: decoded.name || decoded.email?.split('@')[0] || 'HR Recruitment',
           role: 'HR Recruitment Head'
         });
+        fetchNotifications(decoded.id || decoded.userId);
       } catch (e) {
         console.log('Token decode error');
       }
     }
   }, []);
+
+  const fetchNotifications = async (userId) => {
+    try {
+      const res = await getAllNotifications(userId);
+      const notifs = (res.data || []).map(n => ({
+        id: n.id,
+        text: n.message,
+        time: new Date(n.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        read: n.status === 'read',
+        type: n.type,
+      }));
+      setNotifications(notifs);
+    } catch (e) {
+      console.log('Notification fetch error');
+    }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.read) {
+      try {
+        await markNotificationRead(notif.id);
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+      } catch (e) { /* ignore */ }
+    }
+  };
 
   const breadcrumbs = [
     { label: 'Home', path: '/' },
@@ -440,7 +468,8 @@ const HRRecruitmentDashboard = () => {
       dashboardTitle="HR Recruitment"
       breadcrumbs={breadcrumbs}
       userInfo={userInfo}
-      notifications={[]}
+      notifications={notifications}
+      onNotificationClick={handleNotificationClick}
     >
       {renderContent()}
     </AdminLayout>

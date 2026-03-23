@@ -14,6 +14,8 @@ import {
   FiCalendar,
   FiMessageSquare,
   FiFlag,
+  FiBell,
+  FiLoader,
 } from 'react-icons/fi';
 import {
   getDepartmentTasks,
@@ -25,15 +27,15 @@ import {
 
 const StatusBadge = ({ status }) => {
   const config = {
-    Pending: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
-    'In Progress': { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
-    Completed: { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-    Overdue: { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500' },
+    Pending: { bg: '#fef3c7', text: '#92400e', dot: '#f59e0b' },
+    'In Progress': { bg: '#dbeafe', text: '#1e40af', dot: '#3b82f6' },
+    Completed: { bg: '#d1fae5', text: '#065f46', dot: '#10b981' },
+    Overdue: { bg: '#fee2e2', text: '#991b1b', dot: '#ef4444' },
   };
   const c = config[status] || config.Pending;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${c.bg} ${c.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`}></span>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '9999px', fontSize: '12px', fontWeight: 500, background: c.bg, color: c.text }}>
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.dot }}></span>
       {status}
     </span>
   );
@@ -41,14 +43,15 @@ const StatusBadge = ({ status }) => {
 
 const PriorityBadge = ({ priority }) => {
   const config = {
-    Low: 'bg-slate-100 text-slate-600',
-    Medium: 'bg-amber-100 text-amber-700',
-    High: 'bg-orange-100 text-orange-700',
-    Urgent: 'bg-red-100 text-red-700',
+    Low: { bg: '#f1f5f9', text: '#475569' },
+    Medium: { bg: '#fef3c7', text: '#92400e' },
+    High: { bg: '#ffedd5', text: '#c2410c' },
+    Urgent: { bg: '#fee2e2', text: '#991b1b' },
   };
+  const c = config[priority] || config.Medium;
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${config[priority] || config.Medium}`}>
-      <FiFlag className="w-3 h-3" />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', background: c.bg, color: c.text }}>
+      <FiFlag style={{ width: '12px', height: '12px' }} />
       {priority}
     </span>
   );
@@ -70,6 +73,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
     priority: 'Medium',
     dueDate: '',
   });
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     fetchData();
@@ -88,15 +97,15 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
       console.error('Error fetching data:', error);
       // Mock data
       setTeamMembers([
-        { _id: '1', name: 'Manju Sharma', role: 'HR Executive' },
-        { _id: '2', name: 'Jyoti Verma', role: 'Leave Manager' },
-        { _id: '3', name: 'Priya Singh', role: 'Payroll Specialist' },
+        { id: '1', name: 'Manju Sharma', role: 'HR Executive' },
+        { id: '2', name: 'Jyoti Verma', role: 'Leave Manager' },
+        { id: '3', name: 'Priya Singh', role: 'Payroll Specialist' },
       ]);
       setTasks([
-        { _id: '1', title: 'Process March Payroll', description: 'Process payroll for TechCorp employees', assignedTo: { _id: '1', name: 'Manju Sharma' }, assignedToName: 'Manju Sharma', status: 'In Progress', priority: 'High', dueDate: '2026-03-25', createdAt: new Date() },
-        { _id: '2', title: 'Review Leave Requests', description: 'Review and approve pending leave requests', assignedTo: { _id: '2', name: 'Jyoti Verma' }, assignedToName: 'Jyoti Verma', status: 'Pending', priority: 'Medium', dueDate: '2026-03-20', createdAt: new Date() },
-        { _id: '3', title: 'Update Attendance Records', description: 'Update attendance for all clients', assignedTo: { _id: '3', name: 'Priya Singh' }, assignedToName: 'Priya Singh', status: 'Completed', priority: 'Low', dueDate: '2026-03-18', createdAt: new Date() },
-        { _id: '4', title: 'Prepare Tax Documentation', description: 'Prepare TDS documentation for Q4', assignedTo: { _id: '1', name: 'Manju Sharma' }, assignedToName: 'Manju Sharma', status: 'Overdue', priority: 'Urgent', dueDate: '2026-03-15', createdAt: new Date() },
+        { id: '1', title: 'Process March Payroll', description: 'Process payroll for TechCorp employees', assignedTo: { id: '1', name: 'Manju Sharma' }, assignedToName: 'Manju Sharma', status: 'In Progress', priority: 'High', dueDate: '2026-03-25', createdAt: new Date() },
+        { id: '2', title: 'Review Leave Requests', description: 'Review and approve pending leave requests', assignedTo: { id: '2', name: 'Jyoti Verma' }, assignedToName: 'Jyoti Verma', status: 'Pending', priority: 'Medium', dueDate: '2026-03-20', createdAt: new Date() },
+        { id: '3', title: 'Update Attendance Records', description: 'Update attendance for all clients', assignedTo: { id: '3', name: 'Priya Singh' }, assignedToName: 'Priya Singh', status: 'Completed', priority: 'Low', dueDate: '2026-03-18', createdAt: new Date() },
+        { id: '4', title: 'Prepare Tax Documentation', description: 'Prepare TDS documentation for Q4', assignedTo: { id: '1', name: 'Manju Sharma' }, assignedToName: 'Manju Sharma', status: 'Overdue', priority: 'Urgent', dueDate: '2026-03-15', createdAt: new Date() },
       ]);
     } finally {
       setLoading(false);
@@ -112,7 +121,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
       };
 
       if (editingTask) {
-        await updateDepartmentTask(editingTask._id, taskData);
+        await updateDepartmentTask(editingTask.id, taskData);
       } else {
         await createDepartmentTask(taskData);
       }
@@ -120,29 +129,34 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
       setShowModal(false);
       setEditingTask(null);
       setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' });
+      showToast(editingTask ? 'Task updated!' : 'Task assigned!');
       fetchData();
     } catch (error) {
       console.error('Error saving task:', error);
-      alert(error.message || 'Failed to save task');
+      showToast(error.message || 'Failed to save task', 'error');
     }
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
       await updateDepartmentTask(taskId, { status: newStatus });
-      setTasks(tasks.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
+      setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+      showToast(`Task marked as ${newStatus}`);
     } catch (error) {
       console.error('Error updating status:', error);
+      showToast('Failed to update status', 'error');
     }
   };
 
   const handleDelete = async (taskId) => {
     try {
       await deleteDepartmentTask(taskId);
-      setTasks(tasks.filter(t => t._id !== taskId));
+      setTasks(tasks.filter(t => t.id !== taskId));
       setConfirmDelete(null);
+      showToast('Task deleted');
     } catch (error) {
       console.error('Error deleting task:', error);
+      showToast('Failed to delete task', 'error');
     }
   };
 
@@ -182,11 +196,43 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -40, scale: 0.95 }}
+            style={{
+              position: 'fixed', top: '24px', right: '24px', zIndex: 9999,
+              padding: '14px 20px', borderRadius: '12px',
+              background: toast.type === 'error' ? '#fef2f2' : '#f0fdf4',
+              border: `1px solid ${toast.type === 'error' ? '#fecaca' : '#bbf7d0'}`,
+              boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+              display: 'flex', alignItems: 'center', gap: '10px',
+              maxWidth: '360px',
+            }}
+          >
+            <span style={{
+              width: '24px', height: '24px', borderRadius: '50%',
+              background: toast.type === 'error' ? '#ef4444' : '#22c55e',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontSize: '12px', fontWeight: 700, flexShrink: 0,
+            }}>
+              {toast.type === 'error' ? '!' : '✓'}
+            </span>
+            <span style={{ fontSize: '14px', fontWeight: 500, color: toast.type === 'error' ? '#991b1b' : '#166534' }}>
+              {toast.message}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
-            <FiCheckSquare className="w-6 h-6 text-white" />
+          <div style={{ padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981, #0d9488)', boxShadow: '0 4px 12px rgba(16,185,129,0.3)' }}>
+            <FiCheckSquare style={{ width: '24px', height: '24px', color: '#fff' }} />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Task Assignment</h2>
@@ -197,41 +243,39 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' }); setShowModal(true); }}
-          className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-shadow"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '10px 20px', fontSize: '14px', fontWeight: 600,
+            background: 'linear-gradient(135deg, #059669, #0d9488)',
+            color: '#fff', borderRadius: '12px', border: 'none', cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(5,150,105,0.3)',
+          }}
         >
-          <FiPlus className="w-4 h-4" />
+          <FiPlus style={{ width: '16px', height: '16px' }} />
           Assign Task
         </motion.button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs font-medium text-gray-500 uppercase">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs font-medium text-gray-500 uppercase">Pending</p>
-          <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs font-medium text-gray-500 uppercase">In Progress</p>
-          <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs font-medium text-gray-500 uppercase">Completed</p>
-          <p className="text-2xl font-bold text-emerald-600">{stats.completed}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-xs font-medium text-gray-500 uppercase">Overdue</p>
-          <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
-        </div>
+        {[
+          { label: 'Total', value: stats.total, color: '#6366f1' },
+          { label: 'Pending', value: stats.pending, color: '#f59e0b' },
+          { label: 'In Progress', value: stats.inProgress, color: '#3b82f6' },
+          { label: 'Completed', value: stats.completed, color: '#10b981' },
+          { label: 'Overdue', value: stats.overdue, color: '#ef4444' },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs font-medium text-gray-500 uppercase">{stat.label}</p>
+            <p className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Search & Filter */}
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <FiSearch style={{ width: '20px', height: '20px', color: '#9ca3af', position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
             value={searchTerm}
@@ -256,7 +300,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
       {/* Task List */}
       {filteredTasks.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
-          <FiCheckSquare size={48} className="mx-auto mb-3 opacity-30" />
+          <FiCheckSquare style={{ width: '48px', height: '48px', margin: '0 auto 12px', opacity: 0.3 }} />
           <p className="font-medium">No tasks found</p>
           <p className="text-sm mt-1">Assign your first task to get started</p>
         </div>
@@ -264,7 +308,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
         <div className="space-y-3">
           {filteredTasks.map((task, idx) => (
             <motion.div
-              key={task._id}
+              key={task.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
@@ -280,12 +324,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                   <p className="text-sm text-gray-500 mb-3">{task.description}</p>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1.5">
-                      <FiUser className="w-4 h-4" />
+                      <FiUser style={{ width: '16px', height: '16px' }} />
                       <span>{task.assignedToName}</span>
                     </div>
                     {task.dueDate && (
                       <div className="flex items-center gap-1.5">
-                        <FiCalendar className="w-4 h-4" />
+                        <FiCalendar style={{ width: '16px', height: '16px' }} />
                         <span>{new Date(task.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
                       </div>
                     )}
@@ -296,7 +340,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                   {task.status !== 'Completed' && (
                     <select
                       value={task.status}
-                      onChange={(e) => handleStatusChange(task._id, e.target.value)}
+                      onChange={(e) => handleStatusChange(task.id, e.target.value)}
                       className="text-xs px-3 py-2 rounded-lg border border-gray-200 bg-white font-medium cursor-pointer"
                     >
                       <option value="Pending">Pending</option>
@@ -312,7 +356,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                       setFormData({
                         title: task.title,
                         description: task.description || '',
-                        assignedTo: task.assignedTo?._id || '',
+                        assignedTo: task.assignedTo?.id || task.assignedTo?._id || '',
                         priority: task.priority,
                         dueDate: task.dueDate?.split('T')[0] || '',
                       });
@@ -320,15 +364,15 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                     }}
                     className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700"
                   >
-                    <FiEdit2 className="w-4 h-4" />
+                    <FiEdit2 style={{ width: '16px', height: '16px' }} />
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => setConfirmDelete(task._id)}
+                    onClick={() => setConfirmDelete(task.id)}
                     className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600"
                   >
-                    <FiTrash2 className="w-4 h-4" />
+                    <FiTrash2 style={{ width: '16px', height: '16px' }} />
                   </motion.button>
                 </div>
               </div>
@@ -362,7 +406,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                   onClick={() => { setShowModal(false); setEditingTask(null); }}
                   className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX style={{ width: '20px', height: '20px' }} />
                 </button>
               </div>
 
@@ -399,7 +443,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                     >
                       <option value="">Select member</option>
                       {teamMembers.map(member => (
-                        <option key={member._id} value={member._id}>{member.name}</option>
+                        <option key={member.id || member._id} value={member.id || member._id}>{member.name}</option>
                       ))}
                     </select>
                   </div>
@@ -436,7 +480,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25"
+                    style={{
+                      padding: '10px 20px', fontSize: '14px', fontWeight: 600,
+                      borderRadius: '12px', border: 'none', cursor: 'pointer',
+                      background: 'linear-gradient(135deg, #059669, #0d9488)',
+                      color: '#fff', boxShadow: '0 4px 12px rgba(5,150,105,0.25)',
+                    }}
                   >
                     {editingTask ? 'Update Task' : 'Assign Task'}
                   </button>
@@ -464,14 +513,22 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center"
             >
-              <div className="mx-auto w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <FiTrash2 className="w-8 h-8 text-red-500" />
+              <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: '#fee2e2' }}>
+                <FiTrash2 style={{ width: '32px', height: '32px', color: '#ef4444' }} />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-1">Delete Task?</h3>
               <p className="text-sm text-gray-500 mb-5">This action cannot be undone.</p>
               <div className="flex items-center justify-center gap-3">
                 <button onClick={() => setConfirmDelete(null)} className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gray-100 text-gray-600">Cancel</button>
-                <button onClick={() => handleDelete(confirmDelete)} className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white">Delete</button>
+                <button
+                  onClick={() => handleDelete(confirmDelete)}
+                  style={{
+                    padding: '10px 20px', fontSize: '14px', fontWeight: 600,
+                    borderRadius: '12px', border: 'none', cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #ef4444, #e11d48)',
+                    color: '#fff',
+                  }}
+                >Delete</button>
               </div>
             </motion.div>
           </div>
