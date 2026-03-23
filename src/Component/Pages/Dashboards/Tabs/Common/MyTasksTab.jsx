@@ -149,6 +149,8 @@ const MyTasksTab = () => {
   const [expandedTask, setExpandedTask] = useState(null);
   const [commentText, setCommentText] = useState('');
   const [updatingTaskId, setUpdatingTaskId] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [sendingComment, setSendingComment] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -167,13 +169,20 @@ const MyTasksTab = () => {
     }
   };
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const handleStatusChange = async (taskId, newStatus) => {
     try {
       setUpdatingTaskId(taskId);
       await updateDepartmentTask(taskId, { status: newStatus });
       setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus, ...(newStatus === 'Completed' ? { completedAt: new Date().toISOString() } : {}) } : t));
+      showToast(`Task marked as ${newStatus}`);
     } catch (error) {
       console.error('Error updating status:', error);
+      showToast('Failed to update status', 'error');
     } finally {
       setUpdatingTaskId(null);
     }
@@ -182,11 +191,16 @@ const MyTasksTab = () => {
   const handleAddComment = async (taskId) => {
     if (!commentText.trim()) return;
     try {
+      setSendingComment(true);
       await updateDepartmentTask(taskId, { comments: commentText });
       setCommentText('');
+      showToast('Comment sent!');
       fetchTasks();
     } catch (error) {
       console.error('Error adding comment:', error);
+      showToast('Failed to send comment', 'error');
+    } finally {
+      setSendingComment(false);
     }
   };
 
@@ -234,6 +248,37 @@ const MyTasksTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -40, scale: 0.95 }}
+            style={{
+              position: 'fixed', top: '24px', right: '24px', zIndex: 9999,
+              padding: '14px 20px', borderRadius: '12px',
+              background: toast.type === 'error' ? '#fef2f2' : '#f0fdf4',
+              border: `1px solid ${toast.type === 'error' ? '#fecaca' : '#bbf7d0'}`,
+              boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+              display: 'flex', alignItems: 'center', gap: '10px',
+              maxWidth: '360px',
+            }}
+          >
+            <span style={{
+              width: '24px', height: '24px', borderRadius: '50%',
+              background: toast.type === 'error' ? '#ef4444' : '#22c55e',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontSize: '12px', fontWeight: 700, flexShrink: 0,
+            }}>
+              {toast.type === 'error' ? '!' : '✓'}
+            </span>
+            <span style={{ fontSize: '14px', fontWeight: 500, color: toast.type === 'error' ? '#991b1b' : '#166534' }}>
+              {toast.message}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Header */}
       <div className="flex items-center gap-3">
         <div style={{ padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}>
@@ -386,47 +431,123 @@ const MyTasksTab = () => {
                       exit={{ height: 0, opacity: 0 }}
                       className="border-t border-gray-100 overflow-hidden"
                     >
-                      <div className="p-5 bg-gray-50">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Comments</h4>
+                      <div style={{ padding: '20px', background: 'linear-gradient(180deg, #f8fafc, #f1f5f9)' }}>
+                        {/* Comments Header */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                          <FiMessageSquare style={{ width: '18px', height: '18px', color: '#6366f1' }} />
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
+                            Comments
+                          </span>
+                          {task.comments?.length > 0 && (
+                            <span style={{
+                              fontSize: '11px', fontWeight: 600, color: '#6366f1',
+                              background: '#e0e7ff', padding: '2px 8px', borderRadius: '9999px',
+                            }}>
+                              {task.comments.length}
+                            </span>
+                          )}
+                        </div>
 
-                        {/* Existing Comments */}
+                        {/* Comments List - Chat Style */}
                         {task.comments?.length > 0 ? (
-                          <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
                             {task.comments.map((comment, i) => (
-                              <div key={i} className="bg-white rounded-lg p-3 text-sm">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="font-medium text-gray-700">{comment.byName || 'User'}</span>
-                                  <span className="text-xs text-gray-400">
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}
+                              >
+                                {/* Avatar */}
+                                <div style={{
+                                  width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+                                  background: `linear-gradient(135deg, ${comment.byType === 'TeamLeader' ? '#f59e0b, #ea580c' : '#3b82f6, #6366f1'})`,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  color: '#fff', fontSize: '13px', fontWeight: 700,
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                }}>
+                                  {(comment.byName || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                {/* Message Bubble */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{
+                                    background: '#fff', borderRadius: '0 12px 12px 12px',
+                                    padding: '12px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                                    border: '1px solid #e2e8f0',
+                                  }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                                        {comment.byName || 'User'}
+                                      </span>
+                                      {comment.byType === 'TeamLeader' && (
+                                        <span style={{
+                                          fontSize: '10px', fontWeight: 600, color: '#b45309',
+                                          background: '#fef3c7', padding: '1px 6px', borderRadius: '4px',
+                                        }}>
+                                          Manager
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', margin: 0, wordBreak: 'break-word' }}>
+                                      {comment.text}
+                                    </p>
+                                  </div>
+                                  <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'block', paddingLeft: '4px' }}>
                                     {new Date(comment.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </div>
-                                <p className="text-gray-600">{comment.text}</p>
-                              </div>
+                              </motion.div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-400 mb-4">No comments yet</p>
+                          <div style={{
+                            textAlign: 'center', padding: '24px 16px', marginBottom: '16px',
+                            background: '#fff', borderRadius: '12px', border: '1px dashed #cbd5e1',
+                          }}>
+                            <FiMessageSquare style={{ width: '28px', height: '28px', color: '#cbd5e1', margin: '0 auto 8px' }} />
+                            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>No comments yet — start the conversation!</p>
+                          </div>
                         )}
 
-                        {/* Add Comment */}
+                        {/* Add Comment Input */}
                         {task.status !== 'Completed' && (
-                          <div className="flex gap-2">
+                          <div style={{
+                            display: 'flex', gap: '10px', alignItems: 'center',
+                            background: '#fff', borderRadius: '16px', padding: '6px 6px 6px 16px',
+                            border: '2px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                            transition: 'border-color 0.2s',
+                          }}>
                             <input
                               type="text"
                               value={expandedTask === task.id ? commentText : ''}
                               onChange={(e) => setCommentText(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && handleAddComment(task.id)}
-                              placeholder="Add a comment..."
-                              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300"
+                              onKeyDown={(e) => e.key === 'Enter' && !sendingComment && handleAddComment(task.id)}
+                              placeholder="Write a message..."
+                              style={{
+                                flex: 1, border: 'none', outline: 'none', fontSize: '14px',
+                                color: '#1e293b', background: 'transparent',
+                              }}
                             />
                             <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
+                              whileHover={{ scale: 1.08 }}
+                              whileTap={{ scale: 0.92 }}
                               onClick={() => handleAddComment(task.id)}
-                              className="px-4 py-2 rounded-lg text-white text-sm font-medium"
-                              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
+                              disabled={sendingComment || !commentText.trim()}
+                              style={{
+                                width: '40px', height: '40px', borderRadius: '12px',
+                                background: commentText.trim() ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : '#e2e8f0',
+                                border: 'none', cursor: commentText.trim() ? 'pointer' : 'default',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                transition: 'background 0.2s',
+                                opacity: sendingComment ? 0.6 : 1,
+                              }}
                             >
-                              <FiSend style={{ width: '16px', height: '16px' }} />
+                              {sendingComment ? (
+                                <FiLoader style={{ width: '16px', height: '16px', color: '#fff', animation: 'spin 1s linear infinite' }} />
+                              ) : (
+                                <FiSend style={{ width: '16px', height: '16px', color: commentText.trim() ? '#fff' : '#94a3b8' }} />
+                              )}
                             </motion.button>
                           </div>
                         )}
