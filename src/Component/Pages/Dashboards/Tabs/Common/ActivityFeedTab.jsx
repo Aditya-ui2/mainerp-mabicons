@@ -31,20 +31,20 @@ const ActivityTypeIcon = ({ type }) => {
   return <Icon style={{width:'16px',height:'16px'}} />;
 };
 
-const getActionColor = (action) => {
-  if (action.includes('completed') || action.includes('approved') || action.includes('accepted')) {
-    return 'from-emerald-500 to-teal-600';
+const getActionGradient = (action) => {
+  if (action?.includes('completed') || action?.includes('approved') || action?.includes('accepted')) {
+    return 'linear-gradient(135deg, #10b981, #0d9488)';
   }
-  if (action.includes('rejected') || action.includes('deleted')) {
-    return 'from-red-500 to-rose-600';
+  if (action?.includes('rejected') || action?.includes('deleted')) {
+    return 'linear-gradient(135deg, #ef4444, #e11d48)';
   }
-  if (action.includes('assigned') || action.includes('scheduled')) {
-    return 'from-blue-500 to-indigo-600';
+  if (action?.includes('assigned') || action?.includes('scheduled')) {
+    return 'linear-gradient(135deg, #3b82f6, #4f46e5)';
   }
-  if (action.includes('updated') || action.includes('modified')) {
-    return 'from-amber-500 to-orange-600';
+  if (action?.includes('updated') || action?.includes('modified')) {
+    return 'linear-gradient(135deg, #f59e0b, #ea580c)';
   }
-  return 'from-violet-500 to-purple-600';
+  return 'linear-gradient(135deg, #8b5cf6, #9333ea)';
 };
 
 const formatTimeAgo = (date) => {
@@ -156,11 +156,17 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
           <button
             key={type}
             onClick={() => setFilter(type)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full capitalize transition-all ${
-              filter === type
-                ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            style={filter === type ? {
+              background: 'linear-gradient(to right, #7c3aed, #9333ea)',
+              color: '#fff',
+              boxShadow: '0 10px 15px -3px rgba(139,92,246,0.25)',
+              padding: '6px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 500,
+              textTransform: 'capitalize', border: 'none', cursor: 'pointer',
+            } : {
+              background: '#f3f4f6', color: '#4b5563',
+              padding: '6px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 500,
+              textTransform: 'capitalize', border: 'none', cursor: 'pointer',
+            }}
           >
             {type}
           </button>
@@ -188,7 +194,12 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
               >
                 <div className="flex items-start gap-4">
                   {/* Avatar with action color */}
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${getActionColor(activity.action)} flex items-center justify-center text-white shadow-lg`}>
+                  <div style={{
+                    flexShrink: 0, width: '40px', height: '40px', borderRadius: '50%',
+                    background: getActionGradient(activity.action),
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                  }}>
                     <ActivityTypeIcon type={activity.actionType} />
                   </div>
 
@@ -196,13 +207,14 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-gray-900">{activity.performedByName}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
-                        activity.actionType === 'task' ? 'bg-emerald-100 text-emerald-700' :
-                        activity.actionType === 'leave' ? 'bg-blue-100 text-blue-700' :
-                        activity.actionType === 'payroll' ? 'bg-amber-100 text-amber-700' :
-                        activity.actionType === 'attendance' ? 'bg-violet-100 text-violet-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
+                      <span style={{
+                        fontSize: '12px', padding: '2px 8px', borderRadius: '9999px', textTransform: 'capitalize',
+                        ...(activity.actionType === 'task' ? { background: '#d1fae5', color: '#047857' } :
+                           activity.actionType === 'leave' ? { background: '#dbeafe', color: '#1d4ed8' } :
+                           activity.actionType === 'payroll' ? { background: '#fef3c7', color: '#b45309' } :
+                           activity.actionType === 'attendance' ? { background: '#ede9fe', color: '#6d28d9' } :
+                           { background: '#f3f4f6', color: '#4b5563' })
+                      }}>
                         {activity.actionType}
                       </span>
                     </div>
