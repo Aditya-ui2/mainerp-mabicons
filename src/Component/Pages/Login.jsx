@@ -244,6 +244,8 @@ const Login = () => {
       }
 
       if (response.token) {
+        // Clear old session data first
+        localStorage.clear();
         localStorage.setItem('token', response.token);
         localStorage.setItem('userType', userType);
         if (response.user) {
