@@ -158,11 +158,11 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign }) => {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 40, scale: 0.97 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className={`relative z-10 rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col ${isDarkMode ? 'bg-slate-900 border border-slate-700/50' : 'bg-white'}`}
+        className={`relative z-10 rounded-3xl shadow-2xl w-full max-w-xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col ${isDarkMode ? 'bg-slate-900 border border-slate-700/50' : 'bg-white'}`}
         style={{ boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(139,92,246,0.1)' }}
       >
         {/* ── Compact Header ── */}
-        <div className="relative overflow-hidden px-6 pt-6 pb-4">
+        <div className="relative overflow-hidden px-4 sm:px-6 pt-6 pb-4">
           <div className="absolute inset-0 opacity-10" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #4f46e5 100%)' }} />
           <div className="relative flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -171,7 +171,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign }) => {
               </div>
               <div>
                 <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Assign Task</h3>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex flex-wrap items-center gap-2 mt-0.5">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDarkMode ? 'bg-violet-900/40 text-violet-300' : 'bg-violet-100 text-violet-600'}`}>{job?.title}</span>
                   <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>•</span>
                   <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{job?.client}</span>
@@ -185,12 +185,12 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign }) => {
         </div>
 
         {/* ── Scrollable Body ── */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 space-y-5">
 
           {/* Quick Task Type Chips */}
           <div>
             <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Quick Select Task Type</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {taskTypes.map(t => (
                 <motion.button key={t.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                   onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
@@ -277,14 +277,14 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign }) => {
         </div>
 
         {/* ── Footer ── */}
-        <div className={`flex items-center justify-between gap-3 px-6 py-4 border-t ${isDarkMode ? 'bg-slate-900/80 border-slate-700/50' : 'bg-slate-50/80 border-slate-200'}`}>
+        <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t ${isDarkMode ? 'bg-slate-900/80 border-slate-700/50' : 'bg-slate-50/80 border-slate-200'}`}>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onClose}
-            className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}
+            className={`w-full sm:w-auto px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}
           >Cancel</motion.button>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
             disabled={!taskTitle && !taskType}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', boxShadow: '0 8px 20px rgba(139,92,246,0.35)' }}
           >
             <FiSend className="w-4 h-4" /> Assign Task
@@ -315,15 +315,15 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
         >
           <FiArrowLeft className="w-5 h-5" /> Back to Job Openings
         </motion.button>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => onAssignTask(job)}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl shadow-lg"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl shadow-lg"
             style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', boxShadow: '0 8px 16px rgba(245,158,11,0.3)' }}
           >
             <FiClipboard className="w-4 h-4" /> Assign Task
           </motion.button>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => onEdit(job)}
-            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl border-2 ${isDarkMode ? 'border-slate-600 text-slate-300 hover:border-violet-500' : 'border-slate-200 text-slate-600 hover:border-violet-400'}`}
+            className={`flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl border-2 ${isDarkMode ? 'border-slate-600 text-slate-300 hover:border-violet-500' : 'border-slate-200 text-slate-600 hover:border-violet-400'}`}
           >
             <FiEdit2 className="w-4 h-4" /> Edit Position
           </motion.button>
@@ -331,35 +331,35 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
       </div>
 
       {/* Header Card */}
-      <div className={`rounded-2xl border-2 p-6 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-violet-100 shadow-lg'}`}>
+      <div className={`rounded-2xl border-2 p-4 sm:p-6 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-violet-100 shadow-lg'}`}>
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
-          <div className="flex items-start gap-5">
-            <div className="h-20 w-20 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg flex-shrink-0"
+          <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+            <div className="h-20 w-20 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg flex-shrink-0 mx-auto sm:mx-0"
               style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
               {job.clientLogo}
             </div>
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
+            <div className="text-center sm:text-left">
+              <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-start">
                 <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{job.title}</h2>
               </div>
               <p className={`text-lg mt-1 font-medium ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>{job.client}</p>
-              <div className="flex flex-wrap items-center gap-5 mt-3">
+              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-5 mt-3">
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-4 h-4" /> {job.location}</span>
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiDollarSign className="w-4 h-4" /> {job.salary}</span>
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiClock className="w-4 h-4" /> {job.type}</span>
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiCalendar className="w-4 h-4" /> Deadline: {new Date(job.deadline).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
               </div>
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap gap-2 mt-4 justify-center sm:justify-start">
                 {job.skills.map(skill => (
                   <span key={skill} className={`text-xs font-semibold px-3 py-1.5 rounded-full ${isDarkMode ? 'bg-violet-900/40 text-violet-300 border border-violet-700/50' : 'bg-gradient-to-r from-violet-50 to-blue-50 text-violet-700 border border-violet-200'}`}>{skill}</span>
                 ))}
               </div>
             </div>
           </div>
-          <div className="text-right flex-shrink-0">
+          <div className="text-center lg:text-right flex-shrink-0">
             <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Positions Filled</p>
             <p className="text-4xl font-bold" style={{ color: '#7c3aed' }}>{job.filled}/{job.openings}</p>
-            <div className={`w-36 h-2.5 rounded-full mt-2 overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-violet-100'}`}>
+            <div className={`w-36 h-2.5 rounded-full mt-2 overflow-hidden mx-auto lg:mx-0 ${isDarkMode ? 'bg-slate-700' : 'bg-violet-100'}`}>
               <motion.div initial={{ width: 0 }} animate={{ width: `${(job.filled / job.openings) * 100}%` }} transition={{ duration: 0.8 }}
                 className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)' }} />
             </div>
@@ -368,7 +368,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
       </div>
 
       {/* Tabs */}
-      <div className={`flex gap-1 p-1.5 rounded-xl ${isDarkMode ? 'bg-slate-800/80' : 'bg-slate-100'}`}>
+      <div className={`flex flex-wrap gap-1 p-1.5 rounded-xl ${isDarkMode ? 'bg-slate-800/80' : 'bg-slate-100'}`}>
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === tab.id
@@ -381,9 +381,9 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
       </div>
 
       {/* Tab Content */}
-      <div className={`rounded-2xl border-2 p-6 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
+      <div className={`rounded-2xl border-2 p-4 sm:p-6 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {[
               { label: 'Client', value: job.client, icon: FiBriefcase },
               { label: 'Location', value: job.location, icon: FiMapPin },
@@ -872,6 +872,16 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     return matchesSearch && matchesClient && matchesPosition && matchesDate;
   });
 
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterClient('all');
+    setFilterPosition('all');
+    setFilterDate('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+  };
+
   const getAvatarGradient = (name) => {
     const gradients = [
       'linear-gradient(135deg, #8b5cf6, #7c3aed)',
@@ -883,17 +893,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     return gradients[(name || '').charCodeAt(0) % gradients.length];
   };
 
-  // Skeleton loader
+  // Skeleton loader (responsive)
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <div className="space-y-2">
-            <div className={`h-8 w-64 rounded-lg animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
-            <div className={`h-4 w-40 rounded-lg animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
+            <div className={`h-8 w-48 sm:w-64 rounded-lg animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
+            <div className={`h-4 w-32 sm:w-40 rounded-lg animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
           </div>
+          <div className={`h-10 w-32 rounded-xl animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className={`h-28 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
           ))}
@@ -938,10 +949,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             <FiBriefcase className="w-7 h-7" style={{ color: 'white' }} />
           </div>
           <div>
-            <h2 className="text-3xl font-bold" style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold" style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Client Job Openings
             </h2>
-            <p className={`text-base mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <p className={`text-sm sm:text-base mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
               Manage client requirements, track positions & assign tasks
             </p>
           </div>
@@ -950,43 +961,45 @@ const JobOpeningsTab = ({ isDarkMode }) => {
           <motion.button
             whileHover={{ scale: 1.02, rotate: 180 }}
             whileTap={{ scale: 0.98 }}
+            onClick={fetchPositions}
             className={`p-3 rounded-xl border-2 transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400 hover:border-violet-500' : 'bg-white border-slate-200 text-slate-500 hover:border-violet-300'}`}
           >
-            <FiRefreshCw className="w-6 h-6" />
+            <FiRefreshCw className="w-5 h-5 sm:w-6 sm:h-6" />
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-6 py-3 text-base font-semibold text-white rounded-xl transition-shadow"
+            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white rounded-xl transition-shadow"
             style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.25)' }}
           >
-            <FiPlus className="w-5 h-5" />
-            New Position
+            <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">New Position</span>
+            <span className="sm:hidden">New</span>
           </motion.button>
         </div>
       </motion.div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Stats Cards - Fully Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Total Positions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           whileHover={{ scale: 1.02, y: -2 }}
-          className={`relative overflow-hidden rounded-2xl p-6 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-violet-100 shadow-lg'}`}
+          className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-violet-100 shadow-lg'}`}
         >
           <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
             <div className="w-full h-full rounded-full" style={{ backgroundColor: '#8b5cf6' }}></div>
           </div>
           <div className="relative flex items-start justify-between">
             <div>
-              <p className={`text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Total Clients</p>
-              <p className="text-4xl font-extrabold mt-2" style={{ color: '#7c3aed' }}>{stats.total}</p>
+              <p className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Total Clients</p>
+              <p className="text-3xl sm:text-4xl font-extrabold mt-2" style={{ color: '#7c3aed' }}>{stats.total}</p>
             </div>
-            <div className="p-4 rounded-xl" style={{ backgroundColor: '#8b5cf6', boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.3)' }}>
-              <FiBriefcase className="w-6 h-6" style={{ color: 'white' }} />
+            <div className="p-3 sm:p-4 rounded-xl" style={{ backgroundColor: '#8b5cf6', boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.3)' }}>
+              <FiBriefcase className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'white' }} />
             </div>
           </div>
         </motion.div>
@@ -997,18 +1010,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           whileHover={{ scale: 1.02, y: -2 }}
-          className={`relative overflow-hidden rounded-2xl p-6 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-emerald-100 shadow-lg'}`}
+          className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-emerald-100 shadow-lg'}`}
         >
           <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
             <div className="w-full h-full rounded-full" style={{ backgroundColor: '#10b981' }}></div>
           </div>
           <div className="relative flex items-start justify-between">
             <div>
-              <p className={`text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Active Openings</p>
-              <p className="text-4xl font-extrabold mt-2" style={{ color: '#059669' }}>{stats.open}</p>
+              <p className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Active Openings</p>
+              <p className="text-3xl sm:text-4xl font-extrabold mt-2" style={{ color: '#059669' }}>{stats.open}</p>
             </div>
-            <div className="p-4 rounded-xl" style={{ backgroundColor: '#10b981', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)' }}>
-              <FiCheckCircle className="w-6 h-6" style={{ color: 'white' }} />
+            <div className="p-3 sm:p-4 rounded-xl" style={{ backgroundColor: '#10b981', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)' }}>
+              <FiCheckCircle className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'white' }} />
             </div>
           </div>
         </motion.div>
@@ -1019,18 +1032,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           whileHover={{ scale: 1.02, y: -2 }}
-          className={`relative overflow-hidden rounded-2xl p-6 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-blue-100 shadow-lg'}`}
+          className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-blue-100 shadow-lg'}`}
         >
           <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
             <div className="w-full h-full rounded-full" style={{ backgroundColor: '#3b82f6' }}></div>
           </div>
           <div className="relative flex items-start justify-between">
             <div>
-              <p className={`text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>In Progress</p>
-              <p className="text-4xl font-extrabold mt-2" style={{ color: '#2563eb' }}>{stats.inProgress}</p>
+              <p className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>In Progress</p>
+              <p className="text-3xl sm:text-4xl font-extrabold mt-2" style={{ color: '#2563eb' }}>{stats.inProgress}</p>
             </div>
-            <div className="p-4 rounded-xl" style={{ backgroundColor: '#3b82f6', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}>
-              <FiClock className="w-6 h-6" style={{ color: 'white' }} />
+            <div className="p-3 sm:p-4 rounded-xl" style={{ backgroundColor: '#3b82f6', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}>
+              <FiClock className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'white' }} />
             </div>
           </div>
         </motion.div>
@@ -1041,116 +1054,128 @@ const JobOpeningsTab = ({ isDarkMode }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           whileHover={{ scale: 1.02, y: -2 }}
-          className={`relative overflow-hidden rounded-2xl p-6 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-indigo-100 shadow-lg'}`}
+          className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-indigo-100 shadow-lg'}`}
         >
           <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
             <div className="w-full h-full rounded-full" style={{ backgroundColor: '#6366f1' }}></div>
           </div>
           <div className="relative flex items-start justify-between">
             <div>
-              <p className={`text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Positions Filled</p>
-              <p className="text-4xl font-extrabold mt-2" style={{ color: '#4f46e5' }}>{stats.totalFilled}/{stats.totalOpenings}</p>
+              <p className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Positions Filled</p>
+              <p className="text-3xl sm:text-4xl font-extrabold mt-2" style={{ color: '#4f46e5' }}>{stats.totalFilled}/{stats.totalOpenings}</p>
             </div>
-            <div className="p-4 rounded-xl" style={{ backgroundColor: '#6366f1', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)' }}>
-              <FiUsers className="w-6 h-6" style={{ color: 'white' }} />
+            <div className="p-3 sm:p-4 rounded-xl" style={{ backgroundColor: '#6366f1', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)' }}>
+              <FiUsers className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'white' }} />
             </div>
           </div>
         </motion.div>
       </div>
 
-      {/* Search & Filter */}
+      {/* Search & Filter - Fully Responsive */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="flex flex-col md:flex-row gap-4"
+        className="flex flex-col gap-4"
       >
-        <div className="relative flex-1">
-          <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by title, client, or location..."
-            className={`w-full rounded-xl border-2 py-3.5 pl-14 pr-5 text-base transition-all focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-          />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by title, client, or location..."
+              className={`w-full rounded-xl border-2 py-3 pl-12 pr-5 text-base transition-all focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-4">
+            <div className="relative w-full">
+              <select
+                value={filterClient}
+                onChange={(e) => setFilterClient(e.target.value)}
+                className={`appearance-none w-full rounded-xl border-2 px-4 py-3 pr-10 text-base font-medium cursor-pointer focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+              >
+                <option value="all">All Clients</option>
+                {ACTIVE_CLIENTS.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+            </div>
+            <div className="relative w-full">
+              <select
+                value={filterPosition}
+                onChange={(e) => setFilterPosition(e.target.value)}
+                className={`appearance-none w-full rounded-xl border-2 px-4 py-3 pr-10 text-base font-medium cursor-pointer focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+              >
+                <option value="all">All</option>
+                <option value="Open">Open</option>
+                <option value="Filled">Filled</option>
+              </select>
+              <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+            </div>
+            <div className="relative w-full">
+              <select
+                value={filterDate}
+                onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
+                className={`appearance-none w-full rounded-xl border-2 px-4 py-3 pr-10 text-base font-medium cursor-pointer focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+              >
+                <option value="all">All Time</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="custom">Custom Date</option>
+              </select>
+              <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={clearFilters}
+              className="px-4 py-3 text-sm font-semibold rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 text-white shadow-md"
+            >
+              Clear Filters
+            </motion.button>
+          </div>
         </div>
-        <div className="relative">
-          <select
-            value={filterClient}
-            onChange={(e) => setFilterClient(e.target.value)}
-            className={`appearance-none rounded-xl border-2 px-5 py-3.5 pr-12 text-base font-medium cursor-pointer focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-          >
-            <option value="all">All Clients</option>
-            {ACTIVE_CLIENTS.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <FiChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-        </div>
-        <div className="relative">
-          <select
-            value={filterPosition}
-            onChange={(e) => setFilterPosition(e.target.value)}
-            className={`appearance-none rounded-xl border-2 px-5 py-3.5 pr-12 text-base font-medium cursor-pointer focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-          >
-            <option value="all">All</option>
-            <option value="Open">Open</option>
-            <option value="Filled">Filled</option>
-          </select>
-          <FiChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-        </div>
-        <div className="relative">
-          <select
-            value={filterDate}
-            onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-            className={`appearance-none rounded-xl border-2 px-5 py-3.5 pr-12 text-base font-medium cursor-pointer focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-          >
-            <option value="all">All Time</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="year">This Year</option>
-            <option value="custom">Custom Date</option>
-          </select>
-          <FiChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-        </div>
-      </motion.div>
 
-      {/* Custom Date Range Picker */}
-      {filterDate === 'custom' && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row gap-4 items-end"
-        >
-          <div className="flex-1">
-            <label className={`block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>From Date</label>
-            <input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-            />
-          </div>
-          <div className="flex-1">
-            <label className={`block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>To Date</label>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-            />
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => { setCustomStartDate(''); setCustomEndDate(''); setFilterDate('all'); }}
-            className={`px-5 py-3 text-sm font-semibold rounded-xl ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+        {/* Custom Date Range Picker */}
+        {filterDate === 'custom' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row gap-4 items-end"
           >
-            Clear
-          </motion.button>
-        </motion.div>
-      )}
+            <div className="flex-1 w-full">
+              <label className={`block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>From Date</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+              />
+            </div>
+            <div className="flex-1 w-full">
+              <label className={`block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>To Date</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+              />
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => { setCustomStartDate(''); setCustomEndDate(''); setFilterDate('all'); }}
+              className={`w-full sm:w-auto px-5 py-3 text-sm font-semibold rounded-xl ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            >
+              Clear
+            </motion.button>
+          </motion.div>
+        )}
+      </motion.div>
 
       {/* Job Cards */}
       {filteredJobs.length === 0 ? (
@@ -1158,6 +1183,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
           <FiAlertCircle size={48} className="mx-auto mb-4 opacity-30" />
           <p className="font-semibold text-lg">No job openings found</p>
           <p className="text-base mt-2">Try adjusting your search or filters</p>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={clearFilters}
+            className="mt-4 px-6 py-2 text-sm font-semibold rounded-xl bg-violet-600 text-white shadow-md"
+          >
+            Clear All Filters
+          </motion.button>
         </div>
       ) : (
         <div className="grid gap-5">
@@ -1171,20 +1204,20 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 transition={{ delay: idx * 0.05 }}
                 whileHover={{ scale: 1.01, y: -2 }}
                 onClick={() => setSelectedJob(job)}
-                className={`rounded-2xl border-2 p-6 transition-shadow cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-violet-500/50' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-violet-200'}`}
+                className={`rounded-2xl border-2 p-4 sm:p-6 transition-shadow cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-violet-500/50' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-violet-200'}`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
                   {/* Left: Job Info */}
-                  <div className="flex items-start gap-5 flex-1">
-                    <div className="h-16 w-16 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0" style={{ background: getAvatarGradient(job.client) }}>
+                  <div className="flex flex-col sm:flex-row items-start gap-5 flex-1">
+                    <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0 mx-auto sm:mx-0" style={{ background: getAvatarGradient(job.client) }}>
                       {job.clientLogo}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{job.title}</h3>
+                    <div className="flex-1 min-w-0 text-center sm:text-left">
+                      <div className="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
+                        <h3 className={`text-lg sm:text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{job.title}</h3>
                       </div>
                       <p className={`text-base mt-1.5 font-medium ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>{job.client}</p>
-                      <div className="flex flex-wrap items-center gap-4 mt-4">
+                      <div className="flex flex-wrap justify-center sm:justify-start items-center gap-4 mt-4">
                         <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                           <FiMapPin className="w-4 h-4" /> {job.location}
                         </span>
@@ -1199,7 +1232,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                         </span>
                       </div>
                       {/* Skills */}
-                      <div className="flex flex-wrap gap-2 mt-4">
+                      <div className="flex flex-wrap gap-2 mt-4 justify-center sm:justify-start">
                         {job.skills.map(skill => (
                           <span key={skill} className={`text-xs font-semibold px-3 py-1.5 rounded-full ${isDarkMode ? 'bg-violet-900/40 text-violet-300 border border-violet-700/50' : 'bg-gradient-to-r from-violet-50 to-blue-50 text-violet-700 border border-violet-200'}`}>
                             {skill}
@@ -1226,9 +1259,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   </div>
 
                   {/* Right: Progress & Actions */}
-                  <div className="flex flex-col items-end gap-4">
+                  <div className="flex flex-row lg:flex-col items-center justify-between lg:items-end gap-4 mt-4 lg:mt-0">
                     {/* Progress */}
-                    <div className="text-right">
+                    <div className="text-center lg:text-right">
                       <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Positions Filled</p>
                       <p className="text-3xl font-bold" style={{ color: '#7c3aed' }}>
                         {job.filled}/{job.openings}
@@ -1282,25 +1315,33 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         </div>
       )}
 
-      {/* Add/Edit Job Modal */}
+      {/* Add/Edit Job Modal - IMPROVED POSITIONING */}
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal} />
             <motion.div 
-              initial={{ opacity: 0, y: 40, scale: 0.97 }} 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
+              onClick={closeModal} 
+            />
+            <motion.div 
+              initial={{ opacity: 0, y: -20, scale: 0.95 }} 
               animate={{ opacity: 1, y: 0, scale: 1 }} 
-              exit={{ opacity: 0, y: 40, scale: 0.97 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className={`relative z-10 rounded-3xl shadow-2xl w-full ${modalStep === 2 ? 'max-w-4xl' : 'max-w-2xl'} max-h-[90vh] overflow-hidden flex flex-col ${isDarkMode ? 'bg-slate-900 border border-slate-700/50' : 'bg-white'}`}
-              style={{ boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(139,92,246,0.1)' }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: "spring", damping: 20, stiffness: 300, mass: 0.8 }}
+              className={`relative z-10 rounded-3xl shadow-2xl w-full ${modalStep === 2 ? 'max-w-4xl' : 'max-w-2xl'} max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col ${isDarkMode ? 'bg-slate-900 border border-slate-700/50' : 'bg-white'}`}
+              style={{ 
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(139,92,246,0.1)',
+                marginTop: '5vh' // This lifts the modal up
+              }}
             >
-
               {/* ═══ STEP 1: Job Form ═══ */}
               {modalStep === 1 && (
                 <>
                   {/* Compact Header */}
-                  <div className="relative overflow-hidden px-6 pt-6 pb-4">
+                  <div className="relative overflow-hidden px-4 sm:px-6 pt-6 pb-4">
                     <div className="absolute inset-0 opacity-10" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #4f46e5 100%)' }} />
                     <div className="relative flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -1321,17 +1362,20 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   </div>
                   
                   {/* Scrollable Body */}
-                  <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-5">
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 space-y-5">
 
                     {/* Section: Basic Info */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-violet-900/40' : 'bg-violet-100'}`}>
                           <FiBriefcase className={`w-3 h-3 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`} />
+                          <br />
+                          <br/>
                         </div>
+                        <br /><br /> <br /> 
                         <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Basic Information</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Job Title *</label>
                           <input type="text" value={newJobForm.title} onChange={e => setNewJobForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Senior Software Engineer"
@@ -1377,7 +1421,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                         </div>
                         <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Job Details</span>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div>
                           <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Type</label>
                           <select value={newJobForm.type} onChange={e => setNewJobForm(f => ({ ...f, type: e.target.value }))}
@@ -1411,7 +1455,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </div>
 
                     {/* Priority & Deadline Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className={`block text-xs font-semibold mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Priority</label>
                         <div className="flex gap-2">
@@ -1456,15 +1500,15 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   </div>
 
                   {/* Footer */}
-                  <div className={`flex items-center justify-between gap-3 px-6 py-4 border-t ${isDarkMode ? 'bg-slate-900/80 border-slate-700/50' : 'bg-slate-50/80 border-slate-200'}`}>
+                  <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t ${isDarkMode ? 'bg-slate-900/80 border-slate-700/50' : 'bg-slate-50/80 border-slate-200'}`}>
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={closeModal}
-                      className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}
+                      className={`w-full sm:w-auto px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}
                     >Cancel</motion.button>
                     <motion.button 
                       whileHover={{ scale: 1.02 }} 
                       whileTap={{ scale: 0.98 }}
                       onClick={editingJob ? handleUpdatePosition : handleCreatePosition}
-                      className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all"
                       style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', boxShadow: '0 8px 20px rgba(139,92,246,0.35)' }}
                     >
                       <FiPlus className="w-4 h-4" /> {editingJob ? 'Update Position' : 'Create Position'}
@@ -1492,7 +1536,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </button>
                   </div>
 
-                  <div className="p-5">
+                  <div className="p-4 sm:p-5">
                     {/* Position Created Success */}
                     <div className="flex items-center gap-3 mb-5 p-3 rounded-xl" style={{ background: isDarkMode ? 'rgba(34,197,94,0.1)' : 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
                       <FiCheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
@@ -1513,7 +1557,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     {!resumeFetchLoading && matchedResumes.length > 0 && (
                       <>
                         {/* Select All / Count Bar */}
-                        <div className={`flex items-center justify-between p-3 rounded-xl mb-4 ${isDarkMode ? 'bg-slate-700/50' : 'bg-violet-50'}`}>
+                        <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl mb-4 gap-2 ${isDarkMode ? 'bg-slate-700/50' : 'bg-violet-50'}`}>
                           <label className="flex items-center gap-3 cursor-pointer select-none" onClick={toggleSelectAll}>
                             <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                               selectedResumes.size === matchedResumes.length 
@@ -1543,7 +1587,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.04 }}
                                 onClick={() => toggleResumeSelection(resume.id)}
-                                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 ${
+                                className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 ${
                                   isSelected
                                     ? isDarkMode ? 'border-violet-500 bg-violet-500/10' : 'border-violet-500 bg-violet-50'
                                     : isDarkMode ? 'border-slate-700 bg-slate-700/30 hover:border-slate-600' : 'border-slate-200 bg-white hover:border-violet-300'
@@ -1564,7 +1608,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
+                                  <div className="flex flex-wrap items-center gap-2 mb-1">
                                     <p className={`text-sm font-semibold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
                                       {resume.candidateName || resume.fileName?.replace(/\.[^.]+$/, '') || 'Unknown'}
                                     </p>
@@ -1634,16 +1678,16 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   </div>
 
                   {/* Footer */}
-                  <div className={`sticky bottom-0 flex items-center justify-between gap-3 p-4 border-t ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  <div className={`sticky bottom-0 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={closeModal}
-                      className={`px-5 py-2.5 text-sm font-semibold rounded-xl ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}
+                      className={`w-full sm:w-auto px-5 py-2.5 text-sm font-semibold rounded-xl ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}
                     >Skip</motion.button>
                     <motion.button 
                       whileHover={{ scale: 1.02 }} 
                       whileTap={{ scale: 0.98 }}
                       onClick={handleAddSelectedToPipeline}
                       disabled={selectedResumes.size === 0}
-                      className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl shadow-lg transition-opacity ${selectedResumes.size === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl shadow-lg transition-opacity ${selectedResumes.size === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                       style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', boxShadow: '0 8px 16px rgba(139,92,246,0.3)' }}
                     >
                       <FiCheckCircle className="w-4 h-4" />
@@ -1677,14 +1721,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <div className="p-6">
                 <h3 className={`text-lg font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Delete Position?</h3>
                 <p className={`text-sm mb-5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>This will permanently remove the job opening and all associated candidates.</p>
-                <div className="flex items-center justify-center gap-3">
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfirmDelete(null)} className={`px-5 py-2.5 text-sm font-semibold rounded-xl ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfirmDelete(null)} className={`w-full sm:w-auto px-5 py-2.5 text-sm font-semibold rounded-xl ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                     Cancel
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={async () => {
                     try { await deleteRecruitmentPosition(confirmDelete); } catch (e) { console.error('Backend delete failed:', e); }
                     setJobs(jobs.filter(j => j.id !== confirmDelete)); setConfirmDelete(null);
-                  }} className="px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl shadow-lg shadow-red-500/25">
+                  }} className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl shadow-lg shadow-red-500/25">
                     Delete
                   </motion.button>
                 </div>

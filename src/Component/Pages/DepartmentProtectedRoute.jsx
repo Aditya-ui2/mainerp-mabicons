@@ -1,9 +1,9 @@
 import { Navigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 
 /**
  * Protected Route Component for Department-based Access Control
- * 
+ * ✅ JWT decode hata diya — sirf localStorage use karta hai
+ *
  * @param {Object} props
  * @param {React.Component} props.children - The component to render if authorized
  * @param {string} props.allowedDepartment - 'HR Operations' | 'HR Recruitment' | 'Both'
@@ -11,71 +11,52 @@ import { jwtDecode } from 'jwt-decode';
  */
 const DepartmentProtectedRoute = ({ children, allowedDepartment, redirectPath = '/login' }) => {
   const token = localStorage.getItem('token');
+  const department = localStorage.getItem('department');
   const userType = localStorage.getItem('userType');
 
-  // If no token, redirect to login
+  // ✅ No token = go to login
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  try {
-    const decoded = jwtDecode(token);
-    const userDepartment = decoded.department || localStorage.getItem('department') || 'Both';
+  // ✅ Get department directly from localStorage (no JWT decode needed)
+  const userDepartment = department || 'Both';
 
-    // Check if token is expired
-    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userType');
-      localStorage.removeItem('department');
-      return <Navigate to="/login" replace />;
-    }
-
-    // Check department access
-    // 'Both' department has access to everything
-    if (userDepartment === 'Both') {
-      return children;
-    }
-
-    // Check specific department access
-    if (allowedDepartment === 'HR Operations' && userDepartment !== 'HR Operations') {
-      // User doesn't have HR Operations access, redirect to their allowed dashboard
-      return <Navigate to={userDepartment === 'HR Recruitment' ? '/kam-recruitment-dashboard' : redirectPath} replace />;
-    }
-
-    if (allowedDepartment === 'HR Recruitment' && userDepartment !== 'HR Recruitment') {
-      // User doesn't have HR Recruitment access, redirect to their allowed dashboard
-      return <Navigate to={userDepartment === 'HR Operations' ? '/kam-operations-dashboard' : redirectPath} replace />;
-    }
-
+  // ✅ 'Both' allowedDepartment = access to everything
+  if (allowedDepartment === 'Both') {
     return children;
-  } catch (error) {
-    console.error('Error decoding token:', error);
-    localStorage.removeItem('token');
-    return <Navigate to="/login" replace />;
   }
+
+  // ✅ Exact department match = allow
+  if (userDepartment === allowedDepartment) {
+    return children;
+  }
+
+  // ✅ Wrong department = redirect to correct dashboard
+  if (userDepartment === 'HR Recruitment') {
+    return <Navigate to="/kam-recruitment-dashboard" replace />;
+  }
+
+  if (userDepartment === 'HR Operations') {
+    return <Navigate to="/kam-operations-dashboard" replace />;
+  }
+
+  // Fallback
+  return <Navigate to={redirectPath} replace />;
 };
 
 /**
- * Hook to get current user's department access
+ * Hook to get current user's department
  */
 export const useUserDepartment = () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    const decoded = jwtDecode(token);
-    return decoded.department || localStorage.getItem('department') || 'Both';
-  } catch (error) {
-    return null;
-  }
+  return localStorage.getItem('department') || 'Both';
 };
 
 /**
  * Check if user has access to a specific department
  */
 export const hasAccessTo = (department) => {
-  const userDepartment = useUserDepartment();
-  if (!userDepartment) return false;
+  const userDepartment = localStorage.getItem('department') || 'Both';
   if (userDepartment === 'Both') return true;
   return userDepartment === department;
 };

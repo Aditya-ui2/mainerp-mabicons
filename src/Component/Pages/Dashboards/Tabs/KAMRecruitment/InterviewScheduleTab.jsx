@@ -455,12 +455,12 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
             >
               List
             </button>
-            <button
+            {/* <button
               onClick={() => setViewMode('calendar')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'calendar' ? 'bg-white shadow text-slate-700' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}
             >
               Calendar
-            </button>
+            </button> */}
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}

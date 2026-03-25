@@ -39,6 +39,12 @@ import {
   FiAlertCircle,
   FiThumbsUp,
   FiPause,
+  FiEye,
+  FiBookmark,
+  FiTrendingUp,
+  FiUserCheck,
+  FiUserX,
+  FiFilter as FiFilterIcon,
 } from 'react-icons/fi';
 import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus } from '../../../service/api';
 
@@ -123,8 +129,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
   const [resumeBankLoading, setResumeBankLoading] = useState(false);
   const [resumeBankRole, setResumeBankRole] = useState('');
 
-  // ── View & UI State ──
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'kanban'
+  // ── View & UI State ── (Kanban removed, default to list)
   const [selectedCandidateDetail, setSelectedCandidateDetail] = useState(null);
   const [showDetailSidebar, setShowDetailSidebar] = useState(false);
 
@@ -377,7 +382,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     fetchCandidates();
   }, [fetchCandidates]);
 
-  // Pipeline stages for Kanban view
+  // Pipeline stages
   const stages = ['Screening', 'Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Offer Sent', 'Joined'];
   
   // Stats
@@ -403,7 +408,8 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
   const filteredCandidates = candidates.filter(c => {
     const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.jobTitle.toLowerCase().includes(searchTerm.toLowerCase());
+      c.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.skills && c.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase())));
     const matchesStage = filterStage === 'all' || c.stage === filterStage;
     const matchesJob = filterJob === 'all' || c.jobTitle === filterJob;
     const matchesClient = filterClient === 'all' || c.client === filterClient;
@@ -420,6 +426,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
   });
 
   const uniqueJobs = [...new Set(candidates.map(c => c.jobTitle))];
+  const uniqueClients = [...new Set(candidates.map(c => c.client).filter(Boolean))];
 
   const getAvatarGradient = (name) => {
     const gradients = [
@@ -547,8 +554,8 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
   // ── Export to CSV ──
   const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Phone', 'Location', 'Job Title', 'Client', 'Stage', 'Experience', 'Current CTC', 'Expected CTC', 'Notice Period', 'Applied Date', 'Rating'];
-    const rows = filteredCandidates.map(c => [c.name, c.email, c.phone, c.location, c.jobTitle, c.client, c.stage, c.experience, c.currentCTC, c.expectedCTC, c.noticePeriod, c.appliedDate, c.rating]);
+    const headers = ['Name', 'Email', 'Phone', 'Location', 'Job Title', 'Client', 'Stage', 'Experience', 'Current CTC', 'Expected CTC', 'Notice Period', 'Applied Date', 'Rating', 'Skills', 'Status'];
+    const rows = filteredCandidates.map(c => [c.name, c.email, c.phone, c.location, c.jobTitle, c.client, c.stage, c.experience, c.currentCTC, c.expectedCTC, c.noticePeriod, c.appliedDate, c.rating, (c.skills || []).join(', '), c.pipelineStatus || 'pending']);
     const csv = [headers.join(','), ...rows.map(r => r.map(val => `"${val || ''}"`).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -568,21 +575,6 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
       return { stage, count, rate };
     });
   };
-
-  // ── Kanban drag state ──
-  const [dragCandidate, setDragCandidate] = useState(null);
-  const [dragOverStage, setDragOverStage] = useState(null);
-
-  const handleDragStart = (candidate) => setDragCandidate(candidate);
-  const handleDragOver = (e, stage) => { e.preventDefault(); setDragOverStage(stage); };
-  const handleDrop = (stage) => {
-    if (dragCandidate) {
-      moveToStage(dragCandidate.id, stage);
-      setDragCandidate(null);
-      setDragOverStage(null);
-    }
-  };
-  const handleDragEnd = () => { setDragCandidate(null); setDragOverStage(null); };
 
   // ── Open detail sidebar ──
   const openDetail = (candidate) => {
@@ -897,7 +889,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                           <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
                             {resume.candidateName || resume.fileName || 'Unknown Resume'}
                           </p>
-                          <div className="flex items-center gap-4 mt-1">
+                          <div className="flex items-center gap-4 mt-1 flex-wrap">
                             {resume.roleType && <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiBriefcase className="w-3 h-3" />{resume.roleType}</span>}
                             {resume.experience && <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiClock className="w-3 h-3" />{resume.experience}</span>}
                             {resume.location && <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-3 h-3" />{resume.location}</span>}
@@ -1146,15 +1138,6 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {/* View Toggle */}
-          <div className={`flex items-center rounded-xl border-2 p-0.5 ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-100'}`}>
-            <button onClick={() => setViewMode('list')} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${viewMode === 'list' ? 'bg-white text-violet-600 shadow-sm' : isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-700'}`} style={viewMode === 'list' && isDarkMode ? { background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', color: 'white' } : {}}>
-              <FiList className="w-3.5 h-3.5" /> List
-            </button>
-            <button onClick={() => setViewMode('kanban')} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${viewMode === 'kanban' ? 'bg-white text-violet-600 shadow-sm' : isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-700'}`} style={viewMode === 'kanban' && isDarkMode ? { background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', color: 'white' } : {}}>
-              <FiGrid className="w-3.5 h-3.5" /> Kanban
-            </button>
-          </div>
           {/* Analytics */}
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setShowAnalytics(!showAnalytics)}
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-xl transition-colors ${showAnalytics ? 'text-white' : isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
@@ -1189,12 +1172,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'TOTAL CANDIDATES', value: stats.total, color: '#8b5cf6', icon: FiUsers },
-          { label: 'IN PIPELINE', value: stats.inPipeline, color: '#3b82f6', icon: FiClock },
-          { label: 'OFFERS SENT', value: stats.offersSent, color: '#f59e0b', icon: FiMail },
-          { label: 'JOINED', value: stats.joined, color: '#10b981', icon: FiCheckCircle },
-        ].map((stat, i) => {
+        {statCards.map((stat, i) => {
           const Icon = stat.icon;
           return (
             <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * (i + 1) }} whileHover={{ scale: 1.02, y: -2 }}
@@ -1311,12 +1289,37 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         ))}
       </div>
 
+      {/* Stage Filter Pills */}
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        <button
+          onClick={() => setFilterStage('all')}
+          className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${filterStage === 'all' ? 'bg-slate-800 text-white' : isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}
+        >
+          All Stages
+        </button>
+        {stageOrder.map(stage => {
+          const config = stageConfig[stage] || stageConfig.Screening;
+          const count = candidates.filter(c => c.stage === stage).length;
+          return (
+            <button
+              key={stage}
+              onClick={() => setFilterStage(filterStage === stage ? 'all' : stage)}
+              className={`px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${filterStage === stage ? 'text-white' : isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}
+              style={filterStage === stage ? { backgroundColor: config.color } : {}}
+            >
+              <config.icon className="w-3 h-3" />
+              {stage} ({count})
+            </button>
+          );
+        })}
+      </div>
+
       {/* Search, Filter, Sort & Bulk */}
       <div className="space-y-3">
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-            <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search candidates..."
+            <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by name, email, skills..."
               className={`w-full rounded-xl border-2 py-3 pl-12 pr-4 text-sm transition-all focus:ring-2 focus:ring-blue-500/50 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
           </div>
           <div className="flex gap-2 items-center">
@@ -1358,7 +1361,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                 <select value={filterClient} onChange={e => setFilterClient(e.target.value)}
                   className={`appearance-none rounded-lg border px-3 py-2 pr-8 text-xs font-medium ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
                   <option value="all">All Clients</option>
-                  {[...new Set(candidates.map(c => c.client).filter(Boolean))].map(c => (<option key={c} value={c}>{c}</option>))}
+                  {uniqueClients.map(c => (<option key={c} value={c}>{c}</option>))}
                 </select>
               </div>
               <div className="relative">
@@ -1403,228 +1406,147 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         </AnimatePresence>
       </div>
 
-      {/* ═══════════ KANBAN VIEW ═══════════ */}
-      {viewMode === 'kanban' && (
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 min-w-max">
-            {stages.map((stage) => {
-              const stageCandidates = filteredCandidates.filter(c => c.stage === stage);
-              const config = stageConfig[stage] || stageConfig.Screening;
-              return (
-                <div key={stage}
-                  onDragOver={(e) => handleDragOver(e, stage)}
-                  onDrop={() => handleDrop(stage)}
-                  className={`w-72 flex-shrink-0 rounded-2xl border-2 transition-all ${dragOverStage === stage ? 'border-violet-500 shadow-lg shadow-violet-500/20' : isDarkMode ? 'border-slate-700/50 bg-slate-800/40' : 'border-slate-200/50 bg-slate-50/50'}`}>
-                  
-                  {/* Column Header */}
-                  <div className="p-3 border-b flex items-center justify-between" style={{ borderColor: isDarkMode ? '#334155' : '#e2e8f0' }}>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: config.color }}></div>
-                      <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{stage}</span>
+      {/* ═══════════ LIST VIEW ═══════════ */}
+      {filteredCandidates.length === 0 ? (
+        <div className={`text-center py-16 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          <FiUsers size={40} className="mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No candidates found</p>
+          <p className="text-sm mt-1">Try adjusting your search or filters</p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {/* Select All row */}
+          <div className={`flex items-center gap-3 px-5 py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <label className="flex items-center gap-2 cursor-pointer" onClick={toggleSelectAll}>
+              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selectedIds.size === filteredCandidates.length && filteredCandidates.length > 0 ? 'bg-violet-600 border-violet-600' : isDarkMode ? 'border-slate-600' : 'border-slate-300'}`}>
+                {selectedIds.size === filteredCandidates.length && filteredCandidates.length > 0 && <FiCheck className="w-3 h-3 text-white" />}
+              </div>
+              <span className="text-xs font-medium">Select all ({filteredCandidates.length})</span>
+            </label>
+          </div>
+
+          <AnimatePresence>
+            {filteredCandidates.map((candidate, idx) => (
+              <motion.div
+                key={candidate.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ delay: idx * 0.03 }}
+                className={`rounded-2xl border-2 p-5 transition-shadow ${selectedIds.has(candidate.id) ? isDarkMode ? 'border-violet-500 bg-violet-500/5' : 'border-violet-400 bg-violet-50/50' : isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200'}`}>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    {/* Checkbox */}
+                    <div className="flex flex-col items-center gap-2 pt-1">
+                      <div onClick={() => toggleSelectCandidate(candidate.id)}
+                        className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all ${selectedIds.has(candidate.id) ? 'bg-violet-600 border-violet-600' : isDarkMode ? 'border-slate-600 hover:border-slate-500' : 'border-slate-300 hover:border-slate-400'}`}>
+                        {selectedIds.has(candidate.id) && <FiCheck className="w-3 h-3 text-white" />}
+                      </div>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>{stageCandidates.length}</span>
+                    {/* Avatar */}
+                    {candidate.photo ? (
+                      <div className="relative flex-shrink-0">
+                        <img src={candidate.photo} alt={candidate.name}
+                          className="h-14 w-14 rounded-xl object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
+                          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                        <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg hidden" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
+                      </div>
+                    ) : (
+                      <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
+                    )}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className={`text-lg font-bold cursor-pointer hover:underline ${isDarkMode ? 'text-white' : 'text-slate-800'}`} onClick={() => openDetail(candidate)}>{candidate.name}</h3>
+                        {getStageDuration(candidate) && (
+                          <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                            <FiClock className="w-2.5 h-2.5" /> {getStageDuration(candidate)}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{candidate.jobTitle} • {candidate.client}</p>
+                      <div className="flex flex-wrap items-center gap-3 mt-2">
+                        <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMail className="w-3.5 h-3.5" /> {candidate.email}</span>
+                        <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-3.5 h-3.5" /> {candidate.location}</span>
+                        <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiBriefcase className="w-3.5 h-3.5" /> {candidate.experience}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {(candidate.skills || []).slice(0, 5).map(skill => (
+                          <span key={skill} className={`text-[10px] font-medium px-2 py-1 rounded-full ${isDarkMode ? 'bg-blue-900/40 text-blue-300 border border-blue-700/50' : 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 border border-blue-100'}`}>{skill}</span>
+                        ))}
+                        {(candidate.skills || []).length > 5 && (
+                          <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>+{candidate.skills.length - 5} more</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Cards */}
-                  <div className="p-2 space-y-2 min-h-[200px] max-h-[60vh] overflow-y-auto">
-                    {stageCandidates.map((c) => (
-                      <motion.div
-                        key={c.id}
-                        draggable
-                        onDragStart={() => handleDragStart(c)}
-                        onDragEnd={handleDragEnd}
-                        whileHover={{ scale: 1.02 }}
-                        className={`rounded-xl p-3 border cursor-grab active:cursor-grabbing transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-200 hover:shadow-md'}`}
-                        onClick={() => openDetail(c)}>
-                        <div className="flex items-start gap-2.5 mb-2">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{ background: getAvatarGradient(c.name) }}>{getInitials(c.name)}</div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-xs font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{c.name}</p>
-                            <p className={`text-[10px] truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{c.jobTitle}</p>
-                          </div>
-                          <RatingStars rating={c.rating} />
-                        </div>
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {c.skills.slice(0, 3).map(s => (
-                            <span key={s} className={`text-[9px] px-1.5 py-0.5 rounded-full ${isDarkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-600'}`}>{s}</span>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{c.location}</span>
-                          <span className={`text-[10px] font-semibold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{c.expectedCTC}</span>
-                        </div>
-                        {getStageDuration(c) && (
-                          <div className={`flex items-center gap-1 mt-1.5 text-[9px] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                            <FiClock className="w-2.5 h-2.5" /> In stage: {getStageDuration(c)}
-                          </div>
-                        )}
-                        {/* Pipeline Status Badge */}
-                        <div className="mt-1.5">
-                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                            (c.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                            (c.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' :
-                            (c.pipelineStatus || 'pending') === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                          }`}>
-                            {(c.pipelineStatus || 'pending') === 'approved' ? '✓ Approved' : (c.pipelineStatus || 'pending') === 'hold' ? '⏸ On Hold' : (c.pipelineStatus || 'pending') === 'rejected' ? '✗ Rejected' : '● Pending'}
-                          </span>
-                        </div>
-                        {/* Pipeline Action Buttons: Hold / Approve / Reject */}
-                        {(c.pipelineStatus || 'pending') !== 'approved' && (c.pipelineStatus || 'pending') !== 'rejected' && (
-                          <div className="flex items-center gap-1 mt-1.5">
-                            <button onClick={(e) => { e.stopPropagation(); holdCandidate(c.id); }}
-                              className={`flex items-center gap-0.5 px-2 py-1 rounded-md text-[9px] font-semibold transition-colors ${(c.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white' : isDarkMode ? 'bg-indigo-900/30 text-indigo-400 hover:bg-indigo-900/50' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}>
-                              <FiPause className="w-2.5 h-2.5" /> Hold
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); openApproveModal(c.id); }}
-                              className={`flex items-center gap-0.5 px-2 py-1 rounded-md text-[9px] font-semibold transition-colors ${isDarkMode ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}>
-                              <FiThumbsUp className="w-2.5 h-2.5" /> Approve
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); pipelineRejectCandidate(c.id); }}
-                              className={`flex items-center gap-0.5 px-2 py-1 rounded-md text-[9px] font-semibold transition-colors ${isDarkMode ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}>
-                              <FiXCircle className="w-2.5 h-2.5" /> Reject
-                            </button>
-                          </div>
-                        )}
-                        {/* Quick Contact */}
-                        {c.phone && (
-                          <div className="flex items-center gap-1 mt-2 pt-2 border-t" style={{ borderColor: isDarkMode ? '#334155' : '#e2e8f0' }}>
-                            <a href={`https://wa.me/${c.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                              className={`px-2 py-1 rounded-md text-[9px] font-semibold ${isDarkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-50 text-green-600'}`}>
-                              <FiPhone className="w-2.5 h-2.5" />
-                            </a>
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
-                    {stageCandidates.length === 0 && (
-                      <div className={`text-center py-8 text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No candidates</div>
+                  {/* Right: Actions & Info */}
+                  <div className="flex flex-col items-end gap-2 min-w-[140px]">
+                    {/* Stage Badge */}
+                    <StageBadge stage={candidate.stage} />
+                    
+                    {/* Expected CTC */}
+                    <div className="text-right">
+                      <p className={`text-[9px] uppercase tracking-wider font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Expected CTC</p>
+                      <p className="text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">{candidate.expectedCTC}</p>
+                    </div>
+
+                    {/* Rejection reason */}
+                    {candidate.stage === 'Rejected' && candidate.rejectionReason && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-500'}`}>
+                        Reason: {candidate.rejectionReason}
+                      </span>
+                    )}
+                    
+                    {/* Pipeline Status Badge */}
+                    <div className="mt-1">
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                        (candidate.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                        (candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' :
+                        (candidate.pipelineStatus || 'pending') === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      }`}>
+                        {(candidate.pipelineStatus || 'pending') === 'approved' ? '✓ Approved' : (candidate.pipelineStatus || 'pending') === 'hold' ? '⏸ On Hold' : (candidate.pipelineStatus || 'pending') === 'rejected' ? '✗ Rejected' : '● Pending'}
+                      </span>
+                    </div>
+                    
+                    {/* Pipeline Action Buttons: Hold / Approve / Reject */}
+                    {(candidate.pipelineStatus || 'pending') !== 'approved' && (candidate.pipelineStatus || 'pending') !== 'rejected' && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          onClick={() => holdCandidate(candidate.id)}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${(candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white' : isDarkMode ? 'bg-indigo-900/30 text-indigo-400 hover:bg-indigo-900/50' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}>
+                          <FiPause className="w-3 h-3" /> Hold
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          onClick={() => openApproveModal(candidate.id)}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${isDarkMode ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}>
+                          <FiThumbsUp className="w-3 h-3" /> Approve
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          onClick={() => pipelineRejectCandidate(candidate.id)}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${isDarkMode ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}>
+                          <FiXCircle className="w-3 h-3" /> Reject
+                        </motion.button>
+                      </div>
+                    )}
+                    
+                    {/* Quick Contact */}
+                    {candidate.phone && (
+                      <div className="flex items-center gap-1 mt-2 pt-2 border-t" style={{ borderColor: isDarkMode ? '#334155' : '#e2e8f0' }}>
+                        <a href={`https://wa.me/${candidate.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                          className="px-2 py-1 rounded-md text-[9px] font-semibold bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                          <FiPhone className="w-2.5 h-2.5 inline mr-1" /> WhatsApp
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
-      )}
-
-      {/* ═══════════ LIST VIEW ═══════════ */}
-      {viewMode === 'list' && (
-        <>
-          {filteredCandidates.length === 0 ? (
-            <div className={`text-center py-16 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              <FiUsers size={40} className="mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No candidates found</p>
-              <p className="text-sm mt-1">Try adjusting your search or filters</p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {/* Select All row */}
-              <div className={`flex items-center gap-3 px-5 py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                <label className="flex items-center gap-2 cursor-pointer" onClick={toggleSelectAll}>
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selectedIds.size === filteredCandidates.length && filteredCandidates.length > 0 ? 'bg-violet-600 border-violet-600' : isDarkMode ? 'border-slate-600' : 'border-slate-300'}`}>
-                    {selectedIds.size === filteredCandidates.length && filteredCandidates.length > 0 && <FiCheck className="w-3 h-3 text-white" />}
-                  </div>
-                  <span className="text-xs font-medium">Select all ({filteredCandidates.length})</span>
-                </label>
-              </div>
-
-              <AnimatePresence>
-                {filteredCandidates.map((candidate, idx) => (
-                  <motion.div
-                    key={candidate.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className={`rounded-2xl border-2 p-5 transition-shadow ${selectedIds.has(candidate.id) ? isDarkMode ? 'border-violet-500 bg-violet-500/5' : 'border-violet-400 bg-violet-50/50' : isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200'}`}>
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4 flex-1">
-                        {/* Checkbox */}
-                        <div className="flex flex-col items-center gap-2 pt-1">
-                          <div onClick={() => toggleSelectCandidate(candidate.id)}
-                            className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all ${selectedIds.has(candidate.id) ? 'bg-violet-600 border-violet-600' : isDarkMode ? 'border-slate-600 hover:border-slate-500' : 'border-slate-300 hover:border-slate-400'}`}>
-                            {selectedIds.has(candidate.id) && <FiCheck className="w-3 h-3 text-white" />}
-                          </div>
-                        </div>
-                        {/* Avatar */}
-                        {candidate.photo ? (
-                          <div className="relative flex-shrink-0">
-                            <img src={candidate.photo} alt={candidate.name}
-                              className="h-14 w-14 rounded-xl object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
-                              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                            <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg hidden" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
-                          </div>
-                        ) : (
-                          <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
-                        )}
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className={`text-lg font-bold cursor-pointer hover:underline ${isDarkMode ? 'text-white' : 'text-slate-800'}`} onClick={() => openDetail(candidate)}>{candidate.name}</h3>
-                            {getStageDuration(candidate) && (
-                              <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-                                <FiClock className="w-2.5 h-2.5" /> {getStageDuration(candidate)}
-                              </span>
-                            )}
-                          </div>
-                          <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{candidate.jobTitle} • {candidate.client}</p>
-                          <div className="flex flex-wrap items-center gap-3 mt-2">
-                            <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMail className="w-3.5 h-3.5" /> {candidate.email}</span>
-                            <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-3.5 h-3.5" /> {candidate.location}</span>
-                            <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiBriefcase className="w-3.5 h-3.5" /> {candidate.experience}</span>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5 mt-3">
-                            {candidate.skills.map(skill => (
-                              <span key={skill} className={`text-[10px] font-medium px-2 py-1 rounded-full ${isDarkMode ? 'bg-blue-900/40 text-blue-300 border border-blue-700/50' : 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 border border-blue-100'}`}>{skill}</span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Actions & Info */}
-                      <div className="flex flex-col items-end gap-2 min-w-[140px]">
-                        {/* Expected CTC */}
-                        <div className="text-right">
-                          <p className={`text-[9px] uppercase tracking-wider font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Expected CTC</p>
-                          <p className="text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">{candidate.expectedCTC}</p>
-                        </div>
-
-                        {/* Rejection reason */}
-                        {candidate.stage === 'Rejected' && candidate.rejectionReason && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-500'}`}>
-                            Reason: {candidate.rejectionReason}
-                          </span>
-                        )}
-                        {/* Pipeline Action Buttons: Hold / Approve / Reject */}
-                        {(candidate.pipelineStatus || 'pending') !== 'approved' && (candidate.pipelineStatus || 'pending') !== 'rejected' && (
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                              onClick={() => holdCandidate(candidate.id)}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${(candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white' : isDarkMode ? 'bg-indigo-900/30 text-indigo-400 hover:bg-indigo-900/50' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}>
-                              <FiPause className="w-3 h-3" /> Hold
-                            </motion.button>
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                              onClick={() => openApproveModal(candidate.id)}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${isDarkMode ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}>
-                              <FiThumbsUp className="w-3 h-3" /> Approve
-                            </motion.button>
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                              onClick={() => pipelineRejectCandidate(candidate.id)}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${isDarkMode ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}>
-                              <FiXCircle className="w-3 h-3" /> Reject
-                            </motion.button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
-        </>
       )}
 
       {/* ═══ Click-away handler for stage menu ═══ */}
