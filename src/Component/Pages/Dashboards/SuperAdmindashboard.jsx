@@ -191,8 +191,13 @@ const Dashboard = () => {
   }, []);
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userType');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('department');
+    localStorage.removeItem('recruitmentTabAuth');
+    window.location.href = '/login';
   };
 
   const handleMarkNotificationRead = async (notificationId) => {

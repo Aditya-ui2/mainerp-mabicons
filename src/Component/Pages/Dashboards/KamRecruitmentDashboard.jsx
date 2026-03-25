@@ -21,11 +21,11 @@ import {
   FiUserPlus,
   FiCheckSquare,
   FiDatabase,
+  FiRepeat,
 } from 'react-icons/fi';
 import logo from '../../../assets/images/mabicons-logo.svg';
 
 // Lazy load Recruitment Tab Components
-const KamOverviewTab = lazy(() => import('./Tabs/KAMRecruitment/KamOverviewTab'));
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
 const CandidatePipelineTab = lazy(() => import('./Tabs/KAMRecruitment/CandidatePipelineTab'));
 const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
@@ -35,6 +35,7 @@ const RecruitmentAnalyticsTab = lazy(() => import('./Tabs/KAMRecruitment/Recruit
 const TeamMembersTab = lazy(() => import('./Tabs/KAMRecruitment/TeamMembersTab'));
 const TaskAssignmentTab = lazy(() => import('./Tabs/KAMRecruitment/TaskAssignmentTab'));
 const ResumeBankTab = lazy(() => import('./Tabs/KAMRecruitment/ResumeBankTab'));
+const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
 
 /* ── Skeleton / Shimmer Loader ───────────────────────── */
 const TabLoader = () => (
@@ -65,7 +66,6 @@ const TabLoader = () => (
 
 /* ── Sidebar Items ───────────────────────────────────── */
 const moduleItems = [
-  { id: 0, title: 'KAM Overview', short: 'KAMs', icon: FiTarget },
   { id: 1, title: 'Job Openings', short: 'Openings', icon: FiBriefcase },
   { id: 2, title: 'Candidate Pipeline', short: 'Pipeline', icon: FiUsers },
   { id: 3, title: 'Interview Schedule', short: 'Interviews', icon: FiCalendar },
@@ -75,6 +75,7 @@ const moduleItems = [
   { id: 7, title: 'Resume Bank', short: 'Resumes', icon: FiDatabase },
   { id: 8, title: 'Team Members', short: 'Team', icon: FiUserPlus, section: 'TEAM' },
   { id: 9, title: 'Task Assignment', short: 'Tasks', icon: FiCheckSquare, section: 'TEAM' },
+  { id: 10, title: 'Work Handover', short: 'Handover', icon: FiRepeat, section: 'TEAM' },
 ];
 
 /* ── Page Transition Wrapper ─────────────────────────── */
@@ -100,7 +101,7 @@ const PageTransition = ({ children, tabKey }) => {
 /* ══════════════════ KAM RECRUITMENT DASHBOARD ═══════════════════ */
 const KamRecruitmentDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('KAM Overview');
+  const [activeTab, setActiveTab] = useState('Job Openings');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -156,6 +157,11 @@ const KamRecruitmentDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userType');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('department');
+    localStorage.removeItem('recruitmentTabAuth');
     window.location.href = '/login';
   };
 
@@ -167,7 +173,6 @@ const KamRecruitmentDashboard = () => {
   const renderTabContent = () => {
     const tabProps = { isDarkMode, selectedClient };
     switch (activeTab) {
-      case 'KAM Overview': return <KamOverviewTab {...tabProps} />;
       case 'Job Openings': return <JobOpeningsTab {...tabProps} />;
       case 'Candidate Pipeline': return <CandidatePipelineTab {...tabProps} />;
       case 'Interview Schedule': return <InterviewScheduleTab {...tabProps} />;
@@ -177,6 +182,7 @@ const KamRecruitmentDashboard = () => {
       case 'Resume Bank': return <ResumeBankTab {...tabProps} />;
       case 'Team Members': return <TeamMembersTab {...tabProps} userRole="KAM" />;
       case 'Task Assignment': return <TaskAssignmentTab {...tabProps} userRole="KAM" />;
+      case 'Work Handover': return <WorkHandoverTab {...tabProps} />;
       default: return <p className="text-xl text-slate-500 font-medium">{activeTab}</p>;
     }
   };
@@ -293,9 +299,9 @@ const KamRecruitmentDashboard = () => {
         {/* ═══════ MAIN CONTENT ═══════ */}
         <main className="relative z-10 flex-1 flex flex-col min-w-0">
           {/* ── Top Bar ── */}
-          <header className={`sticky top-0 z-30 ${isDarkMode ? 'bg-slate-800/80' : 'bg-[#f7f5fc]/80'} backdrop-blur-xl border-b ${isDarkMode ? 'border-slate-700' : 'border-[#e8e4f3]'}`}>
+          <header className={`sticky top-0 z-30 ${isDarkMode ? 'bg-slate-800/80' : 'bg-[#f7f5fc]/80'} backdrop-blur-xl`}>
             <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
-              {/* Left: hamburger + search */}
+              {/* Left: hamburger */}
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {/* Hamburger – mobile only */}
                 <button
@@ -304,20 +310,6 @@ const KamRecruitmentDashboard = () => {
                 >
                   <FiMenu className="w-5 h-5" />
                 </button>
-
-                {/* Search */}
-                <div className="relative flex-1 max-w-md">
-                  <FiSearch className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${searchFocused ? isDarkMode ? 'text-violet-400' : 'text-violet-500' : isDarkMode ? 'text-slate-500' : 'text-slate-400'} transition-colors`} />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setSearchFocused(false)}
-                    placeholder="Search candidates, jobs..."
-                    className={`w-full rounded-xl ${isDarkMode ? 'bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white/70 border-slate-200 placeholder:text-slate-400'} border py-2 pl-10 pr-4 text-sm outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-200/50 ${isDarkMode ? 'focus:ring-violet-500/20' : ''}`}
-                  />
-                </div>
               </div>
 
               {/* Right: theme toggle + profile */}

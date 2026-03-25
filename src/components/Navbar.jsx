@@ -308,6 +308,11 @@ export function NavbarWithSearch({ onProfileClick, companyName }) {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userType');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('department');
+    localStorage.removeItem('recruitmentTabAuth');
     window.location.href = '/login';
   };
 

@@ -84,8 +84,13 @@ const TeamleaderDashboard = () => {
   const [activeTab, setActiveTab] = useState("Onboarding");
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+    localStorage.removeItem('token');
+    localStorage.removeItem('userType');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('department');
+    localStorage.removeItem('recruitmentTabAuth');
+    window.location.href = '/login';
   };
 
   const renderMainContent = () => {

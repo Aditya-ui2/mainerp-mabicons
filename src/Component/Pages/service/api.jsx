@@ -342,6 +342,10 @@ export const deleteTask = async (taskId) => {
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('userType');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('userEmail');
+  localStorage.removeItem('department');
+  localStorage.removeItem('recruitmentTabAuth');
   setAuthToken(null);
 };
 
@@ -2693,6 +2697,50 @@ export const getRecruitmentStats = async () => {
     throw error.response?.data || {
       message: 'Failed to fetch stats'
     };
+  }
+};
+
+// Get all recruitment positions (with filtering)
+export const getAllRecruitmentPositions = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/recruitment/positions', {
+      params: filters,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching positions:', error);
+    throw error.response?.data || { message: 'Failed to fetch positions' };
+  }
+};
+
+// Delete a recruitment position
+export const deleteRecruitmentPosition = async (positionId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete(`/recruitment/positions/${positionId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting position:', error);
+    throw error.response?.data || { message: 'Failed to delete position' };
+  }
+};
+
+// Get all candidates (pipeline view) with filters
+export const getAllCandidates = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/recruitment/candidates', {
+      params: filters,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching candidates:', error);
+    throw error.response?.data || { message: 'Failed to fetch candidates' };
   }
 };
 

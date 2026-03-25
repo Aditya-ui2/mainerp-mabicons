@@ -77,7 +77,11 @@ const AdminLayout = ({
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userType');
-    navigate('/login');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('department');
+    localStorage.removeItem('recruitmentTabAuth');
+    window.location.href = '/login';
   };
 
   const unreadNotifications = notifications.filter(n => !n.read).length;
@@ -273,8 +277,8 @@ const AdminLayout = ({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm">
-          {/* Left: Mobile Menu + Breadcrumbs */}
+        <header className="h-16 bg-white flex items-center justify-between px-4 lg:px-6 shadow-sm">
+          {/* Left: Mobile Menu */}
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileSidebarOpen(true)}
@@ -282,47 +286,10 @@ const AdminLayout = ({
             >
               <FiMenu style={{width:'20px',height:'20px'}} />
             </button>
-            
-            {/* Breadcrumbs */}
-            <nav className="hidden sm:flex items-center gap-2 text-sm">
-              {breadcrumbs.map((crumb, idx) => (
-                <span key={idx} className="flex items-center gap-2">
-                  {idx > 0 && <FiChevronRight style={{width:'16px',height:'16px',color:'#9ca3af'}} />}
-                  <span
-                    className={`${idx === breadcrumbs.length - 1 ? 'text-gray-900 font-medium' : 'text-blue-600 hover:text-blue-700 cursor-pointer'}`}
-                    onClick={() => crumb.path && navigate(crumb.path)}
-                  >
-                    {crumb.label}
-                  </span>
-                </span>
-              ))}
-            </nav>
           </div>
 
-          {/* Right: Search + Actions */}
+          {/* Right: Actions */}
           <div className="flex items-center gap-3">
-            {/* Search */}
-            <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2">
-              <FiSearch style={{width:'16px',height:'16px',color:'#9ca3af'}} />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="ml-2 bg-transparent border-none outline-none text-sm w-40 lg:w-56"
-              />
-            </div>
-
-            {/* View Toggle */}
-            <div className="hidden lg:flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-              <button className="p-1.5 rounded bg-white shadow-sm">
-                <FiGrid style={{width:'16px',height:'16px',color:'#4b5563'}} />
-              </button>
-              <button className="p-1.5 rounded hover:bg-gray-200">
-                <FiList style={{width:'16px',height:'16px',color:'#9ca3af'}} />
-              </button>
-            </div>
-
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
               <button

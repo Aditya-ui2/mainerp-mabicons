@@ -21,6 +21,7 @@ import ResetPassword from './Component/Pages/reset_password'
 import ForgotPassword from './Component/Pages/forgetpassword'
 import ClientLogin from './Component/Pages/ClientLogin'
 import DepartmentProtectedRoute from './Component/Pages/DepartmentProtectedRoute'
+import ProtectedRoute from './Component/Pages/ProtectedRoute'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -34,7 +35,11 @@ function App() {
       <Route path='/reset-password/:token/:userType' element={<ResetPassword />} />
       <Route path='/reset-password' element={<ResetPassword />} />
       <Route path='/client-login' element={<ClientLogin />} />
-      <Route path='/bd-dashboard' element={<BdDashboard />} />
+      <Route path='/bd-dashboard' element={
+        <ProtectedRoute allowedRoles={['bd']}>
+          <BdDashboard />
+        </ProtectedRoute>
+      } />
       
       {/* Department Protected Routes */}
       <Route path='/kam-operations-dashboard' element={
@@ -54,12 +59,36 @@ function App() {
       } />
 
       <Route path='/document-upload' element={<DocumentUploadForm />} />
-      <Route path='/admin-dashboard' element={<AdminDashboard />} />
-      <Route path='/client-dashboard' element={<ClientModularDashboard />} />
-      <Route path='/client-dashboard-legacy' element={<CustomerDashboard />} />
-      <Route path='/teamleader-dashboard' element={<TeamleaderDashboard />} />
-      <Route path='/superadmin-dashboard' element={<SuperAdminDashboard />} />
-      <Route path='/employee-dashboard' element={<EmployeeDashboard />} />
+      <Route path='/admin-dashboard' element={
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path='/client-dashboard' element={
+        <ProtectedRoute allowedRoles={['admin', 'customer']}>
+          <ClientModularDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path='/client-dashboard-legacy' element={
+        <ProtectedRoute allowedRoles={['admin', 'customer']}>
+          <CustomerDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path='/teamleader-dashboard' element={
+        <ProtectedRoute allowedRoles={['teamleader']}>
+          <TeamleaderDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path='/superadmin-dashboard' element={
+        <ProtectedRoute allowedRoles={['superadmin']}>
+          <SuperAdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path='/employee-dashboard' element={
+        <ProtectedRoute allowedRoles={['employee']}>
+          <EmployeeDashboard />
+        </ProtectedRoute>
+      } />
      
     </Routes>
   )

@@ -152,7 +152,12 @@ const ClientModularDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    window.location.href = '/client-login';
+    localStorage.removeItem('userType');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('department');
+    localStorage.removeItem('recruitmentTabAuth');
+    window.location.href = '/login';
   };
 
   const switchTab = (title) => {
@@ -259,9 +264,9 @@ const ClientModularDashboard = () => {
         {/* ═══════ MAIN CONTENT ═══════ */}
         <main className="relative z-10 flex-1 flex flex-col min-w-0">
           {/* ── Top Bar ── */}
-          <header className="sticky top-0 z-30 bg-[#f5f7fc]/80 backdrop-blur-xl border-b border-[#e2e7f3]">
+          <header className="sticky top-0 z-30 bg-[#f5f7fc]/80 backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
-              {/* Left: hamburger + search */}
+              {/* Left: hamburger */}
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <button
                   onClick={() => setSidebarOpen(true)}
@@ -269,23 +274,6 @@ const ClientModularDashboard = () => {
                 >
                   <FiMenu className="w-5 h-5" />
                 </button>
-
-                <div className={`relative flex-1 max-w-xl transition-all duration-300 ${searchFocused ? 'scale-[1.01]' : ''}`}>
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setSearchFocused(false)}
-                    className={`
-                      w-full rounded-xl border bg-[#eff1f8] py-2.5 md:py-3 pl-10 pr-4
-                      text-sm md:text-base leading-none text-slate-600
-                      focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 focus:bg-white
-                      transition-all duration-300
-                      ${searchFocused ? 'border-blue-300 shadow-lg shadow-blue-100' : 'border-[#dfe4ef]'}
-                    `}
-                  />
-                  <FiSearch className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-200 ${searchFocused ? 'text-blue-500' : 'text-slate-400'}`} />
-                </div>
               </div>
 
               {/* Right: profile */}

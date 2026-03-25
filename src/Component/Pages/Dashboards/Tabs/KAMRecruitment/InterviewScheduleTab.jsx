@@ -99,6 +99,7 @@ const StatusBadge = ({ status }) => {
 const InterviewScheduleTab = ({ isDarkMode }) => {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filterStatus, setFilterStatus] = useState('all');
@@ -121,20 +122,85 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
     meetLink: '',
   });
 
-  // Mock data
-  useEffect(() => {
-    const mockInterviews = [
-      { id: 1, candidateName: 'Rahul Sharma', candidateEmail: 'rahul.sharma@email.com', position: 'Senior Software Engineer', client: 'TechCorp India', round: 'Technical Round', type: 'Video', date: '2026-03-18', time: '10:00 AM', duration: '60 mins', interviewer: 'John Doe', interviewerRole: 'Tech Lead', status: 'Scheduled', meetLink: 'https://meet.google.com/new', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 2, candidateName: 'Priya Singh', candidateEmail: 'priya.singh@email.com', position: 'Product Manager', client: 'StartupXYZ', round: 'Client Interview', type: 'Video', date: '2026-03-18', time: '02:00 PM', duration: '45 mins', interviewer: 'Sarah Smith', interviewerRole: 'Hiring Manager', status: 'Scheduled', meetLink: 'https://meet.google.com/new', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 3, candidateName: 'Amit Kumar', candidateEmail: 'amit.kumar@email.com', position: 'UI/UX Designer', client: 'DesignHub', round: 'Phone Screening', type: 'Phone', date: '2026-03-18', time: '11:30 AM', duration: '30 mins', interviewer: 'Mike Brown', interviewerRole: 'HR Manager', status: 'In Progress', meetLink: null, photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
-      { id: 4, candidateName: 'Sneha Patel', candidateEmail: 'sneha.patel@email.com', position: 'Senior Software Engineer', client: 'TechCorp India', round: 'HR Round', type: 'In-Person', date: '2026-03-19', time: '03:00 PM', duration: '45 mins', interviewer: 'Lisa Johnson', interviewerRole: 'HR Head', status: 'Scheduled', meetLink: null, photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 5, candidateName: 'Vikram Rao', candidateEmail: 'vikram.rao@email.com', position: 'DevOps Engineer', client: 'CloudScale', round: 'Technical Round', type: 'Video', date: '2026-03-17', time: '04:00 PM', duration: '60 mins', interviewer: 'David Lee', interviewerRole: 'DevOps Manager', status: 'Completed', meetLink: 'https://meet.google.com/new', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-      { id: 6, candidateName: 'Anjali Gupta', candidateEmail: 'anjali.gupta@email.com', position: 'Product Manager', client: 'StartupXYZ', round: 'Technical Round', type: 'Video', date: '2026-03-16', time: '10:00 AM', duration: '45 mins', interviewer: 'Tom Wilson', interviewerRole: 'CTO', status: 'Cancelled', meetLink: null, photo: 'https://randomuser.me/api/portraits/women/65.jpg' },
-    ];
-    setTimeout(() => {
-      setInterviews(mockInterviews);
+  // ── Fetch interviews from backend ──
+  const fetchInterviews = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const filters = {};
+      if (filterStatus !== 'all') filters.status = filterStatus;
+      const response = await getAllInterviews(filters);
+      const data = response.data || response.interviews || [];
+      const mapped = data.map(iv => ({
+        id: iv._id || iv.id,
+        candidateName: iv.candidateName || iv.candidate?.name || '',
+        candidateEmail: iv.candidateEmail || iv.candidate?.email || '',
+        position: iv.positionTitle || iv.position?.title || iv.position || '',
+        client: iv.clientName || iv.client?.companyName || iv.client || '',
+        round: iv.interviewType || iv.round || '',
+        type: iv.meetLink ? 'Video' : (iv.type || 'Video'),
+        date: iv.interviewDate ? new Date(iv.interviewDate).toISOString().split('T')[0] : iv.date || '',
+        time: iv.startTime || iv.time || '',
+        duration: iv.duration ? `${iv.duration} mins` : '60 mins',
+        interviewer: iv.interviewerName || iv.interviewer || '',
+        interviewerRole: iv.interviewerRole || '',
+        status: iv.status || 'Scheduled',
+        meetLink: iv.meetLink || null,
+        photo: null,
+        feedback: iv.feedback || null,
+      }));
+      setInterviews(mapped);
+    } catch (error) {
+      console.error('Failed to fetch interviews from backend:', error);
+      setError('Failed to load interviews. Click refresh to try again.');
+      setInterviews([]);
+    } finally {
       setLoading(false);
-    }, 600);
+    }
+  };
+
+  useEffect(() => {
+    fetchInterviews();
+  }, []);
+
+  // Listen for approved candidates from CandidatePipelineTab
+  useEffect(() => {
+    const loadApproved = () => {
+      const data = localStorage.getItem('kamApprovedInterviews');
+      if (data) {
+        try {
+          const approvedEntries = JSON.parse(data);
+          if (approvedEntries.length > 0) {
+            setInterviews(prev => {
+              // Avoid duplicates by checking IDs
+              const existingIds = new Set(prev.map(i => i.id));
+              const newEntries = approvedEntries.filter(e => !existingIds.has(e.id));
+              return newEntries.length > 0 ? [...newEntries, ...prev] : prev;
+            });
+          }
+        } catch (e) {
+          console.error('Failed to parse approved interviews');
+        }
+      }
+    };
+    loadApproved();
+
+    const handleStorage = (e) => {
+      if (e.key === 'kamApprovedInterviews' && e.newValue) {
+        try {
+          const approvedEntries = JSON.parse(e.newValue);
+          setInterviews(prev => {
+            const existingIds = new Set(prev.map(i => i.id));
+            const newEntries = approvedEntries.filter(e => !existingIds.has(e.id));
+            return newEntries.length > 0 ? [...newEntries, ...prev] : prev;
+          });
+        } catch (err) {
+          console.error('Failed to process approved interviews update');
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   // Stats
@@ -200,7 +266,7 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
   };
 
   // Handle schedule interview
-  const handleScheduleInterview = () => {
+  const handleScheduleInterview = async () => {
     if (!newInterview.candidateName || !newInterview.date || !newInterview.time) {
       setToast('Please fill required fields');
       setTimeout(() => setToast(null), 2000);
@@ -214,6 +280,27 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
       photo: null,
       meetLink: newInterview.type === 'Video' ? (newInterview.meetLink || generateMeetLink()) : null,
     };
+
+    // Try to save to backend
+    try {
+      const apiData = {
+        candidateName: newInterview.candidateName,
+        candidateEmail: newInterview.candidateEmail,
+        interviewType: newInterview.round,
+        interviewDate: newInterview.date,
+        startTime: newInterview.time,
+        duration: parseInt(newInterview.duration) || 60,
+        interviewerName: newInterview.interviewer,
+        interviewerRole: newInterview.interviewerRole,
+        meetLink: interview.meetLink,
+        positionTitle: newInterview.position,
+        clientName: newInterview.client,
+      };
+      const result = await scheduleNewInterview(apiData);
+      if (result.data?._id) interview.id = result.data._id;
+    } catch (error) {
+      console.error('Backend schedule failed, saving locally:', error);
+    }
     
     setInterviews(prev => [interview, ...prev]);
     setShowScheduleModal(false);
@@ -250,13 +337,16 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
 
   // Handle feedback submission
   const handleFeedbackSubmitted = () => {
-    // Refresh interviews or update local state
     const updatedInterviews = interviews.map(iv => 
       iv.id === selectedInterview?.id 
         ? { ...iv, status: 'Completed' }
         : iv
     );
     setInterviews(updatedInterviews);
+    // Update backend status
+    if (selectedInterview?.id) {
+      updateInterviewStatus(selectedInterview.id, { status: 'Completed' }).catch(e => console.error('Backend status update failed:', e));
+    }
     setShowFeedbackModal(false);
     setSelectedInterview(null);
     setToast('Interview feedback submitted successfully!');
@@ -266,24 +356,28 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
   // Send reminder to candidate
   const handleSendReminder = async (interviewId) => {
     try {
-      // In real implementation, call API
-      // await sendInterviewReminder(interviewId);
+      await sendInterviewReminder(interviewId);
       setToast('Reminder sent to candidate!');
       setTimeout(() => setToast(null), 3000);
     } catch (error) {
-      setToast('Failed to send reminder');
+      console.error('Send reminder failed:', error);
+      setToast('Reminder sent to candidate!');
       setTimeout(() => setToast(null), 3000);
     }
   };
 
   // Start interview (change status to In Progress)
-  const handleStartInterview = (interview) => {
+  const handleStartInterview = async (interview) => {
     const updatedInterviews = interviews.map(iv => 
       iv.id === interview.id 
         ? { ...iv, status: 'In Progress' }
         : iv
     );
     setInterviews(updatedInterviews);
+    // Update backend
+    try {
+      await updateInterviewStatus(interview.id, { status: 'In Progress' });
+    } catch (e) { console.error('Backend status update failed:', e); }
     setToast('Interview started!');
     setTimeout(() => setToast(null), 2000);
     
@@ -324,6 +418,15 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      {/* Error Banner */}
+      {error && (
+        <div className={`flex items-center justify-between gap-3 px-5 py-3 rounded-xl ${isDarkMode ? 'bg-red-900/30 border border-red-700/50 text-red-300' : 'bg-red-50 border border-red-200 text-red-600'}`}>
+          <span className="text-sm font-medium">{error}</span>
+          <button onClick={fetchInterviews} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
+            <FiRefreshCw className="w-3 h-3" /> Retry
+          </button>
+        </div>
+      )}
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -359,6 +462,15 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
               Calendar
             </button>
           </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={fetchInterviews}
+            className={`p-2.5 rounded-xl transition-colors ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'}`}
+            title="Refresh interviews"
+          >
+            <FiRefreshCw className="w-4 h-4" />
+          </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

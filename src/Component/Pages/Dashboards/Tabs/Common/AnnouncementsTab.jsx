@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBell, FiPlus, FiTrash2, FiX, FiAlertCircle, FiInfo, FiAlertTriangle, FiPin } from 'react-icons/fi';
+import { FiBell, FiPlus, FiTrash2, FiX, FiAlertCircle, FiInfo, FiAlertTriangle, FiBookmark } from 'react-icons/fi';
 import { getAnnouncements, createAnnouncement, deleteAnnouncement } from '../../../service/api';
 
 const priorityConfig = {
@@ -194,7 +194,7 @@ const AnnouncementsTab = ({ department, isHead = false }) => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      {ann.pinned && <FiPin style={{ width: '14px', height: '14px', color: '#6366f1' }} />}
+                      {ann.pinned && <FiBookmark style={{ width: '14px', height: '14px', color: '#6366f1' }} />}
                       <h4 className="font-semibold text-gray-900">{ann.title}</h4>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase" style={{ color: pc.color, background: pc.bg }}>
                         {pc.label}

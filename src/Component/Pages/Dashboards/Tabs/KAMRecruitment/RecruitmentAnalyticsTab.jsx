@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiTrendingUp,
@@ -18,6 +18,7 @@ import {
   FiFilter,
   FiRefreshCw,
 } from 'react-icons/fi';
+import { getRecruitmentStats } from '../../../service/api';
 
 /* ── Trend Indicator ── */
 const TrendBadge = ({ value, isPositive }) => {
@@ -89,62 +90,74 @@ const RecruitmentAnalyticsTab = ({ isDarkMode }) => {
   const [dateRange, setDateRange] = useState('this-month');
   const [analytics, setAnalytics] = useState(null);
 
-  // Mock analytics data
-  useEffect(() => {
-    const mockData = {
-      summary: {
-        totalOpenings: 28,
-        openingsTrend: 12,
-        activeOpenings: 18,
-        totalApplications: 342,
-        applicationsTrend: 24,
-        hiredThisMonth: 8,
-        hiredTrend: -5,
-        avgTimeToHire: 22,
-        timeTrend: -8,
-      },
-      funnelMetrics: {
-        applied: 342,
-        screened: 186,
-        interviewed: 94,
-        offered: 28,
-        hired: 8,
-      },
-      sourceAnalysis: [
-        { source: 'LinkedIn', count: 142, conversion: 32 },
-        { source: 'Naukri', count: 98, conversion: 28 },
-        { source: 'Employee Referral', count: 56, conversion: 45 },
-        { source: 'Website', count: 32, conversion: 18 },
-        { source: 'Campus', count: 14, conversion: 55 },
-      ],
-      positionMetrics: [
-        { position: 'Software Engineer', openings: 8, filled: 3, avgDays: 18 },
-        { position: 'Product Manager', openings: 4, filled: 2, avgDays: 28 },
-        { position: 'UI/UX Designer', openings: 3, filled: 1, avgDays: 22 },
-        { position: 'DevOps Engineer', openings: 5, filled: 2, avgDays: 20 },
-        { position: 'Data Analyst', openings: 6, filled: 0, avgDays: 0 },
-      ],
-      clientMetrics: [
-        { client: 'TechCorp India', openings: 12, filled: 4, satisfaction: 92 },
-        { client: 'StartupXYZ', openings: 6, filled: 2, satisfaction: 88 },
-        { client: 'CloudScale', openings: 4, filled: 1, satisfaction: 95 },
-        { client: 'DesignHub', openings: 3, filled: 1, satisfaction: 85 },
-        { client: 'DataMinds', openings: 3, filled: 0, satisfaction: 78 },
-      ],
-      monthlyTrend: [
-        { month: 'Oct', hired: 6, target: 8 },
-        { month: 'Nov', hired: 9, target: 10 },
-        { month: 'Dec', hired: 5, target: 6 },
-        { month: 'Jan', hired: 7, target: 8 },
-        { month: 'Feb', hired: 10, target: 10 },
-        { month: 'Mar', hired: 8, target: 12 },
-      ],
-    };
-    setTimeout(() => {
-      setAnalytics(mockData);
+  // Fetch analytics from backend
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await getRecruitmentStats();
+      if (res?.success && res.data) {
+        const d = res.data;
+        const funnel = d.funnel || {};
+        const totalApplied = d.candidates?.total || 0;
+        const screened = (funnel.phoneInterview || 0) + (funnel.technical || 0) + (funnel.hrRound || 0) + (funnel.clientInterview || 0) + (funnel.offerSent || 0) + (funnel.joined || 0);
+        const interviewed = (funnel.technical || 0) + (funnel.hrRound || 0) + (funnel.clientInterview || 0) + (funnel.offerSent || 0) + (funnel.joined || 0);
+
+        setAnalytics({
+          summary: {
+            totalOpenings: d.positions?.total || 0,
+            openingsTrend: 0,
+            activeOpenings: d.positions?.open || 0,
+            totalApplications: totalApplied,
+            applicationsTrend: 0,
+            hiredThisMonth: funnel.joined || 0,
+            hiredTrend: 0,
+            avgTimeToHire: 0,
+            timeTrend: 0,
+          },
+          funnelMetrics: {
+            applied: totalApplied,
+            screened,
+            interviewed,
+            offered: funnel.offerSent || 0,
+            hired: funnel.joined || 0,
+          },
+          sourceAnalysis: [
+            { source: 'Resume Bank', count: totalApplied, conversion: totalApplied > 0 ? Math.round((funnel.joined || 0) / totalApplied * 100) : 0 },
+          ],
+          positionMetrics: (d.positionMetrics || []).map(p => ({
+            position: p.position,
+            openings: p.openings,
+            filled: p.filled,
+            avgDays: 0,
+          })),
+          clientMetrics: (d.clientMetrics || []).map(c => ({
+            client: c.client,
+            openings: c.openings,
+            filled: c.filled,
+            satisfaction: 0,
+          })),
+          monthlyTrend: [],
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error);
+      // Fallback mock data
+      setAnalytics({
+        summary: { totalOpenings: 0, openingsTrend: 0, activeOpenings: 0, totalApplications: 0, applicationsTrend: 0, hiredThisMonth: 0, hiredTrend: 0, avgTimeToHire: 0, timeTrend: 0 },
+        funnelMetrics: { applied: 0, screened: 0, interviewed: 0, offered: 0, hired: 0 },
+        sourceAnalysis: [],
+        positionMetrics: [],
+        clientMetrics: [],
+        monthlyTrend: [],
+      });
+    } finally {
       setLoading(false);
-    }, 600);
-  }, []);
+    }
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const statCards = analytics ? [
     { label: 'Total Openings', value: analytics.summary.totalOpenings, trend: analytics.summary.openingsTrend, isPositive: true, icon: FiBriefcase, bgColor: '#8b5cf6', bgGradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', shadowColor: '139, 92, 246' },
@@ -218,6 +231,7 @@ const RecruitmentAnalyticsTab = ({ isDarkMode }) => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={fetchAnalytics}
             className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
           >
             <FiRefreshCw className="w-4 h-4" />

@@ -29,13 +29,11 @@ const MyProfileTab = lazy(() => import('./Tabs/Common/MyProfileTab'));
 const LeaveRequestTab = lazy(() => import('./Tabs/Common/LeaveRequestTab'));
 const AttendanceTab = lazy(() => import('./Tabs/Common/AttendanceTab'));
 const PerformanceStatsTab = lazy(() => import('./Tabs/Common/PerformanceStatsTab'));
-const TeamChatTab = lazy(() => import('./Tabs/Common/TeamChatTab'));
 const CalendarTab = lazy(() => import('./Tabs/Common/CalendarTab'));
 const DailyReportTab = lazy(() => import('./Tabs/Common/DailyReportTab'));
 const AnnouncementsTab = lazy(() => import('./Tabs/Common/AnnouncementsTab'));
-const DocumentsTab = lazy(() => import('./Tabs/Common/DocumentsTab'));
-const TrainingTab = lazy(() => import('./Tabs/Common/TrainingTab'));
 const PayslipsTab = lazy(() => import('./Tabs/Common/PayslipsTab'));
+const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
 
 // Tab Loader Skeleton
 const TabLoader = () => (
@@ -63,25 +61,24 @@ const sidebarConfig = [
     items: [
       { id: 0, title: 'My Tasks', icon: FiCheckSquare },
       { id: 1, title: 'Activity Feed', icon: FiActivity },
-      { id: 2, title: 'Daily Report', icon: FiFileText },
-      { id: 3, title: 'Calendar', icon: FiCalendar },
     ]
   },
   {
     heading: 'PERSONAL',
     items: [
       { id: 4, title: 'My Profile', icon: FiUser },
-      { id: 5, title: 'Attendance', icon: FiClock },
-      { id: 6, title: 'Leave Requests', icon: FiCalendar },
       { id: 7, title: 'Performance', icon: FiBarChart2 },
+    ]
+  },
+  {
+    heading: 'RECRUITMENT',
+    items: [
+      { id: 8, title: 'Interview Schedule', icon: FiCalendar },
     ]
   },
   {
     heading: 'DEPARTMENT',
     items: [
-      { id: 8, title: 'Team Chat', icon: FiMessageCircle },
-      { id: 10, title: 'Documents', icon: FiFolder },
-      { id: 11, title: 'Training', icon: FiBook },
       { id: 12, title: 'Payslips', icon: FaIndianRupeeSign },
     ]
   },
@@ -238,14 +235,10 @@ const DepartmentMemberDashboard = () => {
               return <LeaveRequestTab />;
             case 'Performance':
               return <PerformanceStatsTab />;
-            case 'Team Chat':
-              return <TeamChatTab department={department} />;
+            case 'Interview Schedule':
+              return <InterviewScheduleTab />;
             case 'Announcements':
               return <AnnouncementsTab department={department} />;
-            case 'Documents':
-              return <DocumentsTab department={department} />;
-            case 'Training':
-              return <TrainingTab />;
             case 'Payslips':
               return <PayslipsTab />;
             default:
@@ -431,7 +424,7 @@ const DepartmentMemberDashboard = () => {
                           { tab: 'Attendance', icon: FiClock, label: 'Mark Attendance', hoverBorder: 'hover:border-emerald-300', hoverBg: 'hover:bg-emerald-50/50', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
                           { tab: 'Daily Report', icon: FiFileText, label: 'Submit Report', hoverBorder: 'hover:border-violet-300', hoverBg: 'hover:bg-violet-50/50', iconBg: 'bg-violet-100', iconColor: 'text-violet-600' },
                           { tab: 'Leave Requests', icon: FiCalendar, label: 'Apply Leave', hoverBorder: 'hover:border-amber-300', hoverBg: 'hover:bg-amber-50/50', iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-                          { tab: 'Team Chat', icon: FiMessageCircle, label: 'Team Chat', hoverBorder: 'hover:border-rose-300', hoverBg: 'hover:bg-rose-50/50', iconBg: 'bg-rose-100', iconColor: 'text-rose-600' },
+                          { tab: 'Interview Schedule', icon: FiCalendar, label: 'Interviews', hoverBorder: 'hover:border-rose-300', hoverBg: 'hover:bg-rose-50/50', iconBg: 'bg-rose-100', iconColor: 'text-rose-600' },
                           { tab: 'Performance', icon: FiBarChart2, label: 'View Performance', hoverBorder: 'hover:border-cyan-300', hoverBg: 'hover:bg-cyan-50/50', iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
                         ].map((action) => (
                           <button

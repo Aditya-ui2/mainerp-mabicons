@@ -21,7 +21,6 @@ import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { getAllNotifications, markNotificationRead } from '../service/api';
 
 // Lazy load Recruitment Tab Components
-const KamOverviewTab = lazy(() => import('./Tabs/KAMRecruitment/KamOverviewTab'));
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
 const CandidatePipelineTab = lazy(() => import('./Tabs/KAMRecruitment/CandidatePipelineTab'));
 const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
@@ -60,7 +59,6 @@ const sidebarConfig = [
   {
     heading: 'RECRUITMENT',
     items: [
-      { id: 0, title: 'KAM Overview', icon: FiTarget },
       { id: 1, title: 'Job Openings', icon: FiBriefcase },
       { id: 2, title: 'Candidate Pipeline', icon: FiUsers },
       { id: 3, title: 'Interview Schedule', icon: FiCalendar },
@@ -165,8 +163,6 @@ const HRRecruitmentDashboard = () => {
       <Suspense fallback={<TabLoader />}>
         {(() => {
           switch (activeTab) {
-            case 'KAM Overview':
-              return <KamOverviewTab />;
             case 'Job Openings':
               return <JobOpeningsTab />;
             case 'Candidate Pipeline':
