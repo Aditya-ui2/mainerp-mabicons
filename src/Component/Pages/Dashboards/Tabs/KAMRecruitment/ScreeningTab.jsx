@@ -155,92 +155,212 @@ const ScreeningTab = ({ isDarkMode }) => {
         className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.25)' }}>
-            <FiFileText className="w-6 h-6" style={{ color: 'white' }} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold" style={{ background: 'linear-gradient(90deg, #059669, #0d9488)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Screening & Assessment
-            </h2>
-            <p className={`text-sm mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              Review CVs and assess candidate fit
-            </p>
-          </div>
+         
+        <div className="flex items-center gap-3">
+  <div className="p-3 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.3)' }}>
+    <FiFileText className="w-6 h-6 text-white" />
+  </div>
+  <div>
+    <h2 className="text-2xl font-bold" style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      Screening & Assessment
+    </h2>
+    <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+      Review CVs and assess candidate fit
+    </p>
+  </div>
+</div>
         </div>
       </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((card, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            whileHover={{ scale: 1.02, y: -2 }}
-            className={`relative overflow-hidden rounded-2xl p-5 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-slate-200/50 shadow-lg'}`}
-            style={{ boxShadow: `0 10px 15px -3px rgba(${card.shadowColor}, 0.15)` }}
+   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  {statCards.map((card, i) => (
+    <motion.div
+      key={i}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        delay: i * 0.1,
+        duration: 0.5,
+        ease: "easeOut"
+      }}
+      whileHover={{ 
+        scale: 1.03, 
+        y: -5,
+        transition: { duration: 0.2 }
+      }}
+      whileTap={{ scale: 0.98 }}
+      className={`relative overflow-hidden rounded-2xl p-5 cursor-pointer transition-all duration-300 ${
+        isDarkMode 
+          ? 'bg-slate-800/80 border border-slate-700/50 hover:border-violet-500/50' 
+          : 'bg-white border border-slate-200/50 hover:border-violet-200 hover:shadow-xl'
+      }`}
+      style={{ 
+        boxShadow: `0 10px 15px -3px rgba(${card.shadowColor}, 0.15)`,
+      }}
+    >
+      {/* Animated background glow */}
+      <motion.div 
+        className="absolute inset-0 opacity-0"
+        style={{ 
+          background: `radial-gradient(circle at 30% 20%, ${card.bgGradient.replace('linear-gradient(', '').replace(')', '')}, transparent)`,
+        }}
+        whileHover={{ opacity: 0.1 }}
+        transition={{ duration: 0.3 }}
+      />
+      
+      <div className="relative flex items-start justify-between z-10">
+        <div>
+          <motion.p 
+            className={`text-xs font-extrabold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1 + 0.1 }}
           >
-            <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
-              <div className="w-full h-full rounded-full" style={{ background: card.bgGradient }}></div>
-            </div>
-            <div className="relative flex items-start justify-between">
-              <div>
-                <p className={`text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {card.label}
-                </p>
-                <p className="text-3xl font-extrabold mt-1" style={{ background: card.bgGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  {card.value}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ background: card.bgGradient, boxShadow: `0 10px 15px -3px rgba(${card.shadowColor}, 0.3)` }}>
-                <card.icon className="w-5 h-5" style={{ color: 'white' }} />
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            {card.label}
+          </motion.p>
+          <motion.p 
+            className="text-3xl font-extrabold mt-1"
+            style={{ background: card.bgGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.1 + 0.2, type: "spring", stiffness: 300 }}
+          >
+            {card.value}
+          </motion.p>
+        </div>
+        
+        <motion.div 
+          className="p-3 rounded-xl shadow-lg"
+          style={{ background: card.bgGradient, boxShadow: `0 10px 15px -3px rgba(${card.shadowColor}, 0.3)` }}
+          initial={{ opacity: 0, rotate: -45, scale: 0 }}
+          animate={{ opacity: 1, rotate: 0, scale: 1 }}
+          transition={{ delay: i * 0.1 + 0.3, type: "spring", stiffness: 300 }}
+          whileHover={{ 
+            rotate: [0, -5, 5, 0],
+            transition: { duration: 0.3 }
+          }}
+        >
+          <card.icon className="w-5 h-5" style={{ color: 'white' }} />
+        </motion.div>
       </div>
+      
+      {/* Hover shine effect */}
+      <motion.div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+          transform: 'translateX(-100%)'
+        }}
+        whileHover={{
+          transform: 'translateX(100%)',
+          transition: { duration: 0.6 }
+        }}
+      />
+    </motion.div>
+  ))}
+</div>
 
       {/* Filter Pills */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="flex gap-2 overflow-x-auto pb-2"
-      >
-        {['all', 'Pending', 'Shortlisted', 'Sent to Client', 'On Hold', 'Rejected'].map((decision) => (
-          <motion.button
-            key={decision}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setFilterDecision(decision)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-              filterDecision === decision
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25'
-                : isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            {decision === 'all' ? 'All' : decision}
-          </motion.button>
-        ))}
-      </motion.div>
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.2 }}
+  className="flex gap-2 overflow-x-auto pb-2"
+>
+  {['all', 'Pending', 'Shortlisted', 'Sent to Client', 'On Hold', 'Rejected'].map((decision) => (
+    <motion.button
+      key={decision}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => setFilterDecision(decision)}
+      className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+        filterDecision === decision
+          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+          : isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+      }`}
+    >
+      {decision === 'all' ? 'All' : decision}
+    </motion.button>
+  ))}
+</motion.div>
 
       {/* Search */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="relative"
+   <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.3 }}
+  className="relative"
+>
+  <motion.div
+    initial={{ scale: 0 }}
+    animate={{ scale: 1 }}
+    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+    className="absolute left-4 top-1/2 -translate-y-1/2"
+  >
+    <FiSearch className={`w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+  </motion.div>
+  
+  <motion.input
+    type="text"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    placeholder="Search candidates..."
+    className={`w-full rounded-xl border-2 py-3 pl-12 pr-4 text-sm transition-all duration-300 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500 hover:border-slate-600' : 'bg-white border-slate-200 placeholder:text-slate-400 hover:border-slate-300'}`}
+    whileFocus={{ 
+      scale: 1.01,
+      transition: { duration: 0.2 }
+    }}
+    initial={{ opacity: 0, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: 0.35, duration: 0.4 }}
+  />
+  
+  {/* Animated glow effect on focus */}
+  <motion.div
+    className="absolute inset-0 rounded-xl pointer-events-none"
+    style={{
+      background: 'linear-gradient(90deg, #2563eb, #4f46e5)',
+      opacity: 0,
+      filter: 'blur(8px)',
+      zIndex: -1
+    }}
+    animate={{
+      opacity: searchTerm ? 0.15 : 0
+    }}
+    transition={{ duration: 0.3 }}
+  />
+  
+  {/* Clear button animation */}
+  <AnimatePresence>
+    {searchTerm && (
+      <motion.button
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setSearchTerm('')}
+        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
       >
-        <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search candidates..."
-          className={`w-full rounded-xl border-2 py-3 pl-12 pr-4 text-sm transition-all focus:ring-2 focus:ring-emerald-500/50 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-        />
-      </motion.div>
+        <FiX className={`w-4 h-4 ${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-700'}`} />
+      </motion.button>
+    )}
+  </AnimatePresence>
+  
+  {/* Animated underline effect */}
+  <motion.div
+    className="absolute bottom-0 left-0 h-0.5 rounded-full"
+    style={{
+      background: 'linear-gradient(90deg, #2563eb, #4f46e5)',
+      width: '0%'
+    }}
+    animate={{
+      width: searchTerm ? '100%' : '0%'
+    }}
+    transition={{ duration: 0.3 }}
+  />
+</motion.div>
 
       {/* Candidate Cards */}
       {filteredCandidates.length === 0 ? (
