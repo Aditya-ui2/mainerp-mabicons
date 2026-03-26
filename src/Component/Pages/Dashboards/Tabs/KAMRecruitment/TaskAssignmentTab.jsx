@@ -166,15 +166,13 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
       },
     ];
 
-    setTimeout(() => {
-      // Filter tasks based on role
-      if (userRole === 'Employee' && currentUserId) {
-        setTasks(mockTasks.filter(t => t.assignedTo === currentUserId));
-      } else {
-        setTasks(mockTasks);
-      }
-      setLoading(false);
-    }, 500);
+    // Filter tasks based on role
+    if (userRole === 'Employee' && currentUserId) {
+      setTasks(mockTasks.filter(t => t.assignedTo === currentUserId));
+    } else {
+      setTasks(mockTasks);
+    }
+    setLoading(false);
   }, [userRole, currentUserId]);
 
   // Stats

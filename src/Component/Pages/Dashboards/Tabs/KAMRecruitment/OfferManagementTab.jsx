@@ -75,10 +75,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
       { id: 5, candidateName: 'Ananya Reddy', email: 'ananya.r@email.com', position: 'Data Analyst', client: 'DataMinds', offeredCTC: '12 LPA', currentCTC: '10 LPA', joiningDate: '2026-04-05', offerDate: '2026-03-10', expiryDate: '2026-03-17', status: 'Rejected', negotiationNotes: 'Chose competitor offer', hikePercent: 20, photo: 'https://randomuser.me/api/portraits/women/55.jpg' },
       { id: 6, candidateName: 'Karthik M', email: 'karthik.m@email.com', position: 'UI/UX Designer', client: 'DesignHub', offeredCTC: '14 LPA', currentCTC: '12 LPA', joiningDate: '', offerDate: '2026-03-19', expiryDate: '2026-03-26', status: 'Draft', negotiationNotes: 'Awaiting budget approval', hikePercent: 17, photo: 'https://randomuser.me/api/portraits/men/46.jpg' },
     ];
-    setTimeout(() => {
-      setOffers(mockOffers);
-      setLoading(false);
-    }, 600);
+    setOffers(mockOffers);
+    setLoading(false);
   }, []);
 
   // Calculate days left

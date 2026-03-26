@@ -510,10 +510,8 @@ const KamOverviewTab = ({ isDarkMode }) => {
       }
     ];
 
-    setTimeout(() => {
-      setKams(mockKams);
-      setLoading(false);
-    }, 600);
+    setKams(mockKams);
+    setLoading(false);
   }, []);
 
   // Calculate overall stats

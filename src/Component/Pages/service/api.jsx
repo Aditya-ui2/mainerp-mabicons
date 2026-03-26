@@ -7,7 +7,7 @@ export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // Create axios instance with specific headers
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: 8000,
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -2697,6 +2697,20 @@ export const getRecruitmentStats = async () => {
     throw error.response?.data || {
       message: 'Failed to fetch stats'
     };
+  }
+};
+
+// Get recruitment progress for a specific client (client-facing)
+export const getClientRecruitmentProgress = async (clientId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get(`/recruitment/client-progress/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client recruitment progress:', error);
+    throw error.response?.data || { message: 'Failed to fetch recruitment progress' };
   }
 };
 

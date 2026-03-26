@@ -472,9 +472,31 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
 };
 
 /* ══════════════════════════════════════════════════════ */
+const CACHE_KEY_JOBS = 'cache_kamJobOpenings';
+const CACHE_KEY_ROLES = 'cache_kamRoleTypes';
+
+const FALLBACK_JOBS = [
+  { id: 1, title: 'Senior Software Engineer', client: 'TechCorp India', clientLogo: 'TC', location: 'Bangalore', type: 'Full-time', salary: '25-35 LPA', openings: 5, filled: 2, status: 'Open', priority: 'High', postedDate: '2026-03-10', deadline: '2026-04-10', experience: '5-8 years', skills: ['React', 'Node.js', 'MongoDB'], description: 'Senior Software Engineer position for TechCorp India.', roleType: 'Engineer' },
+  { id: 2, title: 'Product Manager', client: 'StartupXYZ', clientLogo: 'SX', location: 'Mumbai', type: 'Full-time', salary: '30-40 LPA', openings: 2, filled: 0, status: 'Urgent', priority: 'High', postedDate: '2026-03-15', deadline: '2026-03-30', experience: '6-10 years', skills: ['Agile', 'Roadmap', 'Analytics'], description: 'Product Manager for StartupXYZ.', roleType: 'Manager' },
+  { id: 3, title: 'UI/UX Designer', client: 'DesignHub', clientLogo: 'DH', location: 'Remote', type: 'Contract', salary: '15-20 LPA', openings: 3, filled: 1, status: 'In Progress', priority: 'Medium', postedDate: '2026-03-12', deadline: '2026-04-15', experience: '3-5 years', skills: ['Figma', 'Adobe XD', 'User Research'], description: 'UI/UX Designer for DesignHub.', roleType: 'Graphic Designer' },
+  { id: 4, title: 'Data Analyst', client: 'DataDriven Co', clientLogo: 'DD', location: 'Hyderabad', type: 'Full-time', salary: '12-18 LPA', openings: 4, filled: 4, status: 'Closed', priority: 'Low', postedDate: '2026-02-20', deadline: '2026-03-20', experience: '2-4 years', skills: ['SQL', 'Python', 'Tableau'], description: 'Data Analyst for DataDriven Co.', roleType: 'Data Management and Analyst' },
+  { id: 5, title: 'DevOps Engineer', client: 'CloudScale', clientLogo: 'CS', location: 'Pune', type: 'Full-time', salary: '20-28 LPA', openings: 2, filled: 0, status: 'On Hold', priority: 'Medium', postedDate: '2026-03-05', deadline: '2026-04-05', experience: '4-6 years', skills: ['AWS', 'Docker', 'Kubernetes'], description: 'DevOps Engineer for CloudScale.', roleType: 'Engineer' },
+];
+
+const FALLBACK_ROLES = [
+  { role: 'Sales&Marketing', count: 352 }, { role: 'Engineer', count: 261 }, { role: 'Accountant', count: 203 },
+  { role: 'ITI', count: 165 }, { role: 'HR', count: 119 }, { role: 'Fresher', count: 113 },
+  { role: 'Solar', count: 104 }, { role: 'Tele sales &CRM', count: 99 }, { role: 'Back Office', count: 77 },
+  { role: 'Finance', count: 57 }, { role: 'Data Management and Analyst', count: 56 }, { role: 'Graphic Designer', count: 55 },
+];
+
 const JobOpeningsTab = ({ isDarkMode }) => {
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Always show data instantly — cached, or fallback mock
+  const [jobs, setJobs] = useState(() => {
+    try { const c = localStorage.getItem(CACHE_KEY_JOBS); return c ? JSON.parse(c) : FALLBACK_JOBS; } catch { return FALLBACK_JOBS; }
+  });
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingJob, setEditingJob] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -493,16 +515,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [matchedResumes, setMatchedResumes] = useState([]);
   const [selectedResumes, setSelectedResumes] = useState(new Set());
   const [resumeFetchLoading, setResumeFetchLoading] = useState(false);
-  const [roleTypes, setRoleTypes] = useState([]);
+  const [roleTypes, setRoleTypes] = useState(() => {
+    try { const c = localStorage.getItem(CACHE_KEY_ROLES); return c ? JSON.parse(c) : FALLBACK_ROLES; } catch { return FALLBACK_ROLES; }
+  });
   const [roleTypesLoading, setRoleTypesLoading] = useState(false);
   const [newJobForm, setNewJobForm] = useState({
     title: '', client: '', location: '', type: 'Full-time', salary: '',
     openings: 1, experience: '', priority: 'Medium', deadline: '', skills: '', description: '', roleType: ''
   });
 
-  // ── Fetch positions from backend ──
+  // ── Fetch positions from backend (always background) ──
   const fetchPositions = async () => {
-    setLoading(true);
+    setRefreshing(true);
     try {
       const filters = {};
       if (filterClient !== 'all') filters.client = filterClient;
@@ -529,18 +553,12 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         candidateCount: p.candidateCount || 0,
       }));
       setJobs(positions);
+      try { localStorage.setItem(CACHE_KEY_JOBS, JSON.stringify(positions)); } catch {}
     } catch (error) {
       console.error('Failed to fetch positions from backend:', error);
-      const mockJobs = [
-        { id: 1, title: 'Senior Software Engineer', client: 'TechCorp India', clientLogo: 'TC', location: 'Bangalore', type: 'Full-time', salary: '25-35 LPA', openings: 5, filled: 2, status: 'Open', priority: 'High', postedDate: '2026-03-10', deadline: '2026-04-10', experience: '5-8 years', skills: ['React', 'Node.js', 'MongoDB'], description: 'Senior Software Engineer position for TechCorp India.', roleType: 'Engineer' },
-        { id: 2, title: 'Product Manager', client: 'StartupXYZ', clientLogo: 'SX', location: 'Mumbai', type: 'Full-time', salary: '30-40 LPA', openings: 2, filled: 0, status: 'Urgent', priority: 'High', postedDate: '2026-03-15', deadline: '2026-03-30', experience: '6-10 years', skills: ['Agile', 'Roadmap', 'Analytics'], description: 'Product Manager for StartupXYZ.', roleType: 'Manager' },
-        { id: 3, title: 'UI/UX Designer', client: 'DesignHub', clientLogo: 'DH', location: 'Remote', type: 'Contract', salary: '15-20 LPA', openings: 3, filled: 1, status: 'In Progress', priority: 'Medium', postedDate: '2026-03-12', deadline: '2026-04-15', experience: '3-5 years', skills: ['Figma', 'Adobe XD', 'User Research'], description: 'UI/UX Designer for DesignHub.', roleType: 'Graphic Designer' },
-        { id: 4, title: 'Data Analyst', client: 'DataDriven Co', clientLogo: 'DD', location: 'Hyderabad', type: 'Full-time', salary: '12-18 LPA', openings: 4, filled: 4, status: 'Closed', priority: 'Low', postedDate: '2026-02-20', deadline: '2026-03-20', experience: '2-4 years', skills: ['SQL', 'Python', 'Tableau'], description: 'Data Analyst for DataDriven Co.', roleType: 'Data Management and Analyst' },
-        { id: 5, title: 'DevOps Engineer', client: 'CloudScale', clientLogo: 'CS', location: 'Pune', type: 'Full-time', salary: '20-28 LPA', openings: 2, filled: 0, status: 'On Hold', priority: 'Medium', postedDate: '2026-03-05', deadline: '2026-04-05', experience: '4-6 years', skills: ['AWS', 'Docker', 'Kubernetes'], description: 'DevOps Engineer for CloudScale.', roleType: 'Engineer' },
-      ];
-      setJobs(mockJobs);
+      // Keep whatever data we already have showing
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -556,21 +574,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
   useEffect(() => {
     const fetchRoles = async () => {
-      setRoleTypesLoading(true);
+      setRefreshing(true);
       try {
         const response = await getResumeRoleTypes();
         const rolesData = response.data || response.roles || [];
-        setRoleTypes(rolesData.map(r => ({ role: r.role || r.name || r.roleType || '', count: r.count || 0 })));
+        const mapped = rolesData.map(r => ({ role: r.role || r.name || r.roleType || '', count: r.count || 0 }));
+        setRoleTypes(mapped);
+        try { localStorage.setItem(CACHE_KEY_ROLES, JSON.stringify(mapped)); } catch {}
       } catch (error) {
         console.error('Failed to fetch role types:', error);
-        setRoleTypes([
-          { role: 'Sales&Marketing', count: 352 }, { role: 'Engineer', count: 261 }, { role: 'Accountant', count: 203 },
-          { role: 'ITI', count: 165 }, { role: 'HR', count: 119 }, { role: 'Fresher', count: 113 },
-          { role: 'Solar', count: 104 }, { role: 'Tele sales &CRM', count: 99 }, { role: 'Back Office', count: 77 },
-          { role: 'Finance', count: 57 }, { role: 'Data Management and Analyst', count: 56 }, { role: 'Graphic Designer', count: 55 },
-        ]);
+        // Keep existing role types
       } finally {
-        setRoleTypesLoading(false);
+        setRefreshing(false);
       }
     };
     fetchRoles();

@@ -23,10 +23,15 @@ module.exports = withMT({
           '50%': { transform: 'scale(0.7) rotate(5deg)' },
           '75%': { transform: 'scale(0.5) rotate(-8deg)' },
           '100%': { transform: 'scale(0) rotate(10deg)', opacity: '0' }
+        },
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
         }
       },
       animation: {
-        'crumple': 'crumple 0.5s ease-in forwards'
+        'crumple': 'crumple 0.5s ease-in forwards',
+        'fadeIn': 'fadeIn 150ms ease-out forwards'
       },
       backgroundColor: {
         dark: '#1a1a1a',

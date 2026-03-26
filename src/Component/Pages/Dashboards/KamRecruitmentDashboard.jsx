@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { hasAccessTo } from '../DepartmentProtectedRoute';
 import {
@@ -25,10 +25,12 @@ import {
 } from 'react-icons/fi';
 import logo from '../../../assets/images/mabicons-logo.svg';
 
-// Lazy load Recruitment Tab Components
-const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
-const CandidatePipelineTab = lazy(() => import('./Tabs/KAMRecruitment/CandidatePipelineTab'));
-const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
+// Eagerly load the 3 main tabs for instant render (no lazy = no Suspense delay)
+import JobOpeningsTab from './Tabs/KAMRecruitment/JobOpeningsTab';
+import CandidatePipelineTab from './Tabs/KAMRecruitment/CandidatePipelineTab';
+import InterviewScheduleTab from './Tabs/KAMRecruitment/InterviewScheduleTab';
+
+// Lazy load other tabs (loaded on demand)
 const ScreeningTab = lazy(() => import('./Tabs/KAMRecruitment/ScreeningTab'));
 const OfferManagementTab = lazy(() => import('./Tabs/KAMRecruitment/OfferManagementTab'));
 const RecruitmentAnalyticsTab = lazy(() => import('./Tabs/KAMRecruitment/RecruitmentAnalyticsTab'));
@@ -64,6 +66,40 @@ const TabLoader = () => (
   </div>
 );
 
+/* ── Error Boundary ──────────────────────────────────── */
+class TabErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error('Tab crashed:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">Something went wrong</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">This tab encountered an error while loading. Please try again.</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /* ── Sidebar Items ───────────────────────────────────── */
 const moduleItems = [
   { id: 1, title: 'Job Openings', short: 'Openings', icon: FiBriefcase },
@@ -79,24 +115,11 @@ const moduleItems = [
 ];
 
 /* ── Page Transition Wrapper ─────────────────────────── */
-const PageTransition = ({ children, tabKey }) => {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    setShow(false);
-    const t = requestAnimationFrame(() => setShow(true));
-    return () => cancelAnimationFrame(t);
-  }, [tabKey]);
-
-  return (
-    <div
-      className={`transition-all duration-300 ease-out ${
-        show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-      }`}
-    >
-      {children}
-    </div>
-  );
-};
+const PageTransition = ({ children }) => (
+  <div className="animate-[fadeIn_150ms_ease-out]">
+    {children}
+  </div>
+);
 
 /* ══════════════════ KAM RECRUITMENT DASHBOARD ═══════════════════ */
 const KamRecruitmentDashboard = () => {
@@ -111,6 +134,9 @@ const KamRecruitmentDashboard = () => {
   const profileRef = useRef(null);
   const sidebarRef = useRef(null);
   const touchStartX = useRef(0);
+  // Track which tabs have been visited to keep them mounted
+  // All 3 main tabs are pre-loaded from the start for instant switching
+  const [loadedTabs, setLoadedTabs] = useState(new Set(['Job Openings', 'Candidate Pipeline', 'Interview Schedule']));
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -167,24 +193,61 @@ const KamRecruitmentDashboard = () => {
 
   const switchTab = (title) => {
     setActiveTab(title);
+    setLoadedTabs(prev => new Set([...prev, title]));
     setSidebarOpen(false);
   };
 
+  // Tabs that stay mounted once visited (the heavy data-fetching ones)
+  const cachedTabs = ['Job Openings', 'Candidate Pipeline', 'Interview Schedule'];
+
   const renderTabContent = () => {
     const tabProps = { isDarkMode, selectedClient };
-    switch (activeTab) {
-      case 'Job Openings': return <JobOpeningsTab {...tabProps} />;
-      case 'Candidate Pipeline': return <CandidatePipelineTab {...tabProps} />;
-      case 'Interview Schedule': return <InterviewScheduleTab {...tabProps} />;
-      case 'Screening & Assessment': return <ScreeningTab {...tabProps} />;
-      case 'Offer Management': return <OfferManagementTab {...tabProps} />;
-      case 'Recruitment Analytics': return <RecruitmentAnalyticsTab {...tabProps} />;
-      case 'Resume Bank': return <ResumeBankTab {...tabProps} />;
-      case 'Team Members': return <TeamMembersTab {...tabProps} userRole="KAM" />;
-      case 'Task Assignment': return <TaskAssignmentTab {...tabProps} userRole="KAM" />;
-      case 'Work Handover': return <WorkHandoverTab {...tabProps} />;
-      default: return <p className="text-xl text-slate-500 font-medium">{activeTab}</p>;
+
+    // Render cached tabs with CSS display toggle (stay mounted once loaded)
+    const cachedTabElements = cachedTabs
+      .filter(tab => loadedTabs.has(tab))
+      .map(tab => {
+        let TabComponent;
+        switch (tab) {
+          case 'Job Openings': TabComponent = JobOpeningsTab; break;
+          case 'Candidate Pipeline': TabComponent = CandidatePipelineTab; break;
+          case 'Interview Schedule': TabComponent = InterviewScheduleTab; break;
+          default: return null;
+        }
+        return (
+          <div key={tab} style={{ display: activeTab === tab ? 'block' : 'none' }}>
+            <TabComponent {...tabProps} />
+          </div>
+        );
+      });
+
+    // Non-cached tabs render normally (unmount on switch)
+    let dynamicTab = null;
+    if (!cachedTabs.includes(activeTab)) {
+      switch (activeTab) {
+        case 'Screening & Assessment': dynamicTab = <ScreeningTab {...tabProps} />; break;
+        case 'Offer Management': dynamicTab = <OfferManagementTab {...tabProps} />; break;
+        case 'Recruitment Analytics': dynamicTab = <RecruitmentAnalyticsTab {...tabProps} />; break;
+        case 'Resume Bank': dynamicTab = <ResumeBankTab {...tabProps} />; break;
+        case 'Team Members': dynamicTab = <TeamMembersTab {...tabProps} userRole="KAM" />; break;
+        case 'Task Assignment': dynamicTab = <TaskAssignmentTab {...tabProps} userRole="KAM" />; break;
+        case 'Work Handover': dynamicTab = <WorkHandoverTab {...tabProps} />; break;
+        default: dynamicTab = <p className="text-xl text-slate-500 font-medium">{activeTab}</p>;
+      }
     }
+
+    return (
+      <>
+        {cachedTabElements}
+        {dynamicTab && (
+          <TabErrorBoundary key={activeTab}>
+            <Suspense fallback={<TabLoader />}>
+              <PageTransition>{dynamicTab}</PageTransition>
+            </Suspense>
+          </TabErrorBoundary>
+        )}
+      </>
+    );
   };
 
   const activeModule = moduleItems.find(m => m.title === activeTab);
@@ -363,11 +426,7 @@ const KamRecruitmentDashboard = () => {
 
           {/* ── Tab Content ── */}
           <section className="flex-1 overflow-y-auto p-4 md:p-6">
-            <Suspense fallback={<TabLoader />}>
-              <PageTransition tabKey={activeTab}>
-                {renderTabContent()}
-              </PageTransition>
-            </Suspense>
+            {renderTabContent()}
           </section>
         </main>
       </div>

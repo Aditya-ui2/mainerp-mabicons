@@ -98,9 +98,19 @@ const RatingStars = ({ rating, maxRating = 5 }) => (
 );
 
 /* ══════════════════════════════════════════════════════ */
+const CACHE_KEY_CANDIDATES = 'cache_kamCandidates';
+
+const FALLBACK_CANDIDATES = [
+  { id: 1, name: 'Rahul Sharma', email: 'rahul.sharma@email.com', phone: '+91 98765 43210', location: 'Bangalore', jobTitle: 'Senior Software Engineer', client: 'TechCorp India', stage: 'Technical Round', rating: 4, experience: '5 years', currentCTC: '18 LPA', expectedCTC: '28 LPA', noticePeriod: '30 days', skills: ['React', 'Node.js', 'MongoDB'], appliedDate: '2026-03-12', lastActivity: '2026-03-17', photo: null, pipelineStatus: 'pending' },
+  { id: 2, name: 'Priya Singh', email: 'priya.singh@email.com', phone: '+91 87654 32109', location: 'Mumbai', jobTitle: 'Product Manager', client: 'StartupXYZ', stage: 'Client Interview', rating: 5, experience: '7 years', currentCTC: '25 LPA', expectedCTC: '38 LPA', noticePeriod: '60 days', skills: ['Agile', 'Roadmap', 'Analytics'], appliedDate: '2026-03-15', lastActivity: '2026-03-18', photo: null, pipelineStatus: 'pending' },
+];
+
 const CandidatePipelineTab = ({ isDarkMode }) => {
-  const [candidates, setCandidates] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [candidates, setCandidates] = useState(() => {
+    try { const c = localStorage.getItem(CACHE_KEY_CANDIDATES); return c ? JSON.parse(c) : FALLBACK_CANDIDATES; } catch { return FALLBACK_CANDIDATES; }
+  });
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStage, setFilterStage] = useState('all');
   const [filterJob, setFilterJob] = useState('all');
@@ -332,7 +342,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
   // Fetch candidates from backend
   const fetchCandidates = useCallback(async () => {
     try {
-      setLoading(true);
+      setRefreshing(true);
       const filters = {};
       if (filterStage !== 'all') filters.stage = filterStage;
       if (filterPipelineStatus !== 'all') filters.pipelineStatus = filterPipelineStatus;
@@ -365,16 +375,13 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
           clientId: c.client?._id,
         }));
         setCandidates(mapped);
+        try { localStorage.setItem(CACHE_KEY_CANDIDATES, JSON.stringify(mapped)); } catch {}
       }
     } catch (error) {
       console.error('Failed to fetch candidates:', error);
-      // Fallback mock data
-      setCandidates([
-        { id: 1, name: 'Rahul Sharma', email: 'rahul.sharma@email.com', phone: '+91 98765 43210', location: 'Bangalore', jobTitle: 'Senior Software Engineer', client: 'TechCorp India', stage: 'Technical Round', rating: 4, experience: '5 years', currentCTC: '18 LPA', expectedCTC: '28 LPA', noticePeriod: '30 days', skills: ['React', 'Node.js', 'MongoDB'], appliedDate: '2026-03-12', lastActivity: '2026-03-17', photo: null, pipelineStatus: 'pending' },
-        { id: 2, name: 'Priya Singh', email: 'priya.singh@email.com', phone: '+91 87654 32109', location: 'Mumbai', jobTitle: 'Product Manager', client: 'StartupXYZ', stage: 'Client Interview', rating: 5, experience: '7 years', currentCTC: '25 LPA', expectedCTC: '38 LPA', noticePeriod: '60 days', skills: ['Agile', 'Roadmap', 'Analytics'], appliedDate: '2026-03-15', lastActivity: '2026-03-18', photo: null, pipelineStatus: 'pending' },
-      ]);
+      // Keep whatever data is already showing
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   }, [filterStage, filterPipelineStatus, searchTerm]);
 

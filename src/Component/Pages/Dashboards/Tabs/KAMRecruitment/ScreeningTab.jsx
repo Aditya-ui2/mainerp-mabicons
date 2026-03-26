@@ -78,10 +78,8 @@ const ScreeningTab = ({ isDarkMode }) => {
       { id: 5, name: 'Vikram Rao', email: 'vikram.rao@email.com', phone: '+91 54321 09876', position: 'DevOps Engineer', client: 'CloudScale', resumeScore: 75, skillMatch: 80, experienceMatch: 70, screeningDate: '2026-03-18', decision: 'Pending', notes: '', skills: ['AWS', 'Docker', 'Kubernetes'], experience: '4 years', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
       { id: 6, name: 'Anjali Gupta', email: 'anjali.gupta@email.com', phone: '+91 43210 98765', position: 'Product Manager', client: 'StartupXYZ', resumeScore: 45, skillMatch: 40, experienceMatch: 50, screeningDate: '2026-03-14', decision: 'Rejected', notes: 'Does not meet minimum experience', skills: ['Scrum', 'JIRA'], experience: '2 years', photo: 'https://randomuser.me/api/portraits/women/65.jpg' },
     ];
-    setTimeout(() => {
-      setCandidates(mockCandidates);
-      setLoading(false);
-    }, 600);
+    setCandidates(mockCandidates);
+    setLoading(false);
   }, []);
 
   // Stats

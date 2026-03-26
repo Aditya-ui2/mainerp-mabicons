@@ -96,9 +96,14 @@ const StatusBadge = ({ status }) => {
 };
 
 /* ══════════════════════════════════════════════════════ */
+const CACHE_KEY_INTERVIEWS = 'cache_kamInterviews';
+
 const InterviewScheduleTab = ({ isDarkMode }) => {
-  const [interviews, setInterviews] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [interviews, setInterviews] = useState(() => {
+    try { const c = localStorage.getItem(CACHE_KEY_INTERVIEWS); return c ? JSON.parse(c) : []; } catch { return []; }
+  });
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('list');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -129,7 +134,7 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
 
   // ── Fetch interviews from backend ──
   const fetchInterviews = async () => {
-    setLoading(true);
+    setRefreshing(true);
     setError(null);
     try {
       const filters = {};
@@ -155,12 +160,14 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
         feedback: iv.feedback || null,
       }));
       setInterviews(mapped);
+      try { localStorage.setItem(CACHE_KEY_INTERVIEWS, JSON.stringify(mapped)); } catch {}
     } catch (error) {
       console.error('Failed to fetch interviews from backend:', error);
-      setError('Failed to load interviews. Click refresh to try again.');
-      setInterviews([]);
+      if (interviews.length === 0) {
+        setError('Failed to load interviews. Click refresh to try again.');
+      }
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
 

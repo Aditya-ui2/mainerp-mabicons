@@ -218,10 +218,8 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
       },
     ];
 
-    setTimeout(() => {
-      setMembers(teamMembers);
-      setLoading(false);
-    }, 500);
+    setMembers(teamMembers);
+    setLoading(false);
   }, []);
 
   // Stats
