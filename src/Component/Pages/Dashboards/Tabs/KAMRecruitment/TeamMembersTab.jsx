@@ -18,7 +18,9 @@ import {
   FiTarget,
   FiCalendar,
   FiSend,
+  FiRefreshCw,
 } from 'react-icons/fi';
+import { getDepartmentTeamMembers, createDepartmentTask } from '../../service/api';
 
 /* ── Team Member Card ── */
 const TeamMemberCard = ({ member, isDarkMode, onAssignTask, onViewDetails }) => {
@@ -102,15 +104,15 @@ const TeamMemberCard = ({ member, isDarkMode, onAssignTask, onViewDetails }) => 
           <div className="grid grid-cols-3 gap-3 mt-4">
             <div className={`text-center p-2 rounded-lg ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
               <p className="text-lg font-bold" style={{ color: '#3b82f6' }}>{member.assignedCandidates}</p>
-              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Candidates</p>
+              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assigned</p>
             </div>
             <div className={`text-center p-2 rounded-lg ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
               <p className="text-lg font-bold" style={{ color: '#8b5cf6' }}>{member.interviews}</p>
-              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Interviews</p>
+              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Completed</p>
             </div>
             <div className={`text-center p-2 rounded-lg ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-              <p className="text-lg font-bold" style={{ color: '#10b981' }}>{member.placements}</p>
-              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Placements</p>
+              <p className="text-lg font-bold" style={{ color: '#10b981' }}>{member.currentTasks}</p>
+              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Current</p>
             </div>
           </div>
         </div>
@@ -151,75 +153,41 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [assignmentType, setAssignmentType] = useState('candidate');
-  const [toast, setToast] = useState(null);
+  const [assignNotes, setAssignNotes] = useState('');
+  const [assignDueDate, setAssignDueDate] = useState('');
+  const [assignTitle, setAssignTitle] = useState('');
 
-  // Team members data - Sachin's team
+  const fetchMembers = async () => {
+    setLoading(true);
+    try {
+      const res = await getDepartmentTeamMembers('HR Recruitment');
+      if (res?.success && res.data) {
+        const mapped = res.data.map(m => ({
+          id: m.id?.toString() || m._id,
+          name: m.name,
+          email: m.email,
+          phone: m.phone || 'N/A',
+          role: m.role || 'HR Recruiter',
+          status: m.status || 'Active',
+          joinDate: m.joinDate ? new Date(m.joinDate).toISOString().split('T')[0] : '',
+          assignedCandidates: m.tasksAssigned || 0,
+          interviews: m.tasksCompleted || 0,
+          placements: m.tasksCompleted || 0,
+          currentTasks: m.tasksAssigned || 0,
+          photo: m.avatar || null,
+          clients: [],
+        }));
+        setMembers(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to fetch team members:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const teamMembers = [
-      {
-        id: 1,
-        name: 'Jyoti Yadav',
-        email: 'jyoti.yadav@mabicons.com',
-        phone: '+91 98765 43210',
-        role: 'HR Recruiter',
-        status: 'Active',
-        joinDate: '2024-06-15',
-        assignedCandidates: 12,
-        interviews: 8,
-        placements: 3,
-        currentTasks: 5,
-        photo: 'https://randomuser.me/api/portraits/women/32.jpg',
-        clients: ['TechCorp India', 'StartupXYZ'],
-      },
-      {
-        id: 2,
-        name: 'Manju Saini',
-        email: 'manju.saini@mabicons.com',
-        phone: '+91 87654 32109',
-        role: 'HR Recruiter',
-        status: 'Active',
-        joinDate: '2024-08-20',
-        assignedCandidates: 15,
-        interviews: 10,
-        placements: 4,
-        currentTasks: 7,
-        photo: 'https://randomuser.me/api/portraits/women/44.jpg',
-        clients: ['DesignHub', 'CloudScale'],
-      },
-      {
-        id: 3,
-        name: 'Priyanshi Sharma',
-        email: 'priyanshi.sharma@mabicons.com',
-        phone: '+91 76543 21098',
-        role: 'HR Recruiter',
-        status: 'Active',
-        joinDate: '2024-09-10',
-        assignedCandidates: 8,
-        interviews: 6,
-        placements: 2,
-        currentTasks: 4,
-        photo: 'https://randomuser.me/api/portraits/women/68.jpg',
-        clients: ['TechCorp India'],
-      },
-      {
-        id: 4,
-        name: 'Anushka Raturi',
-        email: 'anushka.raturi@mabicons.com',
-        phone: '+91 65432 10987',
-        role: 'HR Recruiter',
-        status: 'Active',
-        joinDate: '2025-01-05',
-        assignedCandidates: 6,
-        interviews: 4,
-        placements: 1,
-        currentTasks: 3,
-        photo: 'https://randomuser.me/api/portraits/women/65.jpg',
-        clients: ['StartupXYZ', 'CloudScale'],
-      },
-    ];
-
-    setMembers(teamMembers);
-    setLoading(false);
+    fetchMembers();
   }, []);
 
   // Stats
@@ -291,15 +259,25 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
           </div>
         </div>
         {userRole === 'KAM' && (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl"
-            style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.25)' }}
-          >
-            <FiPlus className="w-4 h-4" />
-            Add Team Member
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={fetchMembers}
+              className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            >
+              <FiRefreshCw className="w-4 h-4" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl"
+              style={{ background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.25)' }}
+            >
+              <FiPlus className="w-4 h-4" />
+              Add Team Member
+            </motion.button>
+          </div>
         )}
       </motion.div>
 
@@ -308,8 +286,8 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
         {[
           { label: 'Team Size', value: stats.totalMembers, icon: FiUsers, color: '#8b5cf6' },
           { label: 'Active Members', value: stats.activeMembers, icon: FiCheckCircle, color: '#10b981' },
-          { label: 'Total Candidates', value: stats.totalCandidates, icon: FiBriefcase, color: '#3b82f6' },
-          { label: 'Total Placements', value: stats.totalPlacements, icon: FiAward, color: '#f59e0b' },
+          { label: 'Tasks Assigned', value: stats.totalCandidates, icon: FiBriefcase, color: '#3b82f6' },
+          { label: 'Tasks Completed', value: stats.totalPlacements, icon: FiAward, color: '#f59e0b' },
         ].map((stat, i) => {
           const Icon = stat.icon;
           return (
@@ -455,9 +433,22 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
 
                 {/* Notes */}
                 <div>
+                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Task Title</label>
+                  <input
+                    type="text"
+                    value={assignTitle}
+                    onChange={(e) => setAssignTitle(e.target.value)}
+                    className={`w-full mt-2 px-4 py-3 rounded-xl border-2 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+                    placeholder="Enter task title..."
+                  />
+                </div>
+
+                <div>
                   <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Instructions/Notes</label>
                   <textarea
                     rows={3}
+                    value={assignNotes}
+                    onChange={(e) => setAssignNotes(e.target.value)}
                     className={`w-full mt-2 px-4 py-3 rounded-xl border-2 resize-none ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                     placeholder="Add any specific instructions..."
                   />
@@ -468,6 +459,8 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
                   <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Due Date</label>
                   <input
                     type="date"
+                    value={assignDueDate}
+                    onChange={(e) => setAssignDueDate(e.target.value)}
                     className={`w-full mt-2 px-4 py-3 rounded-xl border-2 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
                   />
                 </div>
@@ -484,9 +477,36 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setShowAssignModal(false);
-                    setToast(`Work assigned to ${selectedMember.name}`);
+                  onClick={async () => {
+                    if (!assignTitle) {
+                      setToast('Please enter a task title');
+                      setTimeout(() => setToast(null), 2000);
+                      return;
+                    }
+                    try {
+                      const res = await createDepartmentTask({
+                        title: assignTitle,
+                        description: assignNotes,
+                        department: 'HR Recruitment',
+                        assignedTo: selectedMember.id,
+                        assignedToName: selectedMember.name,
+                        priority: 'Medium',
+                        dueDate: assignDueDate || undefined,
+                        status: 'Pending',
+                      });
+                      if (res?.success) {
+                        setShowAssignModal(false);
+                        setAssignTitle('');
+                        setAssignNotes('');
+                        setAssignDueDate('');
+                        setToast(`Task assigned to ${selectedMember.name}`);
+                      } else {
+                        setToast('Failed to assign task');
+                      }
+                    } catch (err) {
+                      console.error('Failed to assign task:', err);
+                      setToast('Failed to assign task');
+                    }
                     setTimeout(() => setToast(null), 2000);
                   }}
                   className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium rounded-xl shadow-lg"

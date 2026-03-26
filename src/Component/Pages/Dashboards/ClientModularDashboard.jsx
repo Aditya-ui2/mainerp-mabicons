@@ -13,10 +13,12 @@ import {
   FiChevronDown,
   FiMenu,
   FiX,
+  FiGrid,
 } from 'react-icons/fi';
 import { jwtDecode } from 'jwt-decode';
 import logo from '../../../assets/images/mabicons-logo.svg';
 import { getClientDetails } from '../service/api';
+import ClientOverviewTab from './Tabs/Client/ClientOverviewTab';
 
 // Lazy load Client Tab Components
 const ClientAttendanceTab = lazy(() => import('./Tabs/Client/ClientAttendanceTab'));
@@ -52,6 +54,7 @@ const TabLoader = () => (
 
 /* ── Sidebar Items ───────────────────────────────────── */
 const moduleItems = [
+  { id: 0, title: 'Dashboard Overview', short: 'Overview', icon: FiGrid },
   { id: 1, title: 'Attendance Share / Review', short: 'Attendance', icon: FiClock },
   { id: 2, title: 'Payroll', short: 'Payroll', icon: FiDollarSign },
   { id: 3, title: 'Policy & Documents', short: 'Policies', icon: FiFileText },
@@ -168,6 +171,7 @@ const ClientModularDashboard = () => {
   const renderTabContent = () => {
     const tabProps = { isDarkMode, clientData };
     switch (activeTab) {
+      case 'Dashboard Overview':        return <ClientOverviewTab {...tabProps} />;
       case 'Attendance Share / Review': return <ClientAttendanceTab {...tabProps} />;
       case 'Payroll':                   return <ClientPayrollTab {...tabProps} />;
       case 'Policy & Documents':        return <ClientPolicyTab {...tabProps} />;

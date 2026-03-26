@@ -18,6 +18,7 @@ import {
   FiTarget,
   FiRefreshCw,
 } from 'react-icons/fi';
+import { getDepartmentTasks, createDepartmentTask, updateDepartmentTask, deleteDepartmentTask, getDepartmentTeamMembers } from '../../../service/api';
 
 /* ── Priority Badge ── */
 const PriorityBadge = ({ priority }) => {
@@ -62,6 +63,7 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [toast, setToast] = useState(null);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -73,106 +75,56 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
     instructions: '',
   });
 
-  // Team members - Sachin's team
-  const teamMembers = [
-    { id: 'emp-001', name: 'Jyoti Yadav', photo: 'https://randomuser.me/api/portraits/women/32.jpg' },
-    { id: 'emp-002', name: 'Manju Saini', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    { id: 'emp-003', name: 'Priyanshi Sharma', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-    { id: 'emp-004', name: 'Anushka Raturi', photo: 'https://randomuser.me/api/portraits/women/65.jpg' },
-  ];
-
-  // Mock tasks data
-  useEffect(() => {
-    const mockTasks = [
-      {
-        id: 1,
-        title: 'Screen candidates for TechCorp India',
-        description: 'Review and screen 5 new applications for Senior Software Engineer position',
-        type: 'screening',
-        assignedTo: 'emp-001',
-        assignedBy: 'Sachin',
-        client: 'TechCorp India',
-        relatedCandidates: ['Rahul Sharma', 'Vikram Rao'],
-        priority: 'High',
-        status: 'In Progress',
-        dueDate: '2026-03-22',
-        createdAt: '2026-03-18',
-        progress: 40,
-        comments: 2,
-      },
-      {
-        id: 2,
-        title: 'Schedule interviews for StartupXYZ',
-        description: 'Coordinate and schedule client interviews for Product Manager candidates',
-        type: 'interview',
-        assignedTo: 'emp-002',
-        assignedBy: 'Sachin',
-        client: 'StartupXYZ',
-        relatedCandidates: ['Priya Singh'],
-        priority: 'High',
-        status: 'Not Started',
-        dueDate: '2026-03-21',
-        createdAt: '2026-03-19',
-        progress: 0,
-        comments: 0,
-      },
-      {
-        id: 3,
-        title: 'Follow up with DesignHub candidates',
-        description: 'Contact shortlisted UI/UX designers and collect availability',
-        type: 'followup',
-        assignedTo: 'emp-003',
-        assignedBy: 'Sachin',
-        client: 'DesignHub',
-        relatedCandidates: ['Amit Kumar'],
-        priority: 'Medium',
-        status: 'Completed',
-        dueDate: '2026-03-19',
-        createdAt: '2026-03-16',
-        progress: 100,
-        comments: 5,
-      },
-      {
-        id: 4,
-        title: 'Prepare offer letter for CloudScale',
-        description: 'Draft and send offer letter to selected DevOps Engineer candidate',
-        type: 'offer',
-        assignedTo: 'emp-004',
-        assignedBy: 'Sachin',
-        client: 'CloudScale',
-        relatedCandidates: ['Sneha Patel'],
-        priority: 'High',
-        status: 'In Progress',
-        dueDate: '2026-03-20',
-        createdAt: '2026-03-18',
-        progress: 70,
-        comments: 3,
-      },
-      {
-        id: 5,
-        title: 'Update candidate profiles in SharePoint',
-        description: 'Sync latest candidate data and interview feedback to SharePoint',
-        type: 'admin',
-        assignedTo: 'emp-001',
-        assignedBy: 'Sachin',
-        client: null,
-        relatedCandidates: [],
-        priority: 'Low',
-        status: 'Not Started',
-        dueDate: '2026-03-23',
-        createdAt: '2026-03-20',
-        progress: 0,
-        comments: 0,
-      },
-    ];
-
-    // Filter tasks based on role
-    if (userRole === 'Employee' && currentUserId) {
-      setTasks(mockTasks.filter(t => t.assignedTo === currentUserId));
-    } else {
-      setTasks(mockTasks);
+  const fetchTeamMembers = async () => {
+    try {
+      const res = await getDepartmentTeamMembers('HR Recruitment');
+      if (res?.success && res.data) {
+        setTeamMembers(res.data.map(m => ({
+          id: m.id?.toString() || m._id,
+          name: m.name,
+          photo: m.avatar || null,
+        })));
+      }
+    } catch (err) {
+      console.error('Failed to fetch team members:', err);
     }
-    setLoading(false);
+  };
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      const assignedTo = userRole === 'Employee' && currentUserId ? currentUserId : null;
+      const res = await getDepartmentTasks('HR Recruitment', null, assignedTo);
+      if (res?.success && res.data) {
+        const mapped = res.data.map(t => ({
+          id: t.id || t._id,
+          title: t.title,
+          description: t.description || '',
+          type: 'admin',
+          assignedTo: t.assignedTo?.toString() || '',
+          assignedToName: t.assignedToName || '',
+          assignedBy: t.assignedByName || 'KAM',
+          client: '',
+          relatedCandidates: [],
+          priority: t.priority || 'Medium',
+          status: t.status === 'Pending' ? 'Not Started' : t.status,
+          dueDate: t.dueDate ? new Date(t.dueDate).toISOString().split('T')[0] : '',
+          createdAt: t.createdAt ? new Date(t.createdAt).toISOString().split('T')[0] : '',
+          progress: t.status === 'Completed' ? 100 : t.status === 'In Progress' ? 50 : 0,
+          comments: t.comments?.length || 0,
+        }));
+        setTasks(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeamMembers();
+    fetchTasks();
   }, [userRole, currentUserId]);
 
   // Stats
@@ -192,47 +144,68 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
     return matchesSearch && matchesStatus && matchesAssignee;
   });
 
-  const getAssigneeName = (id) => teamMembers.find(m => m.id === id)?.name || 'Unassigned';
+  const getAssigneeName = (id, task) => teamMembers.find(m => m.id === id)?.name || task?.assignedToName || 'Unassigned';
   const getAssigneePhoto = (id) => teamMembers.find(m => m.id === id)?.photo || null;
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     if (!newTask.title || !newTask.assignedTo || !newTask.dueDate) {
       setToast('Please fill required fields');
       setTimeout(() => setToast(null), 2000);
       return;
     }
 
-    const task = {
-      id: Date.now(),
-      ...newTask,
-      assignedBy: 'Sachin',
-      status: 'Not Started',
-      progress: 0,
-      comments: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    setTasks(prev => [task, ...prev]);
-    setShowCreateModal(false);
-    setNewTask({
-      title: '',
-      description: '',
-      assignedTo: '',
-      type: 'candidate',
-      relatedItem: '',
-      priority: 'Medium',
-      dueDate: '',
-      instructions: '',
-    });
-    setToast('Task created successfully!');
+    try {
+      const member = teamMembers.find(m => m.id === newTask.assignedTo);
+      const res = await createDepartmentTask({
+        title: newTask.title,
+        description: newTask.description || newTask.instructions || '',
+        department: 'HR Recruitment',
+        assignedTo: newTask.assignedTo,
+        assignedToName: member?.name || '',
+        priority: newTask.priority,
+        dueDate: newTask.dueDate,
+        status: 'Pending',
+      });
+      if (res?.success) {
+        await fetchTasks();
+        setShowCreateModal(false);
+        setNewTask({
+          title: '',
+          description: '',
+          assignedTo: '',
+          type: 'candidate',
+          relatedItem: '',
+          priority: 'Medium',
+          dueDate: '',
+          instructions: '',
+        });
+        setToast('Task created successfully!');
+      } else {
+        setToast('Failed to create task');
+      }
+    } catch (err) {
+      console.error('Failed to create task:', err);
+      setToast('Failed to create task');
+    }
     setTimeout(() => setToast(null), 2000);
   };
 
-  const handleUpdateStatus = (taskId, newStatus) => {
-    setTasks(prev => prev.map(t => 
-      t.id === taskId ? { ...t, status: newStatus, progress: newStatus === 'Completed' ? 100 : t.progress } : t
-    ));
-    setToast('Task status updated!');
+  const handleUpdateStatus = async (taskId, newStatus) => {
+    try {
+      const backendStatus = newStatus === 'Not Started' ? 'Pending' : newStatus;
+      const res = await updateDepartmentTask(taskId, { status: backendStatus });
+      if (res?.success) {
+        setTasks(prev => prev.map(t =>
+          t.id === taskId ? { ...t, status: newStatus, progress: newStatus === 'Completed' ? 100 : newStatus === 'In Progress' ? 50 : 0 } : t
+        ));
+        setToast('Task status updated!');
+      } else {
+        setToast('Failed to update status');
+      }
+    } catch (err) {
+      console.error('Failed to update task:', err);
+      setToast('Failed to update status');
+    }
     setTimeout(() => setToast(null), 2000);
   };
 
@@ -422,7 +395,7 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
                         </div>
                       )}
                       <span className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                        {getAssigneeName(task.assignedTo)}
+                        {getAssigneeName(task.assignedTo, task)}
                       </span>
                     </div>
 

@@ -2714,6 +2714,20 @@ export const getClientRecruitmentProgress = async (clientId) => {
   }
 };
 
+// Unified client dashboard overview (recruitment + operations)
+export const getClientDashboardOverview = async (clientId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get(`/client/dashboard-overview/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client dashboard overview:', error);
+    throw error.response?.data || { message: 'Failed to fetch dashboard overview' };
+  }
+};
+
 // Get all recruitment positions (with filtering)
 export const getAllRecruitmentPositions = async (filters = {}) => {
   try {

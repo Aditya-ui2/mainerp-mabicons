@@ -24,7 +24,9 @@ import {
   FiDownload,
   FiTrendingUp,
   FiAward,
+  FiRefreshCw,
 } from 'react-icons/fi';
+import { getKamsWithRecruitment } from '../../../service/api';
 
 /* ===== RUPEE ICON ===== */
 const RupeeIcon = ({ className }) => (
@@ -433,86 +435,25 @@ const KamOverviewTab = ({ isDarkMode }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedKam, setExpandedKam] = useState(null);
   const [showAddKamModal, setShowAddKamModal] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Mock Data - KAMs with their assigned clients and positions
-  useEffect(() => {
-    const mockKams = [
-      {
-        id: 1,
-        name: 'Rajesh Sharma',
-        email: 'rajesh.sharma@mabicons.com',
-        phone: '+91 98765 43210',
-        avatar: 'RS',
-        photo: 'https://randomuser.me/api/portraits/men/32.jpg',
-        clients: [
-          {
-            id: 101,
-            name: 'TechCorp India Pvt Ltd',
-            logo: 'TC',
-            industry: 'IT Services',
-            positions: [
-              { id: 1001, title: 'Senior Software Engineer', location: 'Bangalore', status: 'Open', openings: 5, filled: 2, sharedCVs: 15, shortlisted: 5 },
-              { id: 1002, title: 'DevOps Engineer', location: 'Bangalore', status: 'Open', openings: 3, filled: 1, sharedCVs: 10, shortlisted: 3 },
-              { id: 1003, title: 'UI/UX Designer', location: 'Remote', status: 'Hold', openings: 2, filled: 0, sharedCVs: 6, shortlisted: 2 },
-            ]
-          },
-          {
-            id: 102,
-            name: 'DataDriven Analytics',
-            logo: 'DA',
-            industry: 'Data Analytics',
-            positions: [
-              { id: 1004, title: 'Data Scientist', location: 'Hyderabad', status: 'Open', openings: 4, filled: 1, sharedCVs: 12, shortlisted: 4 },
-              { id: 1005, title: 'ML Engineer', location: 'Hyderabad', status: 'Closed', openings: 2, filled: 2, sharedCVs: 8, shortlisted: 3 },
-            ]
-          },
-        ]
-      },
-      {
-        id: 2,
-        name: 'Priya Patel',
-        email: 'priya.patel@mabicons.com',
-        phone: '+91 98765 43211',
-        avatar: 'PP',
-        photo: 'https://randomuser.me/api/portraits/women/44.jpg',
-        clients: [
-          {
-            id: 103,
-            name: 'CloudScale Solutions',
-            logo: 'CS',
-            industry: 'Cloud Services',
-            positions: [
-              { id: 1006, title: 'Cloud Architect', location: 'Mumbai', status: 'Open', openings: 2, filled: 0, sharedCVs: 8, shortlisted: 3 },
-              { id: 1007, title: 'Site Reliability Engineer', location: 'Pune', status: 'Open', openings: 3, filled: 1, sharedCVs: 10, shortlisted: 4 },
-            ]
-          },
-          {
-            id: 104,
-            name: 'FinTech Innovations',
-            logo: 'FI',
-            industry: 'Financial Services',
-            positions: [
-              { id: 1008, title: 'Backend Developer', location: 'Mumbai', status: 'Open', openings: 4, filled: 2, sharedCVs: 14, shortlisted: 5 },
-              { id: 1009, title: 'Security Analyst', location: 'Mumbai', status: 'Hold', openings: 2, filled: 0, sharedCVs: 5, shortlisted: 1 },
-              { id: 1010, title: 'Product Manager', location: 'Remote', status: 'Closed', openings: 1, filled: 1, sharedCVs: 6, shortlisted: 2 },
-            ]
-          },
-          {
-            id: 105,
-            name: 'EduLearn Systems',
-            logo: 'EL',
-            industry: 'EdTech',
-            positions: [
-              { id: 1011, title: 'Full Stack Developer', location: 'Bangalore', status: 'Open', openings: 3, filled: 1, sharedCVs: 9, shortlisted: 3 },
-            ]
-          }
-        ]
+  const fetchKams = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getKamsWithRecruitment();
+      if (res?.success && res.data) {
+        setKams(res.data);
       }
-    ];
+    } catch (err) {
+      console.error('Failed to fetch KAM data:', err);
+      setError('Failed to load KAM data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setKams(mockKams);
-    setLoading(false);
-  }, []);
+  useEffect(() => { fetchKams(); }, []);
 
   // Calculate overall stats
   const overallStats = {
@@ -608,6 +549,15 @@ const KamOverviewTab = ({ isDarkMode }) => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={fetchKams}
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl font-medium transition-all ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+            title="Refresh"
+          >
+            <FiRefreshCw className="w-4 h-4" />
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setShowAddKamModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium shadow-lg transition-all"
             style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}
@@ -619,6 +569,14 @@ const KamOverviewTab = ({ isDarkMode }) => {
       </motion.div>
 
       {/* Stats Grid */}
+      {error ? (
+        <div className={`text-center py-12 rounded-2xl ${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+          <p className={`text-sm ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>{error}</p>
+          <button onClick={fetchKams} className="mt-3 px-4 py-2 rounded-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700">
+            <FiRefreshCw className="w-4 h-4 inline mr-2" />Retry
+          </button>
+        </div>
+      ) : (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {statCards.map((stat, idx) => (
           <motion.div
@@ -631,6 +589,7 @@ const KamOverviewTab = ({ isDarkMode }) => {
           </motion.div>
         ))}
       </div>
+      )}
 
       {/* KAMs List */}
       <div className="space-y-4">
