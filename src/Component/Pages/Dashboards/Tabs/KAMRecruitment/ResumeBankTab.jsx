@@ -13,6 +13,7 @@ import {
   FiClock,
   FiCheckCircle,
   FiUsers,
+  FiArrowLeft,
 } from 'react-icons/fi';
 import {
   getResumeBankStats,
@@ -35,7 +36,7 @@ const ResumeBankTab = () => {
   const [roleTypes, setRoleTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [syncSource, setSyncSource] = useState(null); // 's3' or 'sharepoint'
+  const [syncSource, setSyncSource] = useState(null);
   const [showSyncMenu, setShowSyncMenu] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [selectedResumes, setSelectedResumes] = useState([]);
@@ -78,7 +79,6 @@ const ResumeBankTab = () => {
         limit: pagination.limit,
         ...filters
       };
-      // Remove empty params
       Object.keys(params).forEach(key => !params[key] && delete params[key]);
       
       const response = await getResumeBankResumes(params);
@@ -191,7 +191,6 @@ const ResumeBankTab = () => {
   const handleDownload = async (resumeId) => {
     try {
       const response = await getResumeDownloadUrl(resumeId);
-      // Create a temporary link to force download
       const link = document.createElement('a');
       link.href = response.downloadUrl;
       link.setAttribute('download', response.fileName || 'resume');
@@ -262,7 +261,6 @@ const ResumeBankTab = () => {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  // Format file size
   const formatFileSize = (bytes) => {
     if (!bytes) return '-';
     const kb = bytes / 1024;
@@ -271,18 +269,22 @@ const ResumeBankTab = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" style={{ fontFamily: 'Calibri, sans-serif' }}>
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Resume Bank</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage {stats?.total?.toLocaleString() || 0} resumes from SharePoint
-          </p>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center w-11 h-11 rounded-xl 
+                          bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] 
+                          shadow-lg shadow-[#1E88E5]/30 dark:shadow-[#1E88E5]/30">
+            <span className="text-white text-xl">🏦</span>
+          </div>
+          <h1 className="text-2xl font-bold bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] bg-clip-text text-transparent">
+            Resume Bank
+          </h1>
         </div>
         <div className="relative">
           {syncing ? (
-            <button disabled className="px-4 py-2 rounded-lg opacity-50 flex items-center gap-2" style={{ backgroundColor: '#2563eb', color: '#fff' }}>
+            <button disabled className="px-4 py-2 rounded-lg opacity-50 flex items-center gap-2" style={{ backgroundColor: '#1E88E5', color: '#fff' }}>
               <FiLoader className="animate-spin" size={20} />
               Syncing from {syncSource === 'sharepoint' ? 'SharePoint' : 'S3'}...
             </button>
@@ -291,7 +293,7 @@ const ResumeBankTab = () => {
               <button
                 onClick={() => setShowSyncMenu(!showSyncMenu)}
                 className="px-4 py-2 rounded-lg flex items-center gap-2"
-                style={{ backgroundColor: '#2563eb', color: '#fff' }}
+                style={{ backgroundColor: '#1E88E5', color: '#fff' }}
               >
                 <FiRefreshCw size={18} />
                 Refresh Resumes
@@ -329,32 +331,30 @@ const ResumeBankTab = () => {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
-          {/* Total Resumes */}
           <div
             className="relative overflow-hidden rounded-2xl p-5"
             style={{
               background: 'var(--bg-modal, #fff)',
               border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.15)'
+              boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.15)'
             }}
           >
             <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
-              <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}></div>
+              <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)' }}></div>
             </div>
             <div className="relative flex items-start justify-between">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Total Resumes</p>
-                <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   {stats.total?.toLocaleString()}
                 </p>
               </div>
-              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.3)' }}>
+              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.3)' }}>
                 <FiDatabase size={20} color="#ffffff" />
               </div>
             </div>
           </div>
 
-          {/* Recently Added */}
           <div
             className="relative overflow-hidden rounded-2xl p-5"
             style={{
@@ -364,22 +364,21 @@ const ResumeBankTab = () => {
             }}
           >
             <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
-              <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #3b82f6, #4f46e5)' }}></div>
+              <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #3b82f6, #1E88E5)' }}></div>
             </div>
             <div className="relative flex items-start justify-between">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Recently Added</p>
-                <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #3b82f6, #4f46e5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #3b82f6, #1E88E5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   {stats.recentlyAdded?.toLocaleString()}
                 </p>
               </div>
-              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #3b82f6, #4f46e5)', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}>
+              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #3b82f6, #1E88E5)', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}>
                 <FiClock size={20} color="#ffffff" />
               </div>
             </div>
           </div>
 
-          {/* Status cards */}
           {stats.byStatus && Object.entries(stats.byStatus).slice(0, 4).map(([status, count]) => (
             <div
               key={status}
@@ -412,7 +411,6 @@ const ResumeBankTab = () => {
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {/* Search */}
           <div className="md:col-span-2">
             <input
               type="text"
@@ -423,7 +421,6 @@ const ResumeBankTab = () => {
             />
           </div>
           
-          {/* Role Filter */}
           <select
             value={filters.roleType}
             onChange={(e) => handleFilterChange('roleType', e.target.value)}
@@ -435,7 +432,6 @@ const ResumeBankTab = () => {
             ))}
           </select>
 
-          {/* Status Filter */}
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -447,7 +443,6 @@ const ResumeBankTab = () => {
             ))}
           </select>
 
-          {/* Starred Filter */}
           <select
             value={filters.isStarred}
             onChange={(e) => handleFilterChange('isStarred', e.target.value)}
@@ -461,8 +456,8 @@ const ResumeBankTab = () => {
 
       {/* Bulk Actions */}
       {selectedResumes.length > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg flex items-center justify-between">
-          <span className="text-blue-800 dark:text-blue-200">
+        <div className="bg-[#1E88E5]/10 dark:bg-[#1E88E5]/20 p-4 rounded-lg flex items-center justify-between">
+          <span className="text-[#1E88E5] dark:text-[#3FA9F5]">
             {selectedResumes.length} resume(s) selected
           </span>
           <div className="flex gap-2">
@@ -519,7 +514,7 @@ const ResumeBankTab = () => {
               {loading ? (
                 <tr>
                   <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
-                    <svg className="animate-spin mx-auto" style={{ width: 32, height: 32, color: '#3b82f6' }} viewBox="0 0 24 24">
+                    <svg className="animate-spin mx-auto" style={{ width: 32, height: 32, color: '#1E88E5' }} viewBox="0 0 24 24">
                       <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
@@ -556,7 +551,7 @@ const ResumeBankTab = () => {
                         {resume.fileType === 'pdf' ? <FiFileText size={18} style={{ color: '#ef4444' }} /> : <FiFile size={18} style={{ color: '#6b7280' }} />}
                         <button
                           onClick={() => handlePreviewResume(resume.id, resume.fileName)}
-                          className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate max-w-[200px] text-left"
+                          className="text-sm text-[#1E88E5] dark:text-[#3FA9F5] hover:underline truncate max-w-[200px] text-left"
                           title="Click to preview"
                         >
                           {resume.fileName}
@@ -593,7 +588,7 @@ const ResumeBankTab = () => {
                           className="p-1 rounded hover:opacity-80"
                           title="Download"
                         >
-                          <FiDownload size={18} style={{ color: '#2563eb' }} />
+                          <FiDownload size={18} style={{ color: '#1E88E5' }} />
                         </button>
                         <button
                           onClick={() => handlePreviewResume(resume.id, resume.fileName)}
@@ -602,7 +597,6 @@ const ResumeBankTab = () => {
                         >
                           <FiEye size={18} style={{ color: '#16a34a' }} />
                         </button>
-
                       </div>
                     </td>
                   </tr>
@@ -653,7 +647,7 @@ const ResumeBankTab = () => {
                   className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer"
                   onClick={() => handleFilterChange('roleType', filters.roleType === role.name ? '' : role.name)}
                 >
-                  <span className={`text-sm truncate ${filters.roleType === role.name ? 'font-semibold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                  <span className={`text-sm truncate ${filters.roleType === role.name ? 'font-semibold text-[#1E88E5]' : 'text-gray-700 dark:text-gray-300'}`}>
                     {role.name}
                   </span>
                   <div className="flex items-center gap-2">
@@ -664,7 +658,7 @@ const ResumeBankTab = () => {
                       onClick={(e) => { e.stopPropagation(); handleSyncRole(role.name); }}
                       title={`Sync ${role.name}`}
                     >
-                      <FiRefreshCw size={14} style={{ color: '#3b82f6' }} />
+                      <FiRefreshCw size={14} style={{ color: '#1E88E5' }} />
                     </button>
                   </div>
                 </div>
@@ -673,7 +667,6 @@ const ResumeBankTab = () => {
           </div>
         </div>
 
-        {/* Top Roles Chart (simple bar representation) */}
         <div className="lg:col-span-3">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4">Top Roles Distribution</h3>
@@ -685,7 +678,7 @@ const ResumeBankTab = () => {
                     <span className="w-32 text-sm text-gray-600 dark:text-gray-400 truncate">{role._id}</span>
                     <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
                       <div 
-                        className="bg-blue-500 h-full rounded-full transition-all duration-500"
+                        className="bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] h-full rounded-full transition-all duration-500"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -710,7 +703,7 @@ const ResumeBankTab = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1"
-                  style={{ backgroundColor: '#2563eb', color: '#fff' }}
+                  style={{ backgroundColor: '#1E88E5', color: '#fff' }}
                 >
                   <FiDownload size={16} />
                   Download
@@ -739,7 +732,7 @@ const ResumeBankTab = () => {
                     href={previewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 bg-[#1E88E5] text-white rounded-lg hover:bg-[#0D47A1]"
                   >
                     Download to View
                   </a>
@@ -795,7 +788,7 @@ const ResumeDetailModal = ({ resume, onClose, onUpdate, statusOptions }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto" style={{ fontFamily: 'Calibri, sans-serif' }}>
         <div className="p-6">
           <div className="flex justify-between items-start mb-6">
             <div>
@@ -976,7 +969,7 @@ const ResumeDetailModal = ({ resume, onClose, onUpdate, statusOptions }) => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 bg-[#1E88E5] text-white rounded hover:bg-[#0D47A1]"
               >
                 Save Changes
               </button>
