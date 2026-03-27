@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
-import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin, departmentTeamLogin } from './service/api';
+import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin, departmentTeamLogin, clientLogin } from './service/api';
 import { FiMail, FiEye, FiEyeOff, FiSun, FiMoon } from 'react-icons/fi';
 
 const BackgroundAnimation = () => (
@@ -168,6 +168,7 @@ const USER_CREDENTIALS = {
   'employee.mabicons@gmail.com': { password: 'Employee@123', role: 'employee', department: null, name: 'Employee' },
   'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
   'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
+  'client.mabicons@gmail.com': { password: 'Client@123', role: 'client', department: null, name: 'Client' }
 };
 
 const Login = () => {
@@ -221,6 +222,10 @@ const Login = () => {
         response = await bdExecutiveLogin(credentials);
         userType = 'bdExecutive';
         destination = '/bd-dashboard';
+      } else if (emailLower.includes('client')) {
+        response = await clientLogin(credentials);
+        userType = 'client';
+        destination = '/client-dashboard';
       } else {
         // Try employee login first, fallback to department team login
         try {
@@ -248,15 +253,16 @@ const Login = () => {
         localStorage.clear();
         localStorage.setItem('token', response.token);
         localStorage.setItem('userType', userType);
-        if (response.user) {
-          localStorage.setItem('userName', response.user.name);
-          localStorage.setItem('userEmail', response.user.email);
-          if (response.user.department) {
-            localStorage.setItem('department', response.user.department);
+        const user = response.user || response.client;
+        if (user) {
+          localStorage.setItem('userName', user.name);
+          localStorage.setItem('userEmail', user.email);
+          if (user.department) {
+            localStorage.setItem('department', user.department);
           }
         }
 
-        setToastMessage(`Welcome, ${response.user?.name || 'User'}!`);
+        setToastMessage(`Welcome, ${user?.name || 'User'}!`);
         setShowToast(true);
         setIsError(false);
 

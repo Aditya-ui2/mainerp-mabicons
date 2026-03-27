@@ -15,16 +15,16 @@ import {
 import { jwtDecode } from 'jwt-decode';
 import { getClientRecruitmentProgress } from '../../../service/api';
 
-/* ── Stage color config ── */
+/* ── Stage color config (hex for reliable gradient rendering) ── */
 const STAGE_CONFIG = {
-  screening: { label: 'Screening', color: 'from-slate-400 to-slate-500', bg: 'bg-slate-100 text-slate-700' },
-  phoneInterview: { label: 'Phone Interview', color: 'from-blue-400 to-blue-600', bg: 'bg-blue-100 text-blue-700' },
-  technical: { label: 'Technical Round', color: 'from-violet-400 to-violet-600', bg: 'bg-violet-100 text-violet-700' },
-  hrRound: { label: 'HR Round', color: 'from-purple-400 to-purple-600', bg: 'bg-purple-100 text-purple-700' },
-  clientInterview: { label: 'Client Interview', color: 'from-pink-400 to-pink-600', bg: 'bg-pink-100 text-pink-700' },
-  offerSent: { label: 'Offer Sent', color: 'from-amber-400 to-amber-600', bg: 'bg-amber-100 text-amber-700' },
-  joined: { label: 'Joined', color: 'from-emerald-400 to-emerald-600', bg: 'bg-emerald-100 text-emerald-700' },
-  rejected: { label: 'Rejected', color: 'from-red-400 to-red-600', bg: 'bg-red-100 text-red-700' },
+  screening: { label: 'Screening', hex: ['#94a3b8', '#64748b'], bg: 'bg-slate-100 text-slate-700' },
+  phoneInterview: { label: 'Phone Interview', hex: ['#60a5fa', '#2563eb'], bg: 'bg-blue-100 text-blue-700' },
+  technical: { label: 'Technical Round', hex: ['#a78bfa', '#7c3aed'], bg: 'bg-violet-100 text-violet-700' },
+  hrRound: { label: 'HR Round', hex: ['#c084fc', '#9333ea'], bg: 'bg-purple-100 text-purple-700' },
+  clientInterview: { label: 'Client Interview', hex: ['#f472b6', '#db2777'], bg: 'bg-pink-100 text-pink-700' },
+  offerSent: { label: 'Offer Sent', hex: ['#fbbf24', '#d97706'], bg: 'bg-amber-100 text-amber-700' },
+  joined: { label: 'Joined', hex: ['#34d399', '#059669'], bg: 'bg-emerald-100 text-emerald-700' },
+  rejected: { label: 'Rejected', hex: ['#f87171', '#dc2626'], bg: 'bg-red-100 text-red-700' },
 };
 
 /* ── Status Badge ── */
@@ -74,10 +74,13 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) throw new Error('No token');
       const decoded = jwtDecode(token);
       const res = await getClientRecruitmentProgress(decoded.id);
-      if (res?.success) setData(res.data);
+      if (res?.success) {
+        setData(res.data);
+        return;
+      }
     } catch (err) {
       console.error('Failed to load recruitment progress:', err);
       setError('Failed to load recruitment data. Please try again.');
@@ -127,7 +130,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow">
+          <div className="p-2.5 rounded-xl text-white shadow" style={{ background: 'linear-gradient(135deg, #8b5cf6, #9333ea)' }}>
             <FiTarget size={22} />
           </div>
           <div>
@@ -143,14 +146,14 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Open Positions', value: summary.openPositions, total: summary.totalPositions, icon: FiBriefcase, gradient: 'from-blue-500 to-indigo-600' },
-          { label: 'Candidates', value: summary.inPipeline, total: summary.totalCandidates, icon: FiUsers, gradient: 'from-violet-500 to-purple-600' },
-          { label: 'Interviews', value: summary.scheduledInterviews, total: summary.totalInterviews, icon: FiCalendar, gradient: 'from-cyan-500 to-blue-600' },
-          { label: 'Hired', value: summary.hired, total: summary.totalCandidates, icon: FiCheckCircle, gradient: 'from-emerald-500 to-teal-600' },
+          { label: 'Open Positions', value: summary.openPositions, total: summary.totalPositions, icon: FiBriefcase, hex: ['#3b82f6', '#4f46e5'] },
+          { label: 'Candidates', value: summary.inPipeline, total: summary.totalCandidates, icon: FiUsers, hex: ['#8b5cf6', '#9333ea'] },
+          { label: 'Interviews', value: summary.scheduledInterviews, total: summary.totalInterviews, icon: FiCalendar, hex: ['#06b6d4', '#2563eb'] },
+          { label: 'Hired', value: summary.hired, total: summary.totalCandidates, icon: FiCheckCircle, hex: ['#10b981', '#0d9488'] },
         ].map((card, i) => (
           <div key={i} className={`${cardBg} rounded-xl border ${border} p-4 relative overflow-hidden`}>
-            <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${card.gradient} opacity-10 rounded-bl-[2rem]`} />
-            <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${card.gradient} text-white mb-2`}>
+            <div className="absolute top-0 right-0 w-16 h-16 opacity-10 rounded-bl-[2rem]" style={{ background: `linear-gradient(135deg, ${card.hex[0]}, ${card.hex[1]})` }} />
+            <div className="inline-flex p-2 rounded-lg text-white mb-2" style={{ background: `linear-gradient(135deg, ${card.hex[0]}, ${card.hex[1]})` }}>
               <card.icon className="w-4 h-4" />
             </div>
             <p className={`text-2xl font-bold ${text}`}>{card.value}</p>
@@ -174,8 +177,8 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
                 <span className={`text-[11px] font-medium w-28 text-right ${textSub}`}>{cfg.label}</span>
                 <div className={`flex-1 h-7 rounded-full ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-100'} overflow-hidden relative`}>
                   <div
-                    className={`h-full rounded-full bg-gradient-to-r ${cfg.color} transition-all duration-700 ease-out flex items-center justify-end pr-2`}
-                    style={{ width: `${width}%` }}
+                    className="h-full rounded-full transition-all duration-700 ease-out flex items-center justify-end pr-2"
+                    style={{ width: `${width}%`, background: `linear-gradient(to right, ${cfg.hex[0]}, ${cfg.hex[1]})` }}
                   >
                     {count > 0 && <span className="text-[10px] font-bold text-white">{count}</span>}
                   </div>
@@ -300,7 +303,10 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
 
                 return (
                   <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${border} ${isDarkMode ? 'bg-[#1e1b2e]' : 'bg-[#faf9ff]'}`}>
-                    <div className={`flex-shrink-0 w-11 h-11 rounded-lg flex flex-col items-center justify-center ${isToday ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white' : isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                    <div
+                      className={`flex-shrink-0 w-11 h-11 rounded-lg flex flex-col items-center justify-center ${isToday ? 'text-white' : isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}
+                      style={isToday ? { background: 'linear-gradient(135deg, #8b5cf6, #9333ea)' } : {}}
+                    >
                       <span className="text-[10px] font-bold leading-none">{dateLabel}</span>
                       {!isToday && !isTomorrow && <span className="text-[8px] opacity-60">{date.getFullYear()}</span>}
                     </div>

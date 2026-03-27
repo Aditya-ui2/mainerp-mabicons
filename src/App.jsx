@@ -65,12 +65,12 @@ function App() {
         </ProtectedRoute>
       } />
       <Route path='/client-dashboard' element={
-        <ProtectedRoute allowedRoles={['admin', 'customer']}>
+        <ProtectedRoute allowedRoles={['admin', 'customer', 'client']}>
           <ClientModularDashboard />
         </ProtectedRoute>
       } />
       <Route path='/client-dashboard-legacy' element={
-        <ProtectedRoute allowedRoles={['admin', 'customer']}>
+        <ProtectedRoute allowedRoles={['admin', 'customer', 'client']}>
           <CustomerDashboard />
         </ProtectedRoute>
       } />

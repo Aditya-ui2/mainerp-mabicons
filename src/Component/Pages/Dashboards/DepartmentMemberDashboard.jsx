@@ -34,6 +34,7 @@ const DailyReportTab = lazy(() => import('./Tabs/Common/DailyReportTab'));
 const AnnouncementsTab = lazy(() => import('./Tabs/Common/AnnouncementsTab'));
 const PayslipsTab = lazy(() => import('./Tabs/Common/PayslipsTab'));
 const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
+const ClientRecruitmentProgressTab = lazy(() => import('./Tabs/Client/ClientRecruitmentProgressTab'));
 
 // Tab Loader Skeleton
 const TabLoader = () => (
@@ -74,6 +75,7 @@ const sidebarConfig = [
     heading: 'RECRUITMENT',
     items: [
       { id: 8, title: 'Interview Schedule', icon: FiCalendar },
+      { id: 13, title: 'Recruitment Process', icon: FiTarget },
     ]
   },
   {
@@ -237,6 +239,8 @@ const DepartmentMemberDashboard = () => {
               return <PerformanceStatsTab />;
             case 'Interview Schedule':
               return <InterviewScheduleTab />;
+            case 'Recruitment Process':
+              return <ClientRecruitmentProgressTab />;
             case 'Announcements':
               return <AnnouncementsTab department={department} />;
             case 'Payslips':
