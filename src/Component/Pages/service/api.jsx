@@ -22,11 +22,14 @@ const axiosInstance = axios.create({
 // axios.defaults.headers.common['Content-Type'] = 'application/json';
 // axios.defaults.headers.common['Accept'] = 'application/json';
 
-const saveToken = (token, userType) => {
+const saveToken = (token, userType, refreshToken) => {
   if (token) {
     localStorage.setItem('token', token);
     localStorage.setItem('userType', userType);
     setAuthToken(token);
+  }
+  if (refreshToken) {
+    localStorage.setItem('refreshToken', refreshToken);
   }
 };
 
@@ -38,6 +41,69 @@ const setAuthToken = (token) => {
   }
 };
 
+// Auto-refresh: if access token expired (401), use refresh token to get new one
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        // No refresh token — force re-login
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userType');
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers['Authorization'] = `Bearer ${token}`;
+          return axiosInstance(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const { data } = await axios.post(`${BASE_URL}/auth/refresh-token`, { refreshToken });
+        const newToken = data.token;
+        localStorage.setItem('token', newToken);
+        setAuthToken(newToken);
+        processQueue(null, newToken);
+        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userType');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Update the login function to include specific headers
 export const superAdminLogin = async (credentials) => {
   try {
@@ -48,7 +114,7 @@ export const superAdminLogin = async (credentials) => {
       }
     });
     if (response.data.token) {
-      saveToken(response.data.token, 'superAdmin');
+      saveToken(response.data.token, 'superAdmin', response.data.refreshToken);
     }
     return response.data;
   } catch (error) {
@@ -67,7 +133,7 @@ export const adminLogin = async (credentials) => {
       }
     });
     if (response.data.token) {
-      saveToken(response.data.token, 'admin');
+      saveToken(response.data.token, 'admin', response.data.refreshToken);
     }
     return response.data;
   } catch (error) {
@@ -84,7 +150,7 @@ export const teamLeaderLogin = async (credentials) => {
       }
     });
     if (response.data.token) {
-      saveToken(response.data.token, 'teamLeader');
+      saveToken(response.data.token, 'teamLeader', response.data.refreshToken);
     }
     return response.data;
   } catch (error) {
@@ -101,7 +167,7 @@ export const employeeLogin = async (credentials) => {
       }
     });
     if (response.data.token) {
-      saveToken(response.data.token, 'employee');
+      saveToken(response.data.token, 'employee', response.data.refreshToken);
     }
     return response.data;
   } catch (error) {
@@ -118,7 +184,7 @@ export const departmentTeamLogin = async (credentials) => {
       }
     });
     if (response.data.token) {
-      saveToken(response.data.token, response.data.user?.department === 'HR Operations' ? 'hrOperations' : 'hrRecruitment');
+      saveToken(response.data.token, response.data.user?.department === 'HR Operations' ? 'hrOperations' : 'hrRecruitment', response.data.refreshToken);
     }
     return response.data;
   } catch (error) {
@@ -256,7 +322,7 @@ export const clientLogin = async (credentials) => {
   try {
     const response = await axiosInstance.post('/client/login', credentials);
     if (response.data.token) {
-      saveToken(response.data.token, 'client');
+      saveToken(response.data.token, 'client', response.data.refreshToken);
     }
     return response.data;
   } catch (error) {

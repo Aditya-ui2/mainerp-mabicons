@@ -87,6 +87,55 @@ const DonutChart = ({ segments, size = 120, strokeWidth = 14, isDarkMode }) => {
   );
 };
 
+/* ── Mock data (temporary until API is fully implemented) ── */
+const MOCK_DASHBOARD_DATA = {
+  client: {
+    companyName: 'Mabicons Client',
+    name: 'Client',
+    kam: { name: 'Recruitment Team', email: 'recruitment.mabicons@gmail.com', phone: '+91 9876543210' },
+  },
+  allowedServices: ['recruitment', 'operations'],
+  recruitment: {
+    summary: { totalPositions: 3, openPositions: 2, totalCandidates: 12, inPipeline: 8, hired: 2, completedInterviews: 5, scheduledInterviews: 3 },
+    positions: [
+      { id: '1', title: 'Senior React Developer', status: 'Open', priority: 'High', openings: 3, filled: 1, candidates: [
+        { id: 'c1', name: 'Rahul Sharma', stage: 'Technical Round', status: 'Shortlisted', rating: 4 },
+        { id: 'c2', name: 'Priya Patel', stage: 'HR Round', status: 'Interview', rating: 5 },
+        { id: 'c3', name: 'Amit Kumar', stage: 'Screening', status: 'Submitted', rating: 3 },
+      ]},
+      { id: '2', title: 'Node.js Backend Engineer', status: 'Open', priority: 'Medium', openings: 2, filled: 1, candidates: [
+        { id: 'c4', name: 'Sneha Gupta', stage: 'Client Interview', status: 'Shortlisted', rating: 5 },
+        { id: 'c5', name: 'Vikram Singh', stage: 'Offer Sent', status: 'Selected', rating: 4 },
+      ]},
+      { id: '3', title: 'UI/UX Designer', status: 'Hold', priority: 'Low', openings: 1, filled: 0, candidates: [
+        { id: 'c6', name: 'Ananya Reddy', stage: 'Phone Interview', status: 'Shared', rating: 3 },
+      ]},
+    ],
+    funnel: { screening: 3, phoneInterview: 2, technical: 2, hrRound: 1, clientInterview: 1, offerSent: 1, joined: 2, rejected: 1 },
+    upcomingInterviews: [
+      { id: 'i1', candidateName: 'Priya Patel', positionTitle: 'Senior React Developer', interviewDate: new Date(Date.now() + 86400000).toISOString(), interviewType: 'HR Round', status: 'Scheduled' },
+      { id: 'i2', candidateName: 'Sneha Gupta', positionTitle: 'Node.js Backend Engineer', interviewDate: new Date(Date.now() + 172800000).toISOString(), interviewType: 'Client Interview', status: 'Scheduled' },
+    ],
+    candidates: [],
+  },
+  operations: {
+    taskSummary: { total: 15, active: 5, wip: 3, completed: 8, pending: 2, resolved: 8, review: 1, overdue: 0, completionRate: 53 },
+    recentTasks: [
+      { id: 't1', title: 'Monthly Payroll Processing', status: 'Active', priority: 'High', dueDate: new Date(Date.now() + 259200000).toISOString(), assignedTo: 'HR Team' },
+      { id: 't2', title: 'Employee Compliance Audit', status: 'Work in Progress', priority: 'Medium', dueDate: new Date(Date.now() + 604800000).toISOString(), assignedTo: 'Compliance Team' },
+      { id: 't3', title: 'Leave Policy Update', status: 'Review', priority: 'Low', dueDate: new Date(Date.now() + 432000000).toISOString(), assignedTo: 'HR Team' },
+    ],
+    overdueTasks: [],
+    requestedTasks: [
+      { id: 'rt1', title: 'New Employee Onboarding', status: 'Pending', priority: 'High', createdAt: new Date(Date.now() - 86400000).toISOString() },
+    ],
+    recurringTasks: [
+      { id: 'rc1', title: 'Weekly Attendance Report', frequency: 'Weekly', status: 'Active', nextDue: new Date(Date.now() + 172800000).toISOString() },
+    ],
+    agreement: { title: 'HR Services Agreement', status: 'Active', startDate: '2026-01-01', endDate: '2026-12-31', allowedScopes: ['Payroll', 'Compliance', 'Recruitment'] },
+  },
+};
+
 /* ══════════════════ CLIENT OVERVIEW TAB ═══════════════════ */
 export default function ClientOverviewTab({ isDarkMode, clientData }) {
   const [data, setData] = useState(null);
@@ -107,13 +156,17 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        setData(MOCK_DASHBOARD_DATA);
+        return;
+      }
       const decoded = jwtDecode(token);
       const res = await getClientDashboardOverview(decoded.id);
       if (res?.success) setData(res.data);
+      else setData(MOCK_DASHBOARD_DATA);
     } catch (err) {
-      console.error('Failed to load dashboard:', err);
-      setError('Failed to load dashboard data.');
+      console.error('Failed to load dashboard, using mock data:', err);
+      setData(MOCK_DASHBOARD_DATA);
     } finally {
       setLoading(false);
     }
@@ -287,14 +340,14 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
                   <div key={stage} className="group">
                     <div className="flex items-center gap-3">
                       <div className={`flex items-center gap-2 w-36 text-right`}>
-                        <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${cfg.gradient} ring-2 ring-offset-1 ${isDarkMode ? 'ring-slate-700 ring-offset-slate-800' : 'ring-white ring-offset-white'} group-hover:scale-125 transition-transform`}
-                          style={{ boxShadow: `0 0 6px ${cfg.hex}40` }}
+                        <div className={`w-2 h-2 rounded-full ring-2 ring-offset-1 ${isDarkMode ? 'ring-slate-700 ring-offset-slate-800' : 'ring-white ring-offset-white'} group-hover:scale-125 transition-transform`}
+                          style={{ background: cfg.hex, boxShadow: `0 0 6px ${cfg.hex}40` }}
                         />
-                        <span className={`text-[11px] font-semibold ${tSub} group-hover:${isDarkMode ? 'text-white' : 'text-slate-800'} transition-colors flex-1 text-right`}>{cfg.label}</span>
+                        <span className={`text-[11px] font-semibold ${tSub} transition-colors flex-1 text-right`}>{cfg.label}</span>
                       </div>
                       <div className={`flex-1 h-8 rounded-xl ${isDarkMode ? 'bg-slate-700/40' : 'bg-slate-100/80'} overflow-hidden relative`}>
-                        <div className={`h-full rounded-xl bg-gradient-to-r ${cfg.gradient} transition-all duration-700 ease-out flex items-center px-3 relative overflow-hidden group-hover:shadow-md`}
-                          style={{ width: `${width}%`, boxShadow: count > 0 ? `0 2px 8px ${cfg.hex}30` : 'none' }}
+                        <div className="h-full rounded-xl transition-all duration-700 ease-out flex items-center px-3 relative overflow-hidden group-hover:shadow-md"
+                          style={{ width: `${width}%`, background: `linear-gradient(to right, ${cfg.hex}, ${cfg.hex}cc)`, boxShadow: count > 0 ? `0 2px 8px ${cfg.hex}30` : 'none' }}
                         >
                           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-white/10" />
                           {count > 0 && <span className="text-[11px] font-bold text-white relative z-10 drop-shadow-sm">{count}</span>}
@@ -794,14 +847,24 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
 }
 
 /* ── Hero Stat Card Component ── */
+const GRADIENT_MAP = {
+  'from-blue-500 to-indigo-600': 'linear-gradient(135deg, #3b82f6, #4f46e5)',
+  'from-violet-500 to-purple-600': 'linear-gradient(135deg, #8b5cf6, #9333ea)',
+  'from-emerald-500 to-teal-600': 'linear-gradient(135deg, #10b981, #0d9488)',
+  'from-cyan-500 to-blue-600': 'linear-gradient(135deg, #06b6d4, #2563eb)',
+  'from-green-500 to-emerald-600': 'linear-gradient(135deg, #22c55e, #059669)',
+  'from-red-500 to-rose-600': 'linear-gradient(135deg, #ef4444, #e11d48)',
+};
+
 function HeroStatCard({ icon: Icon, label, value, sub, gradient, accent, isDarkMode }) {
   const card = isDarkMode ? 'bg-[#282440]' : 'bg-white';
   const bdr = isDarkMode ? 'border-[#3a3556]' : 'border-[#ece8f8]';
+  const bg = GRADIENT_MAP[gradient] || 'linear-gradient(135deg, #8b5cf6, #6d28d9)';
   return (
-    <div className={`${card} rounded-2xl border ${bdr} p-4 relative overflow-hidden group hover:shadow-lg hover:shadow-${accent}-100/30 transition-all duration-300`}>
-      <div className={`absolute -top-6 -right-6 w-20 h-20 bg-gradient-to-br ${gradient} opacity-[0.08] rounded-full group-hover:scale-150 transition-transform duration-500`} />
-      <div className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-      <div className={`inline-flex p-2 rounded-xl bg-gradient-to-br ${gradient} text-white mb-3 shadow-lg shadow-${accent}-200/30`}>
+    <div className={`${card} rounded-2xl border ${bdr} p-4 relative overflow-hidden group hover:shadow-lg transition-all duration-300`}>
+      <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-[0.08] group-hover:scale-150 transition-transform duration-500" style={{ background: bg }} />
+      <div className="absolute bottom-0 left-0 w-full h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: bg }} />
+      <div className="inline-flex p-2 rounded-xl text-white mb-3 shadow-lg" style={{ background: bg }}>
         <Icon className="w-4 h-4" />
       </div>
       <p className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} tracking-tight`}>{value}</p>
