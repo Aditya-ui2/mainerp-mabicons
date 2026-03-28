@@ -375,7 +375,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
           clientId: c.client?._id,
         }));
         setCandidates(mapped);
-        try { localStorage.setItem(CACHE_KEY_CANDIDATES, JSON.stringify(mapped)); } catch {}
+        try { localStorage.setItem(CACHE_KEY_CANDIDATES, JSON.stringify(mapped)); } catch { }
       }
     } catch (error) {
       console.error('Failed to fetch candidates:', error);
@@ -391,7 +391,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
   // Pipeline stages
   const stages = ['Screening', 'Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Offer Sent', 'Joined'];
-  
+
   // Stats
   const stats = {
     total: candidates.length,
@@ -822,22 +822,21 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap">
                     <h2 className="text-2xl font-bold text-white">{selectedCandidateDetail.name}</h2>
-                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm ${
-                      (selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30' :
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm ${(selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30' :
                       (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/30' :
-                      (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? 'bg-red-500/20 text-red-200 ring-1 ring-red-400/30' :
-                      'bg-white/15 text-white/90 ring-1 ring-white/20'
-                    }`}>
+                        (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? 'bg-red-500/20 text-red-200 ring-1 ring-red-400/30' :
+                          'bg-white/15 text-white/90 ring-1 ring-white/20'
+                      }`}>
                       {(selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? '✓ Approved' :
-                       (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? '⏸ On Hold' :
-                       (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? '✗ Rejected' : '● Pending Review'}
+                        (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? '⏸ On Hold' :
+                          (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? '✗ Rejected' : '● Pending Review'}
                     </span>
                   </div>
                   <p className="text-sm text-white/70 mt-1">{selectedCandidateDetail.jobTitle} • {selectedCandidateDetail.client}</p>
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
                     <StageBadge stage={selectedCandidateDetail.stage} />
                     <div className="flex items-center gap-0.5">
-                      {[1,2,3,4,5].map(s => (
+                      {[1, 2, 3, 4, 5].map(s => (
                         <FiStar key={s} className={`w-3.5 h-3.5 ${s <= (selectedCandidateDetail.rating || 0) ? 'text-amber-300 fill-amber-300' : 'text-white/20'}`} />
                       ))}
                     </div>
@@ -862,9 +861,8 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                 <div className="flex gap-2">
                   <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                     onClick={() => { holdCandidate(selectedCandidateDetail.id); setSelectedCandidateDetail(prev => ({ ...prev, pipelineStatus: (prev.pipelineStatus || 'pending') === 'hold' ? 'pending' : 'hold' })); }}
-                    className={`flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
-                      (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25' : isDarkMode ? 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 ring-1 ring-indigo-500/20' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 ring-1 ring-indigo-100'
-                    }`}>
+                    className={`flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${(selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25' : isDarkMode ? 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 ring-1 ring-indigo-500/20' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 ring-1 ring-indigo-100'
+                      }`}>
                     <FiPause className="w-3 h-3" /> Hold
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -1482,6 +1480,144 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     );
   }
 
+  // ═══ Reject Page (inline, replaces pipeline) ═══
+  if (showRejectModal) {
+    return (
+      <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
+        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
+              className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'}`}
+            >
+              <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
+            </motion.button>
+          </div>
+          <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
+            <div className="p-6" style={{ background: 'linear-gradient(135deg, #ef4444, #e11d48)' }}>
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
+                  <FiXCircle className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Reject Candidate</h2>
+                  <p className="text-sm text-white/70 mt-0.5">Select a reason for rejection</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-6 max-w-2xl">
+              <div>
+                <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Reason for Rejection *</label>
+                <select value={rejectReason} onChange={e => setRejectReason(e.target.value)}
+                  className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-red-500/50 focus:border-red-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                  <option value="">Select reason...</option>
+                  {rejectionReasons.map(r => (<option key={r} value={r}>{r}</option>))}
+                </select>
+              </div>
+              {rejectReason === 'Other' && (
+                <div>
+                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Custom Reason *</label>
+                  <input type="text" value={rejectCustomReason} onChange={e => setRejectCustomReason(e.target.value)} placeholder="Enter custom reason..."
+                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-red-500/50 focus:border-red-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200'}`} />
+                </div>
+              )}
+            </div>
+            <div className={`flex items-center justify-between p-6 border-t ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+              <button onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
+                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}>
+                Cancel
+              </button>
+              <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }} disabled={!rejectReason || (rejectReason === 'Other' && !rejectCustomReason)} onClick={handleReject}
+                className="px-8 py-3 text-sm font-bold text-white rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
+                style={{ background: 'linear-gradient(135deg, #ef4444, #e11d48)', boxShadow: '0 8px 15px -3px rgba(239, 68, 68, 0.3)' }}
+              >
+                Reject Candidate
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ═══ Approve Page (inline, replaces pipeline) ═══
+  if (showApproveModal) {
+    const c = candidates.find(c => c.id === approveCandidateId);
+    return (
+      <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
+        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
+              className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700'}`}
+            >
+              <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
+            </motion.button>
+          </div>
+          <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
+            <div className="p-6" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
+                  <FiThumbsUp className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Approve & Schedule Interview</h2>
+                  <p className="text-sm text-white/70 mt-0.5">{c ? `For ${c.name}` : 'Enter interview details'}</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-6 max-w-4xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Round</label>
+                  <select value={approveInterviewRound} onChange={e => setApproveInterviewRound(e.target.value)}
+                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                    <option value="Phone Screening">Phone Screening</option>
+                    <option value="HR Round">HR Round</option>
+                    <option value="Final Round">Final Round</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Type</label>
+                  <select value={approveInterviewType} onChange={e => setApproveInterviewType(e.target.value)}
+                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                    <option value="Video">Video Call</option>
+                    <option value="Phone">Phone Call</option>
+                    <option value="In-person">In-Person</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Date</label>
+                  <input type="date" value={approveInterviewDate} onChange={e => setApproveInterviewDate(e.target.value)}
+                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
+                </div>
+                <div>
+                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Time</label>
+                  <input type="time" value={approveInterviewTime} onChange={e => setApproveInterviewTime(e.target.value)}
+                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
+                </div>
+                <div className="md:col-span-2 max-w-2xl">
+                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interviewer Name</label>
+                  <input type="text" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} placeholder="Enter interviewer name..."
+                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200'}`} />
+                </div>
+              </div>
+            </div>
+            <div className={`flex items-center justify-between p-6 border-t ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+              <button onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
+                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}>
+                Cancel
+              </button>
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleApproveCandidate}
+                className="flex items-center gap-2 px-8 py-3 text-sm font-semibold text-white rounded-xl shadow-lg bg-gradient-to-r from-emerald-500 to-teal-600"
+              >
+                <FiCheckCircle className="w-4 h-4" /> Approve & Schedule
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -1540,7 +1676,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
               <span className="relative z-10 tracking-wide">Analytics</span>
             </motion.button>
-        
+
             {/* From Resume Bank */}
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               onClick={() => { setShowResumeBankModal(true); setResumeBankResumes([]); setResumeBankRole(''); }}
@@ -1720,15 +1856,15 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                 const percent = Math.min((job.filled / job.openings) * 100, 100);
 
                 // Status logic
-                const isError   = job.filled <= 1;
+                const isError = job.filled <= 1;
                 const isWarning = job.filled >= 2 && job.filled <= 3;
                 const isSuccess = job.filled >= 4;
 
                 const statusConfig = isSuccess
                   ? { color: '#10b981', blobColor: '#10b981', barGradient: 'linear-gradient(90deg, #10b981, #059669)', badgeBg: 'bg-emerald-500 shadow-emerald-300', cardBg: isDarkMode ? 'bg-emerald-900/20 border-emerald-700/30' : 'bg-emerald-50 border-emerald-200', icon: '✅', label: 'Filled', labelClass: 'text-emerald-500' }
                   : isWarning
-                  ? { color: '#f59e0b', blobColor: '#f59e0b', barGradient: 'linear-gradient(90deg, #f59e0b, #d97706)', badgeBg: 'bg-amber-500 shadow-amber-300', cardBg: isDarkMode ? 'bg-amber-900/20 border-amber-700/30 hover:border-amber-500' : 'bg-amber-50/50 border-amber-200 hover:border-amber-400 hover:shadow-amber-100', icon: '⚠️', label: 'In Progress', labelClass: 'text-amber-500' }
-                  : { color: '#ef4444', blobColor: '#ef4444', barGradient: 'linear-gradient(90deg, #ef4444, #dc2626)', badgeBg: 'bg-red-500 shadow-red-300', cardBg: isDarkMode ? 'bg-red-900/20 border-red-700/30 hover:border-red-500' : 'bg-red-50/50 border-red-200 hover:border-red-400 hover:shadow-red-100', icon: '🔴', label: 'Critical', labelClass: 'text-red-500' };
+                    ? { color: '#f59e0b', blobColor: '#f59e0b', barGradient: 'linear-gradient(90deg, #f59e0b, #d97706)', badgeBg: 'bg-amber-500 shadow-amber-300', cardBg: isDarkMode ? 'bg-amber-900/20 border-amber-700/30 hover:border-amber-500' : 'bg-amber-50/50 border-amber-200 hover:border-amber-400 hover:shadow-amber-100', icon: '⚠️', label: 'In Progress', labelClass: 'text-amber-500' }
+                    : { color: '#ef4444', blobColor: '#ef4444', barGradient: 'linear-gradient(90deg, #ef4444, #dc2626)', badgeBg: 'bg-red-500 shadow-red-300', cardBg: isDarkMode ? 'bg-red-900/20 border-red-700/30 hover:border-red-500' : 'bg-red-50/50 border-red-200 hover:border-red-400 hover:shadow-red-100', icon: '🔴', label: 'Critical', labelClass: 'text-red-500' };
 
                 return (
                   <motion.div
@@ -1810,11 +1946,11 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         {/* Pipeline Status Filter Pills */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-wrap sm:flex-nowrap">
           {[
-            { key: 'all',      label: 'All',      count: stats.total,    color: '#1E88E5', bg: 'blue', icon: FiUsers       },
-            { key: 'pending',  label: 'Pending',  count: stats.pending,  color: '#f59e0b', bg: 'amber',  icon: FiClock       },
-            { key: 'hold',     label: 'On Hold',  count: stats.onHold,   color: '#6366f1', bg: 'indigo', icon: FiAlertCircle },
-            { key: 'approved', label: 'Approved', count: stats.approved, color: '#10b981', bg: 'emerald',icon: FiCheckCircle },
-            { key: 'rejected', label: 'Rejected', count: stats.rejected, color: '#ef4444', bg: 'red',    icon: FiXCircle     },
+            { key: 'all', label: 'All', count: stats.total, color: '#1E88E5', bg: 'blue', icon: FiUsers },
+            { key: 'pending', label: 'Pending', count: stats.pending, color: '#f59e0b', bg: 'amber', icon: FiClock },
+            { key: 'hold', label: 'On Hold', count: stats.onHold, color: '#6366f1', bg: 'indigo', icon: FiAlertCircle },
+            { key: 'approved', label: 'Approved', count: stats.approved, color: '#10b981', bg: 'emerald', icon: FiCheckCircle },
+            { key: 'rejected', label: 'Rejected', count: stats.rejected, color: '#ef4444', bg: 'red', icon: FiXCircle },
           ].map(({ key, label, count, color, icon: Icon }) => {
             const isActive = filterPipelineStatus === key;
             return (
@@ -2067,63 +2203,82 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                     </div>
 
                     {/* Right: Actions & Info */}
-                    <div className="flex flex-col items-end gap-2 min-w-[140px]">
-                      {/* Stage Badge */}
-                      <StageBadge stage={candidate.stage} />
-                      
-                      {/* Expected CTC */}
-                      <div className="text-right">
-                        <p className={`text-[9px] uppercase tracking-wider font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Expected CTC</p>
-                        <p className="text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">{candidate.expectedCTC}</p>
+                    <div className="flex flex-col items-end gap-2.5 min-w-[150px]">
+                      {/* Stage Badge & Status */}
+                      <div className="flex flex-col items-end gap-1.5 w-full">
+                        <StageBadge stage={candidate.stage} />
+
+                        {/* Pipeline Status Badge */}
+                        <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm text-center inline-block w-full ${(candidate.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800' :
+                          (candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-400 dark:border-indigo-800' :
+                            (candidate.pipelineStatus || 'pending') === 'rejected' ? 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-800' :
+                              'bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800'
+                          }`}>
+                          {(candidate.pipelineStatus || 'pending') === 'approved' ? '✓ APPROVED' : (candidate.pipelineStatus || 'pending') === 'hold' ? '⏸ ON HOLD' : (candidate.pipelineStatus || 'pending') === 'rejected' ? '✗ REJECTED' : '● PENDING'}
+                        </span>
                       </div>
+
+                      {/* Expected CTC */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-center mt-1 w-full bg-slate-50 dark:bg-slate-800/50 py-1.5 px-2 rounded-lg border border-slate-100 dark:border-slate-700/50 shadow-sm"
+                      >
+                        <p className={`text-[9px] uppercase tracking-widest font-extrabold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Expected CTC</p>
+                        <p className="text-base font-black bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">{candidate.expectedCTC}</p>
+                      </motion.div>
 
                       {/* Rejection reason */}
                       {candidate.stage === 'Rejected' && candidate.rejectionReason && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-500'}`}>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg w-full text-center mt-1 border ${isDarkMode ? 'bg-red-900/20 text-red-400 border-red-800/50' : 'bg-red-50 text-red-600 border-red-100'}`}>
                           Reason: {candidate.rejectionReason}
                         </span>
                       )}
-                      
-                      {/* Pipeline Status Badge */}
-                      <div className="mt-1">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                          (candidate.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                          (candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' :
-                          (candidate.pipelineStatus || 'pending') === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        }`}>
-                          {(candidate.pipelineStatus || 'pending') === 'approved' ? '✓ Approved' : (candidate.pipelineStatus || 'pending') === 'hold' ? '⏸ On Hold' : (candidate.pipelineStatus || 'pending') === 'rejected' ? '✗ Rejected' : '● Pending'}
-                        </span>
-                      </div>
-                      
+
                       {/* Pipeline Action Buttons: Hold / Approve / Reject */}
                       {(candidate.pipelineStatus || 'pending') !== 'approved' && (candidate.pipelineStatus || 'pending') !== 'rejected' && (
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                        <div className="grid grid-cols-3 gap-1.5 mt-1.5 w-full">
+                          <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
                             onClick={(e) => { e.stopPropagation(); holdCandidate(candidate.id); }}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${(candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white' : isDarkMode ? 'bg-indigo-900/30 text-indigo-400 hover:bg-indigo-900/50' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}>
-                            <FiPause className="w-3 h-3" /> Hold
+                            className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-extrabold transition-all shadow-sm ${(candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white shadow-indigo-500/30 ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900' :
+                              isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-indigo-900/40 hover:text-indigo-400 border border-slate-600 hover:border-indigo-700/50' :
+                                'bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200'
+                              }`}
+                          >
+                            <FiPause className="w-4 h-4" /> Hold
                           </motion.button>
-                          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+
+                          <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
                             onClick={(e) => { e.stopPropagation(); openApproveModal(candidate.id); }}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${isDarkMode ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}>
-                            <FiThumbsUp className="w-3 h-3" /> Approve
+                            className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-extrabold transition-all shadow-sm ${isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-emerald-900/40 hover:text-emerald-400 border border-slate-600 hover:border-emerald-700/50' :
+                              'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 border border-slate-200 hover:border-emerald-200'
+                              }`}
+                          >
+                            <FiThumbsUp className="w-4 h-4" /> Approve
                           </motion.button>
-                          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+
+                          <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
                             onClick={(e) => { e.stopPropagation(); pipelineRejectCandidate(candidate.id); }}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${isDarkMode ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}>
-                            <FiXCircle className="w-3 h-3" /> Reject
+                            className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-extrabold transition-all shadow-sm ${isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-red-900/40 hover:text-red-400 border border-slate-600 hover:border-red-700/50' :
+                              'bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200'
+                              }`}
+                          >
+                            <FiXCircle className="w-4 h-4" /> Reject
                           </motion.button>
                         </div>
                       )}
-                      
-                      {/* Quick Contact */}
+
+                      {/* Quick Contact WhatsApp */}
                       {candidate.phone && (
-                        <div className="flex items-center gap-1 mt-2 pt-2 border-t" style={{ borderColor: isDarkMode ? '#334155' : '#e2e8f0' }}>
-                          <a href={`https://wa.me/${candidate.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                            className="px-2 py-1 rounded-md text-[9px] font-semibold bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                            <FiPhone className="w-2.5 h-2.5 inline mr-1" /> WhatsApp
-                          </a>
+                        <div className="w-full mt-1.5">
+                          <motion.a
+                            whileHover={{ scale: 1.02, y: -1 }}
+                            whileTap={{ scale: 0.98 }}
+                            href={`https://wa.me/${candidate.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-xs font-extrabold bg-[#25D366]/10 text-[#075E54] dark:bg-[#25D366]/20 dark:text-[#25D366] hover:bg-[#25D366] hover:text-white dark:hover:bg-[#25D366] dark:hover:text-white transition-all border border-[#25D366]/30 shadow-sm"
+                          >
+                            <FiPhone className="w-3.5 h-3.5" /> WhatsApp
+                          </motion.a>
                         </div>
                       )}
                     </div>
@@ -2137,111 +2292,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         {/* ═══ Click-away handler for stage menu ═══ */}
         {stageMenuId && <div className="fixed inset-0 z-40" onClick={() => setStageMenuId(null)} />}
 
-        {/* ═══ Reject Modal ═══ */}
-        <AnimatePresence>
-          {showRejectModal && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); }} />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className={`relative z-10 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'}`}>
-                <div className="py-5 px-6 text-center" style={{ background: 'linear-gradient(135deg, #ef4444, #e11d48)' }}>
-                  <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                    <FiXCircle className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Reject Candidate</h3>
-                  <p className="text-xs text-white/70 mt-1">Select a reason for rejection</p>
-                </div>
-                <div className="p-5 space-y-3">
-                  <select value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                    className={`w-full rounded-xl border-2 px-4 py-3 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                    <option value="">Select reason...</option>
-                    {rejectionReasons.map(r => (<option key={r} value={r}>{r}</option>))}
-                  </select>
-                  {rejectReason === 'Other' && (
-                    <input type="text" value={rejectCustomReason} onChange={e => setRejectCustomReason(e.target.value)} placeholder="Enter custom reason..."
-                      className={`w-full rounded-xl border-2 px-4 py-3 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200'}`} />
-                  )}
-                </div>
-                <div className={`flex gap-3 p-5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                  <button onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
-                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Cancel</button>
-                  <button onClick={handleReject} disabled={!rejectReason || (rejectReason === 'Other' && !rejectCustomReason)}
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 transition-colors">Reject</button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* ═══ Approve Modal (Schedule Interview) ═══ */}
-        <AnimatePresence>
-          {showApproveModal && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }} />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className={`relative z-10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'}`}>
-                <div className="py-5 px-6 text-center" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                  <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                    <FiThumbsUp className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Approve Candidate</h3>
-                  <p className="text-xs text-white/70 mt-1">
-                    {(() => {
-                      const c = candidates.find(c => c.id === approveCandidateId);
-                      return c ? `Schedule interview for ${c.name}` : 'Schedule interview details';
-                    })()}
-                  </p>
-                </div>
-                <div className="p-5 space-y-3">
-                  <div>
-                    <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Interview Round</label>
-                    <select value={approveInterviewRound} onChange={e => setApproveInterviewRound(e.target.value)}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                      <option value="Phone Screening">Phone Screening</option>
-                      <option value="HR Round">HR Round</option>
-                      <option value="Final Round">Final Round</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Interview Type</label>
-                    <select value={approveInterviewType} onChange={e => setApproveInterviewType(e.target.value)}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                      <option value="Video">Video Call</option>
-                      <option value="Phone">Phone Call</option>
-                      <option value="In-person">In-Person</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Date</label>
-                      <input type="date" value={approveInterviewDate} onChange={e => setApproveInterviewDate(e.target.value)}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
-                    </div>
-                    <div>
-                      <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Time</label>
-                      <input type="time" value={approveInterviewTime} onChange={e => setApproveInterviewTime(e.target.value)}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Interviewer Name</label>
-                    <input type="text" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} placeholder="Enter interviewer name..."
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200'}`} />
-                  </div>
-                </div>
-                <div className={`flex gap-3 p-5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                  <button onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
-                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Cancel</button>
-                  <button onClick={handleApproveCandidate}
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors hover:opacity-90"
-                    style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                    <span className="flex items-center justify-center gap-2"><FiCheckCircle className="w-4 h-4" /> Approve & Schedule</span>
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+        {/* Action Modals have been refactored into top-level horizontal pages */}
 
         {/* Upload CV Modal */}
         <AnimatePresence>

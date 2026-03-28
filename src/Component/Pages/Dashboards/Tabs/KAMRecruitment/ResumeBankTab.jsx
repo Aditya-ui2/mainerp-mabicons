@@ -272,11 +272,11 @@ const ResumeBankTab = () => {
     <div className="p-6 space-y-6" style={{ fontFamily: 'Calibri, sans-serif' }}>
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-11 h-11 rounded-xl 
                           bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] 
                           shadow-lg shadow-[#1E88E5]/30 dark:shadow-[#1E88E5]/30">
-            <span className="text-white text-xl">🏦</span>
+            <FiDatabase className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] bg-clip-text text-transparent">
             Resume Bank

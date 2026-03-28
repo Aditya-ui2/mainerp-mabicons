@@ -142,11 +142,10 @@ const WorkTimeline = ({ activities = [], tasks = [], isDarkMode = false }) => {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className={`appearance-none px-4 py-2 pr-8 rounded-lg border text-sm font-medium cursor-pointer ${
-                isDarkMode
-                  ? 'bg-gray-700 border-gray-600 text-white'
-                  : 'bg-gray-50 border-gray-200 text-gray-700'
-              }`}
+              className={`appearance-none px-4 py-2 pr-8 rounded-lg border text-sm font-medium cursor-pointer ${isDarkMode
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : 'bg-gray-50 border-gray-200 text-gray-700'
+                }`}
             >
               <option value="all">All Activity</option>
               <option value="tasks">Tasks Only</option>
@@ -230,11 +229,10 @@ const WorkTimeline = ({ activities = [], tasks = [], isDarkMode = false }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 onClick={() => setShowAll(true)}
-                className={`mt-6 ml-12 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isDarkMode
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`mt-6 ml-12 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDarkMode
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 <FiChevronDown className="w-4 h-4" />
                 Show {timelineItems.length - 10} more activities

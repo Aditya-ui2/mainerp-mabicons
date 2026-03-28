@@ -112,14 +112,12 @@ const AdminLayout = ({
         `}
       >
         {/* Logo Section */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-white/10 bg-white/5 backdrop-blur-sm">
-          <div className="flex items-center gap-3 overflow-hidden">
-            {sidebarCollapsed ? (
-              <img src={logo} alt="Mabicons" className="h-8 w-auto brightness-0 invert" />
-            ) : (
+        <div className={`flex items-center h-16 px-4 border-b border-white/10 bg-white/5 backdrop-blur-sm ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-3 overflow-hidden">
               <img src={logo} alt="Mabicons" className="h-7 w-auto brightness-0 invert" />
-            )}
-          </div>
+            </div>
+          )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/10 transition-all duration-200 group"
