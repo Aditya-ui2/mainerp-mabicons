@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
-import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin, departmentTeamLogin, clientLogin } from './service/api';
+// import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin, departmentTeamLogin } from './service/api';
 import { FiMail, FiEye, FiEyeOff, FiSun, FiMoon } from 'react-icons/fi';
 
 const BackgroundAnimation = () => (
@@ -168,7 +168,6 @@ const USER_CREDENTIALS = {
   'employee.mabicons@gmail.com': { password: 'Employee@123', role: 'employee', department: null, name: 'Employee' },
   'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
   'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
-  'client.mabicons@gmail.com': { password: 'Client@123', role: 'client', department: null, name: 'Client' }
 };
 
 const Login = () => {
@@ -180,103 +179,99 @@ const Login = () => {
   const [isError, setIsError] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const ROLE_MAP = {
+    superAdmin: 'superadmin',
+    admin: 'admin',
+    teamLeader: 'teamleader',
+    employee: 'employee',
+    bdExecutive: 'bd',
+    hrOperations: 'hr',
+    hrRecruitment: 'hr'
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+  
     const emailLower = email.toLowerCase().trim();
-    const credentials = { email: emailLower, password };
+    setLoading(true);
 
     try {
+      // Logic to determine which login API to call based on email prefix or domain
+      const { 
+        superAdminLogin, 
+        adminLogin, 
+        teamLeaderLogin, 
+        employeeLogin,
+        departmentTeamLogin 
+      } = await import('./service/api');
+      
       let response;
-      let userType;
-      let destination;
-
-      // Check if it's a department team login (HR Operations or HR Recruitment)
-      if (emailLower.includes('operation') || emailLower.includes('recruitment')) {
-        response = await departmentTeamLogin(credentials);
-        const dept = response.user?.department;
-        const role = response.user?.role;
-        
-        if (role === 'Department Head') {
-          userType = dept === 'HR Operations' ? 'hrOperations' : 'hrRecruitment';
-          destination = dept === 'HR Operations' ? '/kam-operations-dashboard' : '/kam-recruitment-dashboard';
-        } else {
-          userType = 'departmentMember';
-          destination = '/department-member-dashboard';
-        }
-      } else if (emailLower.includes('superadmin')) {
-        response = await superAdminLogin(credentials);
-        userType = 'superAdmin';
-        destination = '/superadmin-dashboard';
-      } else if (emailLower.includes('admin')) {
-        response = await adminLogin(credentials);
-        userType = 'admin';
-        destination = '/admin-dashboard';
+      
+      // Select the correct API based on the email (mirroring the old USER_CREDENTIALS structure)
+      if (emailLower.includes('superadmin')) {
+        response = await superAdminLogin({ email: emailLower, password });
+      } else if (emailLower.includes('admin.')) {
+        response = await adminLogin({ email: emailLower, password });
       } else if (emailLower.includes('teamleader')) {
-        response = await teamLeaderLogin(credentials);
-        userType = 'teamLeader';
-        destination = '/teamleader-dashboard';
-      } else if (emailLower.includes('bd')) {
-        response = await bdExecutiveLogin(credentials);
-        userType = 'bdExecutive';
-        destination = '/bd-dashboard';
-      } else if (emailLower.includes('client')) {
-        response = await clientLogin(credentials);
-        userType = 'client';
-        destination = '/client-dashboard';
+        response = await teamLeaderLogin({ email: emailLower, password });
+      } else if (emailLower.includes('employee')) {
+        response = await employeeLogin({ email: emailLower, password });
+      } else if (emailLower.includes('recruitment') || emailLower.includes('operation')) {
+        // Correct endpoint for Sachin (HR Recruitment Head) and Ramesh (HR Operations Head)
+        response = await departmentTeamLogin({ email: emailLower, password });
       } else {
-        // Try employee login first, fallback to department team login
-        try {
-          response = await employeeLogin(credentials);
-          userType = 'employee';
-          destination = '/employee-dashboard';
-        } catch (empError) {
-          // If employee login fails, try department team login (for team members without keyword in email)
-          response = await departmentTeamLogin(credentials);
-          const dept = response.user?.department;
-          const role = response.user?.role;
-          
-          if (role === 'Department Head') {
-            userType = dept === 'HR Operations' ? 'hrOperations' : 'hrRecruitment';
-            destination = dept === 'HR Operations' ? '/kam-operations-dashboard' : '/kam-recruitment-dashboard';
-          } else {
-            userType = 'departmentMember';
-            destination = '/department-member-dashboard';
-          }
-        }
+        // Default to admin login if pattern doesn't match
+        response = await adminLogin({ email: emailLower, password });
       }
 
-      if (response.token) {
-        // Clear old session data first
-        localStorage.clear();
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('userType', userType);
-        const user = response.user || response.client;
-        if (user) {
-          localStorage.setItem('userName', user.name);
-          localStorage.setItem('userEmail', user.email);
-          if (user.department) {
-            localStorage.setItem('department', user.department);
-          }
+      if (response && response.success) {
+        const user = response.user;
+        const role = response.userType || user.role || user.userType;
+        console.log("Login SUCCESS! Role detected:", role, "User info:", user);
+        
+        // Save necessary info for ProtectedRoutes
+        localStorage.setItem('userName', user.name);
+        localStorage.setItem('userEmail', emailLower);
+        if (user.department) {
+          localStorage.setItem('department', user.department);
         }
-
-        setToastMessage(`Welcome, ${user?.name || 'User'}!`);
+        
+        setToastMessage(`Welcome, ${user.name}!`);
         setShowToast(true);
         setIsError(false);
-
+  
         setTimeout(() => {
-          navigate(destination);
-        }, 1500);
+          // Comprehensive navigation mapping based on server roles and departments
+          const isRecruitment = role === 'hrRecruitment' || role === 'hr_recruitment' || role === 'Department Head' && user.department === 'HR Recruitment' || emailLower.includes('recruitment');
+          const isOperations = role === 'hrOperations' || role === 'hr_operations' || role === 'Department Head' && user.department === 'HR Operations' || emailLower.includes('operation');
+
+          if (isRecruitment) {
+            navigate('/kam-recruitment-dashboard');
+          } else if (isOperations) {
+            navigate('/kam-operations-dashboard');
+          } else if (role === 'superAdmin' || role === 'super_admin') {
+            navigate('/admin-dashboard');
+          } else if (role === 'admin') {
+            navigate('/admin-dashboard');
+          } else if (role === 'teamLeader' || role === 'team_leader') {
+            navigate('/teamleader-dashboard');
+          } else {
+            navigate('/employee-dashboard');
+          }
+        }, 800);
       } else {
-        throw new Error('No token received');
+        throw new Error(response.message || 'Login failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setToastMessage(error.message || 'Login failed. Please check your credentials.');
+      console.error("Login Error:", error);
+      setToastMessage(error.message || 'Invalid email or password. Please use live database credentials.');
       setShowToast(true);
       setIsError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -413,11 +408,17 @@ const Login = () => {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl
+              disabled={loading}
+              className={`w-full ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-medium py-3 px-4 rounded-xl
                 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none
-                focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg"
+                focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg flex items-center justify-center`}
             >
-              Sign In
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing In...
+                </div>
+              ) : "Sign In"}
             </button>
 
             {/* Client Login Link */}

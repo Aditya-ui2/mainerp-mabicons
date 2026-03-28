@@ -18,7 +18,7 @@ import {
   FiDatabase,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
-import { getAllNotifications, markNotificationRead } from '../service/api';
+import { getAllNotifications, markNotificationRead, getRecruitmentStats, getAllRecruitmentPositions, getAllInterviews } from '../service/api';
 
 // Lazy load Recruitment Tab Components
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
@@ -97,11 +97,14 @@ const HRRecruitmentDashboard = () => {
 
   // Summary stats
   const [stats, setStats] = useState({
-    activePositions: 24,
-    totalCandidates: 156,
-    scheduledInterviews: 18,
-    pendingOffers: 5,
+    activePositions: 0,
+    totalCandidates: 0,
+    scheduledInterviews: 0,
+    pendingOffers: 0,
   });
+  const [statsBarData, setStatsBarData] = useState([]);
+  const [todayInterviews, setTodayInterviews] = useState([]);
+  const [activeJobs, setActiveJobs] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -113,11 +116,65 @@ const HRRecruitmentDashboard = () => {
           role: 'HR Recruitment Head'
         });
         fetchNotifications(decoded.id || decoded.userId);
+        fetchDashboardData();
       } catch (e) {
         console.log('Token decode error');
       }
     }
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      // 1. Fetch recruitment stats
+      const statsRes = await getRecruitmentStats();
+      if (statsRes.success) {
+        const s = statsRes.data;
+        setStats({
+          activePositions: s.positions.open || 0,
+          totalCandidates: s.candidates.total || 0,
+          scheduledInterviews: s.candidates.shortlisted || 0,
+          pendingOffers: s.funnel.offerSent || 0,
+        });
+
+        // Map stats bar data with relative percentages
+        const total = s.candidates.total || 1;
+        const interviewed = (s.funnel.technical || 0) + (s.funnel.hrRound || 0) + (s.funnel.clientInterview || 0);
+        
+        const barData = [
+          { label: 'New Applications', value: s.candidates.total || '0', percentage: '100%', color: 'bg-blue-500' },
+          { label: 'In Screening', value: s.funnel.screening || '0', percentage: `${((s.funnel.screening || 0) / total * 100).toFixed(0)}%`, color: 'bg-yellow-500' },
+          { label: 'Interviewed', value: interviewed || '0', percentage: `${(interviewed / total * 100).toFixed(0)}%`, color: 'bg-purple-500' },
+          { label: 'Selected', value: s.candidates.selected || '0', percentage: `${((s.candidates.selected || 0) / total * 100).toFixed(0)}%`, color: 'bg-green-500' },
+          { label: 'Conversion Rate', value: `${((s.candidates.selected / total) * 100).toFixed(1)}%`, percentage: `${((s.candidates.selected / total) * 100).toFixed(0)}%`, color: 'bg-teal-500' },
+        ];
+        setStatsBarData(barData);
+      }
+
+      // 2. Fetch today's interviews
+      const today = new Date().toISOString().split('T')[0];
+      const interviewRes = await getAllInterviews({ date: today });
+      if (interviewRes.success) {
+        setTodayInterviews(interviewRes.data.slice(0, 5)); // Top 5 for today
+      }
+
+      // 3. Fetch active job openings
+      const jobsRes = await getAllRecruitmentPositions({ status: 'Open' });
+      if (jobsRes.success) {
+        setActiveJobs(jobsRes.data.slice(0, 4));
+      }
+
+    } catch (e) {
+      console.error('Error fetching dashboard data:', e);
+      if (e?.status === 401 || e?.response?.status === 401) {
+        alert("Session expired. Redirecting to login...");
+        localStorage.removeItem('token');
+        navigate('/login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchNotifications = async (userId) => {
     try {
@@ -148,14 +205,6 @@ const HRRecruitmentDashboard = () => {
     { label: 'Home', path: '/' },
     { label: 'HR Recruitment', path: '/kam-recruitment-dashboard' },
     { label: activeTab }
-  ];
-
-  const statsBarData = [
-    { label: 'New Applications', value: '89', percentage: '75%', color: 'bg-blue-500' },
-    { label: 'In Screening', value: '34', percentage: '45%', color: 'bg-yellow-500' },
-    { label: 'Interviewed', value: '28', percentage: '60%', color: 'bg-purple-500' },
-    { label: 'Selected', value: '12', percentage: '85%', color: 'bg-green-500' },
-    { label: 'Conversion Rate', value: '13.5%', percentage: '65%', color: 'bg-teal-500' },
   ];
 
   const renderContent = () => {
@@ -194,7 +243,9 @@ const HRRecruitmentDashboard = () => {
                     <div className="relative z-10 flex items-center justify-between">
                       <div>
                         <h1 className="text-3xl lg:text-4xl font-bold">Welcome, {userInfo.name} 👋</h1>
-                        <p className="mt-2 text-lg text-blue-100">HR Recruitment Dashboard - Build your dream team</p>
+                        <p className="mt-2 text-lg text-blue-100 italic">
+                          {loading ? "Connecting to Live Backend..." : stats.totalCandidates === 0 && stats.activePositions === 0 ? "Backend Connected (No live data found)" : "HR Recruitment Dashboard - Build your dream team"}
+                        </p>
                       </div>
                       {hasAccessTo('HR Operations') && (
                         <button
@@ -213,38 +264,26 @@ const HRRecruitmentDashboard = () => {
                     <StatCard
                       title="Active Positions"
                       value={stats.activePositions}
-                      change="+4"
-                      changeType="increase"
                       icon={FiBriefcase}
                       color="pink"
-                      sparklineData={[15, 18, 16, 20, 22, 24, 26]}
                     />
                     <StatCard
                       title="Total Candidates"
                       value={stats.totalCandidates}
-                      change="+23"
-                      changeType="increase"
                       icon={FiUsers}
                       color="purple"
-                      sparklineData={[100, 115, 125, 130, 140, 150, 156]}
                     />
                     <StatCard
                       title="Scheduled Interviews"
                       value={stats.scheduledInterviews}
-                      change="+5"
-                      changeType="increase"
                       icon={FiCalendar}
                       color="blue"
-                      sparklineData={[8, 10, 12, 14, 15, 16, 18]}
                     />
                     <StatCard
                       title="Pending Offers"
                       value={stats.pendingOffers}
-                      change="-2"
-                      changeType="decrease"
                       icon={FiAward}
                       color="yellow"
-                      sparklineData={[10, 8, 9, 7, 6, 5, 5]}
                     />
                   </div>
 
@@ -258,71 +297,26 @@ const HRRecruitmentDashboard = () => {
                       <div className="p-5 border-b border-gray-100">
                         <h3 className="font-bold text-lg text-gray-900">Today's Interviews</h3>
                       </div>
-                      <div className="divide-y divide-gray-50">
-                        {/* John Smith */}
-                        <div className="p-5 flex items-center justify-between hover:bg-gray-50">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-semibold shadow-sm">
-                              J
+                      <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
+                        {todayInterviews.length > 0 ? todayInterviews.map((interview, idx) => (
+                          <div key={idx} className="p-5 flex items-center justify-between hover:bg-gray-50">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-semibold shadow-sm">
+                                {interview.candidateName ? interview.candidateName.charAt(0) : 'C'}
+                              </div>
+                              <div>
+                                <p className="text-base font-semibold text-gray-900">{interview.candidateName}</p>
+                                <p className="text-sm text-gray-500">{interview.positionTitle || 'Position'}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-base font-semibold text-gray-900">John Smith</p>
-                              <p className="text-sm text-gray-500">Senior Developer</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-base font-semibold text-gray-900">10:00 AM</p>
-                            <span className="text-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">Upcoming</span>
-                          </div>
-                        </div>
-                        {/* Sarah Johnson */}
-                        <div className="p-5 flex items-center justify-between hover:bg-gray-50">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-lg font-semibold shadow-sm">
-                              S
-                            </div>
-                            <div>
-                              <p className="text-base font-semibold text-gray-900">Sarah Johnson</p>
-                              <p className="text-sm text-gray-500">Product Manager</p>
+                            <div className="text-right">
+                              <p className="text-base font-semibold text-gray-900">{interview.startTime || 'Scheduled'}</p>
+                              <span className="text-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">Upcoming</span>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-base font-semibold text-gray-900">11:30 AM</p>
-                            <span className="text-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">Upcoming</span>
-                          </div>
-                        </div>
-                        {/* Mike Brown */}
-                        <div className="p-5 flex items-center justify-between hover:bg-gray-50">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center text-white text-lg font-semibold shadow-sm">
-                              M
-                            </div>
-                            <div>
-                              <p className="text-base font-semibold text-gray-900">Mike Brown</p>
-                              <p className="text-sm text-gray-500">UX Designer</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-base font-semibold text-gray-900">2:00 PM</p>
-                            <span className="text-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">Upcoming</span>
-                          </div>
-                        </div>
-                        {/* Emily Davis */}
-                        <div className="p-5 flex items-center justify-between hover:bg-gray-50">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white text-lg font-semibold shadow-sm">
-                              E
-                            </div>
-                            <div>
-                              <p className="text-base font-semibold text-gray-900">Emily Davis</p>
-                              <p className="text-sm text-gray-500">Data Analyst</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-base font-semibold text-gray-900">4:00 PM</p>
-                            <span className="text-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">Upcoming</span>
-                          </div>
-                        </div>
+                        )) : (
+                          <div className="p-10 text-center text-gray-500">No interviews scheduled for today</div>
+                        )}
                       </div>
                       <div className="p-4 bg-gray-50 text-center">
                         <button 
@@ -419,23 +413,18 @@ const HRRecruitmentDashboard = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {[
-                            { position: 'Senior Frontend Developer', department: 'Engineering', candidates: 24, status: 'Active' },
-                            { position: 'Product Manager', department: 'Product', candidates: 18, status: 'Active' },
-                            { position: 'DevOps Engineer', department: 'Engineering', candidates: 12, status: 'Active' },
-                            { position: 'UX Designer', department: 'Design', candidates: 15, status: 'Urgent' },
-                          ].map((job, idx) => (
+                          {activeJobs.length > 0 ? activeJobs.map((job, idx) => (
                             <tr key={idx} className="hover:bg-gray-50">
                               <td className="px-5 py-4">
-                                <span className="text-base font-semibold text-gray-900">{job.position}</span>
+                                <span className="text-base font-semibold text-gray-900">{job.title}</span>
                               </td>
-                              <td className="px-5 py-4 text-base text-gray-600">{job.department}</td>
+                              <td className="px-5 py-4 text-base text-gray-600">{job.clientName || 'N/A'}</td>
                               <td className="px-5 py-4">
-                                <span className="text-base font-semibold text-gray-900">{job.candidates}</span>
+                                <span className="text-base font-semibold text-gray-900">{job.candidateCount || 0}</span>
                               </td>
                               <td className="px-5 py-4">
                                 <span className={`px-3 py-1.5 text-sm font-semibold rounded-full ${
-                                  job.status === 'Active' ? 'bg-green-100 text-green-700' :
+                                  job.status === 'Active' || job.status === 'Open' ? 'bg-green-100 text-green-700' :
                                   job.status === 'Urgent' ? 'bg-red-100 text-red-700' :
                                   'bg-yellow-100 text-yellow-700'
                                 }`}>
@@ -443,7 +432,11 @@ const HRRecruitmentDashboard = () => {
                                 </span>
                               </td>
                             </tr>
-                          ))}
+                          )) : (
+                            <tr>
+                              <td colSpan="4" className="px-5 py-10 text-center text-gray-500 italic">No active job openings found</td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>

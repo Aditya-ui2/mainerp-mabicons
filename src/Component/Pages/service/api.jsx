@@ -10,10 +10,7 @@ const axiosInstance = axios.create({
   timeout: 8000,
   headers: {
     'Accept': 'application/json',
-    'Content-Type': 'application/json',
-    'sec-ch-ua': '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"'
+    'Content-Type': 'application/json'
   },
   withCredentials: false  // Changed to false since the server might not be expecting credentials
 });
@@ -22,14 +19,13 @@ const axiosInstance = axios.create({
 // axios.defaults.headers.common['Content-Type'] = 'application/json';
 // axios.defaults.headers.common['Accept'] = 'application/json';
 
-const saveToken = (token, userType, refreshToken) => {
+const saveToken = (token, userType, name, department) => {
   if (token) {
     localStorage.setItem('token', token);
     localStorage.setItem('userType', userType);
+    if (name) localStorage.setItem('userName', name);
+    if (department) localStorage.setItem('department', department);
     setAuthToken(token);
-  }
-  if (refreshToken) {
-    localStorage.setItem('refreshToken', refreshToken);
   }
 };
 
@@ -41,65 +37,16 @@ const setAuthToken = (token) => {
   }
 };
 
-// Auto-refresh: if access token expired (401), use refresh token to get new one
-let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) prom.reject(error);
-    else prom.resolve(token);
-  });
-  failedQueue = [];
-};
-
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        // No refresh token — force re-login
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('userType');
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(token => {
-          originalRequest.headers['Authorization'] = `Bearer ${token}`;
-          return axiosInstance(originalRequest);
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh-token`, { refreshToken });
-        const newToken = data.token;
-        localStorage.setItem('token', newToken);
-        setAuthToken(newToken);
-        processQueue(null, newToken);
-        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-        return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('userType');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+// Add request interceptor to always use fresh token from localStorage
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token.trim()}`;
     }
+    return config;
+  },
+  (error) => {
     return Promise.reject(error);
   }
 );
@@ -107,14 +54,9 @@ axiosInstance.interceptors.response.use(
 // Update the login function to include specific headers
 export const superAdminLogin = async (credentials) => {
   try {
-    const response = await axiosInstance.post('/superAdmin/login', credentials, {
-      headers: {
-        'Referer': 'http://localhost:5173/',
-        'Origin': 'http://localhost:5173'
-      }
-    });
+    const response = await axiosInstance.post('/superAdmin/login', credentials);
     if (response.data.token) {
-      saveToken(response.data.token, 'superAdmin', response.data.refreshToken);
+      saveToken(response.data.token, 'superAdmin', response.data.user?.name, response.data.user?.department);
     }
     return response.data;
   } catch (error) {
@@ -126,14 +68,9 @@ export const superAdminLogin = async (credentials) => {
 // Similar updates for other login functions
 export const adminLogin = async (credentials) => {
   try {
-    const response = await axiosInstance.post('/admin/login', credentials, {
-      headers: {
-        'Referer': 'http://localhost:5173/',
-        'Origin': 'http://localhost:5173'
-      }
-    });
+    const response = await axiosInstance.post('/admin/login', credentials);
     if (response.data.token) {
-      saveToken(response.data.token, 'admin', response.data.refreshToken);
+      saveToken(response.data.token, 'admin', response.data.user?.name, response.data.user?.department);
     }
     return response.data;
   } catch (error) {
@@ -143,14 +80,9 @@ export const adminLogin = async (credentials) => {
 
 export const teamLeaderLogin = async (credentials) => {
   try {
-    const response = await axiosInstance.post('/teamLeader/login', credentials, {
-      headers: {
-        'Referer': 'http://localhost:5173/',
-        'Origin': 'http://localhost:5173'
-      }
-    });
+    const response = await axiosInstance.post('/teamLeader/login', credentials);
     if (response.data.token) {
-      saveToken(response.data.token, 'teamLeader', response.data.refreshToken);
+      saveToken(response.data.token, 'teamLeader', response.data.user?.name, response.data.user?.department);
     }
     return response.data;
   } catch (error) {
@@ -167,7 +99,7 @@ export const employeeLogin = async (credentials) => {
       }
     });
     if (response.data.token) {
-      saveToken(response.data.token, 'employee', response.data.refreshToken);
+      saveToken(response.data.token, 'employee');
     }
     return response.data;
   } catch (error) {
@@ -177,14 +109,11 @@ export const employeeLogin = async (credentials) => {
 
 export const departmentTeamLogin = async (credentials) => {
   try {
-    const response = await axiosInstance.post('/department/login', credentials, {
-      headers: {
-        'Referer': 'http://localhost:5173/',
-        'Origin': 'http://localhost:5173'
-      }
-    });
+    const response = await axiosInstance.post('/department/login', credentials);
     if (response.data.token) {
-      saveToken(response.data.token, response.data.user?.department === 'HR Operations' ? 'hrOperations' : 'hrRecruitment', response.data.refreshToken);
+      const dept = response.data.user?.department;
+      const userType = dept === 'HR Operations' ? 'hrOperations' : (dept === 'HR Recruitment' ? 'hrRecruitment' : 'departmentTeam');
+      saveToken(response.data.token, userType, response.data.user?.name, dept);
     }
     return response.data;
   } catch (error) {
@@ -222,7 +151,6 @@ export const clientSignup = async (clientData) => {
     }
     
     return response;
-    
   } catch (error) {
     console.error('API Error:', error);
     if (error.response) {
@@ -322,7 +250,7 @@ export const clientLogin = async (credentials) => {
   try {
     const response = await axiosInstance.post('/client/login', credentials);
     if (response.data.token) {
-      saveToken(response.data.token, 'client', response.data.refreshToken);
+      saveToken(response.data.token, 'client');
     }
     return response.data;
   } catch (error) {
@@ -2751,12 +2679,7 @@ export const getCandidatesByPosition = async (positionId, status = null) => {
 // Get recruitment stats for dashboard
 export const getRecruitmentStats = async () => {
   try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/recruitment/stats', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const response = await axiosInstance.get('/recruitment/stats');
     return response.data;
   } catch (error) {
     console.error('Error fetching recruitment stats:', error);

@@ -18,7 +18,7 @@ import {
 } from "@material-tailwind/react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiUpload, FiUser, FiBriefcase, FiCalendar, FiFileText, FiUsers, FiTag, FiSend, FiFilter, FiPieChart, FiClock, FiZap, FiMail, FiXCircle } from 'react-icons/fi';
-import { getRecruitmentRequests, uploadResumes, generateMeetLink, closeRecruitmentRequest } from "../../../Pages/service/api";
+import { getRecruitmentRequests, uploadResumes, generateMeetLink, closeRecruitmentRequest, createRecruitmentPosition, getAllClients } from "../../../Pages/service/api";
 import { jwtDecode } from "jwt-decode";
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -60,6 +60,24 @@ const RecruitmentTab = ({ isDarkMode }) => {
 
   // Add new state for meeting link loading
   const [isMeetingLinkLoading, setIsMeetingLinkLoading] = useState(false);
+
+  // Add state for Create Request Modal
+  const [isCreateRequestModalOpen, setIsCreateRequestModalOpen] = useState(false);
+  const [isCreatingRequest, setIsCreatingRequest] = useState(false);
+  const [clients, setClients] = useState([]);
+  const [newRequestData, setNewRequestData] = useState({
+    title: '',
+    description: '',
+    location: '',
+    type: 'Full-time',
+    salary: '',
+    priority: 'Medium',
+    openings: 1,
+    skills: '',
+    experience: '',
+    clientId: '',
+    deadline: ''
+  });
 
   // Add this near the top of the component where other state variables are defined
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
@@ -141,8 +159,8 @@ const RecruitmentTab = ({ isDarkMode }) => {
         // Process shortlisted candidates
         const allShortlisted = active.flatMap(request => 
           (request.shortlisted || []).map(candidate => ({
-            id: candidate._id,
-            recruitmentId: request._id,
+            id: candidate.id,
+            recruitmentId: request.id,
             name: candidate.originalName.split('.')[0],
             clientId: request.clientId,
             clientName: request.name,
@@ -160,6 +178,14 @@ const RecruitmentTab = ({ isDarkMode }) => {
         
         console.log('Processed shortlisted:', allShortlisted);
         setShortlistedCandidates(allShortlisted);
+
+        try {
+          const clientsRes = await getAllClients();
+          const clientsData = clientsRes.data?.clients || clientsRes.clients || (Array.isArray(clientsRes) ? clientsRes : []);
+          setClients(clientsData);
+        } catch (clientErr) {
+          console.error('Error fetching clients:', clientErr);
+        }
 
         // Process accepted requests and their CVs
         const acceptedRequests = active.filter(req => req.status === "Accepted");
@@ -217,7 +243,7 @@ const RecruitmentTab = ({ isDarkMode }) => {
       const token = localStorage.getItem("token");
       const decoded = jwtDecode(token);
       formData.append('teamLeaderId', decoded.id);
-      formData.append('requestId', selectedRequest._id);
+      formData.append('requestId', selectedRequest.id);
       
       selectedFiles.forEach((file) => {
         formData.append('resume', file);
@@ -228,7 +254,7 @@ const RecruitmentTab = ({ isDarkMode }) => {
       // Update the recruitmentRequests state to reflect the new CVs
       setRecruitmentRequests(prev => 
         prev.map(request => 
-          request._id === selectedRequest._id 
+          request.id === selectedRequest.id
             ? { ...request, uploadedCVs: [...request.uploadedCVs, ...response.uploadedFiles.resume] }
             : request
         )
@@ -717,6 +743,247 @@ const RecruitmentTab = ({ isDarkMode }) => {
   };
 
   // Update the EmailModal component
+  const CreateRequestModal = ({ isOpen, handleClose }) => {
+    const handleCreateRequest = async (e) => {
+      e.preventDefault();
+      try {
+        setIsCreatingRequest(true);
+        // Add current leader ID
+        const token = localStorage.getItem("token");
+        const decoded = jwtDecode(token);
+        const dataToSubmit = {
+          ...newRequestData,
+          teamLeaderId: decoded.id
+        };
+        // Format skills to an array if separated by comma
+        if (typeof dataToSubmit.skills === 'string') {
+          dataToSubmit.skills = dataToSubmit.skills.split(',').map(s => s.trim()).filter(Boolean);
+        }
+
+        await createRecruitmentPosition(dataToSubmit);
+        alert('Recruitment request created successfully!');
+        
+        // Reset state
+        setNewRequestData({
+          title: '', description: '', location: '', type: 'Full-time', salary: '',
+          priority: 'Medium', openings: 1, skills: '', experience: '', clientId: '', deadline: ''
+        });
+        
+        // Refresh the list directly
+        const response = await getRecruitmentRequests(decoded.id);
+        const active = response.requests.filter(req => req.status !== "Closed");
+        setRecruitmentRequests(active);
+        
+        handleClose();
+      } catch (err) {
+        console.error('Failed to create request:', err);
+        alert(err.message || 'Failed to create request.');
+      } finally {
+        setIsCreatingRequest(false);
+      }
+    };
+
+    return (
+      <Dialog
+        open={isOpen}
+        handler={handleClose}
+        className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl max-w-2xl mx-auto overflow-y-auto max-h-[90vh]`}
+      >
+        <DialogHeader className={`${isDarkMode ? 'text-white' : 'text-gray-900'} border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className="flex items-center gap-3">
+            <FiBriefcase className="text-xl text-blue-500" />
+            Create Job Request
+          </div>
+        </DialogHeader>
+        <DialogBody className="space-y-4 overflow-y-auto pr-2">
+          <form id="create-request-form" onSubmit={handleCreateRequest} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Client Selection */}
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Client <span className="text-red-500">*</span></label>
+                <select
+                  required
+                  value={newRequestData.clientId}
+                  onChange={(e) => setNewRequestData({...newRequestData, clientId: e.target.value})}
+                  className={`w-full p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
+                >
+                  <option value="">Select a Client</option>
+                  {clients.map((client, idx) => (
+                    <option key={client.id || idx} value={client.id}>
+                      {client.name || client.companyName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Job Title <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <FiBriefcase className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <input
+                    type="text"
+                    required
+                    value={newRequestData.title}
+                    onChange={(e) => setNewRequestData({...newRequestData, title: e.target.value})}
+                    placeholder="e.g. Senior Software Engineer"
+                    className={`w-full pl-10 p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'} focus:ring-2 focus:ring-blue-500`}
+                  />
+                </div>
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Location <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  value={newRequestData.location}
+                  onChange={(e) => setNewRequestData({...newRequestData, location: e.target.value})}
+                  placeholder="e.g. Mumbai, India / Remote"
+                  className={`w-full p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
+                />
+              </div>
+
+              {/* Deadline */}
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Deadline</label>
+                <div className="relative">
+                  <FiCalendar className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <input
+                    type="date"
+                    value={newRequestData.deadline}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setNewRequestData({...newRequestData, deadline: e.target.value})}
+                    className={`w-full pl-10 p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
+                  />
+                </div>
+              </div>
+
+              {/* Type, Priority, Openings, Experience */}
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Job Type</label>
+                <select
+                  value={newRequestData.type}
+                  onChange={(e) => setNewRequestData({...newRequestData, type: e.target.value})}
+                  className={`w-full p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
+                >
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Internship">Internship</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Priority</label>
+                <select
+                  value={newRequestData.priority}
+                  onChange={(e) => setNewRequestData({...newRequestData, priority: e.target.value})}
+                  className={`w-full p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Urgent">Urgent</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Number of Openings</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newRequestData.openings}
+                  onChange={(e) => setNewRequestData({...newRequestData, openings: parseInt(e.target.value)})}
+                  className={`w-full p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Experience Required</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 3-5 years"
+                  value={newRequestData.experience}
+                  onChange={(e) => setNewRequestData({...newRequestData, experience: e.target.value})}
+                  className={`w-full p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Salary Range</label>
+                <input
+                  type="text"
+                  placeholder="e.g. ₹10L - ₹15L PA"
+                  value={newRequestData.salary}
+                  onChange={(e) => setNewRequestData({...newRequestData, salary: e.target.value})}
+                  className={`w-full p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
+                />
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Required Skills (comma separated)</label>
+              <div className="relative">
+                <FiTag className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                <input
+                  type="text"
+                  placeholder="React, Node.js, MongoDB"
+                  value={newRequestData.skills}
+                  onChange={(e) => setNewRequestData({...newRequestData, skills: e.target.value})}
+                  className={`w-full pl-10 p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'} focus:ring-2 focus:ring-blue-500`}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Job Description</label>
+              <textarea
+                rows="4"
+                placeholder="Detailed job description and requirements..."
+                value={newRequestData.description}
+                onChange={(e) => setNewRequestData({...newRequestData, description: e.target.value})}
+                className={`w-full p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'} focus:ring-2 focus:ring-blue-500 resize-none`}
+              />
+            </div>
+          </form>
+        </DialogBody>
+        <DialogFooter className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} space-x-2`}>
+          <Button
+            variant="outlined"
+            onClick={handleClose}
+            className={isDarkMode ? 'text-gray-300 border-gray-600 hover:bg-gray-700' : 'text-gray-700 border-gray-300 hover:bg-gray-50'}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="blue"
+            type="submit"
+            form="create-request-form"
+            disabled={isCreatingRequest}
+            className="flex items-center gap-2"
+          >
+            {isCreatingRequest ? (
+              <>
+                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                Creating...
+              </>
+            ) : (
+              <>
+                <FiBriefcase className="text-sm" />
+                Create Request
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+    );
+  };
+
+  // Update the EmailModal component
   const EmailModal = ({ isOpen, handleClose, candidate }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [emailOption, setEmailOption] = useState('client');
@@ -996,14 +1263,14 @@ const RecruitmentTab = ({ isDarkMode }) => {
                 const decoded = jwtDecode(token);
                 
                 await closeRecruitmentRequest({
-                  recruitmentId: request._id,
+                  recruitmentId: request.id,
                   userType: 'teamLeader',
                   userId: decoded.id
                 });
 
                 // Update the local state to reflect the closed request
                 setRecruitmentRequests(prev => 
-                  prev.filter(req => req._id !== request._id)
+                  prev.filter(req => req.id !== request.id)
                 );
 
                 // Show success message
@@ -1428,118 +1695,143 @@ const RecruitmentTab = ({ isDarkMode }) => {
           <TabPanel value="requests">
             <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
-                <div className="flex items-center gap-3">
-                  <FiBriefcase className="text-white text-xl" />
-                  <h2 className="text-white text-lg font-semibold">Recruitment Requests</h2>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FiBriefcase className="text-white text-xl" />
+                    <h2 className="text-white text-lg font-semibold">Recruitment Requests</h2>
+                  </div>
+                  <Button
+                    color="white"
+                    size="sm"
+                    className="flex items-center gap-2 text-blue-600"
+                    onClick={() => setIsCreateRequestModalOpen(true)}
+                  >
+                    <FiBriefcase className="text-sm" />
+                    Create Request
+                  </Button>
                 </div>
               </div>
+
               <div className="p-4">
-                {renderFilterDropdowns('requests', pendingRequests)}
-                {isLoading ? (
-                  <div className="flex justify-center items-center h-48">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                  </div>
-                ) : error ? (
-                  <div className="text-center text-red-500 p-4">
-                    {error}
-                  </div>
-                ) : filteredPendingRequests.length === 0 ? (
-                  <div className="text-center text-gray-500 p-4">
-                    No recruitment requests found
-                  </div>
-                ) : (
-                  <>
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full min-w-max table-auto text-left">
-                        <thead>
-                          <tr>
-                            {["Client", "Position", "Requirements", "Status", "Date", "Keywords", "Action"].map((head) => (
-                              <th key={head} className={`border-b ${isDarkMode ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-700'} p-2.5 text-xs font-medium`}>
-                                {head}
-                              </th>
+                  {renderFilterDropdowns('requests', pendingRequests)}
+                  {isLoading ? (
+                    <div className="flex justify-center items-center h-48">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : error ? (
+                    <div className="text-center text-red-500 p-4">
+                      {error}
+                    </div>
+                  ) : filteredPendingRequests.length === 0 ? (
+                    <div className="text-center text-gray-500 p-4">
+                      No recruitment requests found
+                    </div>
+                  ) : (
+                    <>
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full min-w-max table-auto text-left">
+                          <thead>
+                            <tr>
+                              {["Client", "Position", "Requirements", "Status", "Date", "Keywords", "Action"].map((head) => (
+                                <th key={head} className={`border-b ${isDarkMode ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-700'} p-2.5 text-xs font-medium`}>
+                                  {head}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {currentRequests.map((request) => (
+                              <motion.tr 
+                                key={request.id}
+                                variants={tableRowVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
+                              >
+                                <td className={`p-2.5 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                  <div className="flex items-center gap-2">
+                                    <FiUser className="text-sm text-blue-500" />
+                                    {request.name}
+                                  </div>
+                                </td>
+                                <td className={`p-2.5 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                  <div className="flex items-center gap-2">
+                                    <FiBriefcase className="text-sm text-green-500" />
+                                    {request.position}
+                                  </div>
+                                </td>
+                                <td className={`p-2.5 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                  <div className="flex items-center gap-2">
+                                    <FiFileText className="text-sm text-purple-500" />
+                                    {`${request.experience} years, ${request.qualification}`}
+                                  </div>
+                                </td>
+                                <td className="p-2.5">
+                                  <span className={`px-3 py-1 rounded-full text-sm ${getStatusBadgeColor(request.status)}`}>
+                                    {request.status}
+                                  </span>
+                                </td>
+                                <td className="p-2.5">
+                                  <div className="flex items-center gap-2">
+                                    <FiCalendar className="text-sm text-orange-500" />
+                                    {request.date}
+                                  </div>
+                                </td>
+                                <td className="p-2.5">
+                                  <div className="flex flex-wrap gap-1">
+                                    {request.skills && request.skills.map((skill, index) => (
+                                      <span
+                                        key={index}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 flex items-center gap-1"
+                                      >
+                                        <FiTag className="text-xs" />
+                                        {skill}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="p-2.5">
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      color="blue"
+                                      size="sm"
+                                      className="flex items-center gap-1.5 py-1.5 px-2.5 text-xs"
+                                      onClick={() => {
+                                        setSelectedRequest(request);
+                                        setIsModalOpen(true);
+                                      }}
+                                    >
+                                      <FiUpload className="text-sm" />
+                                      {request.uploadedCVs && request.uploadedCVs.length > 0 ? 'Send More Resume' : 'Send CV'}
+                                    </Button>
+                                    
+                                    <Button
+                                      color="red"
+                                      size="sm"
+                                      className="flex items-center gap-1.5 py-1.5 px-2.5 text-xs"
+                                      onClick={() => {
+                                        setSelectedRequestToClose(request);
+                                        setIsCloseModalOpen(true);
+                                      }}
+                                    >
+                                      <FiXCircle className="text-sm" />
+                                      Close
+                                    </Button>
+                                  </div>
+                                </td>
+                              </motion.tr>
                             ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {currentRequests.map((request) => (
-                            <motion.tr 
-                              key={request._id}
-                              variants={tableRowVariants}
-                              initial="hidden"
-                              animate="visible"
-                              className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
-                            >
-                              <td className={`p-2.5 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                <div className="flex items-center gap-2">
-                                  <FiUser className="text-sm text-blue-500" />
-                                  {request.name}
-                                </div>
-                              </td>
-                              <td className={`p-2.5 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                <div className="flex items-center gap-2">
-                                  <FiBriefcase className="text-sm text-green-500" />
-                                  {request.position}
-                                </div>
-                              </td>
-                              <td className={`p-2.5 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                <div className="flex items-center gap-2">
-                                  <FiFileText className="text-sm text-purple-500" />
-                                  {`${request.experience} years, ${request.qualification}`}
-                                </div>
-                              </td>
-                              <td className="p-2.5">
-                                <span className={`px-3 py-1 rounded-full text-sm ${getStatusBadgeColor(request.status)}`}>
-                                  {request.status}
-                                </span>
-                              </td>
-                              <td className="p-2.5">
-                                <div className="flex items-center gap-2">
-                                  <FiCalendar className="text-sm text-orange-500" />
-                                  {request.date}
-                                </div>
-                              </td>
-                              <td className="p-2.5">
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    color="blue"
-                                    size="sm"
-                                    className="flex items-center gap-1.5 py-1.5 px-2.5 text-xs"
-                                    onClick={() => {
-                                      setSelectedRequest(request);
-                                      setIsModalOpen(true);
-                                    }}
-                                  >
-                                    <FiUpload className="text-sm" />
-                                    {request.uploadedCVs && request.uploadedCVs.length > 0 ? 'Send More Resume' : 'Send CV'}
-                                  </Button>
-                                  
-                                  <Button
-                                    color="red"
-                                    size="sm"
-                                    className="flex items-center gap-1.5 py-1.5 px-2.5 text-xs"
-                                    onClick={() => {
-                                      setSelectedRequestToClose(request);
-                                      setIsCloseModalOpen(true);
-                                    }}
-                                  >
-                                    <FiXCircle className="text-sm" />
-                                    Close
-                                  </Button>
-                                </div>
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <Pagination section="requests" data={filteredPendingRequests} />
-                    </div>
-                    
-                    <div className="md:hidden space-y-3">
-                      {currentRequests.map((request) => renderMobileCard(request, 'request'))}
-                      <Pagination section="requests" data={filteredPendingRequests} />
-                    </div>
-                  </>
-                )}
+                          </tbody>
+                        </table>
+                        <Pagination section="requests" data={filteredPendingRequests} />
+                      </div>
+                      
+                      <div className="md:hidden space-y-3">
+                        {currentRequests.map((request) => renderMobileCard(request, 'request'))}
+                        <Pagination section="requests" data={filteredPendingRequests} />
+                      </div>
+                    </>
+                  )}
               </div>
             </div>
           </TabPanel>
@@ -1828,7 +2120,7 @@ const RecruitmentTab = ({ isDarkMode }) => {
                           }, [])
                           .map((request) => (
                             <motion.tr 
-                              key={request._id}
+                              key={request.id}
                               variants={tableRowVariants}
                               initial="hidden"
                               animate="visible"
@@ -1921,7 +2213,7 @@ const RecruitmentTab = ({ isDarkMode }) => {
                         <tbody>
                           {closedRequests.map((request) => (
                             <motion.tr 
-                              key={request._id}
+                              key={request.id}
                               variants={tableRowVariants}
                               initial="hidden"
                               animate="visible"
@@ -2103,6 +2395,14 @@ const RecruitmentTab = ({ isDarkMode }) => {
         }}
         request={selectedRequestToClose}
       />
+
+      <CreateRequestModal
+      isOpen={isCreateRequestModalOpen}
+      handleClose={() => {
+        setIsCreateRequestModalOpen(false);
+      }}
+    />
+
 
     </motion.div>
   );
