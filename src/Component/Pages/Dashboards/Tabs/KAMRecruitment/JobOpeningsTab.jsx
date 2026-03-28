@@ -88,12 +88,12 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign }) => {
   const [submitted, setSubmitted] = useState(false);
 
   const taskTypes = [
-    { label: 'Screen CVs', icon: '📋', desc: 'Review and shortlist candidates' },
-    { label: 'Source Candidates', icon: '🔍', desc: 'Find new candidates for role' },
-    { label: 'Schedule Interviews', icon: '📅', desc: 'Arrange interview slots' },
-    { label: 'Follow Up', icon: '📞', desc: 'Follow up with candidates' },
-    { label: 'Client Update', icon: '💼', desc: 'Send progress report to client' },
-    { label: 'Custom Task', icon: '✏️', desc: 'Define a custom task' },
+    { label: 'Screen CVs', icon: FiFileText, desc: 'Review and shortlist candidates' },
+    { label: 'Source Candidates', icon: FiSearch, desc: 'Find new candidates for role' },
+    { label: 'Schedule Interviews', icon: FiCalendar, desc: 'Arrange interview slots' },
+    { label: 'Follow Up', icon: FiPhone, desc: 'Follow up with candidates' },
+    { label: 'Client Update', icon: FiBriefcase, desc: 'Send progress report to client' },
+    { label: 'Custom Task', icon: FiEdit2, desc: 'Define a custom task' },
   ];
 
   const priorities = [
@@ -193,7 +193,9 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign }) => {
                     ? 'border-[#1E88E5] shadow-lg ' + (isDarkMode ? 'bg-[#1E88E5]/30' : 'bg-[#1E88E5]/10')
                     : isDarkMode ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
                     }`}>
-                  <span className="text-xl">{t.icon}</span>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md mb-1" style={{ background: 'linear-gradient(135deg, #5fa8f0, #76A8DB)' }}>
+                    <t.icon className="w-5 h-5" />
+                  </div>
                   <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? (isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]') : isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.label}</span>
                 </motion.button>
               ))}

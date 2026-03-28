@@ -44,6 +44,10 @@ import {
   FiTrendingUp,
   FiUserCheck,
   FiUserX,
+  FiAward,
+  FiActivity,
+  FiDollarSign,
+  FiZap,
   FiFilter as FiFilterIcon,
 } from 'react-icons/fi';
 import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus } from '../../../service/api';
@@ -804,225 +808,347 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
             <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
           </motion.button>
 
-          {/* Hero Header */}
-          <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
-            <div className="relative overflow-hidden p-6" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5, #0D47A1)' }}>
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/20" />
-                <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-white/10" />
+          {/* Premium Hero Header */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`rounded-3xl border-2 overflow-hidden relative ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 shadow-2xl' : 'bg-white border-slate-100 shadow-xl'}`}>
+            <div className="relative overflow-hidden p-8 sm:p-10" style={{ background: 'linear-gradient(135deg, #1E3A8A, #3B82F6, #60A5FA)' }}>
+              {/* Abstract decorative elements */}
+              <div className="absolute inset-0 opacity-20 pointer-events-none">
+                <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white blur-3xl" />
+                <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-blue-900 blur-2xl" />
               </div>
-              <div className="relative flex items-center gap-5">
-                {/* Avatar */}
-                <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold ring-2 ring-white/20 flex-shrink-0"
-                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)' }}>
-                  {selectedCandidateDetail.photo
-                    ? <img src={selectedCandidateDetail.photo} alt="" className="w-full h-full rounded-2xl object-cover" />
-                    : getInitials(selectedCandidateDetail.name)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h2 className="text-2xl font-bold text-white">{selectedCandidateDetail.name}</h2>
-                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm ${(selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30' :
-                      (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/30' :
-                        (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? 'bg-red-500/20 text-red-200 ring-1 ring-red-400/30' :
-                          'bg-white/15 text-white/90 ring-1 ring-white/20'
-                      }`}>
-                      {(selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? '✓ Approved' :
-                        (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? '⏸ On Hold' :
-                          (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? '✗ Rejected' : '● Pending Review'}
-                    </span>
+
+              <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-8">
+                {/* Standardized Initials Avatar */}
+                <motion.div
+                  whileHover={{ scale: 1.05, rotate: 2 }}
+                  className="w-28 h-28 rounded-[2.5rem] flex items-center justify-center text-white text-3xl font-black shadow-2xl flex-shrink-0 ring-4 ring-white/30 border-2 border-white/20"
+                  style={{ background: getAvatarGradient(selectedCandidateDetail.name) }}>
+                  {getInitials(selectedCandidateDetail.name)}
+                </motion.div>
+
+                <div className="flex-1 min-w-0 text-center sm:text-left">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-3">
+                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md">{selectedCandidateDetail.name}</h2>
+                    <div className="flex justify-center sm:start items-center gap-2">
+                      <span className={"text-[11px] font-black px-4 py-1.5 rounded-full backdrop-blur-md shadow-sm border border-white/20 " + 
+                        ((selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-500/30 text-emerald-100' :
+                        (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-amber-500/30 text-amber-100' :
+                          (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? 'bg-rose-500/30 text-rose-100' :
+                            'bg-white/20 text-white/90')
+                        }>
+                        {(selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? '✓ APPROVED' :
+                          (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? '⏸ ON HOLD' :
+                            (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? '✗ REJECTED' : '● PENDING'}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-white/70 mt-1">{selectedCandidateDetail.jobTitle} • {selectedCandidateDetail.client}</p>
-                  <div className="flex items-center gap-3 mt-2 flex-wrap">
+
+                  <p className="text-lg text-white/90 font-medium mb-4 flex items-center justify-center sm:justify-start gap-2">
+                    <FiBriefcase className="w-5 h-5 opacity-70" />
+                    {selectedCandidateDetail.jobTitle} <span className="opacity-50">•</span> {selectedCandidateDetail.client}
+                  </p>
+
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
                     <StageBadge stage={selectedCandidateDetail.stage} />
-                    <div className="flex items-center gap-0.5">
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <FiStar key={s} className={`w-3.5 h-3.5 ${s <= (selectedCandidateDetail.rating || 0) ? 'text-amber-300 fill-amber-300' : 'text-white/20'}`} />
-                      ))}
+                    <div className="bg-black/10 backdrop-blur-md rounded-full px-4 py-1.5 flex items-center gap-1 border border-white/10">
+                      <RatingStars rating={selectedCandidateDetail.rating || 0} />
                     </div>
                   </div>
                 </div>
-                {/* Quick contact buttons */}
-                <div className="flex gap-2 flex-shrink-0">
+
+                {/* Quick Action Contact FABs */}
+                <div className="flex sm:flex-col gap-3 flex-shrink-0">
                   {selectedCandidateDetail.phone && (
-                    <a href={`https://wa.me/${selectedCandidateDetail.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                      className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"><FiPhone className="w-4 h-4" /></a>
+                    <motion.a
+                      whileHover={{ scale: 1.1, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      href={`https://wa.me/${selectedCandidateDetail.phone.replace(/[^0-9]/g, '')}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                      <FiPhone className="w-5 h-5" />
+                    </motion.a>
                   )}
-                  <a href={`mailto:${selectedCandidateDetail.email}`}
-                    className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"><FiMail className="w-4 h-4" /></a>
+                  <motion.a
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    href={`mailto:${selectedCandidateDetail.email}`}
+                    className="w-12 h-12 rounded-2xl bg-white text-blue-600 flex items-center justify-center shadow-lg shadow-black/10">
+                    <FiMail className="w-5 h-5" />
+                  </motion.a>
                 </div>
               </div>
             </div>
+          </motion.div>
 
             {/* Decision Bar */}
             {(selectedCandidateDetail.pipelineStatus || 'pending') !== 'approved' && (selectedCandidateDetail.pipelineStatus || 'pending') !== 'rejected' && (
-              <div className={`px-6 py-3 flex items-center gap-3 border-b ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-100'}`}>
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Decision</span>
-                <div className="flex gap-2">
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              <div className={`px-8 py-4 flex items-center justify-between border-b ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50/50 border-slate-100'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-white text-slate-400 shadow-sm'}`}>
+                    <FiActivity size={18} />
+                  </div>
+                  <span className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Decision & Action</span>
+                </div>
+                <div className="flex gap-3">
+                  <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
                     onClick={() => { holdCandidate(selectedCandidateDetail.id); setSelectedCandidateDetail(prev => ({ ...prev, pipelineStatus: (prev.pipelineStatus || 'pending') === 'hold' ? 'pending' : 'hold' })); }}
-                    className={`flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${(selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25' : isDarkMode ? 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 ring-1 ring-indigo-500/20' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 ring-1 ring-indigo-100'
-                      }`}>
-                    <FiPause className="w-3 h-3" /> Hold
+                     className={`flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-bold rounded-2xl transition-all ${(selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : isDarkMode ? 'bg-slate-700 text-amber-400 hover:bg-slate-600 border border-amber-500/20' : 'bg-white text-amber-600 hover:bg-amber-50 border border-amber-100 shadow-sm'}`}>
+                    <FiPause className="w-4 h-4" /> HOLD
                   </motion.button>
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
                     onClick={() => openApproveModal(selectedCandidateDetail.id)}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl text-white shadow-lg shadow-emerald-500/25"
+                    className="flex items-center justify-center gap-2 px-8 py-2.5 text-xs font-bold rounded-2xl text-white shadow-xl shadow-emerald-500/30 transition-all hover:brightness-110"
                     style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                    <FiThumbsUp className="w-3 h-3" /> Approve
+                    <FiThumbsUp className="w-4 h-4" /> APPROVE
                   </motion.button>
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
                     onClick={() => { pipelineRejectCandidate(selectedCandidateDetail.id); setSelectedCandidateDetail(prev => ({ ...prev, pipelineStatus: 'rejected' })); }}
-                    className={`flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 ring-1 ring-red-500/20' : 'bg-red-50 text-red-500 hover:bg-red-100 ring-1 ring-red-100'}`}>
-                    <FiXCircle className="w-3 h-3" /> Reject
+                    className={`flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-bold rounded-2xl transition-all ${isDarkMode ? 'bg-slate-700 text-rose-400 hover:bg-slate-600 border border-rose-500/20' : 'bg-white text-rose-600 hover:bg-rose-50 border border-rose-100 shadow-sm'}`}>
+                    <FiXCircle className="w-4 h-4" /> REJECT
                   </motion.button>
                 </div>
               </div>
             )}
 
-            <div className="p-6">
-              {/* Stage Progress */}
-              <div className="mb-6">
-                <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Stage Progress</h4>
-                <div className="flex items-center gap-1.5">
+            <div className="p-8">
+              {/* Premium Stage Progress */}
+              <div className="mb-10">
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Hiring Pipeline Progress</h4>
+                  <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                    Current: {selectedCandidateDetail.stage}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
                   {stageOrder.map((s, i) => {
                     const currentIdx = stageOrder.indexOf(selectedCandidateDetail.stage);
-                    const isPast = i <= currentIdx;
+                    const isPast = i < currentIdx;
                     const isCurrent = i === currentIdx;
                     const config = stageConfig[s] || stageConfig.Screening;
                     return (
                       <div key={s} className="flex-1 group relative">
                         <button
                           onClick={() => { moveToStage(selectedCandidateDetail.id, s); setSelectedCandidateDetail(prev => ({ ...prev, stage: s })); }}
-                          className={`w-full h-2.5 rounded-full transition-all cursor-pointer hover:h-3.5 ${isCurrent ? 'h-3' : ''}`}
-                          style={{ backgroundColor: isPast ? config.color : isDarkMode ? '#1e293b' : '#e2e8f0' }}
+                          className={`w-full h-3 rounded-full transition-all duration-300 cursor-pointer relative overflow-hidden ${isCurrent ? 'h-4 shadow-inner' : ''}`}
+                          style={{ backgroundColor: isPast || isCurrent ? config.color : isDarkMode ? '#1e293b' : '#f1f5f9' }}
                           title={s}
-                        />
-                        <span className={`absolute -bottom-5 left-1/2 -translate-x-1/2 text-[7px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{s}</span>
+                        >
+                          {(isPast || isCurrent) && (
+                            <motion.div
+                              initial={{ x: '-100%' }}
+                              animate={{ x: '100%' }}
+                              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                              className="absolute inset-0 bg-white/20 skew-x-12"
+                            />
+                          )}
+                        </button>
+                        <div className={`absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-bold whitespace-nowrap transition-all duration-300 ${isCurrent ? 'opacity-100 translate-y-0 text-blue-500' : 'opacity-0 translate-y-2 ' + (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`}>
+                          {s}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-                <div className="flex justify-between mt-2">
-                  <span className={`text-[8px] font-medium ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>Screening</span>
-                  <span className={`text-[8px] font-medium ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>Joined</span>
+                <div className="flex justify-between mt-10">
+                  <div className="flex flex-col items-start gap-1">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>Start</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                      <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Screening</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>Goal</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Joined</span>
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Two Column Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column */}
-                <div className="space-y-5">
-                  {/* Contact Info */}
-                  <div className={`rounded-2xl p-4 space-y-2.5 ${isDarkMode ? 'bg-slate-800/50 ring-1 ring-slate-700/50' : 'bg-slate-50 ring-1 ring-slate-100'}`}>
-                    <h4 className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Contact Info</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
-                          <FiMail className={`w-3.5 h-3.5 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} />
-                        </div>
-                        <a href={`mailto:${selectedCandidateDetail.email}`} className={`text-xs hover:underline truncate ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{selectedCandidateDetail.email}</a>
+              {/* Premium Two Column Information Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Column: Core Metrics */}
+                <div className="space-y-6">
+                  {/* Contact High-Fidelity Card */}
+                  <div className={`rounded-[2.5rem] p-8 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 shadow-xl' : 'bg-slate-50/50 border-slate-100 hover:bg-white hover:shadow-2xl'}`}>
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner">
+                        <FiUserCheck size={24} />
                       </div>
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-green-500/10' : 'bg-green-50'}`}>
-                          <FiPhone className={`w-3.5 h-3.5 ${isDarkMode ? 'text-green-400' : 'text-green-500'}`} />
+                      <h4 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Contact Profile</h4>
+                    </div>
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="flex items-center gap-5 group">
+                        <div className={`w-14 min-w-[3.5rem] h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 shadow-lg ${isDarkMode ? 'bg-blue-500/10 text-blue-400 shadow-blue-500/5' : 'bg-blue-50 text-blue-600 shadow-blue-200/50'}`}>
+                          <FiMail className="w-6 h-6" />
                         </div>
-                        <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{selectedCandidateDetail.phone || 'N/A'}</span>
-                        {selectedCandidateDetail.phone && (
-                          <a href={`https://wa.me/${selectedCandidateDetail.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                            className="text-[9px] font-bold text-green-500 hover:underline">WhatsApp</a>
-                        )}
+                        <div className="flex flex-col min-w-0">
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Primary Email</span>
+                          <a href={`mailto:${selectedCandidateDetail.email}`} className={`text-sm font-bold truncate hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{selectedCandidateDetail.email}</a>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-violet-500/10' : 'bg-violet-50'}`}>
-                          <FiMapPin className={`w-3.5 h-3.5 ${isDarkMode ? 'text-violet-400' : 'text-violet-500'}`} />
+                      <div className="flex items-center gap-5 group">
+                        <div className={`w-14 min-w-[3.5rem] h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:-rotate-3 shadow-lg ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 shadow-emerald-500/5' : 'bg-emerald-50 text-emerald-600 shadow-emerald-200/50'}`}>
+                          <FiPhone className="w-6 h-6" />
                         </div>
-                        <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{selectedCandidateDetail.location || 'N/A'}</span>
+                        <div className="flex flex-col">
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Mobile Number</span>
+                          <div className="flex items-center gap-3">
+                            <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{selectedCandidateDetail.phone || 'Not Shared'}</span>
+                            {selectedCandidateDetail.phone && (
+                              <a href={`https://wa.me/${selectedCandidateDetail.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                                className="text-[10px] font-black px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full hover:bg-emerald-500/20 transition-colors flex items-center gap-1 border border-emerald-500/20">
+                                <FiCheck size={10} /> WHATSAPP
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-5 group">
+                        <div className={`w-14 min-w-[3.5rem] h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 shadow-lg ${isDarkMode ? 'bg-violet-500/10 text-violet-400 shadow-violet-500/5' : 'bg-violet-50 text-violet-600 shadow-violet-200/50'}`}>
+                          <FiMapPin className="w-6 h-6" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Current Location</span>
+                          <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{selectedCandidateDetail.location || 'Remote / Unspecified'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: 'Experience', value: selectedCandidateDetail.experience, icon: FiBriefcase, color: '#3FA9F5' },
-                      { label: 'Current CTC', value: selectedCandidateDetail.currentCTC, icon: FiTarget, color: '#3b82f6' },
-                      { label: 'Expected CTC', value: selectedCandidateDetail.expectedCTC, icon: FiTarget, color: '#10b981' },
-                      { label: 'Notice Period', value: selectedCandidateDetail.noticePeriod, icon: FiClock, color: '#f59e0b' },
-                      { label: 'Applied', value: selectedCandidateDetail.appliedDate, icon: FiCalendar, color: '#ec4899' },
-                      { label: 'Stage Duration', value: getStageDuration(selectedCandidateDetail) || 'N/A', icon: FiClock, color: '#6366f1' },
-                    ].map(d => (
-                      <div key={d.label} className={`rounded-xl p-3 ${isDarkMode ? 'bg-slate-800/50 ring-1 ring-slate-700/50' : 'bg-slate-50 ring-1 ring-slate-100'}`}>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <d.icon className="w-3 h-3" style={{ color: d.color }} />
-                          <p className={`text-[9px] font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{d.label}</p>
-                        </div>
-                        <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{d.value || 'N/A'}</p>
+                  {/* Skills High-Fidelity Card */}
+                  <div className={`rounded-[2.5rem] p-8 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 shadow-xl' : 'bg-slate-50/50 border-slate-100 hover:bg-white hover:shadow-2xl'}`}>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 shadow-inner">
+                        <FiZap size={24} />
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Skills */}
-                  <div>
-                    <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Skills</h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(selectedCandidateDetail.skills || []).map(s => (
-                        <span key={s} className={`text-[10px] px-2.5 py-1 rounded-lg font-semibold ${isDarkMode ? 'bg-blue-500/15 text-blue-300 ring-1 ring-blue-500/20' : 'bg-blue-50 text-blue-600 ring-1 ring-blue-100'}`}>{s}</span>
+                      <h4 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Professional Skills</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      {(selectedCandidateDetail.skills || []).map((s, i) => (
+                        <motion.span
+                          key={s}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: i * 0.05 }}
+                          whileHover={{ scale: 1.1, rotate: 1 }}
+                          className={`text-[11px] px-4 py-2 rounded-xl font-black border transition-all cursor-default ${isDarkMode ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20' : 'bg-white text-indigo-600 border-indigo-100 shadow-sm'}`}>
+                          {s}
+                        </motion.span>
                       ))}
+                      {(selectedCandidateDetail.skills || []).length === 0 && <span className="text-xs italic text-slate-500">No skills listed</span>}
                     </div>
                   </div>
                 </div>
 
-                {/* Right Column */}
-                <div className="space-y-5">
-                  {/* Rejection Reason */}
-                  {selectedCandidateDetail.stage === 'Rejected' && selectedCandidateDetail.rejectionReason && (
-                    <div className={`rounded-2xl p-4 ${isDarkMode ? 'bg-red-500/5 ring-1 ring-red-500/20' : 'bg-red-50 ring-1 ring-red-100'}`}>
-                      <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>Rejection Reason</h4>
-                      <p className={`text-xs ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>{selectedCandidateDetail.rejectionReason}</p>
-                    </div>
-                  )}
+                {/* Right Column: Key Details & Activity */}
+                <div className="space-y-6">
+                  {/* Metrics Bento Grid */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { label: 'Experience', value: selectedCandidateDetail.experience, icon: FiBriefcase, color: '#3FA9F5', bg: 'bg-blue-500/10' },
+                      { label: 'Current CTC', value: selectedCandidateDetail.currentCTC, icon: FiDollarSign, color: '#10b981', bg: 'bg-emerald-500/10' },
+                      { label: 'Expected CTC', value: selectedCandidateDetail.expectedCTC, icon: FiTrendingUp, color: '#f59e0b', bg: 'bg-amber-500/10' },
+                      { label: 'Notice Period', value: selectedCandidateDetail.noticePeriod, icon: FiClock, color: '#ec4899', bg: 'bg-rose-500/10' },
+                      { label: 'Application Date', value: selectedCandidateDetail.appliedDate, icon: FiCalendar, color: '#6366f1', bg: 'bg-indigo-500/10' },
+                      { label: 'Time In Stage', value: getStageDuration(selectedCandidateDetail) || 'Entry', icon: FiActivity, color: '#14b8a6', bg: 'bg-teal-500/10' },
+                    ].map((d, i) => (
+                      <motion.div
+                        key={d.label}
+                        initial={{ opacity: 0, rotateX: -20 }}
+                        animate={{ opacity: 1, rotateX: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        whileHover={{ y: -5, scale: 1.02 }}
+                        className={`rounded-[2rem] p-5 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 shadow-lg' : 'bg-white border-slate-100 shadow-xl'}`}>
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${d.bg}`} style={{ color: d.color }}>
+                            <d.icon size={18} />
+                          </div>
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{d.label}</span>
+                        </div>
+                        <p className={`text-xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{d.value || 'N/A'}</p>
+                      </motion.div>
+                    ))}
+                  </div>
 
-                  {/* Notes/Comments */}
-                  <div className={`rounded-2xl p-4 ${isDarkMode ? 'bg-slate-800/50 ring-1 ring-slate-700/50' : 'bg-slate-50 ring-1 ring-slate-100'}`}>
-                    <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                      <FiMessageSquare className="w-3 h-3 inline mr-1" /> Notes & Comments
-                    </h4>
-                    <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
+                  {/* Notes & Community Comments */}
+                  <div className={`rounded-[2.5rem] p-8 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 shadow-xl' : 'bg-slate-50 shadow-xl border-white'}`}>
+                    <div className="flex items-center justify-between mb-8">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 shadow-inner">
+                          <FiMessageSquare size={24} />
+                        </div>
+                        <h4 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Process Notes</h4>
+                      </div>
+                      <span className={`text-[10px] font-black px-3 py-1 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-white text-slate-400 border border-slate-100'}`}>
+                        {(candidateNotes[selectedCandidateDetail.id] || []).length} TOTAL
+                      </span>
+                    </div>
+
+                    <div className="space-y-4 mb-8 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                       {(candidateNotes[selectedCandidateDetail.id] || []).length === 0 && (
-                        <p className={`text-[10px] italic ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>No notes yet</p>
+                        <div className="text-center py-8 opacity-40">
+                          <FiMessageSquare className="mx-auto mb-2 opacity-20" size={32} />
+                          <p className="text-[11px] font-bold uppercase tracking-widest">No feedback yet</p>
+                        </div>
                       )}
                       {(candidateNotes[selectedCandidateDetail.id] || []).map((note, i) => (
-                        <div key={i} className={`rounded-lg p-2.5 ${isDarkMode ? 'bg-slate-900/50 ring-1 ring-slate-700/50' : 'bg-white ring-1 ring-slate-100'}`}>
-                          <p className={`text-[11px] ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{note.text}</p>
-                          <p className={`text-[9px] mt-1 ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>{note.author} • {new Date(note.date).toLocaleDateString()}</p>
-                        </div>
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className={`rounded-2xl p-4 border transition-all ${isDarkMode ? 'bg-slate-900 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+                          <p className={`text-[13px] font-medium leading-relaxed mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{note.text}</p>
+                          <div className="flex items-center justify-between border-t border-dashed pt-3 mt-auto border-slate-200/50">
+                            <span className="text-[10px] font-black uppercase text-blue-500">{note.author}</span>
+                            <span className={`text-[10px] font-bold ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>{new Date(note.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          </div>
+                        </motion.div>
                       ))}
                     </div>
-                    <div className="flex gap-1.5">
-                      <input type="text" value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Add a note..."
+
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        placeholder="Share your feedback..."
                         onKeyDown={(e) => e.key === 'Enter' && addNote(selectedCandidateDetail.id)}
-                        className={`flex-1 rounded-lg border px-2.5 py-1.5 text-[11px] ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white placeholder:text-slate-600' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
-                      <button onClick={() => addNote(selectedCandidateDetail.id)}
-                        className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white" style={{ background: 'linear-gradient(90deg, #3FA9F5, #0D47A1)' }}>Add</button>
+                        className={`w-full rounded-2xl border-2 px-6 py-4 text-sm font-medium transition-all focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white placeholder:text-slate-600' : 'bg-white border-slate-100 placeholder:text-slate-400'}`}
+                      />
+                      <button
+                        onClick={() => addNote(selectedCandidateDetail.id)}
+                        disabled={!newNote.trim()}
+                        className="absolute right-3 top-3 h-10 px-6 rounded-xl text-xs font-black text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-30 shadow-lg shadow-blue-500/20"
+                        style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}>
+                        POST
+                      </button>
                     </div>
                   </div>
 
-                  {/* Activity Timeline */}
-                  <div>
-                    <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Timeline</h4>
-                    <div className="space-y-2.5">
+                  {/* High-Fidelity Timeline */}
+                  <div className={`rounded-[2.5rem] p-8 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 shadow-xl' : 'bg-slate-50/50 border-slate-100 hover:bg-white hover:shadow-2xl'}`}>
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-500 shadow-inner">
+                        <FiActivity size={24} />
+                      </div>
+                      <h4 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Candidate Journey</h4>
+                    </div>
+                    <div className="relative pl-6 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-blue-500/50 before:via-teal-500/50 before:to-transparent">
                       {[
-                        { label: `Applied for ${selectedCandidateDetail.jobTitle}`, date: selectedCandidateDetail.appliedDate, icon: FiFileText, color: '#64748b' },
-                        { label: `Moved to ${selectedCandidateDetail.stage}`, date: selectedCandidateDetail.lastActivity, icon: FiArrowRight, color: (stageConfig[selectedCandidateDetail.stage] || stageConfig.Screening).color },
+                        { label: `Application registered for ${selectedCandidateDetail.jobTitle}`, date: selectedCandidateDetail.appliedDate, icon: FiFileText, color: '#3b82f6' },
+                        { label: `Successfully moved to ${selectedCandidateDetail.stage}`, date: selectedCandidateDetail.lastActivity, icon: FiTarget, color: (stageConfig[selectedCandidateDetail.stage] || stageConfig.Screening).color },
                       ].map((ev, i) => (
-                        <div key={i} className="flex items-start gap-2.5">
-                          <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: ev.color + '15' }}>
-                            <ev.icon className="w-3 h-3" style={{ color: ev.color }} />
-                          </div>
-                          <div>
-                            <p className={`text-[11px] font-medium ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{ev.label}</p>
-                            <p className={`text-[9px] ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>{ev.date}</p>
+                        <div key={i} className="relative group">
+                          <div className="absolute -left-[1.35rem] top-1 w-3 h-3 rounded-full border-2 border-white bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] group-hover:scale-125 transition-transform" />
+                          <div className="flex flex-col">
+                            <span className={`text-[11px] font-black uppercase tracking-widest mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{ev.label}</span>
+                            <span className={`text-[10px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{ev.date}</span>
                           </div>
                         </div>
                       ))}
@@ -1031,8 +1157,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                 </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+
 
         {/* ═══ Reject Modal ═══ */}
         <AnimatePresence>
@@ -1136,6 +1261,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
             </div>
           )}
         </AnimatePresence>
+        </motion.div>
       </div>
     );
   }
@@ -1221,7 +1347,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
               {resumeBankLoading ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <FiRefreshCw className="w-10 h-10 animate-spin text-[#1E88E5] mb-4" />
-                  <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Searching Resume Bank for "{resumeBankRole}"...</p>
+                  <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Searching Resume Bank for &quot;{resumeBankRole}&quot;...</p>
                 </div>
               ) : resumeBankResumes.length > 0 ? (
                 <div className="space-y-4">
@@ -1230,7 +1356,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                       Found {resumeBankResumes.length} matching resume{resumeBankResumes.length !== 1 ? 's' : ''}
                     </p>
                     <span className={`text-xs font-medium px-3 py-1 rounded-full ${isDarkMode ? 'bg-[#1E88E5]/40 text-[#3FA9F5]' : 'bg-[#1E88E5]/10 text-[#1E88E5]'}`}>
-                      for "{resumeBankRole}"
+                      for &quot;{resumeBankRole}&quot;
                     </span>
                   </div>
                   <div className="grid gap-3">
