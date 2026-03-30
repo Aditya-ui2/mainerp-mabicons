@@ -92,12 +92,8 @@ const CandidateDetailView = ({ candidate, onClose, isDarkMode, handleViewCV, loa
       <div className={`rounded-3xl p-6 sm:p-10 ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100'}`}>
         {/* Header Profile */}
         <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-          {candidate.photo ? (
-            <img src={candidate.photo} alt={candidate.name} className="w-32 h-32 rounded-3xl object-cover shadow-2xl ring-4 ring-white dark:ring-slate-700"
-              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-          ) : null}
-          <div className="w-32 h-32 rounded-3xl items-center justify-center text-white text-4xl font-bold shadow-2xl"
-            style={{ display: candidate.photo ? 'none' : 'flex', background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)' }}>
+          <div className="w-32 h-32 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-2xl"
+            style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)' }}>
             {candidate.name.split(' ').map(n => n[0]).join('').toUpperCase()}
           </div>
 
@@ -495,29 +491,12 @@ const ScreeningTab = ({ isDarkMode }) => {
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         {/* Left: Candidate Info */}
                         <div className="flex items-start gap-4 flex-1 group">
-                          {candidate.photo ? (
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src={candidate.photo}
-                                alt={candidate.name}
-                                className="h-14 w-14 rounded-xl object-cover shadow-lg ring-2 ring-white dark:ring-slate-700 transition-transform duration-300 group-hover:scale-105"
-                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                              />
-                              <div
-                                className="h-14 w-14 rounded-xl items-center justify-center text-white text-lg font-bold shadow-lg hidden"
-                                style={{ background: getAvatarGradient(candidate.name) }}
-                              >
-                                {getInitials(candidate.name)}
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
-                              style={{ background: getAvatarGradient(candidate.name) }}
-                            >
-                              {getInitials(candidate.name)}
-                            </div>
-                          )}
+                          <div
+                            className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+                            style={{ background: getAvatarGradient(candidate.name) }}
+                          >
+                            {getInitials(candidate.name)}
+                          </div>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">

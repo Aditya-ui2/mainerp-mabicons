@@ -43,7 +43,7 @@ const NotificationItem = ({ title, message, time, isNew }) => (
 
 const NotificationBadge = ({ icon: Icon, count }) => {
   const [isOpen, setIsOpen] = React.useState(false);
-  
+
   const notifications = [
     {
       id: 1,
@@ -78,8 +78,8 @@ const NotificationBadge = ({ icon: Icon, count }) => {
   return (
     <>
       <Badge content={count} className="bg-red-500">
-        <IconButton 
-          variant="text" 
+        <IconButton
+          variant="text"
           className="text-blue-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-white"
           onClick={() => setIsOpen(true)}
         >
@@ -103,9 +103,9 @@ const NotificationBadge = ({ icon: Icon, count }) => {
               Notifications
             </Typography>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="text" 
-                size="sm" 
+              <Button
+                variant="text"
+                size="sm"
                 className="text-blue-500 dark:text-blue-400"
                 onClick={() => console.log('Mark all as read')}
               >
@@ -322,11 +322,11 @@ export function NavbarWithSearch({ onProfileClick, companyName }) {
           {/* Left section - Logo */}
           <div className="flex items-center">
             <div className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-300">
-              <img 
+              <img
                 // src={Logo} 
                 src="http://www.mabicons.com/wp-content/uploads/2023/11/cropped-logo-1a-1.png"
-                alt="ERP Logo" 
-                className="h-8 w-auto sm:h-10 object-contain filter drop-shadow-md hover:drop-shadow-lg transition-all duration-300" 
+                alt="ERP Logo"
+                className="h-8 w-auto sm:h-10 object-contain filter drop-shadow-md hover:drop-shadow-lg transition-all duration-300"
               />
             </div>
           </div>
@@ -360,7 +360,7 @@ export function NavbarWithSearch({ onProfileClick, companyName }) {
             </IconButton>
 
             <div className="border-l border-blue-gray-100 dark:border-blue-gray-800 h-8 mx-2" />
-            
+
             <ProfileMenu />
 
             <IconButton
