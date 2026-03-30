@@ -30,6 +30,7 @@ import {
 import {
   getResumeBankResumes,
   getResumeDownloadUrl,
+  getAllCandidates,
 } from '../../../service/api';
 
 /* ── Score Badge ── */
@@ -210,20 +211,56 @@ const ScreeningTab = ({ isDarkMode }) => {
   const [cvPreviewUrl, setCvPreviewUrl] = useState(null);
   const [loadingCV, setLoadingCV] = useState(false);
 
-  // Mock data
-  useEffect(() => {
-    const mockCandidates = [
-      { id: 1, name: 'Rahul Sharma', email: 'rahul.sharma@email.com', phone: '+91 98765 43210', position: 'Senior Software Engineer', client: 'TechCorp India', resumeScore: 85, skillMatch: 90, experienceMatch: 80, screeningDate: '2026-03-17', decision: 'Shortlisted', notes: 'Strong technical background', skills: ['React', 'Node.js', 'MongoDB'], experience: '5 years', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 2, name: 'Priya Singh', email: 'priya.singh@email.com', phone: '+91 87654 32109', position: 'Product Manager', client: 'StartupXYZ', resumeScore: 92, skillMatch: 95, experienceMatch: 88, screeningDate: '2026-03-17', decision: 'Sent to Client', notes: 'Excellent fit for the role', skills: ['Agile', 'Roadmap', 'Analytics'], experience: '7 years', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 3, name: 'Amit Kumar', email: 'amit.kumar@email.com', phone: '+91 76543 21098', position: 'UI/UX Designer', client: 'DesignHub', resumeScore: 62, skillMatch: 70, experienceMatch: 55, screeningDate: '2026-03-16', decision: 'On Hold', notes: 'Needs more portfolio review', skills: ['Figma', 'Adobe XD'], experience: '3 years', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
-      { id: 4, name: 'Sneha Patel', email: 'sneha.patel@email.com', phone: '+91 65432 10987', position: 'Senior Software Engineer', client: 'TechCorp India', resumeScore: 88, skillMatch: 85, experienceMatch: 92, screeningDate: '2026-03-15', decision: 'Shortlisted', notes: 'Good leadership skills', skills: ['React', 'TypeScript', 'AWS'], experience: '6 years', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 5, name: 'Vikram Rao', email: 'vikram.rao@email.com', phone: '+91 54321 09876', position: 'DevOps Engineer', client: 'CloudScale', resumeScore: 75, skillMatch: 80, experienceMatch: 70, screeningDate: '2026-03-18', decision: 'Pending', notes: '', skills: ['AWS', 'Docker', 'Kubernetes'], experience: '4 years', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-      { id: 6, name: 'Anjali Gupta', email: 'anjali.gupta@email.com', phone: '+91 43210 98765', position: 'Product Manager', client: 'StartupXYZ', resumeScore: 45, skillMatch: 40, experienceMatch: 50, screeningDate: '2026-03-14', decision: 'Rejected', notes: 'Does not meet minimum experience', skills: ['Scrum', 'JIRA'], experience: '2 years', photo: 'https://randomuser.me/api/portraits/women/65.jpg' },
-    ];
-    setTimeout(() => {
-      setCandidates(mockCandidates);
+  // Fetch candidates from backend
+  const fetchCandidates = async () => {
+    setLoading(true);
+    try {
+      // Fetch candidates that are in screening stage
+      const response = await getAllCandidates({ stage: 'Screening' });
+      const candidatesData = (response.data || response.candidates || []).map(c => ({
+        id: c._id || c.id,
+        name: c.name || c.candidateName || 'Unknown',
+        email: c.email || '',
+        phone: c.phone || '',
+        position: c.position?.title || c.positionTitle || c.position || '',
+        client: c.position?.client?.companyName || c.clientName || c.client || '',
+        resumeScore: c.resumeScore || c.score || 0,
+        skillMatch: c.skillMatch || 0,
+        experienceMatch: c.experienceMatch || 0,
+        screeningDate: c.updatedAt?.split('T')[0] || c.createdAt?.split('T')[0] || '',
+        decision: mapStatusToDecision(c.status || c.pipelineStatus),
+        notes: c.notes || c.screeningNotes || '',
+        skills: c.skills || [],
+        experience: c.experience || '',
+        photo: c.photo || null,
+      }));
+      setCandidates(candidatesData);
+    } catch (error) {
+      console.error('Failed to fetch screening candidates:', error);
+      setCandidates([]);
+    } finally {
       setLoading(false);
-    }, 600);
+    }
+  };
+
+  // Map candidate status to screening decision
+  const mapStatusToDecision = (status) => {
+    const statusMap = {
+      'Screening': 'Pending',
+      'Shortlisted': 'Shortlisted',
+      'Sent': 'Sent to Client',
+      'On Hold': 'On Hold',
+      'Rejected': 'Rejected',
+      'pending': 'Pending',
+      'hold': 'On Hold',
+      'approved': 'Shortlisted',
+      'rejected': 'Rejected',
+    };
+    return statusMap[status] || 'Pending';
+  };
+
+  useEffect(() => {
+    fetchCandidates();
   }, []);
 
   // Handle View CV
@@ -260,7 +297,7 @@ const ScreeningTab = ({ isDarkMode }) => {
     pending: candidates.filter(c => c.decision === 'Pending').length,
     shortlisted: candidates.filter(c => c.decision === 'Shortlisted').length,
     sentToClient: candidates.filter(c => c.decision === 'Sent to Client').length,
-    avgScore: Math.round(candidates.reduce((sum, c) => sum + c.resumeScore, 0) / candidates.length),
+    avgScore: candidates.length > 0 ? Math.round(candidates.reduce((sum, c) => sum + (c.resumeScore || 0), 0) / candidates.length) : 0,
   };
 
   const statCards = [
@@ -272,9 +309,9 @@ const ScreeningTab = ({ isDarkMode }) => {
 
   // Filter candidates
   const filteredCandidates = candidates.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.position.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.position || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDecision = filterDecision === 'all' || c.decision === filterDecision;
     return matchesSearch && matchesDecision;
   });
@@ -290,7 +327,7 @@ const ScreeningTab = ({ isDarkMode }) => {
     return gradients[(name || '').charCodeAt(0) % gradients.length];
   };
 
-  const getInitials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const getInitials = (name) => (name || 'U').split(' ').map(n => n[0] || '').join('').toUpperCase() || 'U';
 
   // Skeleton loader
   if (loading) {

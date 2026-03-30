@@ -62,6 +62,7 @@ const formatTimeAgo = (date) => {
 const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -74,22 +75,14 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   const fetchActivities = async () => {
     try {
       setLoading(true);
+      setError(null);
       const actionType = filter === 'all' ? null : filter;
       const response = await getDepartmentActivityLogs(department, 50, actionType);
       setActivities(response.activities || []);
     } catch (error) {
       console.error('Error fetching activities:', error);
-      // Mock data for demo
-      setActivities([
-        { _id: '1', performedByName: 'Manju Sharma', action: 'completed_task', actionType: 'task', description: 'Completed payroll processing for March 2026', createdAt: new Date(Date.now() - 1000 * 60 * 5) },
-        { _id: '2', performedByName: 'Jyoti Verma', action: 'approved_leave', actionType: 'leave', description: 'Approved leave request for Rahul (Mar 20-22)', createdAt: new Date(Date.now() - 1000 * 60 * 30) },
-        { _id: '3', performedByName: 'Priya Singh', action: 'updated_attendance', actionType: 'attendance', description: 'Updated attendance records for TechCorp employees', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2) },
-        { _id: '4', performedByName: 'Ramesh Kumar', action: 'assigned_task', actionType: 'task', description: 'Assigned document verification task to Manju', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4) },
-        { _id: '5', performedByName: 'Manju Sharma', action: 'processed_payroll', actionType: 'payroll', description: 'Processed salary disbursement for StartupXYZ', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6) },
-        { _id: '6', performedByName: 'Jyoti Verma', action: 'rejected_leave', actionType: 'leave', description: 'Rejected leave request for Amit (insufficient balance)', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8) },
-        { _id: '7', performedByName: 'Priya Singh', action: 'completed_task', actionType: 'task', description: 'Completed employee onboarding documentation', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12) },
-        { _id: '8', performedByName: 'Ramesh Kumar', action: 'added_team_member', actionType: 'general', description: 'Added new team member Neha to the team', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24) },
-      ]);
+      setError(error.message || 'Failed to load activities');
+      setActivities([]);
     } finally {
       setLoading(false);
     }
@@ -127,6 +120,19 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
 
   return (
     <div className="space-y-6">
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+          <p className="text-red-700 text-sm">{error}. Click refresh to try again.</p>
+          <button
+            onClick={handleRefresh}
+            className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 flex items-center gap-1"
+          >
+            <FiRefreshCw className="w-3 h-3" /> Retry
+          </button>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">

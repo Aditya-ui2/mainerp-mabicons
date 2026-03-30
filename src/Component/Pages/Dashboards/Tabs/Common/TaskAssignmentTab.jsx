@@ -95,18 +95,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
       setTeamMembers(membersRes.members || []);
     } catch (error) {
       console.error('Error fetching data:', error);
-      // Mock data
-      setTeamMembers([
-        { id: '1', name: 'Manju Sharma', role: 'HR Executive' },
-        { id: '2', name: 'Jyoti Verma', role: 'Leave Manager' },
-        { id: '3', name: 'Priya Singh', role: 'Payroll Specialist' },
-      ]);
-      setTasks([
-        { id: '1', title: 'Process March Payroll', description: 'Process payroll for TechCorp employees', assignedTo: { id: '1', name: 'Manju Sharma' }, assignedToName: 'Manju Sharma', status: 'In Progress', priority: 'High', dueDate: '2026-03-25', createdAt: new Date() },
-        { id: '2', title: 'Review Leave Requests', description: 'Review and approve pending leave requests', assignedTo: { id: '2', name: 'Jyoti Verma' }, assignedToName: 'Jyoti Verma', status: 'Pending', priority: 'Medium', dueDate: '2026-03-20', createdAt: new Date() },
-        { id: '3', title: 'Update Attendance Records', description: 'Update attendance for all clients', assignedTo: { id: '3', name: 'Priya Singh' }, assignedToName: 'Priya Singh', status: 'Completed', priority: 'Low', dueDate: '2026-03-18', createdAt: new Date() },
-        { id: '4', title: 'Prepare Tax Documentation', description: 'Prepare TDS documentation for Q4', assignedTo: { id: '1', name: 'Manju Sharma' }, assignedToName: 'Manju Sharma', status: 'Overdue', priority: 'Urgent', dueDate: '2026-03-15', createdAt: new Date() },
-      ]);
+      setTasks([]);
+      setTeamMembers([]);
     } finally {
       setLoading(false);
     }

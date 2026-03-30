@@ -70,12 +70,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
       setMembers(response.members || []);
     } catch (error) {
       console.error('Error fetching team members:', error);
-      // Mock data for demo
-      setMembers([
-        { _id: '1', name: 'Manju Sharma', email: 'manju@mabicons.com', phone: '9876543210', role: 'HR Executive', status: 'Active', tasksCompleted: 45, tasksAssigned: 52, skills: ['Payroll', 'Attendance'], joinDate: '2024-01-15' },
-        { _id: '2', name: 'Jyoti Verma', email: 'jyoti@mabicons.com', phone: '9876543211', role: 'Leave Manager', status: 'Active', tasksCompleted: 38, tasksAssigned: 40, skills: ['Leave Management', 'Documentation'], joinDate: '2024-02-20' },
-        { _id: '3', name: 'Priya Singh', email: 'priya@mabicons.com', phone: '9876543212', role: 'Payroll Specialist', status: 'On Leave', tasksCompleted: 28, tasksAssigned: 30, skills: ['Payroll', 'Tax Filing'], joinDate: '2024-03-10' },
-      ]);
+      setMembers([]);
     } finally {
       setLoading(false);
     }

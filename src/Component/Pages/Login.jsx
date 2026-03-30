@@ -160,11 +160,39 @@ const Rocket = ({ isDarkMode }) => (
 );
 
 // Predefined user credentials for Mabicons ERP
+// Super-Admin: Ashish (Boss) - Can see everything
+// Admins: Sachin (Recruitment Head), Ashwin (Manager), Ramesh (Operation Head)
+// KAMs under Sachin: Priyanshi Sharma, Manju, Jyoti
 const USER_CREDENTIALS = {
-  'superadmin.mabicons@gmail.com': { password: 'SuperAdmin@123', role: 'superAdmin', department: null, name: 'Super Admin' },
+  // Super Admin - Ashish (Boss)
+  'superadmin.mabicons@gmail.com': { password: 'SuperAdmin@123', role: 'superAdmin', department: null, name: 'Ashish (Super Admin)' },
+  'ashish.mabicons@gmail.com': { password: 'Ashish@123', role: 'superAdmin', department: null, name: 'Ashish (Super Admin)' },
+  
+  // Admins
   'admin.mabicons@gmail.com': { password: 'Admin@123', role: 'admin', department: null, name: 'Admin' },
-  'operation.mabicons@gmail.com': { password: 'Operation@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations)' },
-  'recruitment.mabicons@gmail.com': { password: 'Recruitment@123', role: 'hrRecruitment', department: 'HR Recruitment', name: 'Sachin (HR Recruitment)' },
+  'ashwin.mabicons@gmail.com': { password: 'Ashwin@123', role: 'admin', department: null, name: 'Ashwin (Manager)' },
+  
+  // Operation Head - Ramesh
+  'operation.mabicons@gmail.com': { password: 'Operation@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
+  'ramesh.mabicons@gmail.com': { password: 'Ramesh@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
+  
+  // Recruitment Head - Sachin
+  'recruitment.mabicons@gmail.com': { password: 'Recruitment@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
+  'sachin.mabicons@gmail.com': { password: 'Sachin@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
+  
+  // KAM - Priyanshi Sharma (Under Sachin)
+  'priyanshi.mabicons@gmail.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
+  'priyanshi.sharma@mabicons.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
+  
+  // KAM - Manju (Under Sachin)
+  'manju.mabicons@gmail.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
+  'manju@mabicons.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
+  
+  // KAM - Jyoti (Under Sachin)
+  'jyoti.mabicons@gmail.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
+  'jyoti@mabicons.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
+  
+  // Other roles
   'employee.mabicons@gmail.com': { password: 'Employee@123', role: 'employee', department: null, name: 'Employee' },
   'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
   'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
@@ -189,7 +217,43 @@ const Login = () => {
     employee: 'employee',
     bdExecutive: 'bd',
     hrOperations: 'hr',
-    hrRecruitment: 'hr'
+    hrRecruitment: 'hr',
+    recruitmentHead: 'recruitmentHead',
+    kamRecruitment: 'kamRecruitment'
+  };
+
+  // Navigation helper function
+  const navigateByRole = (role, emailLower, user) => {
+    const isRecruitmentHead = role === 'recruitmentHead' || 
+      (role === 'hrRecruitment' && emailLower.includes('sachin')) || 
+      emailLower.includes('recruitment.mabicons');
+    const isKAM = role === 'kamRecruitment' || 
+      emailLower.includes('priyanshi') || 
+      emailLower.includes('manju') || 
+      emailLower.includes('jyoti');
+    const isOperations = role === 'hrOperations' || 
+      role === 'hr_operations' || 
+      (role === 'Department Head' && user?.department === 'HR Operations') || 
+      emailLower.includes('operation') || 
+      emailLower.includes('ramesh');
+
+    if (isRecruitmentHead) {
+      navigate('/recruitment-head-dashboard');
+    } else if (isKAM) {
+      navigate('/kam-member-dashboard');
+    } else if (isOperations) {
+      navigate('/kam-operations-dashboard');
+    } else if (role === 'superAdmin' || role === 'super_admin') {
+      navigate('/superadmin-dashboard');
+    } else if (role === 'admin') {
+      navigate('/admin-dashboard');
+    } else if (role === 'teamLeader' || role === 'team_leader') {
+      navigate('/teamleader-dashboard');
+    } else if (role === 'bdExecutive' || role === 'bd') {
+      navigate('/bd-dashboard');
+    } else {
+      navigate('/employee-dashboard');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -198,8 +262,59 @@ const Login = () => {
     const emailLower = email.toLowerCase().trim();
     setLoading(true);
 
+    // Helper function to create mock token
+    const createMockToken = (userData) => {
+      const payload = {
+        id: `mock-${Date.now()}`,
+        email: emailLower,
+        name: userData.name,
+        role: userData.role,
+        department: userData.department,
+        supervisor: userData.supervisor || null,
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
+      };
+      return btoa(JSON.stringify({ alg: 'HS256' })) + '.' + btoa(JSON.stringify(payload)) + '.mock-signature';
+    };
+
+    // Helper function for local/development mode login
+    const localLogin = () => {
+      const userData = USER_CREDENTIALS[emailLower];
+      if (userData && userData.password === password) {
+        const mockToken = createMockToken(userData);
+        localStorage.setItem('token', mockToken);
+        localStorage.setItem('userType', userData.role);
+        localStorage.setItem('userName', userData.name);
+        localStorage.setItem('userEmail', emailLower);
+        if (userData.department) {
+          localStorage.setItem('department', userData.department);
+        }
+        return {
+          success: true,
+          user: userData,
+          userType: userData.role,
+          token: mockToken,
+          isLocal: true
+        };
+      }
+      return null;
+    };
+
     try {
-      // Logic to determine which login API to call based on email prefix or domain
+      // First try local login for development/demo mode
+      const localResult = localLogin();
+      if (localResult) {
+        console.log('✅ Local/Demo login successful:', localResult.user.name);
+        setToastMessage(`Welcome, ${localResult.user.name}! (Demo Mode)`);
+        setShowToast(true);
+        setIsError(false);
+
+        setTimeout(() => {
+          navigateByRole(localResult.user.role, emailLower, localResult.user);
+        }, 800);
+        return;
+      }
+
+      // If local login fails, try backend API
       const { 
         superAdminLogin, 
         adminLogin, 
@@ -210,17 +325,19 @@ const Login = () => {
       
       let response;
       
-      // Select the correct API based on the email (mirroring the old USER_CREDENTIALS structure)
-      if (emailLower.includes('superadmin')) {
+      // Select the correct API based on the email
+      if (emailLower.includes('superadmin') || emailLower.includes('ashish')) {
         response = await superAdminLogin({ email: emailLower, password });
-      } else if (emailLower.includes('admin.')) {
+      } else if (emailLower.includes('admin.') || emailLower.includes('ashwin')) {
         response = await adminLogin({ email: emailLower, password });
       } else if (emailLower.includes('teamleader')) {
         response = await teamLeaderLogin({ email: emailLower, password });
       } else if (emailLower.includes('employee')) {
         response = await employeeLogin({ email: emailLower, password });
-      } else if (emailLower.includes('recruitment') || emailLower.includes('operation')) {
-        // Correct endpoint for Sachin (HR Recruitment Head) and Ramesh (HR Operations Head)
+      } else if (emailLower.includes('recruitment') || emailLower.includes('operation') || 
+                 emailLower.includes('sachin') || emailLower.includes('ramesh')) {
+        response = await departmentTeamLogin({ email: emailLower, password });
+      } else if (emailLower.includes('priyanshi') || emailLower.includes('manju') || emailLower.includes('jyoti')) {
         response = await departmentTeamLogin({ email: emailLower, password });
       } else {
         // Default to admin login if pattern doesn't match
@@ -230,7 +347,7 @@ const Login = () => {
       if (response && response.success) {
         const user = response.user;
         const role = response.userType || user.role || user.userType;
-        console.log("Login SUCCESS! Role detected:", role, "User info:", user);
+        console.log("✅ API Login SUCCESS! Role:", role, "User:", user);
         
         // Save necessary info for ProtectedRoutes
         localStorage.setItem('userName', user.name);
@@ -244,30 +361,14 @@ const Login = () => {
         setIsError(false);
   
         setTimeout(() => {
-          // Comprehensive navigation mapping based on server roles and departments
-          const isRecruitment = role === 'hrRecruitment' || role === 'hr_recruitment' || role === 'Department Head' && user.department === 'HR Recruitment' || emailLower.includes('recruitment');
-          const isOperations = role === 'hrOperations' || role === 'hr_operations' || role === 'Department Head' && user.department === 'HR Operations' || emailLower.includes('operation');
-
-          if (isRecruitment) {
-            navigate('/kam-recruitment-dashboard');
-          } else if (isOperations) {
-            navigate('/kam-operations-dashboard');
-          } else if (role === 'superAdmin' || role === 'super_admin') {
-            navigate('/admin-dashboard');
-          } else if (role === 'admin') {
-            navigate('/admin-dashboard');
-          } else if (role === 'teamLeader' || role === 'team_leader') {
-            navigate('/teamleader-dashboard');
-          } else {
-            navigate('/employee-dashboard');
-          }
+          navigateByRole(role, emailLower, user);
         }, 800);
       } else {
         throw new Error(response.message || 'Login failed');
       }
     } catch (error) {
       console.error("Login Error:", error);
-      setToastMessage(error.message || 'Invalid email or password. Please use live database credentials.');
+      setToastMessage(error.message || 'Invalid email or password. Please check your credentials.');
       setShowToast(true);
       setIsError(true);
     } finally {
