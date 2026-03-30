@@ -26,6 +26,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "erp": "file:",
+    "firebase": "^12.11.0",
     "framer-motion": "^11.11.7",
     "heroicon": "^0.0.2",
     "heroicons": "^2.1.5",
