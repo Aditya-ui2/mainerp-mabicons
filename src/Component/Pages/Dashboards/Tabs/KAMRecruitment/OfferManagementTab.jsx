@@ -22,6 +22,7 @@ import {
   FiMail,
   FiArrowLeft,
 } from 'react-icons/fi';
+import { getAllCandidates, updateCandidateStatus } from '../../../service/api';
 
 /* ── Status Badge ── */
 const StatusBadge = ({ status }) => {
@@ -84,20 +85,62 @@ const OfferManagementTab = ({ isDarkMode }) => {
     hikePercent: '',
   });
 
-  // Mock data
-  useEffect(() => {
-    const mockOffers = [
-      { id: 1, candidateName: 'Priya Singh', email: 'priya.singh@email.com', position: 'Product Manager', client: 'StartupXYZ', offeredCTC: '25 LPA', currentCTC: '20 LPA', joiningDate: '2026-04-15', offerDate: '2026-03-15', expiryDate: '2026-03-22', status: 'Accepted', negotiationNotes: 'Negotiated joining bonus', hikePercent: 25, photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 2, candidateName: 'Rahul Sharma', email: 'rahul.sharma@email.com', position: 'Senior Software Engineer', client: 'TechCorp India', offeredCTC: '22 LPA', currentCTC: '18 LPA', joiningDate: '2026-04-01', offerDate: '2026-03-17', expiryDate: '2026-03-24', status: 'Sent', negotiationNotes: '', hikePercent: 22, photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 3, candidateName: 'Sneha Patel', email: 'sneha.patel@email.com', position: 'Senior Software Engineer', client: 'TechCorp India', offeredCTC: '24 LPA', currentCTC: '19 LPA', joiningDate: '2026-04-10', offerDate: '2026-03-16', expiryDate: '2026-03-23', status: 'Negotiating', negotiationNotes: 'Requested remote work', hikePercent: 26, photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 4, candidateName: 'Vikram Rao', email: 'vikram.rao@email.com', position: 'DevOps Engineer', client: 'CloudScale', offeredCTC: '18 LPA', currentCTC: '15 LPA', joiningDate: '2026-04-20', offerDate: '2026-03-18', expiryDate: '2026-03-25', status: 'Pending Approval', negotiationNotes: '', hikePercent: 20, photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-      { id: 5, candidateName: 'Ananya Reddy', email: 'ananya.r@email.com', position: 'Data Analyst', client: 'DataMinds', offeredCTC: '12 LPA', currentCTC: '10 LPA', joiningDate: '2026-04-05', offerDate: '2026-03-10', expiryDate: '2026-03-17', status: 'Rejected', negotiationNotes: 'Chose competitor offer', hikePercent: 20, photo: 'https://randomuser.me/api/portraits/women/55.jpg' },
-      { id: 6, candidateName: 'Karthik M', email: 'karthik.m@email.com', position: 'UI/UX Designer', client: 'DesignHub', offeredCTC: '14 LPA', currentCTC: '12 LPA', joiningDate: '', offerDate: '2026-03-19', expiryDate: '2026-03-26', status: 'Draft', negotiationNotes: 'Awaiting budget approval', hikePercent: 17, photo: 'https://randomuser.me/api/portraits/men/46.jpg' },
-    ];
-    setTimeout(() => {
-      setOffers(mockOffers);
+  // Fetch offers (candidates at offer stage) from backend
+  const fetchOffers = async () => {
+    setLoading(true);
+    try {
+      // Fetch candidates with offer-related statuses
+      const response = await getAllCandidates({ 
+        status: 'Offer Sent,Negotiating,Accepted,Rejected,Joined' 
+      });
+      const candidatesData = (response.candidates || response.data || []).map(c => ({
+        id: c._id || c.id,
+        candidateName: c.name || c.candidateName || 'Unknown',
+        email: c.email || '',
+        position: c.position?.title || c.positionTitle || c.position || '',
+        client: c.position?.client?.companyName || c.clientName || c.client || '',
+        offeredCTC: c.offeredCTC || c.expectedCTC || '',
+        currentCTC: c.currentCTC || '',
+        joiningDate: c.joiningDate || '',
+        offerDate: c.offerDate || c.updatedAt?.split('T')[0] || '',
+        expiryDate: c.offerExpiryDate || '',
+        status: mapCandidateStatusToOffer(c.status),
+        negotiationNotes: c.negotiationNotes || c.notes || '',
+        hikePercent: calculateHike(c.currentCTC, c.offeredCTC || c.expectedCTC),
+        photo: c.photo || '',
+      }));
+      setOffers(candidatesData);
+    } catch (error) {
+      console.error('Failed to fetch offers:', error);
+      setOffers([]);
+    } finally {
       setLoading(false);
-    }, 600);
+    }
+  };
+
+  // Map candidate status to offer status
+  const mapCandidateStatusToOffer = (status) => {
+    const statusMap = {
+      'Offer Sent': 'Sent',
+      'Negotiating': 'Negotiating',
+      'Accepted': 'Accepted',
+      'Rejected': 'Rejected',
+      'Joined': 'Accepted',
+    };
+    return statusMap[status] || 'Draft';
+  };
+
+  // Calculate hike percentage
+  const calculateHike = (current, offered) => {
+    if (!current || !offered) return 0;
+    const currentVal = parseFloat(String(current).replace(/[^\d.]/g, ''));
+    const offeredVal = parseFloat(String(offered).replace(/[^\d.]/g, ''));
+    if (currentVal === 0) return 0;
+    return Math.round(((offeredVal - currentVal) / currentVal) * 100);
+  };
+
+  useEffect(() => {
+    fetchOffers();
   }, []);
 
   // Calculate days left
@@ -198,9 +241,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
   // Filter offers
   const filteredOffers = offers.filter(o => {
-    const matchesSearch = o.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.client.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (o.candidateName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (o.position || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (o.client || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || o.status === filterStatus;
     return matchesSearch && matchesStatus;
   });

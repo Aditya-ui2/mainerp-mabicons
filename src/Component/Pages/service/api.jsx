@@ -1368,7 +1368,7 @@ export const deleteTeamLeaderAndPromoteEmployee = async ({ oldTeamLeaderId, empl
 export const createRecruitmentRequest = async (requestData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/request', {
+    const response = await axiosInstance.post('/recruitment/request', {
       name: requestData.name,
       position: requestData.position,
       keywords: requestData.keywords,
@@ -1398,7 +1398,7 @@ export const createRecruitmentRequest = async (requestData) => {
 export const acceptRecruitmentRequest = async (acceptData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/accept', {
+    const response = await axiosInstance.post('/recruitment/accept', {
       reason: acceptData.reason,
       teamLeaderId: acceptData.teamLeaderId,
       clientId: acceptData.clientId
@@ -1420,7 +1420,7 @@ export const acceptRecruitmentRequest = async (acceptData) => {
 export const rejectRecruitmentRequest = async (rejectData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/reject', {
+    const response = await axiosInstance.post('/recruitment/reject', {
       reason: rejectData.reason,
       teamLeaderId: rejectData.teamLeaderId,
       clientId: rejectData.clientId
@@ -1444,7 +1444,7 @@ export const rejectRecruitmentRequest = async (rejectData) => {
 export const getRecruitmentRequests = async (teamLeaderid) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/recruit/getRequests', {
+    const response = await axiosInstance.get('/recruitment/getRequests', {
       params: { teamLeaderid },
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1464,7 +1464,7 @@ export const uploadResumes = async (formData) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${BASE_URL}/recruit/upload-resumes`, 
+      `${BASE_URL}/recruitment/upload-resumes`, 
       formData,
       {
         headers: {
@@ -1492,7 +1492,7 @@ export const uploadResumes = async (formData) => {
 export const getShortlistedCandidates = async (payload) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/shortlisted', {
+    const response = await axiosInstance.post('/recruitment/shortlisted', {
       teamLeaderId: payload.teamLeaderId,
       clientId: payload.clientId
     }, {
@@ -1513,7 +1513,7 @@ export const getShortlistedCandidates = async (payload) => {
 export const getClientRequests = async (clientId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/recruit/getRequests-client?clientId=${clientId}`, {
+    const response = await axiosInstance.get(`/recruitment/getRequests-client?clientId=${clientId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -1532,7 +1532,7 @@ export const getClientRequests = async (clientId) => {
 export const getClientRequestDetails = async (requestId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/recruit/request/${requestId}`, {
+    const response = await axiosInstance.get(`/recruitment/request/${requestId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -1551,7 +1551,7 @@ export const getClientRequestDetails = async (requestId) => {
 export const createClientRequest = async (requestData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/create-request', requestData, {
+    const response = await axiosInstance.post('/recruitment/create-request', requestData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -1570,7 +1570,7 @@ export const createClientRequest = async (requestData) => {
 export const acceptCandidate = async (acceptData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/accept', {
+    const response = await axiosInstance.post('/recruitment/accept', {
       reason: acceptData.reason,
       recruitmentId: acceptData.recruitmentId,
       fileId: acceptData.fileId
@@ -1591,7 +1591,7 @@ export const acceptCandidate = async (acceptData) => {
 export const rejectCandidate = async (rejectData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/reject', {
+    const response = await axiosInstance.post('/recruitment/reject', {
       reason: rejectData.reason,
       recruitmentId: rejectData.recruitmentId,
       fileId: rejectData.fileId
@@ -1613,7 +1613,7 @@ export const rejectCandidate = async (rejectData) => {
 export const getRecruitmentStatus = async (payload) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/status', {
+    const response = await axiosInstance.post('/recruitment/status', {
       recruitmentId: payload.recruitmentId,
       clientId: payload.clientId,
       teamLeaderId: payload.teamLeaderId
@@ -1635,7 +1635,7 @@ export const getRecruitmentStatus = async (payload) => {
 export const scheduleInterview = async (interviewData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/schedule-interview', {
+    const response = await axiosInstance.post('/recruitment/schedule-interview', {
       recruitmentId: interviewData.recruitmentId,
       fileId: interviewData.fileId,
       interviewDate: interviewData.interviewDate,
@@ -1657,7 +1657,7 @@ export const scheduleInterview = async (interviewData) => {
 export const closeRecruitmentRequest = async (closeData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/close-request', {
+    const response = await axiosInstance.post('/recruitment/close-request', {
       recruitmentId: closeData.recruitmentId,
       userType: closeData.userType,
       userId: closeData.userId
@@ -1680,7 +1680,7 @@ export const closeRecruitmentRequest = async (closeData) => {
 export const generateMeetLink = async (meetingData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruit/meet-link', {
+    const response = await axiosInstance.post('/recruitment/meet-link', {
       interviewDate: meetingData.interviewDate,
       interviewTime: meetingData.interviewTime,
       clientId: meetingData.clientId,
@@ -2127,10 +2127,7 @@ export const cancelInterview = async (interviewId, reason) => {
 // Get resume bank statistics
 export const getResumeBankStats = async () => {
   try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/api/resumebank/stats', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const response = await axiosInstance.get('/api/resumebank/stats');
     return response.data;
   } catch (error) {
     console.error('Failed to fetch resume stats:', error);
@@ -2141,10 +2138,7 @@ export const getResumeBankStats = async () => {
 // Get role types with counts
 export const getResumeRoleTypes = async () => {
   try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/api/resumebank/roles', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const response = await axiosInstance.get('/api/resumebank/roles');
     return response.data;
   } catch (error) {
     console.error('Failed to fetch role types:', error);
@@ -2155,11 +2149,8 @@ export const getResumeRoleTypes = async () => {
 // Get resumes with filters
 export const getResumeBankResumes = async (params = {}) => {
   try {
-    const token = localStorage.getItem('token');
     const queryParams = new URLSearchParams(params).toString();
-    const response = await axiosInstance.get(`/api/resumebank?${queryParams}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const response = await axiosInstance.get(`/api/resumebank?${queryParams}`);
     return response.data;
   } catch (error) {
     console.error('Failed to fetch resumes:', error);
@@ -2170,10 +2161,7 @@ export const getResumeBankResumes = async (params = {}) => {
 // Get single resume details
 export const getResumeDetails = async (resumeId) => {
   try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/api/resumebank/${resumeId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const response = await axiosInstance.get(`/api/resumebank/${resumeId}`);
     return response.data;
   } catch (error) {
     console.error('Failed to fetch resume details:', error);
@@ -2184,12 +2172,8 @@ export const getResumeDetails = async (resumeId) => {
 // Update resume details
 export const updateResumeDetails = async (resumeId, data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/api/resumebank/${resumeId}`, data, {
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     });
     return response.data;
   } catch (error) {
@@ -2201,12 +2185,8 @@ export const updateResumeDetails = async (resumeId, data) => {
 // Sync resumes from SharePoint
 export const syncResumesFromSharePoint = async (data = {}) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/api/resumebank/sync', data, {
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       timeout: 300000 // 5 minutes for large syncs
     });
     return response.data;
@@ -2219,12 +2199,8 @@ export const syncResumesFromSharePoint = async (data = {}) => {
 // Sync resumes from SharePoint
 export const syncResumesFromSharePointDrive = async (data = {}) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/api/resumebank/sync-sharepoint', data, {
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       timeout: 300000
     });
     return response.data;
@@ -2237,10 +2213,8 @@ export const syncResumesFromSharePointDrive = async (data = {}) => {
 // Star/unstar resumes
 export const toggleStarResumes = async (resumeIds, isStarred) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/api/resumebank/star', 
-      { resumeIds, isStarred },
-      { headers: { 'Authorization': `Bearer ${token}` } }
+      { resumeIds, isStarred }
     );
     return response.data;
   } catch (error) {
@@ -2252,10 +2226,8 @@ export const toggleStarResumes = async (resumeIds, isStarred) => {
 // Bulk update status
 export const bulkUpdateResumeStatus = async (resumeIds, status) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/api/resumebank/bulk-status', 
-      { resumeIds, status },
-      { headers: { 'Authorization': `Bearer ${token}` } }
+      { resumeIds, status }
     );
     return response.data;
   } catch (error) {
@@ -2267,10 +2239,8 @@ export const bulkUpdateResumeStatus = async (resumeIds, status) => {
 // Assign resumes to position
 export const assignResumesToPosition = async (resumeIds, positionId, assignedTo) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/api/resumebank/assign', 
-      { resumeIds, positionId, assignedTo },
-      { headers: { 'Authorization': `Bearer ${token}` } }
+      { resumeIds, positionId, assignedTo }
     );
     return response.data;
   } catch (error) {
@@ -2282,10 +2252,7 @@ export const assignResumesToPosition = async (resumeIds, positionId, assignedTo)
 // Get download URL
 export const getResumeDownloadUrl = async (resumeId) => {
   try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/api/resumebank/${resumeId}/download`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const response = await axiosInstance.get(`/api/resumebank/${resumeId}/download`);
     return response.data;
   } catch (error) {
     console.error('Failed to get download URL:', error);
@@ -2296,10 +2263,7 @@ export const getResumeDownloadUrl = async (resumeId) => {
 // Get SharePoint folders
 export const getSharePointFolders = async () => {
   try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/api/resumebank/folders', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const response = await axiosInstance.get('/api/resumebank/folders');
     return response.data;
   } catch (error) {
     console.error('Failed to fetch folders:', error);
@@ -2310,14 +2274,310 @@ export const getSharePointFolders = async () => {
 // Search S3 directly
 export const searchS3Resumes = async (query) => {
   try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/api/resumebank/search-s3?query=${encodeURIComponent(query)}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const response = await axiosInstance.get(`/api/resumebank/search-s3?query=${encodeURIComponent(query)}`);
     return response.data;
   } catch (error) {
     console.error('Failed to search S3:', error);
     throw error.response?.data || { message: 'Failed to search S3' };
+  }
+};
+
+// ========== KAM (KEY ACCOUNT MANAGER) MANAGEMENT APIs ==========
+// Using /recruitment/kams and /department/members endpoints
+
+// Get all KAM members (recruitment department)
+export const getAllKAMMembers = async (department = 'HR Recruitment') => {
+  try {
+    // Try recruitment/kams endpoint first (has recruitment data)
+    const response = await axiosInstance.get('/recruitment/kams');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch KAM members:', error);
+    // Fallback to department/members
+    try {
+      const fallbackResponse = await axiosInstance.get('/department/members', {
+        params: { department, role: 'KAM' }
+      });
+      return fallbackResponse.data;
+    } catch (fallbackError) {
+      throw fallbackError.response?.data || { message: 'Failed to fetch KAM members' };
+    }
+  }
+};
+
+// Create new KAM member (uses /department/members)
+export const createKAMMember = async (kamData) => {
+  try {
+    const response = await axiosInstance.post('/department/members', {
+      name: kamData.name,
+      email: kamData.email,
+      phone: kamData.phone,
+      password: kamData.password || 'Mabicons@123',
+      department: kamData.department || 'HR Recruitment',
+      role: kamData.role || 'KAM - Recruitment',
+      supervisorId: kamData.supervisorId,
+      skills: kamData.skills,
+      targets: kamData.targets
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create KAM member:', error);
+    throw error.response?.data || { message: 'Failed to create KAM member' };
+  }
+};
+
+// Update KAM member (uses /department/members/:id)
+export const updateKAMMember = async (kamId, updateData) => {
+  try {
+    const response = await axiosInstance.put(`/department/members/${kamId}`, updateData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update KAM member:', error);
+    throw error.response?.data || { message: 'Failed to update KAM member' };
+  }
+};
+
+// Delete KAM member (uses /department/members/:id)
+export const deleteKAMMember = async (kamId) => {
+  try {
+    const response = await axiosInstance.delete(`/department/members/${kamId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete KAM member:', error);
+    throw error.response?.data || { message: 'Failed to delete KAM member' };
+  }
+};
+
+// Get KAM performance stats (uses /department/my-stats or stats)
+export const getKAMPerformance = async (kamId, period = 'month') => {
+  try {
+    const response = await axiosInstance.get(`/department/stats`, {
+      params: { memberId: kamId, period }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch KAM performance:', error);
+    throw error.response?.data || { message: 'Failed to fetch KAM performance' };
+  }
+};
+
+// Get team performance for recruitment head (uses /department/stats)
+export const getTeamPerformance = async (supervisorId, period = 'month') => {
+  try {
+    const response = await axiosInstance.get('/department/stats', {
+      params: { supervisorId, period }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch team performance:', error);
+    throw error.response?.data || { message: 'Failed to fetch team performance' };
+  }
+};
+
+// Assign task to KAM (uses /department/tasks)
+export const assignTaskToKAM = async (taskData) => {
+  try {
+    const response = await axiosInstance.post('/department/tasks', {
+      title: taskData.title,
+      description: taskData.description,
+      assignedTo: taskData.kamId,
+      priority: taskData.priority,
+      deadline: taskData.dueDate,
+      type: taskData.type,
+      department: 'HR Recruitment'
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to assign task:', error);
+    throw error.response?.data || { message: 'Failed to assign task' };
+  }
+};
+
+// Get KAM tasks (uses /department/tasks or /department/my-tasks)
+export const getKAMTasks = async (kamId, status) => {
+  try {
+    const response = await axiosInstance.get('/department/tasks', {
+      params: { assignedTo: kamId, status, department: 'HR Recruitment' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch KAM tasks:', error);
+    throw error.response?.data || { message: 'Failed to fetch KAM tasks' };
+  }
+};
+
+// ========== RECRUITMENT STATS & POSITIONS APIs ==========
+
+// Get recruitment statistics
+export const getRecruitmentStats = async (filters = {}) => {
+  try {
+    const response = await axiosInstance.get('/recruitment/stats', {
+      params: filters
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch recruitment stats:', error);
+    throw error.response?.data || { message: 'Failed to fetch recruitment stats' };
+  }
+};
+
+// Get all recruitment positions
+export const getAllRecruitmentPositions = async (filters = {}) => {
+  try {
+    const response = await axiosInstance.get('/recruitment/positions', {
+      params: filters
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch positions:', error);
+    throw error.response?.data || { message: 'Failed to fetch positions' };
+  }
+};
+
+// Create recruitment position
+export const createRecruitmentPosition = async (positionData) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/positions', positionData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create position:', error);
+    throw error.response?.data || { message: 'Failed to create position' };
+  }
+};
+
+// Update recruitment position
+export const updateRecruitmentPosition = async (positionId, updateData) => {
+  try {
+    const response = await axiosInstance.put(`/recruitment/positions/${positionId}`, updateData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update position:', error);
+    throw error.response?.data || { message: 'Failed to update position' };
+  }
+};
+
+// Delete recruitment position
+export const deleteRecruitmentPosition = async (positionId) => {
+  try {
+    const response = await axiosInstance.delete(`/recruitment/positions/${positionId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete position:', error);
+    throw error.response?.data || { message: 'Failed to delete position' };
+  }
+};
+
+// Get all candidates (pipeline view)
+export const getAllCandidates = async (filters = {}) => {
+  try {
+    const response = await axiosInstance.get('/recruitment/candidates', {
+      params: filters
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch candidates:', error);
+    throw error.response?.data || { message: 'Failed to fetch candidates' };
+  }
+};
+
+// Add a candidate
+export const addCandidate = async (candidateData) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/candidates', candidateData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to add candidate:', error);
+    throw error.response?.data || { message: 'Failed to add candidate' };
+  }
+};
+
+// Update candidate status (move through stages)
+export const updateCandidateStatus = async (candidateId, statusData) => {
+  try {
+    const response = await axiosInstance.put(`/recruitment/candidates/${candidateId}/status`, statusData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update candidate status:', error);
+    throw error.response?.data || { message: 'Failed to update candidate' };
+  }
+};
+
+// Get department team members
+export const getDepartmentTeamMembers = async (department) => {
+  try {
+    const response = await axiosInstance.get('/department/team-members', {
+      params: { department }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch team members:', error);
+    throw error.response?.data || { message: 'Failed to fetch team members' };
+  }
+};
+
+// Add department team member
+export const addDepartmentTeamMember = async (memberData) => {
+  try {
+    const response = await axiosInstance.post('/department/team-members', memberData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to add team member:', error);
+    throw error.response?.data || { message: 'Failed to add team member' };
+  }
+};
+
+// Update department team member
+export const updateDepartmentTeamMember = async (memberId, updateData) => {
+  try {
+    const response = await axiosInstance.put(`/department/team-members/${memberId}`, updateData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update team member:', error);
+    throw error.response?.data || { message: 'Failed to update team member' };
+  }
+};
+
+// Delete department team member
+export const deleteDepartmentTeamMember = async (memberId) => {
+  try {
+    const response = await axiosInstance.delete(`/department/team-members/${memberId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete team member:', error);
+    throw error.response?.data || { message: 'Failed to delete team member' };
+  }
+};
+
+// Get department stats
+export const getDepartmentStats = async (department) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/stats', {
+      params: { department },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department stats:', error);
+    throw error.response?.data || { message: 'Failed to fetch department stats' };
   }
 };
 
@@ -2583,112 +2843,6 @@ export const getKamsWithRecruitment = async () => {
   }
 };
 
-// Create a new recruitment position
-export const createRecruitmentPosition = async (positionData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruitment/positions', positionData, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error creating recruitment position:', error);
-    throw error.response?.data || {
-      message: 'Failed to create position'
-    };
-  }
-};
-
-// Update recruitment position
-export const updateRecruitmentPosition = async (positionId, updates) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.put(`/recruitment/positions/${positionId}`, updates, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating recruitment position:', error);
-    throw error.response?.data || {
-      message: 'Failed to update position'
-    };
-  }
-};
-
-// Add a candidate
-export const addCandidate = async (candidateData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruitment/candidates', candidateData, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error adding candidate:', error);
-    throw error.response?.data || {
-      message: 'Failed to add candidate'
-    };
-  }
-};
-
-// Update candidate status (share CV, shortlist, etc.)
-export const updateCandidateStatus = async (candidateId, statusData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.put(`/recruitment/candidates/${candidateId}/status`, statusData, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating candidate status:', error);
-    throw error.response?.data || {
-      message: 'Failed to update candidate'
-    };
-  }
-};
-
-// Get candidates for a position
-export const getCandidatesByPosition = async (positionId, status = null) => {
-  try {
-    const token = localStorage.getItem('token');
-    let url = `/recruitment/positions/${positionId}/candidates`;
-    if (status) url += `?status=${status}`;
-    
-    const response = await axiosInstance.get(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching candidates:', error);
-    throw error.response?.data || {
-      message: 'Failed to fetch candidates'
-    };
-  }
-};
-
-// Get recruitment stats for dashboard
-export const getRecruitmentStats = async () => {
-  try {
-    const response = await axiosInstance.get('/recruitment/stats');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching recruitment stats:', error);
-    throw error.response?.data || {
-      message: 'Failed to fetch stats'
-    };
-  }
-};
-
 // Get recruitment progress for a specific client (client-facing)
 export const getClientRecruitmentProgress = async (clientId) => {
   try {
@@ -2714,123 +2868,6 @@ export const getClientDashboardOverview = async (clientId) => {
   } catch (error) {
     console.error('Error fetching client dashboard overview:', error);
     throw error.response?.data || { message: 'Failed to fetch dashboard overview' };
-  }
-};
-
-// Get all recruitment positions (with filtering)
-export const getAllRecruitmentPositions = async (filters = {}) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/recruitment/positions', {
-      params: filters,
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching positions:', error);
-    throw error.response?.data || { message: 'Failed to fetch positions' };
-  }
-};
-
-// Delete a recruitment position
-export const deleteRecruitmentPosition = async (positionId) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.delete(`/recruitment/positions/${positionId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting position:', error);
-    throw error.response?.data || { message: 'Failed to delete position' };
-  }
-};
-
-// Get all candidates (pipeline view) with filters
-export const getAllCandidates = async (filters = {}) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/recruitment/candidates', {
-      params: filters,
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching candidates:', error);
-    throw error.response?.data || { message: 'Failed to fetch candidates' };
-  }
-};
-
-// ============== DEPARTMENT TEAM APIs ==============
-
-// Get all team members for a department
-export const getDepartmentTeamMembers = async (department) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/members', {
-      params: { department },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching team members:', error);
-    throw error.response?.data || { message: 'Failed to fetch team members' };
-  }
-};
-
-// Get single team member
-export const getDepartmentTeamMember = async (memberId) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/department/members/${memberId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching team member:', error);
-    throw error.response?.data || { message: 'Failed to fetch team member' };
-  }
-};
-
-// Add new team member
-export const addDepartmentTeamMember = async (memberData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/members', memberData, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error adding team member:', error);
-    throw error.response?.data || { message: 'Failed to add team member' };
-  }
-};
-
-// Update team member
-export const updateDepartmentTeamMember = async (memberId, updateData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.put(`/department/members/${memberId}`, updateData, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating team member:', error);
-    throw error.response?.data || { message: 'Failed to update team member' };
-  }
-};
-
-// Delete team member
-export const deleteDepartmentTeamMember = async (memberId) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.delete(`/department/members/${memberId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting team member:', error);
-    throw error.response?.data || { message: 'Failed to delete team member' };
   }
 };
 
@@ -2924,21 +2961,6 @@ export const deleteDepartmentTask = async (taskId) => {
   } catch (error) {
     console.error('Error deleting department task:', error);
     throw error.response?.data || { message: 'Failed to delete task' };
-  }
-};
-
-// Get department dashboard stats
-export const getDepartmentStats = async (department) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/stats', {
-      params: { department },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching department stats:', error);
-    throw error.response?.data || { message: 'Failed to fetch stats' };
   }
 };
 

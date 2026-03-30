@@ -104,14 +104,10 @@ const RatingStars = ({ rating, maxRating = 5 }) => (
 /* ══════════════════════════════════════════════════════ */
 const CACHE_KEY_CANDIDATES = 'cache_kamCandidates';
 
-const FALLBACK_CANDIDATES = [
-  { id: 1, name: 'Rahul Sharma', email: 'rahul.sharma@email.com', phone: '+91 98765 43210', location: 'Bangalore', jobTitle: 'Senior Software Engineer', client: 'TechCorp India', stage: 'Technical Round', rating: 4, experience: '5 years', currentCTC: '18 LPA', expectedCTC: '28 LPA', noticePeriod: '30 days', skills: ['React', 'Node.js', 'MongoDB'], appliedDate: '2026-03-12', lastActivity: '2026-03-17', photo: null, pipelineStatus: 'pending' },
-  { id: 2, name: 'Priya Singh', email: 'priya.singh@email.com', phone: '+91 87654 32109', location: 'Mumbai', jobTitle: 'Product Manager', client: 'StartupXYZ', stage: 'Client Interview', rating: 5, experience: '7 years', currentCTC: '25 LPA', expectedCTC: '38 LPA', noticePeriod: '60 days', skills: ['Agile', 'Roadmap', 'Analytics'], appliedDate: '2026-03-15', lastActivity: '2026-03-18', photo: null, pipelineStatus: 'pending' },
-];
-
 const CandidatePipelineTab = ({ isDarkMode }) => {
+  // Start with cached data or empty array - will fetch real data from API
   const [candidates, setCandidates] = useState(() => {
-    try { const c = localStorage.getItem(CACHE_KEY_CANDIDATES); return c ? JSON.parse(c) : FALLBACK_CANDIDATES; } catch { return FALLBACK_CANDIDATES; }
+    try { const c = localStorage.getItem(CACHE_KEY_CANDIDATES); return c ? JSON.parse(c) : []; } catch { return []; }
   });
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -417,10 +413,10 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
   // Filter candidates (advanced)
   const filteredCandidates = candidates.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (c.skills && c.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase())));
+    const matchesSearch = (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.jobTitle || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.skills && c.skills.some(skill => (skill || '').toLowerCase().includes(searchTerm.toLowerCase())));
     const matchesStage = filterStage === 'all' || c.stage === filterStage;
     const matchesJob = filterJob === 'all' || c.jobTitle === filterJob;
     const matchesClient = filterClient === 'all' || c.client === filterClient;
@@ -429,7 +425,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     return matchesSearch && matchesStage && matchesJob && matchesClient && matchesSource && matchesPipelineStatus;
   }).sort((a, b) => {
     let cmp = 0;
-    if (sortBy === 'name') cmp = a.name.localeCompare(b.name);
+    if (sortBy === 'name') cmp = (a.name || '').localeCompare(b.name || '');
     else if (sortBy === 'rating') cmp = (b.rating || 0) - (a.rating || 0);
     else if (sortBy === 'experience') cmp = (parseInt(a.experience) || 0) - (parseInt(b.experience) || 0);
     else cmp = new Date(b.appliedDate || 0) - new Date(a.appliedDate || 0);

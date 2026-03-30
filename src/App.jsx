@@ -17,6 +17,8 @@ import HROperationsDashboard from './Component/Pages/Dashboards/HROperationsDash
 import HRRecruitmentDashboard from './Component/Pages/Dashboards/HRRecruitmentDashboardNew'
 import DepartmentMemberDashboard from './Component/Pages/Dashboards/DepartmentMemberDashboard'
 import ClientModularDashboard from './Component/Pages/Dashboards/ClientModularDashboard'
+import RecruitmentHeadDashboard from './Component/Pages/Dashboards/RecruitmentHeadDashboard'
+import KAMMemberDashboard from './Component/Pages/Dashboards/KAMMemberDashboard'
 import ResetPassword from './Component/Pages/reset_password'
 import ForgotPassword from './Component/Pages/forgetpassword'
 import ClientLogin from './Component/Pages/ClientLogin'
@@ -88,6 +90,20 @@ function App() {
         <ProtectedRoute allowedRoles={['employee']}>
           <EmployeeDashboard />
         </ProtectedRoute>
+      } />
+      
+      {/* Recruitment Head Dashboard - Sachin */}
+      <Route path='/recruitment-head-dashboard' element={
+        <DepartmentProtectedRoute allowedDepartment="HR Recruitment">
+          <RecruitmentHeadDashboard />
+        </DepartmentProtectedRoute>
+      } />
+      
+      {/* KAM Member Dashboard - Priyanshi, Manju, Jyoti */}
+      <Route path='/kam-member-dashboard' element={
+        <DepartmentProtectedRoute allowedDepartment="HR Recruitment">
+          <KAMMemberDashboard />
+        </DepartmentProtectedRoute>
       } />
      
     </Routes>

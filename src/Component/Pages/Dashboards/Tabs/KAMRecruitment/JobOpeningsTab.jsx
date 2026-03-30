@@ -31,7 +31,7 @@ import {
   FiPhone,
   FiStar,
 } from 'react-icons/fi';
-import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition } from '../../../service/api';
+import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers } from '../../../service/api';
 
 /* ── Status Badge ── */
 const StatusBadge = ({ status }) => {
@@ -68,17 +68,8 @@ const PriorityBadge = ({ priority }) => {
   );
 };
 
-/* ── Active Clients List ── */
-const ACTIVE_CLIENTS = [
-  'Solar91 & Battfit',
-  'Infrared Power',
-  'Johns Electric',
-  'New Shop - Anusuya Enterprises',
-  'Solar One Energy',
-];
-
 /* ── Assign Task Modal ── */
-const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign }) => {
+const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] }) => {
   const [taskTitle, setTaskTitle] = useState('');
   const [assignee, setAssignee] = useState('');
   const [taskPriority, setTaskPriority] = useState('Medium');
@@ -100,12 +91,6 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign }) => {
     { value: 'High', color: '#ef4444', bg: isDarkMode ? 'bg-red-900/30 border-red-700/50 text-red-400' : 'bg-red-50 border-red-200 text-red-600', icon: '🔴' },
     { value: 'Medium', color: '#f59e0b', bg: isDarkMode ? 'bg-[#1E88E5]/30 border-[#1E88E5]/50 text-[#3FA9F5]' : 'bg-[#1E88E5]/10 border-[#1E88E5]/30 text-[#1E88E5]', icon: '🟡' },
     { value: 'Low', color: '#10b981', bg: isDarkMode ? 'bg-emerald-900/30 border-emerald-700/50 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600', icon: '🟢' },
-  ];
-
-  const teamMembers = [
-    { id: 'recruiter1', name: 'Priya Sharma', role: 'Recruiter', avatar: 'PS', color: '#1E88E5' },
-    { id: 'recruiter2', name: 'Rahul Verma', role: 'Recruiter', avatar: 'RV', color: '#1E88E5' },
-    { id: 'lead1', name: 'Anita Singh', role: 'Team Lead', avatar: 'AS', color: '#1E88E5' },
   ];
 
   const handleSubmit = () => {
@@ -474,27 +459,17 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
 /* ══════════════════════════════════════════════════════ */
 const CACHE_KEY_JOBS = 'cache_kamJobOpenings';
 const CACHE_KEY_ROLES = 'cache_kamRoleTypes';
-
-const FALLBACK_JOBS = [
-  { id: 1, title: 'Senior Software Engineer', client: 'TechCorp India', clientLogo: 'TC', location: 'Bangalore', type: 'Full-time', salary: '25-35 LPA', openings: 5, filled: 2, status: 'Open', priority: 'High', postedDate: '2026-03-10', deadline: '2026-04-10', experience: '5-8 years', skills: ['React', 'Node.js', 'MongoDB'], description: 'Senior Software Engineer position for TechCorp India.', roleType: 'Engineer' },
-  { id: 2, title: 'Product Manager', client: 'StartupXYZ', clientLogo: 'SX', location: 'Mumbai', type: 'Full-time', salary: '30-40 LPA', openings: 2, filled: 0, status: 'Urgent', priority: 'High', postedDate: '2026-03-15', deadline: '2026-03-30', experience: '6-10 years', skills: ['Agile', 'Roadmap', 'Analytics'], description: 'Product Manager for StartupXYZ.', roleType: 'Manager' },
-  { id: 3, title: 'UI/UX Designer', client: 'DesignHub', clientLogo: 'DH', location: 'Remote', type: 'Contract', salary: '15-20 LPA', openings: 3, filled: 1, status: 'In Progress', priority: 'Medium', postedDate: '2026-03-12', deadline: '2026-04-15', experience: '3-5 years', skills: ['Figma', 'Adobe XD', 'User Research'], description: 'UI/UX Designer for DesignHub.', roleType: 'Graphic Designer' },
-  { id: 4, title: 'Data Analyst', client: 'DataDriven Co', clientLogo: 'DD', location: 'Hyderabad', type: 'Full-time', salary: '12-18 LPA', openings: 4, filled: 4, status: 'Closed', priority: 'Low', postedDate: '2026-02-20', deadline: '2026-03-20', experience: '2-4 years', skills: ['SQL', 'Python', 'Tableau'], description: 'Data Analyst for DataDriven Co.', roleType: 'Data Management and Analyst' },
-  { id: 5, title: 'DevOps Engineer', client: 'CloudScale', clientLogo: 'CS', location: 'Pune', type: 'Full-time', salary: '20-28 LPA', openings: 2, filled: 0, status: 'On Hold', priority: 'Medium', postedDate: '2026-03-05', deadline: '2026-04-05', experience: '4-6 years', skills: ['AWS', 'Docker', 'Kubernetes'], description: 'DevOps Engineer for CloudScale.', roleType: 'Engineer' },
-];
-
-const FALLBACK_ROLES = [
-  { role: 'Sales&Marketing', count: 352 }, { role: 'Engineer', count: 261 }, { role: 'Accountant', count: 203 },
-  { role: 'ITI', count: 165 }, { role: 'HR', count: 119 }, { role: 'Fresher', count: 113 },
-  { role: 'Solar', count: 104 }, { role: 'Tele sales &CRM', count: 99 }, { role: 'Back Office', count: 77 },
-  { role: 'Finance', count: 57 }, { role: 'Data Management and Analyst', count: 56 }, { role: 'Graphic Designer', count: 55 },
-];
+const CACHE_KEY_CLIENTS = 'cache_kamClients';
 
 const JobOpeningsTab = ({ isDarkMode }) => {
-  // Always show data instantly — cached, or fallback mock
+  // Start with cached data or empty arrays - will fetch real data from API
   const [jobs, setJobs] = useState(() => {
-    try { const c = localStorage.getItem(CACHE_KEY_JOBS); return c ? JSON.parse(c) : FALLBACK_JOBS; } catch { return FALLBACK_JOBS; }
+    try { const c = localStorage.getItem(CACHE_KEY_JOBS); return c ? JSON.parse(c) : []; } catch { return []; }
   });
+  const [clients, setClients] = useState(() => {
+    try { const c = localStorage.getItem(CACHE_KEY_CLIENTS); return c ? JSON.parse(c) : []; } catch { return []; }
+  });
+  const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -516,13 +491,45 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [selectedResumes, setSelectedResumes] = useState(new Set());
   const [resumeFetchLoading, setResumeFetchLoading] = useState(false);
   const [roleTypes, setRoleTypes] = useState(() => {
-    try { const c = localStorage.getItem(CACHE_KEY_ROLES); return c ? JSON.parse(c) : FALLBACK_ROLES; } catch { return FALLBACK_ROLES; }
+    try { const c = localStorage.getItem(CACHE_KEY_ROLES); return c ? JSON.parse(c) : []; } catch { return []; }
   });
   const [roleTypesLoading, setRoleTypesLoading] = useState(false);
   const [newJobForm, setNewJobForm] = useState({
     title: '', client: '', location: '', type: 'Full-time', salary: '',
     openings: 1, experience: '', priority: 'Medium', deadline: '', skills: '', description: '', roleType: ''
   });
+
+  // ── Fetch clients from backend ──
+  const fetchClients = async () => {
+    try {
+      const response = await getAllClients();
+      const clientsData = (response.clients || response.data || []).map(c => ({
+        id: c._id || c.id,
+        name: c.companyName || c.name || c.clientName || 'Unknown',
+      }));
+      setClients(clientsData);
+      try { localStorage.setItem(CACHE_KEY_CLIENTS, JSON.stringify(clientsData)); } catch {}
+    } catch (error) {
+      console.error('Failed to fetch clients:', error);
+    }
+  };
+
+  // ── Fetch team members from backend ──
+  const fetchTeamMembers = async () => {
+    try {
+      const response = await getDepartmentTeamMembers('recruitment');
+      const members = (response.members || response.data || []).map(m => ({
+        id: m._id || m.id,
+        name: m.name || m.fullName || 'Unknown',
+        role: m.role || m.position || 'Team Member',
+        avatar: (m.name || 'U').substring(0, 2).toUpperCase(),
+        color: '#1E88E5',
+      }));
+      setTeamMembers(members);
+    } catch (error) {
+      console.error('Failed to fetch team members:', error);
+    }
+  };
 
   // ── Fetch positions from backend (always background) ──
   const fetchPositions = async () => {
@@ -564,6 +571,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
   useEffect(() => {
     fetchPositions();
+    fetchClients();
+    fetchTeamMembers();
   }, []);
 
   useEffect(() => {
@@ -811,13 +820,13 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   };
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (job.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (job.client || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (job.location || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClient = filterClient === 'all' || job.client === filterClient;
-    const matchesPosition = filterPosition === 'all' || (filterPosition === 'Open' ? job.filled < job.openings : job.filled >= job.openings);
+    const matchesPosition = filterPosition === 'all' || (filterPosition === 'Open' ? (job.filled || 0) < (job.openings || 1) : (job.filled || 0) >= (job.openings || 1));
     let matchesDate = true;
-    if (filterDate !== 'all') {
+    if (filterDate !== 'all' && job.postedDate) {
       const jobDate = new Date(job.postedDate);
       const now = new Date();
       if (filterDate === 'week') {
@@ -945,8 +954,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                         className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
                       >
                         <option value="">Select Client</option>
-                        {ACTIVE_CLIENTS.map(c => (
-                          <option key={c} value={c}>{c}</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
                         ))}
                       </select>
                     </div>
@@ -1182,7 +1191,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="w-full"
           >
-            <AssignTaskModal isDarkMode={isDarkMode} job={assignTaskJob} onClose={() => setAssignTaskJob(null)} onAssign={handleAssignTask} />
+            <AssignTaskModal isDarkMode={isDarkMode} job={assignTaskJob} onClose={() => setAssignTaskJob(null)} onAssign={handleAssignTask} teamMembers={teamMembers} />
           </motion.div>
         ) : selectedJob ? (
           <motion.div
@@ -1300,7 +1309,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     <select value={filterClient} onChange={(e) => setFilterClient(e.target.value)}
                       className={`appearance-none w-full rounded-xl border-2 px-4 py-3 pr-10 text-base font-medium cursor-pointer focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
                       <option value="all">All Clients</option>
-                      {ACTIVE_CLIENTS.map(c => (<option key={c} value={c}>{c}</option>))}
+                      {clients.map(c => (<option key={c.id} value={c.name}>{c.name}</option>))}
                     </select>
                     <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   </div>

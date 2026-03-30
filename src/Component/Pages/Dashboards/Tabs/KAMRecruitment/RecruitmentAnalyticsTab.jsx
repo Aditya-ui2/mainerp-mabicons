@@ -87,6 +87,7 @@ const ProgressRing = ({ percentage, size = 80, strokeWidth = 8, gradient }) => {
 /* ══════════════════════════════════════════════════════ */
 const RecruitmentAnalyticsTab = ({ isDarkMode }) => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [dateRange, setDateRange] = useState('this-month');
   const [analytics, setAnalytics] = useState(null);
 
@@ -94,6 +95,7 @@ const RecruitmentAnalyticsTab = ({ isDarkMode }) => {
   const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await getRecruitmentStats();
       if (res?.success && res.data) {
         const d = res.data;
@@ -141,15 +143,8 @@ const RecruitmentAnalyticsTab = ({ isDarkMode }) => {
       }
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
-      // Fallback mock data
-      setAnalytics({
-        summary: { totalOpenings: 0, openingsTrend: 0, activeOpenings: 0, totalApplications: 0, applicationsTrend: 0, hiredThisMonth: 0, hiredTrend: 0, avgTimeToHire: 0, timeTrend: 0 },
-        funnelMetrics: { applied: 0, screened: 0, interviewed: 0, offered: 0, hired: 0 },
-        sourceAnalysis: [],
-        positionMetrics: [],
-        clientMetrics: [],
-        monthlyTrend: [],
-      });
+      setError(error.message || 'Failed to load analytics');
+      setAnalytics(null);
     } finally {
       setLoading(false);
     }
@@ -186,6 +181,24 @@ const RecruitmentAnalyticsTab = ({ isDarkMode }) => {
             <div key={i} className={`h-64 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error || !analytics) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20" style={{ fontFamily: 'Calibri, sans-serif' }}>
+        <div className="p-4 rounded-full bg-red-100 mb-4">
+          <FiBarChart2 className="w-8 h-8 text-red-500" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">Failed to Load Analytics</h3>
+        <p className="text-gray-500 mb-4">{error || 'Unable to fetch recruitment statistics'}</p>
+        <button
+          onClick={fetchAnalytics}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <FiRefreshCw className="w-4 h-4" /> Retry
+        </button>
       </div>
     );
   }
