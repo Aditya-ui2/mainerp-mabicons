@@ -2084,6 +2084,42 @@ export const updateInterviewStatus = async (interviewId, statusData) => {
   }
 };
 
+export const updateInterview = async (interviewId, interviewData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put(`/interview/${interviewId}`, interviewData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update interview:', error);
+    throw error.response?.data || {
+      message: 'Failed to update interview. Please try again.'
+    };
+  }
+};
+
+// Delete interview permanently
+export const deleteInterview = async (interviewId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete(`/interview/${interviewId}/hard`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete interview:', error);
+    throw error.response?.data || {
+      message: 'Failed to delete interview. Please try again.'
+    };
+  }
+};
+
 // Send interview reminder
 export const sendInterviewReminder = async (interviewId) => {
   try {
@@ -2527,9 +2563,7 @@ export const getAllCandidates = async (filters = {}) => {
 // Add a candidate
 export const addCandidate = async (candidateData) => {
   try {
-    const response = await axiosInstance.post('/recruitment/candidates', candidateData, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await axiosInstance.post('/recruitment/candidates', candidateData);
     return response.data;
   } catch (error) {
     console.error('Failed to add candidate:', error);
@@ -2553,7 +2587,7 @@ export const updateCandidateStatus = async (candidateId, statusData) => {
 // Get department team members
 export const getDepartmentTeamMembers = async (department) => {
   try {
-    const response = await axiosInstance.get('/department/team-members', {
+    const response = await axiosInstance.get('/department/members', {
       params: { department }
     });
     return response.data;
@@ -2600,20 +2634,7 @@ export const deleteDepartmentTeamMember = async (memberId) => {
   }
 };
 
-// Get department stats
-export const getDepartmentStats = async (department) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/stats', {
-      params: { department },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Failed to fetch department stats:', error);
-    throw error.response?.data || { message: 'Failed to fetch department stats' };
-  }
-};
+
 
 // Then, include it in the default export
 const api = {

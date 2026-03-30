@@ -34,7 +34,13 @@ import {
   scheduleNewInterview, 
   sendInterviewReminder,
   cancelInterview as cancelInterviewAPI,
-  updateInterviewStatus 
+  deleteInterview,
+  updateInterview,
+  updateInterviewStatus,
+  getAllCandidates,
+  getAllRecruitmentPositions,
+  getAllClients,
+  getDepartmentTeamMembers
 } from '../../../service/api';
 
 /* ── Generate unique Google Meet link ── */
@@ -112,12 +118,26 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState(null);
   const [toast, setToast] = useState(null);
+  const [availableCandidates, setAvailableCandidates] = useState([]);
+  const [availablePositions, setAvailablePositions] = useState([]);
+  const [availableClients, setAvailableClients] = useState([]);
+  const [availableInterviewers, setAvailableInterviewers] = useState([]);
+  const [showCandidateSuggestions, setShowCandidateSuggestions] = useState(false);
+  const [showPositionSuggestions, setShowPositionSuggestions] = useState(false);
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const [showInterviewerSuggestions, setShowInterviewerSuggestions] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [interviewIdToCancel, setInterviewIdToCancel] = useState(null);
+  const [modalActionType, setModalActionType] = useState('cancel'); // 'cancel' or 'delete'
   
   // NEW STATE FOR FULL PAGE FORM
   const [showFullPageForm, setShowFullPageForm] = useState(false);
   const [editingInterview, setEditingInterview] = useState(null);
   
   const [newInterview, setNewInterview] = useState({
+    candidateId: '',
+    positionId: '',
+    clientId: '',
     candidateName: '',
     candidateEmail: '',
     position: '',
@@ -173,6 +193,30 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
 
   useEffect(() => {
     fetchInterviews();
+    
+    const fetchRecruitmentData = async () => {
+      try {
+        const [candidatesData, positionsData, clientsData, hrRecData, hrOpsData] = await Promise.all([
+          getAllCandidates(),
+          getAllRecruitmentPositions(),
+          getAllClients(),
+          getDepartmentTeamMembers('HR Recruitment'),
+          getDepartmentTeamMembers('HR Operations')
+        ]);
+        setAvailableCandidates(candidatesData.data || []);
+        setAvailablePositions(positionsData.data || []);
+        setAvailableClients(clientsData.data || []);
+        
+        const hrStaff = [
+          ...(hrRecData.data || []),
+          ...(hrOpsData.data || [])
+        ];
+        setAvailableInterviewers(hrStaff);
+      } catch (err) {
+        console.error('Failed to fetch recruitment data:', err);
+      }
+    };
+    fetchRecruitmentData();
   }, []);
 
   // Listen for approved candidates from CandidatePipelineTab
@@ -321,6 +365,9 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
     // Try to save to backend
     try {
       const apiData = {
+        candidateId: newInterview.candidateId,
+        positionId: newInterview.positionId,
+        clientId: newInterview.clientId,
         candidateName: newInterview.candidateName,
         candidateEmail: newInterview.candidateEmail,
         interviewType: newInterview.round,
@@ -333,15 +380,28 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
         positionTitle: newInterview.position,
         clientName: newInterview.client,
       };
+
+      console.log('Sending interview data to backend:', apiData);
       
-      if (editingInterview) {
-        // Update existing interview
-        await updateInterviewStatus(editingInterview.id, apiData);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingInterview?.id);
+
+      if (editingInterview && isUuid) {
+        // Update existing interview in backend
+        await updateInterview(editingInterview.id, apiData);
         setInterviews(prev => prev.map(i => i.id === editingInterview.id ? interview : i));
       } else {
+        // This is either a brand new interview OR a local record that hasn't been saved to backend yet
         const result = await scheduleNewInterview(apiData);
-        if (result.data?._id) interview.id = result.data._id;
-        setInterviews(prev => [interview, ...prev]);
+        if (result.success && result.data?.id) {
+            interview.id = result.data.id;
+        }
+        
+        if (editingInterview) {
+            // Replace the local record with the new backend-synchronized record
+            setInterviews(prev => prev.map(i => i.id === editingInterview.id ? interview : i));
+        } else {
+            setInterviews(prev => [interview, ...prev]);
+        }
       }
     } catch (error) {
       console.error('Backend operation failed, saving locally:', error);
@@ -444,17 +504,33 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
     }, 1000);
   };
 
-  // Cancel interview
-  const handleCancelInterview = async (interviewId) => {
+  // Open Action Confirmation (Cancel or Delete)
+  const handleOpenActionModal = (interviewId, actionType = 'cancel') => {
+    setInterviewIdToCancel(interviewId);
+    setModalActionType(actionType);
+    setShowCancelConfirm(true);
+  };
+
+  // Execute Action (Cancel or Delete)
+  const handleConfirmAction = async () => {
+    if (!interviewIdToCancel) return;
+    
     try {
-      await cancelInterviewAPI(interviewId);
-      setInterviews(prev => prev.map(i => i.id === interviewId ? { ...i, status: 'Cancelled' } : i));
-      setToast('Interview cancelled successfully!');
-      setTimeout(() => setToast(null), 2000);
+      if (modalActionType === 'delete') {
+        await deleteInterview(interviewIdToCancel);
+        setInterviews(prev => prev.filter(i => i.id !== interviewIdToCancel));
+        setToast('Interview deleted permanently!');
+      } else {
+        await cancelInterviewAPI(interviewIdToCancel);
+        setInterviews(prev => prev.map(i => i.id === interviewIdToCancel ? { ...i, status: 'Cancelled' } : i));
+        setToast('Interview cancelled successfully!');
+      }
     } catch (error) {
-      console.error('Cancel interview failed:', error);
-      setInterviews(prev => prev.map(i => i.id === interviewId ? { ...i, status: 'Cancelled' } : i));
-      setToast('Interview cancelled!');
+      console.error(`Action ${modalActionType} failed:`, error);
+      setToast(`Failed to ${modalActionType} interview.`);
+    } finally {
+      setShowCancelConfirm(false);
+      setInterviewIdToCancel(null);
       setTimeout(() => setToast(null), 2000);
     }
   };
@@ -528,15 +604,70 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
                     </span>
                   </div>
                   
-                  <div>
+                  <div className="relative">
                     <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Candidate Name *</label>
                     <input
                       type="text"
                       value={newInterview.candidateName}
-                      onChange={(e) => setNewInterview(prev => ({ ...prev, candidateName: e.target.value }))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewInterview(prev => ({ ...prev, candidateName: val }));
+                        setShowCandidateSuggestions(val.length > 0);
+                      }}
+                      onFocus={() => setShowCandidateSuggestions(newInterview.candidateName.length > 0)}
                       className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                       placeholder="Enter candidate name"
                     />
+                    
+                    {/* Candidate Suggestions Dropdown */}
+                    <AnimatePresence>
+                      {showCandidateSuggestions && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
+                        >
+                          {availableCandidates
+                            .filter(c => {
+                              const search = (newInterview.candidateName || '').toLowerCase().trim();
+                              return (c.name || '').toLowerCase().includes(search) || 
+                                     (c.email || '').toLowerCase().includes(search);
+                            })
+                            .map((candidate) => (
+                              <button
+                                key={candidate.id}
+                                className={`w-full text-left px-4 py-3 flex flex-col transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
+                                onClick={() => {
+                                  setNewInterview(prev => ({
+                                    ...prev,
+                                    candidateId: candidate.id,
+                                    candidateName: candidate.name,
+                                    candidateEmail: candidate.email || '',
+                                    positionId: candidate.positionId || '',
+                                    position: candidate.position?.title || candidate.jobTitle || '',
+                                    clientId: candidate.clientId || '',
+                                    client: (candidate.client?.companyName || candidate.client?.name) || '',
+                                  }));
+                                  setShowCandidateSuggestions(false);
+                                }}
+                              >
+                                <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{candidate.name}</span>
+                                <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{candidate.email} • {candidate.jobTitle || 'No Title'}</span>
+                              </button>
+                            ))}
+                          {availableCandidates.filter(c => {
+                            const search = (newInterview.candidateName || '').toLowerCase().trim();
+                            return (c.name || '').toLowerCase().includes(search) || 
+                                   (c.email || '').toLowerCase().includes(search);
+                          }).length === 0 && (
+                            <div className={`p-4 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                              No matching candidates found
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div>
@@ -562,26 +693,100 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
                     </span>
                   </div>
                   
-                  <div>
+                  <div className="relative">
                     <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Position</label>
                     <input
                       type="text"
                       value={newInterview.position}
-                      onChange={(e) => setNewInterview(prev => ({ ...prev, position: e.target.value }))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewInterview(prev => ({ ...prev, position: val }));
+                        setShowPositionSuggestions(val.length > 0);
+                      }}
+                      onFocus={() => setShowPositionSuggestions(newInterview.position.length > 0)}
                       className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                       placeholder="e.g., Senior Software Engineer"
                     />
+                    
+                    {/* Position Suggestions Dropdown */}
+                    <AnimatePresence>
+                      {showPositionSuggestions && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
+                        >
+                          {availablePositions
+                            .filter(p => (p.title || '').toLowerCase().includes((newInterview.position || '').toLowerCase().trim()))
+                            .map((pos) => (
+                              <button
+                                key={pos.id}
+                                className={`w-full text-left px-4 py-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
+                                onClick={() => {
+                                  setNewInterview(prev => ({
+                                    ...prev,
+                                    positionId: pos.id,
+                                    position: pos.title,
+                                    clientId: pos.clientId || prev.clientId,
+                                    client: pos.client?.companyName || pos.client?.name || prev.client
+                                  }));
+                                  setShowPositionSuggestions(false);
+                                }}
+                              >
+                                <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{pos.title}</span>
+                              </button>
+                            ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
-                  <div>
+                  <div className="relative">
                     <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client</label>
                     <input
                       type="text"
                       value={newInterview.client}
-                      onChange={(e) => setNewInterview(prev => ({ ...prev, client: e.target.value }))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewInterview(prev => ({ ...prev, client: val }));
+                        setShowClientSuggestions(val.length > 0);
+                      }}
+                      onFocus={() => setShowClientSuggestions(newInterview.client.length > 0)}
                       className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                       placeholder="e.g., TechCorp India"
                     />
+                    
+                    {/* Client Suggestions Dropdown */}
+                    <AnimatePresence>
+                      {showClientSuggestions && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
+                        >
+                          {availableClients
+                            .filter(cl => (cl.companyName || cl.name || '').toLowerCase().includes((newInterview.client || '').toLowerCase().trim()))
+                            .map((cl) => (
+                              <button
+                                key={cl.id}
+                                className={`w-full text-left px-4 py-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
+                                onClick={() => {
+                                  setNewInterview(prev => ({
+                                    ...prev,
+                                    clientId: cl.id,
+                                    client: cl.companyName || cl.name
+                                  }));
+                                  setShowClientSuggestions(false);
+                                }}
+                              >
+                                <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{cl.companyName || cl.name}</span>
+                              </button>
+                            ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div>
@@ -702,15 +907,53 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
 
                   {/* Interviewer Details */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
+                    <div className="relative">
                       <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interviewer Name</label>
                       <input
                         type="text"
                         value={newInterview.interviewer}
-                        onChange={(e) => setNewInterview(prev => ({ ...prev, interviewer: e.target.value }))}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewInterview(prev => ({ ...prev, interviewer: val }));
+                          setShowInterviewerSuggestions(val.length > 0);
+                        }}
+                        onFocus={() => setShowInterviewerSuggestions(newInterview.interviewer.length > 0)}
                         className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                         placeholder="Interviewer name"
                       />
+                      
+                      {/* Interviewer Suggestions Dropdown */}
+                      <AnimatePresence>
+                        {showInterviewerSuggestions && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
+                          >
+                            {availableInterviewers
+                              .filter(hr => (hr.name || '').toLowerCase().includes((newInterview.interviewer || '').toLowerCase().trim()))
+                              .map((hr) => (
+                                <button
+                                  key={hr.id}
+                                  type="button"
+                                  className={`w-full text-left px-4 py-3 flex flex-col transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
+                                  onClick={() => {
+                                    setNewInterview(prev => ({
+                                      ...prev,
+                                      interviewer: hr.name,
+                                      interviewerRole: hr.role || 'HR Executive'
+                                    }));
+                                    setShowInterviewerSuggestions(false);
+                                  }}
+                                >
+                                  <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{hr.name}</span>
+                                  <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{hr.department} • {hr.role}</span>
+                                </button>
+                              ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                     <div>
                       <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Role</label>
@@ -1007,10 +1250,15 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
                                   <motion.button
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
-                                    onClick={() => handleCancelInterview(interview.id)}
+                                    onClick={() => handleOpenActionModal(interview.id, interview.status === 'Cancelled' ? 'delete' : 'cancel')}
+                                    title={interview.status === 'Cancelled' ? "Delete Interview" : "Cancel Interview"}
                                     className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900/40 text-slate-400 hover:text-red-400' : 'hover:bg-red-100 text-slate-500 hover:text-red-600'}`}
                                   >
-                                    <FiXCircle className="w-4 h-4" />
+                                    {interview.status === 'Cancelled' ? (
+                                      <FiTrash2 className="w-4 h-4" />
+                                    ) : (
+                                      <FiXCircle className="w-4 h-4" />
+                                    )}
                                   </motion.button>
                                 </div>
                               </div>
@@ -1076,6 +1324,80 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
                 </div>
               </motion.div>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Confirmation Modals ── */}
+      <AnimatePresence>
+        {/* Feedback Modal */}
+        {showFeedbackModal && (
+          <InterviewFeedbackModal
+            isOpen={showFeedbackModal}
+            onClose={() => setShowFeedbackModal(false)}
+            interview={selectedInterview}
+            isDarkMode={isDarkMode}
+            onFeedbackSubmitted={handleFeedbackSubmitted}
+          />
+        )}
+
+        {/* Cancellation Confirmation Modal */}
+        {showCancelConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`w-full max-w-sm rounded-2xl p-6 shadow-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}
+            >
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className={`p-4 rounded-full ${modalActionType === 'delete' ? (isDarkMode ? 'bg-red-900/30' : 'bg-red-50') : (isDarkMode ? 'bg-red-900/30' : 'bg-red-100')}`}>
+                  {modalActionType === 'delete' ? (
+                    <FiTrash2 className="w-8 h-8 text-red-500" />
+                  ) : (
+                    <FiXCircle className="w-8 h-8 text-red-500" />
+                  )}
+                </div>
+                <div>
+                  <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                    {modalActionType === 'delete' ? 'Delete Interview?' : 'Cancel Interview?'}
+                  </h3>
+                  <p className={`text-sm mt-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {modalActionType === 'delete' 
+                      ? 'Are you sure you want to permanently delete this interview record? This cannot be undone.'
+                      : 'Are you sure you want to cancel this interview? This action cannot be undone.'}
+                  </p>
+                </div>
+                <div className="flex flex-col w-full gap-3 mt-2">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleConfirmAction}
+                    className="w-full py-3 rounded-xl bg-red-500 text-white font-semibold shadow-lg shadow-red-500/20 hover:bg-red-600 transition-colors"
+                  >
+                    {modalActionType === 'delete' ? 'Yes, Delete Permanently' : 'Yes, Cancel Interview'}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setShowCancelConfirm(false);
+                      setInterviewIdToCancel(null);
+                    }}
+                    className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+                      isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {modalActionType === 'delete' ? 'No, Keep Record' : 'No, Keep Interview'}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -46,7 +46,7 @@ import {
   FiUserX,
   FiFilter as FiFilterIcon,
 } from 'react-icons/fi';
-import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus } from '../../../service/api';
+import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions } from '../../../service/api';
 
 /* ── Stage Badge ── */
 const StageBadge = ({ stage }) => {
@@ -125,7 +125,16 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     expectedCTC: '',
     noticePeriod: '30 days',
     skills: '',
+    positionId: '',
+    clientId: '',
+    roleType: '',
   });
+  const [resumeFile, setResumeFile] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // Role Types for the Resume Bank
+  const [roleTypes, setRoleTypes] = useState([]);
+  const [roleTypesLoading, setRoleTypesLoading] = useState(false);
 
   // Job Openings from localStorage (synced from JobOpeningsTab)
   const [jobOpenings, setJobOpenings] = useState([]);
@@ -180,14 +189,34 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
   // Read job openings from localStorage
   useEffect(() => {
-    const storedJobs = localStorage.getItem('kamJobOpenings');
-    if (storedJobs) {
+    // Fetch real positions from API
+    const fetchPositions = async () => {
       try {
-        setJobOpenings(JSON.parse(storedJobs));
-      } catch (e) {
-        console.error('Failed to parse job openings from localStorage');
+        const response = await getAllRecruitmentPositions();
+        if (response.success && Array.isArray(response.data)) {
+          const positions = response.data.map(p => ({
+            id: p.id,
+            title: p.title,
+            client: p.clientName || 'Unknown Client',
+            clientId: p.clientId,
+            openings: p.openings || 1,
+            filled: p.filled || 0,
+            roleType: p.roleType
+          }));
+          setJobOpenings(positions);
+          localStorage.setItem('kamJobOpenings', JSON.stringify(positions));
+        }
+      } catch (err) {
+        console.error('Failed to fetch recruitment positions:', err);
+        // Fallback to localStorage if API fails
+        const storedJobs = localStorage.getItem('kamJobOpenings');
+        if (storedJobs) {
+          setJobOpenings(JSON.parse(storedJobs));
+        }
       }
-    }
+    };
+
+    fetchPositions();
 
     // Check for resumes selected from JobOpeningsTab
     const selectedData = localStorage.getItem('kamSelectedResumes');
@@ -269,6 +298,32 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
+  // Fetch Role Types
+  useEffect(() => {
+    const fetchRoles = async () => {
+      setRoleTypesLoading(true);
+      try {
+        const response = await getResumeRoleTypes();
+        const rolesData = response.data || response.roles || [];
+        const mapped = rolesData.map(r => ({ role: r.role || r.name || r.roleType || '', count: r.count || 0 }));
+        setRoleTypes(mapped);
+      } catch (err) {
+        console.error('Failed to fetch role types:', err);
+      } finally {
+        setRoleTypesLoading(false);
+      }
+    };
+    fetchRoles();
+  }, []);
+
+  // Auto-fetch Resume Bank suggestions when roleType changes in modal
+  useEffect(() => {
+    if (showAddModal && newCandidate.roleType) {
+      const searchTerm = newCandidate.roleType.split(' (')[0];
+      fetchResumeBankMatches(searchTerm);
+    }
+  }, [showAddModal, newCandidate.roleType]);
+
   // Fetch matching resumes from Resume Bank
   const fetchResumeBankMatches = async (roleKeyword) => {
     setResumeBankLoading(true);
@@ -347,7 +402,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
       const res = await getAllCandidates(filters);
       if (res?.success && res.data) {
         const mapped = res.data.map(c => ({
-          id: c._id,
+          id: c.id || c._id,
           name: c.name,
           email: c.email,
           phone: c.phone || '',
@@ -367,8 +422,8 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
           pipelineStatus: c.pipelineStatus || 'pending',
           rejectionReason: c.rejectionReason || '',
           source: c.source || '',
-          positionId: c.position?._id,
-          clientId: c.client?._id,
+          positionId: c.position?.id || c.position?._id,
+          clientId: c.client?.id || c.client?._id,
         }));
         setCandidates(mapped);
         try { localStorage.setItem(CACHE_KEY_CANDIDATES, JSON.stringify(mapped)); } catch { }
@@ -614,81 +669,141 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
   };
 
   // ── Approve candidate → push to Interview Schedule ──
-  const handleApproveCandidate = () => {
+  const handleApproveCandidate = async () => {
     const candidate = candidates.find(c => c.id === approveCandidateId);
     if (!candidate) return;
 
-    const now = new Date().toISOString().split('T')[0];
-    // Update pipeline status to approved in backend
-    updateCandidateStatus(approveCandidateId, { pipelineStatus: 'approved' }).catch(err => console.error('Failed to approve:', err));
-    // Update pipeline status to approved
-    setCandidates(prev => prev.map(c => c.id === approveCandidateId ? { ...c, pipelineStatus: 'approved', lastActivity: now } : c));
+    try {
+      const now = new Date().toISOString().split('T')[0];
+      const interviewDate = approveInterviewDate || new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0];
+      const startTime = approveInterviewTime || '10:00 AM';
 
-    // Create interview entry and push to localStorage for InterviewScheduleTab
-    const interviewEntry = {
-      id: Date.now(),
-      candidateName: candidate.name,
-      candidateEmail: candidate.email,
-      position: candidate.jobTitle,
-      client: candidate.client,
-      round: approveInterviewRound,
-      type: approveInterviewType,
-      date: approveInterviewDate || new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
-      time: approveInterviewTime || '10:00 AM',
-      duration: '60 mins',
-      interviewer: approveInterviewer || 'To be assigned',
-      interviewerRole: '',
-      status: 'Scheduled',
-      meetLink: approveInterviewType === 'Video' ? `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}` : null,
-      photo: candidate.photo || null,
-      phone: candidate.phone || '',
-      location: candidate.location || '',
-      skills: candidate.skills || [],
-      experience: candidate.experience || '',
-      source: 'Pipeline Approval',
-    };
+      // Schedule in backend
+      const apiResponse = await scheduleNewInterview({
+        candidateId: approveCandidateId,
+        positionId: candidate.positionId,
+        clientId: candidate.clientId,
+        interviewType: approveInterviewRound,
+        interviewDate: interviewDate,
+        startTime: startTime,
+        duration: 60,
+        meetingType: approveInterviewType,
+        interviewerName: approveInterviewer || 'Hiring Team',
+        interviewerRole: 'Interviewer',
+        notes: 'Approved from Candidate Pipeline'
+      });
 
-    // Push to localStorage
-    const existing = JSON.parse(localStorage.getItem('kamApprovedInterviews') || '[]');
-    existing.push(interviewEntry);
-    localStorage.setItem('kamApprovedInterviews', JSON.stringify(existing));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'kamApprovedInterviews', newValue: JSON.stringify(existing) }));
+      // Update pipeline status to approved in backend
+      await updateCandidateStatus(approveCandidateId, { pipelineStatus: 'approved' });
 
-    setShowApproveModal(false);
-    setApproveCandidateId(null);
+      // Update local state
+      setCandidates(prev => prev.map(c => c.id === approveCandidateId ? { ...c, pipelineStatus: 'approved', lastActivity: now } : c));
+
+      // Create interview entry for local immediate feedback (localStorage still used as signal for InterviewScheduleTab)
+      const interviewEntry = {
+        id: apiResponse.data?.id || Date.now(),
+        candidateName: candidate.name,
+        candidateEmail: candidate.email,
+        position: candidate.jobTitle,
+        client: candidate.client,
+        round: approveInterviewRound,
+        type: approveInterviewType,
+        date: interviewDate,
+        time: startTime,
+        duration: '60 mins',
+        interviewer: approveInterviewer || 'Hiring Team',
+        interviewerRole: '',
+        status: 'Scheduled',
+        meetLink: apiResponse.data?.meetingLink || (approveInterviewType === 'Video' ? `https://meet.google.com/abc-defg-hij` : null),
+        photo: candidate.photo || null,
+        phone: candidate.phone || '',
+        location: candidate.location || '',
+        skills: candidate.skills || [],
+        experience: candidate.experience || '',
+        source: 'Pipeline Approval',
+      };
+
+      const existing = JSON.parse(localStorage.getItem('kamApprovedInterviews') || '[]');
+      existing.push(interviewEntry);
+      localStorage.setItem('kamApprovedInterviews', JSON.stringify(existing));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'kamApprovedInterviews', newValue: JSON.stringify(existing) }));
+
+      setShowApproveModal(false);
+      setApproveCandidateId(null);
+    } catch (error) {
+      console.error('Failed to complete approval process:', error);
+      // Fallback UI or error message could go here
+    }
   };
 
   // ── Bulk approve ──
-  const bulkApprove = () => {
+  const bulkApprove = async () => {
     const now = new Date().toISOString().split('T')[0];
     const approvedCandidates = candidates.filter(c => selectedIds.has(c.id));
-    // Update all selected to approved in backend
-    selectedIds.forEach(id => updateCandidateStatus(id, { pipelineStatus: 'approved' }).catch(err => console.error('Bulk approve failed:', err)));
-    // Update all selected to approved
-    setCandidates(prev => prev.map(c => selectedIds.has(c.id) ? { ...c, pipelineStatus: 'approved', lastActivity: now } : c));
-    // Push all to Interview Schedule
-    const entries = approvedCandidates.map(c => ({
-      id: Date.now() + Math.random(),
-      candidateName: c.name,
-      candidateEmail: c.email,
-      position: c.jobTitle,
-      client: c.client,
-      round: 'Phone Screening',
-      type: 'Video',
-      date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
-      time: '10:00 AM',
-      duration: '60 mins',
-      interviewer: 'To be assigned',
-      interviewerRole: '',
-      status: 'Scheduled',
-      meetLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`,
-      photo: c.photo || null,
-      source: 'Pipeline Approval',
-    }));
-    const existing = JSON.parse(localStorage.getItem('kamApprovedInterviews') || '[]');
-    localStorage.setItem('kamApprovedInterviews', JSON.stringify([...existing, ...entries]));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'kamApprovedInterviews', newValue: JSON.stringify([...existing, ...entries]) }));
-    setSelectedIds(new Set());
+    
+    try {
+      // Update all selected candidates status and create interview records in backend
+      await Promise.all(approvedCandidates.map(async (c) => {
+        // Schedule interview record in backend
+        const apiResponse = await scheduleNewInterview({
+          candidateId: c.id,
+          positionId: c.positionId,
+          clientId: c.clientId,
+          interviewType: 'Phone Screening',
+          interviewDate: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
+          startTime: '10:00 AM',
+          duration: 60,
+          meetingType: 'Video',
+          interviewerName: 'Hiring Team',
+          interviewerRole: 'Interviewer',
+          notes: 'Bulk Approved from Candidate Pipeline'
+        });
+
+        // Update pipeline status to approved in backend
+        await updateCandidateStatus(c.id, { pipelineStatus: 'approved' });
+        
+        return {
+          ...c,
+          id: apiResponse.data?.id || c.id,
+          meetLink: apiResponse.data?.meetingLink
+        };
+      }));
+
+      // Update local state
+      setCandidates(prev => prev.map(c => selectedIds.has(c.id) ? { ...c, pipelineStatus: 'approved', lastActivity: now } : c));
+
+      // Push all to Interview Schedule localStorage for signal
+      const entries = approvedCandidates.map(c => ({
+        id: Date.now() + Math.random(),
+        candidateName: c.name,
+        candidateEmail: c.email,
+        position: c.jobTitle,
+        client: c.client,
+        round: 'Phone Screening',
+        type: 'Video',
+        date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
+        time: '10:00 AM',
+        duration: '60 mins',
+        interviewer: 'Hiring Team',
+        interviewerRole: '',
+        status: 'Scheduled',
+        meetLink: `https://meet.google.com/abc-defg-hij`,
+        photo: c.photo || null,
+        phone: c.phone || '',
+        location: c.location || '',
+        skills: c.skills || [],
+        experience: c.experience || '',
+        source: 'Pipeline Approval',
+      }));
+
+      const existing = JSON.parse(localStorage.getItem('kamApprovedInterviews') || '[]');
+      localStorage.setItem('kamApprovedInterviews', JSON.stringify([...existing, ...entries]));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'kamApprovedInterviews', newValue: JSON.stringify([...existing, ...entries]) }));
+
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error('Bulk approve process failed:', error);
+    }
   };
 
   // ── Bulk hold ──
@@ -719,24 +834,24 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     };
 
     try {
-      const apiData = {
-        name: newCandidate.name,
-        email: newCandidate.email,
-        phone: newCandidate.phone,
-        location: newCandidate.location,
-        skills: skillsArr,
-        experience: newCandidate.experience,
-        currentSalary: newCandidate.currentCTC,
-        expectedSalary: newCandidate.expectedCTC,
-        noticePeriod: newCandidate.noticePeriod,
-        stage: 'Screening',
-        pipelineStatus: 'pending',
-      };
-      // positionId and clientId required by backend — pass if available
-      if (newCandidate.positionId) apiData.positionId = newCandidate.positionId;
-      if (newCandidate.clientId) apiData.clientId = newCandidate.clientId;
+      const formData = new FormData();
+      formData.append('name', newCandidate.name);
+      formData.append('email', newCandidate.email);
+      formData.append('phone', newCandidate.phone);
+      formData.append('location', newCandidate.location);
+      formData.append('skills', skillsArr.join(', '));
+      formData.append('experience', newCandidate.experience);
+      formData.append('currentSalary', newCandidate.currentCTC);
+      formData.append('expectedSalary', newCandidate.expectedCTC);
+      formData.append('noticePeriod', newCandidate.noticePeriod);
+      formData.append('stage', 'Screening');
+      formData.append('pipelineStatus', 'pending');
+      
+      if (newCandidate.positionId) formData.append('positionId', newCandidate.positionId);
+      if (newCandidate.clientId) formData.append('clientId', newCandidate.clientId);
+      if (resumeFile) formData.append('resume', resumeFile);
 
-      const res = await addCandidateAPI(apiData);
+      const res = await addCandidateAPI(formData);
       if (res?.data?._id) candidateLocal.id = res.data._id;
     } catch (err) {
       console.error('Failed to add candidate to backend:', err);
@@ -744,6 +859,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
     setCandidates(prev => [candidateLocal, ...prev]);
     setShowAddModal(false);
+    setResumeFile(null);
     setNewCandidate({
       name: '',
       email: '',
@@ -756,6 +872,9 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
       expectedCTC: '',
       noticePeriod: '30 days',
       skills: '',
+      positionId: '',
+      clientId: '',
+      roleType: '',
     });
   };
 
@@ -1302,7 +1421,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
           {/* Back & Title */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowAddModal(false); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '' }); }}
+            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowAddModal(false); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '' }); }}
               className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-[#1E88E5] hover:text-[#3FA9F5]' : 'text-[#1E88E5] hover:text-[#0D47A1]'}`}
             >
               <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
@@ -1365,25 +1484,41 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Position/Job Title *</label>
-                    {jobOpenings.length > 0 ? (
-                      <select value={newCandidate.jobTitle} onChange={(e) => {
-                        const selectedTitle = e.target.value;
-                        const matchedJob = jobOpenings.find(j => j.title === selectedTitle);
-                        setNewCandidate(prev => ({ ...prev, jobTitle: selectedTitle, client: matchedJob?.client || prev.client }));
-                      }} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                        <option value="">Select Position</option>
-                        {jobOpenings.map(job => (
-                          <option key={job.id} value={job.title}>{job.title} — {job.client} ({job.filled}/{job.openings})</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input type="text" value={newCandidate.jobTitle} onChange={(e) => setNewCandidate(prev => ({ ...prev, jobTitle: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="e.g., Senior Software Engineer" />
-                    )}
+                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Position/Job Opening</label>
+                    <select value={newCandidate.positionId} onChange={(e) => {
+                      const posId = e.target.value;
+                      const matchedJob = jobOpenings.find(j => j.id === posId);
+                      setNewCandidate(prev => ({ 
+                        ...prev, 
+                        positionId: posId,
+                        jobTitle: matchedJob?.title || prev.jobTitle,
+                        client: matchedJob?.client || prev.client,
+                        clientId: matchedJob?.clientId || prev.clientId,
+                        roleType: matchedJob?.roleType || prev.roleType
+                      }));
+                    }} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                      <option value="">Select Opening (Optional)</option>
+                      {jobOpenings.map(job => (
+                        <option key={job.id} value={job.id}>{job.title} — {job.client}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Role Type (Core Matching) *</label>
+                    <select value={newCandidate.roleType} onChange={(e) => setNewCandidate(prev => ({ ...prev, roleType: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                      <option value="">Select Role Category</option>
+                      {roleTypes.map(r => (
+                        <option key={r.role} value={r.role}>{r.role}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Display Job Title *</label>
+                    <input type="text" value={newCandidate.jobTitle} onChange={(e) => setNewCandidate(prev => ({ ...prev, jobTitle: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="e.g., Senior Software Engineer" />
                   </div>
                   <div>
                     <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client</label>
-                    <input type="text" value={newCandidate.client} onChange={(e) => setNewCandidate(prev => ({ ...prev, client: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="Company name" readOnly={jobOpenings.length > 0 && newCandidate.jobTitle !== ''} />
+                    <input type="text" value={newCandidate.client} onChange={(e) => setNewCandidate(prev => ({ ...prev, client: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="Company name" />
                   </div>
                   <div>
                     <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Experience</label>
@@ -1445,19 +1580,107 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                   {/* Resume Upload */}
                   <div>
                     <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Upload Resume/CV</label>
-                    <div className={`mt-1.5 border-2 border-dashed rounded-xl p-6 text-center ${isDarkMode ? 'border-slate-600 hover:border-[#1E88E5]' : 'border-slate-300 hover:border-[#1E88E5]'} transition-colors cursor-pointer`}>
-                      <FiUpload className={`w-8 h-8 mx-auto mb-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                      <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Drag & drop or click to browse</p>
-                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>PDF, DOC, DOCX (Max 10MB)</p>
+                    <input type="file" ref={fileInputRef} className="hidden" 
+                      onChange={(e) => setResumeFile(e.target.files[0])}
+                      accept=".pdf,.doc,.docx"
+                    />
+                    <div 
+                      onClick={() => fileInputRef.current.click()}
+                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                          setResumeFile(e.dataTransfer.files[0]);
+                        }
+                      }}
+                      className={`mt-1.5 border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
+                        resumeFile 
+                          ? (isDarkMode ? 'bg-emerald-900/20 border-emerald-500/50' : 'bg-emerald-50 border-emerald-200')
+                          : (isDarkMode ? 'border-slate-600 hover:border-[#1E88E5]' : 'border-slate-300 hover:border-[#1E88E5]')
+                      }`}
+                    >
+                      <FiUpload className={`w-8 h-8 mx-auto mb-2 ${resumeFile ? 'text-emerald-500' : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`} />
+                      <p className={`text-sm font-medium ${resumeFile ? 'text-emerald-600' : (isDarkMode ? 'text-slate-300' : 'text-slate-600')}`}>
+                        {resumeFile ? `Selected: ${resumeFile.name}` : 'Drag & drop or click to browse'}
+                      </p>
+                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {resumeFile ? `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB` : 'PDF, DOC, DOCX (Max 10MB)'}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* Resume Bank Suggestions */}
+              {newCandidate.roleType && (
+                <div>
+                  <h4 className={`text-base font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                    <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}>
+                      <FiDatabase className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    Suggested from Resume Bank ({resumeBankResumes.length})
+                  </h4>
+                  {resumeBankLoading ? (
+                    <div className="flex items-center gap-3 py-4 overflow-x-auto no-scrollbar">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className={`w-64 h-32 rounded-xl animate-pulse flex-shrink-0 ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-100'}`} />
+                      ))}
+                    </div>
+                  ) : resumeBankResumes.length > 0 ? (
+                    <div className="flex items-center gap-4 py-2 overflow-x-auto no-scrollbar pb-4">
+                      {resumeBankResumes.map(resume => (
+                        <motion.div 
+                          key={resume.id} 
+                          whileHover={{ y: -4 }}
+                          className={`w-72 p-4 rounded-xl border flex-shrink-0 relative group transition-all ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/50' : 'bg-white border-slate-200 hover:border-purple-400 shadow-sm hover:shadow-md'}`}
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}>
+                              {getInitials(resume.candidateName || resume.fileName || 'U')}
+                            </div>
+                            <div className="min-w-0">
+                              <h5 className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{resume.candidateName || resume.fileName}</h5>
+                              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{resume.email || 'No email'}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mb-4">
+                            {(resume.skills || []).slice(0, 3).map((s, idx) => (
+                              <span key={idx} className={`text-[9px] px-1.5 py-0.5 rounded-full ${isDarkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-50 text-purple-600'}`}>{s}</span>
+                            ))}
+                          </div>
+                          <button 
+                            onClick={() => {
+                              setNewCandidate(prev => ({
+                                ...prev,
+                                name: resume.candidateName || prev.name,
+                                email: resume.email || prev.email,
+                                phone: resume.phone || prev.phone,
+                                location: resume.location || prev.location,
+                                skills: Array.isArray(resume.skills) ? resume.skills.join(', ') : (resume.skills || prev.skills),
+                                experience: resume.experience || prev.experience,
+                              }));
+                            }}
+                            className={`w-full py-2 rounded-lg text-[11px] font-bold transition-all ${isDarkMode ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 ring-1 ring-purple-500/30' : 'bg-purple-50 text-purple-600 hover:bg-purple-100 ring-1 ring-purple-200'}`}
+                          >
+                            Use Profile Data
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={`p-8 rounded-xl border-2 border-dashed text-center ${isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-slate-50'}`}>
+                      <FiDatabase className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
+                      <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No matching candidates in Resume Bank for "{newCandidate.roleType}"</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Form Footer */}
             <div className={`flex items-center justify-between p-6 border-t ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-              <button onClick={() => { setShowAddModal(false); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '' }); }}
+              <button onClick={() => { setShowAddModal(false); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '' }); setResumeFile(null); }}
                 className={`px-6 py-3 rounded-xl font-semibold text-sm transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}
               >
                 Cancel
@@ -1603,9 +1826,10 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                 Cancel
               </button>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleApproveCandidate}
-                className="flex items-center gap-2 px-8 py-3 text-sm font-semibold text-white rounded-xl shadow-lg bg-gradient-to-r from-emerald-500 to-teal-600"
+                className="flex items-center gap-2 px-10 py-3 text-sm font-bold text-white rounded-xl shadow-lg transition-all"
+                style={{ background: 'linear-gradient(35deg, #10b981, #059669)', boxShadow: '0 8px 20px rgba(16,185,129,0.35)' }}
               >
-                <FiCheckCircle className="w-4 h-4" /> Approve & Schedule
+                <FiCheckCircle className="w-5 h-5" /> Approve & Schedule Interview
               </motion.button>
             </div>
           </div>

@@ -89,20 +89,20 @@ const transformKAMData = (apiData) => {
   if (!Array.isArray(apiData)) return [];
   
   return apiData.map((member, idx) => ({
-    id: member._id || member.id || `kam-${idx + 1}`,
-    name: member.name || member.fullName || 'Unknown',
+    id: member.id || `kam-${idx + 1}`,
+    name: member.name || 'Unknown',
     email: member.email || '',
-    phone: member.phone || member.mobile || '',
+    phone: member.phone || '',
     role: member.role || 'KAM - Recruitment',
-    avatar: (member.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+    avatar: member.avatar || (member.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
     status: member.status || 'Active',
     color: AVATAR_COLORS[idx % AVATAR_COLORS.length],
     stats: {
-      activePositions: member.stats?.activePositions || member.activePositions || 0,
-      candidatesPipeline: member.stats?.candidatesPipeline || member.totalCandidates || 0,
-      interviewsScheduled: member.stats?.interviewsScheduled || member.interviews || 0,
-      offersExtended: member.stats?.offersExtended || member.offers || 0,
-      thisWeekHires: member.stats?.thisWeekHires || member.hires || 0,
+      activePositions: member.stats?.activePositions || 0,
+      candidatesPipeline: member.stats?.candidatesPipeline || 0,
+      interviewsScheduled: member.stats?.interviewsScheduled || 0,
+      offersExtended: member.stats?.offersExtended || 0,
+      thisWeekHires: member.stats?.thisWeekHires || 0,
     },
     recentActivity: member.recentActivity || [
       { action: 'No recent activity', candidate: '', time: 'N/A' }
@@ -275,17 +275,26 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage }) => {
 };
 
 // Team Overview Tab Content
-const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM }) => {
-  const totalStats = teamData.reduce(
+const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, globalStats }) => {
+  const teamAggregatedStats = teamData.reduce(
     (acc, kam) => ({
-      activePositions: acc.activePositions + kam.stats.activePositions,
-      candidatesPipeline: acc.candidatesPipeline + kam.stats.candidatesPipeline,
-      interviewsScheduled: acc.interviewsScheduled + kam.stats.interviewsScheduled,
-      offersExtended: acc.offersExtended + kam.stats.offersExtended,
-      thisWeekHires: acc.thisWeekHires + kam.stats.thisWeekHires,
+      activePositions: acc.activePositions + (kam.stats?.activePositions || 0),
+      candidatesPipeline: acc.candidatesPipeline + (kam.stats?.candidatesPipeline || 0),
+      interviewsScheduled: acc.interviewsScheduled + (kam.stats?.interviewsScheduled || 0),
+      offersExtended: acc.offersExtended + (kam.stats?.offersExtended || 0),
+      thisWeekHires: acc.thisWeekHires + (kam.stats?.thisWeekHires || 0),
     }),
     { activePositions: 0, candidatesPipeline: 0, interviewsScheduled: 0, offersExtended: 0, thisWeekHires: 0 }
   );
+
+  // Use global stats if available, otherwise fallback to team aggregation
+  const displayStats = {
+    activePositions: globalStats?.activePositions || teamAggregatedStats.activePositions,
+    candidatesPipeline: globalStats?.totalCandidates || teamAggregatedStats.candidatesPipeline,
+    interviewsScheduled: globalStats?.scheduledInterviews || teamAggregatedStats.interviewsScheduled,
+    offersExtended: globalStats?.pendingOffers || teamAggregatedStats.offersExtended,
+    thisWeekHires: globalStats?.thisWeekHires || teamAggregatedStats.thisWeekHires,
+  };
 
   return (
     <div className="space-y-8">
@@ -315,19 +324,19 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
               <p className="text-sm text-blue-100">KAMs</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{totalStats.activePositions}</p>
+              <p className="text-3xl font-bold">{displayStats.activePositions}</p>
               <p className="text-sm text-blue-100">Total Jobs</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{totalStats.candidatesPipeline}</p>
+              <p className="text-3xl font-bold">{displayStats.candidatesPipeline}</p>
               <p className="text-sm text-blue-100">Candidates</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{totalStats.interviewsScheduled}</p>
+              <p className="text-3xl font-bold">{displayStats.interviewsScheduled}</p>
               <p className="text-sm text-blue-100">Interviews</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{totalStats.thisWeekHires}</p>
+              <p className="text-3xl font-bold">{displayStats.thisWeekHires}</p>
               <p className="text-sm text-blue-100">This Week</p>
             </div>
           </div>
@@ -724,15 +733,17 @@ const RecruitmentHeadDashboard = () => {
         setStatsBarData(barData);
       }
     } catch (e) {
-      // Use aggregated KAM data
+      console.error('Failed to fetch global stats:', e);
+      // Fallback to aggregation if global API fails
       const totalStats = kamTeam.reduce(
         (acc, kam) => ({
-          activePositions: acc.activePositions + kam.stats.activePositions,
-          totalCandidates: acc.totalCandidates + kam.stats.candidatesPipeline,
-          scheduledInterviews: acc.scheduledInterviews + kam.stats.interviewsScheduled,
-          pendingOffers: acc.pendingOffers + kam.stats.offersExtended,
+          activePositions: acc.activePositions + (kam.stats?.activePositions || 0),
+          totalCandidates: acc.totalCandidates + (kam.stats?.candidatesPipeline || 0),
+          scheduledInterviews: acc.scheduledInterviews + (kam.stats?.interviewsScheduled || 0),
+          pendingOffers: acc.pendingOffers + (kam.stats?.offersExtended || 0),
+          thisWeekHires: acc.thisWeekHires + (kam.stats?.thisWeekHires || 0),
         }),
-        { activePositions: 0, totalCandidates: 0, scheduledInterviews: 0, pendingOffers: 0 }
+        { activePositions: 0, totalCandidates: 0, scheduledInterviews: 0, pendingOffers: 0, thisWeekHires: 0 }
       );
       setStats(totalStats);
       
@@ -796,7 +807,14 @@ const RecruitmentHeadDashboard = () => {
   // Add KAM handler
   const handleAddKAM = () => {
     setKamFormMode('add');
-    setKamFormData({ name: '', email: '', phone: '', role: 'KAM - Recruitment' });
+    setKamFormData({ 
+      name: '', 
+      email: '', 
+      phone: '', 
+      role: 'KAM - Recruitment',
+      department: 'HR Recruitment',
+      password: 'Mabicons@123' // Default password for new members
+    });
     setShowKAMFormModal(true);
   };
 
@@ -866,7 +884,10 @@ const RecruitmentHeadDashboard = () => {
       setShowKAMFormModal(false);
       fetchKAMTeam(); // Refresh the list
     } catch (error) {
-      alert(error.message || `Failed to ${kamFormMode} KAM member`);
+      console.error(`Error in ${kamFormMode} KAM:`, error);
+      const errorMessage = error.error || error.message || `Failed to ${kamFormMode} KAM member`;
+      const details = error.details ? `\nDetails: ${error.details.join(', ')}` : '';
+      alert(`${errorMessage}${details}`);
     }
   };
 
@@ -891,6 +912,7 @@ const RecruitmentHeadDashboard = () => {
                   onMessage={handleMessage}
                   onRefresh={fetchKAMTeam}
                   onAddKAM={handleAddKAM}
+                  globalStats={stats}
                 />
               );
             case 'KAM Performance':

@@ -1,5 +1,4 @@
 import React from "react";
-import Logo from '../../public/ERP LOGO.png';
 import {
   Navbar,
   Typography,
