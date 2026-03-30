@@ -2182,7 +2182,7 @@ export const updateResumeDetails = async (resumeId, data) => {
   }
 };
 
-// Sync resumes from SharePoint
+// Sync resumes from S3 storage
 export const syncResumesFromSharePoint = async (data = {}) => {
   try {
     const response = await axiosInstance.post('/api/resumebank/sync', data, {
@@ -2191,22 +2191,56 @@ export const syncResumesFromSharePoint = async (data = {}) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to sync resumes:', error);
-    throw error.response?.data || { message: 'Failed to sync resumes from SharePoint' };
+    console.error('Failed to sync resumes from S3:', error);
+    const errorMessage = error.response?.data?.message || 
+                         error.response?.data?.error || 
+                         error.message || 
+                         'Failed to sync resumes from S3 storage';
+    throw { 
+      message: errorMessage,
+      status: error.response?.status,
+      details: error.response?.data 
+    };
   }
 };
 
-// Sync resumes from SharePoint
+// Sync resumes from SharePoint Drive
 export const syncResumesFromSharePointDrive = async (data = {}) => {
   try {
     const response = await axiosInstance.post('/api/resumebank/sync-sharepoint', data, {
       headers: { 'Content-Type': 'application/json' },
-      timeout: 300000
+      timeout: 300000 // 5 minutes for large syncs
     });
     return response.data;
   } catch (error) {
     console.error('Failed to sync from SharePoint:', error);
-    throw error.response?.data || { message: 'Failed to sync resumes from SharePoint' };
+    const errorMessage = error.response?.data?.message || 
+                         error.response?.data?.error || 
+                         error.message;
+    
+    // Check for specific error types
+    if (error.response?.status === 404) {
+      throw { 
+        message: 'SharePoint sync endpoint not found. Please contact administrator.',
+        status: 404 
+      };
+    } else if (error.response?.status === 401 || error.response?.status === 403) {
+      throw { 
+        message: 'SharePoint authentication failed. Please check credentials.',
+        status: error.response.status 
+      };
+    } else if (error.code === 'ECONNABORTED') {
+      throw { 
+        message: 'Sync timed out. The operation is taking too long.',
+        status: 'timeout' 
+      };
+    }
+    
+    throw { 
+      message: errorMessage || 'Failed to sync resumes from SharePoint',
+      status: error.response?.status,
+      details: error.response?.data 
+    };
   }
 };
 

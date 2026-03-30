@@ -118,24 +118,45 @@ const ResumeBankTab = () => {
     fetchResumes();
   }, [fetchResumes]);
 
+  // State for sync error message
+  const [syncError, setSyncError] = useState(null);
+
   // Handlers
   const handleSync = async (source = 's3') => {
     try {
       setSyncing(true);
       setSyncSource(source);
       setShowSyncMenu(false);
+      setSyncError(null);
+      
       if (source === 'sharepoint') {
         await syncResumesFromSharePointDrive({});
       } else {
         await syncResumesFromSharePoint({});
       }
+      
       await fetchStats();
       await fetchRoleTypes();
       await fetchResumes();
-      alert(`Resumes synced successfully from ${source === 'sharepoint' ? 'SharePoint' : 'S3'}!`);
+      alert(`Resumes synced successfully from ${source === 'sharepoint' ? 'SharePoint' : 'AWS S3'}!`);
     } catch (error) {
       console.error('Sync failed:', error);
-      alert('Failed to sync resumes: ' + (error.message || 'Unknown error'));
+      
+      // Provide more user-friendly error messages
+      let errorMsg = error.message || 'Unknown error occurred';
+      
+      if (error.status === 404) {
+        errorMsg = `${source === 'sharepoint' ? 'SharePoint' : 'S3'} sync service not available. Please contact administrator.`;
+      } else if (error.status === 401 || error.status === 403) {
+        errorMsg = 'Authentication failed. Please refresh and try again.';
+      } else if (error.status === 'timeout') {
+        errorMsg = 'Sync operation timed out. Please try again with a smaller batch.';
+      } else if (error.status === 500) {
+        errorMsg = 'Server error. Please try again later or contact support.';
+      }
+      
+      setSyncError(errorMsg);
+      alert(`Sync failed: ${errorMsg}`);
     } finally {
       setSyncing(false);
       setSyncSource(null);
@@ -145,13 +166,16 @@ const ResumeBankTab = () => {
   const handleSyncRole = async (roleType) => {
     try {
       setSyncing(true);
+      setSyncError(null);
       await syncResumesFromSharePoint({ roleType });
       await fetchStats();
       await fetchResumes();
       alert(`Resumes for ${roleType} synced successfully!`);
     } catch (error) {
       console.error('Sync failed:', error);
-      alert('Failed to sync: ' + (error.message || 'Unknown error'));
+      const errorMsg = error.message || 'Unknown error occurred';
+      setSyncError(errorMsg);
+      alert('Failed to sync: ' + errorMsg);
     } finally {
       setSyncing(false);
     }
@@ -270,6 +294,35 @@ const ResumeBankTab = () => {
 
   return (
     <div className="p-6 space-y-6" style={{ fontFamily: 'Calibri, sans-serif' }}>
+      {/* Sync Error Banner */}
+      {syncError && (
+        <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-800 flex items-center justify-center">
+              <FiX className="w-4 h-4 text-red-600 dark:text-red-300" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">Sync Failed</p>
+              <p className="text-xs text-red-600 dark:text-red-300">{syncError}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleSync('s3')}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+            >
+              Retry S3
+            </button>
+            <button
+              onClick={() => setSyncError(null)}
+              className="p-1.5 rounded-lg text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-800 transition-colors"
+            >
+              <FiX size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
