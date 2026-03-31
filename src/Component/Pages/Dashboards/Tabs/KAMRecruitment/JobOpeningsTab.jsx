@@ -82,7 +82,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
   const [resumeBankSuggestions, setResumeBankSuggestions] = useState([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [loadingBank, setLoadingBank] = useState(false);
-  const [step, setStep] = useState(2); // Default to Step 2 for Mega-Bulk flow
+  const [step] = useState(2); // strictly 2 to skip Step 1 candidate selection
 
   const taskTypes = [
     { label: 'Screen CVs', icon: '📋', desc: 'Review and shortlist candidates' },
@@ -205,7 +205,6 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
   const handleCandidateSelect = (c) => {
     setSelectedCandidate(c);
-    setStep(2);
   };
 
   return (
@@ -243,136 +242,23 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
         {/* ── Body ── */}
         <div className="px-4 sm:px-6 pb-6 space-y-5">
-          {step === 1 ? (
-            <div className="space-y-4">
-              <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Step 1: Select Candidate</label>
-              {loadingCandidates || loadingBank ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-3">
-                  <FiRefreshCw className="animate-spin w-8 h-8 text-blue-500" />
-                  <p className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Finding relevant candidates...</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-                  {/* --- CURRENT PIPELINE CANDIDATES --- */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between pb-1 px-1">
-                      <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Current Pipeline</span>
-                      <span className={`text-[10px] font-bold ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'}`}>{candidates.length} Found</span>
-                    </div>
-                    
-                    {candidates.length > 0 ? (
-                      <>
-                        <button key="all" type="button" onClick={() => handleCandidateSelect({ id: 'ALL', name: 'All Candidates' })}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left ${selectedCandidate?.id === 'ALL' ? 'border-[#1E88E5] bg-[#1E88E5]/10' : isDarkMode ? 'border-amber-700/50 bg-amber-900/10 hover:border-amber-600' : 'border-amber-200 bg-amber-50 hover:border-amber-300'}`}>
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-amber-500/20"><FiUsers /></div>
-                            <div>
-                              <p className={`text-sm font-bold ${isDarkMode ? 'text-amber-400' : 'text-amber-700'}`}>Select All Pipeline Candidates</p>
-                              <p className="text-[10px] opacity-70">Bulk task assignment for this position</p>
-                            </div>
-                          </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedCandidate?.id === 'ALL' ? 'border-[#1E88E5] bg-[#1E88E5]' : isDarkMode ? 'border-slate-600' : 'border-slate-300'}`}>
-                            {selectedCandidate?.id === 'ALL' && <FiCheck className="w-3 h-3 text-white" />}
-                          </div>
-                        </button>
-                        {candidates.map(c => (
-                          <button key={c._id || c.id} type="button" onClick={() => handleCandidateSelect(c)}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${selectedCandidate?._id === c._id || selectedCandidate?.id === c.id ? 'border-[#1E88E5] bg-[#1E88E5]/10 shadow-md' : isDarkMode ? 'border-slate-700 bg-slate-800/30 hover:border-slate-600' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-                            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/20">{(c.name || 'C').substring(0, 1)}</div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{c.name}</p>
-                              <p className={`text-[10px] truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{c.email}</p>
-                            </div>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{c.stage}</span>
-                          </button>
-                        ))}
-                      </>
-                    ) : (
-                      <div className={`p-4 text-center rounded-xl border-2 border-dashed ${isDarkMode ? 'border-slate-800 text-slate-500' : 'border-slate-100 text-slate-400'} text-xs italic`}>
-                        No candidates currently in pipeline
-                      </div>
-                    )}
-                  </div>
-
-                  {/* --- RESUME BANK SUGGESTIONS --- */}
-                  <div className="space-y-2 mt-2">
-                    <div className="flex items-center justify-between pb-1 px-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Resume Bank Suggestions</span>
-                        <div className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${isDarkMode ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-100 text-indigo-700'}`}>MATCHING ROLE</div>
-                      </div>
-                      <span className={`text-[10px] font-bold ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{resumeBankSuggestions.length} Found</span>
-                    </div>
-
-                    {resumeBankSuggestions.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-2">
-                        {resumeBankSuggestions.map(r => (
-                          <button key={r._id || r.id} type="button" onClick={() => handleCandidateSelect({ ...r, isFromBank: true })}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${selectedCandidate?._id === r._id || selectedCandidate?.id === r.id ? 'border-indigo-500 bg-indigo-500/10 shadow-md' : isDarkMode ? 'border-slate-700 bg-slate-800/30 hover:border-indigo-900/30 hover:border-indigo-500/50' : 'border-slate-200 bg-white hover:border-indigo-100 hover:border-indigo-300'}`}>
-                            <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-indigo-500/20">{(r.name || 'R').substring(0, 1)}</div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{r.name}</p>
-                                <FiDatabase className="w-3 h-3 text-indigo-400" title="From Resume Bank" />
-                              </div>
-                              <p className={`text-[10px] truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{r.email || 'No email'}</p>
-                            </div>
-                            <div className="text-right">
-                                <span className={`text-[9px] font-bold block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{r.role || 'New'}</span>
-                                <span className={`text-[8px] font-medium block opacity-60 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Exp: {r.experience || 'N/A'}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className={`p-4 text-center rounded-xl border-2 border-dashed ${isDarkMode ? 'border-slate-800 text-slate-500' : 'border-slate-100 text-slate-400'} text-xs italic`}>
-                        {job.roleType ? `No matching resumes for ${job.roleType} in bank` : 'Define a role type to see bank suggestions'}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              {selectedCandidate && (
-                <button onClick={() => setStep(2)} className="w-full mt-4 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg">
-                  Next: Task Details
-                </button>
-              )}
-            </div>
-          ) : (
             <>
-              {/* Back to Candidate Selection */}
-              {candidates.length > 0 && (
-                <button onClick={() => setStep(1)} className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-1 mb-2">
-                  <FiArrowLeft className="w-2.5 h-2.5" /> Back to Candidate Selection
-                </button>
-              )}
-
-              {/* Selected Candidate Badge */}
-              {selectedCandidate && (
-                <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-blue-500/20'}`}>
-                    {selectedCandidate.id === 'MEGA_BULK' ? <FiUsers /> : (selectedCandidate.name || 'C').substring(0, 1)}
-                  </div>
-                  <div className="flex-1">
-                    <span className={`text-[12px] font-bold block ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-700')}`}>
-                      {selectedCandidate.id === 'MEGA_BULK' ? 'Target: All Matching Candidates' : `Task for: ${selectedCandidate.name}`}
-                    </span>
-                    {selectedCandidate.id === 'MEGA_BULK' && (
-                      <span className={`text-[10px] opacity-70 block ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
-                         Includes pipeline candidates & Resume Bank matches for {job?.roleType?.split(' (')[0] || 'this role'}
-                      </span>
-                    )}
-                  </div>
-                  {selectedCandidate.id !== 'MEGA_BULK' && (
-                    <button onClick={() => { setSelectedCandidate({ id: 'MEGA_BULK', name: 'All Matching Candidates' }); setStep(2); }} className="p-1.5 hover:bg-blue-100 rounded-full text-blue-500 transition-colors">
-                      <FiRefreshCw className="w-4 h-4" title="Switch to Bulk" />
-                    </button>
-                  )}
-                  <button onClick={() => setStep(1)} className={`ml-2 px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 shadow-sm'}`}>
-                    Change Selection
-                  </button>
+              {/* Selected Candidate Badge (Bulk Info) */}
+              <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-blue-500/20'}`}>
+                  {selectedCandidate.id === 'MEGA_BULK' ? <FiUsers /> : (selectedCandidate.name || 'C').substring(0, 1)}
                 </div>
-              )}
+                <div className="flex-1">
+                  <span className={`text-[12px] font-bold block ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-700')}`}>
+                    {selectedCandidate.id === 'MEGA_BULK' ? 'Target: All Matching Candidates (Automatic)' : `Task for: ${selectedCandidate.name}`}
+                  </span>
+                  {selectedCandidate.id === 'MEGA_BULK' && (
+                    <span className={`text-[10px] opacity-70 block ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
+                        Includes pipeline candidates & matching profiles from Resume Bank
+                    </span>
+                  )}
+                </div>
+              </div>
 
               {/* Quick Task Type Chips */}
               <div>
@@ -457,7 +343,6 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
                 />
               </div>
             </>
-          )}
         </div>
 
         {/* ── Footer ── */}
@@ -467,11 +352,11 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
           >Cancel</motion.button>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
-            disabled={step === 1 || (!taskTitle && !taskType) || !assignee}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all ${step === 1 || (!taskTitle && !taskType) || !assignee ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
-            style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: step === 1 || (!taskTitle && !taskType) || !assignee ? 'none' : '0 8px 20px rgba(31,136,229,0.35)' }}
+            disabled={(!taskTitle && !taskType) || !assignee}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all ${(!taskTitle && !taskType) || !assignee ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+            style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: (!taskTitle && !taskType) || !assignee ? 'none' : '0 8px 20px rgba(31,136,229,0.35)' }}
           >
-            <FiSend className="w-4 h-4" /> {step === 1 ? 'Select Candidate to Proceed' : 'Assign Task'}
+            <FiSend className="w-4 h-4" /> Assign Task
           </motion.button>
         </div>
       </div>
@@ -832,7 +717,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const handleAssignTask = async (jobId, taskData) => {
     try {
       if (taskData.candidateId === 'ALL' || taskData.candidateId === 'MEGA_BULK') {
-        const selectedPosition = recruitmentPositions.find(p => p.id === jobId);
+        const selectedPosition = jobs.find(p => p.id === jobId);
         if (!selectedPosition) return;
 
         let totalTargetIds = [];

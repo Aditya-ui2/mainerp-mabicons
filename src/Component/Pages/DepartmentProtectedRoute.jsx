@@ -32,14 +32,8 @@ const DepartmentProtectedRoute = ({ children, allowedDepartment, redirectPath = 
     return children;
   }
 
-  // ✅ Wrong department = redirect to correct dashboard
-  if (userDepartment === 'HR Recruitment') {
-    return <Navigate to="/kam-recruitment-dashboard" replace />;
-  }
-
-  if (userDepartment === 'HR Operations') {
-    return <Navigate to="/kam-operations-dashboard" replace />;
-  }
+  // User is not authorized for this specific department
+  console.log(`Access denied for ${userDepartment}. Requires ${allowedDepartment}`);
 
   // Fallback
   return <Navigate to={redirectPath} replace />;

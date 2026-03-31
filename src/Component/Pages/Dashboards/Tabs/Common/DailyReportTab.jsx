@@ -4,10 +4,10 @@ import { FiFileText, FiPlus, FiCheckCircle, FiAlertCircle, FiSmile, FiMeh, FiFro
 import { submitDailyReport, getMyReports } from '../../../service/api';
 
 const moodConfig = {
-  great: { icon: FiSmile, color: '#10b981', label: 'Great' },
-  good: { icon: FiSmile, color: '#3b82f6', label: 'Good' },
-  okay: { icon: FiMeh, color: '#f59e0b', label: 'Okay' },
-  bad: { icon: FiFrown, color: '#ef4444', label: 'Bad' },
+  Great: { icon: FiSmile, color: '#10b981', label: 'Great' },
+  Good: { icon: FiSmile, color: '#3b82f6', label: 'Good' },
+  Okay: { icon: FiMeh, color: '#f59e0b', label: 'Okay' },
+  Tough: { icon: FiFrown, color: '#ef4444', label: 'Tough' },
 };
 
 const DailyReportTab = () => {
@@ -21,7 +21,7 @@ const DailyReportTab = () => {
     tasksCompleted: '',
     tasksPlanned: '',
     blockers: '',
-    mood: 'good',
+    mood: 'Good',
   });
 
   const showToast = (message, type = 'success') => {
@@ -61,7 +61,7 @@ const DailyReportTab = () => {
       await submitDailyReport(payload);
       showToast('Report submitted successfully');
       setShowForm(false);
-      setForm({ summary: '', tasksCompleted: '', tasksPlanned: '', blockers: '', mood: 'good' });
+      setForm({ summary: '', tasksCompleted: '', tasksPlanned: '', blockers: '', mood: 'Good' });
       fetchReports();
     } catch (err) {
       showToast(err.message || 'Failed to submit report', 'error');
@@ -213,7 +213,7 @@ const DailyReportTab = () => {
       ) : (
         <div className="space-y-3">
           {reports.map((report, idx) => {
-            const mc = moodConfig[report.mood] || moodConfig.good;
+            const mc = moodConfig[report.mood] || moodConfig.Good;
             return (
               <motion.div
                 key={report.id}

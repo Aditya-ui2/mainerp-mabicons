@@ -32,6 +32,7 @@ import {
   getAllCandidates,
   getKAMTasks,
   getMyDepartmentTasks,
+  getMyRecruitmentPerformance,
 } from '../service/api';
 
 // Lazy load Tab Components
@@ -107,22 +108,29 @@ const sidebarConfig = [
 ];
 
 // My Performance Content
-const MyPerformanceContent = ({ stats }) => {
+const MyPerformanceContent = ({ stats, period, onPeriodChange, user }) => {
+  const isHead = user?.role === 'Department Head' || user?.role === 'Admin' || user?.id === '60de4380-0140-49ff-b26d-a8d06333af11';
+  
   const targets = {
-    hires: 5,
-    interviews: 15,
-    screening: 30,
-    offers: 8,
+    hires: isHead ? 25 : 5,
+    interviews: isHead ? 75 : 15,
+    screening: isHead ? 150 : 30,
+    offers: isHead ? 40 : 8,
   };
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">My Performance</h2>
-        <select className="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <h2 className="text-2xl font-bold text-gray-900">{isHead ? 'Team Performance' : 'My Performance'}</h2>
+        <select 
+          value={period}
+          onChange={(e) => onPeriodChange(e.target.value)}
+          className="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        >
           <option>This Month</option>
           <option>Last Month</option>
           <option>This Quarter</option>
+          <option>All Time</option>
         </select>
       </div>
 
@@ -130,29 +138,30 @@ const MyPerformanceContent = ({ stats }) => {
       <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl p-8 text-white">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-2xl font-bold">Great Progress!</h3>
-            <p className="text-emerald-100">You're on track to meet your monthly targets</p>
+            <h3 className="text-2xl font-bold">{isHead ? 'Department Performance' : 'Great Progress!'}</h3>
+            <p className="text-emerald-100">{isHead ? "Here is your team's cumulative impact" : "You're on track to meet your monthly targets"}</p>
           </div>
           <div className="bg-white/20 rounded-full p-4">
             <FiStar className="w-8 h-8" />
           </div>
         </div>
+        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-            <p className="text-3xl font-bold">{stats.thisWeekHires || 2}</p>
-            <p className="text-sm text-emerald-100">Hires This Month</p>
+          <div className="bg-white rounded-xl p-4 text-center border-t-4 border-emerald-400 shadow-lg">
+            <p className="text-3xl font-extrabold text-gray-900">{stats.thisWeekHires || 0}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Hires</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-            <p className="text-3xl font-bold">{stats.interviewsScheduled || 8}</p>
-            <p className="text-sm text-emerald-100">Interviews Done</p>
+          <div className="bg-white rounded-xl p-4 text-center border-t-4 border-blue-400 shadow-lg">
+            <p className="text-3xl font-extrabold text-gray-900">{stats.interviewsScheduled || 0}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Interviews</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-            <p className="text-3xl font-bold">{stats.candidatesPipeline || 25}</p>
-            <p className="text-sm text-emerald-100">Candidates Screened</p>
+          <div className="bg-white rounded-xl p-4 text-center border-t-4 border-purple-400 shadow-lg">
+            <p className="text-3xl font-extrabold text-gray-900">{stats.candidatesPipeline}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Screenings</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-            <p className="text-3xl font-bold">{stats.offersExtended || 3}</p>
-            <p className="text-sm text-emerald-100">Offers Extended</p>
+          <div className="bg-white rounded-xl p-4 text-center border-t-4 border-amber-400 shadow-lg">
+            <p className="text-3xl font-extrabold text-gray-900">{stats.offersExtended}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Offers</p>
           </div>
         </div>
       </div>
@@ -164,12 +173,12 @@ const MyPerformanceContent = ({ stats }) => {
           <div>
             <div className="flex justify-between items-center mb-2">
               <span className="font-medium text-gray-700">Hiring Target</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.thisWeekHires || 2}/{targets.hires}</span>
+              <span className="text-sm font-semibold text-gray-900">{stats.thisWeekHires}/{targets.hires}</span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500"
-                style={{ width: `${((stats.thisWeekHires || 2) / targets.hires) * 100}%` }}
+                style={{ width: `${Math.min((stats.thisWeekHires / targets.hires) * 100, 100)}%` }}
               />
             </div>
           </div>
@@ -177,12 +186,12 @@ const MyPerformanceContent = ({ stats }) => {
           <div>
             <div className="flex justify-between items-center mb-2">
               <span className="font-medium text-gray-700">Interviews Scheduled</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.interviewsScheduled || 8}/{targets.interviews}</span>
+              <span className="text-sm font-semibold text-gray-900">{stats.interviewsScheduled}/{targets.interviews}</span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-500"
-                style={{ width: `${((stats.interviewsScheduled || 8) / targets.interviews) * 100}%` }}
+                style={{ width: `${Math.min((stats.interviewsScheduled / targets.interviews) * 100, 100)}%` }}
               />
             </div>
           </div>
@@ -190,12 +199,12 @@ const MyPerformanceContent = ({ stats }) => {
           <div>
             <div className="flex justify-between items-center mb-2">
               <span className="font-medium text-gray-700">Candidates Screened</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.candidatesPipeline || 25}/{targets.screening}</span>
+              <span className="text-sm font-semibold text-gray-900">{stats.candidatesPipeline}/{targets.screening}</span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all duration-500"
-                style={{ width: `${((stats.candidatesPipeline || 25) / targets.screening) * 100}%` }}
+                style={{ width: `${Math.min((stats.candidatesPipeline / targets.screening) * 100, 100)}%` }}
               />
             </div>
           </div>
@@ -203,12 +212,12 @@ const MyPerformanceContent = ({ stats }) => {
           <div>
             <div className="flex justify-between items-center mb-2">
               <span className="font-medium text-gray-700">Offers Extended</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.offersExtended || 3}/{targets.offers}</span>
+              <span className="text-sm font-semibold text-gray-900">{stats.offersExtended}/{targets.offers}</span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500"
-                style={{ width: `${((stats.offersExtended || 3) / targets.offers) * 100}%` }}
+                style={{ width: `${Math.min((stats.offersExtended / targets.offers) * 100, 100)}%` }}
               />
             </div>
           </div>
@@ -220,32 +229,32 @@ const MyPerformanceContent = ({ stats }) => {
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h3 className="font-bold text-lg text-gray-900 mb-5">This Week's Activity</h3>
           <div className="space-y-4">
-            {[
-              { day: 'Monday', hires: 0, interviews: 2, screenings: 5 },
-              { day: 'Tuesday', hires: 1, interviews: 3, screenings: 4 },
-              { day: 'Wednesday', hires: 0, interviews: 1, screenings: 6 },
-              { day: 'Thursday', hires: 1, interviews: 2, screenings: 3 },
-              { day: 'Friday', hires: 0, interviews: 0, screenings: 2 },
-            ].map((day, idx) => (
+            {(stats.weeklyActivity && stats.weeklyActivity.length > 0 ? stats.weeklyActivity : [
+              { day: 'Monday', hires: 0, interviews: 0, screenings: 0 },
+              { day: 'Tuesday', hires: 0, interviews: 0, screenings: 0 },
+              { day: 'Wednesday', hires: 0, interviews: 0, screenings: 0 },
+              { day: 'Thursday', hires: 0, interviews: 0, screenings: 0 },
+              { day: 'Friday', hires: 0, interviews: 0, screenings: 0 },
+            ]).map((day, idx) => (
               <div key={idx} className="flex items-center gap-4">
                 <span className="w-24 text-sm font-medium text-gray-600">{day.day}</span>
                 <div className="flex-1 flex items-center gap-2">
                   <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-emerald-500 rounded-full"
-                      style={{ width: `${(day.hires / 2) * 100}%` }}
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                      style={{ width: `${day.hires > 0 ? Math.min((day.hires / 2) * 100, 100) : 0}%` }}
                     />
                   </div>
                   <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${(day.interviews / 5) * 100}%` }}
+                      className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                      style={{ width: `${day.interviews > 0 ? Math.min((day.interviews / 5) * 100, 100) : 0}%` }}
                     />
                   </div>
                   <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-500 rounded-full"
-                      style={{ width: `${(day.screenings / 10) * 100}%` }}
+                      className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                      style={{ width: `${day.screenings > 0 ? Math.min((day.screenings / 10) * 100, 100) : 0}%` }}
                     />
                   </div>
                 </div>
@@ -268,26 +277,26 @@ const MyPerformanceContent = ({ stats }) => {
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h3 className="font-bold text-lg text-gray-900 mb-5">Conversion Metrics</h3>
           <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100">
               <div>
-                <p className="text-sm text-gray-600">Screening to Interview</p>
-                <p className="text-2xl font-bold text-blue-600">32%</p>
+                <p className="text-sm font-medium text-blue-700">Screening to Interview</p>
+                <p className="text-2xl font-bold text-blue-900">{stats.conversionMetrics?.screeningToInterview || 0}%</p>
               </div>
-              <FiTrendingUp className="w-8 h-8 text-blue-400" />
+              <FiTrendingUp className="w-8 h-8 text-blue-300" />
             </div>
-            <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-xl border border-emerald-100">
               <div>
-                <p className="text-sm text-gray-600">Interview to Offer</p>
-                <p className="text-2xl font-bold text-emerald-600">38%</p>
+                <p className="text-sm font-medium text-emerald-700">Interview to Offer</p>
+                <p className="text-2xl font-bold text-emerald-900">{stats.conversionMetrics?.interviewToOffer || 0}%</p>
               </div>
-              <FiTrendingUp className="w-8 h-8 text-emerald-400" />
+              <FiTrendingUp className="w-8 h-8 text-emerald-300" />
             </div>
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-100">
               <div>
-                <p className="text-sm text-gray-600">Offer to Join</p>
-                <p className="text-2xl font-bold text-purple-600">67%</p>
+                <p className="text-sm font-medium text-purple-700">Offer to Join</p>
+                <p className="text-2xl font-bold text-purple-900">{stats.conversionMetrics?.offerToJoin || 0}%</p>
               </div>
-              <FiTrendingUp className="w-8 h-8 text-purple-400" />
+              <FiTrendingUp className="w-8 h-8 text-purple-300" />
             </div>
           </div>
         </div>
@@ -312,6 +321,14 @@ const KAMMemberDashboard = () => {
   });
   const [todayTasks, setTodayTasks] = useState([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
+  const [personalStats, setPersonalStats] = useState({
+    activePositions: 0,
+    candidatesPipeline: 0,
+    interviewsScheduled: 0,
+    offersExtended: 0,
+    thisWeekHires: 0,
+  });
+  const [performancePeriod, setPerformancePeriod] = useState('This Month');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -324,12 +341,13 @@ const KAMMemberDashboard = () => {
         const userId = decoded.id || decoded.userId || decoded._id;
         setUserInfo({
           name: decoded.name || userName || 'KAM',
-          role: 'Key Account Manager - Recruitment',
+          role: decoded.role || 'Key Account Manager - Recruitment',
           id: userId,
           email: decoded.email || userEmail
         });
         fetchNotifications(userId);
         fetchDashboardData(userId);
+        fetchPersonalStats('This Month');
         fetchTodayTasks(userId);
         fetchUpcomingInterviews();
       } catch (e) {
@@ -405,6 +423,22 @@ const KAMMemberDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPersonalStats = async (period) => {
+    try {
+      const res = await getMyRecruitmentPerformance(period);
+      if (res.success) {
+        setPersonalStats(res.data);
+      }
+    } catch (e) {
+      console.error('Personal stats fetch error:', e);
+    }
+  };
+
+  const onPerformancePeriodChange = (newPeriod) => {
+    setPerformancePeriod(newPeriod);
+    fetchPersonalStats(newPeriod);
   };
 
   const fetchTodayTasks = async (userId) => {
@@ -554,7 +588,14 @@ const KAMMemberDashboard = () => {
             case 'Daily Report':
               return <DailyReportTab />;
             case 'My Performance':
-              return <MyPerformanceContent stats={stats} />;
+              return (
+                <MyPerformanceContent 
+                  stats={personalStats} 
+                  period={performancePeriod} 
+                  onPeriodChange={onPerformancePeriodChange}
+                  user={userInfo}
+                />
+              );
             case 'Job Openings':
               return <JobOpeningsTab />;
             case 'Candidate Pipeline':

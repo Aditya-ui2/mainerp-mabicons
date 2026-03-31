@@ -9,8 +9,7 @@ const axiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 8000,
   headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
+    'Accept': 'application/json'
   },
   withCredentials: false  // Changed to false since the server might not be expecting credentials
 });
@@ -2497,6 +2496,19 @@ export const getRecruitmentStats = async (filters = {}) => {
   }
 };
 
+// Get personal recruitment performance stats
+export const getMyRecruitmentPerformance = async (period = 'This Month') => {
+  try {
+    const response = await axiosInstance.get('/recruitment/my-performance', {
+      params: { period }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch personal performance stats:', error);
+    throw error.response?.data || { message: 'Failed to fetch personal performance stats' };
+  }
+};
+
 // Get all recruitment positions
 export const getAllRecruitmentPositions = async (filters = {}) => {
   try {
@@ -2631,6 +2643,19 @@ export const deleteDepartmentTeamMember = async (memberId) => {
   } catch (error) {
     console.error('Failed to delete team member:', error);
     throw error.response?.data || { message: 'Failed to delete team member' };
+  }
+};
+
+// Get department stats
+export const getDepartmentStats = async (department) => {
+  try {
+    const response = await axiosInstance.get('/department/stats', {
+      params: { department }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department stats:', error);
+    throw error.response?.data || { message: 'Failed to fetch department stats' };
   }
 };
 
