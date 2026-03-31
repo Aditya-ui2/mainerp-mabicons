@@ -2558,6 +2558,15 @@ export const deleteRecruitmentPosition = async (positionId) => {
     throw error.response?.data || { message: 'Failed to delete position' };
   }
 };
+export const getCandidateById = async (candidateId) => {
+  try {
+    const response = await axiosInstance.get(`/recruitment/candidates/${candidateId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch candidate:', error);
+    throw error.response?.data || { message: 'Failed to fetch candidate details' };
+  }
+};
 
 // Get all candidates (pipeline view)
 export const getAllCandidates = async (filters = {}) => {
