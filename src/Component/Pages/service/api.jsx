@@ -3297,6 +3297,31 @@ export const getDeptReports = async (department, date) => {
   }
 };
 
+export const getMISReports = async (params = {}) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/mis-reports', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch MIS reports' };
+  }
+};
+
+export const addHeadComment = async (reportId, comment) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post(`/department/daily-report/${reportId}/comment`, { comment }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to add comment' };
+  }
+};
+
 // Announcements
 export const getAnnouncements = async (department) => {
   try {
