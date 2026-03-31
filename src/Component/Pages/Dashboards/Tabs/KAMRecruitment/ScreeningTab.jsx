@@ -28,9 +28,11 @@ import {
 } from 'react-icons/fi';
 
 import {
+  BASE_URL,
   getResumeBankResumes,
   getResumeDownloadUrl,
   getAllCandidates,
+  updateCandidateStatus,
 } from '../../../service/api';
 
 /* ── Score Badge ── */
@@ -74,7 +76,7 @@ const DecisionBadge = ({ decision }) => {
 };
 
 /* ── Candidate Detail View ── */
-const CandidateDetailView = ({ candidate, onClose, isDarkMode, handleViewCV, loadingCV, selectedCV }) => {
+const CandidateDetailView = ({ candidate, onClose, isDarkMode, handleViewCV, loadingCV, selectedCV, handleStatusUpdate }) => {
   if (!candidate) return null;
 
   return (
@@ -124,6 +126,29 @@ const CandidateDetailView = ({ candidate, onClose, isDarkMode, handleViewCV, loa
               className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
               <FiMessageSquare className="w-5 h-5" /> Message
             </motion.button>
+
+            {candidate.decision === 'Pending' && (
+              <div className="flex gap-4 mt-6">
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleStatusUpdate(candidate.id, 'Shortlisted')}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-500/20 transition-all duration-200"
+                >
+                  <FiThumbsUp className="w-5 h-5" />
+                  <span>Shortlist Candidate</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleStatusUpdate(candidate.id, 'Rejected')}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-lg shadow-rose-500/20 transition-all duration-200"
+                >
+                  <FiThumbsDown className="w-5 h-5" />
+                  <span>Reject Candidate</span>
+                </motion.button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -213,29 +238,62 @@ const ScreeningTab = ({ isDarkMode }) => {
     try {
       // Fetch candidates that are in screening stage
       const response = await getAllCandidates({ stage: 'Screening' });
-      const candidatesData = (response.data || response.candidates || []).map(c => ({
+      
+      const rawData = response?.data || response?.candidates || [];
+      if (!Array.isArray(rawData)) {
+        console.error('Expected array for candidates but got:', rawData);
+        setCandidates([]);
+        return;
+      }
+
+      const candidatesData = rawData.map(c => ({
         id: c._id || c.id,
-        name: c.name || c.candidateName || 'Unknown',
+        name: c.name || 'Unknown Candidate',
         email: c.email || '',
         phone: c.phone || '',
-        position: c.position?.title || c.positionTitle || c.position || '',
-        client: c.position?.client?.companyName || c.clientName || c.client || '',
-        resumeScore: c.resumeScore || c.score || 0,
+        position: c.position?.title || c.positionTitle || (typeof c.position === 'string' ? c.position : 'Unknown Position'),
+        client: c.position?.client?.companyName || c.clientName || (typeof c.client === 'string' ? c.client : (c.client?.companyName || c.client?.name || 'Unknown Client')),
+        status: c.status || 'Submitted',
+        stage: c.stage || 'Screening',
+        resumeScore: c.rating || 0,
         skillMatch: c.skillMatch || 0,
         experienceMatch: c.experienceMatch || 0,
-        screeningDate: c.updatedAt?.split('T')[0] || c.createdAt?.split('T')[0] || '',
+        screeningDate: (c.updatedAt && typeof c.updatedAt === 'string') ? c.updatedAt.split('T')[0] : 
+                        ((c.createdAt && typeof c.createdAt === 'string') ? c.createdAt.split('T')[0] : ''),
+        avatar: (c.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+        pipelineStatus: c.pipelineStatus || 'pending',
+        skills: Array.isArray(c.skills) ? c.skills : (typeof c.skills === 'string' ? c.skills.split(',').map(s => s.trim()) : []),
+        experience: c.experience || 'N/A',
+        expectedSalary: c.expectedSalary || 'N/A',
+        noticePeriod: c.noticePeriod || 'N/A',
+        cvUrl: c.cvUrl || null,
+        cvFileName: c.cvFileName || null,
         decision: mapStatusToDecision(c.status || c.pipelineStatus),
         notes: c.notes || c.screeningNotes || '',
-        skills: c.skills || [],
-        experience: c.experience || '',
-        photo: c.photo || null,
       }));
+      
+      console.log(`Fetched ${candidatesData.length} screening candidates`);
       setCandidates(candidatesData);
     } catch (error) {
       console.error('Failed to fetch screening candidates:', error);
       setCandidates([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (candidateId, newStatus) => {
+    try {
+      await updateCandidateStatus(candidateId, { status: newStatus });
+      setCandidates(prev => prev.map(c => 
+        c.id === candidateId ? { ...c, status: newStatus, decision: mapStatusToDecision(newStatus) } : c
+      ));
+      if (selectedCandidate && selectedCandidate.id === candidateId) {
+        setSelectedCandidate(prev => ({ ...prev, status: newStatus, decision: mapStatusToDecision(newStatus) }));
+      }
+    } catch (error) {
+      console.error(`Failed to update candidate ${candidateId} to ${newStatus}:`, error);
+      // Optional: Add toast notification for error
     }
   };
 
@@ -265,7 +323,19 @@ const ScreeningTab = ({ isDarkMode }) => {
       setLoadingCV(true);
       setSelectedCV(candidate);
 
-      // Search for candidate's CV in ResumeBank using email or name
+      // 1. If candidate already has a direct CV URL (locally uploaded), use it immediately
+      if (candidate.cvUrl) {
+        // Ensure we have a full URL
+        const fullUrl = candidate.cvUrl.startsWith('http') 
+          ? candidate.cvUrl 
+          : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
+        
+        setCvPreviewUrl(fullUrl);
+        setShowCVModal(true);
+        return;
+      }
+
+      // 2. Otherwise, search for candidate's CV in ResumeBank using email or name (for synced resumes)
       const response = await getResumeBankResumes({
         search: candidate.email || candidate.name,
         limit: 5
@@ -274,7 +344,14 @@ const ScreeningTab = ({ isDarkMode }) => {
       if (response.data && response.data.length > 0) {
         const resume = response.data[0];
         const downloadResponse = await getResumeDownloadUrl(resume.id);
-        setCvPreviewUrl(downloadResponse.downloadUrl);
+        
+        // Handle downloadUrl (might be relative for 'local' drive from ResumeBank)
+        let downloadUrl = downloadResponse.downloadUrl;
+        if (downloadUrl && !downloadUrl.startsWith('http')) {
+          downloadUrl = `${BASE_URL}${downloadUrl.startsWith('/') ? '' : '/'}${downloadUrl}`;
+        }
+        
+        setCvPreviewUrl(downloadUrl);
         setShowCVModal(true);
       } else {
         alert('CV not found in Resume Bank. Please sync resumes first.');
@@ -368,6 +445,7 @@ const ScreeningTab = ({ isDarkMode }) => {
               handleViewCV={handleViewCV}
               loadingCV={loadingCV}
               selectedCV={selectedCV}
+              handleStatusUpdate={handleStatusUpdate}
             />
           </motion.div>
         ) : (
@@ -503,6 +581,7 @@ const ScreeningTab = ({ isDarkMode }) => {
                               <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
                                 {candidate.name}
                               </h3>
+                              <DecisionBadge decision={candidate.decision} />
                             </div>
 
                             <p className={`text-sm mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -584,18 +663,22 @@ const ScreeningTab = ({ isDarkMode }) => {
                                 <motion.button
                                   whileHover={{ scale: 1.15, y: -2 }}
                                   whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => { e.stopPropagation(); handleStatusUpdate(candidate.id, 'Shortlisted'); }}
                                   className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 
                                          text-emerald-600 shadow-md hover:shadow-lg 
                                          transition-all duration-200 border border-emerald-200"
+                                  title="Shortlist Candidate"
                                 >
                                   <FiThumbsUp className="w-4.5 h-4.5" />
                                 </motion.button>
                                 <motion.button
                                   whileHover={{ scale: 1.15, y: -2 }}
                                   whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => { e.stopPropagation(); handleStatusUpdate(candidate.id, 'Rejected'); }}
                                   className="p-2.5 rounded-xl bg-gradient-to-br from-red-50 to-red-100 
                                          text-red-600 shadow-md hover:shadow-lg 
                                          transition-all duration-200 border border-red-200"
+                                  title="Reject Candidate"
                                 >
                                   <FiThumbsDown className="w-4.5 h-4.5" />
                                 </motion.button>

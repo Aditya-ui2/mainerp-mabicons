@@ -31,7 +31,7 @@ import {
   FiPhone,
   FiStar,
 } from 'react-icons/fi';
-import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers } from '../../../service/api';
+import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers, createDepartmentTask, getAllCandidates, assignResumesToPosition } from '../../../service/api';
 
 /* ── Status Badge ── */
 const StatusBadge = ({ status }) => {
@@ -77,6 +77,12 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
   const [taskDescription, setTaskDescription] = useState('');
   const [taskType, setTaskType] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState({ id: 'MEGA_BULK', name: 'All Matching Candidates' });
+  const [candidates, setCandidates] = useState([]);
+  const [resumeBankSuggestions, setResumeBankSuggestions] = useState([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [loadingBank, setLoadingBank] = useState(false);
+  const [step] = useState(2); // strictly 2 to skip Step 1 candidate selection
 
   const taskTypes = [
     { label: 'Screen CVs', icon: FiFileText, desc: 'Review and shortlist candidates' },
@@ -93,25 +99,90 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
     { value: 'Low', color: '#10b981', bg: isDarkMode ? 'bg-emerald-900/30 border-emerald-700/50 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600', icon: '🟢' },
   ];
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    if (job?.id) {
+      const fetchCandidatesForJob = async () => {
+        setLoadingCandidates(true);
+        try {
+          const res = await getAllCandidates({ positionId: job.id });
+          if (res?.success) {
+            setCandidates(res.data || []);
+          }
+        } catch (err) {
+          console.error("Failed to fetch candidates:", err);
+        } finally {
+          setLoadingCandidates(false);
+        }
+      };
+      
+      const fetchBankSuggestions = async () => {
+        if (!job.roleType) return;
+        setLoadingBank(true);
+        try {
+          // Parse roleType to get the name (e.g. "Engineer" from "Engineer (261)")
+          const roleName = job.roleType.split(' (')[0];
+          const res = await getResumeBankResumes({ role: roleName, limit: 20 });
+          if (res?.success) {
+            setResumeBankSuggestions(res.data || []);
+          }
+        } catch (err) {
+          console.error("Failed to fetch bank suggestions:", err);
+        } finally {
+          setLoadingBank(false);
+        }
+      };
+
+      fetchCandidatesForJob();
+      fetchBankSuggestions();
+    }
+  }, [job?.id, job?.roleType]);
+
+  const handleSubmit = async () => {
     if (!taskTitle && !taskType) return;
-    const member = teamMembers.find(t => t.id === assignee);
-    const taskData = {
-      id: Date.now(),
-      title: taskTitle || taskType,
-      type: taskType,
-      assignee: member ? member.name : '',
-      assigneeAvatar: member ? member.avatar : '',
-      assigneeColor: member ? member.color : '#1E88E5',
-      priority: taskPriority,
-      deadline: taskDeadline,
-      description: taskDescription,
-      createdAt: new Date().toISOString(),
-      status: 'Pending',
-    };
-    if (onAssign) onAssign(job?.id, taskData);
-    setSubmitted(true);
-    setTimeout(() => { onClose(); }, 1200);
+    
+    setLoadingCandidates(true); // Reuse loading state for submission
+    try {
+      let finalCandidateId = selectedCandidate?.id || selectedCandidate?._id;
+      
+      // If candidate is from Resume Bank, onboard them to the position first
+      if (selectedCandidate?.isFromBank) {
+        const onboardRes = await assignResumesToPosition(
+          [finalCandidateId],
+          job?.id,
+          assignee
+        );
+        // After onboarding, we might have a new candidate ID, but using the existing one for the task
+        // should work if the backend handles the mapping.
+      }
+
+      const member = teamMembers.find(t => t.id === assignee);
+      const taskData = {
+        id: Date.now(),
+        title: taskTitle || taskType,
+        type: taskType,
+        assignee: member ? member.name : '',
+        assigneeId: assignee,
+        assigneeAvatar: member ? member.avatar : '',
+        assigneeColor: member ? member.color : '#1E88E5',
+        priority: taskPriority,
+        deadline: taskDeadline,
+        description: selectedCandidate 
+          ? `[Candidate: ${selectedCandidate.name}] ${taskDescription}` 
+          : taskDescription,
+        candidateId: finalCandidateId,
+        createdAt: new Date().toISOString(),
+        status: 'Pending',
+      };
+      
+      if (onAssign) await onAssign(job?.id, taskData);
+      setSubmitted(true);
+      setTimeout(() => { onClose(); }, 1200);
+    } catch (error) {
+      console.error("Failed to complete assignment:", error);
+      // Alert user or handle error
+    } finally {
+      setLoadingCandidates(false);
+    }
   };
 
   if (submitted) {
@@ -125,12 +196,16 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
           </motion.div>
           <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Task Assigned!</h3>
           <p className={`text-sm mt-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            {assignee ? teamMembers.find(t => t.id === assignee)?.name : 'Team member'} has been notified
+             Assignment Successful
           </p>
         </motion.div>
       </div>
     );
   }
+
+  const handleCandidateSelect = (c) => {
+    setSelectedCandidate(c);
+  };
 
   return (
     <div className="w-full pb-8">
@@ -167,91 +242,107 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
         {/* ── Body ── */}
         <div className="px-4 sm:px-6 pb-6 space-y-5">
-          {/* Quick Task Type Chips */}
-          <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Quick Select Task Type</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {taskTypes.map(t => (
-                <motion.button key={t.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                  onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center ${taskType === t.label
-                    ? 'border-[#1E88E5] shadow-lg ' + (isDarkMode ? 'bg-[#1E88E5]/30' : 'bg-[#1E88E5]/10')
-                    : isDarkMode ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
-                    }`}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md mb-1" style={{ background: 'linear-gradient(135deg, #5fa8f0, #76A8DB)' }}>
-                    <t.icon className="w-5 h-5" />
-                  </div>
-                  <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? (isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]') : isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.label}</span>
-                </motion.button>
-              ))}
+            {/* Selected Candidate Badge (Bulk Info) */}
+            <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-blue-500/20'}`}>
+                    {selectedCandidate.id === 'MEGA_BULK' ? <FiUsers /> : (selectedCandidate.name || 'C').substring(0, 1)}
+                </div>
+                <div className="flex-1">
+                    <span className={`text-[12px] font-bold block ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-700')}`}>
+                    {selectedCandidate.id === 'MEGA_BULK' ? 'Target: All Matching Candidates (Automatic)' : `Task for: ${selectedCandidate.name}`}
+                    </span>
+                    {selectedCandidate.id === 'MEGA_BULK' && (
+                    <span className={`text-[10px] opacity-70 block ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
+                        Includes pipeline candidates & matching profiles from Resume Bank
+                    </span>
+                    )}
+                </div>
             </div>
-          </div>
 
-          {/* Task Title */}
-          <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Task Title *</label>
-            <input type="text" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="e.g. Screen 10 candidates for shortlist"
-              className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-            />
-          </div>
-
-          {/* Assign To — Team Member Cards */}
-          <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assign To *</label>
-            <div className="space-y-2">
-              {teamMembers.map(m => (
-                <motion.button key={m.id} whileHover={{ x: 2 }} whileTap={{ scale: 0.99 }}
-                  onClick={() => setAssignee(m.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${assignee === m.id
-                    ? 'border-[#1E88E5] shadow-md ' + (isDarkMode ? 'bg-[#1E88E5]/20' : 'bg-[#1E88E5]/10')
-                    : isDarkMode ? 'border-slate-700 hover:border-slate-600 bg-slate-800/30' : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: m.color }}>
-                    {m.avatar}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{m.name}</p>
-                    <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.role}</p>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${assignee === m.id ? 'border-[#1E88E5] bg-[#1E88E5]' : isDarkMode ? 'border-slate-600' : 'border-slate-300'
-                    }`}>
-                    {assignee === m.id && <FiCheck className="w-3 h-3 text-white" />}
-                  </div>
-                </motion.button>
-              ))}
+            {/* Quick Task Type Chips */}
+            <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Quick Select Task Type</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {taskTypes.map(t => (
+                    <motion.button key={t.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                        onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center ${taskType === t.label
+                        ? 'border-[#1E88E5] shadow-lg ' + (isDarkMode ? 'bg-[#1E88E5]/30' : 'bg-[#1E88E5]/10')
+                        : isDarkMode ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
+                        }`}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md mb-1" style={{ background: 'linear-gradient(135deg, #5fa8f0, #76A8DB)' }}>
+                        <t.icon className="w-5 h-5" />
+                        </div>
+                        <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? (isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]') : isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.label}</span>
+                    </motion.button>
+                    ))}
+                </div>
             </div>
-          </div>
 
-          {/* Priority — Pill Selection */}
-          <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Priority</label>
-            <div className="flex gap-2">
-              {priorities.map(p => (
-                <motion.button key={p.value} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                  onClick={() => setTaskPriority(p.value)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${taskPriority === p.value ? p.bg + ' border-current shadow-sm' : isDarkMode ? 'border-slate-700 text-slate-400 bg-slate-800/30' : 'border-slate-200 text-slate-500 bg-white'
-                    }`}>
-                  <span className="text-xs">{p.icon}</span> {p.value}
-                </motion.button>
-              ))}
-            </div>
-          </div>
+              {/* Task Title */}
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Task Title *</label>
+                <input type="text" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="e.g. Screen 10 candidates for shortlist"
+                  className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+                />
+              </div>
 
-          {/* Deadline */}
-          <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Deadline</label>
-            <input type="date" value={taskDeadline} onChange={e => setTaskDeadline(e.target.value)}
-              className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-            />
-          </div>
+              {/* Assign To — Team Member Cards */}
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assign To *</label>
+                <div className="space-y-2">
+                  {teamMembers.map(m => (
+                    <motion.button key={m.id} whileHover={{ x: 2 }} whileTap={{ scale: 0.99 }}
+                      onClick={() => setAssignee(m.id)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${assignee === m.id
+                        ? 'border-[#1E88E5] shadow-md ' + (isDarkMode ? 'bg-[#1E88E5]/20' : 'bg-[#1E88E5]/10')
+                        : isDarkMode ? 'border-slate-700 hover:border-slate-600 bg-slate-800/30' : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}>
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: m.color }}>
+                        {m.avatar}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{m.name}</p>
+                        <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.role}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${assignee === m.id ? 'border-[#1E88E5] bg-[#1E88E5]' : isDarkMode ? 'border-slate-600' : 'border-slate-300'
+                        }`}>
+                        {assignee === m.id && <FiCheck className="w-3 h-3 text-white" />}
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
 
-          {/* Description */}
-          <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Notes (optional)</label>
-            <textarea value={taskDescription} onChange={e => setTaskDescription(e.target.value)} rows={3} placeholder="Add any specific instructions..."
-              className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-            />
-          </div>
+              {/* Priority — Pill Selection */}
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Priority</label>
+                <div className="flex gap-2">
+                  {priorities.map(p => (
+                    <motion.button key={p.value} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                      onClick={() => setTaskPriority(p.value)}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${taskPriority === p.value ? p.bg + ' border-current shadow-sm' : isDarkMode ? 'border-slate-700 text-slate-400 bg-slate-800/30' : 'border-slate-200 text-slate-500 bg-white'}`}>
+                      <span className="text-xs">{p.icon}</span> {p.value}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Deadline */}
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Deadline</label>
+                <input type="date" value={taskDeadline} onChange={e => setTaskDeadline(e.target.value)}
+                  className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Notes (optional)</label>
+                <textarea value={taskDescription} onChange={e => setTaskDescription(e.target.value)} rows={3} placeholder="Add any specific instructions..."
+                  className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+                />
+              </div>
         </div>
 
         {/* ── Footer ── */}
@@ -261,9 +352,9 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
           >Cancel</motion.button>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
-            disabled={!taskTitle && !taskType}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: '0 8px 20px rgba(31,136,229,0.35)' }}
+            disabled={(!taskTitle && !taskType) || !assignee}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all ${(!taskTitle && !taskType) || !assignee ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+            style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: (!taskTitle && !taskType) || !assignee ? 'none' : '0 8px 20px rgba(31,136,229,0.35)' }}
           >
             <FiSend className="w-4 h-4" /> Assign Task
           </motion.button>
@@ -416,7 +507,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
             <ul className="space-y-3">
               {(job.requirements || [
                 `${job.skills[0] ? `Strong proficiency in ${job.skills[0]}` : 'Strong technical background'} with hands-on experience`,
-                `${(parseInt(job.salary) || 3)}+ years of relevant industry experience`,
+                `${job.experience ? (parseInt(job.experience) || job.experience) : '3+'}${typeof job.experience === 'number' || (job.experience && !job.experience.includes('year')) ? ' years' : ''} of relevant industry experience`,
                 `Excellent problem-solving and analytical skills`,
                 `Strong communication and teamwork abilities`,
                 `Bachelor's degree in relevant field (or equivalent experience)`,
@@ -495,7 +586,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   });
   const [roleTypesLoading, setRoleTypesLoading] = useState(false);
   const [newJobForm, setNewJobForm] = useState({
-    title: '', client: '', location: '', type: 'Full-time', salary: '',
+    title: '', client: '', clientId: '', location: '', type: 'Full-time', salary: '',
     openings: 1, experience: '', priority: 'Medium', deadline: '', skills: '', description: '', roleType: ''
   });
 
@@ -503,8 +594,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const fetchClients = async () => {
     try {
       const response = await getAllClients();
-      const clientsData = (response.clients || response.data || []).map(c => ({
-        id: c._id || c.id,
+      // Handle { success: true, data: { clients: [...] } } or { clients: [...] } or direct array
+      const rawClients = response.data?.clients || response.clients || response.data || [];
+      const clientsData = (Array.isArray(rawClients) ? rawClients : []).map(c => ({
+        id: c.id || c._id,
         name: c.companyName || c.name || c.clientName || 'Unknown',
       }));
       setClients(clientsData);
@@ -517,12 +610,13 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   // ── Fetch team members from backend ──
   const fetchTeamMembers = async () => {
     try {
-      const response = await getDepartmentTeamMembers('recruitment');
-      const members = (response.members || response.data || []).map(m => ({
+      const response = await getDepartmentTeamMembers('HR Recruitment');
+      const rawMembers = response.members || response.data || [];
+      const members = (Array.isArray(rawMembers) ? rawMembers : []).map(m => ({
         id: m._id || m.id,
         name: m.name || m.fullName || 'Unknown',
         role: m.role || m.position || 'Team Member',
-        avatar: (m.name || 'U').substring(0, 2).toUpperCase(),
+        avatar: (m.name || 'U').substring(0, 1).toUpperCase(),
         color: '#1E88E5',
       }));
       setTeamMembers(members);
@@ -540,7 +634,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       if (searchTerm) filters.search = searchTerm;
       const response = await getAllRecruitmentPositions(filters);
       const positions = (response.data || []).map(p => ({
-        id: p._id,
+        id: p.id || p._id,
         title: p.title,
         client: p.clientName || p.client?.companyName || p.client?.name || 'Unknown',
         clientLogo: p.clientLogo || 'NA',
@@ -558,7 +652,27 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         description: p.description || '',
         roleType: p.roleType || '',
         candidateCount: p.candidateCount || 0,
+        tasks: p.tasks || [],
+        clientId: p.clientId,
       }));
+
+      // Update jobTasks mapping
+      const taskMap = {};
+      positions.forEach(p => {
+        if (p.tasks && p.tasks.length > 0) {
+          taskMap[p.id] = p.tasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            priority: t.priority,
+            deadline: t.dueDate,
+            assignee: t.assignedToName,
+            status: t.status,
+            assigneeAvatar: (t.assignedToName || 'U').substring(0, 1).toUpperCase()
+          }));
+        }
+      });
+      setJobTasks(taskMap);
+
       setJobs(positions);
       try { localStorage.setItem(CACHE_KEY_JOBS, JSON.stringify(positions)); } catch { }
     } catch (error) {
@@ -600,11 +714,88 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     fetchRoles();
   }, []);
 
-  const handleAssignTask = (jobId, taskData) => {
-    setJobTasks(prev => ({
-      ...prev,
-      [jobId]: [...(prev[jobId] || []), taskData],
-    }));
+  const handleAssignTask = async (jobId, taskData) => {
+    try {
+      if (taskData.candidateId === 'ALL' || taskData.candidateId === 'MEGA_BULK') {
+        const selectedPosition = jobs.find(p => p.id === jobId);
+        if (!selectedPosition) return;
+
+        let totalTargetIds = [];
+        
+        // 1. Fetch Pipeline Candidates
+        const candidatesRes = await getAllCandidates({ positionId: jobId });
+        const pipelineCandidates = candidatesRes?.success ? (candidatesRes.data || []) : [];
+        pipelineCandidates.forEach(c => totalTargetIds.push({ id: c._id || c.id, name: c.name }));
+
+        // 2. For MEGA_BULK, fetch and onboard Resume Bank profiles
+        if (taskData.candidateId === 'MEGA_BULK') {
+            const roleName = selectedPosition.roleType?.split(' (')[0];
+            if (roleName) {
+                const bankRes = await getResumeBankResumes({ role: roleName });
+                const bankResumes = bankRes?.success ? (bankRes.data || []) : [];
+                
+                if (bankResumes.length > 0) {
+                    const bankResumeIds = bankResumes.map(r => r._id || r.id);
+                    // Bulk onboard bank profiles to the position
+                    await assignResumesToPosition(bankResumeIds, jobId, taskData.assigneeId);
+                    
+                    // Add bank candidates to the target list
+                    bankResumes.forEach(r => {
+                      // Check if already in pipeline to avoid duplicate task creation if possible
+                      if (!totalTargetIds.find(tid => tid.id === (r._id || r.id))) {
+                        totalTargetIds.push({ id: r._id || r.id, name: r.name });
+                      }
+                    });
+                }
+            }
+        }
+
+        if (totalTargetIds.length === 0) {
+          console.warn("No candidates found for assignment.");
+          return;
+        }
+
+        // 3. Create Tasks for Everyone
+        for (const target of totalTargetIds) {
+          const apiPayload = {
+            title: taskData.title,
+            description: `[Direct: ${target.name}] ${taskData.description.replace(/^\[Direct: .*?\] /, '')}`,
+            department: 'HR Recruitment',
+            assignedTo: taskData.assigneeId,
+            priority: taskData.priority,
+            dueDate: taskData.deadline,
+            positionId: jobId,
+            candidateId: target.id
+          };
+          await createDepartmentTask(apiPayload);
+        }
+      } else {
+        const apiPayload = {
+          title: taskData.title,
+          description: taskData.description || `Task for job: ${jobId}`,
+          department: 'HR Recruitment',
+          assignedTo: taskData.assigneeId,
+          priority: taskData.priority,
+          dueDate: taskData.deadline,
+          positionId: jobId,
+          candidateId: taskData.candidateId
+        };
+        await createDepartmentTask(apiPayload);
+      }
+
+      // Success feedback (optimistic update or just refresh)
+      setJobTasks(prev => ({
+        ...prev,
+        [jobId]: [...(prev[jobId] || []), taskData],
+      }));
+    } catch (error) {
+      console.error('Failed to assign task:', error);
+      // Fallback: show local update anyway but warn? (Actually better to just log)
+      setJobTasks(prev => ({
+        ...prev,
+        [jobId]: [...(prev[jobId] || []), { ...taskData, error: true }],
+      }));
+    }
   };
 
   const resetModal = () => {
@@ -612,7 +803,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     setMatchedResumes([]);
     setSelectedResumes(new Set());
     setResumeFetchLoading(false);
-    setNewJobForm({ title: '', client: '', location: '', type: 'Full-time', salary: '', openings: 1, experience: '', priority: 'Medium', deadline: '', skills: '', description: '', roleType: '' });
+    setNewJobForm({ title: '', client: '', clientId: '', location: '', type: 'Full-time', salary: '', openings: 1, experience: '', priority: 'Medium', deadline: '', skills: '', description: '', roleType: '' });
   };
 
   useEffect(() => {
@@ -640,6 +831,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     try {
       const positionData = {
         title: newJobForm.title,
+        clientId: newJobForm.clientId,
         description: newJobForm.description,
         location: newJobForm.location,
         type: newJobForm.type,
@@ -651,6 +843,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         experience: newJobForm.experience,
         deadline: newJobForm.deadline || undefined,
         roleType: newJobForm.roleType,
+        teamLeaderId: JSON.parse(localStorage.getItem('user'))?.id || undefined,
       };
       const result = await createRecruitmentPosition(positionData);
       const created = result.data || {};
@@ -732,22 +925,32 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     } catch (error) {
       console.error('Backend update failed, updating locally:', error);
     }
-    setJobs(prev => prev.map(j => j.id === editingJob.id ? {
-      ...j,
-      title: newJobForm.title,
-      client: newJobForm.client,
-      clientLogo: newJobForm.client ? newJobForm.client.substring(0, 2).toUpperCase() : j.clientLogo,
-      location: newJobForm.location,
-      type: newJobForm.type,
-      salary: newJobForm.salary,
-      openings: parseInt(newJobForm.openings) || j.openings,
-      experience: newJobForm.experience,
-      priority: newJobForm.priority,
-      deadline: newJobForm.deadline,
-      skills: newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
-      description: newJobForm.description,
-      roleType: newJobForm.roleType,
-    } : j));
+    setJobs(prev => {
+      const updatedJobs = prev.map(j => j.id === editingJob.id ? {
+        ...j,
+        title: newJobForm.title,
+        client: newJobForm.client,
+        clientLogo: newJobForm.client ? newJobForm.client.substring(0, 2).toUpperCase() : j.clientLogo,
+        location: newJobForm.location,
+        type: newJobForm.type,
+        salary: newJobForm.salary,
+        openings: parseInt(newJobForm.openings) || j.openings,
+        experience: newJobForm.experience,
+        priority: newJobForm.priority,
+        deadline: newJobForm.deadline,
+        skills: newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
+        description: newJobForm.description,
+        roleType: newJobForm.roleType,
+      } : j);
+      
+      // Update selectedJob if it's the one being edited
+      if (selectedJob && selectedJob.id === editingJob.id) {
+        const updatedSelected = updatedJobs.find(j => j.id === editingJob.id);
+        setSelectedJob(updatedSelected);
+      }
+      
+      return updatedJobs;
+    });
     setShowFullPageForm(false);
     setEditingJob(null);
     resetModal();
@@ -950,12 +1153,15 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
                     <div>
                       <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client/Company *</label>
-                      <select value={newJobForm.client} onChange={e => setNewJobForm(f => ({ ...f, client: e.target.value }))}
+                      <select value={newJobForm.clientId} onChange={e => {
+                        const selected = clients.find(c => c.id === e.target.value);
+                        setNewJobForm(f => ({ ...f, clientId: e.target.value, client: selected?.name || '' }));
+                      }}
                         className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
                       >
                         <option value="">Select Client</option>
                         {clients.map(c => (
-                          <option key={c.id} value={c.name}>{c.name}</option>
+                          <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>
                     </div>
@@ -1369,6 +1575,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                               <span className="text-sm">₹</span> {job.salary}
                             </span>
                             <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiClock className="w-4 h-4" /> {job.type}</span>
+                            <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiUsers className="w-4 h-4" /> {job.candidateCount} Candidates</span>
                             <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiCalendar className="w-4 h-4" /> Deadline: {new Date(job.deadline).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
                           </div>
                           <div className="flex flex-wrap gap-2 mt-4 justify-center sm:justify-start">

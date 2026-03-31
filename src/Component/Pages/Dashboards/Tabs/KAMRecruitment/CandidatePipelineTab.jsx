@@ -853,15 +853,50 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
       
       if (newCandidate.positionId) formData.append('positionId', newCandidate.positionId);
       if (newCandidate.clientId) formData.append('clientId', newCandidate.clientId);
+      if (newCandidate.roleType) formData.append('roleType', newCandidate.roleType.split(' (')[0]);
       if (resumeFile) formData.append('resume', resumeFile);
 
       const res = await addCandidateAPI(formData);
-      if (res?.data?._id) candidateLocal.id = res.data._id;
+      
+      if (res?.success && res.data) {
+        const c = res.data;
+        const mappedCandidate = {
+          id: c.id || c._id,
+          name: c.name,
+          email: c.email,
+          phone: c.phone || '',
+          location: c.location || '',
+          jobTitle: c.position?.title || newCandidate.jobTitle || '',
+          client: c.client?.companyName || c.client?.name || newCandidate.client || '',
+          stage: c.stage || 'Screening',
+          rating: c.rating || 0,
+          experience: c.experience || '',
+          currentCTC: c.currentSalary || '',
+          expectedCTC: c.expectedSalary || '',
+          noticePeriod: c.noticePeriod || '30 days',
+          skills: c.skills || [],
+          appliedDate: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          lastActivity: c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          photo: null,
+          pipelineStatus: c.pipelineStatus || 'pending',
+          rejectionReason: c.rejectionReason || '',
+          source: c.source || '',
+          positionId: c.position?.id || c.position?._id,
+          clientId: c.client?.id || c.client?._id,
+          cvUrl: c.cvUrl || null,
+          cvFileName: c.cvFileName || null,
+        };
+        setCandidates(prev => [mappedCandidate, ...prev]);
+      } else {
+        // Fallback to local if response is weird but success
+        setCandidates(prev => [candidateLocal, ...prev]);
+      }
     } catch (err) {
       console.error('Failed to add candidate to backend:', err);
+      // Still show local to user so they don't lose progress, but maybe show warning
+      setCandidates(prev => [candidateLocal, ...prev]);
     }
 
-    setCandidates(prev => [candidateLocal, ...prev]);
     setShowAddModal(false);
     setResumeFile(null);
     setNewCandidate({

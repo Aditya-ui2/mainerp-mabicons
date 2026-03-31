@@ -920,19 +920,19 @@ const RecruitmentHeadDashboard = () => {
             case 'Task Assignment':
               return <TaskAssignmentTab department="HR Recruitment" />;
             case 'Job Openings':
-              return <JobOpeningsTab />;
+              return <JobOpeningsTab isDarkMode={false} />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab />;
+              return <CandidatePipelineTab isDarkMode={false} />;
             case 'Interview Schedule':
-              return <InterviewScheduleTab />;
+              return <InterviewScheduleTab isDarkMode={false} />;
             case 'Screening & Assessment':
-              return <ScreeningTab />;
+              return <ScreeningTab isDarkMode={false} />;
             case 'Offer Management':
-              return <OfferManagementTab />;
+              return <OfferManagementTab isDarkMode={false} />;
             case 'Recruitment Analytics':
-              return <RecruitmentAnalyticsTab />;
+              return <RecruitmentAnalyticsTab isDarkMode={false} />;
             case 'Resume Bank':
-              return <ResumeBankTab />;
+              return <ResumeBankTab isDarkMode={false} />;
             case 'Activity Feed':
               return <ActivityFeedTab department="HR Recruitment" />;
             default:

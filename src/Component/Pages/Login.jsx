@@ -350,6 +350,8 @@ const Login = () => {
         console.log("✅ API Login SUCCESS! Role:", role, "User:", user);
         
         // Save necessary info for ProtectedRoutes
+        if (response.token) localStorage.setItem('token', response.token);
+        localStorage.setItem('userType', role);
         localStorage.setItem('userName', user.name);
         localStorage.setItem('userEmail', emailLower);
         if (user.department) {
