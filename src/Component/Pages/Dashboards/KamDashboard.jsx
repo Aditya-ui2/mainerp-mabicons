@@ -83,7 +83,7 @@ const sidebarGroups = [
   {
     heading: 'HR Operations',
     items: [
-      { id: 1, title: 'Attendance & Time Tracking', short: 'Attendance', icon: FiClock },
+      { id: 1, title: 'Attendance', short: 'Attendance', icon: FiClock },
       { id: 2, title: 'Payroll', short: 'Payroll', icon: FiDollarSign },
       { id: 13, title: 'Leave Management', short: 'Leaves', icon: FiCalendar },
       { id: 6, title: 'Performance Management', short: 'Performance', icon: FiTrendingUp },
@@ -226,7 +226,7 @@ const KamDashboard = () => {
     const tabProps = { isDarkMode, selectedClient };
     switch (activeTab) {
       case 'Dashboard': return <DashboardOverviewTab {...tabProps} onNavigate={switchTab} />;
-      case 'Attendance & Time Tracking': return <AttendanceTab {...tabProps} />;
+      case 'Attendance': return <AttendanceTab {...tabProps} />;
       case 'Payroll': return <PayrollTab {...tabProps} />;
       case 'Onboarding': return <OnboardingKamTab {...tabProps} />;
       case 'Policy Making': return <PolicyTab {...tabProps} />;

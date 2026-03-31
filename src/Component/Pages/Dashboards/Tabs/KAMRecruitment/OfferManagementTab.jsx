@@ -462,129 +462,125 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 Back to Offers
               </motion.button>
               <div className="flex gap-2">
-                 <motion.button
-                   whileHover={{ scale: 1.05 }}
-                   whileTap={{ scale: 0.95 }}
-                   onClick={() => handleEditOffer(viewingOffer)}
-                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
-                   style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5, #0D47A1)' }}
-                 >
-                   <FiEdit3 className="w-4 h-4" /> Edit Details
-                 </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleEditOffer(viewingOffer)}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
+                  style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5, #0D47A1)' }}
+                >
+                  <FiEdit3 className="w-4 h-4" /> Edit Details
+                </motion.button>
               </div>
             </div>
 
             <div className="px-4 sm:px-6 pb-8">
               <div className="max-w-4xl mx-auto space-y-6">
-                 {/* Profile Header Card */}
-                 <div className={`p-6 md:p-8 rounded-3xl border-2 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
-                    <div className="absolute -right-10 -top-10 w-48 h-48 opacity-10 rounded-full" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)' }}></div>
-                    
-                    {/* Avatar */}
-                    <div className="flex-shrink-0 z-10">
-                      {viewingOffer.photo ? (
-                        <img src={viewingOffer.photo} alt={viewingOffer.candidateName} className="w-24 h-24 rounded-2xl object-cover shadow-xl ring-4 ring-white dark:ring-slate-700" />
-                      ) : (
-                        <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-xl ring-4 ring-white dark:ring-slate-700" style={{ background: getAvatarGradient(viewingOffer.candidateName) }}>
-                          {getInitials(viewingOffer.candidateName)}
+                {/* Profile Header Card */}
+                <div className={`p-6 md:p-8 rounded-3xl border-2 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
+                  <div className="absolute -right-10 -top-10 w-48 h-48 opacity-10 rounded-full" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)' }}></div>
+
+                  {/* Avatar */}
+                  <div className="flex-shrink-0 z-10">
+                    <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-xl ring-4 ring-white dark:ring-slate-700" style={{ background: getAvatarGradient(viewingOffer.candidateName) }}>
+                      {getInitials(viewingOffer.candidateName)}
+                    </div>
+                  </div>
+
+                  {/* Basic Info */}
+                  <div className="flex-1 text-center md:text-left z-10 w-full">
+                    <h1 className={`text-2xl md:text-3xl font-extrabold mb-3 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{viewingOffer.candidateName}</h1>
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
+                      <StatusBadge status={viewingOffer.status} />
+                      {viewingOffer.status === 'Sent' && <UrgencyBadge daysLeft={getDaysLeft(viewingOffer.expiryDate)} />}
+                      <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                        <FiBriefcase className="w-3.5 h-3.5" /> {viewingOffer.position}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap center items-center justify-center md:justify-start gap-4">
+                      <p className={`text-sm flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-slate-700 flex items-center justify-center">
+                          <FiMail className="w-3.5 h-3.5 text-blue-500" />
                         </div>
-                      )}
+                        {viewingOffer.email || 'No email provided'}
+                      </p>
+                      <p className={`text-sm flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-slate-700 flex items-center justify-center">
+                          <FiUser className="w-3.5 h-3.5 text-emerald-500" />
+                        </div>
+                        {viewingOffer.client || 'Internal'}
+                      </p>
                     </div>
-                    
-                    {/* Basic Info */}
-                    <div className="flex-1 text-center md:text-left z-10 w-full">
-                       <h1 className={`text-2xl md:text-3xl font-extrabold mb-3 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{viewingOffer.candidateName}</h1>
-                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
-                          <StatusBadge status={viewingOffer.status} />
-                          {viewingOffer.status === 'Sent' && <UrgencyBadge daysLeft={getDaysLeft(viewingOffer.expiryDate)} />}
-                          <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                             <FiBriefcase className="w-3.5 h-3.5" /> {viewingOffer.position}
-                          </span>
-                       </div>
-                       <div className="flex flex-wrap center items-center justify-center md:justify-start gap-4">
-                         <p className={`text-sm flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-slate-700 flex items-center justify-center">
-                              <FiMail className="w-3.5 h-3.5 text-blue-500" />
-                            </div>
-                            {viewingOffer.email || 'No email provided'}
-                         </p>
-                         <p className={`text-sm flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-slate-700 flex items-center justify-center">
-                              <FiUser className="w-3.5 h-3.5 text-emerald-500" />
-                            </div>
-                            {viewingOffer.client || 'Internal'}
-                         </p>
-                       </div>
-                    </div>
-                 </div>
+                  </div>
+                </div>
 
-                 {/* Information Grid */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Offer Package */}
-                    <div className={`p-6 md:p-8 rounded-3xl border-2 hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
-                       <h3 className={`text-base font-bold mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                         <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                            <FiDollarSign className="w-5 h-5 text-white" />
-                         </div>
-                         Compensation Package
-                       </h3>
-                       <div className="space-y-3">
-                          <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
-                             <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Offered CTC</span>
-                             <span className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{viewingOffer.offeredCTC || '-'}</span>
-                          </div>
-                          <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
-                             <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Current CTC</span>
-                             <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{viewingOffer.currentCTC || '-'}</span>
-                          </div>
-                          <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-blue-50/50'}`}>
-                             <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}>Hike & Growth</span>
-                             <span className="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">
-                                {viewingOffer.hikePercent ? `+${viewingOffer.hikePercent}%` : '-'}
-                             </span>
-                          </div>
-                       </div>
+                {/* Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Offer Package */}
+                  <div className={`p-6 md:p-8 rounded-3xl border-2 hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
+                    <h3 className={`text-base font-bold mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                        <FiDollarSign className="w-5 h-5 text-white" />
+                      </div>
+                      Compensation Package
+                    </h3>
+                    <div className="space-y-3">
+                      <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Offered CTC</span>
+                        <span className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{viewingOffer.offeredCTC || '-'}</span>
+                      </div>
+                      <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Current CTC</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{viewingOffer.currentCTC || '-'}</span>
+                      </div>
+                      <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-blue-50/50'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}>Hike & Growth</span>
+                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">
+                          {viewingOffer.hikePercent ? `+${viewingOffer.hikePercent}%` : '-'}
+                        </span>
+                      </div>
                     </div>
+                  </div>
 
-                    {/* Timeline & Roles */}
-                    <div className={`p-6 md:p-8 rounded-3xl border-2 hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
-                       <h3 className={`text-base font-bold mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                         <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}>
-                            <FiCalendar className="w-5 h-5 text-white" />
-                         </div>
-                         Timeline Details
-                       </h3>
-                       <div className="space-y-3">
-                          <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
-                             <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Offer Date</span>
-                             <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{viewingOffer.offerDate ? new Date(viewingOffer.offerDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
-                          </div>
-                          <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
-                             <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Expiry Date</span>
-                             <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{viewingOffer.expiryDate ? new Date(viewingOffer.expiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
-                          </div>
-                          <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
-                             <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Joining Date</span>
-                             <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{viewingOffer.joiningDate ? new Date(viewingOffer.joiningDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
-                          </div>
-                       </div>
+                  {/* Timeline & Roles */}
+                  <div className={`p-6 md:p-8 rounded-3xl border-2 hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
+                    <h3 className={`text-base font-bold mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}>
+                        <FiCalendar className="w-5 h-5 text-white" />
+                      </div>
+                      Timeline Details
+                    </h3>
+                    <div className="space-y-3">
+                      <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Offer Date</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{viewingOffer.offerDate ? new Date(viewingOffer.offerDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
+                      </div>
+                      <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Expiry Date</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{viewingOffer.expiryDate ? new Date(viewingOffer.expiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
+                      </div>
+                      <div className={`flex justify-between items-center p-4 rounded-2xl ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Joining Date</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{viewingOffer.joiningDate ? new Date(viewingOffer.joiningDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
+                      </div>
                     </div>
-                 </div>
+                  </div>
+                </div>
 
-                 {/* Negotiation Notes */}
-                 {viewingOffer.negotiationNotes && (
-                    <div className={`p-6 md:p-8 rounded-3xl border-2 border-amber-200 bg-amber-50 hover:shadow-md transition-shadow duration-300 dark:bg-amber-900/10 dark:border-amber-800/50`}>
-                       <h3 className="text-base font-bold mb-4 flex items-center gap-3 text-amber-700 dark:text-amber-500">
-                         <div className="w-10 h-10 rounded-xl bg-amber-200 dark:bg-amber-800/50 flex items-center justify-center">
-                           <FiMessageCircle className="w-5 h-5" /> 
-                         </div>
-                         Negotiation Notes
-                       </h3>
-                       <p className="text-sm text-amber-800 dark:text-amber-200/80 leading-relaxed font-medium bg-amber-100/50 dark:bg-amber-900/20 p-4 rounded-2xl">
-                          {viewingOffer.negotiationNotes}
-                       </p>
-                    </div>
-                 )}
+                {/* Negotiation Notes */}
+                {viewingOffer.negotiationNotes && (
+                  <div className={`p-6 md:p-8 rounded-3xl border-2 border-amber-200 bg-amber-50 hover:shadow-md transition-shadow duration-300 dark:bg-amber-900/10 dark:border-amber-800/50`}>
+                    <h3 className="text-base font-bold mb-4 flex items-center gap-3 text-amber-700 dark:text-amber-500">
+                      <div className="w-10 h-10 rounded-xl bg-amber-200 dark:bg-amber-800/50 flex items-center justify-center">
+                        <FiMessageCircle className="w-5 h-5" />
+                      </div>
+                      Negotiation Notes
+                    </h3>
+                    <p className="text-sm text-amber-800 dark:text-amber-200/80 leading-relaxed font-medium bg-amber-100/50 dark:bg-amber-900/20 p-4 rounded-2xl">
+                      {viewingOffer.negotiationNotes}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -717,23 +713,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         {/* Left: Candidate & Position */}
                         <div className="flex items-start gap-4 flex-1">
-                          {offer.photo ? (
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src={offer.photo}
-                                alt={offer.candidateName}
-                                className="h-14 w-14 rounded-xl object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
-                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                              />
-                              <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg hidden" style={{ background: getAvatarGradient(offer.candidateName) }}>
-                                {getInitials(offer.candidateName)}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0" style={{ background: getAvatarGradient(offer.candidateName) }}>
-                              {getInitials(offer.candidateName)}
-                            </div>
-                          )}
+                          <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0" style={{ background: getAvatarGradient(offer.candidateName) }}>
+                            {getInitials(offer.candidateName)}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{offer.candidateName}</h3>

@@ -85,12 +85,12 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
   const [step] = useState(2); // strictly 2 to skip Step 1 candidate selection
 
   const taskTypes = [
-    { label: 'Screen CVs', icon: '📋', desc: 'Review and shortlist candidates' },
-    { label: 'Source Candidates', icon: '🔍', desc: 'Find new candidates for role' },
-    { label: 'Schedule Interviews', icon: '📅', desc: 'Arrange interview slots' },
-    { label: 'Follow Up', icon: '📞', desc: 'Follow up with candidates' },
-    { label: 'Client Update', icon: '💼', desc: 'Send progress report to client' },
-    { label: 'Custom Task', icon: '✏️', desc: 'Define a custom task' },
+    { label: 'Screen CVs', icon: FiFileText, desc: 'Review and shortlist candidates' },
+    { label: 'Source Candidates', icon: FiSearch, desc: 'Find new candidates for role' },
+    { label: 'Schedule Interviews', icon: FiCalendar, desc: 'Arrange interview slots' },
+    { label: 'Follow Up', icon: FiPhone, desc: 'Follow up with candidates' },
+    { label: 'Client Update', icon: FiBriefcase, desc: 'Send progress report to client' },
+    { label: 'Custom Task', icon: FiEdit2, desc: 'Define a custom task' },
   ];
 
   const priorities = [
@@ -242,41 +242,42 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
         {/* ── Body ── */}
         <div className="px-4 sm:px-6 pb-6 space-y-5">
-            <>
-              {/* Selected Candidate Badge (Bulk Info) */}
-              <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
+            {/* Selected Candidate Badge (Bulk Info) */}
+            <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-blue-500/20'}`}>
-                  {selectedCandidate.id === 'MEGA_BULK' ? <FiUsers /> : (selectedCandidate.name || 'C').substring(0, 1)}
+                    {selectedCandidate.id === 'MEGA_BULK' ? <FiUsers /> : (selectedCandidate.name || 'C').substring(0, 1)}
                 </div>
                 <div className="flex-1">
-                  <span className={`text-[12px] font-bold block ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-700')}`}>
+                    <span className={`text-[12px] font-bold block ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-700')}`}>
                     {selectedCandidate.id === 'MEGA_BULK' ? 'Target: All Matching Candidates (Automatic)' : `Task for: ${selectedCandidate.name}`}
-                  </span>
-                  {selectedCandidate.id === 'MEGA_BULK' && (
+                    </span>
+                    {selectedCandidate.id === 'MEGA_BULK' && (
                     <span className={`text-[10px] opacity-70 block ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
                         Includes pipeline candidates & matching profiles from Resume Bank
                     </span>
-                  )}
+                    )}
                 </div>
-              </div>
+            </div>
 
-              {/* Quick Task Type Chips */}
-              <div>
+            {/* Quick Task Type Chips */}
+            <div>
                 <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Quick Select Task Type</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {taskTypes.map(t => (
+                    {taskTypes.map(t => (
                     <motion.button key={t.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                      onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
-                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center ${taskType === t.label
+                        onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center ${taskType === t.label
                         ? 'border-[#1E88E5] shadow-lg ' + (isDarkMode ? 'bg-[#1E88E5]/30' : 'bg-[#1E88E5]/10')
                         : isDarkMode ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
                         }`}>
-                      <span className="text-xl">{t.icon}</span>
-                      <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? (isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]') : isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.label}</span>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md mb-1" style={{ background: 'linear-gradient(135deg, #5fa8f0, #76A8DB)' }}>
+                        <t.icon className="w-5 h-5" />
+                        </div>
+                        <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? (isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]') : isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.label}</span>
                     </motion.button>
-                  ))}
+                    ))}
                 </div>
-              </div>
+            </div>
 
               {/* Task Title */}
               <div>
@@ -342,7 +343,6 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
                   className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                 />
               </div>
-            </>
         </div>
 
         {/* ── Footer ── */}

@@ -40,10 +40,10 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate }) => {
 
   const statCards = [
     { label: 'Total Employees', value: stats?.totalEmployees || 0, icon: FiUsers, gradientStyle: 'linear-gradient(135deg, #8b5cf6, #9333ea)', textHex: '#7c3aed', change: '+12', positive: true, navigateTo: 'Master Data (Emp)' },
-    { label: 'Active Today', value: stats?.activeEmployees || 0, icon: FiUserCheck, gradientStyle: 'linear-gradient(135deg, #10b981, #0d9488)', textHex: '#059669', change: '+5', positive: true, navigateTo: 'Attendance & Time Tracking' },
+    { label: 'Active Today', value: stats?.activeEmployees || 0, icon: FiUserCheck, gradientStyle: 'linear-gradient(135deg, #10b981, #0d9488)', textHex: '#059669', change: '+5', positive: true, navigateTo: 'Attendance' },
     { label: 'On Leave', value: stats?.onLeave || 0, icon: FiCalendar, gradientStyle: 'linear-gradient(135deg, #f59e0b, #ea580c)', textHex: '#d97706', change: '-2', positive: true, navigateTo: 'Leave Management' },
     { label: 'Pending Tasks', value: stats?.pendingTasks || 24, icon: FiAlertCircle, gradientStyle: 'linear-gradient(135deg, #f43f5e, #ec4899)', textHex: '#e11d48', change: '+3', positive: false, navigateTo: 'Task by Client' },
-    { label: 'Attendance Rate', value: `${stats?.attendanceRate || 0}%`, icon: FiClock, gradientStyle: 'linear-gradient(135deg, #3b82f6, #6366f1)', textHex: '#2563eb', change: '+2.1%', positive: true, navigateTo: 'Attendance & Time Tracking' },
+    { label: 'Attendance Rate', value: `${stats?.attendanceRate || 0}%`, icon: FiClock, gradientStyle: 'linear-gradient(135deg, #3b82f6, #6366f1)', textHex: '#2563eb', change: '+2.1%', positive: true, navigateTo: 'Attendance' },
     { label: 'Avg. Performance', value: `${stats?.performanceAvg || 0}/5`, icon: FiTrendingUp, gradientStyle: 'linear-gradient(135deg, #06b6d4, #3b82f6)', textHex: '#0891b2', change: '+0.3', positive: true, navigateTo: 'Performance Management' },
   ];
 
@@ -200,7 +200,7 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate }) => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
-          onClick={() => handleCardClick('Attendance & Time Tracking')}
+          onClick={() => handleCardClick('Attendance')}
           className={`rounded-2xl p-6 border-2 cursor-pointer transition-all hover:scale-[1.01] ${
             isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-100 hover:shadow-lg hover:border-violet-200'
           }`}

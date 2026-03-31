@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { hasAccessTo } from '../DepartmentProtectedRoute';
 import {
   FiClock,
-  FiDollarSign,
   FiUserPlus,
   FiFileText,
   FiUsers,
@@ -22,6 +21,7 @@ import {
   FiActivity,
   FiBriefcase,
 } from 'react-icons/fi';
+import { FaIndianRupeeSign } from 'react-icons/fa6';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 
 // Lazy load KAM Tab Components
@@ -75,8 +75,8 @@ const sidebarConfig = [
   {
     heading: 'HR OPERATIONS',
     items: [
-      { id: 1, title: 'Attendance & Time Tracking', icon: FiClock },
-      { id: 2, title: 'Payroll', icon: FiDollarSign },
+      { id: 1, title: 'Attendance', icon: FiClock },
+      { id: 2, title: 'Payroll', icon: FaIndianRupeeSign },
       { id: 13, title: 'Leave Management', icon: FiCalendar },
       { id: 6, title: 'Performance Management', icon: FiTrendingUp },
     ]
@@ -173,7 +173,7 @@ const HROperationsDashboard = () => {
       <Suspense fallback={<TabLoader />}>
         {(() => {
           switch (activeTab) {
-            case 'Attendance & Time Tracking':
+            case 'Attendance':
               return <AttendanceTab />;
             case 'Payroll':
               return <PayrollTab />;
@@ -265,7 +265,7 @@ const HROperationsDashboard = () => {
                       value={stats.pendingPayroll}
                       change="-2"
                       changeType="decrease"
-                      icon={FiDollarSign}
+                      icon={FaIndianRupeeSign}
                       color="yellow"
                       sparklineData={[15, 12, 10, 14, 11, 8, 9]}
                     />
@@ -311,7 +311,7 @@ const HROperationsDashboard = () => {
                         </div>
                         <div className="p-4 flex items-center gap-4 hover:bg-gray-50">
                           <div className="p-2 rounded-lg bg-amber-100 text-amber-600">
-                            <FiDollarSign className="w-4 h-4" />
+                            <FaIndianRupeeSign className="w-4 h-4" />
                           </div>
                           <div className="flex-1">
                             <p className="text-sm text-gray-800">Payroll processed for March</p>
@@ -344,7 +344,7 @@ const HROperationsDashboard = () => {
                           <span className="text-sm font-medium text-gray-700">Add Employee</span>
                         </button>
                         <button
-                          onClick={() => setActiveTab('Attendance & Time Tracking')}
+                          onClick={() => setActiveTab('Attendance')}
                           className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 text-left group"
                         >
                           <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-105 transition-transform">
@@ -357,7 +357,7 @@ const HROperationsDashboard = () => {
                           className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all duration-200 text-left group"
                         >
                           <div className="p-2 rounded-lg bg-amber-100 text-amber-600 group-hover:scale-105 transition-transform">
-                            <FiDollarSign className="w-4 h-4" />
+                            <FaIndianRupeeSign className="w-4 h-4" />
                           </div>
                           <span className="text-sm font-medium text-gray-700">Process Payroll</span>
                         </button>
