@@ -84,6 +84,24 @@ const AVATAR_COLORS = [
   'from-amber-500 to-orange-500',
 ];
 
+const hasMeaningfulStats = (stats = {}) =>
+  (stats.activePositions || 0) > 0 ||
+  (stats.candidatesPipeline || 0) > 0 ||
+  (stats.interviewsScheduled || 0) > 0 ||
+  (stats.offersExtended || 0) > 0 ||
+  (stats.thisWeekHires || 0) > 0;
+
+const getEffectiveKamStats = (kam) =>
+  hasMeaningfulStats(kam?.stats)
+    ? kam.stats
+    : {
+        activePositions: 0,
+        candidatesPipeline: 0,
+        interviewsScheduled: 0,
+        offersExtended: 0,
+        thisWeekHires: 0,
+      };
+
 // Transform API response to component format
 const transformKAMData = (apiData) => {
   if (!Array.isArray(apiData)) return [];
@@ -104,9 +122,7 @@ const transformKAMData = (apiData) => {
       offersExtended: member.stats?.offersExtended || 0,
       thisWeekHires: member.stats?.thisWeekHires || 0,
     },
-    recentActivity: member.recentActivity || [
-      { action: 'No recent activity', candidate: '', time: 'N/A' }
-    ],
+    recentActivity: Array.isArray(member.recentActivity) ? member.recentActivity : [],
   }));
 };
 
@@ -153,6 +169,7 @@ const sidebarConfig = [
 // KAM Card Component
 const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const statsToShow = getEffectiveKamStats(kam);
 
   return (
     <motion.div
@@ -236,19 +253,19 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage }) => {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           <div className="bg-blue-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-blue-600">{kam.stats.activePositions}</p>
+            <p className="text-2xl font-bold text-blue-600">{statsToShow.activePositions}</p>
             <p className="text-xs text-gray-600">Active Jobs</p>
           </div>
           <div className="bg-purple-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-purple-600">{kam.stats.candidatesPipeline}</p>
+            <p className="text-2xl font-bold text-purple-600">{statsToShow.candidatesPipeline}</p>
             <p className="text-xs text-gray-600">Candidates</p>
           </div>
           <div className="bg-amber-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-amber-600">{kam.stats.interviewsScheduled}</p>
+            <p className="text-2xl font-bold text-amber-600">{statsToShow.interviewsScheduled}</p>
             <p className="text-xs text-gray-600">Interviews</p>
           </div>
           <div className="bg-emerald-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-emerald-600">{kam.stats.thisWeekHires}</p>
+            <p className="text-2xl font-bold text-emerald-600">{statsToShow.thisWeekHires}</p>
             <p className="text-xs text-gray-600">This Week Hires</p>
           </div>
         </div>
@@ -294,7 +311,6 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
     offersExtended: globalStats?.pendingOffers || teamAggregatedStats.offersExtended,
     thisWeekHires: globalStats?.thisWeekHires || teamAggregatedStats.thisWeekHires,
   };
-
   return (
     <div className="space-y-8">
       {/* Team Stats Summary */}
@@ -668,7 +684,6 @@ const RecruitmentHeadDashboard = () => {
     pendingOffers: 0,
   });
   const [statsBarData, setStatsBarData] = useState([]);
-
   // Fetch KAM Team data from API
   const fetchKAMTeam = async () => {
     try {
@@ -794,7 +809,11 @@ const RecruitmentHeadDashboard = () => {
   };
 
   const handleViewKAM = (kam) => {
-    setSelectedKAM(kam);
+    setSelectedKAM({
+      ...kam,
+      stats: getEffectiveKamStats(kam),
+      recentActivity: kam.recentActivity || []
+    });
     setShowKAMModal(true);
   };
 
@@ -924,7 +943,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Job Openings':
               return <JobOpeningsTab isDarkMode={false} />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab isDarkMode={false} />;
+              return <CandidatePipelineTab isDarkMode={false} setActiveTab={setActiveTab} />;
             case 'Interview Schedule':
               return <InterviewScheduleTab isDarkMode={false} />;
             case 'Screening & Assessment':
@@ -1087,27 +1106,39 @@ const RecruitmentHeadDashboard = () => {
                         <h3 className="font-bold text-lg text-gray-900">Recent Team Activity</h3>
                       </div>
                       <div className="divide-y divide-gray-50 max-h-[280px] overflow-y-auto">
+                        {kamTeam
+                          .flatMap((kam) =>
+                            (kam.recentActivity || [])
+                              .filter((activity) => activity?.action && activity.action !== 'No recent activity')
+                              .slice(0, 1)
+                              .map((activity) => ({
+                                ...activity,
+                                kamName: kam.name,
+                                avatar: kam.avatar,
+                                color: kam.color,
+                              }))
+                          )
+                          .map((activity, idx) => (
+                            <div key={idx} className="p-4 flex items-center gap-4 hover:bg-gray-50">
+                              <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${activity.color} flex items-center justify-center text-white font-semibold text-sm`}>
+                                {activity.avatar}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm text-gray-900">
+                                  <span className="font-semibold">{activity.kamName}</span>{' '}
+                                  {activity.action}: {activity.candidate || activity.position}
+                                </p>
+                                <p className="text-xs text-gray-500">{activity.time}</p>
+                              </div>
+                            </div>
+                          ))}
                         {kamTeam.flatMap((kam) =>
-                          kam.recentActivity.slice(0, 1).map((activity, idx) => ({
-                            ...activity,
-                            kamName: kam.name,
-                            avatar: kam.avatar,
-                            color: kam.color,
-                          }))
-                        ).map((activity, idx) => (
-                          <div key={idx} className="p-4 flex items-center gap-4 hover:bg-gray-50">
-                            <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${activity.color} flex items-center justify-center text-white font-semibold text-sm`}>
-                              {activity.avatar}
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm text-gray-900">
-                                <span className="font-semibold">{activity.kamName}</span>{' '}
-                                {activity.action}: {activity.candidate || activity.position}
-                              </p>
-                              <p className="text-xs text-gray-500">{activity.time}</p>
-                            </div>
+                          (kam.recentActivity || []).filter((activity) => activity?.action && activity.action !== 'No recent activity').slice(0, 1)
+                        ).length === 0 && (
+                          <div className="p-6 text-center text-sm text-gray-500">
+                            No recent team activity found
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1207,7 +1238,7 @@ const RecruitmentHeadDashboard = () => {
                 <div className="border-t border-gray-100 pt-6">
                   <h3 className="font-semibold text-gray-900 mb-4">Recent Activity</h3>
                   <div className="space-y-3">
-                    {selectedKAM.recentActivity.map((activity, idx) => (
+                    {selectedKAM.recentActivity.length > 0 ? selectedKAM.recentActivity.map((activity, idx) => (
                       <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
                         <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                         <div className="flex-1">
@@ -1217,7 +1248,11 @@ const RecruitmentHeadDashboard = () => {
                         </div>
                         <span className="text-xs text-gray-500">{activity.time}</span>
                       </div>
-                    ))}
+                    )) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-sm text-gray-500">
+                        No recent activity found
+                      </div>
+                    )}
                   </div>
                 </div>
 

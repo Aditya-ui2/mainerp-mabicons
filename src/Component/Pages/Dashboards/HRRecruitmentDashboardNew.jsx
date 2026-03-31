@@ -215,7 +215,7 @@ const HRRecruitmentDashboard = () => {
             case 'Job Openings':
               return <JobOpeningsTab />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab />;
+              return <CandidatePipelineTab setActiveTab={setActiveTab} />;
             case 'Interview Schedule':
               return <InterviewScheduleTab />;
             case 'Screening & Assessment':

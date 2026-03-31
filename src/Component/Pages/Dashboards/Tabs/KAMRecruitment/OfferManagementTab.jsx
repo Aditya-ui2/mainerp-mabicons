@@ -22,7 +22,7 @@ import {
   FiMail,
   FiArrowLeft,
 } from 'react-icons/fi';
-import { getAllCandidates, updateCandidateStatus } from '../../../service/api';
+import { getAllOffers, saveOffer, getOfferCandidateSuggestions } from '../../../service/api';
 
 /* ── Status Badge ── */
 const StatusBadge = ({ status }) => {
@@ -70,7 +70,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const [showFullPageForm, setShowFullPageForm] = useState(false);
   const [editingOffer, setEditingOffer] = useState(null);
   const [viewingOffer, setViewingOffer] = useState(null);
+  const [candidateSuggestions, setCandidateSuggestions] = useState([]);
+  const [showCandidateSuggestions, setShowCandidateSuggestions] = useState(false);
   const [formData, setFormData] = useState({
+    candidateId: '',
     candidateName: '',
     email: '',
     position: '',
@@ -89,25 +92,11 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const fetchOffers = async () => {
     setLoading(true);
     try {
-      // Fetch candidates with offer-related statuses
-      const response = await getAllCandidates({ 
-        status: 'Offer Sent,Negotiating,Accepted,Rejected,Joined' 
-      });
-      const candidatesData = (response.candidates || response.data || []).map(c => ({
-        id: c._id || c.id,
-        candidateName: c.name || c.candidateName || 'Unknown',
-        email: c.email || '',
-        position: c.position?.title || c.positionTitle || c.position || '',
-        client: c.position?.client?.companyName || c.clientName || c.client || '',
-        offeredCTC: c.offeredCTC || c.expectedCTC || '',
-        currentCTC: c.currentCTC || '',
-        joiningDate: c.joiningDate || '',
-        offerDate: c.offerDate || c.updatedAt?.split('T')[0] || '',
-        expiryDate: c.offerExpiryDate || '',
-        status: mapCandidateStatusToOffer(c.status),
-        negotiationNotes: c.negotiationNotes || c.notes || '',
-        hikePercent: calculateHike(c.currentCTC, c.offeredCTC || c.expectedCTC),
-        photo: c.photo || '',
+      const response = await getAllOffers();
+      const candidatesData = (response.data || []).map(c => ({
+        ...c,
+        id: c.id,
+        hikePercent: calculateHike(c.currentCTC, c.offeredCTC),
       }));
       setOffers(candidatesData);
     } catch (error) {
@@ -116,18 +105,6 @@ const OfferManagementTab = ({ isDarkMode }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Map candidate status to offer status
-  const mapCandidateStatusToOffer = (status) => {
-    const statusMap = {
-      'Offer Sent': 'Sent',
-      'Negotiating': 'Negotiating',
-      'Accepted': 'Accepted',
-      'Rejected': 'Rejected',
-      'Joined': 'Accepted',
-    };
-    return statusMap[status] || 'Draft';
   };
 
   // Calculate hike percentage
@@ -143,6 +120,31 @@ const OfferManagementTab = ({ isDarkMode }) => {
     fetchOffers();
   }, []);
 
+  useEffect(() => {
+    if (!showFullPageForm || editingOffer) return;
+
+    const search = formData.candidateName.trim();
+    if (search.length < 2) {
+      setCandidateSuggestions([]);
+      setShowCandidateSuggestions(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await getOfferCandidateSuggestions(search);
+        setCandidateSuggestions(response.data || []);
+        setShowCandidateSuggestions(true);
+      } catch (error) {
+        console.error('Failed to load candidate suggestions:', error);
+        setCandidateSuggestions([]);
+        setShowCandidateSuggestions(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.candidateName, showFullPageForm, editingOffer]);
+
   // Calculate days left
   const getDaysLeft = (expiryDate) => {
     const today = new Date();
@@ -153,7 +155,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
   // Handle edit offer - open full page form
   const handleEditOffer = (offer) => {
     setEditingOffer(offer);
+    setCandidateSuggestions([]);
+    setShowCandidateSuggestions(false);
     setFormData({
+      candidateId: offer.candidateId || offer.id || '',
       candidateName: offer.candidateName || '',
       email: offer.email || '',
       position: offer.position || '',
@@ -174,7 +179,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
   // Handle create new offer - open full page form
   const handleCreateOffer = () => {
     setEditingOffer(null);
+    setCandidateSuggestions([]);
+    setShowCandidateSuggestions(false);
     setFormData({
+      candidateId: '',
       candidateName: '',
       email: '',
       position: '',
@@ -207,20 +215,42 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
   // Handle save offer
   const handleSaveOffer = () => {
-    const newOffer = {
-      id: editingOffer?.id || Date.now(),
-      ...formData,
-      photo: editingOffer?.photo || null,
-    };
+    (async () => {
+      try {
+        const response = await saveOffer({
+          candidateId: formData.candidateId || editingOffer?.candidateId || editingOffer?.id || null,
+          candidateName: formData.candidateName,
+          email: formData.email,
+          position: formData.position,
+          client: formData.client,
+          offeredCTC: formData.offeredCTC,
+          currentCTC: formData.currentCTC,
+          joiningDate: formData.joiningDate,
+          offerDate: formData.offerDate,
+          expiryDate: formData.expiryDate,
+          status: formData.status,
+          negotiationNotes: formData.negotiationNotes,
+        });
 
-    if (editingOffer) {
-      setOffers(prev => prev.map(o => o.id === editingOffer.id ? newOffer : o));
-    } else {
-      setOffers(prev => [newOffer, ...prev]);
-    }
+        const savedOffer = {
+          ...response.data,
+          hikePercent: calculateHike(response.data.currentCTC, response.data.offeredCTC),
+        };
 
-    setShowFullPageForm(false);
-    setEditingOffer(null);
+        if (editingOffer) {
+          setOffers(prev => prev.map(o => o.id === editingOffer.id ? savedOffer : o));
+        } else {
+          setOffers(prev => [savedOffer, ...prev.filter(o => o.id !== savedOffer.id)]);
+        }
+
+        setCandidateSuggestions([]);
+        setShowCandidateSuggestions(false);
+        setShowFullPageForm(false);
+        setEditingOffer(null);
+      } catch (error) {
+        console.error('Failed to save offer:', error);
+      }
+    })();
   };
 
   // Stats
@@ -260,6 +290,21 @@ const OfferManagementTab = ({ isDarkMode }) => {
   };
 
   const getInitials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+  const handleSelectCandidateSuggestion = (candidate) => {
+    setFormData(prev => ({
+      ...prev,
+      candidateId: candidate.id,
+      candidateName: candidate.name || '',
+      email: candidate.email || '',
+      position: candidate.position || '',
+      client: candidate.client || '',
+      currentCTC: candidate.currentCTC || prev.currentCTC || '',
+      offeredCTC: prev.offeredCTC || candidate.expectedCTC || '',
+    }));
+    setCandidateSuggestions([]);
+    setShowCandidateSuggestions(false);
+  };
 
   // Skeleton loader
   if (loading) {
@@ -330,15 +375,40 @@ const OfferManagementTab = ({ isDarkMode }) => {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
+                    <div className="relative">
                       <label className={`block text-xs font-bold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Candidate Name *</label>
                       <input
                         type="text"
                         value={formData.candidateName}
-                        onChange={(e) => setFormData(prev => ({ ...prev, candidateName: e.target.value }))}
+                        onChange={(e) => setFormData(prev => ({ ...prev, candidateId: '', candidateName: e.target.value }))}
+                        onFocus={() => setShowCandidateSuggestions(candidateSuggestions.length > 0)}
                         className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 hover:border-blue-400/50 ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-600' : 'bg-slate-50 border-slate-200 placeholder:text-slate-400'}`}
                         placeholder="e.g. Priya Singh"
                       />
+                      <AnimatePresence>
+                        {showCandidateSuggestions && candidateSuggestions.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-64 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
+                          >
+                            {candidateSuggestions.map((candidate) => (
+                              <button
+                                key={candidate.id}
+                                type="button"
+                                onClick={() => handleSelectCandidateSuggestion(candidate)}
+                                className={`w-full text-left px-4 py-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
+                              >
+                                <div className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{candidate.name}</div>
+                                <div className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                  {candidate.email || 'No email'}{candidate.position ? ` • ${candidate.position}` : ''}{candidate.client ? ` • ${candidate.client}` : ''}
+                                </div>
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                     <div>
                       <label className={`block text-xs font-bold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Email Address</label>

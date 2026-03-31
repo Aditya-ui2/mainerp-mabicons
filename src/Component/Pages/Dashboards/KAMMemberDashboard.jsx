@@ -135,33 +135,45 @@ const MyPerformanceContent = ({ stats, period, onPeriodChange, user }) => {
       </div>
 
       {/* Performance Overview */}
-      <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl p-8 text-white">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-2xl font-bold">{isHead ? 'Department Performance' : 'Great Progress!'}</h3>
-            <p className="text-emerald-100">{isHead ? "Here is your team's cumulative impact" : "You're on track to meet your monthly targets"}</p>
+      <div
+        className="rounded-3xl p-8 text-white shadow-lg"
+        style={{
+          background: 'linear-gradient(135deg, #0f766e 0%, #0ea5a4 45%, #2563eb 100%)'
+        }}
+      >
+        <div className="flex items-start justify-between gap-6 mb-8">
+          <div className="max-w-2xl">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
+              Performance Overview
+            </p>
+            <h3 className="text-3xl font-bold text-white">
+              {isHead ? 'Department Performance' : 'Great Progress!'}
+            </h3>
+            <p className="mt-3 max-w-xl text-sm md:text-base text-cyan-50">
+              {isHead ? "Here is your team's cumulative impact" : "You're on track to meet your monthly targets."}
+            </p>
           </div>
-          <div className="bg-white/20 rounded-full p-4">
-            <FiStar className="w-8 h-8" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15">
+            <FiStar className="w-7 h-7 text-white" />
           </div>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-4 text-center border-t-4 border-emerald-400 shadow-lg">
+          <div className="rounded-2xl bg-white p-4 text-center shadow-sm text-gray-900">
             <p className="text-3xl font-extrabold text-gray-900">{stats.thisWeekHires || 0}</p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Hires</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-700">Hires</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center border-t-4 border-blue-400 shadow-lg">
+          <div className="rounded-2xl bg-white p-4 text-center shadow-sm text-gray-900">
             <p className="text-3xl font-extrabold text-gray-900">{stats.interviewsScheduled || 0}</p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Interviews</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-blue-700">Interviews</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center border-t-4 border-purple-400 shadow-lg">
+          <div className="rounded-2xl bg-white p-4 text-center shadow-sm text-gray-900">
             <p className="text-3xl font-extrabold text-gray-900">{stats.candidatesPipeline}</p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Screenings</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-purple-700">Screenings</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center border-t-4 border-amber-400 shadow-lg">
+          <div className="rounded-2xl bg-white p-4 text-center shadow-sm text-gray-900">
             <p className="text-3xl font-extrabold text-gray-900">{stats.offersExtended}</p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Offers</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-amber-700">Offers</p>
           </div>
         </div>
       </div>
@@ -402,13 +414,13 @@ const KAMMemberDashboard = () => {
         candidatesPipeline = candidates.length || candidatesPipeline;
       }
 
-      setStats({
+      setStats(prev => ({
+        ...prev,
         activePositions: activePositions || 12,
         candidatesPipeline: candidatesPipeline || 45,
-        interviewsScheduled: 0, // Will be set by interview fetch
         offersExtended: offersExtended || 3,
         thisWeekHires: thisWeekHires || 2,
-      });
+      }));
 
     } catch (e) {
       console.error('Dashboard data fetch error:', e);
@@ -599,7 +611,7 @@ const KAMMemberDashboard = () => {
             case 'Job Openings':
               return <JobOpeningsTab />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab />;
+              return <CandidatePipelineTab setActiveTab={setActiveTab} />;
             case 'Interview Schedule':
               return <InterviewScheduleTab />;
             case 'Screening':

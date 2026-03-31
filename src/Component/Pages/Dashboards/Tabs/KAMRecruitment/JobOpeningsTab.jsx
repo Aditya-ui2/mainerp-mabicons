@@ -412,6 +412,9 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
                 <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{job.title}</h2>
               </div>
               <p className={`text-lg mt-1 font-medium ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'}`}>{job.client}</p>
+              <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Posted by: <span className={`font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{job.postedByName || 'Unassigned'}</span>
+              </p>
               <div className="flex flex-wrap justify-center sm:justify-start items-center gap-5 mt-3">
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-4 h-4" /> {job.location}</span>
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -464,6 +467,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
               { label: 'Total Openings', value: job.openings, icon: FiUsers },
               { label: 'Filled', value: job.filled, icon: FiCheckCircle },
               { label: 'Priority', value: job.priority, icon: FiAlertCircle },
+              { label: 'Posted By', value: job.postedByName || 'Unassigned', icon: FiClipboard },
               { label: 'Posted Date', value: new Date(job.postedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }), icon: FiCalendar },
               { label: 'Deadline', value: new Date(job.deadline).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }), icon: FiCalendar },
               { label: 'Experience', value: job.experience || '3-7 years', icon: FiAward },
@@ -598,7 +602,17 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       const rawClients = response.data?.clients || response.clients || response.data || [];
       const clientsData = (Array.isArray(rawClients) ? rawClients : []).map(c => ({
         id: c.id || c._id,
+        clientName: c.name || c.clientName || 'Unknown Client',
+        companyName: c.companyName || 'Unknown Company',
         name: c.companyName || c.name || c.clientName || 'Unknown',
+        displayName: (() => {
+          const clientName = (c.name || c.clientName || '').trim();
+          const companyName = (c.companyName || '').trim();
+          if (clientName && companyName && clientName.toLowerCase() !== companyName.toLowerCase()) {
+            return `${clientName} / ${companyName}`;
+          }
+          return companyName || clientName || 'Unknown';
+        })(),
       }));
       setClients(clientsData);
       try { localStorage.setItem(CACHE_KEY_CLIENTS, JSON.stringify(clientsData)); } catch {}
@@ -654,6 +668,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         candidateCount: p.candidateCount || 0,
         tasks: p.tasks || [],
         clientId: p.clientId,
+        postedByName: p.postedByName || p.postedBy?.name || '',
+        postedByEmail: p.postedByEmail || p.postedBy?.email || '',
       }));
 
       // Update jobTasks mapping
@@ -829,21 +845,30 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
   const handleCreatePosition = async () => {
     try {
+      const currentUserName = localStorage.getItem('userName') || 'Current User';
+      let departmentTeamId;
+      try {
+        const token = localStorage.getItem('token');
+        departmentTeamId = token ? JSON.parse(atob(token.split('.')[1])).id : undefined;
+      } catch (e) {
+        departmentTeamId = undefined;
+      }
+
       const positionData = {
         title: newJobForm.title,
         clientId: newJobForm.clientId,
         description: newJobForm.description,
-        location: newJobForm.location,
-        type: newJobForm.type,
+        location: newJobForm.location || 'Remote',
+        type: newJobForm.type === 'Remote' ? 'Full-time' : newJobForm.type,
         salary: newJobForm.salary,
-        status: newJobForm.priority === 'High' ? 'Urgent' : 'Open',
+        status: 'Open',
         priority: newJobForm.priority,
         openings: parseInt(newJobForm.openings) || 1,
         skills: newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
         experience: newJobForm.experience,
         deadline: newJobForm.deadline || undefined,
         roleType: newJobForm.roleType,
-        teamLeaderId: JSON.parse(localStorage.getItem('user'))?.id || undefined,
+        departmentTeamId,
       };
       const result = await createRecruitmentPosition(positionData);
       const created = result.data || {};
@@ -866,30 +891,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         skills: created.skills || newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
         description: created.description || newJobForm.description,
         roleType: created.roleType || newJobForm.roleType,
+        postedByName: created.postedByName || currentUserName,
+        postedByEmail: created.postedByEmail || '',
       };
       setJobs(prev => [newJob, ...prev]);
     } catch (error) {
-      console.error('Backend create failed, adding locally:', error);
-      const newJob = {
-        id: Date.now(),
-        title: newJobForm.title,
-        client: newJobForm.client,
-        clientLogo: newJobForm.client ? newJobForm.client.substring(0, 2).toUpperCase() : 'NA',
-        location: newJobForm.location,
-        type: newJobForm.type,
-        salary: newJobForm.salary,
-        openings: parseInt(newJobForm.openings) || 1,
-        filled: 0,
-        status: newJobForm.priority === 'High' ? 'Urgent' : 'Open',
-        priority: newJobForm.priority,
-        postedDate: new Date().toISOString().split('T')[0],
-        deadline: newJobForm.deadline,
-        experience: newJobForm.experience,
-        skills: newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
-        description: newJobForm.description,
-        roleType: newJobForm.roleType,
-      };
-      setJobs(prev => [newJob, ...prev]);
+      console.error('Backend create failed:', error);
+      alert(error?.message || error?.error || 'Position create failed. Please check required fields and try again.');
+      return;
     }
 
     setModalStep(2);
@@ -1155,13 +1164,13 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client/Company *</label>
                       <select value={newJobForm.clientId} onChange={e => {
                         const selected = clients.find(c => c.id === e.target.value);
-                        setNewJobForm(f => ({ ...f, clientId: e.target.value, client: selected?.name || '' }));
+                        setNewJobForm(f => ({ ...f, clientId: e.target.value, client: selected?.companyName || selected?.name || '' }));
                       }}
                         className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
                       >
-                        <option value="">Select Client</option>
+                        <option value="">Select Client / Company</option>
                         {clients.map(c => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
+                          <option key={c.id} value={c.id}>{c.displayName}</option>
                         ))}
                       </select>
                     </div>
@@ -1515,7 +1524,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     <select value={filterClient} onChange={(e) => setFilterClient(e.target.value)}
                       className={`appearance-none w-full rounded-xl border-2 px-4 py-3 pr-10 text-base font-medium cursor-pointer focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
                       <option value="all">All Clients</option>
-                      {clients.map(c => (<option key={c.id} value={c.name}>{c.name}</option>))}
+                      {clients.map(c => (<option key={c.id} value={c.companyName || c.name}>{c.displayName}</option>))}
                     </select>
                     <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   </div>
@@ -1568,6 +1577,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                         <div className="flex-1 min-w-0 text-center sm:text-left">
                           <h3 className={`text-lg sm:text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{job.title}</h3>
                           <p className={`text-base mt-1.5 font-medium ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'}`}>{job.client}</p>
+                          <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            Posted by: <span className={`font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{job.postedByName || 'Unassigned'}</span>
+                          </p>
                           <div className="flex flex-wrap justify-center sm:justify-start items-center gap-4 mt-4">
                             <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-4 h-4" /> {job.location}</span>
                             <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
