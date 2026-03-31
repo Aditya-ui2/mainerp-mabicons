@@ -135,7 +135,7 @@ const EmployeePayrollDetailView = ({ employee, onBack, isDarkMode, getStatusConf
   );
 };
 
-const PayrollProcessingModal = ({ isOpen, onClose, onComplete, totalEmployees, totalAmount, isDarkMode }) => {
+const PayrollRunView = ({ onBack, onComplete, totalEmployees, totalAmount, isDarkMode, formatDate, formatCurrency }) => {
   const [stage, setStage] = useState('summary'); // summary, processing, success
   const [progress, setProgress] = useState(0);
 
@@ -155,157 +155,187 @@ const PayrollProcessingModal = ({ isOpen, onClose, onComplete, totalEmployees, t
     }
   }, [stage]);
 
-  if (!isOpen) return null;
-
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 50, transition: { duration: 0.2 } }}
+      className={`w-full ${isDarkMode ? 'text-white' : 'text-slate-800'}`}
     >
-      <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        className={`w-full max-w-lg rounded-3xl p-8 shadow-2xl overflow-hidden relative ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'}`}
-      >
-        <AnimatePresence mode="wait">
-          {stage === 'summary' && (
-            <motion.div
-              key="summary"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="text-center"
-            >
-              <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FiFileText className="w-10 h-10 text-blue-600 dark:text-blue-400" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2">Run Payroll Summary</h3>
-              <p className={`mb-8 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Review the payroll details for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} before processing.</p>
-              
-              <div className={`grid grid-cols-2 gap-4 mb-8 text-left`}>
-                <div className={`p-4 rounded-2xl ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Staff</p>
-                  <p className="text-xl font-bold">{totalEmployees} Employees</p>
-                </div>
-                <div className={`p-4 rounded-2xl ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Payable</p>
-                  <p className="text-xl font-bold text-blue-600">₹{totalAmount.toLocaleString('en-IN')}</p>
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-10 text-left">
+        <button
+          onClick={onBack}
+          className={`p-2.5 rounded-xl transition-all shadow-sm ${
+            isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
+          }`}
+        >
+          <FiArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex flex-col">
+          <h2 
+            onClick={onBack}
+            className="text-2xl font-black bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity select-none"
+          >
+            Execute Payroll Cycle
+          </h2>
+          <p className={`text-[10px] font-bold tracking-widest ${isDarkMode ? 'text-blue-400' : 'text-[#1E88E5]'}`}>
+            Final Auditory and Settlement Cycle
+          </p>
+        </div>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {stage === 'summary' && (
+          <motion.div
+            key="summary"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`p-10 lg:p-14 rounded-[3rem] border-2 shadow-2xl relative overflow-hidden ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
+            }`}
+          >
+            <div className="absolute top-0 right-0 w-96 h-96 opacity-[0.03] blur-3xl rounded-full bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1]"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-12 border-l-4 border-blue-600 pl-6 py-2">
+                <FiFileText className="w-8 h-8 text-blue-600" />
+                <div className="text-left">
+                  <h3 className="text-xl font-black tracking-tight">Run Summary</h3>
+                  <p className="text-[10px] font-bold text-slate-400 tracking-widest">Verify Before Final Processing</p>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <button 
-                  onClick={onClose}
-                  className={`flex-1 py-3.5 rounded-xl font-bold border-2 ${isDarkMode ? 'border-slate-700 hover:bg-slate-700' : 'border-slate-100 hover:bg-slate-50'}`}
-                >
-                  Cancel
-                </button>
-                <button 
+              {/* Horizontal Form Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <div className={`p-8 rounded-3xl border-2 transition-all hover:scale-105 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-white shadow-sm'}`}>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Payroll Cycle</p>
+                  <p className="text-xl font-black text-blue-600">{formatDate(new Date().toISOString())}</p>
+                </div>
+                <div className={`p-8 rounded-3xl border-2 transition-all hover:scale-105 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-white shadow-sm'}`}>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Total Headcount</p>
+                  <p className="text-xl font-black">{totalEmployees} Staff Member</p>
+                </div>
+                <div className={`p-8 rounded-3xl border-2 transition-all hover:scale-105 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-white shadow-md'}`}>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Total Settlement</p>
+                  <p className="text-3xl font-black text-[#0D47A1] tracking-tighter">{formatCurrency(totalAmount)}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-6 border-t border-slate-100 dark:border-slate-800 pt-10">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setStage('processing')}
-                  className="flex-1 py-3.5 bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white rounded-xl font-bold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
+                  className="flex-1 px-12 py-5 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all flex items-center justify-center gap-3"
                 >
-                  Confirm & Run
+                  <FiCheckCircle className="w-5 h-5" />
+                  Confirm & Process Payroll
+                </motion.button>
+                <button
+                  onClick={onBack}
+                  className={`flex-1 px-10 py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-xs border-2 transition-all ${
+                    isDarkMode ? 'border-slate-800 text-slate-400 hover:bg-slate-800' : 'border-slate-100 text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  Cancel Cycle
                 </button>
               </div>
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
+        )}
 
-          {stage === 'processing' && (
-            <motion.div
-              key="processing"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              className="text-center py-8"
-            >
-              <div className="relative w-32 h-32 mx-auto mb-8">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="64" cy="64" r="60"
-                    stroke="currentColor" strokeWidth="8"
-                    fill="transparent"
-                    className="text-slate-100 dark:text-slate-700"
-                  />
-                  <motion.circle
-                    cx="64" cy="64" r="60"
-                    stroke="currentColor" strokeWidth="8"
-                    fill="transparent"
-                    strokeDasharray={377}
-                    strokeDashoffset={377 - (377 * progress) / 100}
-                    className="text-blue-600"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold">{progress}%</span>
-                </div>
+        {stage === 'processing' && (
+          <motion.div
+            key="processing"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className={`p-20 text-center rounded-[3.5rem] border-2 border-dashed ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50/50 border-blue-100'
+            }`}
+          >
+            <div className="relative w-48 h-48 mx-auto mb-12">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="96" cy="96" r="90" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-slate-200 dark:text-slate-800" />
+                <motion.circle cx="96" cy="96" r="90" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={565} strokeDashoffset={565 - (565 * progress) / 100} className="text-blue-600" strokeLinecap="round" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-5xl font-black tracking-tighter text-blue-600 font-mono">{progress}%</span>
               </div>
-              <h3 className="text-xl font-bold mb-2">Calculating Salaries...</h3>
-              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Generating digital payslips and updating balances</p>
+            </div>
+            <h3 className="text-3xl font-black mb-4 uppercase tracking-tight">Syncing Digital Ledger...</h3>
+            <p className={`text-sm font-bold max-w-md mx-auto leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              Generating digital payslips, calculating audit logs, and preparing fund transfer protocols.
+            </p>
+            <div className="mt-12 flex items-center justify-center gap-4 text-blue-600 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">
+              <FiLoader className="animate-spin w-5 h-5" />
+              System Processing...
+            </div>
+          </motion.div>
+        )}
+
+        {stage === 'success' && (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`p-16 text-center rounded-[4rem] border-2 shadow-2xl relative overflow-hidden ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
+            }`}
+          >
+            <div className="absolute -top-24 -left-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
+
+            <div className="relative z-10">
+              <div className="w-32 h-32 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-emerald-500/20 ring-8 ring-emerald-50 dark:ring-emerald-900/10">
+                <FiCheckCircle className="w-16 h-16 text-emerald-600" />
+              </div>
+              <h3 className="text-5xl font-black mb-4 bg-gradient-to-br from-emerald-600 to-teal-400 bg-clip-text text-transparent tracking-tighter uppercase">
+                Payroll Liquidated
+              </h3>
+              <p className={`mb-12 font-black text-[10px] uppercase tracking-[0.3em] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                Audit report generated • Cycle successfully closed
+              </p>
               
-              <div className="mt-8 flex items-center justify-center gap-2 text-blue-600 font-medium animate-pulse">
-                <FiLoader className="animate-spin" />
-                Processing request...
-              </div>
-            </motion.div>
-          )}
-
-          {stage === 'success' && (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
-            >
-              <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                >
-                  <FiCheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
-                </motion.div>
-              </div>
-              <h3 className="text-3xl font-bold mb-2 text-green-600">Success!</h3>
-              <p className={`mb-8 font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Payroll has been processed for all employees.</p>
-              
-              <div className={`p-5 rounded-2xl mb-8 border-2 border-dashed ${isDarkMode ? 'border-green-900/30 bg-green-900/10' : 'border-green-100 bg-green-50'}`}>
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-slate-500">Processing Time:</span>
-                  <span className="font-bold">2.4 Seconds</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-12">
+                <div className={`p-8 rounded-3xl border-2 border-dashed ${isDarkMode ? 'border-slate-800 bg-slate-800/40 text-slate-300' : 'bg-emerald-50/50 border-emerald-100 text-emerald-700'}`}>
+                  <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60">Processing Time</span>
+                  <p className="text-xl font-black">2.4 SECONDS</p>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Status:</span>
-                  <span className="font-bold text-green-600">All Completed</span>
+                <div className={`p-8 rounded-3xl border-2 border-dashed ${isDarkMode ? 'border-slate-800 bg-slate-800/40 text-slate-300' : 'bg-blue-50/50 border-blue-100 text-blue-700'}`}>
+                  <span className="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-60">Security Level</span>
+                  <p className="text-xl font-black uppercase">AES-256 Verified</p>
                 </div>
               </div>
 
-              <button 
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   onComplete();
-                  onClose();
+                  onBack();
                 }}
-                className="w-full py-4 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/25 hover:bg-green-700 transition-all"
+                className="px-16 py-6 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all border-b-4 border-emerald-800"
               >
-                Great, thanks!
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+                Back to Portal
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
 
 const PayrollTab = ({ isDarkMode, selectedClient }) => {
+  const [activeView, setActiveView] = useState('list'); // 'list', 'details', 'run-payroll'
   const [payrollData, setPayrollData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [searchTerm, setSearchTerm] = useState('');
   const [showPayslip, setShowPayslip] = useState(null);
-  const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
@@ -335,10 +365,10 @@ const PayrollTab = ({ isDarkMode, selectedClient }) => {
 
   const statCards = [
     { key: 'basic', label: 'Total Basic', value: totals.basic, icon: RupeeIcon, gradient: 'from-blue-500 to-indigo-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50', textColor: 'text-blue-600' },
-    { key: 'hra', label: 'Total HRA', value: totals.hra, icon: FiTrendingUp, gradient: 'from-cyan-500 to-blue-600', lightBg: 'bg-gradient-to-br from-cyan-50 to-blue-50', textColor: 'text-cyan-600' },
-    { key: 'allowances', label: 'Allowances', value: totals.allowances, icon: FiCalendar, gradient: 'from-indigo-500 to-purple-600', lightBg: 'bg-gradient-to-br from-indigo-50 to-purple-50', textColor: 'text-indigo-600' },
-    { key: 'deductions', label: 'Deductions', value: totals.deductions, icon: RupeeIcon, gradient: 'from-red-500 to-pink-600', lightBg: 'bg-gradient-to-br from-red-50 to-pink-50', isNegative: true, textColor: 'text-red-500' },
-    { key: 'netPay', label: 'Net Payable', value: totals.netPay, icon: RupeeIcon, gradient: 'from-[#3FA9F5] to-[#0D47A1]', lightBg: 'bg-gradient-to-br from-blue-50 to-blue-100', isPrimary: true, textColor: 'text-blue-700' },
+    { key: 'hra', label: 'Total HRA', value: totals.hra, icon: FiTrendingUp, gradient: 'from-cyan-500 to-blue-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50', textColor: 'text-cyan-600' },
+    { key: 'allowances', label: 'Allowances', value: totals.allowances, icon: FiCalendar, gradient: 'from-indigo-500 to-purple-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50', textColor: 'text-indigo-600' },
+    { key: 'deductions', label: 'Deductions', value: totals.deductions, icon: RupeeIcon, gradient: 'from-red-500 to-pink-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50', isNegative: true, textColor: 'text-red-500' },
+    { key: 'netPay', label: 'Net Payable', value: totals.netPay, icon: RupeeIcon, gradient: 'from-[#3FA9F5] to-[#0D47A1]', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50', isPrimary: true, textColor: 'text-blue-700' },
   ];
 
   const getStatusConfig = (status) => {
@@ -407,27 +437,14 @@ const PayrollTab = ({ isDarkMode, selectedClient }) => {
   return (
     <div className={`space-y-8 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
       <AnimatePresence mode="wait">
-        {!selectedEmployee ? (
+        {activeView === 'list' ? (
           <motion.div
             key="payroll-list-view"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 1, x: -50, transition: { duration: 0.2 } }}
+            exit={{ opacity: 0, x: -50, transition: { duration: 0.2 } }}
             className="space-y-8"
           >
-            <AnimatePresence>
-                {isProcessingModalOpen && (
-                <PayrollProcessingModal
-                    isOpen={isProcessingModalOpen}
-                    onClose={() => setIsProcessingModalOpen(false)}
-                    onComplete={handlePayrollComplete}
-                    totalEmployees={payrollData.length}
-                    totalAmount={totals.netPay}
-                    isDarkMode={isDarkMode}
-                />
-                )}
-            </AnimatePresence>
-
             {/* Header */}
             <motion.div 
                 initial={{ opacity: 0, y: -20 }}
@@ -435,38 +452,38 @@ const PayrollTab = ({ isDarkMode, selectedClient }) => {
                 className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
             >
                 <div>
-                <div className="flex items-center gap-3 text-left">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-lg shadow-[#1E88E5]/25">
-                    <RupeeIcon className="w-6 h-6 text-white" />
-                    </div>
-                    <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent">
-                    Payroll Management
-                    </h2>
-                </div>
-                <p className={`text-base font-semibold mt-4 ml-2 tracking-wide text-left ${isDarkMode ? 'text-blue-400' : 'text-[#1E88E5]'} flex items-center gap-2`}>
-                    <FiCalendar className="w-4 h-4" />
-                    {formatDate(selectedDate)} • {payrollData.length} Employees
-                </p>
+                  <div className="flex items-center gap-3 text-left">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-lg shadow-[#1E88E5]/25">
+                      <RupeeIcon className="w-6 h-6 text-white" />
+                      </div>
+                      <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent">
+                      Payroll Management
+                      </h2>
+                  </div>
+                  <p className={`text-base font-semibold mt-4 ml-2 tracking-wide text-left ${isDarkMode ? 'text-white' : 'text-black'} flex items-center gap-2`}>
+                      <FiCalendar className="w-4 h-4 text-black dark:text-white" />
+                      {formatDate(selectedDate)} • {payrollData.length} Employee Records
+                  </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                    className={`rounded-xl border-2 px-4 py-2.5 text-sm font-medium cursor-pointer transition-all focus:ring-2 focus:ring-emerald-500/50 ${
-                    isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'
-                    }`}
-                />
-                <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setIsProcessingModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-xl font-medium shadow-lg shadow-[#1E88E5]/25"
-                >
-                    <FiFileText className="w-4 h-4" />
-                    Run Payroll
-                </motion.button>
+                  <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                      className={`rounded-xl border-2 px-4 py-2.5 text-sm font-medium cursor-pointer transition-all focus:ring-2 focus:ring-emerald-500/50 ${
+                      isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'
+                      }`}
+                  />
+                  <motion.button 
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setActiveView('run-payroll')}
+                      className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-2xl font-black tracking-widest text-[10px] uppercase shadow-2xl shadow-blue-500/30 transition-all hover:shadow-blue-500/50"
+                  >
+                      <FiFileText className="w-4 h-4" />
+                      Run Settlement
+                  </motion.button>
                 </div>
             </motion.div>
 
@@ -480,27 +497,35 @@ const PayrollTab = ({ isDarkMode, selectedClient }) => {
                     transition={{ delay: index * 0.1 }}
                     onMouseEnter={() => setHoveredCard(card.key)}
                     onMouseLeave={() => setHoveredCard(null)}
-                    className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer ${
+                    className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${
                     isDarkMode 
-                        ? 'bg-slate-800/80 border border-slate-700/50' 
-                        : `${card.lightBg} border border-white/50 hover:shadow-xl`
-                    } ${hoveredCard === card.key ? 'scale-[1.02]' : ''}`}
+                        ? 'bg-slate-800/80 border-slate-700/50 text-white' 
+                        : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-white shadow-sm hover:shadow-xl'
+                    } ${hoveredCard === card.key ? 'scale-[1.02] border-blue-200 dark:border-blue-800' : ''}`}
                 >
-                    <div className="absolute top-0 right-0 w-20 h-20 opacity-10">
-                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                        <circle cx="80" cy="20" r="40" fill="currentColor" />
-                    </svg>
-                    </div>
-                    <div className="relative flex items-start justify-between">
-                    <div className="flex-1 min-w-0 text-left">
-                        <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{card.label}</p>
-                        <p className={`text-xl lg:text-2xl font-medium truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                        {card.isNegative ? '-' : ''}{formatCurrency(card.value)}
-                        </p>
-                    </div>
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient} shadow-lg flex-shrink-0`}>
-                        <card.icon className="w-4 h-4 text-white" />
-                    </div>
+                    <div className="relative text-left">
+                        <div className="flex items-center justify-between mb-4">
+                            <p className={`text-[10px] font-extrabold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                {card.label}
+                            </p>
+                            <div className={`p-2 rounded-xl bg-gradient-to-br ${card.gradient} shadow-lg flex-shrink-0`}>
+                                <card.icon className="w-4 h-4 text-white" />
+                            </div>
+                        </div>
+                        <div className="flex items-end gap-2">
+                            <p className={`text-2xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-[#0D47A1]'}`}>
+                                {card.isNegative ? '-' : ''}{formatCurrency(card.value)}
+                            </p>
+                        </div>
+                        
+                        <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-white/50'}`}>
+                            <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: '65%' }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className={`h-full bg-gradient-to-r ${card.gradient}`}
+                            />
+                        </div>
                     </div>
                 </motion.div>
                 ))}
@@ -572,7 +597,10 @@ const PayrollTab = ({ isDarkMode, selectedClient }) => {
                         return (
                             <motion.tr 
                             key={emp.id}
-                            onClick={() => setSelectedEmployee(emp)}
+                            onClick={() => {
+                              setSelectedEmployee(emp);
+                              setActiveView('details');
+                            }}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
@@ -627,11 +655,25 @@ const PayrollTab = ({ isDarkMode, selectedClient }) => {
                 </div>
             </motion.div>
           </motion.div>
+        ) : activeView === 'run-payroll' ? (
+          <PayrollRunView
+            key="payroll-run-view"
+            onBack={() => setActiveView('list')}
+            onComplete={handlePayrollComplete}
+            totalEmployees={payrollData.length}
+            totalAmount={totals.netPay}
+            isDarkMode={isDarkMode}
+            formatDate={formatDate}
+            formatCurrency={formatCurrency}
+          />
         ) : (
           <EmployeePayrollDetailView 
             key="payroll-detail-view"
             employee={selectedEmployee} 
-            onBack={() => setSelectedEmployee(null)} 
+            onBack={() => {
+              setSelectedEmployee(null);
+              setActiveView('list');
+            }} 
             isDarkMode={isDarkMode} 
             getStatusConfig={getStatusConfig}
             getAvatarColor={getAvatarColor}

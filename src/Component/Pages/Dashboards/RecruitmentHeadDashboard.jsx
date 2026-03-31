@@ -87,7 +87,7 @@ const AVATAR_COLORS = [
 // Transform API response to component format
 const transformKAMData = (apiData) => {
   if (!Array.isArray(apiData)) return [];
-  
+
   return apiData.map((member, idx) => ({
     id: member.id || `kam-${idx + 1}`,
     name: member.name || 'Unknown',
@@ -168,9 +168,8 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage }) => {
           </div>
         </div>
         <div className="absolute top-4 right-4">
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            kam.status === 'Active' ? 'bg-white/20 text-white' : 'bg-yellow-100 text-yellow-700'
-          }`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${kam.status === 'Active' ? 'bg-white/20 text-white' : 'bg-yellow-100 text-yellow-700'
+            }`}>
             {kam.status}
           </span>
         </div>
@@ -317,7 +316,7 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
             )}
           </div>
           <p className="text-blue-100 mb-6">Manage your Key Account Managers and track their recruitment performance</p>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
               <p className="text-3xl font-bold">{teamData.length}</p>
@@ -529,17 +528,19 @@ const KAMPerformanceContent = ({ teamData, loading }) => {
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Interview Conversion</span>
                   <span className="text-sm font-semibold text-gray-900">
-                    {kam.stats.interviewsScheduled > 0 
-                      ? Math.round((kam.stats.offersExtended / kam.stats.interviewsScheduled) * 100) 
+                    {kam.stats.interviewsScheduled > 0
+                      ? Math.round((kam.stats.offersExtended / kam.stats.interviewsScheduled) * 100)
                       : 0}%
                   </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 rounded-full"
-                    style={{ width: `${kam.stats.interviewsScheduled > 0 
-                      ? (kam.stats.offersExtended / kam.stats.interviewsScheduled) * 100 
-                      : 0}%` }}
+                    style={{
+                      width: `${kam.stats.interviewsScheduled > 0
+                        ? (kam.stats.offersExtended / kam.stats.interviewsScheduled) * 100
+                        : 0}%`
+                    }}
                   />
                 </div>
               </div>
@@ -556,9 +557,11 @@ const KAMPerformanceContent = ({ teamData, loading }) => {
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-blue-500 rounded-full"
-                    style={{ width: `${kam.stats.candidatesPipeline > 0
-                      ? (kam.stats.interviewsScheduled / kam.stats.candidatesPipeline) * 100
-                      : 0}%` }}
+                    style={{
+                      width: `${kam.stats.candidatesPipeline > 0
+                        ? (kam.stats.interviewsScheduled / kam.stats.candidatesPipeline) * 100
+                        : 0}%`
+                    }}
                   />
                 </div>
               </div>
@@ -602,11 +605,10 @@ const KAMPerformanceContent = ({ teamData, loading }) => {
                 .map((kam, idx) => (
                   <tr key={kam.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
-                      <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        idx === 0 ? 'bg-yellow-100 text-yellow-700' :
+                      <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-yellow-100 text-yellow-700' :
                         idx === 1 ? 'bg-gray-100 text-gray-600' :
-                        'bg-amber-50 text-amber-700'
-                      }`}>
+                          'bg-amber-50 text-amber-700'
+                        }`}>
                         {idx + 1}
                       </span>
                     </td>
@@ -746,7 +748,7 @@ const RecruitmentHeadDashboard = () => {
         { activePositions: 0, totalCandidates: 0, scheduledInterviews: 0, pendingOffers: 0, thisWeekHires: 0 }
       );
       setStats(totalStats);
-      
+
       setStatsBarData([
         { label: 'Total Candidates', value: totalStats.totalCandidates, percentage: '100%', color: 'bg-blue-500' },
         { label: 'In Interview', value: totalStats.scheduledInterviews, percentage: '17%', color: 'bg-purple-500' },
@@ -807,10 +809,10 @@ const RecruitmentHeadDashboard = () => {
   // Add KAM handler
   const handleAddKAM = () => {
     setKamFormMode('add');
-    setKamFormData({ 
-      name: '', 
-      email: '', 
-      phone: '', 
+    setKamFormData({
+      name: '',
+      email: '',
+      phone: '',
       role: 'KAM - Recruitment',
       department: 'HR Recruitment',
       password: 'Mabicons@123' // Default password for new members
@@ -835,7 +837,7 @@ const RecruitmentHeadDashboard = () => {
   // Delete KAM handler
   const handleDeleteKAM = async (kam) => {
     if (!window.confirm(`Are you sure you want to remove ${kam.name} from the team?`)) return;
-    
+
     try {
       await deleteKAMMember(kam.id);
       setKamTeam(prev => prev.filter(k => k.id !== kam.id));
@@ -849,7 +851,7 @@ const RecruitmentHeadDashboard = () => {
   // Submit KAM form (add/edit)
   const handleSubmitKAMForm = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (kamFormMode === 'add') {
         const response = await createKAMMember(kamFormData);
@@ -873,8 +875,8 @@ const RecruitmentHeadDashboard = () => {
       } else {
         const response = await updateKAMMember(kamFormData.id, kamFormData);
         if (response.success || response.data) {
-          setKamTeam(prev => prev.map(k => 
-            k.id === kamFormData.id 
+          setKamTeam(prev => prev.map(k =>
+            k.id === kamFormData.id
               ? { ...k, name: kamFormData.name, email: kamFormData.email, phone: kamFormData.phone, role: kamFormData.role }
               : k
           ));

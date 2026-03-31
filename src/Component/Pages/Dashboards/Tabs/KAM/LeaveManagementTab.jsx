@@ -309,9 +309,9 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
   }, [selectedClient]);
 
   const leaveBalance = [
-    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-600 to-pink-700', lightBg: 'bg-gradient-to-br from-rose-50 to-pink-50', iconColor: 'text-rose-600' },
-    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-gradient-to-br from-amber-50 to-orange-50', iconColor: 'text-amber-600' },
-    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-600 to-teal-800', lightBg: 'bg-gradient-to-br from-emerald-50 to-teal-100', iconColor: 'text-emerald-600' },
+    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-600 to-pink-700', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-rose-600' },
+    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-amber-600' },
+    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-600 to-teal-800', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-emerald-600' },
     { type: 'Comp Off', total: 4, used: 1, remaining: 3, icon: FiMoon, gradient: 'from-[#3FA9F5] to-[#0D47A1]', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-blue-600' },
   ];
 
@@ -401,15 +401,6 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                   Manage employee leave requests
                 </p>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setView('apply')}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
-              >
-                <FiPlus className="w-5 h-5" />
-                Apply Leave
-              </motion.button>
             </motion.div>
 
             {/* Leave Balance Cards */}

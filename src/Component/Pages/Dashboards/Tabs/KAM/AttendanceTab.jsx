@@ -168,8 +168,8 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
       value: stats.present,
       icon: FiCheckCircle,
       gradient: 'from-green-500 to-green-600',
-      bgGlow: 'shadow-green-500/20',
-      lightBg: 'bg-gradient-to-br from-green-50 to-green-100',
+      bgGlow: 'shadow-blue-500/20',
+      lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
       percentage: Math.round((stats.present / stats.total) * 100) || 0
     },
     {
@@ -178,8 +178,8 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
       value: stats.absent,
       icon: FiXCircle,
       gradient: 'from-red-500 to-red-600',
-      bgGlow: 'shadow-red-500/20',
-      lightBg: 'bg-gradient-to-br from-red-50 to-red-100',
+      bgGlow: 'shadow-blue-500/20',
+      lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
       percentage: Math.round((stats.absent / stats.total) * 100) || 0
     },
     {
@@ -188,8 +188,8 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
       value: stats.halfday,
       icon: FiCoffee,
       gradient: 'from-amber-500 to-orange-600',
-      bgGlow: 'shadow-amber-500/20',
-      lightBg: 'bg-gradient-to-br from-amber-50 to-orange-50',
+      bgGlow: 'shadow-blue-500/20',
+      lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
       percentage: Math.round((stats.halfday / stats.total) * 100) || 0
     },
     {
@@ -303,14 +303,14 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
                     Attendance
                   </h2>
                 </div>
-                <p className={`text-base font-semibold mt-3 tracking-wide ${isDarkMode ? 'text-blue-400' : 'text-[#1E88E5]'} flex items-center gap-2`}>
-                  <span className="flex items-center gap-1.5">
-                    <FiUsers className="w-4 h-4" />
+                <p className={`text-base font-semibold mt-3 tracking-wide ${isDarkMode ? 'text-white' : 'text-black'} flex items-center gap-2`}>
+                  <span className="flex items-center gap-1.5 text-black dark:text-white">
+                    <FiUsers className="w-4 h-4 text-black dark:text-white" />
                     {selectedClient ? `Client: ${selectedClient}` : 'All Employees'}
                   </span>
                   <span className="text-slate-300 dark:text-slate-600">|</span>
-                  <span className="flex items-center gap-1.5">
-                    <FiCalendar className="w-4 h-4" />
+                  <span className="flex items-center gap-1.5 text-black dark:text-white">
+                    <FiCalendar className="w-4 h-4 text-black dark:text-white" />
                     {formatDate(selectedDate)}
                   </span>
                 </p>
