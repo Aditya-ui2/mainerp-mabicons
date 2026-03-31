@@ -4,10 +4,11 @@ import {
   FiTrendingUp, FiChevronDown, FiChevronUp, FiMapPin, FiRefreshCw,
   FiClipboard, FiAlertTriangle, FiRepeat, FiShield, FiUser, FiPhone,
   FiMail, FiActivity, FiArrowRight, FiFileText, FiStar, FiPlay,
-  FiAward, FiLayers, FiZap, FiPercent,
+  FiAward, FiLayers, FiZap, FiPercent, FiX, FiDownload, FiExternalLink,
+  FiDollarSign, FiBell,
 } from 'react-icons/fi';
 import { jwtDecode } from 'jwt-decode';
-import { getClientDashboardOverview } from '../../../service/api';
+import { getClientDashboardOverview, getCandidateById } from '../../../service/api';
 
 /* ── Color configs ── */
 const STAGE_COLORS = {
@@ -144,12 +145,45 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
   const [activeSection, setActiveSection] = useState('all');
   const [expandedPosition, setExpandedPosition] = useState(null);
   const [showAllTasks, setShowAllTasks] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [candidateLoading, setCandidateLoading] = useState(false);
+  const [showCandidateModal, setShowCandidateModal] = useState(false);
+  const [dateRange, setDateRange] = useState('30');
+  const [showDateDropdown, setShowDateDropdown] = useState(false);
+
+  const dateRangeOptions = [
+    { value: '7', label: 'Last 7 Days' },
+    { value: '30', label: 'Last 30 Days' },
+    { value: '90', label: 'Last 90 Days' },
+    { value: 'all', label: 'All Time' },
+  ];
 
   const t = isDarkMode ? 'text-gray-100' : 'text-gray-800';
   const tSub = isDarkMode ? 'text-gray-400' : 'text-gray-500';
   const card = isDarkMode ? 'bg-[#282440]' : 'bg-white';
   const bdr = isDarkMode ? 'border-[#3a3556]' : 'border-[#ece8f8]';
   const subBg = isDarkMode ? 'bg-[#1e1b2e]' : 'bg-[#f7f5fc]';
+  
+  // Fetch candidate details
+  const handleCandidateClick = async (candidateId) => {
+    setCandidateLoading(true);
+    setShowCandidateModal(true);
+    try {
+      const res = await getCandidateById(candidateId);
+      if (res?.success) {
+        setSelectedCandidate(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch candidate:', err);
+    } finally {
+      setCandidateLoading(false);
+    }
+  };
+
+  const closeCandidateModal = () => {
+    setShowCandidateModal(false);
+    setSelectedCandidate(null);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -229,36 +263,177 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
           <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200/50">
             <FiActivity size={24} />
           </div>
-          <div>
-            <h2 className={`text-xl font-extrabold ${t} tracking-tight`}>Dashboard Overview</h2>
-            <p className={`text-xs ${tSub} mt-0.5`}>{client.companyName} — {serviceLabel} at a glance</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h2 className={`text-xl font-extrabold ${t} tracking-tight`}>Dashboard Overview</h2>
+              <p className={`text-xs ${tSub} mt-0.5`}>{client.companyName} — {serviceLabel} at a glance</p>
+            </div>
+            {/* Date Range Dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowDateDropdown(!showDateDropdown)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${bdr} ${card} text-xs font-medium ${tSub} cursor-pointer hover:shadow-sm transition-all`}
+              >
+                <FiCalendar className="w-3.5 h-3.5" />
+                <span>{dateRangeOptions.find(o => o.value === dateRange)?.label}</span>
+                <FiChevronDown className={`w-3 h-3 transition-transform ${showDateDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              {showDateDropdown && (
+                <div className={`absolute top-full left-0 mt-1 ${card} border ${bdr} rounded-lg shadow-lg z-50 min-w-[140px] overflow-hidden`}>
+                  {dateRangeOptions.map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => { setDateRange(option.value); setShowDateDropdown(false); }}
+                      className={`w-full px-3 py-2 text-left text-xs font-medium transition-colors ${
+                        dateRange === option.value 
+                          ? 'bg-violet-500 text-white' 
+                          : `${isDarkMode ? 'text-gray-300 hover:bg-slate-700' : 'text-gray-600 hover:bg-violet-50'}`
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2.5">
-          {/* Only show toggle if client has both services */}
+          {/* Toggle buttons - Radio style */}
           {hasBoth && (
-            <div className={`flex items-center rounded-xl border ${bdr} overflow-hidden text-xs font-semibold shadow-sm`}>
+            <div className={`flex items-center rounded-full border ${bdr} overflow-hidden text-xs font-semibold shadow-sm ${card} p-1`}>
               {[
-                { key: 'all', label: 'All', icon: FiLayers },
-                { key: 'recruitment', label: 'Recruitment', icon: FiTarget },
-                { key: 'operations', label: 'Operations', icon: FiClipboard },
+                { key: 'all', label: 'All', Icon: FiLayers },
+                { key: 'recruitment', label: 'Recruitment', Icon: FiTarget },
+                { key: 'operations', label: 'Operations', Icon: FiClipboard },
               ].map(s => (
                 <button key={s.key} onClick={() => setActiveSection(s.key)}
-                  className={`flex items-center gap-1.5 px-4 py-2 transition-all duration-200 ${activeSection === s.key
-                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-inner'
-                    : `${isDarkMode ? 'text-gray-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-50'}`
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all duration-200 ${activeSection === s.key
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
+                    : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-slate-500 hover:text-slate-700'}`
                   }`}
                 >
-                  <s.icon className="w-3.5 h-3.5" />
+                  <s.Icon className="w-3.5 h-3.5" />
                   {s.label}
                 </button>
               ))}
             </div>
           )}
-          <button onClick={fetchData} className={`p-2 rounded-xl border ${bdr} ${card} ${tSub} hover:shadow-md transition-all group`} title="Refresh">
+          <button onClick={fetchData} className={`p-2.5 rounded-full border ${bdr} ${card} ${tSub} hover:shadow-md hover:scale-105 active:scale-95 transition-all group`} title="Refresh">
             <FiRefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
           </button>
         </div>
+      </div>
+
+      {/* ═══ HERO STATS - New Modern Design ═══ */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        {showRecruitment && (
+          <>
+            {/* Open Positions Card */}
+            <div className={`${card} rounded-2xl border ${bdr} p-4 relative overflow-hidden group hover:shadow-xl transition-all duration-300`}>
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br from-blue-400/20 to-blue-600/30" />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30">
+                <svg width="50" height="40" viewBox="0 0 50 40">
+                  <path d="M0 35 Q10 30, 15 25 T30 15 T50 8" stroke="#3b82f6" strokeWidth="2" fill="none" opacity="0.5"/>
+                  <path d="M0 38 Q10 35, 15 30 T30 22 T50 15" stroke="#3b82f6" strokeWidth="2" fill="none" opacity="0.3"/>
+                </svg>
+              </div>
+              <div className="relative">
+                <div className="inline-flex p-2.5 rounded-xl text-white mb-3 shadow-lg" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                  <FiBriefcase className="w-4 h-4" />
+                </div>
+                <p className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} tracking-tight`}>{rSum.openPositions}</p>
+                <p className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>Open Positions</p>
+                <p className={`text-[10px] ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-0.5`}>{rSum.totalPositions} Active</p>
+              </div>
+            </div>
+
+            {/* In Pipeline Card */}
+            <div className={`${card} rounded-2xl border ${bdr} p-4 relative overflow-hidden group hover:shadow-xl transition-all duration-300`}>
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br from-purple-400/20 to-purple-600/30" />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-60 flex items-end gap-1 h-10">
+                {[6, 4, 5, 3, 6, 4, 7].map((h, i) => (
+                  <div key={i} className="w-2 rounded-t" style={{ height: `${h * 5}px`, background: `linear-gradient(to top, #8b5cf6, #a855f7)` }} />
+                ))}
+              </div>
+              <div className="relative">
+                <div className="inline-flex p-2.5 rounded-xl text-white mb-3 shadow-lg" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
+                  <FiUsers className="w-4 h-4" />
+                </div>
+                <p className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} tracking-tight`}>{rSum.inPipeline}</p>
+                <p className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>In Pipeline</p>
+                <p className={`text-[10px] ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-0.5`}>{funnel.screening || 0} Screened, {funnel.offerSent || 0} Offered, {funnel.joined || 0} Joined</p>
+              </div>
+            </div>
+
+            {/* Hired Card */}
+            <div className={`${card} rounded-2xl border ${bdr} p-4 relative overflow-hidden group hover:shadow-xl transition-all duration-300`}>
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br from-amber-400/20 to-amber-600/30" />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">
+                <FiAward className="w-12 h-12 text-amber-500" />
+              </div>
+              <div className="relative">
+                <div className="inline-flex p-2.5 rounded-xl text-white mb-3 shadow-lg" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+                  <FiAward className="w-4 h-4" />
+                </div>
+                <p className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} tracking-tight`}>{rSum.hired}</p>
+                <p className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>Hired</p>
+                <p className={`text-[10px] ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-0.5`}>Last 30 Days</p>
+              </div>
+            </div>
+          </>
+        )}
+        {showOperations && (
+          <>
+            {/* Active Tasks Card */}
+            <div className={`${card} rounded-2xl border ${bdr} p-4 relative overflow-hidden group hover:shadow-xl transition-all duration-300`}>
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br from-teal-400/20 to-teal-600/30" />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">
+                <FiZap className="w-10 h-10 text-teal-500" />
+              </div>
+              <div className="relative">
+                <div className="inline-flex p-2.5 rounded-xl text-white mb-3 shadow-lg" style={{ background: 'linear-gradient(135deg, #14b8a6, #0d9488)' }}>
+                  <FiZap className="w-4 h-4" />
+                </div>
+                <p className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} tracking-tight`}>{taskSummary.active + taskSummary.wip}</p>
+                <p className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>Active Tasks</p>
+                <p className={`text-[10px] ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-0.5`}>Tasks: {taskSummary.total > 0 ? 'In Progress' : 'Awaiting'}</p>
+              </div>
+            </div>
+
+            {/* Completed Card */}
+            <div className={`${card} rounded-2xl border ${bdr} p-4 relative overflow-hidden group hover:shadow-xl transition-all duration-300`}>
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400/20 to-emerald-600/30" />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">
+                <FiCheckCircle className="w-10 h-10 text-emerald-500" />
+              </div>
+              <div className="relative">
+                <div className="inline-flex p-2.5 rounded-xl text-white mb-3 shadow-lg" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
+                  <FiCheckCircle className="w-4 h-4" />
+                </div>
+                <p className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} tracking-tight`}>{taskSummary.resolved}</p>
+                <p className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>Completed</p>
+                <p className={`text-[10px] ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-0.5`}>{taskSummary.completionRate}% rate</p>
+              </div>
+            </div>
+
+            {/* Overdue Card */}
+            <div className={`${card} rounded-2xl border ${bdr} p-4 relative overflow-hidden group hover:shadow-xl transition-all duration-300`}>
+              <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br from-red-400/20 to-red-600/30" />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">
+                <FiAlertTriangle className="w-10 h-10 text-red-500" />
+              </div>
+              <div className="relative">
+                <div className="inline-flex p-2.5 rounded-xl text-white mb-3 shadow-lg" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}>
+                  <FiAlertTriangle className="w-4 h-4" />
+                </div>
+                <p className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} tracking-tight`}>{taskSummary.overdue}</p>
+                <p className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>Overdue</p>
+                <p className={`text-[10px] ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-0.5`}>{taskSummary.review > 0 ? `${taskSummary.review} in Review` : 'Awaiting Review'}</p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ═══ KAM Info Card ═══ */}
@@ -267,8 +442,11 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
           <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-violet-500/5 to-transparent rounded-bl-full" />
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 relative">
             <div className="flex items-center gap-4 flex-1">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-violet-200/40">
-                {client.kam.name?.charAt(0)}
+              <div 
+                className="w-12 h-12 rounded-2xl text-white flex items-center justify-center font-bold text-lg shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #8b5cf6, #4f46e5)' }}
+              >
+                {client.kam.name?.charAt(0) || <FiUser className="w-5 h-5" />}
               </div>
               <div>
                 <p className={`text-[11px] font-semibold uppercase tracking-wider ${isDarkMode ? 'text-violet-400' : 'text-violet-500'}`}>Your Account Manager</p>
@@ -290,24 +468,6 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
           </div>
         </div>
       )}
-
-      {/* ═══ HERO STATS ═══ */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {showRecruitment && (
-          <>
-            <HeroStatCard icon={FiBriefcase} label="Open Positions" value={rSum.openPositions} sub={`${rSum.totalPositions} total`} gradient="from-blue-500 to-indigo-600" accent="blue" isDarkMode={isDarkMode} />
-            <HeroStatCard icon={FiUsers} label="In Pipeline" value={rSum.inPipeline} sub={`${rSum.totalCandidates} total`} gradient="from-violet-500 to-purple-600" accent="violet" isDarkMode={isDarkMode} />
-            <HeroStatCard icon={FiAward} label="Hired" value={rSum.hired} sub={`${rSum.completedInterviews} interviews`} gradient="from-emerald-500 to-teal-600" accent="emerald" isDarkMode={isDarkMode} />
-          </>
-        )}
-        {showOperations && (
-          <>
-            <HeroStatCard icon={FiZap} label="Active Tasks" value={taskSummary.active + taskSummary.wip} sub={`${taskSummary.total} total`} gradient="from-cyan-500 to-blue-600" accent="cyan" isDarkMode={isDarkMode} />
-            <HeroStatCard icon={FiCheckCircle} label="Completed" value={taskSummary.resolved} sub={`${taskSummary.completionRate}% rate`} gradient="from-green-500 to-emerald-600" accent="green" isDarkMode={isDarkMode} />
-            <HeroStatCard icon={FiAlertTriangle} label="Overdue" value={taskSummary.overdue} sub={`${taskSummary.review} in review`} gradient="from-red-500 to-rose-600" accent="red" isDarkMode={isDarkMode} />
-          </>
-        )}
-      </div>
 
       {/* ═══════════════════════════════════════════════════════ */}
       {/* ═══ RECRUITMENT SECTION ═══ */}
@@ -427,15 +587,19 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
                                     const stageKey = Object.keys(STAGE_COLORS).find(k => STAGE_COLORS[k].label === c.stage);
                                     const cfg = STAGE_COLORS[stageKey] || {};
                                     return (
-                                      <div key={c.id} className={`flex items-center justify-between py-2.5 px-3 rounded-xl ${subBg} border ${bdr}`}>
+                                      <button 
+                                        key={c.id} 
+                                        onClick={() => handleCandidateClick(c.id)}
+                                        className={`flex items-center justify-between py-2.5 px-3 rounded-xl ${subBg} border ${bdr} cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200 text-left w-full group`}
+                                      >
                                         <div className="flex items-center gap-2.5">
-                                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-br ${cfg.gradient || 'from-slate-400 to-slate-500'}`}>
+                                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-br ${cfg.gradient || 'from-slate-400 to-slate-500'} group-hover:scale-110 transition-transform`}>
                                             {c.name?.charAt(0)}
                                           </div>
-                                          <span className={`text-xs font-semibold ${t}`}>{c.name}</span>
+                                          <span className={`text-xs font-semibold ${t} group-hover:text-violet-500 transition-colors`}>{c.name}</span>
                                         </div>
                                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${cfg.badge || 'bg-slate-100 text-slate-600'}`}>{c.stage}</span>
-                                      </div>
+                                      </button>
                                     );
                                   })}
                                 </div>
@@ -539,13 +703,17 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
                       const stageKey = Object.keys(STAGE_COLORS).find(k => STAGE_COLORS[k].label === c.stage);
                       const cfg = STAGE_COLORS[stageKey] || {};
                       return (
-                        <tr key={c.id} className={`border-t ${bdr} ${i % 2 === 0 ? '' : isDarkMode ? 'bg-slate-800/20' : 'bg-slate-50/50'} hover:${isDarkMode ? 'bg-slate-700/30' : 'bg-violet-50/50'} transition-colors`}>
+                        <tr 
+                          key={c.id} 
+                          onClick={() => handleCandidateClick(c.id)}
+                          className={`border-t ${bdr} ${i % 2 === 0 ? '' : isDarkMode ? 'bg-slate-800/20' : 'bg-slate-50/50'} hover:${isDarkMode ? 'bg-slate-700/30' : 'bg-violet-50/50'} transition-colors cursor-pointer group`}
+                        >
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-br ${cfg.gradient || 'from-slate-400 to-slate-500'}`}>
+                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-br ${cfg.gradient || 'from-slate-400 to-slate-500'} group-hover:scale-110 transition-transform`}>
                                 {c.name?.charAt(0)}
                               </div>
-                              <span className={`text-xs font-semibold ${t}`}>{c.name}</span>
+                              <span className={`text-xs font-semibold ${t} group-hover:text-violet-500 transition-colors`}>{c.name}</span>
                             </div>
                           </td>
                           <td className={`py-3 px-4 text-xs ${tSub}`}>{c.position || '—'}</td>
@@ -841,6 +1009,201 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
             </div>
           )}
         </>
+      )}
+
+      {/* ═══ CANDIDATE DETAIL MODAL ═══ */}
+      {showCandidateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeCandidateModal} />
+          <div className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl ${card} border ${bdr}`}>
+            {/* Modal Header */}
+            <div className={`sticky top-0 z-10 flex items-center justify-between p-5 border-b ${bdr} ${card}`}>
+              <h3 className={`text-lg font-bold ${t}`}>Candidate Details</h3>
+              <button onClick={closeCandidateModal} className={`p-2 rounded-xl hover:bg-gray-100 ${isDarkMode ? 'hover:bg-slate-700' : ''} transition-colors`}>
+                <FiX className={`w-5 h-5 ${tSub}`} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            {candidateLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3">
+                <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                <p className={`text-sm ${tSub}`}>Loading candidate details...</p>
+              </div>
+            ) : selectedCandidate ? (
+              <div className="p-5 space-y-5">
+                {/* Candidate Header */}
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-lg" 
+                    style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                    {selectedCandidate.name?.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className={`text-xl font-bold ${t}`}>{selectedCandidate.name}</h4>
+                    <p className={`text-sm ${tSub} mt-0.5`}>{selectedCandidate.position?.title || 'Position not assigned'}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      {(() => {
+                        const stageKey = Object.keys(STAGE_COLORS).find(k => STAGE_COLORS[k].label === selectedCandidate.stage);
+                        const cfg = STAGE_COLORS[stageKey] || {};
+                        return <span className={`text-xs font-bold px-3 py-1 rounded-lg ${cfg.badge || 'bg-slate-100 text-slate-600'}`}>{selectedCandidate.stage}</span>;
+                      })()}
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{selectedCandidate.status}</span>
+                      {selectedCandidate.rating > 0 && (
+                        <span className="flex items-center gap-1 text-xs font-semibold text-amber-500">
+                          <FiStar className="w-3.5 h-3.5 fill-current" /> {selectedCandidate.rating.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-xl ${subBg} border ${bdr}`}>
+                  {selectedCandidate.email && (
+                    <a href={`mailto:${selectedCandidate.email}`} className="flex items-center gap-2.5 text-sm hover:text-violet-500 transition-colors">
+                      <div className="p-2 rounded-lg bg-violet-100"><FiMail className="w-4 h-4 text-violet-600" /></div>
+                      <span className={t}>{selectedCandidate.email}</span>
+                    </a>
+                  )}
+                  {selectedCandidate.phone && (
+                    <a href={`tel:${selectedCandidate.phone}`} className="flex items-center gap-2.5 text-sm hover:text-emerald-500 transition-colors">
+                      <div className="p-2 rounded-lg bg-emerald-100"><FiPhone className="w-4 h-4 text-emerald-600" /></div>
+                      <span className={t}>{selectedCandidate.phone}</span>
+                    </a>
+                  )}
+                  {selectedCandidate.location && (
+                    <div className="flex items-center gap-2.5 text-sm">
+                      <div className="p-2 rounded-lg bg-blue-100"><FiMapPin className="w-4 h-4 text-blue-600" /></div>
+                      <span className={t}>{selectedCandidate.location}</span>
+                    </div>
+                  )}
+                  {selectedCandidate.experience && (
+                    <div className="flex items-center gap-2.5 text-sm">
+                      <div className="p-2 rounded-lg bg-amber-100"><FiBriefcase className="w-4 h-4 text-amber-600" /></div>
+                      <span className={t}>{selectedCandidate.experience} experience</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Salary & Notice Period */}
+                {(selectedCandidate.currentSalary || selectedCandidate.expectedSalary || selectedCandidate.noticePeriod) && (
+                  <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3`}>
+                    {selectedCandidate.currentSalary && (
+                      <div className={`p-3 rounded-xl ${subBg} border ${bdr}`}>
+                        <p className={`text-[10px] font-semibold uppercase ${tSub}`}>Current Salary</p>
+                        <p className={`text-sm font-bold ${t} mt-1 flex items-center gap-1.5`}><FiDollarSign className="w-3.5 h-3.5 text-emerald-500" />{selectedCandidate.currentSalary}</p>
+                      </div>
+                    )}
+                    {selectedCandidate.expectedSalary && (
+                      <div className={`p-3 rounded-xl ${subBg} border ${bdr}`}>
+                        <p className={`text-[10px] font-semibold uppercase ${tSub}`}>Expected Salary</p>
+                        <p className={`text-sm font-bold ${t} mt-1 flex items-center gap-1.5`}><FiDollarSign className="w-3.5 h-3.5 text-violet-500" />{selectedCandidate.expectedSalary}</p>
+                      </div>
+                    )}
+                    {selectedCandidate.noticePeriod && (
+                      <div className={`p-3 rounded-xl ${subBg} border ${bdr}`}>
+                        <p className={`text-[10px] font-semibold uppercase ${tSub}`}>Notice Period</p>
+                        <p className={`text-sm font-bold ${t} mt-1 flex items-center gap-1.5`}><FiClock className="w-3.5 h-3.5 text-blue-500" />{selectedCandidate.noticePeriod}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Skills */}
+                {selectedCandidate.skills && selectedCandidate.skills.length > 0 && (
+                  <div>
+                    <p className={`text-xs font-bold uppercase ${tSub} mb-2`}>Skills</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCandidate.skills.map((skill, i) => (
+                        <span key={i} className={`text-xs font-medium px-3 py-1.5 rounded-lg ${isDarkMode ? 'bg-violet-900/30 text-violet-300 border border-violet-800/40' : 'bg-violet-50 text-violet-700 border border-violet-200'}`}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resume Download */}
+                {selectedCandidate.cvUrl && (
+                  <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gradient-to-r from-violet-900/30 to-indigo-900/30 border border-violet-800/40' : 'bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200'}`}>
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white">
+                          <FiFileText className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-bold ${t}`}>{selectedCandidate.cvFileName || 'Resume'}</p>
+                          <p className={`text-xs ${tSub}`}>Click to view or download</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a href={selectedCandidate.cvUrl} target="_blank" rel="noopener noreferrer" 
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:shadow-lg hover:shadow-violet-200/50 transition-all">
+                          <FiExternalLink className="w-4 h-4" /> View Resume
+                        </a>
+                        <a href={selectedCandidate.cvUrl} download 
+                          className={`p-2.5 rounded-xl border ${bdr} ${card} hover:shadow-md transition-all`} title="Download">
+                          <FiDownload className={`w-4 h-4 ${tSub}`} />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Interview History */}
+                {selectedCandidate.interviews && selectedCandidate.interviews.length > 0 && (
+                  <div>
+                    <p className={`text-xs font-bold uppercase ${tSub} mb-3`}>Interview History</p>
+                    <div className="space-y-2">
+                      {selectedCandidate.interviews.map((iv, i) => (
+                        <div key={i} className={`flex items-center justify-between p-3 rounded-xl ${subBg} border ${bdr}`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center ${iv.status === 'Completed' ? 'bg-emerald-100' : iv.status === 'Scheduled' ? 'bg-blue-100' : 'bg-slate-100'}`}>
+                              <span className="text-[8px] font-bold text-slate-500">{new Date(iv.interviewDate).toLocaleDateString('en-IN', { month: 'short' }).toUpperCase()}</span>
+                              <span className={`text-sm font-bold ${iv.status === 'Completed' ? 'text-emerald-600' : iv.status === 'Scheduled' ? 'text-blue-600' : 'text-slate-600'}`}>{new Date(iv.interviewDate).getDate()}</span>
+                            </div>
+                            <div>
+                              <p className={`text-sm font-semibold ${t}`}>{iv.interviewType}</p>
+                              <p className={`text-xs ${tSub}`}>{iv.startTime || 'Time TBD'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {iv.rating > 0 && (
+                              <span className="flex items-center gap-1 text-xs font-semibold text-amber-500">
+                                <FiStar className="w-3 h-3 fill-current" /> {iv.rating}
+                              </span>
+                            )}
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${
+                              iv.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                              iv.status === 'Scheduled' ? 'bg-blue-100 text-blue-700' :
+                              iv.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                              'bg-slate-100 text-slate-600'
+                            }`}>{iv.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {selectedCandidate.notes && (
+                  <div>
+                    <p className={`text-xs font-bold uppercase ${tSub} mb-2`}>Notes</p>
+                    <div className={`p-4 rounded-xl ${subBg} border ${bdr}`}>
+                      <p className={`text-sm ${t} whitespace-pre-wrap`}>{selectedCandidate.notes}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className={`flex flex-col items-center justify-center py-20 ${tSub}`}>
+                <FiUser className="w-12 h-12 mb-3 opacity-30" />
+                <p className="text-sm">Failed to load candidate details</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

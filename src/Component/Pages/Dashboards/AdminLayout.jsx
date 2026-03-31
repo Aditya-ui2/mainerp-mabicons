@@ -16,7 +16,7 @@ import {
   FiGrid,
   FiList,
 } from 'react-icons/fi';
-import logo from '../../../assets/images/mabicons-logo.svg';
+import logo from '../../../assets/images/mabicons logo blue.png';
 
 /**
  * AdminLayout - GroceryMart Style Dashboard Layout
@@ -112,23 +112,23 @@ const AdminLayout = ({
         `}
       >
         {/* Logo Section */}
-        <div className={`flex items-center h-16 px-4 border-b border-white/10 bg-white/5 backdrop-blur-sm ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+        <div className={`flex items-center h-16 border-b border-slate-200 bg-white ${sidebarCollapsed ? 'justify-start px-3.5' : 'justify-between px-4'}`}>
           {!sidebarCollapsed && (
             <div className="flex items-center gap-3 overflow-hidden">
-              <img src={logo} alt="Mabicons" className="h-7 w-auto brightness-0 invert" />
+              <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain" />
             </div>
           )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/10 transition-all duration-200 group"
+            className="hidden lg:flex p-1.5 rounded-lg hover:bg-slate-50 transition-all duration-200 group"
           >
-            <FiMenu style={{width:'20px',height:'20px'}} className="group-hover:text-blue-400 transition-colors" />
+            <FiMenu style={{ width: '24px', height: '24px' }} className="text-[#1E88E5] group-hover:scale-110 transition-transform" />
           </button>
           <button
             onClick={() => setMobileSidebarOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            className="lg:hidden p-1.5 rounded-lg hover:bg-slate-50 text-[#1E88E5] transition-colors"
           >
-            <FiX style={{width:'20px',height:'20px'}} />
+            <FiX style={{ width: '24px', height: '24px' }} />
           </button>
         </div>
 
@@ -280,9 +280,9 @@ const AdminLayout = ({
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+              className="lg:hidden p-2 rounded-lg hover:bg-blue-50 text-[#1E88E5] transition-colors"
             >
-              <FiMenu style={{width:'20px',height:'20px'}} />
+              <FiMenu style={{width:'24px',height:'24px'}} />
             </button>
           </div>
 

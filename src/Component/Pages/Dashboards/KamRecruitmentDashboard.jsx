@@ -23,7 +23,7 @@ import {
   FiDatabase,
   FiRepeat,
 } from 'react-icons/fi';
-import logo from '../../../assets/images/mabicons-logo.svg';
+import logo from '../../../assets/images/mabicons logo blue.png';
 
 // Eagerly load the 3 main tabs for instant render (no lazy = no Suspense delay)
 import JobOpeningsTab from './Tabs/KAMRecruitment/JobOpeningsTab';
@@ -284,15 +284,15 @@ const KamRecruitmentDashboard = () => {
           `}
         >
           {/* Logo + close */}
-          <div className="flex items-center justify-between pb-5 pt-1 px-1">
+          <div className="flex items-center justify-between pb-4 pt-4 px-4 bg-white mb-4 -mx-5 -mt-5 border-b border-slate-100 shadow-sm">
             <div className="flex items-center gap-2">
               <img src={logo} alt="Mabicons" className="h-10 w-auto object-contain" />
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className={`md:hidden rounded-lg p-1.5 ${isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-white/60 text-slate-500'} transition-colors`}
+              className="md:hidden rounded-lg p-1.5 hover:bg-slate-50 text-[#1E88E5] transition-colors"
             >
-              <FiX className="w-5 h-5" />
+              <FiX className="w-6 h-6 stroke-[3]" />
             </button>
           </div>
 
@@ -362,27 +362,29 @@ const KamRecruitmentDashboard = () => {
         {/* ═══════ MAIN CONTENT ═══════ */}
         <main className="relative z-10 flex-1 flex flex-col min-w-0">
           {/* ── Top Bar ── */}
-          <header className={`sticky top-0 z-30 ${isDarkMode ? 'bg-slate-800/80' : 'bg-[#f7f5fc]/80'} backdrop-blur-xl`}>
+          <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
             <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
-              {/* Left: hamburger */}
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                {/* Hamburger – mobile only */}
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className={`md:hidden rounded-lg p-2 ${isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-white/70 text-slate-600'} transition-colors`}
-                >
-                  <FiMenu className="w-5 h-5" />
-                </button>
+              {/* Left: Logo + Hamburger */}
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <img src={logo} alt="Mabicons" className="h-9 w-auto md:hidden object-contain" />
               </div>
 
-              {/* Right: theme toggle + profile */}
+              {/* Right: theme toggle + profile + hamburger button */}
               <div className="flex items-center gap-3">
                 {/* Theme Toggle */}
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
-                  className={`p-2 rounded-xl ${isDarkMode ? 'bg-slate-700 text-amber-400 hover:bg-slate-600' : 'bg-white/70 text-slate-600 hover:bg-white'} transition-all`}
+                  className={`p-2 rounded-xl ${isDarkMode ? 'bg-slate-700 text-amber-400 hover:bg-slate-600' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'} transition-all`}
                 >
                   {isDarkMode ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+                </button>
+                
+                {/* Hamburger – mobile only */}
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="md:hidden rounded-lg p-2 text-[#1E88E5] hover:bg-slate-50 transition-colors"
+                >
+                  <FiMenu className="w-7 h-7 stroke-[2.5]" />
                 </button>
 
                 {/* Profile dropdown */}
