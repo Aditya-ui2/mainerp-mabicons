@@ -2204,6 +2204,37 @@ export const getResumeDetails = async (resumeId) => {
   }
 };
 
+export const getAllOffers = async () => {
+  try {
+    const response = await axiosInstance.get('/recruitment/offers');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch offers:', error);
+    throw error.response?.data || { message: 'Failed to fetch offers' };
+  }
+};
+
+export const saveOffer = async (offerData) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/offers', offerData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to save offer:', error);
+    throw error.response?.data || { message: 'Failed to save offer' };
+  }
+};
+
+export const getOfferCandidateSuggestions = async (search) => {
+  try {
+    const query = new URLSearchParams({ search, limit: 8 }).toString();
+    const response = await axiosInstance.get(`/recruitment/offers/candidate-suggestions?${query}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch offer candidate suggestions:', error);
+    throw error.response?.data || { message: 'Failed to fetch candidate suggestions' };
+  }
+};
+
 // Update resume details
 export const updateResumeDetails = async (resumeId, data) => {
   try {
@@ -2591,6 +2622,7 @@ export const addCandidate = async (candidateData) => {
     throw error.response?.data || { message: 'Failed to add candidate' };
   }
 };
+
 
 // Update candidate status (move through stages)
 export const updateCandidateStatus = async (candidateId, statusData) => {
@@ -3442,7 +3474,6 @@ export const getCalendarEvents = async (month, year) => {
     throw error.response?.data || { message: 'Failed to fetch calendar events' };
   }
 };
-
 
 
 

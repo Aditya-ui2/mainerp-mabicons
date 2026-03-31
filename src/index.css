@@ -2,9 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
-}
+/* Removed font-family override to restore previous default font */
+
 
 /* Custom scrollbar for KAM sidebar & content */
 .scrollbar-thin::-webkit-scrollbar { width: 4px; }

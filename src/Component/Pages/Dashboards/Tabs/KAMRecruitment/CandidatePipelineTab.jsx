@@ -50,7 +50,7 @@ import {
   FiZap,
   FiFilter as FiFilterIcon,
 } from 'react-icons/fi';
-import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions } from '../../../service/api';
+import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions, uploadResumes } from '../../../service/api';
 
 /* ── Stage Badge ── */
 const StageBadge = ({ stage }) => {
@@ -104,7 +104,13 @@ const RatingStars = ({ rating, maxRating = 5 }) => (
 /* ══════════════════════════════════════════════════════ */
 const CACHE_KEY_CANDIDATES = 'cache_kamCandidates';
 
-const CandidatePipelineTab = ({ isDarkMode }) => {
+const CandidatePipelineTab = ({ isDarkMode, setActiveTab }) => {
+  const getResumeDisplayName = (resume) => {
+    if (resume?.candidateName) return resume.candidateName;
+    if (resume?.fileName) return resume.fileName.replace(/\.[^.]+$/, '');
+    return 'Unknown';
+  };
+
   // Start with cached data or empty array - will fetch real data from API
   const [candidates, setCandidates] = useState(() => {
     try { const c = localStorage.getItem(CACHE_KEY_CANDIDATES); return c ? JSON.parse(c) : []; } catch { return []; }
@@ -115,8 +121,13 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
   const [filterStage, setFilterStage] = useState('all');
   const [filterJob, setFilterJob] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [bulkUploadFiles, setBulkUploadFiles] = useState([]);
+  const [bulkUploadPositionId, setBulkUploadPositionId] = useState('');
+  const [bulkUploading, setBulkUploading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedResumeProfileId, setSelectedResumeProfileId] = useState('');
+  const [selectedResumeProfile, setSelectedResumeProfile] = useState(null);
   const [newCandidate, setNewCandidate] = useState({
     name: '',
     email: '',
@@ -132,9 +143,12 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     positionId: '',
     clientId: '',
     roleType: '',
+    source: '',
+    resumeId: '',
   });
   const [resumeFile, setResumeFile] = useState(null);
   const fileInputRef = useRef(null);
+  const bulkUploadInputRef = useRef(null);
 
   // Role Types for the Resume Bank
   const [roleTypes, setRoleTypes] = useState([]);
@@ -189,7 +203,17 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
   const [approveInterviewType, setApproveInterviewType] = useState('Video');
   const [approveInterviewDate, setApproveInterviewDate] = useState('');
   const [approveInterviewTime, setApproveInterviewTime] = useState('');
+  const [approveInterviewDuration, setApproveInterviewDuration] = useState('60 mins');
   const [approveInterviewer, setApproveInterviewer] = useState('');
+  const [approveInterviewerRole, setApproveInterviewerRole] = useState('');
+  const [approveMeetLink, setApproveMeetLink] = useState('');
+
+  const generateMeetLink = () => {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    const makeChunk = (size) =>
+      Array.from({ length: size }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+    return `https://meet.google.com/${makeChunk(3)}-${makeChunk(4)}-${makeChunk(3)}`;
+  };
 
   // Read job openings from localStorage
   useEffect(() => {
@@ -333,8 +357,31 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     setResumeBankLoading(true);
     setResumeBankRole(roleKeyword);
     try {
-      const response = await getResumeBankResumes({ search: roleKeyword, limit: 20 });
-      setResumeBankResumes(response.data || []);
+      const selectedJob = jobOpenings.find(
+        (job) => job.title === roleKeyword || job.id === roleKeyword || `${job.title} — ${job.client}` === roleKeyword
+      );
+
+      const cleanedKeyword = String(roleKeyword || '')
+        .replace(/[._-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const fallbackTerms = [
+        selectedJob?.roleType,
+        selectedJob?.title,
+        roleKeyword,
+        cleanedKeyword,
+        cleanedKeyword.split(' ')[0],
+      ].filter((term, index, list) => term && list.indexOf(term) === index);
+
+      let matchedResumes = [];
+      for (const term of fallbackTerms) {
+        const response = await getResumeBankResumes({ search: term, limit: 20 });
+        matchedResumes = response.data || [];
+        if (matchedResumes.length > 0) break;
+      }
+
+      setResumeBankResumes(matchedResumes);
     } catch (error) {
       console.error('Failed to fetch resume bank matches:', error);
       setResumeBankResumes([]);
@@ -667,7 +714,10 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     setApproveInterviewType('Video');
     setApproveInterviewDate('');
     setApproveInterviewTime('');
+    setApproveInterviewDuration('60 mins');
     setApproveInterviewer('');
+    setApproveInterviewerRole('');
+    setApproveMeetLink('');
     setShowApproveModal(true);
     setStageMenuId(null);
   };
@@ -687,13 +737,17 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         candidateId: approveCandidateId,
         positionId: candidate.positionId,
         clientId: candidate.clientId,
+        candidateName: candidate.name,
+        candidateEmail: candidate.email,
+        positionTitle: candidate.jobTitle,
+        clientName: candidate.client,
         interviewType: approveInterviewRound,
         interviewDate: interviewDate,
         startTime: startTime,
-        duration: 60,
+        duration: parseInt(approveInterviewDuration, 10) || 60,
         meetingType: approveInterviewType,
         interviewerName: approveInterviewer || 'Hiring Team',
-        interviewerRole: 'Interviewer',
+        interviewerRole: approveInterviewerRole || 'Interviewer',
         notes: 'Approved from Candidate Pipeline'
       });
 
@@ -714,11 +768,11 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         type: approveInterviewType,
         date: interviewDate,
         time: startTime,
-        duration: '60 mins',
+        duration: approveInterviewDuration,
         interviewer: approveInterviewer || 'Hiring Team',
-        interviewerRole: '',
+        interviewerRole: approveInterviewerRole || 'Interviewer',
         status: 'Scheduled',
-        meetLink: apiResponse.data?.meetingLink || (approveInterviewType === 'Video' ? `https://meet.google.com/abc-defg-hij` : null),
+        meetLink: apiResponse.data?.meetingLink || (approveInterviewType === 'Video' ? approveMeetLink || generateMeetLink() : null),
         photo: candidate.photo || null,
         phone: candidate.phone || '',
         location: candidate.location || '',
@@ -753,6 +807,10 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
           candidateId: c.id,
           positionId: c.positionId,
           clientId: c.clientId,
+          candidateName: c.name,
+          candidateEmail: c.email,
+          positionTitle: c.jobTitle,
+          clientName: c.client,
           interviewType: 'Phone Screening',
           interviewDate: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
           startTime: '10:00 AM',
@@ -820,7 +878,11 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
   // Handle Add Candidate
   const handleAddCandidate = async () => {
-    if (!newCandidate.name || !newCandidate.email || !newCandidate.jobTitle) {
+    const generatedResumeBankEmail = newCandidate.resumeId && !newCandidate.email
+      ? `${(newCandidate.name || 'candidate').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '') || 'candidate'}.${Date.now()}@resume-bank.local`
+      : newCandidate.email;
+
+    if (!newCandidate.name || !generatedResumeBankEmail || !newCandidate.jobTitle) {
       alert('Please fill required fields (Name, Email, Job Title)');
       return;
     }
@@ -828,6 +890,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     const candidateLocal = {
       id: Date.now(),
       ...newCandidate,
+      email: generatedResumeBankEmail,
       stage: 'Screening',
       rating: 0,
       skills: skillsArr,
@@ -840,7 +903,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
     try {
       const formData = new FormData();
       formData.append('name', newCandidate.name);
-      formData.append('email', newCandidate.email);
+      formData.append('email', generatedResumeBankEmail);
       formData.append('phone', newCandidate.phone);
       formData.append('location', newCandidate.location);
       formData.append('skills', skillsArr.join(', '));
@@ -850,6 +913,9 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
       formData.append('noticePeriod', newCandidate.noticePeriod);
       formData.append('stage', 'Screening');
       formData.append('pipelineStatus', 'pending');
+      if (newCandidate.source) formData.append('source', newCandidate.source);
+      if (selectedResumeProfile?.webUrl) formData.append('cvUrl', selectedResumeProfile.webUrl);
+      if (selectedResumeProfile?.fileName) formData.append('cvFileName', selectedResumeProfile.fileName);
       
       if (newCandidate.positionId) formData.append('positionId', newCandidate.positionId);
       if (newCandidate.clientId) formData.append('clientId', newCandidate.clientId);
@@ -915,6 +981,75 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
       clientId: '',
       roleType: '',
     });
+  };
+
+  const resetBulkUploadModal = () => {
+    setBulkUploadFiles([]);
+    setBulkUploadPositionId('');
+    setBulkUploading(false);
+  };
+
+  const handleBulkFilesSelected = (fileList) => {
+    const files = Array.from(fileList || []).filter(Boolean);
+    setBulkUploadFiles(files);
+  };
+
+  const handleBulkResumeUpload = async () => {
+    if (bulkUploadFiles.length === 0) {
+      alert('Please select at least one resume.');
+      return;
+    }
+
+    setBulkUploading(true);
+    try {
+      const selectedJob = jobOpenings.find(job => job.id === bulkUploadPositionId);
+      const formData = new FormData();
+
+      bulkUploadFiles.forEach(file => {
+        formData.append('resume', file);
+      });
+
+      if (bulkUploadPositionId) formData.append('positionId', bulkUploadPositionId);
+      if (selectedJob?.clientId) formData.append('clientId', selectedJob.clientId);
+
+      const res = await uploadResumes(formData);
+
+      if (res?.success && Array.isArray(res.data)) {
+        const uploadedCandidates = res.data.map(candidate => ({
+          id: candidate.id || candidate._id,
+          name: candidate.name,
+          email: candidate.email || '',
+          phone: candidate.phone || '',
+          location: candidate.location || '',
+          jobTitle: selectedJob?.title || '',
+          client: selectedJob?.client || '',
+          stage: candidate.stage || 'Screening',
+          rating: candidate.rating || 0,
+          experience: candidate.experience || '',
+          currentCTC: candidate.currentSalary || '',
+          expectedCTC: candidate.expectedSalary || '',
+          noticePeriod: candidate.noticePeriod || '',
+          skills: candidate.skills || [],
+          appliedDate: candidate.createdAt ? new Date(candidate.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          lastActivity: candidate.updatedAt ? new Date(candidate.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          photo: null,
+          pipelineStatus: candidate.pipelineStatus || 'pending',
+          cvUrl: candidate.cvUrl || null,
+          cvFileName: candidate.cvFileName || null,
+        }));
+
+        setCandidates(prev => [...uploadedCandidates, ...prev]);
+        setShowUploadModal(false);
+        resetBulkUploadModal();
+      } else {
+        alert(res?.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Bulk resume upload failed:', error);
+      alert(error?.message || 'Failed to upload resumes');
+    } finally {
+      setBulkUploading(false);
+    }
   };
 
   // Skeleton loader
@@ -1546,7 +1681,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
           {/* Back & Title */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowAddModal(false); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '' }); }}
+            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowAddModal(false); setSelectedResumeProfileId(''); setSelectedResumeProfile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' }); }}
               className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-[#1E88E5] hover:text-[#3FA9F5]' : 'text-[#1E88E5] hover:text-[#0D47A1]'}`}
             >
               <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
@@ -1758,14 +1893,18 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                         <motion.div 
                           key={resume.id} 
                           whileHover={{ y: -4 }}
-                          className={`w-72 p-4 rounded-xl border flex-shrink-0 relative group transition-all ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/50' : 'bg-white border-slate-200 hover:border-purple-400 shadow-sm hover:shadow-md'}`}
+                          className={`w-72 p-4 rounded-xl border flex-shrink-0 relative group transition-all ${
+                            selectedResumeProfileId === resume.id
+                              ? (isDarkMode ? 'bg-purple-900/20 border-purple-500/60 shadow-lg shadow-purple-900/20' : 'bg-purple-50 border-purple-400 shadow-md')
+                              : (isDarkMode ? 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/50' : 'bg-white border-slate-200 hover:border-purple-400 shadow-sm hover:shadow-md')
+                          }`}
                         >
                           <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}>
                               {getInitials(resume.candidateName || resume.fileName || 'U')}
                             </div>
                             <div className="min-w-0">
-                              <h5 className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{resume.candidateName || resume.fileName}</h5>
+                              <h5 className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{getResumeDisplayName(resume)}</h5>
                               <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{resume.email || 'No email'}</p>
                             </div>
                           </div>
@@ -1776,19 +1915,32 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                           </div>
                           <button 
                             onClick={() => {
+                              if (selectedResumeProfileId === resume.id) {
+                                setSelectedResumeProfileId('');
+                                setSelectedResumeProfile(null);
+                                setNewCandidate(prev => ({
+                                  ...prev,
+                                  source: '',
+                                  resumeId: '',
+                                }));
+                                return;
+                              }
+
+                              setSelectedResumeProfileId(resume.id || '');
+                              setSelectedResumeProfile(resume);
                               setNewCandidate(prev => ({
                                 ...prev,
-                                name: resume.candidateName || prev.name,
-                                email: resume.email || prev.email,
-                                phone: resume.phone || prev.phone,
-                                location: resume.location || prev.location,
-                                skills: Array.isArray(resume.skills) ? resume.skills.join(', ') : (resume.skills || prev.skills),
-                                experience: resume.experience || prev.experience,
+                                source: 'Resume Bank',
+                                resumeId: resume.id || prev.resumeId,
                               }));
                             }}
-                            className={`w-full py-2 rounded-lg text-[11px] font-bold transition-all ${isDarkMode ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 ring-1 ring-purple-500/30' : 'bg-purple-50 text-purple-600 hover:bg-purple-100 ring-1 ring-purple-200'}`}
+                            className={`w-full py-2 rounded-lg text-[11px] font-bold transition-all ${
+                              selectedResumeProfileId === resume.id
+                                ? (isDarkMode ? 'bg-purple-500 text-white ring-1 ring-purple-400' : 'bg-purple-500 text-white ring-1 ring-purple-300')
+                                : (isDarkMode ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 ring-1 ring-purple-500/30' : 'bg-purple-50 text-purple-600 hover:bg-purple-100 ring-1 ring-purple-200')
+                            }`}
                           >
-                            Use Profile Data
+                            {selectedResumeProfileId === resume.id ? 'Resume Selected' : 'Select Resume'}
                           </button>
                         </motion.div>
                       ))}
@@ -1805,7 +1957,7 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
             {/* Form Footer */}
             <div className={`flex items-center justify-between p-6 border-t ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-              <button onClick={() => { setShowAddModal(false); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '' }); setResumeFile(null); }}
+              <button onClick={() => { setShowAddModal(false); setSelectedResumeProfileId(''); setSelectedResumeProfile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' }); setResumeFile(null); }}
                 className={`px-6 py-3 rounded-xl font-semibold text-sm transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}
               >
                 Cancel
@@ -1908,40 +2060,170 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
                 </div>
               </div>
             </div>
-            <div className="p-6 space-y-6 max-w-4xl">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Round</label>
-                  <select value={approveInterviewRound} onChange={e => setApproveInterviewRound(e.target.value)}
-                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                    <option value="Phone Screening">Phone Screening</option>
-                    <option value="HR Round">HR Round</option>
-                    <option value="Final Round">Final Round</option>
-                  </select>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-emerald-900/40' : 'bg-emerald-100'}`}>
+                      <FiUsers className={`w-3 h-3 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                    </div>
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Candidate Details
+                    </span>
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Candidate Name</label>
+                    <input
+                      type="text"
+                      value={c?.name || ''}
+                      readOnly
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Candidate Email</label>
+                    <input
+                      type="text"
+                      value={c?.email || ''}
+                      readOnly
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Type</label>
-                  <select value={approveInterviewType} onChange={e => setApproveInterviewType(e.target.value)}
-                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                    <option value="Video">Video Call</option>
-                    <option value="Phone">Phone Call</option>
-                    <option value="In-person">In-Person</option>
-                  </select>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
+                      <FiBriefcase className={`w-3 h-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                    </div>
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Position Details
+                    </span>
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Position</label>
+                    <input
+                      type="text"
+                      value={c?.jobTitle || ''}
+                      readOnly
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client</label>
+                    <input
+                      type="text"
+                      value={c?.client || ''}
+                      readOnly
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Round</label>
+                    <select value={approveInterviewRound} onChange={e => setApproveInterviewRound(e.target.value)}
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                      <option value="Phone Screening">Phone Screening</option>
+                      <option value="Technical Round">Technical Round</option>
+                      <option value="HR Round">HR Round</option>
+                      <option value="Client Interview">Client Interview</option>
+                      <option value="Final Round">Final Round</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Date</label>
-                  <input type="date" value={approveInterviewDate} onChange={e => setApproveInterviewDate(e.target.value)}
-                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
-                </div>
-                <div>
-                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Time</label>
-                  <input type="time" value={approveInterviewTime} onChange={e => setApproveInterviewTime(e.target.value)}
-                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
-                </div>
-                <div className="md:col-span-2 max-w-2xl">
-                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interviewer Name</label>
-                  <input type="text" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} placeholder="Enter interviewer name..."
-                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200'}`} />
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-emerald-900/40' : 'bg-emerald-100'}`}>
+                      <FiCalendar className={`w-3 h-3 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                    </div>
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Interview Details
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Date</label>
+                      <input type="date" value={approveInterviewDate} onChange={e => setApproveInterviewDate(e.target.value)}
+                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Time</label>
+                      <input type="time" value={approveInterviewTime} onChange={e => setApproveInterviewTime(e.target.value)}
+                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Duration</label>
+                      <select value={approveInterviewDuration} onChange={e => setApproveInterviewDuration(e.target.value)}
+                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                        <option value="30 mins">30 mins</option>
+                        <option value="45 mins">45 mins</option>
+                        <option value="60 mins">60 mins</option>
+                        <option value="90 mins">90 mins</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Type</label>
+                      <select value={approveInterviewType} onChange={e => {
+                        setApproveInterviewType(e.target.value);
+                        if (e.target.value !== 'Video') setApproveMeetLink('');
+                      }}
+                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                        <option value="Video">Video Call</option>
+                        <option value="Phone">Phone Call</option>
+                        <option value="In-person">In-Person</option>
+                      </select>
+                    </div>
+                  </div>
+                  {approveInterviewType === 'Video' && (
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Google Meet Link</label>
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            value={approveMeetLink}
+                            onChange={e => setApproveMeetLink(e.target.value)}
+                            placeholder="Click generate or paste your meet link"
+                            className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+                          />
+                          {approveMeetLink && (
+                            <button
+                              type="button"
+                              onClick={() => navigator.clipboard?.writeText(approveMeetLink)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600"
+                            >
+                              <FiCopy className="w-4 h-4 text-slate-400" />
+                            </button>
+                          )}
+                        </div>
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setApproveMeetLink(generateMeetLink())}
+                          className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-xl shadow-lg"
+                          style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 8px 20px rgba(16, 185, 129, 0.35)' }}
+                        >
+                          <FiRefreshCw className="w-4 h-4" />
+                          Generate
+                        </motion.button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interviewer Name</label>
+                      <input type="text" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} placeholder="Interviewer name"
+                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Role</label>
+                      <input type="text" value={approveInterviewerRole} onChange={e => setApproveInterviewerRole(e.target.value)} placeholder="e.g., Tech Lead"
+                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2024,7 +2306,15 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
 
             {/* From Resume Bank */}
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => { setShowResumeBankModal(true); setResumeBankResumes([]); setResumeBankRole(''); }}
+              onClick={() => {
+                if (typeof setActiveTab === 'function') {
+                  setActiveTab('Resume Bank');
+                  return;
+                }
+                setShowResumeBankModal(true);
+                setResumeBankResumes([]);
+                setResumeBankRole('');
+              }}
               className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-xl text-white"
               style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: '0 4px 12px rgba(31,136,229,0.3)' }}>
               <FiDatabase className="w-3.5 h-3.5" /> Resume Bank
@@ -2049,28 +2339,6 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
               </motion.span>
 
               <span className="relative z-10 tracking-wide">Export CSV</span>
-            </motion.button>
-            {/* Upload CVs */}
-            <motion.button
-              whileHover={{ scale: 1.06, y: -2 }}
-              whileTap={{ scale: 0.94 }}
-              onClick={() => setShowUploadModal(true)}
-              className={`relative flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl overflow-hidden
-                transition-all duration-200
-                ${isDarkMode
-                  ? 'bg-slate-700 text-slate-300 hover:text-white border border-slate-600 hover:border-[#1E88E5]'
-                  : 'bg-white text-slate-600 hover:text-[#1E88E5] border border-slate-200 hover:border-[#1E88E5] shadow-sm hover:shadow-md'
-                }`}
-            >
-              <motion.span
-                whileHover={{ y: -3, scale: 1.2 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="relative z-10"
-              >
-                <FiUpload className="w-3.5 h-3.5" />
-              </motion.span>
-
-              <span className="relative z-10 tracking-wide">Upload CVs</span>
             </motion.button>
             {/* Add Candidate */}
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setShowAddModal(true)}
@@ -2643,35 +2911,74 @@ const CandidatePipelineTab = ({ isDarkMode }) => {
         <AnimatePresence>
           {showUploadModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowUploadModal(false)} />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowUploadModal(false); resetBulkUploadModal(); }} />
               <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`relative rounded-2xl shadow-2xl w-full max-w-md overflow-hidden ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'}`}>
                 <div className="flex items-center justify-between p-5" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5, #0D47A1)' }}>
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)' }}><FiUpload className="w-5 h-5 text-white" /></div>
                     <div><h3 className="text-lg font-bold text-white">Upload CVs/Resumes</h3><p className="text-xs text-white/70">Add resumes for candidates</p></div>
                   </div>
-                  <button onClick={() => setShowUploadModal(false)} className="p-2 rounded-lg hover:bg-white/20 text-white/80 hover:text-white"><FiX className="w-5 h-5" /></button>
+                  <button onClick={() => { setShowUploadModal(false); resetBulkUploadModal(); }} className="p-2 rounded-lg hover:bg-white/20 text-white/80 hover:text-white"><FiX className="w-5 h-5" /></button>
                 </div>
                 <div className="p-5 space-y-4">
                   {jobOpenings.length > 0 && (
                     <div>
                       <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>For Position (optional)</label>
-                      <select className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                      <select
+                        value={bulkUploadPositionId}
+                        onChange={(e) => setBulkUploadPositionId(e.target.value)}
+                        className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
+                      >
                         <option value="">General Upload</option>
-                        {jobOpenings.filter(j => j.filled < j.openings).map(job => (<option key={job.id} value={job.title}>{job.title} — {job.client}</option>))}
+                        {jobOpenings.filter(j => j.filled < j.openings).map(job => (<option key={job.id} value={job.id}>{job.title} — {job.client}</option>))}
                       </select>
                     </div>
                   )}
-                  <div className={`border-2 border-dashed rounded-2xl p-8 text-center ${isDarkMode ? 'border-slate-600 hover:border-[#1E88E5]' : 'border-slate-300 hover:border-[#1E88E5]'} transition-colors cursor-pointer`}>
-                    <FiUpload className={`w-12 h-12 mx-auto mb-3 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                    <p className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Drag & drop files here</p>
+                  <input
+                    ref={bulkUploadInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={(e) => handleBulkFilesSelected(e.target.files)}
+                  />
+                  <div
+                    onClick={() => bulkUploadInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleBulkFilesSelected(e.dataTransfer.files);
+                    }}
+                    className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer ${isDarkMode ? 'border-slate-600 hover:border-[#1E88E5]' : 'border-slate-300 hover:border-[#1E88E5]'}`}
+                  >
+                    <FiUpload className={`w-12 h-12 mx-auto mb-3 ${bulkUploadFiles.length > 0 ? 'text-emerald-500' : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`} />
+                    <p className={`font-medium ${bulkUploadFiles.length > 0 ? 'text-emerald-600' : (isDarkMode ? 'text-slate-300' : 'text-slate-600')}`}>
+                      {bulkUploadFiles.length > 0 ? `${bulkUploadFiles.length} file(s) selected` : 'Drag & drop files here'}
+                    </p>
                     <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>or click to browse</p>
                     <p className={`text-xs mt-3 ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>PDF, DOC, DOCX (Max 10MB each)</p>
                   </div>
+                  {bulkUploadFiles.length > 0 && (
+                    <div className={`rounded-xl px-3 py-2 text-xs space-y-1 ${isDarkMode ? 'bg-slate-700/70 text-slate-300' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}>
+                      {bulkUploadFiles.slice(0, 4).map(file => (
+                        <div key={`${file.name}-${file.size}`} className="truncate">{file.name}</div>
+                      ))}
+                      {bulkUploadFiles.length > 4 && (
+                        <div>+{bulkUploadFiles.length - 4} more file(s)</div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className={`flex justify-end gap-3 p-5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                  <button onClick={() => setShowUploadModal(false)} className={`px-4 py-2 rounded-xl text-sm font-medium ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Cancel</button>
-                  <button className="px-5 py-2 text-sm font-semibold bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white rounded-xl shadow-lg">Upload</button>
+                  <button onClick={() => { setShowUploadModal(false); resetBulkUploadModal(); }} className={`px-4 py-2 rounded-xl text-sm font-medium ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Cancel</button>
+                  <button
+                    onClick={handleBulkResumeUpload}
+                    disabled={bulkUploading || bulkUploadFiles.length === 0}
+                    className="px-5 py-2 text-sm font-semibold bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {bulkUploading ? 'Uploading...' : 'Upload'}
+                  </button>
                 </div>
               </motion.div>
             </div>
