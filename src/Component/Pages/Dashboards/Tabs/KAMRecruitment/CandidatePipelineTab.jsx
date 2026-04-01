@@ -543,6 +543,16 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
   const uniqueJobs = [...new Set(candidates.map(c => c.jobTitle))];
   const uniqueClients = [...new Set(candidates.map(c => c.client).filter(Boolean))];
+  const activePipelineFiltersCount = [
+    searchTerm.trim() !== '',
+    filterStage !== 'all',
+    filterPipelineStatus !== 'all',
+    filterJob !== 'all',
+    filterClient !== 'all',
+    filterSource !== 'all',
+    sortBy !== 'date',
+    sortOrder !== 'desc',
+  ].filter(Boolean).length;
 
   const getAvatarGradient = (name) => {
     const gradients = [
@@ -2690,39 +2700,71 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         </div> */}
 
         {/* Search, Filter, Sort & Bulk */}
-        <div className="space-y-3">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+        <div className={`space-y-3 rounded-2xl border-2 p-4 ${isDarkMode ? 'bg-slate-800/60 border-slate-700' : 'bg-gradient-to-r from-white to-blue-50/40 border-blue-100'}`}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Candidate Filters</p>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-blue-100 text-blue-700'}`}>
+                {activePipelineFiltersCount} active
+              </span>
+              <button
+                onClick={() => {
+                  setFilterClient('all');
+                  setFilterSource('all');
+                  setFilterStage('all');
+                  setFilterPipelineStatus('all');
+                  setFilterJob('all');
+                  setSortBy('date');
+                  setSortOrder('desc');
+                  setSearchTerm('');
+                }}
+                className={`text-xs font-semibold ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'} hover:underline`}
+              >
+                Reset Filters
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 items-end">
+            <div className="relative w-full">
+              <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Search Candidates</label>
+              <FiSearch className={`absolute left-4 top-[38px] w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
               <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by name, email, skills..."
                 className={`w-full rounded-xl border-2 py-3 pl-12 pr-4 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/50 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
             </div>
-            <div className="flex gap-2 items-center">
-              <div className="relative">
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="relative min-w-[140px]">
+                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Position</label>
                 <select value={filterJob} onChange={(e) => setFilterJob(e.target.value)}
-                  className={`appearance-none rounded-xl border-2 px-4 py-3 pr-10 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+                  className={`appearance-none w-full rounded-xl border-2 px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
                   <option value="all">All Positions</option>
                   {uniqueJobs.map(job => (<option key={job} value={job}>{job}</option>))}
                 </select>
-                <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                <FiChevronDown className={`absolute right-3 top-[38px] w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
               </div>
-              <div className="relative">
+
+              <div className="relative min-w-[140px]">
+                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Sort By</label>
                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-                  className={`appearance-none rounded-xl border-2 px-4 py-3 pr-10 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-                  <option value="date">Sort: Date</option>
-                  <option value="name">Sort: Name</option>
-                  <option value="rating">Sort: Rating</option>
-                  <option value="experience">Sort: Experience</option>
+                  className={`appearance-none w-full rounded-xl border-2 px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+                  <option value="date">Date Added</option>
+                  <option value="name">Name</option>
+                  <option value="rating">Rating</option>
+                  <option value="experience">Experience</option>
                 </select>
-                <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                <FiChevronDown className={`absolute right-3 top-[38px] w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
               </div>
+
               <button onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
-                className={`p-3 rounded-xl border-2 transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                <span className="text-xs font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                className={`h-[46px] mt-[22px] px-3 rounded-xl border-2 transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                <span className="text-xs font-bold">{sortOrder === 'asc' ? 'A-Z / Low-High' : 'Z-A / High-Low'}</span>
               </button>
+
               <button onClick={() => setShowAdvancedFilters(f => !f)}
-                className={`flex items-center gap-1.5 px-3 py-3 rounded-xl border-2 text-sm font-medium ${showAdvancedFilters ? 'border-[#1E88E5] text-[#1E88E5]' : isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'} transition-colors`}>
+                className={`h-[46px] mt-[22px] flex items-center justify-center gap-1.5 px-3 rounded-xl border-2 text-sm font-medium ${showAdvancedFilters ? 'border-[#1E88E5] text-[#1E88E5]' : isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'} transition-colors`}>
                 <FiSliders className="w-4 h-4" />
+                More
               </button>
             </div>
           </div>
@@ -2732,14 +2774,16 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
             {showAdvancedFilters && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                 className={`flex flex-wrap gap-3 p-4 rounded-xl border-2 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-                <div className="relative">
+                  <div className="relative min-w-[160px]">
+                    <label className={`block text-[11px] font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Client</label>
                   <select value={filterClient} onChange={e => setFilterClient(e.target.value)}
                     className={`appearance-none rounded-lg border px-3 py-2 pr-8 text-xs font-medium ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
                     <option value="all">All Clients</option>
                     {uniqueClients.map(c => (<option key={c} value={c}>{c}</option>))}
                   </select>
                 </div>
-                <div className="relative">
+                  <div className="relative min-w-[160px]">
+                    <label className={`block text-[11px] font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Source</label>
                   <select value={filterSource} onChange={e => setFilterSource(e.target.value)}
                     className={`appearance-none rounded-lg border px-3 py-2 pr-8 text-xs font-medium ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
                     <option value="all">All Sources</option>
@@ -2748,7 +2792,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     <option value="Referral">Referral</option>
                   </select>
                 </div>
-                <button onClick={() => { setFilterClient('all'); setFilterSource('all'); setFilterStage('all'); setFilterJob('all'); setSortBy('date'); setSortOrder('desc'); setSearchTerm(''); }}
+                <button onClick={() => { setFilterClient('all'); setFilterSource('all'); setFilterStage('all'); setFilterPipelineStatus('all'); setFilterJob('all'); setSortBy('date'); setSortOrder('desc'); setSearchTerm(''); }}
                   className="text-xs text-[#1E88E5] font-semibold hover:underline">Clear all filters</button>
               </motion.div>
             )}

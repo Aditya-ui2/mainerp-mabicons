@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,7 +8,6 @@ import {
   FiTrash2,
   FiSearch,
   FiMapPin,
-  FiDollarSign,
   FiUsers,
   FiClock,
   FiX,
@@ -32,6 +31,45 @@ import {
   FiStar,
 } from 'react-icons/fi';
 import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers, createDepartmentTask, getAllCandidates, assignResumesToPosition } from '../../../service/api';
+
+const openNativeDatePicker = (inputRef) => {
+  const input = inputRef?.current;
+  if (!input) return;
+
+  input.focus();
+  if (typeof input.showPicker === 'function') {
+    input.showPicker();
+  }
+};
+
+const parseListInput = (value) =>
+  (value || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const normalizeListFromApi = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === 'string') {
+    return value.split('\n').map((item) => item.trim()).filter(Boolean);
+  }
+  return [];
+};
+
+const formatSalaryDisplay = (value) => {
+  const salary = String(value || '').replace(/\$/g, '₹').trim();
+  if (!salary) return 'Not specified';
+
+  // If rupee/INR already present, keep as-is.
+  if (/₹|\brs\b|\binr\b/i.test(salary)) return salary;
+
+  // Common numeric forms should display with rupee and LPA for clarity.
+  if (/^\d+(\.\d+)?$/.test(salary) || /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(salary)) {
+    return `₹ ${salary} LPA`;
+  }
+
+  return `₹ ${salary}`;
+};
 
 /* ── Status Badge ── */
 const StatusBadge = ({ status }) => {
@@ -83,6 +121,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [loadingBank, setLoadingBank] = useState(false);
   const [step] = useState(2); // strictly 2 to skip Step 1 candidate selection
+  const taskDeadlineInputRef = useRef(null);
 
   const taskTypes = [
     { label: 'Screen CVs', icon: FiFileText, desc: 'Review and shortlist candidates' },
@@ -331,9 +370,16 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
               {/* Deadline */}
               <div>
                 <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Deadline</label>
-                <input type="date" value={taskDeadline} onChange={e => setTaskDeadline(e.target.value)}
-                  className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                />
+                <div onClick={() => openNativeDatePicker(taskDeadlineInputRef)} className="cursor-pointer">
+                  <input
+                    ref={taskDeadlineInputRef}
+                    type="date"
+                    value={taskDeadline}
+                    onChange={e => setTaskDeadline(e.target.value)}
+                    onClick={() => openNativeDatePicker(taskDeadlineInputRef)}
+                    className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+                  />
+                </div>
               </div>
 
               {/* Description */}
@@ -418,8 +464,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
               <div className="flex flex-wrap justify-center sm:justify-start items-center gap-5 mt-3">
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-4 h-4" /> {job.location}</span>
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <FiDollarSign className="w-4 h-4" style={{ display: 'none' }} />
-                  <span className="text-sm">₹</span> {job.salary}
+                  {formatSalaryDisplay(job.salary)}
                 </span>
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiClock className="w-4 h-4" /> {job.type}</span>
                 <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiCalendar className="w-4 h-4" /> Deadline: {new Date(job.deadline).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
@@ -463,7 +508,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
               { label: 'Client', value: job.client, icon: FiBriefcase },
               { label: 'Location', value: job.location, icon: FiMapPin },
               { label: 'Employment Type', value: job.type, icon: FiClock },
-              { label: 'Salary Range', value: job.salary, icon: FiDollarSign },
+              { label: 'Salary Range', value: formatSalaryDisplay(job.salary), icon: FiBriefcase },
               { label: 'Total Openings', value: job.openings, icon: FiUsers },
               { label: 'Filled', value: job.filled, icon: FiCheckCircle },
               { label: 'Priority', value: job.priority, icon: FiAlertCircle },
@@ -489,7 +534,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
           <div className="space-y-4">
             <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Job Description</h3>
             <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-              {job.description || `We are looking for a highly skilled ${job.title} to join our client ${job.client}. This is a ${job.type} opportunity based in ${job.location} with a competitive salary range of ${job.salary}.`}
+              {job.description || `We are looking for a highly skilled ${job.title} to join our client ${job.client}. This is a ${job.type} opportunity based in ${job.location} with a competitive salary range of ${formatSalaryDisplay(job.salary)}.`}
             </p>
             <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
               {job.descriptionExtra || `The ideal candidate will have strong expertise in ${job.skills.join(', ')} and be able to contribute to the team from day one. This role offers exposure to cutting-edge projects and a collaborative work environment.`}
@@ -508,42 +553,36 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
         {activeTab === 'requirements' && (
           <div className="space-y-4">
             <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Requirements</h3>
-            <ul className="space-y-3">
-              {(job.requirements || [
-                `${job.skills[0] ? `Strong proficiency in ${job.skills[0]}` : 'Strong technical background'} with hands-on experience`,
-                `${job.experience ? (parseInt(job.experience) || job.experience) : '3+'}${typeof job.experience === 'number' || (job.experience && !job.experience.includes('year')) ? ' years' : ''} of relevant industry experience`,
-                `Excellent problem-solving and analytical skills`,
-                `Strong communication and teamwork abilities`,
-                `Bachelor's degree in relevant field (or equivalent experience)`,
-                `Experience with ${job.skills.slice(1).join(', ') || 'modern tools and technologies'}`,
-              ]).map((req, i) => (
-                <li key={i} className={`flex items-start gap-3 text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  <FiCheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#1E88E5' }} />
-                  {req}
-                </li>
-              ))}
-            </ul>
+            {Array.isArray(job.requirements) && job.requirements.length > 0 ? (
+              <ul className="space-y-3">
+                {job.requirements.map((req, i) => (
+                  <li key={i} className={`flex items-start gap-3 text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <FiCheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#1E88E5' }} />
+                    {req}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No requirements added yet.</p>
+            )}
           </div>
         )}
 
         {activeTab === 'responsibilities' && (
           <div className="space-y-4">
             <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Key Responsibilities</h3>
-            <ul className="space-y-3">
-              {(job.responsibilities || [
-                `Lead and contribute to ${job.skills[0] || 'key'} projects for ${job.client}`,
-                `Collaborate with cross-functional teams to deliver high-quality solutions`,
-                `Mentor junior team members and conduct code/design reviews`,
-                `Drive best practices and innovative approaches within the team`,
-                `Participate in client meetings and requirement gathering sessions`,
-                `Ensure deliverables meet quality standards and deadlines`,
-              ]).map((resp, i) => (
-                <li key={i} className={`flex items-start gap-3 text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  <FiTarget className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#1E88E5' }} />
-                  {resp}
-                </li>
-              ))}
-            </ul>
+            {Array.isArray(job.responsibilities) && job.responsibilities.length > 0 ? (
+              <ul className="space-y-3">
+                {job.responsibilities.map((resp, i) => (
+                  <li key={i} className={`flex items-start gap-3 text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <FiTarget className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#1E88E5' }} />
+                    {resp}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No responsibilities added yet.</p>
+            )}
           </div>
         )}
       </div>
@@ -591,8 +630,17 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [roleTypesLoading, setRoleTypesLoading] = useState(false);
   const [newJobForm, setNewJobForm] = useState({
     title: '', client: '', clientId: '', location: '', type: 'Full-time', salary: '',
-    openings: 1, experience: '', priority: 'Medium', deadline: '', skills: '', description: '', roleType: ''
+    openings: 1,
+    experience: '',
+    priority: 'Medium',
+    deadline: '',
+    skills: '',
+    description: '',
+    requirements: '',
+    responsibilities: '',
+    roleType: ''
   });
+  const positionDeadlineInputRef = useRef(null);
 
   // ── Fetch clients from backend ──
   const fetchClients = async () => {
@@ -664,6 +712,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         experience: p.experience || '',
         skills: p.skills || [],
         description: p.description || '',
+        requirements: normalizeListFromApi(p.requirements),
+        responsibilities: normalizeListFromApi(p.responsibilities),
         roleType: p.roleType || '',
         candidateCount: p.candidateCount || 0,
         tasks: p.tasks || [],
@@ -819,7 +869,23 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     setMatchedResumes([]);
     setSelectedResumes(new Set());
     setResumeFetchLoading(false);
-    setNewJobForm({ title: '', client: '', clientId: '', location: '', type: 'Full-time', salary: '', openings: 1, experience: '', priority: 'Medium', deadline: '', skills: '', description: '', roleType: '' });
+    setNewJobForm({
+      title: '',
+      client: '',
+      clientId: '',
+      location: '',
+      type: 'Full-time',
+      salary: '',
+      openings: 1,
+      experience: '',
+      priority: 'Medium',
+      deadline: '',
+      skills: '',
+      description: '',
+      requirements: '',
+      responsibilities: '',
+      roleType: ''
+    });
   };
 
   useEffect(() => {
@@ -836,6 +902,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         deadline: editingJob.deadline || '',
         skills: editingJob.skills?.join(', ') || '',
         description: editingJob.description || '',
+        requirements: Array.isArray(editingJob.requirements) ? editingJob.requirements.join('\n') : '',
+        responsibilities: Array.isArray(editingJob.responsibilities) ? editingJob.responsibilities.join('\n') : '',
         roleType: editingJob.roleType || '',
       });
     } else {
@@ -865,6 +933,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         priority: newJobForm.priority,
         openings: parseInt(newJobForm.openings) || 1,
         skills: newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
+        requirements: parseListInput(newJobForm.requirements),
+        responsibilities: parseListInput(newJobForm.responsibilities),
         experience: newJobForm.experience,
         deadline: newJobForm.deadline || undefined,
         roleType: newJobForm.roleType,
@@ -890,6 +960,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         experience: created.experience || newJobForm.experience,
         skills: created.skills || newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
         description: created.description || newJobForm.description,
+        requirements: normalizeListFromApi(created.requirements).length > 0 ? normalizeListFromApi(created.requirements) : parseListInput(newJobForm.requirements),
+        responsibilities: normalizeListFromApi(created.responsibilities).length > 0 ? normalizeListFromApi(created.responsibilities) : parseListInput(newJobForm.responsibilities),
         roleType: created.roleType || newJobForm.roleType,
         postedByName: created.postedByName || currentUserName,
         postedByEmail: created.postedByEmail || '',
@@ -928,6 +1000,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         experience: newJobForm.experience,
         deadline: newJobForm.deadline || undefined,
         skills: newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
+        requirements: parseListInput(newJobForm.requirements),
+        responsibilities: parseListInput(newJobForm.responsibilities),
         roleType: newJobForm.roleType,
       };
       await updateRecruitmentPosition(editingJob.id, updates);
@@ -949,6 +1023,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         deadline: newJobForm.deadline,
         skills: newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
         description: newJobForm.description,
+        requirements: parseListInput(newJobForm.requirements),
+        responsibilities: parseListInput(newJobForm.responsibilities),
         roleType: newJobForm.roleType,
       } : j);
       
@@ -1060,6 +1136,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     }
     return matchesSearch && matchesClient && matchesPosition && matchesDate;
   });
+
+  const activeJobFiltersCount = [
+    searchTerm.trim() !== '',
+    filterClient !== 'all',
+    filterPosition !== 'all',
+    filterDate !== 'all',
+    filterDate === 'custom' && (customStartDate || customEndDate),
+  ].filter(Boolean).length;
 
   const getAvatarGradient = (name) => {
     const gradients = [
@@ -1248,9 +1332,16 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
                     <div>
                       <label className={`block text-xs font-semibold mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Deadline</label>
-                      <input type="date" value={newJobForm.deadline} onChange={e => setNewJobForm(f => ({ ...f, deadline: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                      />
+                      <div onClick={() => openNativeDatePicker(positionDeadlineInputRef)} className="cursor-pointer">
+                        <input
+                          ref={positionDeadlineInputRef}
+                          type="date"
+                          value={newJobForm.deadline}
+                          onChange={e => setNewJobForm(f => ({ ...f, deadline: e.target.value }))}
+                          onClick={() => openNativeDatePicker(positionDeadlineInputRef)}
+                          className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -1276,6 +1367,28 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       <textarea value={newJobForm.description} onChange={e => setNewJobForm(f => ({ ...f, description: e.target.value }))}
                         rows={6}
                         placeholder="Describe the role, responsibilities, and requirements..."
+                        className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Requirements (one per line)</label>
+                      <textarea
+                        value={newJobForm.requirements}
+                        onChange={e => setNewJobForm(f => ({ ...f, requirements: e.target.value }))}
+                        rows={4}
+                        placeholder="e.g. 3+ years experience\nStrong communication skills\nHands-on React knowledge"
+                        className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Responsibilities (one per line)</label>
+                      <textarea
+                        value={newJobForm.responsibilities}
+                        onChange={e => setNewJobForm(f => ({ ...f, responsibilities: e.target.value }))}
+                        rows={4}
+                        placeholder="e.g. Work with client stakeholders\nLead delivery milestones\nSupport team members"
                         className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                       />
                     </div>
@@ -1511,7 +1624,34 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             </div>
 
             {/* Search & Filter */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className={`rounded-2xl border-2 p-4 sm:p-5 ${isDarkMode ? 'bg-slate-800/70 border-slate-700/60' : 'bg-gradient-to-r from-white to-blue-50/40 border-blue-100'}`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Filter Job Openings</p>
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-blue-100 text-blue-700'}`}>
+                    {activeJobFiltersCount} active
+                  </span>
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setFilterClient('all');
+                      setFilterPosition('all');
+                      setFilterDate('all');
+                      setCustomStartDate('');
+                      setCustomEndDate('');
+                    }}
+                    className={`text-xs font-semibold ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'} hover:underline`}
+                  >
+                    Reset Filters
+                  </button>
+                </div>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                   <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
@@ -1519,8 +1659,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     className={`w-full rounded-xl border-2 py-3 pl-12 pr-5 text-base transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                   />
                 </div>
-                <div className="grid grid-cols-2 sm:flex sm:flex-row gap-4">
-                  <div className="relative w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full sm:w-auto sm:min-w-[520px]">
+                  <div className="w-full">
+                    <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Client Filter</label>
+                    <div className="relative w-full">
                     <select value={filterClient} onChange={(e) => setFilterClient(e.target.value)}
                       className={`appearance-none w-full rounded-xl border-2 px-4 py-3 pr-10 text-base font-medium cursor-pointer focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
                       <option value="all">All Clients</option>
@@ -1528,20 +1670,27 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </select>
                     <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   </div>
-                  <div className="relative w-full">
+                  </div>
+                  <div className="w-full">
+                    <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Position Status</label>
+                    <div className="relative w-full">
                     <select value={filterPosition} onChange={(e) => setFilterPosition(e.target.value)}
                       className={`appearance-none w-full rounded-xl border-2 px-4 py-3 pr-10 text-base font-medium cursor-pointer focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-                      <option value="all">All</option><option value="Open">Open</option><option value="Filled">Filled</option>
+                      <option value="all">All Positions</option><option value="Open">Open Positions</option><option value="Filled">Filled Positions</option>
                     </select>
                     <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   </div>
-                  <div className="relative w-full">
+                  </div>
+                  <div className="w-full">
+                    <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Date Range</label>
+                    <div className="relative w-full">
                     <select value={filterDate} onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
                       className={`appearance-none w-full rounded-xl border-2 px-4 py-3 pr-10 text-base font-medium cursor-pointer focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
                       <option value="all">All Time</option><option value="week">This Week</option><option value="month">This Month</option>
                       <option value="year">This Year</option><option value="custom">Custom Date</option>
                     </select>
                     <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  </div>
                   </div>
                 </div>
               </div>
@@ -1583,8 +1732,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           <div className="flex flex-wrap justify-center sm:justify-start items-center gap-4 mt-4">
                             <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-4 h-4" /> {job.location}</span>
                             <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                              <FiDollarSign className="w-4 h-4" style={{ display: 'none' }} />
-                              <span className="text-sm">₹</span> {job.salary}
+                              {formatSalaryDisplay(job.salary)}
                             </span>
                             <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiClock className="w-4 h-4" /> {job.type}</span>
                             <span className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiUsers className="w-4 h-4" /> {job.candidateCount} Candidates</span>

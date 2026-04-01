@@ -214,7 +214,6 @@ const sidebarConfig = [
 // KAM Card Component
 const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const statsToShow = getEffectiveKamStats(kam);
   
   // Hardcoded gradients for each card index
   const CARD_GRADIENTS = [
@@ -314,34 +313,6 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
           <div className="flex items-center gap-2">
             <FiPhone className="w-4 h-4 flex-shrink-0 text-gray-400" />
             <span>{kam.phone}</span>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-blue-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-blue-600">{statsToShow.activePositions}</p>
-            <p className="text-xs text-gray-600">Active Jobs</p>
-          </div>
-          <div className="bg-purple-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-purple-600">{statsToShow.candidatesPipeline}</p>
-            <p className="text-xs text-gray-600">Candidates</p>
-          </div>
-          <div className="bg-amber-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-amber-600">{statsToShow.interviewsScheduled}</p>
-            <p className="text-xs text-gray-600">Interviews</p>
-          </div>
-          <div className="bg-emerald-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-emerald-600">{statsToShow.thisWeekHires}</p>
-            <p className="text-xs text-gray-600">This Week Hires</p>
-          </div>
-          <div className="bg-cyan-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-cyan-600">{statsToShow.profilesShared}</p>
-            <p className="text-xs text-gray-600">Profiles Shared</p>
-          </div>
-          <div className="bg-rose-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-rose-600">{statsToShow.callsDone}</p>
-            <p className="text-xs text-gray-600">Phone Calls</p>
           </div>
         </div>
 
@@ -542,6 +513,38 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
 
 // KAM Performance Tab Content
 const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, months, years, getFilterLabel, showDateFilter, setShowDateFilter }) => {
+  const [activeMetric, setActiveMetric] = useState('callsDone');
+
+  const totals = teamData.reduce(
+    (acc, kam) => ({
+      activePositions: acc.activePositions + (kam.stats?.activePositions || 0),
+      candidatesPipeline: acc.candidatesPipeline + (kam.stats?.candidatesPipeline || 0),
+      interviewsScheduled: acc.interviewsScheduled + (kam.stats?.interviewsScheduled || 0),
+      offersExtended: acc.offersExtended + (kam.stats?.offersExtended || 0),
+      thisWeekHires: acc.thisWeekHires + (kam.stats?.thisWeekHires || 0),
+      profilesShared: acc.profilesShared + (kam.stats?.profilesShared || 0),
+      callsDone: acc.callsDone + (kam.stats?.callsDone || 0),
+    }),
+    { activePositions: 0, candidatesPipeline: 0, interviewsScheduled: 0, offersExtended: 0, thisWeekHires: 0, profilesShared: 0, callsDone: 0 }
+  );
+
+  const graphMetrics = [
+    { key: 'callsDone', label: 'Total Calling', color: '#ef4444', bg: 'bg-rose-100', text: 'text-rose-700' },
+    { key: 'candidatesPipeline', label: 'Candidates', color: '#8b5cf6', bg: 'bg-violet-100', text: 'text-violet-700' },
+    { key: 'interviewsScheduled', label: 'Interviews', color: '#3b82f6', bg: 'bg-blue-100', text: 'text-blue-700' },
+    { key: 'offersExtended', label: 'Offers', color: '#f59e0b', bg: 'bg-amber-100', text: 'text-amber-700' },
+    { key: 'thisWeekHires', label: 'Hires', color: '#10b981', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  ];
+
+  const selectedMetric = graphMetrics.find((metric) => metric.key === activeMetric) || graphMetrics[0];
+  const sortedBySelectedMetric = [...teamData].sort(
+    (firstKam, secondKam) => (secondKam.stats?.[selectedMetric.key] || 0) - (firstKam.stats?.[selectedMetric.key] || 0)
+  );
+  const maxSelectedMetricValue = Math.max(
+    ...sortedBySelectedMetric.map((kam) => kam.stats?.[selectedMetric.key] || 0),
+    1
+  );
+
   if (loading) {
     return (
       <div className="space-y-8">
@@ -707,6 +710,38 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
         </div>
       </div>
 
+      {/* Top Totals */}
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Jobs</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totals.activePositions}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Candidates</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totals.candidatesPipeline}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Interviews</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totals.interviewsScheduled}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Offers</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totals.offersExtended}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Hires</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totals.thisWeekHires}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Profiles Shared</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totals.profilesShared}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Calling</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totals.callsDone}</p>
+        </div>
+      </div>
+
       {/* Performance Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {teamData.map((kam, idx) => (
@@ -792,7 +827,7 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-3 mt-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mt-6">
               <div className="bg-gray-50 rounded-xl p-3 text-center">
                 <p className="text-lg font-bold text-gray-900">{kam.stats.offersExtended}</p>
                 <p className="text-xs text-gray-500">Offers Sent</p>
@@ -801,9 +836,96 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
                 <p className="text-lg font-bold text-gray-900">{kam.stats.thisWeekHires}</p>
                 <p className="text-xs text-gray-500">Hired</p>
               </div>
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-gray-900">{kam.stats.callsDone || 0}</p>
+                <p className="text-xs text-gray-500">Total Calling</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-gray-900">{kam.stats.interviewsScheduled || 0}</p>
+                <p className="text-xs text-gray-500">Interviews</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-gray-900">{kam.stats.candidatesPipeline || 0}</p>
+                <p className="text-xs text-gray-500">Candidates</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-gray-900">{kam.stats.profilesShared || 0}</p>
+                <p className="text-xs text-gray-500">Profiles Shared</p>
+              </div>
             </div>
           </motion.div>
         ))}
+      </div>
+
+      {/* Graphical Comparison */}
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50 p-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900">KAM Comparison Graph</h3>
+            <p className="text-sm text-slate-600">Visual comparison by selected metric for {getFilterLabel()}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {graphMetrics.map((metric) => (
+              <button
+                key={metric.key}
+                onClick={() => setActiveMetric(metric.key)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                  selectedMetric.key === metric.key
+                    ? `${metric.bg} ${metric.text} ring-2 ring-white shadow`
+                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {metric.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-xl bg-white/90 p-4 border border-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected Metric</p>
+            <p className="mt-1 text-lg font-bold text-slate-900">{selectedMetric.label}</p>
+          </div>
+          <div className="rounded-xl bg-white/90 p-4 border border-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Team Total</p>
+            <p className="mt-1 text-lg font-bold text-slate-900">{totals[selectedMetric.key] || 0}</p>
+          </div>
+          <div className="rounded-xl bg-white/90 p-4 border border-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Top Performer</p>
+            <p className="mt-1 text-lg font-bold text-slate-900">{sortedBySelectedMetric[0]?.name || 'N/A'}</p>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl bg-white border border-slate-200 p-5">
+          <div className="mb-4 grid grid-cols-[120px_1fr_56px] gap-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <p>KAM</p>
+            <p>Performance Bar</p>
+            <p className="text-right">Value</p>
+          </div>
+
+          <div className="space-y-3">
+            {sortedBySelectedMetric.map((kam) => {
+              const value = kam.stats?.[selectedMetric.key] || 0;
+              const widthPercent = Math.max((value / maxSelectedMetricValue) * 100, value > 0 ? 8 : 0);
+
+              return (
+                <div key={`${selectedMetric.key}-${kam.id}`} className="grid grid-cols-[120px_1fr_56px] items-center gap-3">
+                  <p className="truncate text-xs font-semibold text-slate-700" title={kam.name}>{kam.name}</p>
+                  <div className="relative h-8 overflow-hidden rounded-lg bg-slate-100">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-lg transition-all duration-500"
+                      style={{ width: `${widthPercent}%`, backgroundColor: selectedMetric.color }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-slate-700">
+                      {maxSelectedMetricValue > 0 ? `${Math.round((value / maxSelectedMetricValue) * 100)}% of top` : '0%'}
+                    </div>
+                  </div>
+                  <p className="text-right text-sm font-bold text-slate-900">{value}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Leaderboard */}
