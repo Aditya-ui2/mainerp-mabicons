@@ -104,7 +104,7 @@ const StatusBadge = ({ status }) => {
 /* ══════════════════════════════════════════════════════ */
 const CACHE_KEY_INTERVIEWS = 'cache_kamInterviews';
 
-const InterviewScheduleTab = ({ isDarkMode }) => {
+const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled }) => {
   const [interviews, setInterviews] = useState(() => {
     try { const c = localStorage.getItem(CACHE_KEY_INTERVIEWS); return c ? JSON.parse(c) : []; } catch { return []; }
   });
@@ -151,6 +151,14 @@ const InterviewScheduleTab = ({ isDarkMode }) => {
     interviewerRole: '',
     meetLink: '',
   });
+
+  useEffect(() => {
+    if (quickAction === 'schedule-interview') {
+      resetForm();
+      setShowFullPageForm(true);
+      onQuickActionHandled?.();
+    }
+  }, [quickAction, onQuickActionHandled]);
 
   // ── Fetch interviews from backend ──
   const fetchInterviews = async () => {

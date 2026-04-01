@@ -2386,17 +2386,24 @@ export const searchS3Resumes = async (query) => {
 // Using /recruitment/kams and /department/members endpoints
 
 // Get all KAM members (recruitment department)
-export const getAllKAMMembers = async (department = 'HR Recruitment') => {
+export const getAllKAMMembers = async (filtersOrDepartment = 'HR Recruitment') => {
   try {
+    const filters = typeof filtersOrDepartment === 'string' ? {} : (filtersOrDepartment || {});
+    const department = typeof filtersOrDepartment === 'string'
+      ? filtersOrDepartment
+      : (filtersOrDepartment?.department || 'HR Recruitment');
+
     // Try recruitment/kams endpoint first (has recruitment data)
-    const response = await axiosInstance.get('/recruitment/kams');
+    const response = await axiosInstance.get('/recruitment/kams', {
+      params: filters
+    });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch KAM members:', error);
     // Fallback to department/members
     try {
       const fallbackResponse = await axiosInstance.get('/department/members', {
-        params: { department, role: 'KAM' }
+        params: { department, role: 'KAM', ...(typeof filtersOrDepartment === 'object' ? filtersOrDepartment : {}) }
       });
       return fallbackResponse.data;
     } catch (fallbackError) {

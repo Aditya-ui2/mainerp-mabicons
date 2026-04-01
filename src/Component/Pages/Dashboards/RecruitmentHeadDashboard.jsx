@@ -112,6 +112,33 @@ const getEffectiveKamStats = (kam) =>
         completedTasks: 0,
       };
 
+const getKamCallsBreakdown = (teamData = []) =>
+  teamData
+    .map((kam) => {
+      const effectiveStats = getEffectiveKamStats(kam);
+
+      return {
+        ...kam,
+        totalCalls: effectiveStats.callsDone || 0,
+        activePositions: effectiveStats.activePositions || 0,
+        candidatesPipeline: effectiveStats.candidatesPipeline || 0,
+      };
+    })
+    .sort((firstKam, secondKam) => secondKam.totalCalls - firstKam.totalCalls);
+
+const getKamMetricBreakdown = (teamData = [], metricKey) =>
+  teamData
+    .map((kam) => {
+      const effectiveStats = getEffectiveKamStats(kam);
+
+      return {
+        ...kam,
+        metricValue: effectiveStats[metricKey] || 0,
+        effectiveStats,
+      };
+    })
+    .sort((firstKam, secondKam) => secondKam.metricValue - firstKam.metricValue);
+
 // Transform API response to component format
 const transformKAMData = (apiData) => {
   if (!Array.isArray(apiData)) return [];
@@ -327,7 +354,7 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
 };
 
 // Team Overview Tab Content
-const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, globalStats }) => {
+const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, globalStats, onViewCallsBreakdown }) => {
   const teamAggregatedStats = teamData.reduce(
     (acc, kam) => ({
       activePositions: acc.activePositions + (kam.stats?.activePositions || 0),
@@ -398,10 +425,14 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
               <p className="text-3xl font-bold">{displayStats.profilesShared}</p>
               <p className="text-sm text-blue-100">Profiles Shared</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+            <button
+              type="button"
+              onClick={onViewCallsBreakdown}
+              className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center hover:bg-white/25 transition-colors"
+            >
               <p className="text-3xl font-bold">{displayStats.callsDone}</p>
               <p className="text-sm text-blue-100">Phone Calls</p>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -757,6 +788,9 @@ const RecruitmentHeadDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [selectedKAM, setSelectedKAM] = useState(null);
   const [showKAMModal, setShowKAMModal] = useState(false);
+  const [showCallsBreakdownModal, setShowCallsBreakdownModal] = useState(false);
+  const [showStatsInsightModal, setShowStatsInsightModal] = useState(false);
+  const [statsInsightType, setStatsInsightType] = useState(null);
   const [showKAMFormModal, setShowKAMFormModal] = useState(false);
   const [kamFormMode, setKamFormMode] = useState('add'); // 'add' or 'edit'
   const [kamFormData, setKamFormData] = useState({ name: '', email: '', phone: '', role: 'KAM - Recruitment' });
@@ -775,6 +809,13 @@ const RecruitmentHeadDashboard = () => {
 
   const showToast = (message, type = 'success') => setToast({ message, type });
   const hideToast = () => setToast(null);
+  const kamCallsBreakdown = getKamCallsBreakdown(kamTeam);
+  const teamCallsTotal = kamCallsBreakdown.reduce((sum, kam) => sum + kam.totalCalls, 0);
+  const activePositionsBreakdown = getKamMetricBreakdown(kamTeam, 'activePositions');
+  const candidatesBreakdown = getKamMetricBreakdown(kamTeam, 'candidatesPipeline');
+  const profilesSharedBreakdown = getKamMetricBreakdown(kamTeam, 'profilesShared');
+  const offersBreakdown = getKamMetricBreakdown(kamTeam, 'offersExtended');
+  const hiresBreakdown = getKamMetricBreakdown(kamTeam, 'thisWeekHires');
   
   // Date Filter State
   const [dateFilter, setDateFilter] = useState({
@@ -802,12 +843,29 @@ const RecruitmentHeadDashboard = () => {
         return 'All Time';
     }
   };
+
+  const buildDateFilterParams = (filter = dateFilter) => {
+    if (filter.filterType === 'year') {
+      return { year: filter.year };
+    }
+
+    if (filter.filterType === 'month') {
+      return { year: filter.year, month: filter.month + 1 };
+    }
+
+    if (filter.filterType === 'date') {
+      return { date: filter.date };
+    }
+
+    return {};
+  };
   
   // Fetch KAM Team data from API
-  const fetchKAMTeam = async () => {
+  const fetchKAMTeam = async (filter = dateFilter) => {
     try {
       setTeamLoading(true);
-      const response = await getAllKAMMembers();
+      const filterParams = buildDateFilterParams(filter);
+      const response = await getAllKAMMembers(filterParams);
       if (response.success && response.data?.length > 0) {
         const transformedData = transformKAMData(response.data);
         setKamTeam(transformedData);
@@ -858,14 +916,7 @@ const RecruitmentHeadDashboard = () => {
       setLoading(true);
       
       // Build filter params for API
-      let filterParams = {};
-      if (filter.filterType === 'year') {
-        filterParams = { year: filter.year };
-      } else if (filter.filterType === 'month') {
-        filterParams = { year: filter.year, month: filter.month + 1 }; // month is 0-indexed
-      } else if (filter.filterType === 'date') {
-        filterParams = { date: filter.date };
-      }
+      const filterParams = buildDateFilterParams(filter);
       
       console.log('Fetching stats with filter:', filterParams);
       const statsRes = await getRecruitmentStats(filterParams);
@@ -977,6 +1028,79 @@ const RecruitmentHeadDashboard = () => {
     });
     setShowKAMModal(true);
   };
+
+  const handleViewCallsBreakdown = () => {
+    setShowCallsBreakdownModal(true);
+  };
+
+  const handleOpenStatsInsight = (type) => {
+    setStatsInsightType(type);
+    setShowStatsInsightModal(true);
+  };
+
+  const statsInsightConfig = {
+    activePositions: {
+      title: 'Active Positions Breakdown',
+      subtitle: 'KAM-wise open positions and current recruitment load.',
+      summaries: [
+        { label: 'Active Positions', value: stats.activePositions || 0, tone: 'text-pink-600' },
+        { label: 'Team Tracked', value: activePositionsBreakdown.reduce((sum, kam) => sum + kam.metricValue, 0), tone: 'text-indigo-600' },
+        { label: 'Active KAMs', value: activePositionsBreakdown.filter((kam) => kam.metricValue > 0).length, tone: 'text-emerald-600' },
+      ],
+      rows: activePositionsBreakdown,
+      valueLabel: 'Open Positions',
+      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates · ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
+    },
+    totalCandidates: {
+      title: 'Candidate Pipeline Breakdown',
+      subtitle: 'KAM-wise candidate ownership across the pipeline.',
+      summaries: [
+        { label: 'Total Candidates', value: stats.totalCandidates || 0, tone: 'text-slate-900' },
+        { label: 'Selected', value: stats.selected || 0, tone: 'text-emerald-600' },
+        { label: 'Interviewed', value: stats.scheduledInterviews || 0, tone: 'text-blue-600' },
+      ],
+      rows: candidatesBreakdown,
+      valueLabel: 'Candidates',
+      renderMeta: (kam) => `${kam.effectiveStats.profilesShared || 0} shared · ${kam.effectiveStats.callsDone || 0} calls`,
+    },
+    sharedProfiles: {
+      title: 'Profiles Shared Breakdown',
+      subtitle: 'Client shared profiles across each KAM.',
+      summaries: [
+        { label: 'Profiles Shared', value: stats.sharedProfiles || 0, tone: 'text-cyan-600' },
+        { label: 'Team Shared', value: profilesSharedBreakdown.reduce((sum, kam) => sum + kam.metricValue, 0), tone: 'text-indigo-600' },
+        { label: 'Contributing KAMs', value: profilesSharedBreakdown.filter((kam) => kam.metricValue > 0).length, tone: 'text-emerald-600' },
+      ],
+      rows: profilesSharedBreakdown,
+      valueLabel: 'Profiles Shared',
+      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates · ${kam.effectiveStats.activePositions || 0} jobs`,
+    },
+    candidatesSummary: {
+      title: 'Candidates Summary',
+      subtitle: 'Overall hiring funnel snapshot with KAM-wise contribution.',
+      summaries: [
+        { label: 'Total Candidates', value: stats.totalCandidates || 0, tone: 'text-slate-900' },
+        { label: 'Candidates Selected', value: stats.selected || 0, tone: 'text-indigo-600' },
+        { label: 'Total Hires', value: stats.totalHires || 0, tone: 'text-emerald-600' },
+      ],
+      rows: hiresBreakdown,
+      valueLabel: 'Hires',
+      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates · ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
+    },
+    offersManagement: {
+      title: 'Offers Management Summary',
+      subtitle: 'Offer pipeline status with KAM-level pending offer activity.',
+      summaries: [
+        { label: 'Pending', value: stats.pendingOffers || 0, tone: 'text-amber-600' },
+        { label: 'Accepted', value: stats.acceptedOffers || 0, tone: 'text-emerald-600' },
+        { label: 'Rejected', value: stats.rejectedOffers || 0, tone: 'text-red-500' },
+      ],
+      rows: offersBreakdown,
+      valueLabel: 'Pending Offers',
+      renderMeta: (kam) => `${kam.effectiveStats.thisWeekHires || 0} hires · ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
+    },
+  };
+  const activeStatsInsight = statsInsightType ? statsInsightConfig[statsInsightType] : null;
 
   const handleAssignTask = (kam) => {
     setActiveTab('Task Assignment');
@@ -1098,6 +1222,7 @@ const RecruitmentHeadDashboard = () => {
                   onRefresh={fetchKAMTeam}
                   onAddKAM={handleAddKAM}
                   globalStats={stats}
+                  onViewCallsBreakdown={handleViewCallsBreakdown}
                 />
               );
             case 'KAM Performance':
@@ -1324,7 +1449,7 @@ const RecruitmentHeadDashboard = () => {
                   <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                     {/* Active Positions */}
                     <div 
-                      onClick={() => setActiveTab('Job Openings')}
+                      onClick={() => handleOpenStatsInsight('activePositions')}
                       className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-pink-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
                     >
                       <div className="flex items-start justify-between">
@@ -1344,7 +1469,7 @@ const RecruitmentHeadDashboard = () => {
 
                     {/* Total Candidates */}
                     <div 
-                      onClick={() => setActiveTab('Candidate Pipeline')}
+                      onClick={() => handleOpenStatsInsight('totalCandidates')}
                       className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-gray-400 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
                     >
                       <div className="flex items-start justify-between">
@@ -1364,7 +1489,7 @@ const RecruitmentHeadDashboard = () => {
 
                     {/* Profiles Shared */}
                     <div 
-                      onClick={() => setActiveTab('Candidate Pipeline')}
+                      onClick={() => handleOpenStatsInsight('sharedProfiles')}
                       className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-cyan-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
                     >
                       <div className="flex items-start justify-between">
@@ -1384,7 +1509,7 @@ const RecruitmentHeadDashboard = () => {
 
                     {/* Phone Screening Calls */}
                     <div 
-                      onClick={() => setActiveTab('Interview Schedule')}
+                      onClick={handleViewCallsBreakdown}
                       className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-blue-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
                     >
                       <div className="flex items-start justify-between">
@@ -1404,7 +1529,7 @@ const RecruitmentHeadDashboard = () => {
 
                     {/* Candidates Summary */}
                     <div 
-                      onClick={() => setActiveTab('Candidate Pipeline')}
+                      onClick={() => handleOpenStatsInsight('candidatesSummary')}
                       className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-indigo-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
                     >
                       <div className="flex items-start justify-between">
@@ -1427,7 +1552,7 @@ const RecruitmentHeadDashboard = () => {
 
                     {/* Offers Management */}
                     <div 
-                      onClick={() => setActiveTab('Offer Management')}
+                      onClick={() => handleOpenStatsInsight('offersManagement')}
                       className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-amber-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
                     >
                       <div className="flex items-start justify-between mb-2">
@@ -1806,6 +1931,213 @@ const RecruitmentHeadDashboard = () => {
                     <FiTrash2 className="w-4 h-4" /> Remove
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCallsBreakdownModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowCallsBreakdownModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative overflow-hidden px-6 py-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+                <div className="absolute inset-0 opacity-25">
+                  <div className="absolute -top-10 -right-8 w-40 h-40 rounded-full bg-white/25 blur-3xl" />
+                  <div className="absolute -bottom-12 left-8 w-32 h-32 rounded-full bg-cyan-300/30 blur-2xl" />
+                </div>
+                <div className="relative flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">Call Summary</p>
+                    <h2 className="text-2xl font-bold text-white mt-2">Phone Calls By KAM</h2>
+                    <p className="text-sm text-blue-100 mt-1">Recruitment team ke total aur member-wise phone screening calls.</p>
+                  </div>
+                  <button
+                    onClick={() => setShowCallsBreakdownModal(false)}
+                    className="p-2 bg-white/15 hover:bg-white/25 rounded-xl text-white transition-colors"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+                  <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-blue-100">Dashboard Total</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats.phoneScreeningCalls || 0}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-blue-100">KAM Tracked Calls</p>
+                    <p className="text-3xl font-bold text-white mt-1">{teamCallsTotal}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-blue-100">Active KAMs</p>
+                    <p className="text-3xl font-bold text-white mt-1">{kamCallsBreakdown.length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 max-h-[60vh] overflow-y-auto">
+                {kamCallsBreakdown.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+                    <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+                      <FiPhone className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900">No KAM call data available</h3>
+                    <p className="text-sm text-slate-500 mt-2">Jab call stats aayenge, yahan har KAM ka breakdown dikh jayega.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {kamCallsBreakdown.map((kam, index) => (
+                      <button
+                        key={kam.id}
+                        type="button"
+                        onClick={() => {
+                          handleViewKAM(kam);
+                          setShowCallsBreakdownModal(false);
+                        }}
+                        className="w-full rounded-2xl bg-white border border-slate-200 px-4 py-4 text-left hover:border-blue-300 hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div
+                              className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-md flex-shrink-0"
+                              style={{ background: kam.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}
+                            >
+                              {kam.avatar}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-bold text-slate-900 truncate">{kam.name}</p>
+                                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">#{index + 1}</span>
+                              </div>
+                              <p className="text-sm text-slate-500 truncate">{kam.role}</p>
+                              <p className="text-xs text-slate-400 mt-1">{kam.activePositions} jobs · {kam.candidatesPipeline} candidates</p>
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-xs uppercase tracking-wide text-slate-400">Calls</p>
+                            <p className="text-3xl font-bold text-blue-600 mt-1">{kam.totalCalls}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showStatsInsightModal && activeStatsInsight && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowStatsInsightModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              className="bg-slate-100 rounded-[28px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-white/60"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative overflow-hidden px-7 py-6 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900">
+                <div className="absolute inset-0 opacity-30">
+                  <div className="absolute -top-12 -right-10 w-48 h-48 rounded-full bg-cyan-400/20 blur-3xl" />
+                  <div className="absolute -bottom-12 left-8 w-40 h-40 rounded-full bg-indigo-400/20 blur-3xl" />
+                </div>
+                <div className="relative flex items-start justify-between gap-4">
+                  <div className="max-w-2xl">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-200/90">Dashboard Insight</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-white mt-2 leading-tight">{activeStatsInsight.title}</h2>
+                    <p className="text-sm md:text-base text-slate-200 mt-2 leading-6">{activeStatsInsight.subtitle}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowStatsInsightModal(false)}
+                    className="p-2.5 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-colors border border-white/10"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 md:p-7 bg-gradient-to-b from-slate-100 to-white max-h-[66vh] overflow-y-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                  {activeStatsInsight.summaries.map((summary, summaryIndex) => (
+                    <div
+                      key={summary.label}
+                      className="rounded-2xl bg-white px-5 py-4 shadow-sm border border-slate-200"
+                    >
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{summary.label}</p>
+                      <p className={`text-3xl font-bold mt-2 ${summary.tone || 'text-slate-900'}`}>{summary.value}</p>
+                      <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${summaryIndex === 0 ? 'bg-indigo-600' : summaryIndex === 1 ? 'bg-cyan-500' : 'bg-emerald-500'}`}
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {activeStatsInsight.rows.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+                    <h3 className="text-lg font-semibold text-slate-900">No breakdown available</h3>
+                    <p className="text-sm text-slate-500 mt-2">Is metric ke liye abhi koi team-level data available nahi hai.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activeStatsInsight.rows.map((kam, index) => (
+                      <button
+                        key={kam.id}
+                        type="button"
+                        onClick={() => {
+                          handleViewKAM(kam);
+                          setShowStatsInsightModal(false);
+                        }}
+                        className="w-full rounded-2xl bg-white border border-slate-200 px-4 py-4 text-left hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 transition-all"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div
+                              className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold shadow-md flex-shrink-0"
+                              style={{ background: kam.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}
+                            >
+                              {kam.avatar}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-bold text-slate-900 truncate">{kam.name}</p>
+                                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">Rank #{index + 1}</span>
+                              </div>
+                              <p className="text-sm text-slate-500 truncate">{kam.role}</p>
+                              <p className="text-xs text-slate-400 mt-1">{activeStatsInsight.renderMeta(kam)}</p>
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0 min-w-[108px]">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{activeStatsInsight.valueLabel}</p>
+                            <p className="text-3xl font-bold text-indigo-600 mt-1">{kam.metricValue}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>

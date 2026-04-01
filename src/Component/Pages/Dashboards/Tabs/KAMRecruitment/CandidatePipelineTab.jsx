@@ -104,7 +104,7 @@ const RatingStars = ({ rating, maxRating = 5 }) => (
 /* ══════════════════════════════════════════════════════ */
 const CACHE_KEY_CANDIDATES = 'cache_kamCandidates';
 
-const CandidatePipelineTab = ({ isDarkMode, setActiveTab }) => {
+const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickActionHandled }) => {
   const getResumeDisplayName = (resume) => {
     if (resume?.candidateName) return resume.candidateName;
     if (resume?.fileName) return resume.fileName.replace(/\.[^.]+$/, '');
@@ -214,6 +214,13 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab }) => {
       Array.from({ length: size }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
     return `https://meet.google.com/${makeChunk(3)}-${makeChunk(4)}-${makeChunk(3)}`;
   };
+
+  useEffect(() => {
+    if (quickAction === 'add-candidate') {
+      setShowAddModal(true);
+      onQuickActionHandled?.();
+    }
+  }, [quickAction, onQuickActionHandled]);
 
   // Read job openings from localStorage
   useEffect(() => {

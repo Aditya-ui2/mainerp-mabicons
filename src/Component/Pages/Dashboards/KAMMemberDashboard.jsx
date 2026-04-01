@@ -341,6 +341,7 @@ const KAMMemberDashboard = () => {
     thisWeekHires: 0,
   });
   const [performancePeriod, setPerformancePeriod] = useState('This Month');
+  const [quickActionIntent, setQuickActionIntent] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -584,6 +585,11 @@ const KAMMemberDashboard = () => {
     }
   };
 
+  const handleQuickAction = (tab, intent = null) => {
+    setQuickActionIntent(intent);
+    setActiveTab(tab);
+  };
+
   const breadcrumbs = [
     { label: 'Home', path: '/' },
     { label: 'KAM Recruitment', path: '/kam-member-dashboard' },
@@ -611,9 +617,20 @@ const KAMMemberDashboard = () => {
             case 'Job Openings':
               return <JobOpeningsTab />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab setActiveTab={setActiveTab} />;
+              return (
+                <CandidatePipelineTab
+                  setActiveTab={setActiveTab}
+                  quickAction={quickActionIntent}
+                  onQuickActionHandled={() => setQuickActionIntent(null)}
+                />
+              );
             case 'Interview Schedule':
-              return <InterviewScheduleTab />;
+              return (
+                <InterviewScheduleTab
+                  quickAction={quickActionIntent}
+                  onQuickActionHandled={() => setQuickActionIntent(null)}
+                />
+              );
             case 'Screening':
               return <ScreeningTab />;
             case 'Offer Management':
@@ -815,7 +832,7 @@ const KAMMemberDashboard = () => {
                     <h3 className="font-bold text-lg text-gray-900 mb-5">Quick Actions</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <button
-                        onClick={() => setActiveTab('Job Openings')}
+                        onClick={() => handleQuickAction('Job Openings')}
                         className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
                       >
                         <div className="p-3 rounded-xl bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
@@ -824,7 +841,7 @@ const KAMMemberDashboard = () => {
                         <span className="text-sm font-semibold text-gray-700">View Jobs</span>
                       </button>
                       <button
-                        onClick={() => setActiveTab('Candidate Pipeline')}
+                        onClick={() => handleQuickAction('Candidate Pipeline', 'add-candidate')}
                         className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all group"
                       >
                         <div className="p-3 rounded-xl bg-emerald-100 text-emerald-600 group-hover:scale-110 transition-transform">
@@ -833,7 +850,7 @@ const KAMMemberDashboard = () => {
                         <span className="text-sm font-semibold text-gray-700">Add Candidate</span>
                       </button>
                       <button
-                        onClick={() => setActiveTab('Interview Schedule')}
+                        onClick={() => handleQuickAction('Interview Schedule', 'schedule-interview')}
                         className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all group"
                       >
                         <div className="p-3 rounded-xl bg-violet-100 text-violet-600 group-hover:scale-110 transition-transform">
@@ -842,7 +859,7 @@ const KAMMemberDashboard = () => {
                         <span className="text-sm font-semibold text-gray-700">Schedule Interview</span>
                       </button>
                       <button
-                        onClick={() => setActiveTab('Daily Report')}
+                        onClick={() => handleQuickAction('Daily Report')}
                         className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all group"
                       >
                         <div className="p-3 rounded-xl bg-amber-100 text-amber-600 group-hover:scale-110 transition-transform">
