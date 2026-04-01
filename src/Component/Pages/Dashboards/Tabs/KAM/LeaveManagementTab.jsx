@@ -1,11 +1,295 @@
 import { useState, useEffect } from 'react';
-import { FiCalendar, FiClock, FiCheck, FiX, FiPlus, FiSearch, FiDownload, FiChevronDown, FiSun, FiMoon, FiCoffee, FiAward, FiTrendingUp } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiCheck, FiX, FiPlus, FiSearch, FiDownload, FiChevronDown, FiSun, FiMoon, FiCoffee, FiAward, FiTrendingUp, FiArrowLeft, FiSend, FiFileText } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
+  const [leaveMode, setLeaveMode] = useState('Full Day');
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 50, transition: { duration: 0.2 } }}
+      className={`w-full ${isDarkMode ? 'text-white' : 'text-slate-800'}`}
+    >
+      <div className="flex items-center gap-4 mb-8 text-left">
+        <button 
+          onClick={onBack}
+          className={`p-2.5 rounded-xl transition-all shadow-sm ${
+            isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
+          }`}
+        >
+          <FiArrowLeft className="w-5 h-5" />
+        </button>
+        <h2 
+          onClick={onBack}
+          className="text-2xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity select-none"
+        >
+          Apply New Leave
+        </h2>
+      </div>
+
+      <div className={`max-w-4xl mx-auto p-8 rounded-3xl border-2 shadow-xl ${
+          isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
+        }`}
+      >
+        <form className="space-y-8" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3 text-center">
+              <label className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                Leave Type
+              </label>
+              <div className="relative">
+                <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                <select className={`w-full appearance-none rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
+                  isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`}>
+                  <option>Sick Leave</option>
+                  <option>Casual Leave</option>
+                  <option>Earned Leave</option>
+                  <option>Compensatory Off</option>
+                  <option>Maternity/Paternity Leave</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-center">
+              <label className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                Leave Mode
+              </label>
+              <div className={`flex gap-4 p-1 rounded-2xl border-2 transition-all ${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                <button 
+                  type="button" 
+                  onClick={() => setLeaveMode('Full Day')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${
+                    leaveMode === 'Full Day' 
+                      ? 'bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white shadow-lg' 
+                      : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`
+                  }`}
+                >
+                  Full Day
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setLeaveMode('Half Day')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${
+                    leaveMode === 'Half Day' 
+                      ? 'bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white shadow-lg' 
+                      : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`
+                  }`}
+                >
+                  Half Day
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-center">
+              <label className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                From Date
+              </label>
+              <input 
+                type="date" 
+                onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
+                    isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`} 
+              />
+            </div>
+
+            <div className="space-y-3 text-center">
+              <label className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                To Date
+              </label>
+              <input 
+                type="date" 
+                onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
+                    isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`} 
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3 text-center">
+            <label className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+              Reason for Leave
+            </label>
+            <textarea 
+              rows={4} 
+              className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none resize-none ${
+                isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+              }`} 
+              placeholder="Please provide a clear reason for your leave request..." 
+            />
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button" 
+              onClick={onBack} 
+              className={`flex-1 px-8 py-4 rounded-2xl font-bold border-2 transition-all ${
+                isDarkMode ? 'border-slate-700 hover:bg-slate-700 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+              }`}
+            >
+              Discard Request
+            </motion.button>
+            <motion.button 
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit" 
+              className="flex-[1.5] px-8 py-4 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
+            >
+              <FiSend className="w-5 h-5" />
+              Submit Application
+            </motion.button>
+          </div>
+        </form>
+      </div>
+    </motion.div>
+  );
+};
+
+const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
+  if (!employee) return null;
+
+  const leaveBalanceMock = [
+    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-600 to-pink-700' },
+    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600' },
+    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-600 to-teal-800' },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 50, transition: { duration: 0.2 } }}
+      className={`w-full ${isDarkMode ? 'text-white' : 'text-slate-800'}`}
+    >
+      <div className="flex items-center gap-4 mb-8 text-left">
+        <button 
+          onClick={onBack}
+          className={`p-2.5 rounded-xl transition-all shadow-sm ${
+            isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
+          }`}
+        >
+          <FiArrowLeft className="w-5 h-5" />
+        </button>
+        <h2 
+          onClick={onBack}
+          className="text-2xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity select-none"
+        >
+          Employee Details
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        {/* Left Column: Profile Card */}
+        <div className={`lg:col-span-1 p-8 rounded-3xl border-2 shadow-xl flex flex-col items-center text-center space-y-6 ${
+          isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
+        }`}>
+          <div className="relative">
+            <div className={`w-32 h-32 rounded-3xl bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] flex items-center justify-center text-white text-5xl font-black shadow-2xl ring-4 ring-white`}>
+              {employee.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-emerald-500 text-white shadow-lg ring-4 ring-white">
+              <FiCheck className="w-6 h-6" />
+            </div>
+          </div>
+          
+          <div className="space-y-1">
+            <h3 className="text-2xl font-black tracking-tight">{employee.name}</h3>
+            <p className="text-blue-500 font-bold tracking-widest text-xs uppercase">{employee.empId}</p>
+          </div>
+
+          <div className="w-full pt-6 border-t border-slate-100 space-y-4">
+            <div className="flex justify-between items-center text-sm font-bold">
+              <span className="text-slate-400">Department</span>
+              <span>HR Operations</span>
+            </div>
+            <div className="flex justify-between items-center text-sm font-bold">
+              <span className="text-slate-400">Designation</span>
+              <span>Team Member</span>
+            </div>
+            <div className="flex justify-between items-center text-sm font-bold">
+              <span className="text-slate-400">Joining Date</span>
+              <span>Jan 12, 2024</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Details & Leave Info */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Current Request Card */}
+          <div className={`p-8 rounded-3xl border-2 shadow-xl space-y-6 ${
+            isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
+          }`}>
+            <h4 className="text-lg font-black flex items-center gap-2">
+              <FiFileText className="text-blue-500" />
+              Current Leave Request
+            </h4>
+            
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Leave Type</p>
+                <p className="text-base font-bold text-slate-700">{employee.type}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duration</p>
+                <p className="text-base font-bold text-slate-700">{employee.from} to {employee.to}</p>
+              </div>
+              <div className="space-y-1 col-span-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reason</p>
+                <p className="text-base font-medium text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-100 italic">"{employee.reason}"</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-6">
+            {leaveBalanceMock.map((leave, idx) => (
+              <div key={idx} className={`p-5 rounded-3xl border-2 shadow-lg transition-all hover:-translate-y-1 ${
+                isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
+              }`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded-xl bg-gradient-to-br ${leave.gradient} text-white`}>
+                    <leave.icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{leave.type}</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-black">{leave.remaining}</span>
+                  <span className="text-[10px] font-bold text-slate-400">Days Bal.</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-4 pt-4">
+             <button 
+              onClick={onBack}
+              className={`flex-1 px-8 py-4 rounded-2xl font-bold border-2 transition-all ${
+                isDarkMode ? 'border-slate-700 hover:bg-slate-700 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+              }`}
+            >
+              Close Details
+            </button>
+            <button className="flex-[1.5] px-8 py-4 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+              Update Information
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [view, setView] = useState('list'); // 'list', 'apply', 'details'
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -25,10 +309,10 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
   }, [selectedClient]);
 
   const leaveBalance = [
-    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-500 to-pink-600', lightBg: 'bg-gradient-to-br from-rose-50 to-pink-50' },
-    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-gradient-to-br from-amber-50 to-orange-50' },
-    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-500 to-teal-600', lightBg: 'bg-gradient-to-br from-emerald-50 to-teal-50' },
-    { type: 'Comp Off', total: 4, used: 1, remaining: 3, icon: FiMoon, gradient: 'from-blue-500 to-indigo-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50' },
+    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-600 to-pink-700', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-rose-600' },
+    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-amber-600' },
+    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-600 to-teal-800', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-emerald-600' },
+    { type: 'Comp Off', total: 4, used: 1, remaining: 3, icon: FiMoon, gradient: 'from-[#3FA9F5] to-[#0D47A1]', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-blue-600' },
   ];
 
   const stats = {
@@ -37,17 +321,24 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
     rejected: leaveRequests.filter(l => l.status === 'rejected').length,
   };
 
-  const getStatusConfig = (status) => {
+  const getStatusConfig = (status = '') => {
+    const s = status.toLowerCase();
     const config = {
-      pending: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400', dot: 'bg-amber-500' },
-      approved: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
-      rejected: { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-700 dark:text-rose-400', dot: 'bg-rose-500' },
+      pending: { bg: 'bg-amber-100/80 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400', dot: 'bg-amber-500', label: 'Pending' },
+      approved: { bg: 'bg-green-100/80 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', dot: 'bg-green-600', label: 'Approved' },
+      rejected: { bg: 'bg-red-100/80 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400', dot: 'bg-red-600', label: 'Rejected' },
     };
-    return config[status] || config.pending;
+    return config[s] || config.pending;
   };
 
-  const getAvatarColor = (name) => {
-    const colors = ['from-violet-500 to-purple-600', 'from-blue-500 to-cyan-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
+   const getAvatarColor = (name = 'E') => {
+    const colors = [
+      { bg: '#2563eb', grad: 'from-blue-600 to-indigo-900' },
+      { bg: '#059669', grad: 'from-emerald-600 to-teal-900' },
+      { bg: '#7c3aed', grad: 'from-violet-600 to-purple-900' },
+      { bg: '#e11d48', grad: 'from-rose-600 to-pink-900' },
+      { bg: '#d97706', grad: 'from-amber-600 to-orange-900' }
+    ];
     return colors[name.charCodeAt(0) % colors.length];
   };
 
@@ -82,333 +373,280 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
 
   return (
     <div className={`space-y-8 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
-            <FiCalendar className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Leave Management
-            </h2>
-            <p className={`text-sm mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              Manage employee leave requests
-            </p>
-          </div>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25"
-        >
-          <FiPlus className="w-4 h-4" />
-          Apply Leave
-        </motion.button>
-      </motion.div>
-
-      {/* Leave Balance Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {leaveBalance.map((leave, index) => (
+      <AnimatePresence mode="wait">
+        {view === 'list' ? (
           <motion.div
-            key={leave.type}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            onMouseEnter={() => setHoveredCard(leave.type)}
-            onMouseLeave={() => setHoveredCard(null)}
-            className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer ${
-              isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : `${leave.lightBg} border border-white/50 hover:shadow-xl`
-            } ${hoveredCard === leave.type ? 'scale-[1.02]' : ''}`}
+            key="leave-list-view"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: -50, transition: { duration: 0.2 } }}
+            className="space-y-8"
           >
-            <div className="absolute top-0 right-0 w-24 h-24 opacity-10">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <circle cx="80" cy="20" r="40" fill="currentColor" />
-              </svg>
-            </div>
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{leave.type} Leave</p>
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${leave.gradient} shadow-lg`}>
-                  <leave.icon className="w-4 h-4 text-white" />
+            {/* Header */}
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+            >
+              <div>
+                <div className="flex items-center gap-3 text-left">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-lg shadow-[#1E88E5]/25">
+                    <FiCalendar className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent underline underline-offset-8">
+                    Leave Management Dashboard
+                  </h2>
                 </div>
+                <p className={`text-base font-semibold mt-4 ml-2 tracking-wide text-left ${isDarkMode ? 'text-blue-400' : 'text-[#1E88E5]'} flex items-center gap-2`}>
+                  Manage employee leave requests
+                </p>
               </div>
-              <div className="flex items-end gap-2 mb-3">
-                <span className={`text-3xl font-bold bg-gradient-to-r ${leave.gradient} bg-clip-text text-transparent`}>{leave.remaining}</span>
-                <span className={`text-sm pb-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>/ {leave.total}</span>
+            </motion.div>
+
+            {/* Leave Balance Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {leaveBalance.map((leave, index) => (
+                <motion.div
+                  key={leave.type}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onMouseEnter={() => setHoveredCard(leave.type)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${
+                    isDarkMode 
+                      ? 'bg-slate-800/80 border-slate-700/50' 
+                      : `${leave.lightBg} border-white/50 shadow-sm hover:shadow-xl`
+                  } ${hoveredCard === leave.type ? 'scale-[1.02] border-blue-200 dark:border-blue-800' : ''}`}
+                >
+                  <div className="relative text-left">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className={`text-xs font-extrabold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{leave.type} Leave</p>
+                    </div>
+                    <div className="flex items-end gap-2 mb-4">
+                      <span className={`text-4xl font-extrabold bg-gradient-to-r ${leave.gradient} bg-clip-text text-transparent drop-shadow-md`} style={{ color: leave.type === 'Sick' ? '#e11d48' : leave.type === 'Casual' ? '#d97706' : leave.type === 'Earned' ? '#059669' : '#2563eb' }}>
+                        {leave.remaining}
+                      </span>
+                      <span className={`text-sm pb-1 font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-600'}`}>/ {leave.total}</span>
+                    </div>
+                    <div className={`h-2.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(leave.remaining / leave.total) * 100}%` }}
+                        transition={{ duration: 1.2, ease: "easeOut" }}
+                        className={`h-full rounded-full bg-gradient-to-r ${leave.gradient}`}
+                      />
+                    </div>
+                    <p className={`text-xs mt-3 font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{leave.used} days used this year</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Request Stats summary cards */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="grid grid-cols-3 gap-6"
+            >
+              <div className={`p-6 rounded-3xl text-center border-2 transition-all hover:shadow-lg ${isDarkMode ? 'bg-amber-900/10 border-amber-900/20' : 'bg-amber-50 border-amber-200'}`}>
+                <p className="text-5xl font-extrabold text-[#FFB300] mb-1 drop-shadow-sm">{stats.pending}</p>
+                <p className={`text-sm font-bold uppercase tracking-wider ${isDarkMode ? 'text-amber-400' : 'text-amber-700'}`}>Pending Requests</p>
               </div>
-              <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-white/60'}`}>
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(leave.remaining / leave.total) * 100}%` }}
-                  transition={{ duration: 1, delay: 0.3 + index * 0.1 }}
-                  className={`h-full rounded-full bg-gradient-to-r ${leave.gradient}`}
+              <div className={`p-6 rounded-3xl text-center border-2 transition-all hover:shadow-lg ${isDarkMode ? 'bg-emerald-900/10 border-emerald-900/20' : 'bg-green-50 border-green-200'}`}>
+                <p className="text-5xl font-extrabold text-[#2E7D32] mb-1 drop-shadow-sm">{stats.approved}</p>
+                <p className={`text-sm font-bold uppercase tracking-wider ${isDarkMode ? 'text-emerald-400' : 'text-green-700'}`}>Approved</p>
+              </div>
+              <div className={`p-6 rounded-3xl text-center border-2 transition-all hover:shadow-lg ${isDarkMode ? 'bg-rose-900/10 border-rose-900/20' : 'bg-red-50 border-red-200'}`}>
+                <p className="text-5xl font-extrabold text-[#D32F2F] mb-1 drop-shadow-sm">{stats.rejected}</p>
+                <p className={`text-sm font-bold uppercase tracking-wider ${isDarkMode ? 'text-rose-400' : 'text-red-700'}`}>Rejected</p>
+              </div>
+            </motion.div>
+
+            {/* Filters */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-col md:flex-row items-center gap-4"
+            >
+              <div className="relative flex-1 max-w-4xl">
+                <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                <input
+                  type="text"
+                  placeholder="Search leave requests by name or ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full rounded-2xl border-2 px-4 py-4 pl-12 transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
+                    isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'
+                  }`}
                 />
               </div>
-              <p className={`text-xs mt-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{leave.used} used</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Request Stats */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="grid grid-cols-3 gap-4"
-      >
-        <div className={`p-5 rounded-2xl text-center ${isDarkMode ? 'bg-amber-900/20 border border-amber-900/30' : 'bg-amber-50 border border-amber-100'}`}>
-          <p className="text-4xl font-bold text-amber-500">{stats.pending}</p>
-          <p className={`text-sm font-medium mt-1 ${isDarkMode ? 'text-amber-400' : 'text-amber-700'}`}>Pending</p>
-        </div>
-        <div className={`p-5 rounded-2xl text-center ${isDarkMode ? 'bg-emerald-900/20 border border-emerald-900/30' : 'bg-emerald-50 border border-emerald-100'}`}>
-          <p className="text-4xl font-bold text-emerald-500">{stats.approved}</p>
-          <p className={`text-sm font-medium mt-1 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Approved</p>
-        </div>
-        <div className={`p-5 rounded-2xl text-center ${isDarkMode ? 'bg-rose-900/20 border border-rose-900/30' : 'bg-rose-50 border border-rose-100'}`}>
-          <p className="text-4xl font-bold text-rose-500">{stats.rejected}</p>
-          <p className={`text-sm font-medium mt-1 ${isDarkMode ? 'text-rose-400' : 'text-rose-700'}`}>Rejected</p>
-        </div>
-      </motion.div>
-
-      {/* Filters */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="flex flex-col sm:flex-row gap-3"
-      >
-        <div className="relative flex-1">
-          <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-          <input
-            type="text"
-            placeholder="Search by name or ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full rounded-xl border-2 px-4 py-3 pl-12 transition-all focus:ring-2 focus:ring-blue-500/50 ${
-              isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'
-            }`}
-          />
-        </div>
-        <div className="relative">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className={`appearance-none rounded-xl border-2 px-4 py-3 pr-10 font-medium cursor-pointer ${
-              isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'
-            }`}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-        </div>
-      </motion.div>
-
-      {/* Table */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className={`rounded-2xl border-2 overflow-hidden shadow-xl ${
-          isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200/50'
-        }`}
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className={`${isDarkMode ? 'bg-slate-800' : 'bg-gradient-to-r from-slate-50 to-slate-100'}`}>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Employee</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Leave Type</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Duration</th>
-                <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Days</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Reason</th>
-                <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
-                <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className={`divide-y ${isDarkMode ? 'divide-slate-700/50' : 'divide-slate-100'}`}>
-              <AnimatePresence>
-                {filteredData.map((req, index) => {
-                  const statusConfig = getStatusConfig(req.status);
-                  return (
-                    <motion.tr 
-                      key={req.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`group transition-colors ${isDarkMode ? 'hover:bg-slate-700/30' : 'hover:bg-blue-50/50'}`}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {req.photo ? (
-                            <div className="relative">
-                              <img 
-                                src={req.photo} 
-                                alt={req.name}
-                                className="w-10 h-10 rounded-xl object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
-                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                              />
-                              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarColor(req.name)} items-center justify-center text-white font-bold text-sm shadow-lg hidden`}>
-                                {req.avatar}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarColor(req.name)} flex items-center justify-center text-white font-bold text-sm shadow-lg`}>
-                              {req.avatar}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-semibold">{req.name}</p>
-                            <p className={`text-xs font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{req.empId}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${isDarkMode ? 'bg-violet-900/30 text-violet-400' : 'bg-violet-100 text-violet-700'}`}>
-                          {req.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-sm">
-                          <FiCalendar className={`w-4 h-4 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                          <span>{new Date(req.from).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - {new Date(req.to).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg font-bold ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                          {req.days}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm max-w-[200px] truncate">{req.reason}</td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${statusConfig.bg} ${statusConfig.text}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot} animate-pulse`}></span>
-                          {req.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {req.status === 'pending' && (
-                          <div className="flex items-center justify-center gap-2">
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleAction(req.id, 'approved')}
-                              className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
-                            >
-                              <FiCheck className="w-4 h-4" />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleAction(req.id, 'rejected')}
-                              className="p-2 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors"
-                            >
-                              <FiX className="w-4 h-4" />
-                            </motion.button>
-                          </div>
-                        )}
-                      </td>
-                    </motion.tr>
-                  );
-                })}
-              </AnimatePresence>
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Table Footer */}
-        <div className={`px-6 py-4 border-t ${isDarkMode ? 'border-slate-700/50 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
-          <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            Showing <span className="font-semibold">{filteredData.length}</span> leave requests
-          </p>
-        </div>
-      </motion.div>
-
-      {/* Add Leave Modal */}
-      <AnimatePresence>
-        {showAddModal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setShowAddModal(false)}
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className={`w-full max-w-lg rounded-3xl p-6 shadow-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <FiCalendar className="w-5 h-5 text-blue-500" />
-                  Apply for Leave
-                </h3>
-                <button 
-                  onClick={() => setShowAddModal(false)}
-                  className={`p-2 rounded-xl transition-colors ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
+              <div className="relative min-w-[200px]">
+                <FiChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className={`w-full appearance-none rounded-2xl border-2 px-6 py-4 pr-12 font-bold cursor-pointer transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
+                    isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }`}
                 >
-                  <FiX className="w-5 h-5" />
-                </button>
+                  <option value="all">All Request Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
               </div>
-              <form className="space-y-5">
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Leave Type</label>
-                  <select className={`w-full rounded-xl border-2 px-4 py-3 transition-all focus:ring-2 focus:ring-blue-500/50 ${isDarkMode ? 'bg-slate-700/50 border-slate-600' : 'bg-white border-slate-200'}`}>
-                    <option>Sick Leave</option>
-                    <option>Casual Leave</option>
-                    <option>Earned Leave</option>
-                    <option>Compensatory Off</option>
-                  </select>
+            </motion.div>
+
+            {/* Table */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className={`rounded-3xl border-2 overflow-hidden shadow-2xl ${
+                isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'
+              }`}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className={`${isDarkMode ? 'bg-slate-800' : 'bg-gradient-to-r from-slate-50 to-slate-100/50'}`}>
+                      <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Employee</th>
+                      <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Leave Type</th>
+                      <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Duration</th>
+                      <th className="px-8 py-6 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Days</th>
+                      <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Reason</th>
+                      <th className="px-8 py-6 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Status</th>
+                      <th className="px-8 py-6 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isDarkMode ? 'divide-slate-700/50' : 'divide-slate-100'}`}>
+                    <AnimatePresence>
+                      {filteredData.map((req, index) => {
+                        const statusConfig = getStatusConfig(req.status);
+                        const avatarTheme = getAvatarColor(req.name);
+                        return (
+                          <motion.tr 
+                            key={req.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ delay: index * 0.05 }}
+                            className={`group transition-all cursor-pointer ${isDarkMode ? 'hover:bg-slate-700/30' : 'hover:bg-blue-50/50'}`}
+                            onClick={() => {
+                              setSelectedEmployee(req);
+                              setView('details');
+                            }}
+                          >
+                            <td className="px-8 py-5">
+                              <div className="flex items-center gap-4">
+                                <div className="relative">
+                                    <div 
+                                      className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${avatarTheme.grad} flex items-center justify-center text-white font-black text-lg shadow-lg ring-2 ring-white`}
+                                      style={{ backgroundColor: avatarTheme.bg }}
+                                    >
+                                      {req.name.charAt(0).toUpperCase()}
+                                    </div>
+                                </div>
+                                <div>
+                                  <p className="font-bold text-base">{req.name}</p>
+                                  <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{req.empId}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-8 py-5">
+                              <span className={`px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wide ${isDarkMode ? 'bg-violet-900/30 text-violet-400' : 'bg-violet-50 text-violet-700'}`}>
+                                {req.type}
+                              </span>
+                            </td>
+                            <td className="px-8 py-5">
+                              <div className="flex items-center gap-2 text-sm font-bold">
+                                <FiCalendar className={`w-4 h-4 ${isDarkMode ? 'text-blue-500' : 'text-blue-600'}`} />
+                                <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>
+                                    {new Date(req.from).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - {new Date(req.to).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-8 py-5 text-center">
+                              <span className={`inline-flex items-center justify-center w-9 h-9 rounded-xl font-extrabold text-sm ${isDarkMode ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
+                                {req.days}
+                              </span>
+                            </td>
+                            <td className="px-8 py-5">
+                                <p className={`text-sm font-medium max-w-[200px] truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{req.reason}</p>
+                            </td>
+                             <td className="px-8 py-5 text-center" onClick={(e) => e.stopPropagation()}>
+                               <span className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[11px] font-black ${statusConfig.bg} ${statusConfig.text} uppercase tracking-widest shadow-sm ring-1 ring-inset ${statusConfig.text === 'text-green-700' ? 'ring-green-600/20' : statusConfig.text === 'text-red-700' ? 'ring-red-600/20' : 'ring-amber-600/20'}`}>
+                                 <span className={`w-2.5 h-2.5 rounded-full ${statusConfig.dot} animate-pulse shadow-sm`}></span>
+                                 {statusConfig.label}
+                               </span>
+                             </td>
+                            <td className="px-8 py-5" onClick={(e) => e.stopPropagation()}>
+                              {req.status.toLowerCase() === 'pending' ? (
+                                <div className="flex items-center justify-center gap-3">
+                                  <motion.button
+                                    whileHover={{ scale: 1.1, rotate: 5 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAction(req.id, 'approved');
+                                    }}
+                                    className="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                                  >
+                                    <FiCheck className="w-4 h-4" />
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.1, rotate: -5 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAction(req.id, 'rejected');
+                                    }}
+                                    className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                                  >
+                                    <FiX className="w-4 h-4" />
+                                  </motion.button>
+                                </div>
+                              ) : (
+                                <div className="flex justify-center text-slate-400 italic text-xs font-bold">Processed</div>
+                              )}
+                            </td>
+                          </motion.tr>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Table Footer */}
+              <div className={`px-8 py-5 border-t ${isDarkMode ? 'border-slate-700/50 bg-slate-800/50' : 'border-slate-100 bg-slate-50'}`}>
+                <div className="flex items-center justify-between">
+                    <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Total <span className="text-blue-600 dark:text-blue-400">{filteredData.length}</span> leave requests found
+                    </p>
+                    <div className="flex gap-2">
+                        <FiFileText className="w-4 h-4 text-[#3FA9F5]" />
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Digital Record System</span>
+                    </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>From</label>
-                    <input type="date" className={`w-full rounded-xl border-2 px-4 py-3 ${isDarkMode ? 'bg-slate-700/50 border-slate-600' : 'bg-white border-slate-200'}`} />
-                  </div>
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>To</label>
-                    <input type="date" className={`w-full rounded-xl border-2 px-4 py-3 ${isDarkMode ? 'bg-slate-700/50 border-slate-600' : 'bg-white border-slate-200'}`} />
-                  </div>
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Reason</label>
-                  <textarea rows={3} className={`w-full rounded-xl border-2 px-4 py-3 ${isDarkMode ? 'bg-slate-700/50 border-slate-600' : 'bg-white border-slate-200'}`} placeholder="Enter reason for leave..." />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button" 
-                    onClick={() => setShowAddModal(false)} 
-                    className={`flex-1 px-4 py-3 rounded-xl font-medium border-2 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700' : 'border-slate-200 hover:bg-slate-50'}`}
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit" 
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25"
-                  >
-                    Submit
-                  </motion.button>
-                </div>
-              </form>
+              </div>
             </motion.div>
           </motion.div>
+        ) : view === 'apply' ? (
+          <ApplyLeaveView 
+            onBack={() => setView('list')} 
+            onSubmit={() => setView('list')} 
+            isDarkMode={isDarkMode} 
+          />
+        ) : (
+          <EmployeeDetailsView 
+            employee={selectedEmployee}
+            onBack={() => setView('list')}
+            isDarkMode={isDarkMode}
+          />
         )}
       </AnimatePresence>
     </div>

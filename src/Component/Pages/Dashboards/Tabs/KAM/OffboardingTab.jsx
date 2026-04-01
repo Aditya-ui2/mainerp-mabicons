@@ -42,6 +42,8 @@ const EmployeeOffboardingDetailView = ({ employee, onBack, isDarkMode, getStatus
             </div>
           </div>
 
+
+
           <h3 className="text-2xl font-black mb-1 uppercase tracking-tight">{employee.name}</h3>
           <p className={`font-black tracking-[0.2em] text-[10px] mb-6 ${isDarkMode ? 'text-blue-400' : 'text-[#3FA9F5]'}`}>{employee.empId}</p>
 
@@ -272,28 +274,28 @@ const OffboardingTab = ({ isDarkMode, selectedClient }) => {
 
   const getStatusConfig = (status) => {
     const configs = {
-      'completed': { 
-        bg: 'bg-emerald-500/10 dark:bg-emerald-500/20', 
-        text: 'text-emerald-600 dark:text-emerald-400', 
-        dot: 'bg-emerald-500', 
-        gradient: 'from-emerald-500 to-teal-500', 
+      'completed': {
+        bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+        text: 'text-emerald-600 dark:text-emerald-400',
+        dot: 'bg-emerald-500',
+        gradient: 'from-emerald-500 to-teal-500',
         ring: 'ring-4 ring-emerald-500/10',
         border: 'border-emerald-200 dark:border-emerald-900/50',
         glow: 'shadow-[0_0_10px_rgba(16,185,129,0.5)]'
       },
-      'in-progress': { 
-        bg: 'bg-blue-500/10 dark:bg-blue-500/20', 
-        text: 'text-blue-600 dark:text-blue-400', 
-        dot: 'bg-blue-500', 
+      'in-progress': {
+        bg: 'bg-blue-500/10 dark:bg-blue-500/20',
+        text: 'text-blue-600 dark:text-blue-400',
+        dot: 'bg-blue-500',
         gradient: 'from-blue-500 to-indigo-500',
         ring: 'ring-4 ring-blue-500/10',
         border: 'border-blue-200 dark:border-blue-900/50',
         glow: 'shadow-[0_0_10px_rgba(59,130,246,0.5)]'
       },
-      'pending': { 
-        bg: 'bg-amber-500/10 dark:bg-amber-500/20', 
-        text: 'text-amber-600 dark:text-amber-400', 
-        dot: 'bg-amber-500', 
+      'pending': {
+        bg: 'bg-amber-500/10 dark:bg-amber-500/20',
+        text: 'text-amber-600 dark:text-amber-400',
+        dot: 'bg-amber-500',
         gradient: 'from-amber-500 to-orange-500',
         ring: 'ring-4 ring-amber-500/10',
         border: 'border-amber-200 dark:border-amber-900/50',
@@ -380,10 +382,9 @@ const OffboardingTab = ({ isDarkMode, selectedClient }) => {
                   transition={{ type: "spring", stiffness: 260, damping: 20, delay: index * 0.1 }}
                   onMouseEnter={() => setHoveredCard(stat.key)}
                   onMouseLeave={() => setHoveredCard(null)}
-                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${
-                    isDarkMode 
-                      ? 'bg-slate-800/80 border-slate-700/50 text-white' 
-                      : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-white shadow-sm hover:shadow-xl'
+                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${isDarkMode
+                    ? 'bg-slate-800/80 border-slate-700/50 text-white'
+                    : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-white shadow-sm hover:shadow-xl'
                     } ${hoveredCard === stat.key ? 'scale-[1.02] border-blue-200 dark:border-blue-800' : ''}`}
                 >
                   <div className="relative text-left">
@@ -403,9 +404,9 @@ const OffboardingTab = ({ isDarkMode, selectedClient }) => {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Process</span>
                       </div>
                     </div>
-                    
+
                     <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-white/50'}`}>
-                      <motion.div 
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: '65%' }}
                         transition={{ duration: 0.8, ease: "easeOut" }}

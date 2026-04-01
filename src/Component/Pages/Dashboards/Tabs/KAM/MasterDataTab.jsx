@@ -11,6 +11,7 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
 
+  //mater data
   useEffect(() => {
     const mockData = [
       { id: 1, empId: 'EMP001', name: 'Rahul Sharma', email: 'rahul@company.com', phone: '+91 9876543210', department: 'Engineering', designation: 'Software Engineer', joiningDate: '2024-01-15', status: 'active', salary: 72000, reportingTo: 'Vikram Rao', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
@@ -56,7 +57,7 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => (
+          {[1, 2, 3, 4].map(i => (
             <div key={i} className={`h-28 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
           ))}
         </div>
@@ -118,8 +119,8 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
             onMouseEnter={() => setHoveredCard(stat.key)}
             onMouseLeave={() => setHoveredCard(null)}
             className={`relative overflow-hidden rounded-[2rem] p-6 transition-all duration-500 cursor-pointer border-2 ${isDarkMode
-                ? 'bg-slate-900/40 border-slate-800 hover:border-blue-500/40'
-                : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-white shadow-sm hover:shadow-xl hover:border-blue-100'
+              ? 'bg-slate-900/40 border-slate-800 hover:border-blue-500/40'
+              : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-white shadow-sm hover:shadow-xl hover:border-blue-100'
               } ${hoveredCard === stat.key ? 'scale-[1.02]' : ''}`}
           >
             <div className="relative text-left">
@@ -163,8 +164,8 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className={`w-full rounded-[1.5rem] border-2 px-6 py-4 pl-14 transition-all focus:ring-4 focus:ring-blue-500/10 outline-none font-bold uppercase tracking-widest text-[10px] ${isDarkMode
-                ? 'bg-slate-900/60 border-slate-800 text-white placeholder:text-slate-700'
-                : 'bg-white border-slate-100 shadow-sm placeholder:text-slate-300'
+              ? 'bg-slate-900/60 border-slate-800 text-white placeholder:text-slate-700'
+              : 'bg-white border-slate-100 shadow-sm placeholder:text-slate-300'
               }`}
           />
         </div>
@@ -173,8 +174,8 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
             value={filterDept}
             onChange={(e) => setFilterDept(e.target.value)}
             className={`appearance-none rounded-[1.5rem] border-2 px-10 py-4 pr-16 font-black uppercase tracking-widest text-[10px] cursor-pointer transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${isDarkMode
-                ? 'bg-slate-900/60 border-slate-800 text-white'
-                : 'bg-white border-slate-100 shadow-sm transition-transform hover:scale-105 active:scale-95'
+              ? 'bg-slate-900/60 border-slate-800 text-white'
+              : 'bg-white border-slate-100 shadow-sm transition-transform hover:scale-105 active:scale-95'
               }`}
           >
             <option value="all">Global Database</option>
@@ -198,8 +199,8 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
               transition={{ delay: index * 0.05, type: "spring", stiffness: 100, damping: 15 }}
               whileHover={{ y: -8, shadow: "0 40px 60px -20px rgba(0,0,0,0.15)" }}
               className={`group relative overflow-hidden rounded-[2.5rem] border-2 transition-all duration-500 ${isDarkMode
-                  ? 'bg-slate-900/40 border-slate-800 hover:border-blue-500/40 shadow-black/40'
-                  : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-2xl'
+                ? 'bg-slate-900/40 border-slate-800 hover:border-blue-500/40 shadow-black/40'
+                : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-2xl'
                 }`}
             >
               {/* Card Accent Decor */}
@@ -249,8 +250,8 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
                   {/* Status & Actions */}
                   <div className="flex items-center justify-between lg:justify-end gap-6 pt-6 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-100 lg:pl-8">
                     <span className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg transition-all border ${emp.status === 'active'
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                        : 'bg-rose-50 text-rose-600 border-rose-100'
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                      : 'bg-rose-50 text-rose-600 border-rose-100'
                       }`}>
                       <span className={`w-2 h-2 rounded-full bg-current animate-pulse`}></span>
                       {emp.status}
@@ -345,14 +346,14 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
       {/* Add Employee Modal */}
       <AnimatePresence>
         {showAddModal && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => setShowAddModal(false)}
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -370,7 +371,7 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
                     <FiX className="w-5 h-5" />
                   </button>
                 </div>
-                
+
                 <form className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -409,19 +410,19 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
                     </div>
                   </div>
                   <div className="flex gap-3 pt-4">
-                    <motion.button 
+                    <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      type="button" 
-                      onClick={() => setShowAddModal(false)} 
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
                       className={`flex-1 px-4 py-3 rounded-xl font-medium border-2 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700' : 'border-slate-200 hover:bg-slate-50'}`}
                     >
                       Cancel
                     </motion.button>
-                    <motion.button 
+                    <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      type="submit" 
+                      type="submit"
                       className="flex-1 px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-violet-500/25"
                     >
                       Add Employee

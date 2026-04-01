@@ -112,31 +112,33 @@ const AdminLayout = ({
         `}
       >
         {/* Logo Section */}
-        <div className={`flex items-center h-16 border-b border-slate-700/50 bg-gradient-to-r from-[#0f1629] to-[#1a1f3c] ${sidebarCollapsed ? 'justify-center px-3' : 'justify-between px-4'}`}>
+        <div className={`flex items-center h-16 border-b border-slate-200 bg-white ${sidebarCollapsed ? 'justify-start px-3.5' : 'justify-between px-4'}`}>
           {!sidebarCollapsed && (
             <div className="flex items-center gap-3 overflow-hidden">
-              <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain brightness-0 invert" />
+              <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain" />
             </div>
           )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all duration-300 group backdrop-blur-sm"
-            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="hidden lg:flex p-1.5 rounded-lg hover:bg-slate-50 transition-all duration-200 group"
           >
-            <FiMenu style={{ width: '20px', height: '20px' }} className="text-white group-hover:scale-110 transition-transform" />
+            <FiMenu style={{ width: '24px', height: '24px' }} className="text-[#1E88E5] group-hover:scale-110 transition-transform" />
           </button>
           <button
             onClick={() => setMobileSidebarOpen(false)}
-            className="lg:hidden p-2.5 rounded-xl bg-white/10 hover:bg-red-500/20 border border-white/10 text-white hover:text-red-400 transition-all duration-300"
+            className="lg:hidden p-1.5 rounded-lg hover:bg-slate-50 text-[#1E88E5] transition-colors"
           >
-            <FiX style={{ width: '20px', height: '20px' }} />
+            <FiX style={{ width: '24px', height: '24px' }} />
           </button>
         </div>
 
         {/* Dashboard Link */}
         <div className="px-3 py-4">
           <button
-            onClick={() => setActiveTab && setActiveTab('Dashboard')}
+            onClick={() => {
+              setActiveTab && setActiveTab('Dashboard');
+              setMobileSidebarOpen(false);
+            }}
             className={`
               w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
               ${activeTab === 'Dashboard' 
@@ -277,13 +279,21 @@ const AdminLayout = ({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
         <header className="h-16 bg-white flex items-center justify-between px-4 lg:px-6 shadow-sm">
-          {/* Left: Mobile Menu */}
+          {/* Left: Logo + Mobile Menu */}
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="Mabicons" className="h-8 lg:hidden object-contain" />
+          </div>
+
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
+              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              className={`lg:hidden p-2 transition-all duration-300 rounded-xl active:scale-95 ${
+                mobileSidebarOpen 
+                ? 'bg-[#0f1629] text-white shadow-lg' 
+                : 'text-[#1E88E5] bg-transparent'
+              }`}
             >
-              <FiMenu style={{width:'20px',height:'20px'}} />
+              <FiMenu style={{ width: '28px', height: '28px' }} />
             </button>
           </div>
 

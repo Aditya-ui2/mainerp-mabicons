@@ -83,10 +83,10 @@ const sidebarGroups = [
   {
     heading: 'HR Operations',
     items: [
-      { id: 1, title: 'Attendance & Time Tracking', short: 'Attendance', icon: FiClock },
+      { id: 1, title: 'Attendance', short: 'Attendance', icon: FiClock },
       { id: 2, title: 'Payroll', short: 'Payroll', icon: FiDollarSign },
       { id: 13, title: 'Leave Management', short: 'Leaves', icon: FiCalendar },
-      { id: 6, title: 'Performance Management', short: 'Performance', icon: FiTrendingUp },
+      { id: 6, title: 'Performance', short: 'Performance', icon: FiTrendingUp },
     ]
   },
   {
@@ -226,12 +226,12 @@ const KamDashboard = () => {
     const tabProps = { isDarkMode, selectedClient };
     switch (activeTab) {
       case 'Dashboard': return <DashboardOverviewTab {...tabProps} onNavigate={switchTab} />;
-      case 'Attendance & Time Tracking': return <AttendanceTab {...tabProps} />;
+      case 'Attendance': return <AttendanceTab {...tabProps} />;
       case 'Payroll': return <PayrollTab {...tabProps} />;
       case 'Onboarding': return <OnboardingKamTab {...tabProps} />;
       case 'Policy Making': return <PolicyTab {...tabProps} />;
       case 'Master Data (Emp)': return <MasterDataTab {...tabProps} />;
-      case 'Performance Management': return <PerformanceTab {...tabProps} />;
+      case 'Performance': return <PerformanceTab {...tabProps} />;
       case 'Offboarding': return <OffboardingTab {...tabProps} />;
       case 'FnF': return <FnFTab {...tabProps} />;
       case 'Document Verify': return <DocumentVerifyTab {...tabProps} />;
@@ -375,16 +375,21 @@ const KamDashboard = () => {
         {/* ═══════ MAIN CONTENT ═══════ */}
         <main className="relative z-10 flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           {/* ── Top Bar ── */}
-          <header className="flex-shrink-0 z-30 bg-[#f7f5fc]/80 backdrop-blur-xl">
+          <header className="flex-shrink-0 z-30 bg-white border-b border-slate-200 shadow-sm">
             <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
-              {/* Left: hamburger */}
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                {/* Hamburger – mobile only */}
+              {/* Left: Logo + Hamburger */}
+              <div className="flex items-center justify-between w-full">
+                <img src={logo} alt="Mabicons" className="h-8 md:hidden object-contain" />
+                
                 <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="md:hidden rounded-xl p-2.5 hover:bg-white/60 text-slate-600 transition-colors active:scale-95"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className={`md:hidden p-2 transition-all duration-300 rounded-xl active:scale-95 ${
+                    sidebarOpen 
+                    ? 'bg-[#0f1629] text-white shadow-lg shadow-blue-900/20' 
+                    : 'text-[#1E88E5] bg-transparent'
+                  }`}
                 >
-                  <FiMenu className="w-5 h-5" />
+                  <FiMenu className="w-6 h-6" />
                 </button>
               </div>
 

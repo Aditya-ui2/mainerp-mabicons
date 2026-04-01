@@ -75,10 +75,10 @@ const sidebarConfig = [
   {
     heading: 'HR OPERATIONS',
     items: [
-      { id: 1, title: 'Attendance & Time Tracking', icon: FiClock },
+      { id: 1, title: 'Attendance', icon: FiClock },
       { id: 2, title: 'Payroll', icon: FiDollarSign },
       { id: 13, title: 'Leave Management', icon: FiCalendar },
-      { id: 6, title: 'Performance Management', icon: FiTrendingUp },
+      { id: 6, title: 'Performance', icon: FiTrendingUp },
     ]
   },
   {
@@ -173,7 +173,7 @@ const HROperationsDashboard = () => {
       <Suspense fallback={<TabLoader />}>
         {(() => {
           switch (activeTab) {
-            case 'Attendance & Time Tracking':
+            case 'Attendance':
               return <AttendanceTab />;
             case 'Payroll':
               return <PayrollTab />;
@@ -183,7 +183,7 @@ const HROperationsDashboard = () => {
               return <PolicyTab />;
             case 'Master Data (Emp)':
               return <MasterDataTab />;
-            case 'Performance Management':
+            case 'Performance':
               return <PerformanceTab />;
             case 'Offboarding':
               return <OffboardingTab />;
@@ -344,7 +344,7 @@ const HROperationsDashboard = () => {
                           <span className="text-sm font-medium text-gray-700">Add Employee</span>
                         </button>
                         <button
-                          onClick={() => setActiveTab('Attendance & Time Tracking')}
+                          onClick={() => setActiveTab('Attendance')}
                           className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 text-left group"
                         >
                           <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-105 transition-transform">
@@ -380,7 +380,7 @@ const HROperationsDashboard = () => {
                           <span className="text-sm font-medium text-gray-700">Verify Documents</span>
                         </button>
                         <button
-                          onClick={() => setActiveTab('Performance Management')}
+                          onClick={() => setActiveTab('Performance')}
                           className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/50 transition-all duration-200 text-left group"
                         >
                           <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600 group-hover:scale-105 transition-transform">
