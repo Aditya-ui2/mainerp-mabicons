@@ -1,9 +1,9 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { hasAccessTo } from '../DepartmentProtectedRoute';
+import { getDepartmentDashboardStats } from '../service/api';
 import {
   FiClock,
-  FiDollarSign,
   FiUserPlus,
   FiFileText,
   FiUsers,
@@ -22,6 +22,7 @@ import {
   FiActivity,
   FiBriefcase,
 } from 'react-icons/fi';
+import { FaIndianRupeeSign } from 'react-icons/fa6';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 
 // Lazy load KAM Tab Components
@@ -76,9 +77,9 @@ const sidebarConfig = [
     heading: 'HR OPERATIONS',
     items: [
       { id: 1, title: 'Attendance', icon: FiClock },
-      { id: 2, title: 'Payroll', icon: FiDollarSign },
+      { id: 2, title: 'Payroll', icon: FaIndianRupeeSign },
       { id: 13, title: 'Leave Management', icon: FiCalendar },
-      { id: 6, title: 'Performance', icon: FiTrendingUp },
+      { id: 6, title: 'Performance Management', icon: FiTrendingUp },
     ]
   },
   {
@@ -133,13 +134,56 @@ const HROperationsDashboard = () => {
 
   // Summary stats
   const [stats, setStats] = useState({
-    totalEmployees: 156,
-    activeOnboarding: 12,
-    pendingPayroll: 8,
-    attendanceRate: '94.5%',
+    totalEmployees: 0,
+    activeOnboarding: 0,
+    pendingPayroll: 0,
+    attendanceRate: '0%',
   });
 
+  const [statsBarData, setStatsBarData] = useState([
+    { label: 'Active Employees', value: '0', percentage: '0%', color: 'bg-blue-500' },
+    { label: 'On Leave', value: '0', percentage: '0%', color: 'bg-yellow-500' },
+    { label: 'Pending Actions', value: '0', percentage: '0%', color: 'bg-orange-500' },
+    { label: 'Compliance Rate', value: '0%', percentage: '0%', color: 'bg-green-500' },
+    { label: 'Satisfaction', value: '0/5', percentage: '0%', color: 'bg-purple-500' },
+  ]);
+
+
+
+  const [recentActivities, setRecentActivities] = useState([]);
+
   useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        const response = await getDepartmentDashboardStats('HR Operations');
+        if (response.success && response.stats) {
+          const s = response.stats;
+          setStats(s.overview);
+          
+          if (s.bar) {
+            setStatsBarData([
+              { label: 'Active Employees', value: s.bar.activeEmployees, percentage: '100%', color: 'bg-blue-500' },
+              { label: 'On Leave', value: s.bar.onLeave, percentage: `${((s.bar.onLeave / (s.bar.activeEmployees || 1)) * 100).toFixed(0)}%`, color: 'bg-yellow-500' },
+              { label: 'Pending Actions', value: s.bar.pendingActions, percentage: '15%', color: 'bg-orange-500' },
+              { label: 'Compliance Rate', value: s.bar.complianceRate, percentage: '0%', color: 'bg-green-500' },
+              { label: 'Satisfaction', value: s.bar.satisfaction, percentage: '0%', color: 'bg-purple-500' },
+            ]);
+
+
+          }
+
+          if (s.recentActivities) {
+            setRecentActivities(s.recentActivities);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -152,6 +196,8 @@ const HROperationsDashboard = () => {
         console.log('Token decode error');
       }
     }
+    
+    fetchDashboardData();
   }, []);
 
   const breadcrumbs = [
@@ -160,13 +206,7 @@ const HROperationsDashboard = () => {
     { label: activeTab }
   ];
 
-  const statsBarData = [
-    { label: 'Active Employees', value: '156', percentage: '92%', color: 'bg-blue-500' },
-    { label: 'On Leave', value: '12', percentage: '8%', color: 'bg-yellow-500' },
-    { label: 'Pending Actions', value: '23', percentage: '15%', color: 'bg-orange-500' },
-    { label: 'Compliance Rate', value: '98%', percentage: '98%', color: 'bg-green-500' },
-    { label: 'Satisfaction', value: '4.2/5', percentage: '84%', color: 'bg-purple-500' },
-  ];
+  const statsBarDataMock = []; // Redundant with new state
 
   const renderContent = () => {
     return (
@@ -183,7 +223,7 @@ const HROperationsDashboard = () => {
               return <PolicyTab />;
             case 'Master Data (Emp)':
               return <MasterDataTab />;
-            case 'Performance':
+            case 'Performance Management':
               return <PerformanceTab />;
             case 'Offboarding':
               return <OffboardingTab />;
@@ -245,40 +285,41 @@ const HROperationsDashboard = () => {
                     <StatCard
                       title="Total Employees"
                       value={stats.totalEmployees}
-                      change="+8%"
-                      changeType="increase"
+                      change={stats.trends?.employees || '0'}
+                      changeType={(stats.trends?.employees || '').startsWith('+') ? 'increase' : 'decrease'}
                       icon={FiUsers}
                       color="blue"
-                      sparklineData={[120, 135, 128, 145, 140, 156, 160]}
+                      sparklineData={stats.sparklines?.employees || [0,0,0,0,0,0,0]}
                     />
                     <StatCard
                       title="Active Onboarding"
                       value={stats.activeOnboarding}
-                      change="+3"
-                      changeType="increase"
+                      change={stats.trends?.onboarding || '0'}
+                      changeType={(stats.trends?.onboarding || '').startsWith('+') ? 'increase' : 'decrease'}
                       icon={FiUserPlus}
                       color="teal"
-                      sparklineData={[5, 8, 6, 10, 9, 12, 11]}
+                      sparklineData={stats.sparklines?.onboarding || [0,0,0,0,0,0,0]}
                     />
                     <StatCard
                       title="Pending Payroll"
                       value={stats.pendingPayroll}
-                      change="-2"
-                      changeType="decrease"
-                      icon={FiDollarSign}
+                      change={stats.trends?.payroll || '0'}
+                      changeType={(stats.trends?.payroll || '').startsWith('+') ? 'increase' : 'decrease'}
+                      icon={FaIndianRupeeSign}
                       color="yellow"
-                      sparklineData={[15, 12, 10, 14, 11, 8, 9]}
+                      sparklineData={stats.sparklines?.payroll || [0,0,0,0,0,0,0]}
                     />
                     <StatCard
                       title="Attendance Rate"
                       value={stats.attendanceRate}
-                      change="+2.1%"
-                      changeType="increase"
+                      change={stats.trends?.attendance || '0%'}
+                      changeType={(stats.trends?.attendance || '').startsWith('+') ? 'increase' : 'decrease'}
                       icon={FiClock}
                       color="green"
-                      sparklineData={[88, 90, 91, 93, 92, 94, 95]}
+                      sparklineData={stats.sparklines?.attendance || [0,0,0,0,0,0,0]}
                     />
                   </div>
+
 
                   {/* Stats Bar */}
                   <StatsBar stats={statsBarData} />
@@ -291,42 +332,40 @@ const HROperationsDashboard = () => {
                         <h3 className="font-semibold text-gray-900">Recent Activities</h3>
                       </div>
                       <div className="divide-y divide-gray-50">
-                        <div className="p-4 flex items-center gap-4 hover:bg-gray-50">
-                          <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600">
-                            <FiUserPlus className="w-4 h-4" />
+                        {recentActivities && recentActivities.length > 0 ? (
+                          recentActivities.map((activity, idx) => {
+                            const Icon = activity.actionType === 'task' ? FiCheckSquare : 
+                                         activity.actionType === 'leave' ? FiCalendar :
+                                         activity.actionType === 'payroll' ? FaIndianRupeeSign :
+                                         FiActivity;
+                            const bgColor = activity.actionType === 'task' ? 'bg-violet-100' :
+                                            activity.actionType === 'leave' ? 'bg-blue-100' :
+                                            activity.actionType === 'payroll' ? 'bg-amber-100' :
+                                            'bg-emerald-100';
+                            const textColor = activity.actionType === 'task' ? 'text-violet-600' :
+                                              activity.actionType === 'leave' ? 'text-blue-600' :
+                                              activity.actionType === 'payroll' ? 'text-amber-600' :
+                                              'text-emerald-600';
+
+                            return (
+                              <div key={activity.id || idx} className="p-4 flex items-center gap-4 hover:bg-gray-50">
+                                <div className={`p-2 rounded-lg ${bgColor} ${textColor}`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm text-gray-800">{activity.description}</p>
+                                  <p className="text-xs text-gray-400">
+                                    {new Date(activity.createdAt).toLocaleDateString()} - {activity.performedByName}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="p-8 text-center text-gray-400">
+                            No recent activities
                           </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-800">New employee onboarded - John Doe</p>
-                            <p className="text-xs text-gray-400">2 hours ago</p>
-                          </div>
-                        </div>
-                        <div className="p-4 flex items-center gap-4 hover:bg-gray-50">
-                          <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
-                            <FiCalendar className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-800">Leave approved - Sarah Smith</p>
-                            <p className="text-xs text-gray-400">4 hours ago</p>
-                          </div>
-                        </div>
-                        <div className="p-4 flex items-center gap-4 hover:bg-gray-50">
-                          <div className="p-2 rounded-lg bg-amber-100 text-amber-600">
-                            <FiDollarSign className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-800">Payroll processed for March</p>
-                            <p className="text-xs text-gray-400">1 day ago</p>
-                          </div>
-                        </div>
-                        <div className="p-4 flex items-center gap-4 hover:bg-gray-50">
-                          <div className="p-2 rounded-lg bg-violet-100 text-violet-600">
-                            <FiFile className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-800">Documents verified - Mike Johnson</p>
-                            <p className="text-xs text-gray-400">2 days ago</p>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
@@ -357,7 +396,7 @@ const HROperationsDashboard = () => {
                           className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all duration-200 text-left group"
                         >
                           <div className="p-2 rounded-lg bg-amber-100 text-amber-600 group-hover:scale-105 transition-transform">
-                            <FiDollarSign className="w-4 h-4" />
+                            <FaIndianRupeeSign className="w-4 h-4" />
                           </div>
                           <span className="text-sm font-medium text-gray-700">Process Payroll</span>
                         </button>
@@ -380,7 +419,7 @@ const HROperationsDashboard = () => {
                           <span className="text-sm font-medium text-gray-700">Verify Documents</span>
                         </button>
                         <button
-                          onClick={() => setActiveTab('Performance')}
+                          onClick={() => setActiveTab('Performance Management')}
                           className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/50 transition-all duration-200 text-left group"
                         >
                           <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600 group-hover:scale-105 transition-transform">
@@ -394,8 +433,13 @@ const HROperationsDashboard = () => {
 
                   {/* Try loading the actual overview tab if it exists */}
                   <Suspense fallback={null}>
-                    <DashboardOverviewTab onNavigate={setActiveTab} />
+                    <DashboardOverviewTab 
+                      onNavigate={setActiveTab} 
+                      stats={stats} 
+                      isDarkMode={false} 
+                    />
                   </Suspense>
+
                 </div>
               );
           }

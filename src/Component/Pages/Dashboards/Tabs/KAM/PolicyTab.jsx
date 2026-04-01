@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiBook, FiPlus, FiEdit2, FiTrash2, FiDownload, FiEye, FiCalendar, FiAlertCircle, FiCheckCircle, FiSearch, FiChevronDown, FiX, FiFileText, FiLayers } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDeptPolicies } from '../../../service/api';
 
 const PolicyTab = ({ isDarkMode, selectedClient }) => {
   const [policies, setPolicies] = useState([]);
@@ -14,18 +15,35 @@ const PolicyTab = ({ isDarkMode, selectedClient }) => {
   const categories = ['HR', 'Leave', 'Attendance', 'Code of Conduct', 'IT Security', 'Travel', 'Expense', 'Health & Safety', 'Compliance'];
 
   useEffect(() => {
-    const mockData = [
-      { id: 1, title: 'Leave Policy 2026', category: 'Leave', description: 'Comprehensive leave policy covering all types of leaves including sick, casual, earned, and special leaves.', version: '2.0', effectiveFrom: '2026-01-01', status: 'active', lastUpdated: '2025-12-15', updatedBy: 'HR Manager' },
-      { id: 2, title: 'Remote Work Policy', category: 'HR', description: 'Guidelines for work from home arrangements, eligibility, and productivity expectations.', version: '1.5', effectiveFrom: '2025-06-01', status: 'active', lastUpdated: '2025-05-20', updatedBy: 'HR Director' },
-      { id: 3, title: 'Code of Conduct', category: 'Code of Conduct', description: 'Professional behavior standards, ethics guidelines, and workplace conduct expectations.', version: '3.0', effectiveFrom: '2024-01-01', status: 'active', lastUpdated: '2024-01-01', updatedBy: 'Legal Team' },
-      { id: 4, title: 'Data Security Policy', category: 'IT Security', description: 'Information security guidelines, data handling procedures, and compliance requirements.', version: '2.1', effectiveFrom: '2025-09-01', status: 'active', lastUpdated: '2025-08-25', updatedBy: 'IT Security' },
-      { id: 5, title: 'Travel & Expense Policy', category: 'Travel', description: 'Business travel guidelines, expense claims, and reimbursement procedures.', version: '1.8', effectiveFrom: '2025-04-01', status: 'under-review', lastUpdated: '2026-02-10', updatedBy: 'Finance Team' },
-      { id: 6, title: 'Attendance Policy', category: 'Attendance', description: 'Working hours, punctuality expectations, overtime rules, and attendance tracking.', version: '2.2', effectiveFrom: '2026-01-01', status: 'active', lastUpdated: '2025-12-20', updatedBy: 'HR Manager' },
-    ];
-    setTimeout(() => {
-      setPolicies(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchPolicies = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptPolicies({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.policies || []).map(p => ({
+            id: p.id,
+            title: p.title,
+            category: p.category || 'General',
+            description: p.description || 'No description available',
+            version: p.version || '1.0',
+            effectiveFrom: p.effectiveFrom || new Date().toISOString(),
+            status: p.status?.toLowerCase() || 'active',
+            lastUpdated: p.updatedAt || new Date().toISOString(),
+            updatedBy: p.updatedBy || 'System'
+          }));
+          setPolicies(mappedData);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch policies:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchPolicies();
   }, [selectedClient]);
 
   const getStatusConfig = (status) => {

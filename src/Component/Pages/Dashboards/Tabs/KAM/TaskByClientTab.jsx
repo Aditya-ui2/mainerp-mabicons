@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiClipboard, FiPlus, FiClock, FiCheckCircle, FiAlertCircle, FiUser, FiCalendar, FiSearch, FiEdit2, FiEye, FiX, FiTrendingUp } from 'react-icons/fi';
+import { getDeptTasksByClient } from '../../../service/api';
 
 const TaskByClientTab = ({ isDarkMode, selectedClient }) => {
   const [tasks, setTasks] = useState([]);
@@ -14,25 +15,43 @@ const TaskByClientTab = ({ isDarkMode, selectedClient }) => {
   const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
-    const mockClients = [
-      { id: 1, name: 'ABC Corporation' },
-      { id: 2, name: 'XYZ Industries' },
-      { id: 3, name: 'Tech Solutions Ltd' },
-      { id: 4, name: 'Global Services Inc' },
-    ];
-    const mockTasks = [
-      { id: 1, title: 'Payroll Processing', client: 'ABC Corporation', assignedTo: 'Rahul Sharma', priority: 'high', status: 'in-progress', dueDate: '2026-03-20', progress: 60 },
-      { id: 2, title: 'Compliance Audit', client: 'XYZ Industries', assignedTo: 'Priya Singh', priority: 'urgent', status: 'pending', dueDate: '2026-03-18', progress: 0 },
-      { id: 3, title: 'Employee Onboarding', client: 'Tech Solutions Ltd', assignedTo: 'Amit Kumar', priority: 'normal', status: 'completed', dueDate: '2026-03-15', progress: 100 },
-      { id: 4, title: 'Leave Management Setup', client: 'Global Services Inc', assignedTo: 'Sneha Patel', priority: 'normal', status: 'in-progress', dueDate: '2026-03-22', progress: 40 },
-      { id: 5, title: 'Tax Consultation', client: 'ABC Corporation', assignedTo: 'Vikram Rao', priority: 'high', status: 'pending', dueDate: '2026-03-25', progress: 0 },
-      { id: 6, title: 'HR Policy Review', client: 'XYZ Industries', assignedTo: 'Rahul Sharma', priority: 'low', status: 'completed', dueDate: '2026-03-10', progress: 100 },
-    ];
-    setTimeout(() => {
-      setClients(mockClients);
-      setTasks(mockTasks);
-      setLoading(false);
-    }, 500);
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptTasksByClient({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedTasks = (response.tasks || []).map(t => ({
+            id: t.id,
+            title: t.title,
+            client: t.clientName || 'General',
+            assignedTo: t.assignedToName || 'Unassigned',
+            priority: t.priority?.toLowerCase() || 'normal',
+            status: t.status?.toLowerCase() || 'pending',
+            dueDate: t.dueDate || new Date().toISOString().split('T')[0],
+            progress: parseFloat(t.progress) || 0
+          }));
+          
+          setTasks(mappedTasks);
+          
+          // Derive clients from tasks
+          const uniqueClients = [...new Set(mappedTasks.map(t => t.client))].map((name, index) => ({
+            id: index + 1,
+            name: name
+          }));
+          setClients(uniqueClients);
+          
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tasks:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
   }, [selectedClient]);
 
   const stats = {

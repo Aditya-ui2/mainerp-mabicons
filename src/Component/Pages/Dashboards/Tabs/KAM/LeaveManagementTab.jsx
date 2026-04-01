@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiCalendar, FiClock, FiCheck, FiX, FiPlus, FiSearch, FiDownload, FiChevronDown, FiSun, FiMoon, FiCoffee, FiAward, FiTrendingUp, FiArrowLeft, FiSend, FiFileText } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDeptLeaveRequests, approveRejectLeave } from '../../../service/api';
 
 const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
   const [leaveMode, setLeaveMode] = useState('Full Day');
@@ -155,9 +156,9 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
   if (!employee) return null;
 
   const leaveBalanceMock = [
-    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-600 to-pink-700' },
-    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600' },
-    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-600 to-teal-800' },
+    { type: 'Sick', total: 12, used: 0, remaining: 12, icon: FiSun, gradient: 'from-rose-600 to-pink-700' },
+    { type: 'Casual', total: 12, used: 0, remaining: 12, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600' },
+    { type: 'Earned', total: 15, used: 0, remaining: 15, icon: FiAward, gradient: 'from-emerald-600 to-teal-800' },
   ];
 
   return (
@@ -295,31 +296,60 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    const mockData = [
-      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', type: 'Sick Leave', from: '2026-03-18', to: '2026-03-19', days: 2, reason: 'Fever and cold', status: 'pending', appliedOn: '2026-03-16', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 2, empId: 'EMP002', name: 'Priya Singh', type: 'Casual Leave', from: '2026-03-20', to: '2026-03-20', days: 1, reason: 'Personal work', status: 'approved', appliedOn: '2026-03-15', avatar: 'PS', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 3, empId: 'EMP003', name: 'Amit Kumar', type: 'Earned Leave', from: '2026-03-25', to: '2026-03-28', days: 4, reason: 'Family vacation', status: 'pending', appliedOn: '2026-03-16', avatar: 'AK', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
-      { id: 4, empId: 'EMP004', name: 'Sneha Patel', type: 'Maternity Leave', from: '2026-04-01', to: '2026-06-30', days: 90, reason: 'Maternity', status: 'approved', appliedOn: '2026-03-10', avatar: 'SP', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 5, empId: 'EMP005', name: 'Vikram Rao', type: 'Compensatory Off', from: '2026-03-22', to: '2026-03-22', days: 1, reason: 'Worked on weekend', status: 'rejected', appliedOn: '2026-03-14', avatar: 'VR', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-    ];
-    setTimeout(() => {
-      setLeaveRequests(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchLeaves = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptLeaveRequests({ 
+          department: 'HR Operations'
+        });
+        
+        if (response.success) {
+          const mappedData = (response.leaves || []).map(leave => ({
+            id: leave.id,
+            empId: leave.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: leave.memberName,
+            type: leave.leaveType,
+            from: leave.startDate,
+            to: leave.endDate,
+            days: Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1,
+            reason: leave.reason,
+            status: leave.status.toLowerCase(),
+            appliedOn: leave.createdAt,
+            avatar: leave.memberName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
+            photo: null
+          }));
+          setLeaveRequests(mappedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch leaves:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaves();
   }, [selectedClient]);
 
+  const leaveStats = (leaveRequests || []).reduce((acc, req) => {
+    if (req.status.toLowerCase() === 'approved') {
+      acc[req.type] = (acc[req.type] || 0) + (Number(req.days) || 0);
+    }
+    return acc;
+  }, {});
+
   const leaveBalance = [
-    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-600 to-pink-700', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-rose-600' },
-    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-amber-600' },
-    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-600 to-teal-800', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-emerald-600' },
-    { type: 'Comp Off', total: 4, used: 1, remaining: 3, icon: FiMoon, gradient: 'from-[#3FA9F5] to-[#0D47A1]', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-blue-600' },
-  ];
+    { type: 'Sick', total: 12, used: leaveStats['Sick Leave'] || 0, icon: FiSun, gradient: 'from-rose-600 to-pink-700', lightBg: 'bg-gradient-to-br from-rose-50 to-pink-50', iconColor: 'text-rose-600' },
+    { type: 'Casual', total: 12, used: leaveStats['Casual Leave'] || 0, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-gradient-to-br from-amber-50 to-orange-50', iconColor: 'text-amber-600' },
+    { type: 'Earned', total: 15, used: leaveStats['Earned Leave'] || 0, icon: FiAward, gradient: 'from-emerald-600 to-teal-800', lightBg: 'bg-gradient-to-br from-emerald-50 to-teal-100', iconColor: 'text-emerald-600' },
+    { type: 'Comp Off', total: 4, used: leaveStats['Compensatory Off'] || 0, icon: FiMoon, gradient: 'from-[#3FA9F5] to-[#0D47A1]', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-blue-600' },
+  ].map(b => ({ ...b, remaining: Math.max(0, b.total - b.used) }));
 
   const stats = {
     pending: leaveRequests.filter(l => l.status === 'pending').length,
     approved: leaveRequests.filter(l => l.status === 'approved').length,
     rejected: leaveRequests.filter(l => l.status === 'rejected').length,
   };
+
 
   const getStatusConfig = (status = '') => {
     const s = status.toLowerCase();
@@ -342,8 +372,17 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
     return colors[name.charCodeAt(0) % colors.length];
   };
 
-  const handleAction = (id, action) => {
-    setLeaveRequests(prev => prev.map(req => req.id === id ? { ...req, status: action } : req));
+  const handleAction = async (id, action) => {
+    try {
+      const response = await approveRejectLeave(id, { 
+        status: action === 'approved' ? 'Approved' : 'Rejected' 
+      });
+      if (response.success) {
+        setLeaveRequests(prev => prev.map(req => req.id === id ? { ...req, status: action } : req));
+      }
+    } catch (error) {
+      console.error('Failed to update leave status:', error);
+    }
   };
 
   const filteredData = leaveRequests.filter(req => {
@@ -401,6 +440,15 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                   Manage employee leave requests
                 </p>
               </div>
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setView('apply')}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
+              >
+                <FiPlus className="w-5 h-5" />
+                Apply Leave
+              </motion.button>
             </motion.div>
 
             {/* Leave Balance Cards */}

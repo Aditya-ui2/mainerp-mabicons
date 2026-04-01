@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiClock, FiCalendar, FiCheckCircle, FiXCircle, FiCoffee, FiDownload, FiSearch, FiChevronDown, FiTrendingUp, FiUsers, FiArrowLeft } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDeptAttendance } from '../../../service/api';
 
 const EmployeeDetailView = ({ employee, onBack, isDarkMode, getStatusConfig, getAvatarColor }) => {
   const statusConfig = getStatusConfig(employee.status);
@@ -137,20 +138,39 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  // Mock data - Replace with API call
   useEffect(() => {
-    const mockData = [
-      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', date: '2026-03-17', checkIn: '09:00', checkOut: '18:00', status: 'present', hours: '9h 0m', overtime: '0h', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 2, empId: 'EMP002', name: 'Priya Singh', date: '2026-03-17', checkIn: '09:15', checkOut: '18:30', status: 'present', hours: '9h 15m', overtime: '15m', avatar: 'PS', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 3, empId: 'EMP003', name: 'Amit Kumar', date: '2026-03-17', checkIn: '-', checkOut: '-', status: 'absent', hours: '0h', overtime: '0h', avatar: 'AK', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
-      { id: 4, empId: 'EMP004', name: 'Sneha Patel', date: '2026-03-17', checkIn: '10:00', checkOut: '17:00', status: 'halfday', hours: '7h 0m', overtime: '0h', avatar: 'SP', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 5, empId: 'EMP005', name: 'Vikram Rao', date: '2026-03-17', checkIn: '09:00', checkOut: '20:00', status: 'present', hours: '11h 0m', overtime: '2h', avatar: 'VR', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-      { id: 6, empId: 'EMP006', name: 'Anjali Gupta', date: '2026-03-17', checkIn: '-', checkOut: '-', status: 'leave', hours: '0h', overtime: '0h', avatar: 'AG', photo: 'https://randomuser.me/api/portraits/women/65.jpg' },
-    ];
-    setTimeout(() => {
-      setAttendanceData(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchAttendance = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptAttendance({ 
+          department: 'HR Operations', 
+          date: parseFloat(selectedDate) ? selectedDate : new Date().toISOString().split('T')[0]
+        });
+        
+        if (response.success) {
+          const mappedData = response.records.map(record => ({
+            id: record.id,
+            empId: record.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: record.memberName,
+            date: record.date,
+            checkIn: record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-',
+            checkOut: record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-',
+            status: record.status.toLowerCase().replace(/\s+/g, ''),
+            hours: record.workHours ? `${Math.floor(record.workHours)}h ${Math.round((record.workHours % 1) * 60)}m` : '0h',
+            overtime: record.workHours > 8 ? `${(record.workHours - 8).toFixed(1)}h` : '0h',
+            avatar: record.memberName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
+            photo: null
+          }));
+          setAttendanceData(mappedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch attendance:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAttendance();
   }, [selectedDate, selectedClient]);
 
   const stats = {
