@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiUsers, FiMail, FiPhone, FiMapPin, FiEdit2, FiTrash2, FiPlus, FiSearch, FiDownload, FiEye, FiChevronDown, FiX, FiBriefcase, FiCalendar, FiUserCheck, FiUserX } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDepartmentMembers } from '../../../service/api';
 
 const MasterDataTab = ({ isDarkMode, selectedClient }) => {
   const [employees, setEmployees] = useState([]);
@@ -12,18 +13,39 @@ const MasterDataTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    const mockData = [
-      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', email: 'rahul@company.com', phone: '+91 9876543210', department: 'Engineering', designation: 'Software Engineer', joiningDate: '2024-01-15', status: 'active', salary: 72000, reportingTo: 'Vikram Rao', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 2, empId: 'EMP002', name: 'Priya Singh', email: 'priya@company.com', phone: '+91 9876543211', department: 'HR', designation: 'HR Manager', joiningDate: '2023-06-20', status: 'active', salary: 63900, reportingTo: 'CEO', avatar: 'PS', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 3, empId: 'EMP003', name: 'Amit Kumar', email: 'amit@company.com', phone: '+91 9876543212', department: 'Sales', designation: 'Sales Executive', joiningDate: '2024-03-10', status: 'active', salary: 50400, reportingTo: 'Sneha Patel', avatar: 'AK', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
-      { id: 4, empId: 'EMP004', name: 'Sneha Patel', email: 'sneha@company.com', phone: '+91 9876543213', department: 'Finance', designation: 'Accountant', joiningDate: '2023-09-01', status: 'active', salary: 57600, reportingTo: 'CFO', avatar: 'SP', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 5, empId: 'EMP005', name: 'Vikram Rao', email: 'vikram@company.com', phone: '+91 9876543214', department: 'Engineering', designation: 'Team Lead', joiningDate: '2022-04-15', status: 'active', salary: 86400, reportingTo: 'CTO', avatar: 'VR', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-      { id: 6, empId: 'EMP006', name: 'Anjali Gupta', email: 'anjali@company.com', phone: '+91 9876543215', department: 'Marketing', designation: 'Marketing Manager', joiningDate: '2023-11-01', status: 'inactive', salary: 65000, reportingTo: 'CMO', avatar: 'AG', photo: 'https://randomuser.me/api/portraits/women/65.jpg' },
-    ];
-    setTimeout(() => {
-      setEmployees(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchEmployees = async () => {
+      try {
+        setLoading(true);
+        const response = await getDepartmentMembers({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.members || []).map(emp => ({
+            id: emp.id,
+            empId: emp.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: emp.memberName,
+            email: emp.email,
+            phone: emp.phone || '+91 0000000000',
+            department: emp.department || 'HR Operations',
+            designation: emp.designation || 'Staff',
+            joiningDate: emp.joiningDate || new Date().toISOString(),
+            status: emp.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
+            salary: parseFloat(emp.basicSalary) || 0,
+            reportingTo: emp.reportingTo || 'Head of HR',
+            avatar: emp.memberName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
+            photo: null
+          }));
+          setEmployees(mappedData);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch employees:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
   }, [selectedClient]);
 
   const departments = ['Engineering', 'HR', 'Sales', 'Finance', 'Marketing', 'Operations'];

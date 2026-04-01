@@ -6,31 +6,7 @@ import {
   FiPieChart, FiBarChart2, FiArrowUp, FiArrowDown
 } from 'react-icons/fi';
 
-const DashboardOverviewTab = ({ isDarkMode, onNavigate }) => {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setStats({
-        totalEmployees: 156,
-        activeEmployees: 148,
-        onLeave: 8,
-        pendingTasks: 24,
-        completedTasks: 186,
-        payrollProcessed: 142,
-        attendanceRate: 94.2,
-        performanceAvg: 4.2,
-        newHires: 12,
-        exits: 3,
-        openPositions: 8,
-        documentsVerified: 98,
-      });
-      setLoading(false);
-    }, 600);
-  }, []);
-
+const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
   // Handle card click navigation
   const handleCardClick = (targetTab) => {
     if (onNavigate && targetTab) {
@@ -39,43 +15,40 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate }) => {
   };
 
   const statCards = [
-    { label: 'Total Employees', value: stats?.totalEmployees || 0, icon: FiUsers, gradientStyle: 'linear-gradient(135deg, #8b5cf6, #9333ea)', textHex: '#7c3aed', change: '+12', positive: true, navigateTo: 'Master Data (Emp)' },
-    { label: 'Active Today', value: stats?.activeEmployees || 0, icon: FiUserCheck, gradientStyle: 'linear-gradient(135deg, #10b981, #0d9488)', textHex: '#059669', change: '+5', positive: true, navigateTo: 'Attendance' },
-    { label: 'On Leave', value: stats?.onLeave || 0, icon: FiCalendar, gradientStyle: 'linear-gradient(135deg, #f59e0b, #ea580c)', textHex: '#d97706', change: '-2', positive: true, navigateTo: 'Leave Management' },
-    { label: 'Pending Tasks', value: stats?.pendingTasks || 24, icon: FiAlertCircle, gradientStyle: 'linear-gradient(135deg, #f43f5e, #ec4899)', textHex: '#e11d48', change: '+3', positive: false, navigateTo: 'Task by Client' },
-    { label: 'Attendance Rate', value: `${stats?.attendanceRate || 0}%`, icon: FiClock, gradientStyle: 'linear-gradient(135deg, #3b82f6, #6366f1)', textHex: '#2563eb', change: '+2.1%', positive: true, navigateTo: 'Attendance' },
-    { label: 'Avg. Performance', value: `${stats?.performanceAvg || 0}/5`, icon: FiTrendingUp, gradientStyle: 'linear-gradient(135deg, #06b6d4, #3b82f6)', textHex: '#0891b2', change: '+0.3', positive: true, navigateTo: 'Performance Management' },
+    { label: 'Total Employees', value: stats?.overview?.totalEmployees || 0, icon: FiUsers, gradientStyle: 'linear-gradient(135deg, #8b5cf6, #9333ea)', textHex: '#7c3aed', change: '0', positive: true, navigateTo: 'Master Data (Emp)' },
+    { label: 'Active Today', value: (stats?.overview?.totalEmployees || 0) - (stats?.bar?.onLeave || 0), icon: FiUserCheck, gradientStyle: 'linear-gradient(135deg, #10b981, #0d9488)', textHex: '#059669', change: '0', positive: true, navigateTo: 'Attendance' },
+    { label: 'On Leave', value: stats?.bar?.onLeave || 0, icon: FiCalendar, gradientStyle: 'linear-gradient(135deg, #f59e0b, #ea580c)', textHex: '#d97706', change: '0', positive: true, navigateTo: 'Leave Management' },
+    { label: 'Pending Tasks', value: stats?.bar?.pendingActions || 0, icon: FiAlertCircle, gradientStyle: 'linear-gradient(135deg, #f43f5e, #ec4899)', textHex: '#e11d48', change: '0', positive: false, navigateTo: 'Task by Client' },
+    { label: 'Attendance Rate', value: stats?.overview?.attendanceRate || '0%', icon: FiClock, gradientStyle: 'linear-gradient(135deg, #3b82f6, #6366f1)', textHex: '#2563eb', change: '0%', positive: true, navigateTo: 'Attendance' },
+    { label: 'Avg. Performance', value: stats?.bar?.satisfaction || '0/5', icon: FiTrendingUp, gradientStyle: 'linear-gradient(135deg, #06b6d4, #3b82f6)', textHex: '#0891b2', change: '0', positive: true, navigateTo: 'Performance Management' },
   ];
 
   const quickStats = [
-    { label: 'New Hires (Month)', value: 12, icon: FiUserCheck, bgColor: '#d1fae5', iconColor: '#059669', navigateTo: 'Onboarding' },
-    { label: 'Exits (Month)', value: 3, icon: FiUserX, bgColor: '#ffe4e6', iconColor: '#e11d48', navigateTo: 'Offboarding' },
-    { label: 'Open Positions', value: 8, icon: FiUsers, bgColor: '#fef3c7', iconColor: '#d97706', navigateTo: 'Onboarding' },
-    { label: 'Docs Verified', value: '98%', icon: FiFileText, bgColor: '#ede9fe', iconColor: '#7c3aed', navigateTo: 'Document Verify' },
+    { label: 'New Hires (Month)', value: stats?.quickStats?.newHires || 0, icon: FiUserCheck, bgColor: '#d1fae5', iconColor: '#059669', navigateTo: 'Onboarding' },
+    { label: 'Exits (Month)', value: stats?.quickStats?.exits || 0, icon: FiUserX, bgColor: '#ffe4e6', iconColor: '#e11d48', navigateTo: 'Offboarding' },
+    { label: 'Open Positions', value: stats?.quickStats?.openPositions || 0, icon: FiUsers, bgColor: '#fef3c7', iconColor: '#d97706', navigateTo: 'Onboarding' },
+    { label: 'Docs Verified', value: `${stats?.quickStats?.docsVerified || 0}%`, icon: FiFileText, bgColor: '#ede9fe', iconColor: '#7c3aed', navigateTo: 'Document Verify' },
   ];
 
-  // Mock chart data
-  const attendanceTrend = [85, 92, 88, 95, 91, 94, 96, 93, 97, 94, 92, 95];
+
+
+  // Live chart data from props
+  const attendanceTrend = stats?.attendanceTrend || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
 
-  const departmentData = [
-    { name: 'Engineering', count: 45, color: 'bg-violet-500', hex: '#8b5cf6' },
-    { name: 'Sales', count: 32, color: 'bg-blue-500', hex: '#3b82f6' },
-    { name: 'HR', count: 18, color: 'bg-emerald-500', hex: '#10b981' },
-    { name: 'Finance', count: 22, color: 'bg-amber-500', hex: '#f59e0b' },
-    { name: 'Operations', count: 28, color: 'bg-rose-500', hex: '#f43f5e' },
-    { name: 'Marketing', count: 11, color: 'bg-cyan-500', hex: '#06b6d4' },
+  const departmentData = stats?.departmentDistribution || [
+    { name: 'Operations', count: stats?.overview?.totalEmployees || 0, color: 'bg-violet-500', hex: '#8b5cf6' },
   ];
 
-  const recentActivities = [
-    { action: 'Payroll processed', user: 'System', time: '2 hours ago', type: 'success', navigateTo: 'Payroll' },
-    { action: 'New employee onboarded', user: 'Rahul Sharma', time: '3 hours ago', type: 'info', navigateTo: 'Onboarding' },
-    { action: 'Leave request approved', user: 'Priya Singh', time: '5 hours ago', type: 'success', navigateTo: 'Leave Management' },
-    { action: 'Document pending verification', user: 'Amit Kumar', time: '6 hours ago', type: 'warning', navigateTo: 'Document Verify' },
-    { action: 'Performance review completed', user: 'Sneha Patel', time: '1 day ago', type: 'success', navigateTo: 'Performance Management' },
-  ];
+  const recentActivities = stats?.recentActivities?.map(a => ({
+    action: a.description,
+    user: a.performedByName,
+    time: new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    type: a.actionType === 'task' ? 'info' : 'success',
+    navigateTo: a.actionType === 'task' ? 'Task Assignment' : 'Dashboard'
+  })) || [];
 
-  if (loading) {
+  if (!stats) {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -83,15 +56,12 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate }) => {
             <div key={i} className={`h-32 rounded-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`} />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className={`h-80 rounded-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`} />
-          <div className={`h-80 rounded-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`} />
-        </div>
       </div>
     );
   }
 
   return (
+
     <div className={`space-y-6 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
       {/* Header */}
       <motion.div 
@@ -357,24 +327,36 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate }) => {
           <div className="space-y-4">
             <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-700/50' : 'bg-emerald-50'}`}>
               <p className={`text-xs`} style={{ color: '#10b981' }}>Total Disbursed</p>
-              <p className="text-2xl font-bold" style={{ color: '#10b981' }}>₹48,50,000</p>
+              <p className="text-2xl font-bold" style={{ color: '#10b981' }}>
+                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(stats?.payroll?.totalDisbursed || 0)}
+              </p>
             </div>
             <div className="flex justify-between text-sm">
               <span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Processed</span>
-              <span className="font-semibold" style={{ color: '#10b981' }}>142/156</span>
+              <span className="font-semibold" style={{ color: '#10b981' }}>
+                {stats?.payroll?.processed || 0}/{stats?.payroll?.total || 0}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Pending</span>
-              <span className="font-semibold" style={{ color: '#f59e0b' }}>14</span>
+              <span className="font-semibold" style={{ color: '#f59e0b' }}>
+                {(stats?.payroll?.total || 0) - (stats?.payroll?.processed || 0)}
+              </span>
             </div>
             <div className={`h-2.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
               <div 
                 className="h-full rounded-full" 
-                style={{ width: '91%', background: 'linear-gradient(to right, #10b981, #14b8a6)' }}
+                style={{ 
+                  width: `${stats?.payroll?.completion || 0}%`, 
+                  background: 'linear-gradient(to right, #10b981, #14b8a6)' 
+                }}
               />
             </div>
-            <p className={`text-xs text-center ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>91% Completed</p>
+            <p className={`text-xs text-center ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              {stats?.payroll?.completion || 0}% Completed
+            </p>
           </div>
+
         </motion.div>
       </div>
     </div>

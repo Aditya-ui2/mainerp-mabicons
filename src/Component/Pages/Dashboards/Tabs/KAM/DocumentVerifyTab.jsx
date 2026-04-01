@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiFileText, FiCheck, FiX, FiClock, FiUpload, FiDownload, FiEye, FiSearch, FiAlertTriangle, FiChevronDown, FiShield, FiUser } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDeptDocuments } from '../../../service/api';
 
 const DocumentVerifyTab = ({ isDarkMode, selectedClient }) => {
   const [documents, setDocuments] = useState([]);
@@ -11,18 +12,36 @@ const DocumentVerifyTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    const mockData = [
-      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', docType: 'Aadhaar Card', fileName: 'aadhaar_rahul.pdf', uploadedOn: '2026-03-10', status: 'verified', verifiedBy: 'Priya Singh', verifiedOn: '2026-03-11' },
-      { id: 2, empId: 'EMP001', name: 'Rahul Sharma', docType: 'PAN Card', fileName: 'pan_rahul.pdf', uploadedOn: '2026-03-10', status: 'verified', verifiedBy: 'Priya Singh', verifiedOn: '2026-03-11' },
-      { id: 3, empId: 'EMP002', name: 'Priya Singh', docType: 'Educational Certificate', fileName: 'degree_priya.pdf', uploadedOn: '2026-03-12', status: 'pending', verifiedBy: null, verifiedOn: null },
-      { id: 4, empId: 'EMP003', name: 'Amit Kumar', docType: 'Experience Letter', fileName: 'exp_amit.pdf', uploadedOn: '2026-03-14', status: 'rejected', verifiedBy: 'Sneha Patel', verifiedOn: '2026-03-15', remarks: 'Document not clear' },
-      { id: 5, empId: 'EMP004', name: 'Sneha Patel', docType: 'Bank Statement', fileName: 'bank_sneha.pdf', uploadedOn: '2026-03-15', status: 'pending', verifiedBy: null, verifiedOn: null },
-      { id: 6, empId: 'EMP005', name: 'Vikram Rao', docType: 'Address Proof', fileName: 'address_vikram.pdf', uploadedOn: '2026-03-15', status: 'verified', verifiedBy: 'Priya Singh', verifiedOn: '2026-03-16' },
-    ];
-    setTimeout(() => {
-      setDocuments(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchDocuments = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptDocuments({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.documents || []).map(doc => ({
+            id: doc.id,
+            empId: doc.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: doc.memberName,
+            docType: doc.documentType || 'General',
+            fileName: doc.fileName || 'document.pdf',
+            uploadedOn: doc.createdAt || new Date().toISOString(),
+            status: doc.status?.toLowerCase() || 'pending',
+            verifiedBy: doc.verifiedBy || null,
+            verifiedOn: doc.verifiedAt || null,
+            remarks: doc.remarks || null
+          }));
+          setDocuments(mappedData);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch documents:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchDocuments();
   }, [selectedClient]);
 
   const getAvatarGradient = (name) => {

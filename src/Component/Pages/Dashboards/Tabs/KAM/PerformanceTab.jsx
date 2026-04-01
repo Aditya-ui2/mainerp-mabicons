@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiTrendingUp, FiTarget, FiStar, FiAward, FiSearch, FiDownload, FiEdit2, FiEye, FiChevronDown, FiBarChart2, FiArrowLeft, FiCalendar, FiActivity, FiUsers, FiCheckCircle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDeptPerformanceOverview } from '../../../service/api';
 
 const EmployeePerformanceDetailView = ({ employee, onBack, isDarkMode, getRatingConfig, getAvatarColor, getProgressGradient }) => {
   const ratingConfig = getRatingConfig(employee.rating);
@@ -153,17 +154,38 @@ const PerformanceTab = ({ isDarkMode, selectedClient }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
-    const mockData = [
-      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', department: 'Engineering', rating: 4.5, goals: 8, completed: 7, kpis: { productivity: 92, quality: 88, teamwork: 95, initiative: 85 }, status: 'completed', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 2, empId: 'EMP002', name: 'Priya Singh', department: 'HR', rating: 4.8, goals: 6, completed: 6, kpis: { productivity: 95, quality: 92, teamwork: 98, initiative: 90 }, status: 'completed', avatar: 'PS', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 3, empId: 'EMP003', name: 'Amit Kumar', department: 'Sales', rating: 3.8, goals: 10, completed: 7, kpis: { productivity: 85, quality: 80, teamwork: 88, initiative: 78 }, status: 'pending', avatar: 'AK', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
-      { id: 4, empId: 'EMP004', name: 'Sneha Patel', department: 'Finance', rating: 4.2, goals: 7, completed: 6, kpis: { productivity: 88, quality: 90, teamwork: 85, initiative: 82 }, status: 'completed', avatar: 'SP', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 5, empId: 'EMP005', name: 'Vikram Rao', department: 'Engineering', rating: 4.9, goals: 9, completed: 9, kpis: { productivity: 98, quality: 95, teamwork: 92, initiative: 95 }, status: 'completed', avatar: 'VR', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-    ];
-    setTimeout(() => {
-      setPerformanceData(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchPerformance = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptPerformanceOverview({ 
+          department: 'HR Operations',
+          period: selectedPeriod 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.performances || []).map(p => ({
+            id: p.id,
+            empId: p.empId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: p.name,
+            department: p.department || 'HR Operations',
+            rating: p.rating || 4.0,
+            goals: p.goals || 10,
+            completed: p.completed || 8,
+            kpis: p.kpis || { productivity: 85, quality: 80, teamwork: 85, initiative: 80 },
+            status: p.status || 'completed',
+            avatar: p.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
+            photo: null
+          }));
+          setPerformanceData(mappedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch performance:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPerformance();
   }, [selectedClient, selectedPeriod]);
 
   const avgRating = performanceData.length > 0 ? (performanceData.reduce((acc, emp) => acc + emp.rating, 0) / performanceData.length).toFixed(1) : '0.0';

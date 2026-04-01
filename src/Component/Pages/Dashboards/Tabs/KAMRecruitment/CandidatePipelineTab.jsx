@@ -650,7 +650,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab }) => {
     }));
     setNewNote('');
   };
-
+                                                                
   // ── Stage duration calculator ──
   const getStageDuration = (candidate) => {
     const changedAt = candidate.stageChangedAt || candidate.appliedDate;

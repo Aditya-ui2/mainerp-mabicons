@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiUserMinus, FiClipboard, FiCheckSquare, FiAlertTriangle, FiCalendar, FiMail, FiEdit2, FiEye, FiPlus, FiSearch, FiChevronDown, FiX, FiCheck, FiClock } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getOffboardingList } from '../../../service/api';
 
 const OffboardingTab = ({ isDarkMode, selectedClient }) => {
   const [offboardingData, setOffboardingData] = useState([]);
@@ -11,48 +12,44 @@ const OffboardingTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    const mockData = [
-      {
-        id: 1, empId: 'EMP010', name: 'Rajesh Khanna', email: 'rajesh@company.com', department: 'Engineering',
-        resignationDate: '2026-02-15', lastWorkingDay: '2026-03-15', reason: 'Better opportunity', status: 'in-progress', progress: 70,
-        photo: 'https://randomuser.me/api/portraits/men/52.jpg',
-        checklist: [
-          { task: 'Resignation Accepted', done: true },
-          { task: 'Exit Interview', done: true },
-          { task: 'Knowledge Transfer', done: true },
-          { task: 'Asset Return', done: false },
-          { task: 'Final Settlement', done: false },
-        ]
-      },
-      {
-        id: 2, empId: 'EMP011', name: 'Suman Devi', email: 'suman@company.com', department: 'Marketing',
-        resignationDate: '2026-03-01', lastWorkingDay: '2026-03-31', reason: 'Personal reasons', status: 'pending', progress: 40,
-        photo: 'https://randomuser.me/api/portraits/women/55.jpg',
-        checklist: [
-          { task: 'Resignation Accepted', done: true },
-          { task: 'Exit Interview', done: true },
-          { task: 'Knowledge Transfer', done: false },
-          { task: 'Asset Return', done: false },
-          { task: 'Final Settlement', done: false },
-        ]
-      },
-      {
-        id: 3, empId: 'EMP012', name: 'Anil Kapoor', email: 'anil@company.com', department: 'Sales',
-        resignationDate: '2026-01-10', lastWorkingDay: '2026-02-10', reason: 'Relocation', status: 'completed', progress: 100,
-        photo: 'https://randomuser.me/api/portraits/men/58.jpg',
-        checklist: [
-          { task: 'Resignation Accepted', done: true },
-          { task: 'Exit Interview', done: true },
-          { task: 'Knowledge Transfer', done: true },
-          { task: 'Asset Return', done: true },
-          { task: 'Final Settlement', done: true },
-        ]
-      },
-    ];
-    setTimeout(() => {
-      setOffboardingData(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchOffboarding = async () => {
+      try {
+        setLoading(true);
+        const response = await getOffboardingList({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.list || []).map(emp => ({
+            id: emp.id,
+            empId: emp.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: emp.memberName,
+            email: emp.email,
+            department: emp.department || 'HR Operations',
+            resignationDate: emp.resignationDate || new Date().toISOString(),
+            lastWorkingDay: emp.lastWorkingDay || new Date().toISOString(),
+            reason: emp.exitReason || 'Relocation/Personal',
+            status: emp.exitStatus?.toLowerCase() || 'in-progress',
+            progress: emp.exitStatus === 'Completed' ? 100 : 60,
+            photo: null,
+            checklist: [
+              { task: 'Resignation Accepted', done: true },
+              { task: 'Exit Interview', done: emp.exitStatus === 'Completed' },
+              { task: 'Knowledge Transfer', done: emp.exitStatus === 'Completed' },
+              { task: 'Asset Return', done: false },
+              { task: 'Final Settlement', done: false },
+            ]
+          }));
+          setOffboardingData(mappedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch offboarding:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOffboarding();
   }, [selectedClient]);
 
   const getAvatarGradient = (name) => {

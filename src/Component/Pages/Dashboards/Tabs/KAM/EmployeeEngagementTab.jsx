@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiHeart, FiUsers, FiCalendar, FiGift, FiMessageCircle, FiPlus, FiStar, FiTrendingUp, FiAward, FiSmile } from 'react-icons/fi';
+import { getDeptEngagement } from '../../../service/api';
 
 const EmployeeEngagementTab = ({ isDarkMode, selectedClient }) => {
   const [activities, setActivities] = useState([]);
@@ -10,23 +11,41 @@ const EmployeeEngagementTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    const mockActivities = [
-      { id: 1, title: 'Team Outing - Goa Trip', date: '2026-03-25', participants: 45, status: 'upcoming', category: 'Team Building' },
-      { id: 2, title: 'Birthday Celebration - March', date: '2026-03-20', participants: 12, status: 'upcoming', category: 'Celebration' },
-      { id: 3, title: 'Quarterly Town Hall', date: '2026-03-15', participants: 150, status: 'completed', category: 'Communication' },
-      { id: 4, title: 'Wellness Week', date: '2026-03-10', participants: 80, status: 'completed', category: 'Wellness' },
-      { id: 5, title: 'Hackathon 2026', date: '2026-04-05', participants: 30, status: 'upcoming', category: 'Learning' },
-    ];
-    const mockSurveys = [
-      { id: 1, title: 'Employee Satisfaction Survey Q1', responses: 120, total: 150, status: 'active', dueDate: '2026-03-31' },
-      { id: 2, title: 'Work-Life Balance Feedback', responses: 85, total: 150, status: 'completed', dueDate: '2026-02-28' },
-      { id: 3, title: 'Manager Effectiveness Survey', responses: 45, total: 50, status: 'completed', dueDate: '2026-02-15' },
-    ];
-    setTimeout(() => {
-      setActivities(mockActivities);
-      setSurveys(mockSurveys);
-      setLoading(false);
-    }, 500);
+    const fetchEngagement = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptEngagement({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          setActivities((response.activities || []).map(a => ({
+            id: a.id,
+            title: a.title,
+            date: a.date || new Date().toISOString().split('T')[0],
+            participants: a.participantsCount || 0,
+            status: a.status?.toLowerCase() || 'upcoming',
+            category: a.category || 'Team Building'
+          })));
+          
+          setSurveys((response.surveys || []).map(s => ({
+            id: s.id,
+            title: s.title,
+            responses: s.responsesCount || 0,
+            total: s.totalTarget || 100,
+            status: s.status?.toLowerCase() || 'active',
+            dueDate: s.endDate || new Date().toISOString().split('T')[0]
+          })));
+          
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch engagement:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchEngagement();
   }, [selectedClient]);
 
   const engagementScore = 78;

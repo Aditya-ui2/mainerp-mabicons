@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiShield, FiCheckCircle, FiAlertTriangle, FiClock, FiFileText, FiCalendar, FiDownload, FiEye, FiPlus, FiSearch, FiX } from 'react-icons/fi';
+import { getDeptCompliance } from '../../../service/api';
 
 const ComplianceTab = ({ isDarkMode, selectedClient }) => {
   const [compliances, setCompliances] = useState([]);
@@ -14,19 +15,34 @@ const ComplianceTab = ({ isDarkMode, selectedClient }) => {
   const categories = ['Statutory', 'Tax', 'Labour Law', 'Health & Safety', 'Data Protection', 'Industry Specific'];
 
   useEffect(() => {
-    const mockData = [
-      { id: 1, title: 'PF Monthly Return', category: 'Statutory', dueDate: '2026-03-15', status: 'completed', client: 'ABC Corporation', filedDate: '2026-03-14', penalty: 0 },
-      { id: 2, title: 'ESI Contribution', category: 'Statutory', dueDate: '2026-03-21', status: 'pending', client: 'XYZ Industries', filedDate: null, penalty: 0 },
-      { id: 3, title: 'TDS Quarterly Filing', category: 'Tax', dueDate: '2026-03-31', status: 'in-progress', client: 'Tech Solutions Ltd', filedDate: null, penalty: 0 },
-      { id: 4, title: 'Professional Tax', category: 'Tax', dueDate: '2026-03-10', status: 'overdue', client: 'Global Services Inc', filedDate: null, penalty: 500 },
-      { id: 5, title: 'Labour Welfare Fund', category: 'Labour Law', dueDate: '2026-03-31', status: 'pending', client: 'ABC Corporation', filedDate: null, penalty: 0 },
-      { id: 6, title: 'Fire Safety Audit', category: 'Health & Safety', dueDate: '2026-04-15', status: 'pending', client: 'XYZ Industries', filedDate: null, penalty: 0 },
-      { id: 7, title: 'GDPR Compliance Review', category: 'Data Protection', dueDate: '2026-03-28', status: 'in-progress', client: 'Tech Solutions Ltd', filedDate: null, penalty: 0 },
-    ];
-    setTimeout(() => {
-      setCompliances(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchCompliance = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptCompliance({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.complianceTasks || []).map(c => ({
+            id: c.id,
+            title: c.title,
+            category: c.category || 'Statutory',
+            dueDate: c.dueDate || new Date().toISOString().split('T')[0],
+            status: c.status?.toLowerCase() || 'pending',
+            client: c.clientName || 'General',
+            filedDate: c.filedAt || null,
+            penalty: parseFloat(c.penalty) || 0
+          }));
+          setCompliances(mappedData);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch compliance:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchCompliance();
   }, [selectedClient]);
 
   const stats = {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiUserPlus, FiCheckCircle, FiClock, FiFileText, FiMail, FiUser, FiCalendar, FiEdit2, FiEye, FiPlus, FiSearch, FiChevronDown, FiCheck, FiBriefcase } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getAllCandidates } from '../../../service/api';
 
 const OnboardingKamTab = ({ isDarkMode, selectedClient }) => {
   const [onboardingData, setOnboardingData] = useState([]);
@@ -11,45 +12,45 @@ const OnboardingKamTab = ({ isDarkMode, selectedClient }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
-    const mockData = [
-      { 
-        id: 1, empId: 'EMP007', name: 'Ravi Verma', email: 'ravi@company.com', position: 'Junior Developer', department: 'Engineering',
-        joiningDate: '2026-03-20', status: 'in-progress', progress: 65, avatar: 'RV', photo: 'https://randomuser.me/api/portraits/men/22.jpg',
-        tasks: [
-          { name: 'Documents Submitted', completed: true },
-          { name: 'ID Card Generated', completed: true },
-          { name: 'System Access', completed: true },
-          { name: 'Training Started', completed: false },
-          { name: 'Team Introduction', completed: false },
-        ]
-      },
-      { 
-        id: 2, empId: 'EMP008', name: 'Meena Kumari', email: 'meena@company.com', position: 'HR Executive', department: 'HR',
-        joiningDate: '2026-03-22', status: 'pending', progress: 20, avatar: 'MK', photo: 'https://randomuser.me/api/portraits/women/26.jpg',
-        tasks: [
-          { name: 'Documents Submitted', completed: true },
-          { name: 'ID Card Generated', completed: false },
-          { name: 'System Access', completed: false },
-          { name: 'Training Started', completed: false },
-          { name: 'Team Introduction', completed: false },
-        ]
-      },
-      { 
-        id: 3, empId: 'EMP009', name: 'Karan Singh', email: 'karan@company.com', position: 'Sales Manager', department: 'Sales',
-        joiningDate: '2026-03-10', status: 'completed', progress: 100, avatar: 'KS', photo: 'https://randomuser.me/api/portraits/men/45.jpg',
-        tasks: [
-          { name: 'Documents Submitted', completed: true },
-          { name: 'ID Card Generated', completed: true },
-          { name: 'System Access', completed: true },
-          { name: 'Training Started', completed: true },
-          { name: 'Team Introduction', completed: true },
-        ]
-      },
-    ];
-    setTimeout(() => {
-      setOnboardingData(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchOnboarding = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllCandidates({ 
+          stage: 'Joined',
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.candidates || []).map(c => ({
+            id: c.id,
+            empId: c.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: c.name,
+            email: c.email,
+            position: c.designation || 'New Hire',
+            department: c.clientName || 'HR Operations',
+            joiningDate: c.joiningDate || new Date().toISOString(),
+            status: c.status?.toLowerCase() || 'in-progress',
+            progress: c.status?.toLowerCase() === 'completed' ? 100 : 45,
+            avatar: c.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
+            photo: null,
+            tasks: [
+              { name: 'Documents Submitted', completed: true },
+              { name: 'ID Card Generated', completed: c.status?.toLowerCase() === 'completed' },
+              { name: 'System Access', completed: c.status?.toLowerCase() === 'completed' },
+              { name: 'Training Started', completed: false },
+              { name: 'Team Introduction', completed: false },
+            ]
+          }));
+          setOnboardingData(mappedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch onboarding:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOnboarding();
   }, [selectedClient]);
 
   const statCards = [

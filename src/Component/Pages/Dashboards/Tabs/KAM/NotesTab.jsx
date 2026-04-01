@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiFileText, FiPlus, FiEdit2, FiTrash2, FiSearch, FiCalendar, FiUser, FiTag, FiChevronDown, FiX, FiBookmark, FiMessageSquare } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDeptNotes } from '../../../service/api';
 
 const NotesTab = ({ isDarkMode, selectedClient }) => {
   const [notes, setNotes] = useState([]);
@@ -21,17 +22,34 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
   ];
 
   useEffect(() => {
-    const mockData = [
-      { id: 1, title: 'Quarterly Review Meeting', content: 'Schedule performance reviews for Q1 2026. Ensure all managers submit their reports by March 25th.', category: 'Meeting', priority: 'high', createdBy: 'Admin', createdAt: '2026-03-15', updatedAt: '2026-03-15' },
-      { id: 2, title: 'New Leave Policy Update', content: 'The new leave policy will be effective from April 1st. All employees should acknowledge the policy changes.', category: 'HR Policy', priority: 'urgent', createdBy: 'HR Manager', createdAt: '2026-03-14', updatedAt: '2026-03-14' },
-      { id: 3, title: 'Client ABC Requirements', content: 'Client ABC needs additional resources for the new project. Discuss with team lead about allocation.', category: 'Client', priority: 'normal', createdBy: 'Project Manager', createdAt: '2026-03-12', updatedAt: '2026-03-13' },
-      { id: 4, title: 'Employee Training Schedule', content: 'Technical training sessions scheduled for next week. All engineering team members should attend.', category: 'Employee', priority: 'normal', createdBy: 'Training Head', createdAt: '2026-03-10', updatedAt: '2026-03-10' },
-      { id: 5, title: 'Office Maintenance', content: 'AC maintenance scheduled for March 20th. Office will close early at 5 PM.', category: 'General', priority: 'low', createdBy: 'Admin', createdAt: '2026-03-08', updatedAt: '2026-03-08' },
-    ];
-    setTimeout(() => {
-      setNotes(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchNotes = async () => {
+      try {
+        setLoading(true);
+        const response = await getDeptNotes({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.notes || []).map(n => ({
+            id: n.id,
+            title: n.title,
+            content: n.content,
+            category: n.category || 'General',
+            priority: n.priority?.toLowerCase() || 'normal',
+            createdBy: n.createdByName || 'System',
+            createdAt: n.createdAt || new Date().toISOString(),
+            updatedAt: n.updatedAt || new Date().toISOString()
+          }));
+          setNotes(mappedData);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notes:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchNotes();
   }, [selectedClient]);
 
   const getPriorityConfig = (priority) => priorities.find(p => p.value === priority) || priorities[1];

@@ -310,17 +310,39 @@ const PayrollTab = ({ isDarkMode, selectedClient }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
-    const mockData = [
-      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', designation: 'Software Engineer', basic: 50000, hra: 20000, allowances: 10000, deductions: 8000, netPay: 72000, status: 'processed', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 2, empId: 'EMP002', name: 'Priya Singh', designation: 'HR Manager', basic: 45000, hra: 18000, allowances: 8000, deductions: 7100, netPay: 63900, status: 'processed', avatar: 'PS', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 3, empId: 'EMP003', name: 'Amit Kumar', designation: 'Sales Executive', basic: 35000, hra: 14000, allowances: 7000, deductions: 5600, netPay: 50400, status: 'pending', avatar: 'AK', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
-      { id: 4, empId: 'EMP004', name: 'Sneha Patel', designation: 'Accountant', basic: 40000, hra: 16000, allowances: 8000, deductions: 6400, netPay: 57600, status: 'processed', avatar: 'SP', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 5, empId: 'EMP005', name: 'Vikram Rao', designation: 'Team Lead', basic: 60000, hra: 24000, allowances: 12000, deductions: 9600, netPay: 86400, status: 'pending', avatar: 'VR', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-    ];
-    setTimeout(() => {
-      setPayrollData(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchPayroll = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllDeptPayslips({ 
+          department: 'HR Operations',
+          date: selectedDate 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.payslips || []).map(ps => ({
+            id: ps.id,
+            empId: ps.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: ps.memberName,
+            designation: ps.designation || 'Department Staff',
+            basic: parseFloat(ps.basicSalary) || 0,
+            hra: parseFloat(ps.hra) || 0,
+            allowances: (parseFloat(ps.conveyance) || 0) + (parseFloat(ps.medical) || 0) + (parseFloat(ps.special) || 0),
+            deductions: parseFloat(ps.totalDeductions) || 0,
+            netPay: parseFloat(ps.netSalary) || 0,
+            status: 'processed',
+            avatar: ps.memberName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
+            photo: null
+          }));
+          setPayrollData(mappedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch payroll:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayroll();
   }, [selectedDate, selectedClient]);
 
   const totals = payrollData.reduce((acc, emp) => ({

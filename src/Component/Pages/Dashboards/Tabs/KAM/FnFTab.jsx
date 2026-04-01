@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiDollarSign, FiFileText, FiDownload, FiCheck, FiClock, FiAlertCircle, FiEye, FiPlus, FiSearch, FiChevronDown, FiX, FiTrendingUp, FiTrendingDown, FiPercent } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getFnFList } from '../../../service/api';
 
 const FnFTab = ({ isDarkMode, selectedClient }) => {
   const [fnfData, setFnfData] = useState([]);
@@ -11,39 +12,47 @@ const FnFTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    const mockData = [
-      {
-        id: 1, empId: 'EMP010', name: 'Rajesh Khanna', department: 'Engineering', lastWorkingDay: '2026-03-15', status: 'pending',
-        photo: 'https://randomuser.me/api/portraits/men/52.jpg',
-        settlement: {
-          basicSalary: 50000, hra: 20000, leavesEncashed: 8, leaveAmount: 15385, bonus: 10000, gratuity: 0, 
-          pf: 12000, professionalTax: 200, otherDeductions: 500,
-          grossEarnings: 95385, grossDeductions: 12700, netPayable: 82685
+    const fetchFnF = async () => {
+      try {
+        setLoading(true);
+        const response = await getFnFList({ 
+          department: 'HR Operations' 
+        });
+        
+        if (response.success) {
+          const mappedData = (response.list || []).map(f => ({
+            id: f.id,
+            empId: f.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
+            name: f.memberName,
+            department: f.department || 'HR Operations',
+            lastWorkingDay: f.lastWorkingDay || new Date().toISOString(),
+            status: f.status?.toLowerCase() || 'pending',
+            photo: null,
+            settlement: {
+              basicSalary: parseFloat(f.basicSalary) || 0,
+              hra: parseFloat(f.hra) || 0,
+              leavesEncashed: parseFloat(f.leavesEncashed) || 0,
+              leaveAmount: parseFloat(f.leaveAmount) || 0,
+              bonus: parseFloat(f.bonus) || 0,
+              gratuity: parseFloat(f.gratuity) || 0,
+              pf: parseFloat(f.pf) || 0,
+              professionalTax: parseFloat(f.professionalTax) || 0,
+              otherDeductions: parseFloat(f.otherDeductions) || 0,
+              grossEarnings: parseFloat(f.grossEarnings) || 0,
+              grossDeductions: parseFloat(f.grossDeductions) || 0,
+              netPayable: parseFloat(f.netPayable) || 0
+            }
+          }));
+          setFnfData(mappedData);
         }
-      },
-      {
-        id: 2, empId: 'EMP011', name: 'Suman Devi', department: 'Marketing', lastWorkingDay: '2026-03-31', status: 'processing',
-        photo: 'https://randomuser.me/api/portraits/women/55.jpg',
-        settlement: {
-          basicSalary: 45000, hra: 18000, leavesEncashed: 12, leaveAmount: 20769, bonus: 8000, gratuity: 25000, 
-          pf: 10800, professionalTax: 200, otherDeductions: 300,
-          grossEarnings: 116769, grossDeductions: 11300, netPayable: 105469
-        }
-      },
-      {
-        id: 3, empId: 'EMP012', name: 'Anil Kapoor', department: 'Sales', lastWorkingDay: '2026-02-10', status: 'completed',
-        photo: 'https://randomuser.me/api/portraits/men/58.jpg',
-        settlement: {
-          basicSalary: 60000, hra: 24000, leavesEncashed: 5, leaveAmount: 11538, bonus: 15000, gratuity: 50000, 
-          pf: 14400, professionalTax: 200, otherDeductions: 1000,
-          grossEarnings: 160538, grossDeductions: 15600, netPayable: 144938
-        }
-      },
-    ];
-    setTimeout(() => {
-      setFnfData(mockData);
-      setLoading(false);
-    }, 500);
+      } catch (error) {
+        console.error('Failed to fetch FnF:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFnF();
   }, [selectedClient]);
 
   const formatCurrency = (amount) => `₹${amount.toLocaleString('en-IN')}`;

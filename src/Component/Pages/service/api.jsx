@@ -35,13 +35,22 @@ const setAuthToken = (token) => {
     delete axiosInstance.defaults.headers.common['Authorization'];
   }
 };
+const getStoredAuthToken = () => {
+  const rawToken = localStorage.getItem('token');
+  if (!rawToken) return null;
+
+  const sanitized = String(rawToken).replace(/^"|"$/g, '').trim();
+  if (!sanitized || sanitized === 'null' || sanitized === 'undefined') return null;
+
+  return sanitized;
+};
 
 // Add request interceptor to always use fresh token from localStorage
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = getStoredAuthToken();
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token.trim()}`;
+      config.headers['Authorization'] = Bearer ${token};
     }
     return config;
   },
@@ -49,6 +58,10 @@ axiosInstance.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+
+// Add request interceptor to always use fresh token from localStorage
+
 
 // Update the login function to include specific headers
 export const superAdminLogin = async (credentials) => {
@@ -2478,6 +2491,19 @@ export const getTeamPerformance = async (supervisorId, period = 'month') => {
   }
 };
 
+// Get department dashboard stats (for recruitment head, operations head, etc.)
+export const getDepartmentDashboardStats = async (department) => {
+  try {
+    const response = await axiosInstance.get('/department/stats', {
+      params: { department }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department dashboard stats:', error);
+    throw error.response?.data || { message: 'Failed to fetch department dashboard stats' };
+  }
+};
+
 // Assign task to KAM (uses /department/tasks)
 export const assignTaskToKAM = async (taskData) => {
   try {
@@ -2509,6 +2535,189 @@ export const getKAMTasks = async (kamId, status) => {
   } catch (error) {
     console.error('Failed to fetch KAM tasks:', error);
     throw error.response?.data || { message: 'Failed to fetch KAM tasks' };
+  }
+};
+
+// ========== HR OPERATIONS DASHBOARD APIs ==========
+
+// Get all department attendance (Head view)
+export const getDeptAttendance = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/dept-attendance', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department attendance:', error);
+    throw error.response?.data || { message: 'Failed to fetch department attendance' };
+  }
+};
+
+// Get all department payslips (Head view)
+export const getAllDeptPayslips = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/all-payslips', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department payslips:', error);
+    throw error.response?.data || { message: 'Failed to fetch department payslips' };
+  }
+};
+
+// Get department leave requests (Head view)
+export const getDeptLeaveRequests = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/dept-leaves', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department leaves:', error);
+    throw error.response?.data || { message: 'Failed to fetch department leaves' };
+  }
+};
+
+// Get department performance overview (Head view)
+export const getDeptPerformanceOverview = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/performance-overview', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch performance overview:', error);
+    throw error.response?.data || { message: 'Failed to fetch performance overview' };
+  }
+};
+
+// Get offboarding employees
+export const getOffboardingEmployees = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/offboarding', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch offboarding list:', error);
+    throw error.response?.data || { message: 'Failed to fetch offboarding list' };
+  }
+};
+
+// KAM Dashboard missing exports
+export const getOffboardingList = getOffboardingEmployees;
+export const getDepartmentMembers = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/members', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department members:', error);
+    throw error.response?.data || { message: 'Failed to fetch department members' };
+  }
+};
+
+export const getFnFList = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/fnf', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch FnF list:', error);
+    throw error.response?.data || { message: 'Failed to fetch FnF list' };
+  }
+};
+
+export const getDeptCompliance = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/compliance', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch compliance data:', error);
+    throw error.response?.data || { message: 'Failed to fetch compliance data' };
+  }
+};
+
+export const getDeptEngagement = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/engagement', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch engagement data:', error);
+    throw error.response?.data || { message: 'Failed to fetch engagement data' };
+  }
+};
+
+export const getDeptNotes = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/notes', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department notes:', error);
+    throw error.response?.data || { message: 'Failed to fetch department notes' };
+  }
+};
+
+export const getDeptPolicies = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/policies', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department policies:', error);
+    throw error.response?.data || { message: 'Failed to fetch department policies' };
+  }
+};
+
+export const getDeptProductivity = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/productivity', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch KAM productivity:', error);
+    throw error.response?.data || { message: 'Failed to fetch KAM productivity' };
+  }
+};
+
+export const getDeptTasksByClient = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/tasks-by-client', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch tasks by client:', error);
+    throw error.response?.data || { message: 'Failed to fetch tasks by client' };
+  }
+};
+
+// Get department documents
+export const getDeptDocuments = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/documents', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department documents:', error);
+    throw error.response?.data || { message: 'Failed to fetch department documents' };
+  }
+};
+
+// Get department announcements
+export const getDeptAnnouncements = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/announcements', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch announcements:', error);
+    throw error.response?.data || { message: 'Failed to fetch announcements' };
+  }
+};
+
+// Get department tasks
+export const getDeptTasks = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/tasks', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department tasks:', error);
+    throw error.response?.data || { message: 'Failed to fetch department tasks' };
+  }
+};
+
+// Get department members (for Master Data)
+export const getDeptMembers = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/members', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department members:', error);
+    throw error.response?.data || { message: 'Failed to fetch department members' };
   }
 };
 
@@ -3169,18 +3378,7 @@ export const applyLeave = async (data) => {
   }
 };
 
-export const getDeptLeaveRequests = async (department) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/dept-leaves', {
-      params: { department },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch department leaves' };
-  }
-};
+// ... removed duplicate getDeptLeaveRequests ...
 
 export const approveRejectLeave = async (id, data) => {
   try {
@@ -3232,18 +3430,7 @@ export const getMyAttendance = async (month, year) => {
   }
 };
 
-export const getDeptAttendance = async (department, date) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/dept-attendance', {
-      params: { department, date },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch department attendance' };
-  }
-};
+// ... removed duplicate getDeptAttendance ...
 
 // Performance Stats
 export const getPerformanceStats = async (period) => {
@@ -3284,18 +3471,7 @@ export const getMyReports = async () => {
   }
 };
 
-export const getDeptReports = async (department, date) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/dept-reports', {
-      params: { department, date },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch department reports' };
-  }
-};
+// ... removed duplicate getDeptReports ...
 
 // Announcements
 export const getAnnouncements = async (department) => {
@@ -3336,18 +3512,7 @@ export const deleteAnnouncement = async (id) => {
 };
 
 // Documents
-export const getDeptDocuments = async (department) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/documents', {
-      params: { department },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch documents' };
-  }
-};
+// ... removed duplicate getDeptDocuments ...
 
 export const uploadDeptDocument = async (data) => {
   try {
