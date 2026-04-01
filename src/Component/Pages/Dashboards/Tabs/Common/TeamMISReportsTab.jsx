@@ -1,12 +1,13 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUsers, FiPhone, FiEye, FiShare2, FiCalendar,
   FiClock, FiMessageSquare, FiCheckCircle, FiRefreshCw,
   FiSmile, FiMeh, FiFrown, FiStar, FiX, FiSend,
-  FiAlertCircle, FiBarChart2,
+  FiAlertCircle, FiBarChart2, FiDownload,
 } from 'react-icons/fi';
 import { getMISReports, addHeadComment } from '../../../service/api';
+import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const moodConfig = {
   Great: { icon: FiStar,   color: '#10b981', bg: '#d1fae5', label: 'Great 🌟' },
@@ -219,9 +220,10 @@ const ReportRow = ({ report, onComment }) => {
 const TeamMISReportsTab = () => {
   const [reports, setReports]         = useState([]);
   const [loading, setLoading]         = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getLocalISODate());
   const [commentTarget, setCommentTarget] = useState(null);
   const [toast, setToast]             = useState(null);
+  const dateInputRef = useRef(null);
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
@@ -234,7 +236,11 @@ const TeamMISReportsTab = () => {
       const res = await getMISReports({ date: selectedDate, department: 'HR Recruitment' });
       setReports(res.reports || []);
     } catch (err) {
-      showToast(err.message || 'Failed to fetch MIS reports', 'error');
+      if (err?.message?.toLowerCase().includes('authorization') || err?.message?.toLowerCase().includes('token') || err?.status === 401) {
+        showToast('Session expired. Please login again.', 'error');
+      } else {
+        showToast(err.message || 'Failed to fetch MIS reports', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -255,6 +261,83 @@ const TeamMISReportsTab = () => {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   });
 
+  const openDatePicker = () => {
+    if (!dateInputRef.current) return;
+
+    if (typeof dateInputRef.current.showPicker === 'function') {
+      dateInputRef.current.showPicker();
+      return;
+    }
+
+    dateInputRef.current.focus();
+    dateInputRef.current.click();
+  };
+
+  const downloadMISCSV = () => {
+    const header = [
+      'Date',
+      'Member Name',
+      'Calls',
+      'Profiles Visited',
+      'Profiles Shared',
+      'Candidates Contacted',
+      'Interviews Arranged',
+      'Work Hours',
+      'Mood',
+      'Summary',
+      'Blockers',
+      'Head Comment',
+    ];
+
+    const escapeCSV = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+    const rows = reports.map((report) => [
+      selectedDate,
+      report.memberName || '',
+      report.callsCount || 0,
+      report.profilesVisited || 0,
+      report.profilesShared || 0,
+      report.candidatesContacted || 0,
+      report.interviewsArranged || 0,
+      report.workHours || 0,
+      report.mood || '',
+      report.summary || '',
+      report.blockers || '',
+      report.headComment || '',
+    ]);
+
+    rows.push([
+      selectedDate,
+      'TOTAL',
+      totals.callsCount,
+      totals.profilesVisited,
+      totals.profilesShared,
+      totals.candidatesContacted,
+      totals.interviewsArranged,
+      '',
+      '',
+      '',
+      '',
+      '',
+    ]);
+
+    const csvContent = [header, ...rows]
+      .map((row) => row.map(escapeCSV).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `team-mis-${selectedDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast('MIS report downloaded');
+  };
+
   return (
     <div className="space-y-6">
       <AnimatePresence>
@@ -268,22 +351,45 @@ const TeamMISReportsTab = () => {
           <p className="text-sm text-gray-500 mt-1">Daily performance summary — HR Recruitment team</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={downloadMISCSV}
+            disabled={loading || reports.length === 0}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Download MIS report as CSV"
+          >
+            <FiDownload className="w-4 h-4" />
+            Download CSV
+          </button>
           <button onClick={fetchReports} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors" title="Refresh">
             <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl">
+          <button
+            type="button"
+            onClick={openDatePicker}
+            className="relative flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors"
+            title="Select report date"
+          >
             <FiCalendar className="w-4 h-4 text-gray-400" />
+            <span className="text-sm font-medium text-gray-700">{new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-GB')}</span>
             <input
-              type="date" value={selectedDate}
+              ref={dateInputRef}
+              type="date"
+              value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="text-sm font-medium text-gray-700 focus:outline-none bg-transparent"
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              aria-label="Select report date"
             />
-          </div>
+          </button>
         </div>
       </div>
 
       {/* Date label */}
-      <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={openDatePicker}
+        className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-indigo-50/60 transition-colors"
+        title="Open calendar"
+      >
         <FiCalendar className="w-4 h-4 text-indigo-500" />
         <p className="text-sm font-semibold text-gray-700">{formattedDate}</p>
         {!loading && (
@@ -291,7 +397,7 @@ const TeamMISReportsTab = () => {
             {reports.length} report{reports.length !== 1 ? 's' : ''} submitted
           </span>
         )}
-      </div>
+      </button>
 
       {/* Team Totals Banner */}
       {!loading && reports.length > 0 && (

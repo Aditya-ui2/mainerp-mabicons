@@ -7,6 +7,7 @@ import {
   FiEdit3, FiStar, FiRefreshCw, FiMessageSquare,
 } from 'react-icons/fi';
 import { submitDailyReport, getMyReports } from '../../../service/api';
+import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const SHIFT_START = '09:00';
 const SHIFT_END   = '18:30';
@@ -326,7 +327,7 @@ const DailyReportTab = () => {
     }
   };
 
-  const todayStr    = new Date().toISOString().split('T')[0];
+  const todayStr    = getLocalISODate();
   const todayReport = reports.find(r => r.date === todayStr);
 
   return (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiDownload, FiEye, FiCalendar, FiTrendingUp, FiFileText, FiSearch, FiChevronDown, FiUsers, FiX, FiPrinter, FiCheckCircle, FiLoader, FiAlertCircle, FiArrowLeft, FiActivity } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 // Custom Rupee Icon
 const RupeeIcon = ({ className }) => (
@@ -62,7 +63,7 @@ const EmployeePayrollDetailView = ({ employee, onBack, isDarkMode, getStatusConf
                 <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Payroll Period</span>
                 <div className="flex items-center gap-2 font-bold text-blue-600">
                   <FiCalendar className="w-4 h-4" />
-                  {formatDate(new Date().toISOString().slice(0, 10))}
+                  {formatDate(getLocalISODate())}
                 </div>
               </div>
               <div className="flex flex-col gap-1">
@@ -333,7 +334,7 @@ const PayrollTab = ({ isDarkMode, selectedClient }) => {
   const [activeView, setActiveView] = useState('list'); // 'list', 'details', 'run-payroll'
   const [payrollData, setPayrollData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState(getLocalISODate());
   const [searchTerm, setSearchTerm] = useState('');
   const [showPayslip, setShowPayslip] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);

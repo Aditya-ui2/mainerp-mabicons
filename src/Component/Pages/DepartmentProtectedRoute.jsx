@@ -10,7 +10,8 @@ import { Navigate } from 'react-router-dom';
  * @param {string} props.redirectPath - Path to redirect if unauthorized
  */
 const DepartmentProtectedRoute = ({ children, allowedDepartment, redirectPath = '/login' }) => {
-  const token = localStorage.getItem('token');
+  const rawToken = localStorage.getItem('token');
+  const token = rawToken ? String(rawToken).replace(/^"|"$/g, '').trim() : null;
   const department = localStorage.getItem('department');
   const userType = localStorage.getItem('userType');
 
@@ -20,10 +21,15 @@ const DepartmentProtectedRoute = ({ children, allowedDepartment, redirectPath = 
   }
 
   // ✅ Get department directly from localStorage (no JWT decode needed)
-  const userDepartment = department || 'Both';
+  const userDepartment = department ? String(department).replace(/^"|"$/g, '').trim() : 'Both';
 
   // ✅ 'Both' allowedDepartment = access to everything
   if (allowedDepartment === 'Both') {
+    return children;
+  }
+
+  // ✅ User with 'Both' department can access any department route
+  if (userDepartment === 'Both') {
     return children;
   }
 

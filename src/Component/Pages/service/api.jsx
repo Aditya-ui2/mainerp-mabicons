@@ -50,7 +50,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     const token = getStoredAuthToken();
     if (token) {
-      config.headers['Authorization'] = Bearer ${token};
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -2229,7 +2229,10 @@ export const getAllOffers = async () => {
 
 export const saveOffer = async (offerData) => {
   try {
-    const response = await axiosInstance.post('/recruitment/offers', offerData);
+    const config = offerData instanceof FormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : undefined;
+    const response = await axiosInstance.post('/recruitment/offers', offerData, config);
     return response.data;
   } catch (error) {
     console.error('Failed to save offer:', error);
@@ -2651,6 +2654,36 @@ export const getDeptNotes = async (params = {}) => {
   } catch (error) {
     console.error('Failed to fetch department notes:', error);
     throw error.response?.data || { message: 'Failed to fetch department notes' };
+  }
+};
+
+export const createDeptNote = async (noteData) => {
+  try {
+    const response = await axiosInstance.post('/department/notes', noteData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create department note:', error);
+    throw error.response?.data || { message: 'Failed to create department note' };
+  }
+};
+
+export const updateDeptNote = async (noteId, noteData) => {
+  try {
+    const response = await axiosInstance.put(`/department/notes/${noteId}`, noteData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update department note:', error);
+    throw error.response?.data || { message: 'Failed to update department note' };
+  }
+};
+
+export const deleteDeptNote = async (noteId) => {
+  try {
+    const response = await axiosInstance.delete(`/department/notes/${noteId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete department note:', error);
+    throw error.response?.data || { message: 'Failed to delete department note' };
   }
 };
 

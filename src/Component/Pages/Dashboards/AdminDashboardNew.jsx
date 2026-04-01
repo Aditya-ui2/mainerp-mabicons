@@ -182,7 +182,7 @@ const AdminDashboardNew = () => {
         return (
           <div className="space-y-6">
             {/* Welcome Banner */}
-            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-6 text-white relative overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-600 via-blue-700 to-slate-700 rounded-2xl p-6 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4" />
               <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-white/10 rounded-full translate-y-1/2" />
               <div className="relative z-10">
@@ -331,7 +331,7 @@ const AdminDashboardNew = () => {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-slate-700 flex items-center justify-center text-white text-xs font-medium">
                               {task.assignee?.charAt(0) || 'U'}
                             </div>
                             <span className="text-sm text-gray-600">{task.assignee || 'Unassigned'}</span>

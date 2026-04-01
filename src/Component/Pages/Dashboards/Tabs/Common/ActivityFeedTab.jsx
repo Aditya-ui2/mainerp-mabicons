@@ -16,6 +16,41 @@ import {
 } from 'react-icons/fi';
 import { getDepartmentActivityLogs } from '../../../service/api';
 
+const getDateRangeByPreset = (preset) => {
+  const now = new Date();
+  const end = new Date(now);
+  const start = new Date(now);
+
+  if (preset === 'week') {
+    start.setDate(now.getDate() - 7);
+    return { start, end };
+  }
+  if (preset === 'month') {
+    start.setMonth(now.getMonth() - 1);
+    return { start, end };
+  }
+  if (preset === 'year') {
+    start.setFullYear(now.getFullYear() - 1);
+    return { start, end };
+  }
+
+  return null;
+};
+
+const extractClientName = (activity) => {
+  if (activity?.metadata?.clientName) return activity.metadata.clientName;
+  if (activity?.metadata?.client) return activity.metadata.client;
+
+  const text = `${activity?.description || ''} ${activity?.action || ''}`;
+  const quoted = text.match(/"([^"]+)"/);
+  if (activity?.relatedEntityType === 'Client' && quoted?.[1]) return quoted[1];
+
+  const forClientMatch = text.match(/for\s+([A-Za-z0-9&\-\s]+)/i);
+  if (forClientMatch?.[1]) return forClientMatch[1].trim();
+
+  return null;
+};
+
 const ActivityTypeIcon = ({ type }) => {
   const icons = {
     task: FiCheckCircle,
@@ -65,6 +100,10 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedKam, setSelectedKam] = useState('all');
+  const [selectedClient, setSelectedClient] = useState('all');
+  const [datePreset, setDatePreset] = useState('all');
+  const [customDate, setCustomDate] = useState({ from: '', to: '' });
 
   const actionTypes = ['all', 'task', 'leave', 'payroll', 'attendance', 'candidate', 'interview', 'general'];
 
@@ -94,9 +133,30 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
     setRefreshing(false);
   };
 
-  const filteredActivities = activities.filter(a => 
-    filter === 'all' || a.actionType === filter
-  );
+  const kamOptions = ['all', ...new Set(activities.map((a) => a.performedByName).filter(Boolean))];
+  const clientOptions = ['all', ...new Set(activities.map((a) => extractClientName(a)).filter(Boolean))];
+
+  const filteredActivities = activities.filter((a) => {
+    const typeOk = filter === 'all' || a.actionType === filter;
+    const kamOk = selectedKam === 'all' || a.performedByName === selectedKam;
+
+    const clientName = extractClientName(a);
+    const clientOk = selectedClient === 'all' || clientName === selectedClient;
+
+    const activityDate = new Date(a.createdAt);
+    let dateOk = true;
+    if (datePreset === 'custom' && customDate.from && customDate.to) {
+      const from = new Date(customDate.from);
+      const to = new Date(customDate.to);
+      to.setHours(23, 59, 59, 999);
+      dateOk = activityDate >= from && activityDate <= to;
+    } else if (datePreset !== 'all') {
+      const range = getDateRangeByPreset(datePreset);
+      if (range) dateOk = activityDate >= range.start && activityDate <= range.end;
+    }
+
+    return typeOk && kamOk && clientOk && dateOk;
+  });
 
   if (loading) {
     return (
@@ -177,6 +237,76 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
             {type}
           </button>
         ))}
+      </div>
+
+      {/* Advanced Filters */}
+      <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <select
+            value={selectedKam}
+            onChange={(e) => setSelectedKam(e.target.value)}
+            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
+          >
+            <option value="all">All KAMs / Members</option>
+            {kamOptions.filter((k) => k !== 'all').map((kam) => (
+              <option key={kam} value={kam}>{kam}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedClient}
+            onChange={(e) => setSelectedClient(e.target.value)}
+            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
+          >
+            <option value="all">All Clients</option>
+            {clientOptions.filter((c) => c !== 'all').map((client) => (
+              <option key={client} value={client}>{client}</option>
+            ))}
+          </select>
+
+          <select
+            value={datePreset}
+            onChange={(e) => setDatePreset(e.target.value)}
+            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
+          >
+            <option value="all">All Time</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedKam('all');
+              setSelectedClient('all');
+              setDatePreset('all');
+              setCustomDate({ from: '', to: '' });
+              setFilter('all');
+            }}
+            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Reset Filters
+          </button>
+        </div>
+
+        {datePreset === 'custom' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+            <input
+              type="date"
+              value={customDate.from}
+              onChange={(e) => setCustomDate((prev) => ({ ...prev, from: e.target.value }))}
+              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
+            />
+            <input
+              type="date"
+              value={customDate.to}
+              onChange={(e) => setCustomDate((prev) => ({ ...prev, to: e.target.value }))}
+              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
+            />
+          </div>
+        )}
       </div>
 
       {/* Activity List */}

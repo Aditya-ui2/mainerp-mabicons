@@ -2,7 +2,8 @@ import { Navigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const token = localStorage.getItem('token');
+  const rawToken = localStorage.getItem('token');
+  const token = rawToken ? String(rawToken).replace(/^"|"$/g, '').trim() : null;
 
   // Check if token exists
   if (!token) {
@@ -35,10 +36,14 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
       }
     }
 
-    // Since your token doesn't have exp, you might want to use iat to check token age
-    // For example, expire token after 24 hours
-    const tokenAge = Date.now() / 1000 - decoded.iat;
-    if (tokenAge > 24 * 60 * 60) { // 24 hours in seconds
+    // Prefer JWT exp if present; fallback to iat-based window.
+    if (decoded.exp && Date.now() / 1000 > decoded.exp) {
+      localStorage.removeItem('token');
+      return <Navigate to="/login" />;
+    }
+
+    const tokenAge = decoded.iat ? (Date.now() / 1000 - decoded.iat) : 0;
+    if (tokenAge > 7 * 24 * 60 * 60) { // 7 days in seconds
       localStorage.removeItem('token');
       return <Navigate to="/login" />;
     }

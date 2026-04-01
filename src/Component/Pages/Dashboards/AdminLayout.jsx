@@ -20,7 +20,6 @@ import logo from '../../../assets/images/mabicons logo blue.png';
 
 /**
  * AdminLayout - GroceryMart Style Dashboard Layout
- * 
  * @param {Object} props
  * @param {React.ReactNode} props.children - Main content
  * @param {Array} props.sidebarItems - Sidebar menu configuration
@@ -52,6 +51,7 @@ const AdminLayout = ({
   
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
+  const contentRef = useRef(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -66,6 +66,12 @@ const AdminLayout = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activeTab]);
 
   const toggleMenu = (menuId) => {
     setExpandedMenus(prev => ({
@@ -112,33 +118,32 @@ const AdminLayout = ({
         `}
       >
         {/* Logo Section */}
-        <div className={`flex items-center h-16 border-b border-slate-200 bg-white ${sidebarCollapsed ? 'justify-start px-3.5' : 'justify-between px-4'}`}>
+        <div className={`flex items-center h-16 border-b border-slate-700/50 bg-gradient-to-r from-[#0f1629] to-[#1a1f3c] ${sidebarCollapsed ? 'justify-center px-3' : 'justify-between px-4'}`}>
           {!sidebarCollapsed && (
             <div className="flex items-center gap-3 overflow-hidden">
-              <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain" />
+              <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain brightness-0 invert" />
             </div>
           )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex p-1.5 rounded-lg hover:bg-slate-50 transition-all duration-200 group"
+            className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all duration-300 group backdrop-blur-sm"
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <FiMenu style={{ width: '24px', height: '24px' }} className="text-[#1E88E5] group-hover:scale-110 transition-transform" />
+            <FiMenu style={{ width: '20px', height: '20px' }} className="text-white group-hover:scale-110 transition-transform" />
           </button>
           <button
             onClick={() => setMobileSidebarOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg hover:bg-slate-50 text-[#1E88E5] transition-colors"
+            className="lg:hidden p-2.5 rounded-xl bg-white/10 hover:bg-red-500/20 border border-white/10 text-white hover:text-red-400 transition-all duration-300"
           >
-            <FiX style={{ width: '24px', height: '24px' }} />
+            <FiX style={{ width: '20px', height: '20px' }} />
           </button>
         </div>
 
         {/* Dashboard Link */}
         <div className="px-3 py-4">
           <button
-            onClick={() => {
-              setActiveTab && setActiveTab('Dashboard');
-              setMobileSidebarOpen(false);
-            }}
+            onClick={() => setActiveTab && setActiveTab('Dashboard')}
             className={`
               w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
               ${activeTab === 'Dashboard' 
@@ -279,21 +284,14 @@ const AdminLayout = ({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
         <header className="h-16 bg-white flex items-center justify-between px-4 lg:px-6 shadow-sm">
-          {/* Left: Logo + Mobile Menu */}
-          <div className="flex items-center gap-4">
-            <img src={logo} alt="Mabicons" className="h-8 lg:hidden object-contain" />
-          </div>
-
+          {/* Left: Mobile Menu */}
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className={`lg:hidden p-2 transition-all duration-300 rounded-xl active:scale-95 ${
-                mobileSidebarOpen 
-                ? 'bg-[#0f1629] text-white shadow-lg' 
-                : 'text-[#1E88E5] bg-transparent'
-              }`}
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
+              aria-label="Open menu"
             >
-              <FiMenu style={{ width: '28px', height: '28px' }} />
+              <FiMenu style={{width:'20px',height:'20px'}} />
             </button>
           </div>
 
@@ -408,7 +406,7 @@ const AdminLayout = ({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-gray-100 p-4 lg:p-6">
+        <main ref={contentRef} className="flex-1 overflow-auto bg-gray-100 p-4 lg:p-6">
           {children}
         </main>
       </div>
@@ -429,12 +427,12 @@ export const StatCard = ({
   sparklineData,
 }) => {
   const colorConfig = {
-    blue: { bg: 'bg-blue-50', icon: 'bg-blue-100 text-blue-600', accent: 'bg-blue-500', text: 'text-blue-600' },
-    teal: { bg: 'bg-teal-50', icon: 'bg-teal-100 text-teal-600', accent: 'bg-teal-500', text: 'text-teal-600' },
-    yellow: { bg: 'bg-amber-50', icon: 'bg-amber-100 text-amber-600', accent: 'bg-amber-500', text: 'text-amber-600' },
-    pink: { bg: 'bg-rose-50', icon: 'bg-rose-100 text-rose-600', accent: 'bg-rose-500', text: 'text-rose-600' },
-    purple: { bg: 'bg-violet-50', icon: 'bg-violet-100 text-violet-600', accent: 'bg-violet-500', text: 'text-violet-600' },
-    green: { bg: 'bg-emerald-50', icon: 'bg-emerald-100 text-emerald-600', accent: 'bg-emerald-500', text: 'text-emerald-600' },
+    blue: { accent: 'bg-blue-500', iconStyle: { background: 'linear-gradient(135deg, #1d4ed8, #4338ca)', boxShadow: '0 8px 18px rgba(37, 99, 235, 0.28)' } },
+    teal: { accent: 'bg-cyan-500', iconStyle: { background: 'linear-gradient(135deg, #0f766e, #0369a1)', boxShadow: '0 8px 18px rgba(8, 145, 178, 0.28)' } },
+    yellow: { accent: 'bg-amber-500', iconStyle: { background: 'linear-gradient(135deg, #b45309, #c2410c)', boxShadow: '0 8px 18px rgba(180, 83, 9, 0.28)' } },
+    pink: { accent: 'bg-rose-500', iconStyle: { background: 'linear-gradient(135deg, #be123c, #be185d)', boxShadow: '0 8px 18px rgba(190, 24, 93, 0.26)' } },
+    purple: { accent: 'bg-violet-500', iconStyle: { background: 'linear-gradient(135deg, #6d28d9, #7c3aed)', boxShadow: '0 8px 18px rgba(109, 40, 217, 0.28)' } },
+    green: { accent: 'bg-emerald-500', iconStyle: { background: 'linear-gradient(135deg, #047857, #059669)', boxShadow: '0 8px 18px rgba(5, 150, 105, 0.28)' } },
   };
 
   const colors = colorConfig[color] || colorConfig.blue;
@@ -443,7 +441,8 @@ export const StatCard = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
+      whileHover={{ y: -2 }}
+      className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200"
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -462,8 +461,8 @@ export const StatCard = ({
           </div>
         </div>
         {Icon && (
-          <div className={`p-3 rounded-xl ${colors.icon}`}>
-            <Icon className="w-5 h-5" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={colors.iconStyle}>
+            <Icon className="h-5 w-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4, opacity: 1 }} />
           </div>
         )}
       </div>

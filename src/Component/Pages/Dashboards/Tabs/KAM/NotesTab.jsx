@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiFileText, FiPlus, FiEdit2, FiTrash2, FiSearch, FiCalendar, FiUser, FiTag, FiChevronDown, FiX, FiBookmark, FiMessageSquare } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getDeptNotes } from '../../../service/api';
+import { getDeptNotes, createDeptNote, updateDeptNote, deleteDeptNote } from '../../../service/api';
 
 const NotesTab = ({ isDarkMode, selectedClient }) => {
   const [notes, setNotes] = useState([]);
@@ -21,34 +21,37 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
     { value: 'urgent', label: 'Urgent', gradient: 'from-rose-500 to-pink-600' },
   ];
 
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        setLoading(true);
-        const response = await getDeptNotes({ 
-          department: 'HR Operations' 
-        });
-        
-        if (response.success) {
-          const mappedData = (response.notes || []).map(n => ({
-            id: n.id,
-            title: n.title,
-            content: n.content,
-            category: n.category || 'General',
-            priority: n.priority?.toLowerCase() || 'normal',
-            createdBy: n.createdByName || 'System',
-            createdAt: n.createdAt || new Date().toISOString(),
-            updatedAt: n.updatedAt || new Date().toISOString()
-          }));
-          setNotes(mappedData);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch notes:', error);
-        setLoading(false);
-      }
-    };
+  const mapNote = (n) => ({
+    id: n.id,
+    title: n.title,
+    content: n.content,
+    category: n.category || 'General',
+    priority: n.priority?.toLowerCase() || 'normal',
+    createdBy: n.createdByName || 'System',
+    createdAt: n.createdAt || new Date().toISOString(),
+    updatedAt: n.updatedAt || new Date().toISOString(),
+  });
 
+  const fetchNotes = async () => {
+    try {
+      setLoading(true);
+      const response = await getDeptNotes({
+        department: 'HR Recruitment',
+        limit: 200,
+      });
+
+      if (response.success) {
+        const mappedData = (response.notes || []).map(mapNote);
+        setNotes(mappedData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchNotes();
   }, [selectedClient]);
 
@@ -67,28 +70,50 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
     return gradients[category] || 'from-slate-500 to-slate-600';
   };
 
-  const handleSaveNote = (e) => {
+  const handleSaveNote = async (e) => {
     e.preventDefault();
-    if (editNote) {
-      setNotes(prev => prev.map(n => n.id === editNote.id ? { ...editNote, ...newNote, updatedAt: new Date().toISOString().split('T')[0] } : n));
-    } else {
-      const note = {
-        id: notes.length + 1,
-        ...newNote,
-        createdBy: 'Current User',
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      };
-      setNotes(prev => [note, ...prev]);
+    try {
+      if (editNote) {
+        const response = await updateDeptNote(editNote.id, {
+          title: newNote.title,
+          content: newNote.content,
+          category: newNote.category,
+          priority: newNote.priority,
+          department: 'HR Recruitment',
+        });
+        if (response.success) {
+          setNotes(prev => prev.map(n => n.id === editNote.id ? mapNote(response.note) : n));
+        }
+      } else {
+        const response = await createDeptNote({
+          title: newNote.title,
+          content: newNote.content,
+          category: newNote.category,
+          priority: newNote.priority,
+          department: 'HR Recruitment',
+        });
+        if (response.success) {
+          setNotes(prev => [mapNote(response.note), ...prev]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      return;
     }
+
     setShowAddModal(false);
     setEditNote(null);
     setNewNote({ title: '', content: '', category: 'General', priority: 'normal' });
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this note?')) {
-      setNotes(prev => prev.filter(n => n.id !== id));
+      try {
+        await deleteDeptNote(id);
+        setNotes(prev => prev.filter(n => n.id !== id));
+      } catch (error) {
+        console.error('Failed to delete note:', error);
+      }
     }
   };
 

@@ -14,6 +14,7 @@ import {
   FiCheckCircle,
   FiUsers,
   FiArrowLeft,
+  FiUpload,
 } from 'react-icons/fi';
 import {
   getResumeBankStats,
@@ -27,6 +28,7 @@ import {
   bulkUpdateResumeStatus,
   assignResumesToPosition,
   getResumeDownloadUrl,
+  uploadResumes,
 } from '../../../service/api';
 
 const ResumeBankTab = () => {
@@ -45,6 +47,12 @@ const ResumeBankTab = () => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewFileName, setPreviewFileName] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState([]);
+  const [selectedUploadRoleType, setSelectedUploadRoleType] = useState('');
+  const [customUploadRoleType, setCustomUploadRoleType] = useState('');
+  const [uploadDialog, setUploadDialog] = useState(null);
   
   // Filters
   const [filters, setFilters] = useState({
@@ -285,6 +293,64 @@ const ResumeBankTab = () => {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
+  const handleUploadResumes = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setPendingUploadFiles(files);
+    setSelectedUploadRoleType(filters.roleType || '');
+    setCustomUploadRoleType('');
+    setShowUploadModal(true);
+    e.target.value = '';
+  };
+
+  const handleConfirmUploadResumes = async () => {
+    const resolvedRoleType = (selectedUploadRoleType === '__custom__'
+      ? customUploadRoleType.trim()
+      : selectedUploadRoleType.trim()) || '';
+
+    if (!pendingUploadFiles.length) {
+      setShowUploadModal(false);
+      return;
+    }
+
+    if (!resolvedRoleType) {
+      setUploadDialog({
+        type: 'error',
+        title: 'Role Type Required',
+        message: 'Please select or enter a role type before uploading.'
+      });
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      pendingUploadFiles.forEach((file) => formData.append('resume', file));
+      formData.append('roleType', resolvedRoleType);
+
+      await uploadResumes(formData);
+      await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes()]);
+      setShowUploadModal(false);
+      setUploadDialog({
+        type: 'success',
+        title: 'Upload Complete',
+        message: `${pendingUploadFiles.length} resume(s) uploaded successfully for ${resolvedRoleType}.`
+      });
+      setPendingUploadFiles([]);
+      setSelectedUploadRoleType('');
+      setCustomUploadRoleType('');
+    } catch (error) {
+      setUploadDialog({
+        type: 'error',
+        title: 'Upload Failed',
+        message: error?.message || 'Failed to upload resumes.'
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const formatFileSize = (bytes) => {
     if (!bytes) return '-';
     const kb = bytes / 1024;
@@ -324,7 +390,7 @@ const ResumeBankTab = () => {
       )}
 
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-3">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-11 h-11 rounded-xl 
                           bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] 
@@ -335,49 +401,67 @@ const ResumeBankTab = () => {
             Resume Bank
           </h1>
         </div>
-        <div className="relative">
-          {syncing ? (
-            <button disabled className="px-4 py-2 rounded-lg opacity-50 flex items-center gap-2" style={{ backgroundColor: '#1E88E5', color: '#fff' }}>
-              <FiLoader className="animate-spin" size={20} />
-              Syncing from {syncSource === 'sharepoint' ? 'SharePoint' : 'S3'}...
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={() => setShowSyncMenu(!showSyncMenu)}
-                className="px-4 py-2 rounded-lg flex items-center gap-2"
-                style={{ backgroundColor: '#1E88E5', color: '#fff' }}
-              >
-                <FiRefreshCw size={18} />
-                Refresh Resumes
-                <FiChevronDown size={16} />
+        <div className="flex items-center gap-2">
+          <label
+            className="px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer"
+            style={{ backgroundColor: uploading ? '#64748b' : '#0d9488', color: '#fff' }}
+          >
+            {uploading ? <FiLoader className="animate-spin" size={18} /> : <FiUpload size={18} />}
+            {uploading ? 'Uploading...' : 'Upload Resume'}
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx"
+              onChange={handleUploadResumes}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
+
+          <div className="relative">
+            {syncing ? (
+              <button disabled className="px-4 py-2 rounded-lg opacity-50 flex items-center gap-2" style={{ backgroundColor: '#1E88E5', color: '#fff' }}>
+                <FiLoader className="animate-spin" size={20} />
+                Syncing from {syncSource === 'sharepoint' ? 'SharePoint' : 'S3'}...
               </button>
-              {showSyncMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50">
-                  <button
-                    onClick={() => handleSync('s3')}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg flex items-center gap-3"
-                  >
-                    <span className="text-orange-500 text-lg">☁️</span>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white">Sync from AWS S3</p>
-                      <p className="text-xs text-gray-500">Import from S3 bucket</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleSync('sharepoint')}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-lg flex items-center gap-3 border-t dark:border-gray-700"
-                  >
-                    <span className="text-blue-500 text-lg">📁</span>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white">Sync from SharePoint</p>
-                      <p className="text-xs text-gray-500">Import from SharePoint drive</p>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+            ) : (
+              <>
+                <button
+                  onClick={() => setShowSyncMenu(!showSyncMenu)}
+                  className="px-4 py-2 rounded-lg flex items-center gap-2"
+                  style={{ backgroundColor: '#1E88E5', color: '#fff' }}
+                >
+                  <FiRefreshCw size={18} />
+                  Refresh Resumes
+                  <FiChevronDown size={16} />
+                </button>
+                {showSyncMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50">
+                    <button
+                      onClick={() => handleSync('s3')}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg flex items-center gap-3"
+                    >
+                      <span className="text-orange-500 text-lg">☁️</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white">Sync from AWS S3</p>
+                        <p className="text-xs text-gray-500">Import from S3 bucket</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleSync('sharepoint')}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-lg flex items-center gap-3 border-t dark:border-gray-700"
+                    >
+                      <span className="text-blue-500 text-lg">📁</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white">Sync from SharePoint</p>
+                        <p className="text-xs text-gray-500">Import from SharePoint drive</p>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -463,7 +547,7 @@ const ResumeBankTab = () => {
 
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             <input
               type="text"
@@ -483,26 +567,6 @@ const ResumeBankTab = () => {
             {roleTypes.map(role => (
               <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
             ))}
-          </select>
-
-          <select
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          >
-            <option value="">All Status</option>
-            {statusOptions.map(status => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
-
-          <select
-            value={filters.isStarred}
-            onChange={(e) => handleFilterChange('isStarred', e.target.value)}
-            className="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          >
-            <option value="">All</option>
-            <option value="true">Starred Only</option>
           </select>
         </div>
       </div>
@@ -743,6 +807,114 @@ const ResumeBankTab = () => {
           </div>
         </div>
       </div>
+
+      {/* Resume Preview Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Upload Resume</h3>
+                <p className="text-sm text-slate-500 mt-1">Select a role type for the uploaded resume set.</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setPendingUploadFiles([]);
+                  setSelectedUploadRoleType('');
+                  setCustomUploadRoleType('');
+                }}
+                className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
+              >
+                <FiX size={18} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600">
+                {pendingUploadFiles.length} file(s) selected
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Role Type *</label>
+                <select
+                  value={selectedUploadRoleType}
+                  onChange={(e) => setSelectedUploadRoleType(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm"
+                >
+                  <option value="">Select role type</option>
+                  {roleTypes.map((role) => (
+                    <option key={role.name} value={role.name}>{role.name}</option>
+                  ))}
+                  <option value="__custom__">Other role type</option>
+                </select>
+              </div>
+
+              {selectedUploadRoleType === '__custom__' && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Custom Role Type</label>
+                  <input
+                    type="text"
+                    value={customUploadRoleType}
+                    onChange={(e) => setCustomUploadRoleType(e.target.value)}
+                    placeholder="e.g. HR Executive"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="px-5 py-4 border-t border-slate-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setPendingUploadFiles([]);
+                  setSelectedUploadRoleType('');
+                  setCustomUploadRoleType('');
+                }}
+                className="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmUploadResumes}
+                disabled={uploading}
+                className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}
+              >
+                {uploading ? 'Uploading...' : 'Upload Resume'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {uploadDialog && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className={`text-lg font-bold ${uploadDialog.type === 'success' ? 'text-emerald-700' : 'text-red-700'}`}>
+                {uploadDialog.title}
+              </h3>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-sm text-slate-600">{uploadDialog.message}</p>
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setUploadDialog(null)}
+                className="px-4 py-2.5 text-sm font-semibold text-white rounded-xl"
+                style={{ background: uploadDialog.type === 'success' ? 'linear-gradient(135deg, #10b981, #0f766e)' : 'linear-gradient(135deg, #ef4444, #dc2626)' }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Resume Preview Modal */}
       {showPreviewModal && previewUrl && (

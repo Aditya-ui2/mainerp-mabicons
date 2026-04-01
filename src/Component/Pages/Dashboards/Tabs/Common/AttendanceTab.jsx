@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiClock, FiLogIn, FiLogOut, FiCheckCircle, FiXCircle, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { checkIn, checkOut, getMyAttendance } from '../../../service/api';
+import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const AttendanceTab = () => {
   const [records, setRecords] = useState([]);
@@ -24,7 +25,7 @@ const AttendanceTab = () => {
       const res = await getMyAttendance(month, year);
       const data = res.records || [];
       setRecords(data);
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalISODate();
       const todayRec = data.find(r => r.date === today);
       setTodayRecord(todayRec || null);
       setCheckedIn(todayRec && todayRec.checkIn && !todayRec.checkOut);

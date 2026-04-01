@@ -19,6 +19,7 @@ import {
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { getAllNotifications, markNotificationRead, getRecruitmentStats, getAllRecruitmentPositions, getAllInterviews } from '../service/api';
+import { getLocalISODate } from '../Utilities/dateUtils';
 
 // Lazy load Recruitment Tab Components
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
@@ -67,14 +68,12 @@ const sidebarConfig = [
   {
     heading: 'ASSESSMENT',
     items: [
-      { id: 4, title: 'Screening & Assessment', icon: FiFileText },
       { id: 5, title: 'Offer Management', icon: FiAward },
     ]
   },
   {
     heading: 'ANALYTICS',
     items: [
-      { id: 6, title: 'Recruitment Analytics', icon: FiBarChart2 },
       { id: 7, title: 'Resume Bank', icon: FiDatabase },
     ]
   },
@@ -152,7 +151,7 @@ const HRRecruitmentDashboard = () => {
       }
 
       // 2. Fetch today's interviews
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalISODate();
       const interviewRes = await getAllInterviews({ date: today });
       if (interviewRes.success) {
         setTodayInterviews(interviewRes.data.slice(0, 5)); // Top 5 for today

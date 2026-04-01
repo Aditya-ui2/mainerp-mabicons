@@ -88,7 +88,6 @@ const sidebarConfig = [
   {
     heading: 'ASSESSMENT',
     items: [
-      { id: 7, title: 'Screening', icon: FiFileText },
       { id: 8, title: 'Offer Management', icon: FiAward },
     ],
   },
@@ -342,6 +341,16 @@ const KAMMemberDashboard = () => {
   });
   const [performancePeriod, setPerformancePeriod] = useState('This Month');
   const [quickActionIntent, setQuickActionIntent] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentHour = currentTime.getHours();
+  const greetingText = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
+  const greetingEmoji = currentHour < 12 ? '🌞' : currentHour < 17 ? '☀️' : '🌙';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -655,7 +664,7 @@ const KAMMemberDashboard = () => {
                     <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full pointer-events-none" style={{ background: 'rgba(255,255,255,0.1)' }} />
                     <div className="relative z-10">
                       <h1 className="text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
-                        Good Morning, {userInfo.name.split(' ')[0]}! 🌟
+                        {greetingText}, {userInfo.name.split(' ')[0]}! {greetingEmoji}
                       </h1>
                       <p className="mt-2 text-lg" style={{ color: 'rgba(233, 213, 255, 1)' }}>
                         You have {todayTasks.filter((t) => t.status === 'pending').length} pending tasks today
@@ -833,39 +842,39 @@ const KAMMemberDashboard = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <button
                         onClick={() => handleQuickAction('Job Openings')}
-                        className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
+                        className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-400 hover:from-blue-100 hover:to-indigo-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
                       >
-                        <div className="p-3 rounded-xl bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
-                          <FiBriefcase className="w-6 h-6" />
+                        <div className="p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                          <FiBriefcase className="w-6 h-6" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4 }} />
                         </div>
-                        <span className="text-sm font-semibold text-gray-700">View Jobs</span>
+                        <span className="text-sm font-bold text-blue-900">View Jobs</span>
                       </button>
                       <button
                         onClick={() => handleQuickAction('Candidate Pipeline', 'add-candidate')}
-                        className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all group"
+                        className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
                       >
-                        <div className="p-3 rounded-xl bg-emerald-100 text-emerald-600 group-hover:scale-110 transition-transform">
-                          <FiUserPlus className="w-6 h-6" />
+                        <div className="p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)' }}>
+                          <FiUserPlus className="w-6 h-6" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4 }} />
                         </div>
-                        <span className="text-sm font-semibold text-gray-700">Add Candidate</span>
+                        <span className="text-sm font-bold text-emerald-900">Add Candidate</span>
                       </button>
                       <button
                         onClick={() => handleQuickAction('Interview Schedule', 'schedule-interview')}
-                        className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all group"
+                        className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 hover:border-violet-400 hover:from-violet-100 hover:to-purple-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
                       >
-                        <div className="p-3 rounded-xl bg-violet-100 text-violet-600 group-hover:scale-110 transition-transform">
-                          <FiCalendar className="w-6 h-6" />
+                        <div className="p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
+                          <FiCalendar className="w-6 h-6" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4 }} />
                         </div>
-                        <span className="text-sm font-semibold text-gray-700">Schedule Interview</span>
+                        <span className="text-sm font-bold text-violet-900">Schedule Interview</span>
                       </button>
                       <button
                         onClick={() => handleQuickAction('Daily Report')}
-                        className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all group"
+                        className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 hover:border-amber-400 hover:from-amber-100 hover:to-orange-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
                       >
-                        <div className="p-3 rounded-xl bg-amber-100 text-amber-600 group-hover:scale-110 transition-transform">
-                          <FiEdit3 className="w-6 h-6" />
+                        <div className="p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #f59e0b, #ea580c)' }}>
+                          <FiEdit3 className="w-6 h-6" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4 }} />
                         </div>
-                        <span className="text-sm font-semibold text-gray-700">Submit Report</span>
+                        <span className="text-sm font-bold text-amber-900">Submit Report</span>
                       </button>
                     </div>
                   </div>

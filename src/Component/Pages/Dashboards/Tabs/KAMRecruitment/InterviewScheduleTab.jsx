@@ -29,6 +29,7 @@ import {
   FiArrowLeft,
 } from 'react-icons/fi';
 import InterviewFeedbackModal from './InterviewFeedbackModal';
+import { getLocalISODate, toLocalISODate } from '../../../Utilities/dateUtils';
 import { 
   getAllInterviews, 
   scheduleNewInterview, 
@@ -169,24 +170,27 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
       if (filterStatus !== 'all') filters.status = filterStatus;
       const response = await getAllInterviews(filters);
       const data = response.data || response.interviews || [];
-      const mapped = data.map(iv => ({
+      const mapped = data.map(iv => {
+        const meetingLink = iv.meetingLink || iv.meetLink || null;
+        return {
         id: iv._id || iv.id,
         candidateName: iv.candidateName || iv.candidate?.name || '',
         candidateEmail: iv.candidateEmail || iv.candidate?.email || '',
         position: iv.positionTitle || iv.position?.title || iv.position || '',
         client: iv.clientName || iv.client?.companyName || iv.client || '',
         round: iv.interviewType || iv.round || '',
-        type: iv.meetLink ? 'Video' : (iv.type || 'Video'),
-        date: iv.interviewDate ? new Date(iv.interviewDate).toISOString().split('T')[0] : iv.date || '',
+        type: meetingLink ? 'Video' : (iv.meetingType || iv.type || 'Video'),
+        date: iv.interviewDate ? toLocalISODate(iv.interviewDate) : iv.date || '',
         time: iv.startTime || iv.time || '',
         duration: iv.duration ? `${iv.duration} mins` : '60 mins',
         interviewer: iv.interviewerName || iv.interviewer || '',
         interviewerRole: iv.interviewerRole || '',
         status: iv.status || 'Scheduled',
-        meetLink: iv.meetLink || null,
+        meetLink: meetingLink,
         photo: null,
         feedback: iv.feedback || null,
-      }));
+        };
+      });
       setInterviews(mapped);
       try { localStorage.setItem(CACHE_KEY_INTERVIEWS, JSON.stringify(mapped)); } catch {}
     } catch (error) {
@@ -267,7 +271,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
   }, []);
 
   // Stats
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalISODate();
   const stats = {
     todayCount: interviews.filter(i => i.date === today).length,
     scheduled: interviews.filter(i => i.status === 'Scheduled').length,
@@ -300,12 +304,9 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    if (dateStr === today.toISOString().split('T')[0]) return 'Today';
-    if (dateStr === tomorrow.toISOString().split('T')[0]) return 'Tomorrow';
+
+    if (dateStr === getLocalISODate()) return 'Today';
+    if (dateStr === getLocalISODate(1)) return 'Tomorrow';
     return date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
   };
 

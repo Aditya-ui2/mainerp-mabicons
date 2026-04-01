@@ -105,9 +105,7 @@ const moduleItems = [
   { id: 1, title: 'Job Openings', short: 'Openings', icon: FiBriefcase },
   { id: 2, title: 'Candidate Pipeline', short: 'Pipeline', icon: FiUsers },
   { id: 3, title: 'Interview Schedule', short: 'Interviews', icon: FiCalendar },
-  { id: 4, title: 'Screening & Assessment', short: 'Screening', icon: FiFileText },
   { id: 5, title: 'Offer Management', short: 'Offers', icon: FiAward },
-  { id: 6, title: 'Recruitment Analytics', short: 'Analytics', icon: FiBarChart2 },
   { id: 7, title: 'Resume Bank', short: 'Resumes', icon: FiDatabase },
   { id: 8, title: 'Team Members', short: 'Team', icon: FiUserPlus, section: 'TEAM' },
   { id: 9, title: 'Task Assignment', short: 'Tasks', icon: FiCheckSquare, section: 'TEAM' },
@@ -253,12 +251,12 @@ const KamRecruitmentDashboard = () => {
   const activeModule = moduleItems.find(m => m.title === activeTab);
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-[#f2f0fa]'} p-0 md:p-3 select-none transition-colors duration-300`}>
-      <div className={`relative flex min-h-screen md:min-h-[calc(100vh-1.5rem)] overflow-hidden md:rounded-2xl border-0 md:border ${isDarkMode ? 'border-slate-700 bg-slate-800/90' : 'border-[#dcd8ed] bg-[#f7f5fc]'}`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'} p-0 md:p-3 select-none transition-colors duration-300`}>
+      <div className={`relative flex min-h-screen md:min-h-[calc(100vh-1.5rem)] overflow-hidden md:rounded-2xl border-0 md:border ${isDarkMode ? 'border-slate-700 bg-slate-800/90' : 'border-slate-200 bg-slate-50'}`}>
         {/* ── Background blurs ── */}
-        <div className={`absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t ${isDarkMode ? 'from-violet-900/20' : 'from-[#d9d2fb]/70'} via-transparent to-transparent pointer-events-none`} />
-        <div className={`hidden md:block absolute -bottom-10 left-10 h-44 w-96 rounded-full ${isDarkMode ? 'bg-violet-800/20' : 'bg-[#e7e0ff]/60'} blur-2xl pointer-events-none`} />
-        <div className={`hidden md:block absolute -bottom-14 right-24 h-52 w-[28rem] rounded-full ${isDarkMode ? 'bg-purple-800/20' : 'bg-[#d6d0ff]/50'} blur-2xl pointer-events-none`} />
+        <div className={`absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t ${isDarkMode ? 'from-indigo-900/20' : 'from-indigo-100/50'} via-transparent to-transparent pointer-events-none`} />
+        <div className={`hidden md:block absolute -bottom-10 left-10 h-44 w-96 rounded-full ${isDarkMode ? 'bg-indigo-800/20' : 'bg-indigo-100/40'} blur-2xl pointer-events-none`} />
+        <div className={`hidden md:block absolute -bottom-14 right-24 h-52 w-[28rem] rounded-full ${isDarkMode ? 'bg-slate-700/20' : 'bg-slate-200/40'} blur-2xl pointer-events-none`} />
 
         {/* ═══════ MOBILE OVERLAY ═══════ */}
         {sidebarOpen && (
@@ -276,7 +274,7 @@ const KamRecruitmentDashboard = () => {
             w-[280px] border-r
             ${isDarkMode
               ? 'border-slate-700 bg-gradient-to-b from-slate-800 via-slate-800 to-slate-900/90'
-              : 'border-[#e0dcec] bg-gradient-to-b from-[#f4f1fd] via-[#f2effb] to-[#ddd5fa]/45'
+              : 'border-slate-200 bg-gradient-to-b from-slate-100 via-slate-50 to-indigo-50/50'
             }
             p-5 flex flex-col
             transform transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
@@ -297,10 +295,10 @@ const KamRecruitmentDashboard = () => {
           </div>
 
           {/* Dashboard Type Badge */}
-          <div className={`mb-4 px-4 py-3 rounded-xl ${isDarkMode ? 'bg-violet-900/30 border border-violet-800/50' : 'bg-violet-100 border border-violet-200'}`}>
+          <div className={`mb-4 px-4 py-3 rounded-xl ${isDarkMode ? 'bg-indigo-900/30 border border-indigo-800/50' : 'bg-indigo-100 border border-indigo-200'}`}>
             <div className="flex items-center gap-2">
-              <FiTarget className={`w-4 h-4 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`} />
-              <span className={`text-sm font-semibold ${isDarkMode ? 'text-violet-300' : 'text-violet-700'}`}>HR Recruitment</span>
+              <FiTarget className={`w-4 h-4 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+              <span className={`text-sm font-semibold ${isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>HR Recruitment</span>
             </div>
             <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>Talent Acquisition Hub</p>
           </div>
@@ -330,8 +328,8 @@ const KamRecruitmentDashboard = () => {
                     transition-all duration-200 relative overflow-hidden
                     ${isActive
                       ? isDarkMode
-                        ? 'bg-violet-900/50 text-violet-300 shadow-sm shadow-violet-500/20'
-                        : 'bg-violet-100 text-violet-700 shadow-sm shadow-violet-200/50'
+                        ? 'bg-indigo-900/50 text-indigo-300 shadow-sm shadow-indigo-500/20'
+                        : 'bg-indigo-100 text-indigo-700 shadow-sm shadow-indigo-200/50'
                       : isDarkMode
                         ? 'text-slate-400 hover:bg-slate-700/50 active:scale-[0.98]'
                         : 'text-slate-600 hover:bg-white/50 active:scale-[0.98]'
@@ -340,9 +338,9 @@ const KamRecruitmentDashboard = () => {
                 >
                   {/* Active indicator bar */}
                   {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-violet-500 transition-all duration-300" />
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-indigo-500 transition-all duration-300" />
                   )}
-                  <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? isDarkMode ? 'text-violet-400' : 'text-violet-600' : isDarkMode ? 'text-slate-500' : 'text-slate-400'} group-hover:${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`} />
+                  <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? isDarkMode ? 'text-indigo-400' : 'text-indigo-600' : isDarkMode ? 'text-slate-500' : 'text-slate-400'} group-hover:${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`} />
                   <span className="text-sm leading-none font-medium truncate">{item.title}</span>
                 </button>
               );
@@ -393,7 +391,7 @@ const KamRecruitmentDashboard = () => {
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className={`flex items-center gap-2 rounded-xl ${isDarkMode ? 'bg-slate-700/50 hover:bg-slate-700' : 'bg-white/70 hover:bg-white'} px-3 py-2 transition-all`}
                   >
-                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-slate-700 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                       KR
                     </div>
                     <span className={`hidden sm:block text-sm font-medium ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>KAM User</span>

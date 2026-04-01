@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FiBriefcase,
@@ -27,9 +27,11 @@ import {
   FiX,
   FiTrash2,
   FiPlus,
+  FiEdit3,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getLocalISODate } from '../Utilities/dateUtils';
 import {
   getAllNotifications,
   markNotificationRead,
@@ -42,6 +44,7 @@ import {
   createKAMMember,
   updateKAMMember,
   deleteKAMMember,
+  getDeptNotes,
 } from '../service/api';
 
 // Lazy load Tab Components
@@ -56,6 +59,7 @@ const TeamManagementTab = lazy(() => import('./Tabs/Common/TeamManagementTab'));
 const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
 const TaskAssignmentTab = lazy(() => import('./Tabs/Common/TaskAssignmentTab'));
 const TeamMISReportsTab = lazy(() => import('./Tabs/Common/TeamMISReportsTab'));
+const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -188,14 +192,12 @@ const sidebarConfig = [
   {
     heading: 'ASSESSMENT',
     items: [
-      { id: 7, title: 'Screening & Assessment', icon: FiFileText },
       { id: 8, title: 'Offer Management', icon: FiAward },
     ],
   },
   {
     heading: 'ANALYTICS',
     items: [
-      { id: 9, title: 'Recruitment Analytics', icon: FiBarChart2 },
       { id: 10, title: 'Resume Bank', icon: FiDatabase },
     ],
   },
@@ -204,6 +206,7 @@ const sidebarConfig = [
     items: [
       { id: 11, title: 'Activity Feed', icon: FiActivity },
       { id: 12, title: 'Team MIS Reports', icon: FiFileText },
+      { id: 13, title: 'Notes', icon: FiEdit3 },
     ],
   },
 ];
@@ -227,7 +230,16 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300"
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
+      onClick={() => onViewDetails(kam)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onViewDetails(kam);
+        }
+      }}
     >
       {/* Header with gradient */}
       <div 
@@ -254,9 +266,9 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
             <h3 className="text-lg font-bold text-gray-900">{kam.name}</h3>
             <p className="text-sm text-gray-500">{kam.role}</p>
           </div>
-          <div className="relative">
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <FiMoreVertical className="w-5 h-5 text-gray-500" />
@@ -270,19 +282,19 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
                   className="absolute right-0 top-10 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-10"
                 >
                   <button
-                    onClick={() => { onViewDetails(kam); setShowMenu(false); }}
+                    onClick={(e) => { e.stopPropagation(); onViewDetails(kam); setShowMenu(false); }}
                     className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
                     <FiEye className="w-4 h-4" /> View Details
                   </button>
                   <button
-                    onClick={() => { onAssignTask(kam); setShowMenu(false); }}
+                    onClick={(e) => { e.stopPropagation(); onAssignTask(kam); setShowMenu(false); }}
                     className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
                     <FiCheckSquare className="w-4 h-4" /> Assign Task
                   </button>
                   <button
-                    onClick={() => { onMessage(kam); setShowMenu(false); }}
+                    onClick={(e) => { e.stopPropagation(); onMessage(kam); setShowMenu(false); }}
                     className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
                     <FiSend className="w-4 h-4" /> Send Message
@@ -333,21 +345,6 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="border-t border-gray-100 pt-4">
-          <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Recent Activity</h4>
-          <div className="space-y-2">
-            {kam.recentActivity.slice(0, 2).map((activity, idx) => (
-              <div key={idx} className="flex items-center gap-3 text-sm">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                <span className="text-gray-700 truncate flex-1">
-                  {activity.action}: {activity.candidate || activity.position}
-                </span>
-                <span className="text-gray-400 text-xs whitespace-nowrap">{activity.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </motion.div>
   );
@@ -544,7 +541,7 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
 };
 
 // KAM Performance Tab Content
-const KAMPerformanceContent = ({ teamData, loading }) => {
+const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, months, years, getFilterLabel, showDateFilter, setShowDateFilter }) => {
   if (loading) {
     return (
       <div className="space-y-8">
@@ -578,11 +575,136 @@ const KAMPerformanceContent = ({ teamData, loading }) => {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">KAM Performance Dashboard</h2>
-        <select className="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option>This Month</option>
-          <option>Last Month</option>
-          <option>This Quarter</option>
-        </select>
+        <div className="relative">
+          <button
+            onClick={() => setShowDateFilter(!showDateFilter)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+          >
+            <FiCalendar className="w-4 h-4" />
+            <span className="font-medium">{getFilterLabel()}</span>
+            <svg className={`w-4 h-4 transition-transform ${showDateFilter ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {/* Filter Dropdown */}
+          {showDateFilter && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <p className="font-semibold text-gray-900">Select Time Period</p>
+              </div>
+              
+              {/* Filter Type Tabs */}
+              <div className="flex border-b border-gray-100">
+                {[
+                  { key: 'all', label: 'All Time' },
+                  { key: 'last7days', label: 'Last 7 Days' },
+                  { key: 'year', label: 'Year' },
+                  { key: 'month', label: 'Month' },
+                  { key: 'date', label: 'Date' },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setDateFilter({ ...dateFilter, filterType: tab.key })}
+                    className={`flex-1 px-3 py-3 text-sm font-medium transition-all ${
+                      dateFilter.filterType === tab.key
+                        ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Filter Options */}
+              <div className="p-4 space-y-4">
+                {dateFilter.filterType === 'year' && (
+                  <select
+                    value={dateFilter.year}
+                    onChange={(e) => setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {years.map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                )}
+
+                {dateFilter.filterType === 'month' && (
+                  <>
+                    <select
+                      value={dateFilter.year}
+                      onChange={(e) => setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {years.map((year) => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={dateFilter.month}
+                      onChange={(e) => setDateFilter({ ...dateFilter, month: parseInt(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {months.map((month, idx) => (
+                        <option key={idx} value={idx}>{month}</option>
+                      ))}
+                    </select>
+                  </>
+                )}
+
+                {dateFilter.filterType === 'date' && (
+                  <>
+                    <div
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500 cursor-pointer"
+                      onClick={() => openDatePicker(compactDateInputRef)}
+                    >
+                      <input
+                        ref={compactDateInputRef}
+                        type="date"
+                        value={dateFilter.date}
+                        onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
+                        className="w-full bg-transparent border-0 p-0 text-sm focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setDateFilter({ ...dateFilter, date: getLocalISODate() })}
+                        className="flex-1 px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                      >
+                        Today
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDateFilter({ ...dateFilter, date: getLocalISODate(-1) });
+                        }}
+                        className="flex-1 px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                      >
+                        Yesterday
+                      </button>
+                      <button
+                        onClick={() => setDateFilter({ ...dateFilter, filterType: 'last7days' })}
+                        className="flex-1 px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                      >
+                        Last 7 Days
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="p-3 border-t border-gray-100 bg-gray-50">
+                <button
+                  onClick={() => setShowDateFilter(false)}
+                  className="w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Performance Cards */}
@@ -687,7 +809,7 @@ const KAMPerformanceContent = ({ teamData, loading }) => {
       {/* Leaderboard */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="p-5 border-b border-gray-100">
-          <h3 className="font-bold text-lg text-gray-900">Team Leaderboard - This Month</h3>
+          <h3 className="font-bold text-lg text-gray-900">Team Leaderboard - {getFilterLabel()}</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -805,10 +927,39 @@ const RecruitmentHeadDashboard = () => {
     phoneScreeningCalls: 0,
   });
   const [statsBarData, setStatsBarData] = useState([]);
+  const [recentNotes, setRecentNotes] = useState([]);
+  const [notesLoading, setNotesLoading] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
 
   const showToast = (message, type = 'success') => setToast({ message, type });
   const hideToast = () => setToast(null);
+
+  // Live Time Display
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const formatDateFull = (date) => {
+    return date.toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
   const kamCallsBreakdown = getKamCallsBreakdown(kamTeam);
   const teamCallsTotal = kamCallsBreakdown.reduce((sum, kam) => sum + kam.totalCalls, 0);
   const activePositionsBreakdown = getKamMetricBreakdown(kamTeam, 'activePositions');
@@ -817,14 +968,16 @@ const RecruitmentHeadDashboard = () => {
   const offersBreakdown = getKamMetricBreakdown(kamTeam, 'offersExtended');
   const hiresBreakdown = getKamMetricBreakdown(kamTeam, 'thisWeekHires');
   
-  // Date Filter State
+  // Date Filter State - Default to Today
   const [dateFilter, setDateFilter] = useState({
-    filterType: 'all', // 'all', 'year', 'month', 'date'
+    filterType: 'date', // 'all', 'year', 'month', 'date' - Default to date (today)
     year: new Date().getFullYear(),
     month: new Date().getMonth(),
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalISODate(),
   });
   const [showDateFilter, setShowDateFilter] = useState(false);
+    const compactDateInputRef = useRef(null);
+    const dashboardDateInputRef = useRef(null);
   
   // Generate years from 2020 to current year + 1
   const years = Array.from({ length: new Date().getFullYear() - 2019 + 1 }, (_, i) => 2020 + i);
@@ -833,6 +986,8 @@ const RecruitmentHeadDashboard = () => {
   // Get filter label for display
   const getFilterLabel = () => {
     switch (dateFilter.filterType) {
+      case 'last7days':
+        return 'Last 7 Days';
       case 'year':
         return `Year: ${dateFilter.year}`;
       case 'month':
@@ -845,6 +1000,17 @@ const RecruitmentHeadDashboard = () => {
   };
 
   const buildDateFilterParams = (filter = dateFilter) => {
+    if (filter.filterType === 'last7days') {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 6);
+
+      return {
+        startDate: getLocalISODate(-6),
+        endDate: getLocalISODate(),
+      };
+    }
+
     if (filter.filterType === 'year') {
       return { year: filter.year };
     }
@@ -859,7 +1025,20 @@ const RecruitmentHeadDashboard = () => {
 
     return {};
   };
-  
+
+  const openDatePicker = (inputRef) => {
+    const input = inputRef?.current;
+    if (!input) return;
+
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+      return;
+    }
+
+    input.focus();
+    input.click();
+  };
+
   // Fetch KAM Team data from API
   const fetchKAMTeam = async (filter = dateFilter) => {
     try {
@@ -882,6 +1061,21 @@ const RecruitmentHeadDashboard = () => {
     }
   };
 
+  const fetchRecentNotes = async () => {
+    try {
+      setNotesLoading(true);
+      const response = await getDeptNotes({ department: 'HR Recruitment', limit: 5 });
+      if (response?.success) {
+        setRecentNotes(response.notes || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch recent notes:', error);
+      setRecentNotes([]);
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -894,15 +1088,26 @@ const RecruitmentHeadDashboard = () => {
         fetchNotifications(decoded.id || decoded.userId);
         fetchDashboardData();
         fetchKAMTeam();
+        fetchRecentNotes();
       } catch (e) {
         console.log('Token decode error');
         setUserInfo({ name: localStorage.getItem('userName') || 'Sachin', role: 'Recruitment Head' });
         fetchKAMTeam();
+        fetchRecentNotes();
       }
     } else {
       fetchKAMTeam();
+      fetchRecentNotes();
     }
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'Dashboard') return;
+    const timer = setInterval(() => {
+      fetchRecentNotes();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [activeTab]);
 
   // Apply filter and refresh data
   const applyDateFilter = () => {
@@ -1226,7 +1431,7 @@ const RecruitmentHeadDashboard = () => {
                 />
               );
             case 'KAM Performance':
-              return <KAMPerformanceContent teamData={kamTeam} loading={teamLoading} />;
+              return <KAMPerformanceContent teamData={kamTeam} loading={teamLoading} dateFilter={dateFilter} setDateFilter={setDateFilter} months={months} years={years} getFilterLabel={getFilterLabel} showDateFilter={showDateFilter} setShowDateFilter={setShowDateFilter} />;
             case 'Task Assignment':
               return <TaskAssignmentTab department="HR Recruitment" />;
             case 'Job Openings':
@@ -1247,6 +1452,8 @@ const RecruitmentHeadDashboard = () => {
               return <ActivityFeedTab department="HR Recruitment" />;
             case 'Team MIS Reports':
               return <TeamMISReportsTab />;
+            case 'Notes':
+              return <NotesTab isDarkMode={false} />;
             default:
               // Dashboard
               return (
@@ -1287,14 +1494,30 @@ const RecruitmentHeadDashboard = () => {
                             </button>
                           </div>
                         </div>
-                        <button
-                          onClick={() => setActiveTab('Team Overview')}
-                          className="flex items-center gap-3 px-6 py-3.5 bg-white hover:bg-white/90 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl group"
-                        >
-                          <FiUsers className="w-5 h-5 text-indigo-600" />
-                          <span className="font-bold text-indigo-600">View Team</span>
-                          <FiTrendingUp className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        <div className="flex flex-col items-end gap-4 lg:gap-4">
+                          {/* Live Time Display */}
+                          <div className="bg-white/10 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20 group hover:bg-white/20 transition-all">
+                            <div className="flex items-center gap-3">
+                              <FiClock className="w-5 h-5 text-cyan-300 group-hover:animate-spin" />
+                              <div className="text-right">
+                                <div className="text-lg font-bold text-white tabular-nums font-mono">
+                                  {formatTime(currentTime)}
+                                </div>
+                                <div className="text-xs text-white/70 font-medium">
+                                  {formatDateFull(currentTime)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setActiveTab('Team Overview')}
+                            className="flex items-center gap-3 px-6 py-3.5 bg-white hover:bg-white/90 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl group"
+                          >
+                            <FiUsers className="w-5 h-5 text-indigo-600" />
+                            <span className="font-bold text-indigo-600">View Team</span>
+                            <FiTrendingUp className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1335,6 +1558,7 @@ const RecruitmentHeadDashboard = () => {
                             <div className="flex border-b border-gray-100">
                               {[
                                 { key: 'all', label: 'All Time' },
+                                { key: 'last7days', label: 'Last 7 Days' },
                                 { key: 'year', label: 'Year' },
                                 { key: 'month', label: 'Month' },
                                 { key: 'date', label: 'Date' },
@@ -1389,13 +1613,24 @@ const RecruitmentHeadDashboard = () => {
                               {/* Date Selector */}
                               {dateFilter.filterType === 'date' && (
                                 <div className="mb-3">
-                                  <label className="block text-xs font-medium text-gray-600 mb-2">Select Date</label>
-                                  <input
-                                    type="date"
-                                    value={dateFilter.date}
-                                    onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
-                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50"
-                                  />
+                                  <label
+                                    className="block text-xs font-medium text-gray-600 mb-2 cursor-pointer"
+                                    onClick={() => openDatePicker(dashboardDateInputRef)}
+                                  >
+                                    Select Date
+                                  </label>
+                                  <div
+                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent cursor-pointer"
+                                    onClick={() => openDatePicker(dashboardDateInputRef)}
+                                  >
+                                    <input
+                                      ref={dashboardDateInputRef}
+                                      type="date"
+                                      value={dateFilter.date}
+                                      onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
+                                      className="w-full bg-transparent border-0 p-0 focus:outline-none"
+                                    />
+                                  </div>
                                 </div>
                               )}
                               
@@ -1403,16 +1638,14 @@ const RecruitmentHeadDashboard = () => {
                               {dateFilter.filterType === 'date' && (
                                 <div className="flex flex-wrap gap-2 mb-3">
                                   <button
-                                    onClick={() => setDateFilter({ ...dateFilter, date: new Date().toISOString().split('T')[0] })}
+                                    onClick={() => setDateFilter({ ...dateFilter, date: getLocalISODate() })}
                                     className="px-3 py-1.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors"
                                   >
                                     Today
                                   </button>
                                   <button
                                     onClick={() => {
-                                      const yesterday = new Date();
-                                      yesterday.setDate(yesterday.getDate() - 1);
-                                      setDateFilter({ ...dateFilter, date: yesterday.toISOString().split('T')[0] });
+                                      setDateFilter({ ...dateFilter, date: getLocalISODate(-1) });
                                     }}
                                     className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                                   >
@@ -1420,9 +1653,7 @@ const RecruitmentHeadDashboard = () => {
                                   </button>
                                   <button
                                     onClick={() => {
-                                      const lastWeek = new Date();
-                                      lastWeek.setDate(lastWeek.getDate() - 7);
-                                      setDateFilter({ ...dateFilter, date: lastWeek.toISOString().split('T')[0] });
+                                      setDateFilter({ ...dateFilter, filterType: 'last7days' });
                                     }}
                                     className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                                   >
@@ -1674,50 +1905,54 @@ const RecruitmentHeadDashboard = () => {
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={() => setActiveTab('Job Openings')}
-                          className="flex items-center gap-3 p-4 rounded-xl border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-white hover:border-blue-300 hover:shadow-md transition-all text-left group"
+                          className="flex items-center gap-3 p-4 rounded-2xl border hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group"
+                          style={{ borderColor: '#bfdbfe', background: 'linear-gradient(135deg, #f8fbff, #eef4ff)' }}
                         >
-                          <div className="p-2.5 rounded-xl shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}>
+                          <div className="p-2.5 rounded-xl shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)' }}>
                             <FiBriefcase className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
                           </div>
                           <div>
-                            <span className="text-sm font-bold text-gray-800 block">View Jobs</span>
-                            <span className="text-[10px] text-gray-400">{stats.activePositions} Open</span>
+                            <span className="text-sm font-bold block" style={{ color: '#1e3a8a' }}>View Jobs</span>
+                            <span className="text-[10px] font-semibold" style={{ color: '#334155' }}>{stats.activePositions} Open</span>
                           </div>
                         </button>
                         <button
                           onClick={() => setActiveTab('Candidate Pipeline')}
-                          className="flex items-center gap-3 p-4 rounded-xl border-2 border-emerald-100 bg-gradient-to-br from-emerald-50 to-white hover:border-emerald-300 hover:shadow-md transition-all text-left group"
+                          className="flex items-center gap-3 p-4 rounded-2xl border hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group"
+                          style={{ borderColor: '#99f6e4', background: 'linear-gradient(135deg, #f4fffc, #ecfdf5)' }}
                         >
-                          <div className="p-2.5 rounded-xl shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #10b981, #14b8a6)' }}>
+                          <div className="p-2.5 rounded-xl shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #059669, #0d9488)' }}>
                             <FiUserPlus className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
                           </div>
                           <div>
-                            <span className="text-sm font-bold text-gray-800 block">Pipeline</span>
-                            <span className="text-[10px] text-gray-400">{stats.totalCandidates} Total</span>
+                            <span className="text-sm font-bold block" style={{ color: '#064e3b' }}>Pipeline</span>
+                            <span className="text-[10px] font-semibold" style={{ color: '#334155' }}>{stats.totalCandidates} Total</span>
                           </div>
                         </button>
                         <button
                           onClick={() => setActiveTab('Task Assignment')}
-                          className="flex items-center gap-3 p-4 rounded-xl border-2 border-violet-100 bg-gradient-to-br from-violet-50 to-white hover:border-violet-300 hover:shadow-md transition-all text-left group"
+                          className="flex items-center gap-3 p-4 rounded-2xl border hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group"
+                          style={{ borderColor: '#c4b5fd', background: 'linear-gradient(135deg, #fbf9ff, #f5f3ff)' }}
                         >
-                          <div className="p-2.5 rounded-xl shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #8b5cf6, #a855f7)' }}>
+                          <div className="p-2.5 rounded-xl shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #7c3aed, #9333ea)' }}>
                             <FiCheckSquare className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
                           </div>
                           <div>
-                            <span className="text-sm font-bold text-gray-800 block">Assign Tasks</span>
-                            <span className="text-[10px] text-gray-400">To KAMs</span>
+                            <span className="text-sm font-bold block" style={{ color: '#2e1065' }}>Assign Tasks</span>
+                            <span className="text-[10px] font-semibold" style={{ color: '#334155' }}>To KAMs</span>
                           </div>
                         </button>
                         <button
-                          onClick={() => setActiveTab('Recruitment Analytics')}
-                          className="flex items-center gap-3 p-4 rounded-xl border-2 border-amber-100 bg-gradient-to-br from-amber-50 to-white hover:border-amber-300 hover:shadow-md transition-all text-left group"
+                          onClick={() => setActiveTab('Notes')}
+                          className="flex items-center gap-3 p-4 rounded-2xl border hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group"
+                          style={{ borderColor: '#fcd34d', background: 'linear-gradient(135deg, #fffaf0, #fff7ed)' }}
                         >
-                          <div className="p-2.5 rounded-xl shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)' }}>
-                            <FiBarChart2 className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                          <div className="p-2.5 rounded-xl shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #d97706, #ea580c)' }}>
+                            <FiEdit3 className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
                           </div>
                           <div>
-                            <span className="text-sm font-bold text-gray-800 block">Analytics</span>
-                            <span className="text-[10px] text-gray-400">Reports</span>
+                            <span className="text-sm font-bold block" style={{ color: '#451a03' }}>Notes</span>
+                            <span className="text-[10px] font-semibold" style={{ color: '#334155' }}>Open Notes Tab</span>
                           </div>
                         </button>
                       </div>
@@ -1778,6 +2013,44 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                         )}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Live Notes */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-amber-50 to-white">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl" style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)' }}>
+                          <FiEdit3 className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                        </div>
+                        <h3 className="font-bold text-lg text-gray-900">Live Notes</h3>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('Notes')}
+                        className="px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold hover:bg-amber-200 transition-colors"
+                      >
+                        Manage
+                      </button>
+                    </div>
+                    <div className="divide-y divide-gray-50 max-h-[280px] overflow-y-auto">
+                      {notesLoading ? (
+                        <div className="p-5 text-sm text-gray-500">Loading notes...</div>
+                      ) : recentNotes.length > 0 ? (
+                        recentNotes.map((note) => (
+                          <div key={note.id} className="p-4 hover:bg-amber-50/40 transition-colors">
+                            <p className="font-semibold text-gray-900 line-clamp-1">{note.title}</p>
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{note.content}</p>
+                            <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                              <span>{note.createdByName || 'System'}</span>
+                              <span>{new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center text-sm text-gray-500">
+                          No notes yet. Add notes from the Notes tab.
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2053,7 +2326,7 @@ const RecruitmentHeadDashboard = () => {
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="bg-slate-100 rounded-[28px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-white/60"
+              className="bg-white rounded-[28px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-gray-200"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative overflow-hidden px-7 py-6 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900">
@@ -2123,7 +2396,6 @@ const RecruitmentHeadDashboard = () => {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <p className="font-bold text-slate-900 truncate">{kam.name}</p>
-                                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">Rank #{index + 1}</span>
                               </div>
                               <p className="text-sm text-slate-500 truncate">{kam.role}</p>
                               <p className="text-xs text-slate-400 mt-1">{activeStatsInsight.renderMeta(kam)}</p>

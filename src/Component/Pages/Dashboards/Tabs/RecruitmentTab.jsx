@@ -22,6 +22,7 @@ import { getRecruitmentRequests, uploadResumes, generateMeetLink, closeRecruitme
 import { jwtDecode } from "jwt-decode";
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { getLocalISODate, toLocalISODate } from '../../Utilities/dateUtils';
 
 const RecruitmentTab = ({ isDarkMode }) => {
   const navigate = useNavigate(); // Move this to the top with other hooks
@@ -198,7 +199,7 @@ const RecruitmentTab = ({ isDarkMode }) => {
             clientName: request.name,
             position: request.position,
             candidateName: cv.originalName.split('.')[0], // Extract name from filename
-            sentDate: new Date(request.updatedAt).toISOString().split('T')[0],
+            sentDate: toLocalISODate(request.updatedAt),
             status: shortlistedFileIds.includes(cv.fileId) ? 'Shortlisted' : 'Under Review',
             cvFileName: cv.originalName,
             webViewLink: cv.webViewLink
@@ -261,7 +262,7 @@ const RecruitmentTab = ({ isDarkMode }) => {
       );
 
       // Add uploaded CVs to sentCVs
-      const currentDate = new Date().toISOString().split('T')[0];
+      const currentDate = getLocalISODate();
       const newSentCVs = response.uploadedFiles.resume.map(file => ({
         id: file.fileId,
         clientName: selectedRequest.name,
@@ -853,7 +854,7 @@ const RecruitmentTab = ({ isDarkMode }) => {
                   <input
                     type="date"
                     value={newRequestData.deadline}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getLocalISODate()}
                     onChange={(e) => setNewRequestData({...newRequestData, deadline: e.target.value})}
                     className={`w-full pl-10 p-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500`}
                   />

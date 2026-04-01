@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FiClock, FiCalendar, FiCheckCircle, FiXCircle, FiCoffee, FiDownload, FiSearch, FiChevronDown, FiTrendingUp, FiUsers, FiArrowLeft } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getDeptAttendance } from '../../../service/api';
+import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const EmployeeDetailView = ({ employee, onBack, isDarkMode, getStatusConfig, getAvatarColor }) => {
   const statusConfig = getStatusConfig(employee.status);
@@ -131,7 +132,7 @@ const EmployeeDetailView = ({ employee, onBack, isDarkMode, getStatusConfig, get
 const AttendanceTab = ({ isDarkMode, selectedClient }) => {
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState(getLocalISODate());
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
@@ -144,7 +145,7 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
         setLoading(true);
         const response = await getDeptAttendance({ 
           department: 'HR Operations', 
-          date: parseFloat(selectedDate) ? selectedDate : new Date().toISOString().split('T')[0]
+          date: parseFloat(selectedDate) ? selectedDate : getLocalISODate()
         });
         
         if (response.success) {

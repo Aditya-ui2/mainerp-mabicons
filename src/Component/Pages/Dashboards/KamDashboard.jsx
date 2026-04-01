@@ -252,12 +252,12 @@ const KamDashboard = () => {
   const activeModule = moduleItems.find(m => m.title === activeTab);
 
   return (
-    <div className="h-screen bg-[#f2f0fa] p-0 md:p-3 select-none overflow-hidden">
-      <div className="relative flex h-full md:h-[calc(100vh-1.5rem)] md:rounded-2xl border-0 md:border border-[#dcd8ed] bg-[#f7f5fc] overflow-hidden">
+    <div className="h-screen bg-slate-100 p-0 md:p-3 select-none overflow-hidden">
+      <div className="relative flex h-full md:h-[calc(100vh-1.5rem)] md:rounded-2xl border-0 md:border border-slate-200 bg-slate-50 overflow-hidden">
         {/* ── Background blurs ── */}
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#d9d2fb]/70 via-[#ebe7ff]/35 to-transparent pointer-events-none" />
-        <div className="hidden md:block absolute -bottom-10 left-10 h-44 w-96 rounded-full bg-[#e7e0ff]/60 blur-2xl pointer-events-none" />
-        <div className="hidden md:block absolute -bottom-14 right-24 h-52 w-[28rem] rounded-full bg-[#d6d0ff]/50 blur-2xl pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-indigo-100/50 via-slate-100/20 to-transparent pointer-events-none" />
+        <div className="hidden md:block absolute -bottom-10 left-10 h-44 w-96 rounded-full bg-indigo-100/40 blur-2xl pointer-events-none" />
+        <div className="hidden md:block absolute -bottom-14 right-24 h-52 w-[28rem] rounded-full bg-slate-200/40 blur-2xl pointer-events-none" />
 
         {/* ═══════ MOBILE OVERLAY ═══════ */}
         {sidebarOpen && (
@@ -273,7 +273,7 @@ const KamDashboard = () => {
           className={`
             fixed md:relative z-50 md:z-10 top-0 left-0 h-full
             w-[280px] border-r border-[#e0dcec]
-            bg-gradient-to-b from-[#f4f1fd] via-[#f2effb] to-[#ddd5fa]/45
+            bg-gradient-to-b from-slate-100 via-slate-50 to-indigo-50/50
             p-5 flex flex-col overflow-hidden flex-shrink-0
             transform transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -302,12 +302,12 @@ const KamDashboard = () => {
                   group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left
                   transition-all duration-200 relative overflow-hidden
                   ${activeTab === 'Dashboard'
-                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
-                    : 'text-slate-600 hover:bg-white/50 active:scale-[0.98] border-2 border-dashed border-violet-200 hover:border-violet-300'
+                    ? 'bg-gradient-to-r from-indigo-600 to-slate-700 text-white shadow-lg shadow-indigo-500/30'
+                    : 'text-slate-600 hover:bg-white/70 active:scale-[0.98] border-2 border-dashed border-slate-300 hover:border-slate-400'
                   }
                 `}
               >
-                <FiTrendingUp className={`w-5 h-5 flex-shrink-0 ${activeTab === 'Dashboard' ? 'text-white' : 'text-violet-500'}`} />
+                <FiTrendingUp className={`w-5 h-5 flex-shrink-0 ${activeTab === 'Dashboard' ? 'text-white' : 'text-indigo-600'}`} />
                 <span className="text-sm font-bold truncate">Dashboard Overview</span>
               </button>
 
@@ -315,7 +315,7 @@ const KamDashboard = () => {
               {hasAccessTo('HR Recruitment') && (
                 <button
                   onClick={() => navigate('/kam-recruitment-dashboard')}
-                  className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                  className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 bg-gradient-to-r from-indigo-500 to-cyan-600 text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <FiTarget className="w-5 h-5 flex-shrink-0" />
                   <span className="text-sm font-bold truncate">HR Recruitment</span>
@@ -343,16 +343,16 @@ const KamDashboard = () => {
                           group w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left
                           transition-all duration-200 relative overflow-hidden
                           ${isActive
-                            ? 'bg-violet-100 text-violet-700 shadow-sm shadow-violet-200/50'
-                            : 'text-slate-600 hover:bg-white/50 active:scale-[0.98]'
+                            ? 'bg-indigo-100 text-indigo-700 shadow-sm shadow-indigo-200/50'
+                            : 'text-slate-600 hover:bg-white/70 active:scale-[0.98]'
                           }
                         `}
                       >
                         {/* Active indicator bar */}
                         {isActive && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-violet-500 transition-all duration-300" />
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-indigo-500 transition-all duration-300" />
                         )}
-                        <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-violet-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                        <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
                         <span className="text-sm leading-none font-medium truncate">{item.title}</span>
                       </button>
                     );
@@ -401,7 +401,7 @@ const KamDashboard = () => {
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="flex items-center gap-2 rounded-xl p-1.5 md:p-2 hover:bg-white/60 transition-all duration-200 active:scale-[0.97]"
                   >
-                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-violet-200/50">
+                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-indigo-500 to-slate-700 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-200/50">
                       K
                     </div>
                     <div className="hidden lg:block text-left">
@@ -419,7 +419,7 @@ const KamDashboard = () => {
                   `}>
                     <div className="px-4 py-3 border-b border-slate-100">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 text-white flex items-center justify-center font-bold text-sm">K</div>
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-slate-700 text-white flex items-center justify-center font-bold text-sm">K</div>
                         <div>
                           <p className="font-semibold text-slate-700 text-sm">KAM User</p>
                           <p className="text-xs text-slate-500">kam@mabicons.com</p>

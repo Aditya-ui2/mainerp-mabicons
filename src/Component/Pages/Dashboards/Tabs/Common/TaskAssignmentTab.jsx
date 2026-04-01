@@ -34,7 +34,7 @@ const StatusBadge = ({ status }) => {
   };
   const c = config[status] || config.Pending;
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '9999px', fontSize: '12px', fontWeight: 500, background: c.bg, color: c.text }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '9999px', fontSize: '12px', fontWeight: 700, background: c.bg, color: c.text, border: `1px solid ${c.dot}33` }}>
       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.dot }}></span>
       {status}
     </span>
@@ -50,7 +50,7 @@ const PriorityBadge = ({ priority }) => {
   };
   const c = config[priority] || config.Medium;
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', background: c.bg, color: c.text }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', background: c.bg, color: c.text, border: '1px solid rgba(0,0,0,0.06)' }}>
       <FiFlag style={{ width: '12px', height: '12px' }} />
       {priority}
     </span>
@@ -165,6 +165,19 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
     overdue: tasks.filter(t => t.status === 'Overdue').length,
   };
 
+  const getTaskCardTone = (status) => {
+    switch (status) {
+      case 'Completed':
+        return { border: '#10b981', bg: 'linear-gradient(180deg, #ffffff, #f0fdf4)' };
+      case 'In Progress':
+        return { border: '#3b82f6', bg: 'linear-gradient(180deg, #ffffff, #eff6ff)' };
+      case 'Overdue':
+        return { border: '#ef4444', bg: 'linear-gradient(180deg, #ffffff, #fef2f2)' };
+      default:
+        return { border: '#f59e0b', bg: 'linear-gradient(180deg, #ffffff, #fffbeb)' };
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -255,15 +268,15 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
           { label: 'Completed', value: stats.completed, color: '#10b981' },
           { label: 'Overdue', value: stats.overdue, color: '#ef4444' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-            <p className="text-xs font-medium text-gray-500 uppercase">{stat.label}</p>
+          <div key={stat.label} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm" style={{ borderTop: `3px solid ${stat.color}` }}>
+            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{stat.label}</p>
             <p className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       {/* Search & Filter */}
-      <div className="flex flex-col md:flex-row gap-3">
+      <div className="flex flex-col md:flex-row gap-3 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
         <div className="relative flex-1">
           <FiSearch style={{ width: '20px', height: '20px', color: '#9ca3af', position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
@@ -271,7 +284,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search tasks or assignee..."
-            className="w-full rounded-xl border-2 border-gray-200 py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300"
+            className="w-full rounded-xl border-2 border-gray-200 py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300 bg-white"
           />
         </div>
         <select
@@ -289,7 +302,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
 
       {/* Task List */}
       {filteredTasks.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
+        <div className="text-center py-16 text-gray-500 bg-white rounded-xl border border-gray-200">
           <FiCheckSquare style={{ width: '48px', height: '48px', margin: '0 auto 12px', opacity: 0.3 }} />
           <p className="font-medium">No tasks found</p>
           <p className="text-sm mt-1">Assign your first task to get started</p>
@@ -302,16 +315,17 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow"
+              style={{ borderLeft: `4px solid ${getTaskCardTone(task.status).border}`, background: getTaskCardTone(task.status).bg }}
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <h3 className="font-semibold text-gray-900">{task.title}</h3>
+                    <h3 className="font-bold text-gray-900">{task.title}</h3>
                     <StatusBadge status={task.status} />
                     <PriorityBadge priority={task.priority} />
                   </div>
-                  <p className="text-sm text-gray-500 mb-3">{task.description}</p>
+                  <p className="text-sm text-gray-600 mb-3">{task.description}</p>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1.5">
                       <FiUser style={{ width: '16px', height: '16px' }} />
@@ -331,7 +345,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                     <select
                       value={task.status}
                       onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                      className="text-xs px-3 py-2 rounded-lg border border-gray-200 bg-white font-medium cursor-pointer"
+                      className="text-xs px-3 py-2 rounded-lg border border-gray-300 bg-white font-semibold cursor-pointer"
                     >
                       <option value="Pending">Pending</option>
                       <option value="In Progress">In Progress</option>
@@ -352,7 +366,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                       });
                       setShowModal(true);
                     }}
-                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 border border-transparent hover:border-gray-200"
                   >
                     <FiEdit2 style={{ width: '16px', height: '16px' }} />
                   </motion.button>
@@ -360,7 +374,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setConfirmDelete(task.id)}
-                    className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600"
+                    className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 border border-transparent hover:border-red-100"
                   >
                     <FiTrash2 style={{ width: '16px', height: '16px' }} />
                   </motion.button>
@@ -374,113 +388,141 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-40 bg-gray-100 overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => { setShowModal(false); setEditingTask(null); }}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+              initial={{ opacity: 0, x: 140 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 120 }}
+              transition={{ type: 'spring', damping: 24, stiffness: 220 }}
+              className="min-h-screen px-3 py-4 sm:px-5 sm:py-6"
             >
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {editingTask ? 'Edit Task' : 'Assign New Task'}
-                </h3>
-                <button
-                  onClick={() => { setShowModal(false); setEditingTask(null); }}
-                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-                >
-                  <FiX style={{ width: '20px', height: '20px' }} />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. Process March Payroll"
-                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Task details..."
-                    rows={3}
-                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Assign To *</label>
-                    <select
-                      required
-                      value={formData.assignedTo}
-                      onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                      className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300"
-                    >
-                      <option value="">Select member</option>
-                      {teamMembers.map(member => (
-                        <option key={member.id || member._id} value={member.id || member._id}>{member.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                    <select
-                      value={formData.priority}
-                      onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                      className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300"
-                    >
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                      <option value="Urgent">Urgent</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                  <input
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300"
-                  />
-                </div>
-                <div className="flex justify-end gap-3 pt-4">
+              <div className="max-w-6xl mx-auto space-y-4">
+                <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4 shadow-sm flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => { setShowModal(false); setEditingTask(null); }}
-                    className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    className="text-sm font-semibold text-blue-600 hover:text-blue-700"
                   >
-                    Cancel
+                    {'< Back to Task Assignment'}
                   </button>
+                  <h3 className="text-2xl font-bold text-slate-900 text-center">
+                    {editingTask ? 'Edit Task' : 'Assign New Task'}
+                  </h3>
                   <button
-                    type="submit"
-                    style={{
-                      padding: '10px 20px', fontSize: '14px', fontWeight: 600,
-                      borderRadius: '12px', border: 'none', cursor: 'pointer',
-                      background: 'linear-gradient(135deg, #059669, #0d9488)',
-                      color: '#fff', boxShadow: '0 4px 12px rgba(5,150,105,0.25)',
-                    }}
+                    type="button"
+                    onClick={() => { setShowModal(false); setEditingTask(null); }}
+                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
                   >
-                    {editingTask ? 'Update Task' : 'Assign Task'}
+                    <FiX style={{ width: '18px', height: '18px' }} />
                   </button>
                 </div>
-              </form>
+
+                <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <FiCheckSquare className="w-3 h-3 text-blue-600" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Basic Information</span>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1.5">Task Title *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          placeholder="e.g. Process March Payroll"
+                          className="w-full rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm font-medium placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1.5">Description</label>
+                        <textarea
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          placeholder="Task details and expected output..."
+                          rows={6}
+                          className="w-full rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <FiUser className="w-3 h-3 text-blue-600" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Assignment Details</span>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1.5">Assign To *</label>
+                        <select
+                          required
+                          value={formData.assignedTo}
+                          onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                          className="w-full rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                        >
+                          <option value="">Select member</option>
+                          {teamMembers.map((member) => (
+                            <option key={member.id || member._id} value={member.id || member._id}>{member.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1.5">Priority</label>
+                        <select
+                          value={formData.priority}
+                          onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                          className="w-full rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                        >
+                          <option value="Low">Low</option>
+                          <option value="Medium">Medium</option>
+                          <option value="High">High</option>
+                          <option value="Urgent">Urgent</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center">
+                          <FiCalendar className="w-3 h-3 text-emerald-600" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Schedule</span>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1.5">Due Date</label>
+                        <input
+                          type="date"
+                          value={formData.dueDate}
+                          onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                          className="w-full rounded-xl border-2 border-slate-200 px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 mt-8 pt-5 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => { setShowModal(false); setEditingTask(null); }}
+                      className="px-6 py-2.5 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex items-center gap-2 px-7 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg"
+                      style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 8px 20px rgba(30,136,229,0.3)' }}
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      {editingTask ? 'Update Task' : 'Assign Task'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </div>
         )}

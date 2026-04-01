@@ -21,6 +21,7 @@ import {
   FiAward,
   FiMail,
   FiArrowLeft,
+  FiPaperclip,
 } from 'react-icons/fi';
 import { getAllOffers, saveOffer, getOfferCandidateSuggestions } from '../../../service/api';
 
@@ -62,6 +63,8 @@ const UrgencyBadge = ({ daysLeft }) => {
 const OfferManagementTab = ({ isDarkMode }) => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploadingOfferId, setUploadingOfferId] = useState(null);
+  const [actionNotice, setActionNotice] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -86,6 +89,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
     status: 'Draft',
     negotiationNotes: '',
     hikePercent: '',
+    offerLetter: null,
+    offerLetterName: '',
+    offerLetterUrl: '',
   });
 
   // Fetch offers (candidates at offer stage) from backend
@@ -171,6 +177,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
       status: offer.status || 'Draft',
       negotiationNotes: offer.negotiationNotes || '',
       hikePercent: offer.hikePercent || '',
+        offerLetter: null,
+        offerLetterName: offer.offerLetterFileName || '',
+        offerLetterUrl: offer.offerLetterUrl || '',
     });
     setShowFullPageForm(true);
     setShowOfferModal(false);
@@ -195,6 +204,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
       status: 'Draft',
       negotiationNotes: '',
       hikePercent: '',
+      offerLetter: null,
+      offerLetterName: '',
+      offerLetterUrl: '',
     });
     setShowFullPageForm(true);
     setShowOfferModal(false);
@@ -213,24 +225,35 @@ const OfferManagementTab = ({ isDarkMode }) => {
     setViewingOffer(null);
   };
 
+  const showNotice = (type, text) => {
+    setActionNotice({ type, text });
+    setTimeout(() => {
+      setActionNotice(null);
+    }, 4500);
+  };
+
   // Handle save offer
   const handleSaveOffer = () => {
     (async () => {
       try {
-        const response = await saveOffer({
-          candidateId: formData.candidateId || editingOffer?.candidateId || editingOffer?.id || null,
-          candidateName: formData.candidateName,
-          email: formData.email,
-          position: formData.position,
-          client: formData.client,
-          offeredCTC: formData.offeredCTC,
-          currentCTC: formData.currentCTC,
-          joiningDate: formData.joiningDate,
-          offerDate: formData.offerDate,
-          expiryDate: formData.expiryDate,
-          status: formData.status,
-          negotiationNotes: formData.negotiationNotes,
-        });
+        const payload = new FormData();
+        payload.append('candidateId', formData.candidateId || editingOffer?.candidateId || editingOffer?.id || '');
+        payload.append('candidateName', formData.candidateName || '');
+        payload.append('email', formData.email || '');
+        payload.append('position', formData.position || '');
+        payload.append('client', formData.client || '');
+        payload.append('offeredCTC', formData.offeredCTC || '');
+        payload.append('currentCTC', formData.currentCTC || '');
+        payload.append('joiningDate', formData.joiningDate || '');
+        payload.append('offerDate', formData.offerDate || '');
+        payload.append('expiryDate', formData.expiryDate || '');
+        payload.append('status', formData.status || 'Draft');
+        payload.append('negotiationNotes', formData.negotiationNotes || '');
+        if (formData.offerLetter instanceof File) {
+          payload.append('offerLetter', formData.offerLetter);
+        }
+
+        const response = await saveOffer(payload);
 
         const savedOffer = {
           ...response.data,
@@ -243,6 +266,16 @@ const OfferManagementTab = ({ isDarkMode }) => {
           setOffers(prev => [savedOffer, ...prev.filter(o => o.id !== savedOffer.id)]);
         }
 
+        if (response?.emailNotification?.attempted) {
+          if (response.emailNotification.sent) {
+            showNotice('success', 'Offer letter uploaded and email sent successfully.');
+          } else {
+            showNotice('error', `Offer saved, but email not sent: ${response.emailNotification.reason || 'Unknown issue'}`);
+          }
+        } else {
+          showNotice('success', response?.message || 'Offer saved successfully.');
+        }
+
         setCandidateSuggestions([]);
         setShowCandidateSuggestions(false);
         setShowFullPageForm(false);
@@ -251,6 +284,53 @@ const OfferManagementTab = ({ isDarkMode }) => {
         console.error('Failed to save offer:', error);
       }
     })();
+  };
+
+  const handleQuickUploadOfferLetter = async (offer, file) => {
+    if (!file) return;
+    try {
+      setUploadingOfferId(offer.id);
+      const payload = new FormData();
+      payload.append('candidateId', offer.candidateId || offer.id || '');
+      payload.append('candidateName', offer.candidateName || '');
+      payload.append('email', offer.email || '');
+      payload.append('position', offer.position || '');
+      payload.append('client', offer.client || '');
+      payload.append('offeredCTC', offer.offeredCTC || '');
+      payload.append('currentCTC', offer.currentCTC || '');
+      payload.append('joiningDate', offer.joiningDate || '');
+      payload.append('offerDate', offer.offerDate || '');
+      payload.append('expiryDate', offer.expiryDate || '');
+      payload.append('status', offer.status || 'Draft');
+      payload.append('negotiationNotes', offer.negotiationNotes || '');
+      payload.append('offerLetter', file);
+
+      const response = await saveOffer(payload);
+      const savedOffer = {
+        ...response.data,
+        hikePercent: calculateHike(response.data.currentCTC, response.data.offeredCTC),
+      };
+
+      setOffers(prev => prev.map(item => item.id === offer.id ? savedOffer : item));
+      if (viewingOffer?.id === offer.id) {
+        setViewingOffer(savedOffer);
+      }
+
+      if (response?.emailNotification?.attempted) {
+        if (response.emailNotification.sent) {
+          showNotice('success', `Offer letter uploaded and emailed to ${savedOffer.email || 'candidate'}.`);
+        } else {
+          showNotice('error', `Offer letter uploaded, but email failed: ${response.emailNotification.reason || 'Unknown issue'}`);
+        }
+      } else {
+        showNotice('success', response?.message || 'Offer letter uploaded successfully.');
+      }
+    } catch (error) {
+      console.error('Failed to upload offer letter:', error);
+      showNotice('error', 'Offer letter upload failed. Please try again.');
+    } finally {
+      setUploadingOfferId(null);
+    }
   };
 
   // Stats
@@ -429,6 +509,51 @@ const OfferManagementTab = ({ isDarkMode }) => {
                         className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 hover:border-blue-400/50 ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-600' : 'bg-slate-50 border-slate-200 placeholder:text-slate-400'}`}
                         placeholder="e.g. Senior Software Engineer"
                       />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className={`block text-xs font-bold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Offer Letter</label>
+                      <label className={`flex items-center justify-between gap-3 w-full rounded-xl border-2 px-4 py-3 text-sm font-medium cursor-pointer transition-all ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white hover:border-blue-500/60' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-blue-400/60'}`}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white">
+                            <FiPaperclip className="w-4 h-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="truncate font-semibold">
+                              {formData.offerLetterName || 'Attach offer letter PDF/DOC'}
+                            </div>
+                            <div className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                              Selected candidate ko save karte hi mail chali jayegi.
+                            </div>
+                          </div>
+                        </div>
+                        <span className={`rounded-lg px-3 py-1 text-xs font-bold ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-white text-slate-600 border border-slate-200'}`}>
+                          Choose File
+                        </span>
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setFormData(prev => ({
+                              ...prev,
+                              offerLetter: file,
+                              offerLetterName: file?.name || prev.offerLetterName || '',
+                            }));
+                          }}
+                        />
+                      </label>
+                      {formData.offerLetterUrl ? (
+                        <a
+                          href={formData.offerLetterUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`mt-2 inline-flex items-center gap-2 text-xs font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
+                        >
+                          <FiFileText className="w-4 h-4" />
+                          View current attachment
+                        </a>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -651,6 +776,26 @@ const OfferManagementTab = ({ isDarkMode }) => {
                     </p>
                   </div>
                 )}
+
+                {viewingOffer.offerLetterUrl && (
+                  <div className={`p-6 md:p-8 rounded-3xl border-2 ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
+                    <h3 className={`text-base font-bold mb-4 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style={{ background: 'linear-gradient(135deg, #6366f1, #2563eb)' }}>
+                        <FiPaperclip className="w-5 h-5 text-white" />
+                      </div>
+                      Offer Letter Attachment
+                    </h3>
+                    <a
+                      href={viewingOffer.offerLetterUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold ${isDarkMode ? 'bg-slate-900/60 text-blue-400 border border-slate-700' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}
+                    >
+                      <FiFileText className="w-4 h-4" />
+                      {viewingOffer.offerLetterFileName || 'Open offer letter'}
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -697,6 +842,16 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 <span>Create Offer</span>
               </motion.button>
             </motion.div>
+
+            {actionNotice && (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm font-semibold ${actionNotice.type === 'success'
+                  ? (isDarkMode ? 'bg-emerald-900/30 border-emerald-700 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-700')
+                  : (isDarkMode ? 'bg-red-900/30 border-red-700 text-red-300' : 'bg-red-50 border-red-200 text-red-700')}`}
+              >
+                {actionNotice.text}
+              </div>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -823,6 +978,26 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
                         {/* Right: Actions */}
                         <div className="flex items-center gap-2">
+                          <label
+                            onClick={(e) => e.stopPropagation()}
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all duration-200 ${isDarkMode ? 'bg-blue-900/40 text-blue-300 hover:bg-blue-900/60' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'}`}
+                          >
+                            <FiPaperclip className="w-3.5 h-3.5" />
+                            {uploadingOfferId === offer.id ? 'Uploading...' : 'Upload Letter'}
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                              className="hidden"
+                              disabled={uploadingOfferId === offer.id}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                if (file) {
+                                  handleQuickUploadOfferLetter(offer, file);
+                                }
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
                           <motion.button
                             onClick={(e) => e.stopPropagation()}
                             whileHover={{ scale: 1.05, y: -2 }}
