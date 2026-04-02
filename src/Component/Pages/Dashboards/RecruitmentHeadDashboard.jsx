@@ -174,39 +174,53 @@ const transformKAMData = (apiData) => {
 // Sidebar Configuration for Recruitment Head
 const sidebarConfig = [
   {
-    heading: 'My Team',
     items: [
-      { id: 1, title: 'Team Overview', icon: FiUsers },
-      { id: 2, title: 'KAM Performance', icon: FiTrendingUp },
-      { id: 3, title: 'Task Assignment', icon: FiCheckSquare },
-    ],
-  },
-  {
-    heading: 'Recruitment',
-    items: [
-      { id: 4, title: 'Job Openings', icon: FiBriefcase },
-      { id: 5, title: 'Candidate Pipeline', icon: FiUsers },
-      { id: 6, title: 'Interview Schedule', icon: FiCalendar },
-    ],
-  },
-  {
-    heading: 'Assessment',
-    items: [
-      { id: 8, title: 'Offer Management', icon: FiAward },
-    ],
-  },
-  {
-    heading: 'Analytics',
-    items: [
-      { id: 10, title: 'Resume Bank', icon: FiDatabase },
-    ],
-  },
-  {
-    heading: 'Activity',
-    items: [
-      { id: 11, title: 'Activity Feed', icon: FiActivity },
-      { id: 12, title: 'Team MIS Reports', icon: FiFileText },
-      { id: 13, title: 'Notes', icon: FiEdit3 },
+      {
+        id: 'team',
+        title: 'MY TEAM',
+        icon: FiUsers,
+        submenu: [
+          { id: 1, title: 'Team Overview' },
+          { id: 2, title: 'KAM Performance' },
+          { id: 3, title: 'Task Assignment' },
+        ]
+      },
+      {
+        id: 'recruitment',
+        title: 'RECRUITMENT',
+        icon: FiBriefcase,
+        submenu: [
+          { id: 4, title: 'Job Openings' },
+          { id: 5, title: 'Candidate Pipeline' },
+          { id: 6, title: 'Interview Schedule' },
+        ]
+      },
+      {
+        id: 'assessment',
+        title: 'ASSESSMENT',
+        icon: FiAward,
+        submenu: [
+          { id: 8, title: 'Offer Management' },
+        ]
+      },
+      {
+        id: 'analytics',
+        title: 'ANALYTICS',
+        icon: FiTrendingUp,
+        submenu: [
+          { id: 10, title: 'Resume Bank' },
+        ]
+      },
+      {
+        id: 'activity',
+        title: 'ACTIVITY',
+        icon: FiActivity,
+        submenu: [
+          { id: 11, title: 'Activity Feed' },
+          { id: 12, title: 'Team MIS Reports' },
+          { id: 13, title: 'Notes' },
+        ]
+      },
     ],
   },
 ];
