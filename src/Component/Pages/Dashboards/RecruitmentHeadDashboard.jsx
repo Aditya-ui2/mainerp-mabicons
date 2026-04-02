@@ -60,6 +60,7 @@ const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
 const TaskAssignmentTab = lazy(() => import('./Tabs/Common/TaskAssignmentTab'));
 const TeamMISReportsTab = lazy(() => import('./Tabs/Common/TeamMISReportsTab'));
 const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
+const SettingsTab = lazy(() => import('./Tabs/SettingsTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -1590,6 +1591,8 @@ const RecruitmentHeadDashboard = () => {
               return <TeamMISReportsTab />;
             case 'Notes':
               return <NotesTab isDarkMode={false} />;
+            case 'Settings':
+              return <SettingsTab />;
             default:
               // Dashboard
               return (
