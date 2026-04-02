@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FiUsers, FiUserCheck, FiUserX, FiClock, FiDollarSign, FiTrendingUp, 
+import {
+  FiUsers, FiUserCheck, FiUserX, FiClock, FiDollarSign, FiTrendingUp,
   FiCalendar, FiCheckCircle, FiAlertCircle, FiFileText, FiActivity,
   FiPieChart, FiBarChart2, FiArrowUp, FiArrowDown
 } from 'react-icons/fi';
@@ -20,7 +20,7 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
     { label: 'On Leave', value: stats?.bar?.onLeave || 0, icon: FiCalendar, gradientStyle: 'linear-gradient(135deg, #f59e0b, #ea580c)', textHex: '#d97706', change: '0', positive: true, navigateTo: 'Leave Management' },
     { label: 'Pending Tasks', value: stats?.bar?.pendingActions || 0, icon: FiAlertCircle, gradientStyle: 'linear-gradient(135deg, #f43f5e, #ec4899)', textHex: '#e11d48', change: '0', positive: false, navigateTo: 'Task by Client' },
     { label: 'Attendance Rate', value: stats?.overview?.attendanceRate || '0%', icon: FiClock, gradientStyle: 'linear-gradient(135deg, #3b82f6, #6366f1)', textHex: '#2563eb', change: '0%', positive: true, navigateTo: 'Attendance' },
-    { label: 'Avg. Performance', value: stats?.bar?.satisfaction || '0/5', icon: FiTrendingUp, gradientStyle: 'linear-gradient(135deg, #06b6d4, #3b82f6)', textHex: '#0891b2', change: '0', positive: true, navigateTo: 'Performance Management' },
+    { label: 'Avg. Performance', value: stats?.bar?.satisfaction || '0/5', icon: FiTrendingUp, gradientStyle: 'linear-gradient(135deg, #06b6d4, #3b82f6)', textHex: '#0891b2', change: '0', positive: true, navigateTo: 'Performance' },
   ];
 
   const quickStats = [
@@ -52,7 +52,7 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1,2,3,4,5,6].map(i => (
+          {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className={`h-32 rounded-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`} />
           ))}
         </div>
@@ -64,13 +64,13 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
 
     <div className={`space-y-6 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
       >
         <div className="flex items-center gap-3">
-          <div 
+          <div
             className="p-3 rounded-xl shadow-lg"
             style={{ background: 'linear-gradient(135deg, #8b5cf6, #9333ea)' }}
           >
@@ -96,24 +96,23 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
             onClick={() => handleCardClick(card.navigateTo)}
-            className={`relative overflow-hidden rounded-2xl p-5 border-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer ${
-              isDarkMode 
-                ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' 
-                : 'bg-white border-slate-100 hover:shadow-xl hover:border-violet-200'
-            }`}
+            className={`relative overflow-hidden rounded-2xl p-5 border-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer ${isDarkMode
+              ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600'
+              : 'bg-white border-slate-100 hover:shadow-xl hover:border-violet-200'
+              }`}
           >
             <div className="flex items-start justify-between">
               <div>
                 <p className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   {card.label}
                 </p>
-                <p 
+                <p
                   className="text-2xl lg:text-3xl font-bold"
                   style={{ color: isDarkMode ? '#ffffff' : card.textHex }}
                 >
                   {card.value}
                 </p>
-                <div 
+                <div
                   className="flex items-center gap-1 mt-2 text-xs font-semibold"
                   style={{ color: card.positive ? '#10b981' : '#f43f5e' }}
                 >
@@ -121,7 +120,7 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
                   {card.change}
                 </div>
               </div>
-              <div 
+              <div
                 className="p-3 rounded-xl shadow-lg"
                 style={{ background: card.gradientStyle }}
               >
@@ -141,14 +140,13 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 + idx * 0.05 }}
             onClick={() => handleCardClick(stat.navigateTo)}
-            className={`rounded-xl p-4 border-2 transition-all cursor-pointer hover:scale-[1.02] ${
-              isDarkMode 
-                ? 'bg-slate-800/50 border-slate-700/50' 
-                : 'bg-white border-slate-100'
-            }`}
+            className={`rounded-xl p-4 border-2 transition-all cursor-pointer hover:scale-[1.02] ${isDarkMode
+              ? 'bg-slate-800/50 border-slate-700/50'
+              : 'bg-white border-slate-100'
+              }`}
           >
             <div className="flex items-center gap-3">
-              <div 
+              <div
                 className="p-2.5 rounded-lg"
                 style={{ backgroundColor: stat.bgColor }}
               >
@@ -171,16 +169,15 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
           onClick={() => handleCardClick('Attendance')}
-          className={`rounded-2xl p-6 border-2 cursor-pointer transition-all hover:scale-[1.01] ${
-            isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-100 hover:shadow-lg hover:border-violet-200'
-          }`}
+          className={`rounded-2xl p-6 border-2 cursor-pointer transition-all hover:scale-[1.01] ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-100 hover:shadow-lg hover:border-violet-200'
+            }`}
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <FiBarChart2 className="w-5 h-5" style={{ color: '#8b5cf6' }} />
               <h3 className="font-bold">Attendance Trend</h3>
             </div>
-            <span 
+            <span
               className="text-xs px-3 py-1 rounded-full"
               style={{ backgroundColor: isDarkMode ? '#334155' : '#ede9fe', color: '#7c3aed' }}
             >
@@ -194,7 +191,7 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
                 <div key={idx} className="flex-1 flex flex-col items-center justify-end" style={{ height: '100%' }}>
                   <div
                     className="w-full rounded-t-lg relative group cursor-pointer"
-                    style={{ 
+                    style={{
                       height: `${barHeight}px`,
                       background: 'linear-gradient(to top, #8b5cf6, #a78bfa)',
                       minHeight: '8px'
@@ -219,16 +216,15 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
           onClick={() => handleCardClick('Master Data (Emp)')}
-          className={`rounded-2xl p-6 border-2 cursor-pointer transition-all hover:scale-[1.01] ${
-            isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-100 hover:shadow-lg hover:border-emerald-200'
-          }`}
+          className={`rounded-2xl p-6 border-2 cursor-pointer transition-all hover:scale-[1.01] ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-100 hover:shadow-lg hover:border-emerald-200'
+            }`}
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <FiPieChart className="w-5 h-5" style={{ color: '#10b981' }} />
               <h3 className="font-bold">Department Distribution</h3>
             </div>
-            <span 
+            <span
               className="text-xs px-3 py-1 rounded-full"
               style={{ backgroundColor: isDarkMode ? '#334155' : '#d1fae5', color: '#059669' }}
             >
@@ -240,7 +236,7 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
               const maxCount = Math.max(...departmentData.map(d => d.count));
               const barWidth = Math.round((dept.count / maxCount) * 100);
               return (
-                <motion.div 
+                <motion.div
                   key={dept.name}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -273,9 +269,8 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className={`lg:col-span-2 rounded-2xl p-6 border-2 ${
-            isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-100'
-          }`}
+          className={`lg:col-span-2 rounded-2xl p-6 border-2 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-100'
+            }`}
         >
           <div className="flex items-center gap-2 mb-4">
             <FiActivity className="w-5 h-5" style={{ color: '#3b82f6' }} />
@@ -289,16 +284,15 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6 + idx * 0.05 }}
                 onClick={() => handleCardClick(activity.navigateTo)}
-                className={`flex items-center gap-3 p-3 rounded-xl transition-colors cursor-pointer ${
-                  isDarkMode ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
-                }`}
+                className={`flex items-center gap-3 p-3 rounded-xl transition-colors cursor-pointer ${isDarkMode ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
+                  }`}
               >
-                <div 
+                <div
                   className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  style={{ 
-                    backgroundColor: activity.type === 'success' ? '#10b981' : 
+                  style={{
+                    backgroundColor: activity.type === 'success' ? '#10b981' :
                       activity.type === 'warning' ? '#f59e0b' : '#3b82f6'
-                  }} 
+                  }}
                 />
                 <div className="flex-1">
                   <p className="text-sm font-medium">{activity.action}</p>
@@ -316,9 +310,8 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           onClick={() => handleCardClick('Payroll')}
-          className={`rounded-2xl p-6 border-2 cursor-pointer transition-all hover:scale-[1.02] ${
-            isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-100 hover:shadow-xl hover:border-emerald-200'
-          }`}
+          className={`rounded-2xl p-6 border-2 cursor-pointer transition-all hover:scale-[1.02] ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-100 hover:shadow-xl hover:border-emerald-200'
+            }`}
         >
           <div className="flex items-center gap-2 mb-4">
             <FiDollarSign className="w-5 h-5" style={{ color: '#10b981' }} />
@@ -344,11 +337,11 @@ const DashboardOverviewTab = ({ isDarkMode, onNavigate, stats }) => {
               </span>
             </div>
             <div className={`h-2.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
-              <div 
-                className="h-full rounded-full" 
-                style={{ 
-                  width: `${stats?.payroll?.completion || 0}%`, 
-                  background: 'linear-gradient(to right, #10b981, #14b8a6)' 
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${stats?.payroll?.completion || 0}%`,
+                  background: 'linear-gradient(to right, #10b981, #14b8a6)'
                 }}
               />
             </div>

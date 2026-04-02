@@ -1,7 +1,8 @@
+
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiClipboard, FiPlus, FiClock, FiCheckCircle, FiAlertCircle, FiUser, FiCalendar, FiSearch, FiEdit2, FiEye, FiX, FiTrendingUp } from 'react-icons/fi';
-import { getDeptTasksByClient } from '../../../service/api';
 
 const TaskByClientTab = ({ isDarkMode, selectedClient }) => {
   const [tasks, setTasks] = useState([]);
@@ -10,87 +11,68 @@ const TaskByClientTab = ({ isDarkMode, selectedClient }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClient, setFilterClient] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [hoveredCard, setHoveredCard] = useState(null);
+  const [view, setView] = useState('list');
   const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const response = await getDeptTasksByClient({ 
-          department: 'HR Operations' 
-        });
-        
-        if (response.success) {
-          const mappedTasks = (response.tasks || []).map(t => ({
-            id: t.id,
-            title: t.title,
-            client: t.clientName || 'General',
-            assignedTo: t.assignedToName || 'Unassigned',
-            priority: t.priority?.toLowerCase() || 'normal',
-            status: t.status?.toLowerCase() || 'pending',
-            dueDate: t.dueDate || new Date().toISOString().split('T')[0],
-            progress: parseFloat(t.progress) || 0
-          }));
-          
-          setTasks(mappedTasks);
-          
-          // Derive clients from tasks
-          const uniqueClients = [...new Set(mappedTasks.map(t => t.client))].map((name, index) => ({
-            id: index + 1,
-            name: name
-          }));
-          setClients(uniqueClients);
-          
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch tasks:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchTasks();
+    const mockClients = [
+      { id: 1, name: 'ABC Corporation' },
+      { id: 2, name: 'XYZ Industries' },
+      { id: 3, name: 'Tech Solutions Ltd' },
+      { id: 4, name: 'Global Services Inc' },
+    ];
+    const mockTasks = [
+      { id: 1, title: 'Payroll Processing', client: 'ABC Corporation', assignedTo: 'Rahul Sharma', priority: 'High', status: 'In Progress', dueDate: '2026-03-20', progress: 60 },
+      { id: 2, title: 'Compliance Audit', client: 'XYZ Industries', assignedTo: 'Priya Singh', priority: 'Urgent', status: 'Pending', dueDate: '2026-03-18', progress: 0 },
+      { id: 3, title: 'Employee Onboarding', client: 'Tech Solutions Ltd', assignedTo: 'Amit Kumar', priority: 'Normal', status: 'Completed', dueDate: '2026-03-15', progress: 100 },
+      { id: 4, title: 'Leave Management Setup', client: 'Global Services Inc', assignedTo: 'Sneha Patel', priority: 'Normal', status: 'In Progress', dueDate: '2026-03-22', progress: 40 },
+      { id: 5, title: 'Tax Consultation', client: 'ABC Corporation', assignedTo: 'Vikram Rao', priority: 'High', status: 'Pending', dueDate: '2026-03-25', progress: 0 },
+      { id: 6, title: 'HR Policy Review', client: 'XYZ Industries', assignedTo: 'Rahul Sharma', priority: 'Low', status: 'Completed', dueDate: '2026-03-10', progress: 100 },
+    ];
+    setTimeout(() => {
+      setClients(mockClients);
+      setTasks(mockTasks);
+      setLoading(false);
+    }, 500);
   }, [selectedClient]);
 
   const stats = {
     total: tasks.length,
-    pending: tasks.filter(t => t.status === 'pending').length,
-    inProgress: tasks.filter(t => t.status === 'in-progress').length,
-    completed: tasks.filter(t => t.status === 'completed').length,
+    pending: tasks.filter(t => t.status === 'Pending').length,
+    inProgress: tasks.filter(t => t.status === 'In Progress').length,
+    completed: tasks.filter(t => t.status === 'Completed').length,
   };
 
   const statCards = [
-    { label: 'Total Tasks', value: stats.total, icon: FiClipboard, gradient: 'from-violet-500 to-purple-600', shadowColor: 'shadow-violet-500/25' },
-    { label: 'Pending', value: stats.pending, icon: FiClock, gradient: 'from-amber-500 to-yellow-600', shadowColor: 'shadow-amber-500/25' },
-    { label: 'In Progress', value: stats.inProgress, icon: FiTrendingUp, gradient: 'from-blue-500 to-cyan-600', shadowColor: 'shadow-blue-500/25' },
-    { label: 'Completed', value: stats.completed, icon: FiCheckCircle, gradient: 'from-emerald-500 to-green-600', shadowColor: 'shadow-emerald-500/25' },
+    { label: 'Total Tasks', value: stats.total, icon: FiClipboard, gradient: 'from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1]' },
+    { label: 'Pending Audit', value: stats.pending, icon: FiClock, gradient: 'from-[#FFB300] to-[#F57C00]' },
+    { label: 'In Progress', value: stats.inProgress, icon: FiTrendingUp, gradient: 'from-[#3FA9F5] to-[#1E88E5]' },
+    { label: 'Completed Pulse', value: stats.completed, icon: FiCheckCircle, gradient: 'from-[#81C784] to-[#43A047]' },
   ];
 
   const getPriorityConfig = (priority) => {
     const configs = {
-      'urgent': { gradient: 'from-red-500 to-rose-600', color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30' },
-      'high': { gradient: 'from-orange-500 to-amber-600', color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-      'normal': { gradient: 'from-blue-500 to-cyan-600', color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-      'low': { gradient: 'from-slate-500 to-gray-600', color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-slate-700' },
+      'Urgent': { gradient: 'from-red-500 to-rose-600', color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30' },
+      'High': { gradient: 'from-orange-500 to-amber-600', color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+      'Normal': { gradient: 'from-blue-500 to-cyan-600', color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+      'Low': { gradient: 'from-slate-500 to-gray-600', color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-slate-700' },
     };
-    return configs[priority] || configs.normal;
+    return configs[priority] || configs.Normal;
   };
 
   const getStatusConfig = (status) => {
     const configs = {
-      'pending': { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: FiClock, gradient: 'from-amber-500 to-yellow-600' },
-      'in-progress': { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: FiAlertCircle, gradient: 'from-blue-500 to-cyan-600' },
-      'completed': { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: FiCheckCircle, gradient: 'from-emerald-500 to-green-600' },
+      'Pending': { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: FiClock, gradient: 'from-[#FFB300] to-[#F57C00]' },
+      'In Progress': { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: FiTrendingUp, gradient: 'from-[#3FA9F5] to-blue-600' },
+      'Completed': { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: FiCheckCircle, gradient: 'from-[#81C784] to-[#43A047]' },
     };
-    return configs[status];
+    return configs[status] || configs.Pending;
   };
 
   const getAvatarGradient = (name) => {
     const gradients = [
+      'from-[#3FA9F5] to-[#0D47A1]',
       'from-violet-500 to-purple-600',
-      'from-blue-500 to-cyan-600',
       'from-emerald-500 to-green-600',
       'from-pink-500 to-rose-600',
       'from-amber-500 to-yellow-600',
@@ -100,31 +82,25 @@ const TaskByClientTab = ({ isDarkMode, selectedClient }) => {
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.assignedTo.toLowerCase().includes(searchTerm.toLowerCase());
+      task.assignedTo.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClient = filterClient === 'all' || task.client === filterClient;
     const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
     return matchesSearch && matchesClient && matchesStatus;
   });
 
-  // Skeleton Loader
   if (loading) {
     return (
       <div className={`space-y-6 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-        <div className="flex justify-between items-center">
-          <div>
-            <div className={`h-8 w-56 rounded-lg ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} animate-pulse`} />
-            <div className={`h-4 w-44 rounded mt-2 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} animate-pulse`} />
+        <div className="flex justify-between items-center text-left">
+          <div className="space-y-3">
+            <div className={`h-8 w-64 rounded-lg animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
+            <div className={`h-4 w-48 rounded animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
           </div>
-          <div className={`h-10 w-32 rounded-lg ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} animate-pulse`} />
+          <div className={`h-12 w-40 rounded-xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className={`h-24 rounded-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'} animate-pulse`} />
-          ))}
-        </div>
-        <div className="space-y-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className={`h-44 rounded-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'} animate-pulse`} />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className={`h-28 rounded-[2rem] animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}></div>
           ))}
         </div>
       </div>
@@ -132,445 +108,363 @@ const TaskByClientTab = ({ isDarkMode, selectedClient }) => {
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={`space-y-6 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}
-    >
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <motion.div 
-            className="p-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25"
-            whileHover={{ scale: 1.05, rotate: 5 }}
-          >
-            <FiClipboard className="w-8 h-8 text-white" />
-          </motion.div>
-          <div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-              Tasks by Client
-            </h2>
-            <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              Manage client-specific tasks and deliverables
-            </p>
-          </div>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 transition-shadow"
-        >
-          <FiPlus className="w-5 h-5" />
-          Add Task
-        </motion.button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {statCards.map((stat, index) => (
+    <div className={`relative min-h-[600px] font-[Outfit] ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+      <AnimatePresence mode="wait">
+        {view === 'list' && (
           <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ scale: 1.03, y: -2 }}
-            onMouseEnter={() => setHoveredCard(stat.label)}
-            onMouseLeave={() => setHoveredCard(null)}
-            className={`relative p-4 rounded-2xl border overflow-hidden cursor-pointer transition-all duration-300 ${
-              isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'
-            } ${hoveredCard === stat.label ? `shadow-xl ${stat.shadowColor}` : 'shadow-lg'}`}
+            key="list"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="space-y-12"
           >
-            <div className={`absolute inset-0 bg-gradient-to-r ${stat.gradient} opacity-0 transition-opacity duration-300 ${hoveredCard === stat.label ? 'opacity-10' : ''}`} />
-            <div className="relative flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl bg-gradient-to-r ${stat.gradient} shadow-lg ${stat.shadowColor}`}>
-                <stat.icon className="w-5 h-5 text-white" />
+            {/* Premium Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-12">
+              <div className="flex items-center gap-4 text-left">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-xl shadow-blue-500/20">
+                  <FiClipboard className="w-8 h-8 text-white" />
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-3xl lg:text-4xl font-black text-[#1E88E5] tracking-tight mb-1">
+                    Client Task Hub
+                  </h2>
+                  <div className="flex items-center gap-2 text-slate-600 font-bold">
+                    <FiTrendingUp className="w-4 h-4" />
+                    <span className="text-sm">
+                      Audit Stream • {stats.total} Active Deliverables
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{stat.label}</p>
-                <p className="text-2xl font-bold">{stat.value}</p>
+
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setView('add')}
+                className="flex items-center justify-center gap-2.5 px-6 py-3 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[1.2rem] font-black shadow-xl shadow-blue-500/30 transition-all text-[11px]"
+              >
+                <FiPlus className="w-4 h-4" />
+                Initiate New Task
+              </motion.button>
+            </div>
+
+            {/* Stats Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {statCards.map((stat, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`relative p-8 rounded-3xl border transition-all duration-300 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}
+                >
+                  <div className="relative z-10 flex flex-col gap-4 text-left">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} w-fit shadow-lg shadow-blue-500/10`}>
+                      <stat.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <p className={`text-[12px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{stat.label}</p>
+                    <p className="text-3xl font-black leading-none">{stat.value}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Filter Hub */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`flex flex-col lg:flex-row gap-4 p-4 rounded-[2rem] border ${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-white shadow-xl shadow-blue-500/5'}`}
+            >
+              <div className="relative flex-1 group">
+                <FiSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Scan Protocol Archives..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full bg-white dark:bg-slate-800 rounded-2xl border-none px-14 py-4 focus:ring-4 focus:ring-blue-500/10 font-bold text-sm transition-all shadow-sm`}
+                />
+              </div>
+              <div className="flex gap-4">
+                <select
+                  value={filterClient}
+                  onChange={(e) => setFilterClient(e.target.value)}
+                  className={`bg-white dark:bg-slate-800 rounded-2xl border-none px-6 py-4 focus:ring-4 focus:ring-blue-500/10 font-bold text-sm transition-all shadow-sm cursor-pointer min-w-[200px]`}
+                >
+                  <option value="all">Client Registry</option>
+                  {clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className={`bg-white dark:bg-slate-800 rounded-2xl border-none px-6 py-4 focus:ring-4 focus:ring-blue-500/10 font-bold text-sm transition-all shadow-sm cursor-pointer min-w-[180px]`}
+                >
+                  <option value="all">Status Protocol</option>
+                  <option value="Pending">Pending Audit</option>
+                  <option value="In Progress">Active Execution</option>
+                  <option value="Completed">Verified Pulse</option>
+                </select>
+              </div>
+            </motion.div>
+
+            {/* Task Card Grid */}
+            <div className="flex flex-col gap-4 pb-12">
+              <AnimatePresence mode="popLayout">
+                {filteredTasks.map((task, idx) => {
+                  const statusConfig = getStatusConfig(task.status);
+                  const priorityConfig = getPriorityConfig(task.priority);
+                  return (
+                    <motion.div
+                      key={task.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => { setSelectedTask(task); setView('details'); }}
+                      className={`group relative overflow-hidden rounded-[2.5rem] border transition-all duration-300 cursor-pointer ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm hover:shadow-md hover:border-blue-500/20'}`}
+                    >
+                      <div className="p-6 px-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                        <div className="flex items-center gap-6 min-w-[350px] text-left">
+                          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${priorityConfig.gradient} flex items-center justify-center text-white shadow-lg`}>
+                            <FiClipboard className="w-6 h-6" />
+                          </div>
+                          <div className="flex flex-col">
+                            <h3 className="font-extrabold text-xl capitalize leading-tight group-hover:text-blue-600 transition-colors">{task.title}</h3>
+                            <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-400 tracking-widest uppercase">
+                              <span className="text-blue-500">{task.client}</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                              <FiCalendar className="w-3 h-3" /> Due {task.dueDate}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 max-w-[200px] text-left">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(task.assignedTo)} flex items-center justify-center text-white font-black text-[10px]`}>
+                              {task.assignedTo.charAt(0)}
+                            </div>
+                            <div className="flex flex-col">
+                              <p className="text-xs font-black">{task.assignedTo}</p>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase">Assigned</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-6">
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${statusConfig.color} border border-current opacity-80`}>
+                              {task.status}
+                            </span>
+                          </div>
+                          <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition-all">
+                            <FiChevronRight className="w-5 h-5" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+
+              {filteredTasks.length === 0 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-24 rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
+                  <FiClipboard className="w-16 h-16 mx-auto mb-4 text-slate-200" />
+                  <p className="text-lg font-black text-slate-300 uppercase tracking-widest">No Deliverables Logged</p>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {view === 'add' && (
+          <motion.div
+            key="add"
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="space-y-10"
+          >
+            <div className="flex flex-col gap-8 text-left">
+              <motion.button
+                whileHover={{ x: -10 }}
+                onClick={() => setView('list')}
+                className="flex items-center gap-2.5 self-start px-6 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-black text-[11px]"
+              >
+                <FiArrowLeft className="w-4 h-4" />
+                Return To Hub
+              </motion.button>
+              <div className="flex items-center gap-6">
+                <div className="p-6 rounded-[2.5rem] bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-2xl shadow-blue-500/20">
+                  <FiPlus className="w-12 h-12 text-white" />
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-5xl font-black tracking-tight leading-none">Initiate Task</h2>
+                  <p className="text-sm font-bold text-[#3FA9F5] mt-4 ml-1 uppercase tracking-widest underline underline-offset-8">Client Protocol Entry</p>
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-16 rounded-[4rem] border-2 text-left ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-2xl shadow-blue-500/10'}`}>
+              <form className="space-y-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
+                  <div className="space-y-4">
+                    <label className="block text-[11px] font-black text-[#1E88E5] ml-2 uppercase tracking-widest">Protocol Title</label>
+                    <input type="text" placeholder="Task Classification" className={`w-full rounded-2xl border-2 px-6 py-5 transition-all outline-none font-bold text-base ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`} />
+                  </div>
+                  <div className="space-y-4 text-left">
+                    <label className="block text-[11px] font-black text-[#1E88E5] ml-2 uppercase tracking-widest">Client Registry</label>
+                    <select className={`w-full rounded-2xl border-2 px-6 py-5 transition-all outline-none font-bold text-base ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                      {clients.map(c => <option key={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-4 text-left">
+                    <label className="block text-[11px] font-black text-[#1E88E5] ml-2 uppercase tracking-widest">Strategic Priority</label>
+                    <select className={`w-full rounded-2xl border-2 px-6 py-5 transition-all outline-none font-bold text-base ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                      <option>Urgent</option>
+                      <option>High</option>
+                      <option>Normal</option>
+                      <option>Low</option>
+                    </select>
+                  </div>
+                  <div className="space-y-4 text-left">
+                    <label className="block text-[11px] font-black text-[#1E88E5] ml-2 uppercase tracking-widest">Execution Deadline</label>
+                    <input type="date" className={`w-full rounded-2xl border-2 px-6 py-5 transition-all outline-none font-bold text-base ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`} />
+                  </div>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -5 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setView('list')}
+                  className="px-16 py-6 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[2rem] font-black text-[13px] shadow-2xl shadow-blue-500/40"
+                >
+                  Deploy Task Protocol
+                </motion.button>
+              </form>
+            </div>
+          </motion.div>
+        )}
+
+        {view === 'details' && selectedTask && (
+          <motion.div
+            key="details"
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="space-y-10"
+          >
+            <div className="flex flex-col gap-8 text-left">
+              <motion.button
+                whileHover={{ x: -10 }}
+                onClick={() => setView('list')}
+                className="flex items-center gap-2.5 self-start px-6 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-black text-[11px]"
+              >
+                <FiArrowLeft className="w-4 h-4" />
+                Return To Hub
+              </motion.button>
+              <div className="flex items-center gap-8 text-left">
+                <div className={`w-32 h-32 rounded-[2.5rem] bg-gradient-to-br ${getPriorityConfig(selectedTask.priority).gradient} flex items-center justify-center text-white font-black text-5xl shadow-2xl shadow-blue-500/30`}>
+                  <FiClipboard className="w-16 h-16" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <h2 className="text-5xl font-black tracking-tight leading-none capitalize">{selectedTask.title}</h2>
+                  <div className="flex items-center gap-3 mt-4">
+                    <span className="px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-[#1E88E5] rounded-full text-[11px] font-black uppercase tracking-widest">{selectedTask.client} Registry</span>
+                    <span className={`px-4 py-1.5 rounded-full text-[11px] font-black capitalize ${getStatusConfig(selectedTask.status).color}`}>
+                      Protocol {selectedTask.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
+              <div className={`col-span-1 lg:col-span-2 p-12 rounded-[3.5rem] border ${isDarkMode ? 'bg-slate-900 border-slate-800 shadow-2xl' : 'bg-white border-slate-100 shadow-2xl shadow-blue-500/5'}`}>
+                <div className="space-y-10 text-left">
+                  <div className="border-b border-slate-100 dark:border-slate-800 pb-8 space-y-4">
+                    <h3 className="text-2xl font-black capitalize">Directive Execution Audit</h3>
+                    <p className="text-base font-bold text-slate-500 dark:text-slate-400 leading-relaxed text-left capitalize">Comprehensive analysis of historical task performance and cultural alignment monitoring protocols.</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-8 text-left">
+                    <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800 text-left">
+                      <p className="text-[10px] font-black text-blue-600 mb-2 uppercase tracking-widest">Milestone Date</p>
+                      <p className="text-xl font-extrabold">{selectedTask.dueDate}</p>
+                    </div>
+                    <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800 text-left">
+                      <p className="text-[10px] font-black text-blue-600 mb-2 uppercase tracking-widest">Assigned Partner</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(selectedTask.assignedTo)} flex items-center justify-center text-white text-[10px] uppercase font-black`}>
+                          {selectedTask.assignedTo.charAt(0)}
+                        </div>
+                        <p className="text-xl font-extrabold">{selectedTask.assignedTo}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 text-left">
+                    <div className="flex justify-between items-center text-left">
+                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Execution Progress</p>
+                      <p className="text-xl font-black">{selectedTask.progress}% Complete</p>
+                    </div>
+                    <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${selectedTask.progress}%` }} className="h-full bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-8 text-left">
+                <div className={`p-10 rounded-[3rem] border ${isDarkMode ? 'bg-slate-900 border-slate-800 shadow-2xl' : 'bg-gradient-to-br from-[#1E88E5] to-[#0D47A1] border-blue-500 shadow-2xl shadow-blue-500/20'}`}>
+                  <div className="space-y-6 text-white text-left">
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Status Matrix</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-black capitalize">{selectedTask.status} Protocol</span>
+                      <FiCheckCircle className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <p className="text-sm font-black opacity-80 leading-relaxed text-left capitalize">Audit trail suggests high-integrity execution of deliverables in the current fiscal period.</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-6 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[2rem] font-black text-[12px] shadow-2xl shadow-blue-500/40"
+                  >
+                    Edit Task Details
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setView('list')}
+                    className="w-full px-12 py-6 bg-slate-900 dark:bg-slate-800 text-white rounded-[2rem] font-black text-[12px] shadow-2xl flex items-center justify-center gap-3 border border-slate-800 dark:border-slate-700"
+                  >
+                    Return To Hub
+                  </motion.button>
+                </div>
               </div>
             </div>
           </motion.div>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="flex flex-col sm:flex-row gap-3"
-      >
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full rounded-xl border px-4 py-3 pl-11 transition-all duration-300 focus:ring-2 focus:ring-violet-500/50 ${
-              isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
-            }`}
-          />
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-        </div>
-        <select
-          value={filterClient}
-          onChange={(e) => setFilterClient(e.target.value)}
-          className={`rounded-xl border px-4 py-3 transition-all duration-300 focus:ring-2 focus:ring-violet-500/50 ${
-            isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
-          }`}
-        >
-          <option value="all">All Clients</option>
-          {clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-        </select>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className={`rounded-xl border px-4 py-3 transition-all duration-300 focus:ring-2 focus:ring-violet-500/50 ${
-            isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
-          }`}
-        >
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </motion.div>
-
-      {/* Task Cards */}
-      <AnimatePresence mode="popLayout">
-        <div className="grid gap-4">
-          {filteredTasks.map((task, index) => {
-            const statusConfig = getStatusConfig(task.status);
-            const priorityConfig = getPriorityConfig(task.priority);
-            const StatusIcon = statusConfig.icon;
-            return (
-              <motion.div 
-                key={task.id} 
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.01, y: -2 }}
-                className={`p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl ${
-                  isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'
-                }`}
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className={`p-3 rounded-xl bg-gradient-to-r ${priorityConfig.gradient} shadow-lg`}>
-                      <FiClipboard className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h3 className="font-semibold text-lg">{task.title}</h3>
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-gradient-to-r ${priorityConfig.gradient} text-white`}>
-                          {task.priority}
-                        </span>
-                      </div>
-                      <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                        Client: <span className="font-medium text-violet-500">{task.client}</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className={`w-7 h-7 rounded-full bg-gradient-to-r ${getAvatarGradient(task.assignedTo)} flex items-center justify-center text-white text-xs font-bold`}>
-                          {task.assignedTo.charAt(0)}
-                        </div>
-                        <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>{task.assignedTo}</span>
-                      </div>
-                      <p className={`flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                        <FiCalendar className="w-3.5 h-3.5" /> {task.dueDate}
-                      </p>
-                    </div>
-                    <motion.span 
-                      whileHover={{ scale: 1.05 }}
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${statusConfig.color}`}
-                    >
-                      <StatusIcon className="w-3.5 h-3.5" />
-                      {task.status.replace('-', ' ')}
-                    </motion.span>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                {task.status !== 'pending' && (
-                  <div className="mt-4">
-                    <div className="flex justify-between mb-2">
-                      <span className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Progress</span>
-                      <span className="text-sm font-semibold">{task.progress}%</span>
-                    </div>
-                    <div className={`h-2.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
-                      <motion.div 
-                        className={`h-full rounded-full bg-gradient-to-r ${task.progress === 100 ? 'from-emerald-500 to-green-600' : 'from-violet-500 to-purple-600'}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${task.progress}%` }}
-                        transition={{ duration: 1, ease: 'easeOut', delay: 0.2 }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className={`flex gap-2 mt-4 pt-4 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedTask(task)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-shadow"
-                  >
-                    <FiEye className="w-4 h-4" /> View
-                  </motion.button>
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-shadow"
-                  >
-                    <FiEdit2 className="w-4 h-4" /> Update
-                  </motion.button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </AnimatePresence>
-
-      {/* Empty State */}
-      {filteredTasks.length === 0 && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={`text-center py-16 rounded-2xl border ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
-        >
-          <FiClipboard className={`w-16 h-16 mx-auto mb-4 ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`} />
-          <p className={`text-lg font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No tasks found</p>
-          <p className={`text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Try adjusting your filters</p>
-        </motion.div>
-      )}
-
-      {/* Add Task Modal */}
-      <AnimatePresence>
-        {showAddModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setShowAddModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className={`w-full max-w-lg rounded-2xl p-6 shadow-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 shadow-lg">
-                    <FiPlus className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold">Add New Task</h3>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowAddModal(false)}
-                  className={`p-2 rounded-full ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'}`}
-                >
-                  <FiX className="w-5 h-5" />
-                </motion.button>
-              </div>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Task Title</label>
-                  <input 
-                    type="text" 
-                    className={`w-full rounded-xl border px-4 py-3 transition-all focus:ring-2 focus:ring-violet-500/50 ${
-                      isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'
-                    }`} 
-                    placeholder="Enter task title" 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Client</label>
-                    <select className={`w-full rounded-xl border px-4 py-3 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                      {clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Assign To</label>
-                    <select className={`w-full rounded-xl border px-4 py-3 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                      <option>Rahul Sharma</option>
-                      <option>Priya Singh</option>
-                      <option>Amit Kumar</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Priority</label>
-                    <select className={`w-full rounded-xl border px-4 py-3 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                      <option value="low">Low</option>
-                      <option value="normal">Normal</option>
-                      <option value="high">High</option>
-                      <option value="urgent">Urgent</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Due Date</label>
-                    <input 
-                      type="date" 
-                      className={`w-full rounded-xl border px-4 py-3 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} 
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Description</label>
-                  <textarea 
-                    rows={3} 
-                    className={`w-full rounded-xl border px-4 py-3 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} 
-                    placeholder="Task description..." 
-                  />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <motion.button 
-                    type="button" 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowAddModal(false)} 
-                    className={`flex-1 px-4 py-3 rounded-xl font-medium ${
-                      isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'
-                    }`}
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button 
-                    type="submit" 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-medium shadow-lg"
-                  >
-                    Add Task
-                  </motion.button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
         )}
       </AnimatePresence>
-
-      {/* View Task Modal */}
-      <AnimatePresence>
-        {selectedTask && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setSelectedTask(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className={`w-full max-w-lg rounded-2xl p-6 shadow-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-xl bg-gradient-to-r ${getPriorityConfig(selectedTask.priority).gradient} shadow-lg`}>
-                    <FiClipboard className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">{selectedTask.title}</h3>
-                    <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{selectedTask.client}</p>
-                  </div>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setSelectedTask(null)}
-                  className={`p-2 rounded-full ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'}`}
-                >
-                  <FiX className="w-5 h-5" />
-                </motion.button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                    <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assigned To</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${getAvatarGradient(selectedTask.assignedTo)} flex items-center justify-center text-white text-sm font-bold`}>
-                        {selectedTask.assignedTo.charAt(0)}
-                      </div>
-                      <p className="font-semibold">{selectedTask.assignedTo}</p>
-                    </div>
-                  </div>
-                  <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                    <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Due Date</p>
-                    <p className="font-semibold flex items-center gap-2 mt-1">
-                      <FiCalendar className="w-4 h-4 text-violet-500" />
-                      {selectedTask.dueDate}
-                    </p>
-                  </div>
-                </div>
-
-                <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                  <p className={`text-sm mb-3 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Progress</p>
-                  <div className="flex items-center gap-4">
-                    <div className={`flex-1 h-3 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-600' : 'bg-slate-200'}`}>
-                      <motion.div 
-                        className={`h-full rounded-full bg-gradient-to-r ${selectedTask.progress === 100 ? 'from-emerald-500 to-green-600' : 'from-violet-500 to-purple-600'}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${selectedTask.progress}%` }}
-                        transition={{ duration: 0.8 }}
-                      />
-                    </div>
-                    <span className="text-lg font-bold">{selectedTask.progress}%</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusConfig(selectedTask.status).color}`}>
-                    {selectedTask.status.replace('-', ' ')}
-                  </span>
-                  <span className={`px-3 py-1.5 rounded-full text-sm font-medium capitalize bg-gradient-to-r ${getPriorityConfig(selectedTask.priority).gradient} text-white`}>
-                    {selectedTask.priority}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-medium shadow-lg"
-                >
-                  <FiEdit2 className="w-5 h-5" />
-                  Edit Task
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedTask(null)}
-                  className={`flex-1 px-4 py-3 rounded-xl font-medium ${
-                    isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'
-                  }`}
-                >
-                  Close
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
+
+// Explicitly defining icons that might be missing from direct import
+const FiChevronRight = ({ className }) => (
+  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className={className} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </svg>
+);
+const FiArrowLeft = ({ className }) => (
+  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className={className} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+    <line x1="19" y1="12" x2="5" y2="12"></line>
+    <polyline points="12 19 5 12 12 5"></polyline>
+  </svg>
+);
 
 export default TaskByClientTab;

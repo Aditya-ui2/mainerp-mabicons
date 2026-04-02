@@ -1,125 +1,169 @@
-import { useState, useEffect } from 'react';
+
+
+import { useState, useEffect, useRef } from 'react';
 import { FiClock, FiCalendar, FiCheckCircle, FiXCircle, FiCoffee, FiDownload, FiSearch, FiChevronDown, FiTrendingUp, FiUsers, FiArrowLeft } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getDeptAttendance } from '../../../service/api';
-import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const EmployeeDetailView = ({ employee, onBack, isDarkMode, getStatusConfig, getAvatarColor }) => {
   const statusConfig = getStatusConfig(employee.status);
+  const topRef = useRef(null);
+
+  // Definitive scroll-to-top using Ref (Works even if parent is a scroll container)
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 50 }}
+      ref={topRef}
+      initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 50, transition: { duration: 0.2 } }}
-      className={`w-full ${isDarkMode ? 'text-white' : 'text-slate-800'}`}
+      exit={{ opacity: 0, x: -20 }}
+      className={`w-full min-h-screen pb-12 ${isDarkMode ? 'bg-slate-900' : 'bg-[#f8faff]'}`}
+      style={{ fontFamily: "'Calibri', sans-serif" }}
     >
-      <div className="flex items-center gap-4 mb-8">
-        <button 
-          onClick={onBack}
-          className={`p-2.5 rounded-xl transition-all shadow-sm ${
-            isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
-          }`}
-        >
-          <FiArrowLeft className="w-5 h-5" />
-        </button>
-        <h2 
-          onClick={onBack}
-          className="text-2xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity select-none"
-        >
-          Employee Timeline
-        </h2>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <div className={`col-span-1 p-8 rounded-2xl border-2 shadow-xl flex flex-col items-center text-center ${
-            isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'
-          }`}
-        >
-          <div className="relative mb-5">
-            <div className={`w-28 h-28 rounded-full flex items-center justify-center text-white font-bold text-4xl shadow-xl ring-4 ring-white dark:ring-slate-700 bg-gradient-to-br ${getAvatarColor(employee.name)}`}>
-              {employee.name.charAt(0).toUpperCase()}
-            </div>
-            <div className={`absolute bottom-1 right-2 w-6 h-6 rounded-full border-4 border-white dark:border-slate-800 ${statusConfig.dot}`}></div>
-          </div>
-          <h3 className="text-2xl font-bold mb-1">{employee.name}</h3>
-          <p className={`font-semibold text-lg ${isDarkMode ? 'text-blue-400' : 'text-[#1E88E5]'}`}>{employee.empId}</p>
-          
-          <div className={`mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${statusConfig.bg} ${statusConfig.text}`}>
-            <span className={`w-2.5 h-2.5 rounded-full ${statusConfig.dot} animate-pulse`}></span>
-            {statusConfig.label}
-          </div>
-
-          <div className={`w-full h-px my-6 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
-
-          <div className="w-full">
-            <div className="flex flex-col items-start gap-1">
-              <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Date</span>
-              <div className="flex items-center gap-2 font-medium">
-                <FiCalendar className={`w-4 h-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                {new Date(employee.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-              </div>
-            </div>
-          </div>
+      <div className="max-w-[1400px] mx-auto min-h-screen pb-12">
+        {/* Stable Non-Sticky Header (To prevent overlap) */}
+        <div className={`px-8 py-8 flex items-center gap-6 ${isDarkMode ? 'bg-slate-900' : 'bg-[#f8faff]'}`}>
+          <button
+            onClick={onBack}
+            className={`p-3 rounded-xl border transition-all ${isDarkMode
+                ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-800'
+                : 'bg-white border-slate-200 text-slate-600 hover:shadow-lg'
+              }`}
+          >
+            <FiArrowLeft className="w-5 h-5 text-[#004fb1]" />
+          </button>
+          <h2 className={`text-2xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-[#004fb1]'}`}>
+            Employee Details
+          </h2>
         </div>
 
-        {/* Attendance Details Grid */}
-        <div className="col-span-1 lg:col-span-2 space-y-6">
-          <div className={`p-8 rounded-2xl border-2 shadow-xl h-full ${
-              isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'
-            }`}
-          >
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <div className={`p-2 rounded-lg bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-lg shadow-[#1E88E5]/25`}>
-                <FiClock className="w-4 h-4 text-white" />
-              </div>
-              Time & Attendance Info
-            </h3>
-
-            <div className="grid grid-cols-2 gap-5">
-              <div className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-700/30 border-slate-600/50' : 'bg-slate-50 border-slate-100'}`}>
-                <p className={`text-xs font-extrabold uppercase tracking-wider mb-3 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Check In</p>
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${employee.checkIn === '-' ? (isDarkMode ? 'bg-slate-800' : 'bg-white shadow-sm border') : (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100/80 text-emerald-600 shadow-sm')}`}>
-                    <FiClock className="w-6 h-6" />
+        <div className="px-8 mt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Profile Panel (Matched v1 Square Avatar/Table style) */}
+            <div className="lg:col-span-1 space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 flex flex-col items-center border-2 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'}`}
+              >
+                <div className="relative mb-8 group">
+                  <div className={`w-40 h-40 rounded-[2.5rem] flex items-center justify-center text-white font-black text-4xl shadow-2xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] group-hover:rotate-3 transition-transform duration-500 ring-4 ring-blue-50/50`}>
+                    {employee.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-2xl font-extrabold">{employee.checkIn}</span>
-                </div>
-              </div>
-
-              <div className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-700/30 border-slate-600/50' : 'bg-slate-50 border-slate-100'}`}>
-                <p className={`text-xs font-extrabold uppercase tracking-wider mb-3 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Check Out</p>
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${employee.checkOut === '-' ? (isDarkMode ? 'bg-slate-800' : 'bg-white shadow-sm border') : (isDarkMode ? 'bg-rose-900/40 text-rose-400' : 'bg-rose-100/80 text-rose-600 shadow-sm')}`}>
-                    <FiClock className="w-6 h-6" />
+                  <div className={`absolute -bottom-2 -right-2 p-3 rounded-full border-4 ${isDarkMode ? 'border-slate-900 bg-emerald-500' : 'border-white bg-[#004fb1]'} text-white shadow-xl ring-2 ring-blue-50`}>
+                    <FiCheckCircle className="w-5 h-5" />
                   </div>
-                  <span className="text-2xl font-extrabold">{employee.checkOut}</span>
                 </div>
-              </div>
 
-              <div className={`col-span-2 sm:col-span-1 p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-700/30 border-slate-600/50' : 'bg-blue-50 border-blue-100/80'}`}>
-                <p className={`text-xs font-extrabold uppercase tracking-wider mb-3 text-blue-600 dark:text-blue-400`}>Total Hours</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-blue-700 dark:text-blue-300">{employee.hours.split('h')[0]}<span className="text-lg text-blue-500">h</span></span>
-                  <span className="text-xl font-bold text-blue-600/70">{employee.hours.split('h')[1]?.trim()}</span>
+                <div className="text-center group">
+                  <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight group-hover:text-blue-600 transition-colors">
+                    {employee.name}
+                  </h3>
+                  <p className="text-sm font-black text-[#004fb1] tracking-widest mt-1">
+                    {employee.empId}
+                  </p>
                 </div>
-              </div>
 
-              <div className={`col-span-2 sm:col-span-1 p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-700/30 border-slate-600/50' : 'bg-amber-50/80 border-amber-100'}`}>
-                <p className={`text-xs font-extrabold uppercase tracking-wider mb-3 text-amber-600 dark:text-amber-500`}>Overtime</p>
-                {employee.overtime !== '0h' ? (
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 shadow-sm">
-                      <FiTrendingUp className="w-6 h-6" />
+                <div className="w-full mt-10 pt-10 border-t border-slate-100 dark:border-slate-800 space-y-6">
+                  {[
+                    { label: 'Department', value: 'HR Operations' },
+                    { label: 'Designation', value: 'Team Member' },
+                    { label: 'Joining Date', value: 'Jan 12, 2024' },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between group">
+                      <span className="text-[11px] font-black text-slate-400 tracking-widest">{item.label}</span>
+                      <span className="text-xs font-black text-slate-800 dark:text-slate-200 group-hover:text-blue-500 transition-colors text-right">{item.value}</span>
                     </div>
-                    <span className="text-4xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                      +{employee.overtime}
-                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Right Activity Panel */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Main Information Card (Daily Attendance) */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border-2 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'}`}
+              >
+                <div className="flex items-center gap-3 mb-10">
+                  <FiClock className="w-5 h-5 text-[#004fb1]" />
+                  <h4 className="text-[13px] font-black text-slate-800 dark:text-white tracking-[0.1em]">Daily Attendance Record</h4>
+                </div>
+
+                <div className="grid grid-cols-2 gap-y-12 gap-x-8 mb-12">
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-3">Attendance Status</p>
+                    <div className="flex items-center gap-3">
+                       <span className={`${statusConfig.bg} ${statusConfig.text} px-5 py-2 rounded-full text-[10px] font-black tracking-widest flex items-center gap-2 shadow-sm`}>
+                          <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`}></span>
+                          {statusConfig.label}
+                       </span>
+                    </div>
                   </div>
-                ) : (
-                  <span className="text-4xl font-extrabold text-slate-300 dark:text-slate-600">—</span>
-                )}
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-3">Duration</p>
+                    <p className="text-sm font-black text-slate-800 dark:text-slate-200 tracking-tight">Today, {new Date().toLocaleDateString('en-GB')}</p>
+                  </div>
+                </div>
+
+                <div className="w-full">
+                   <p className="text-center text-[10px] font-black text-slate-400 tracking-[0.3em] mb-4">Reason / Notes</p>
+                   <div className={`p-8 rounded-[1.5rem] border-2 italic text-center text-sm font-bold shadow-inner ${isDarkMode ? 'bg-slate-800/50 border-slate-700 text-slate-400' : 'bg-slate-50/50 border-slate-100 text-slate-500'}`}>
+                      "Employee clocked in on-time and performed critical operations."
+                   </div>
+                </div>
+              </motion.div>
+
+              {/* Bottom Balanced Cards (Stats Grid) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { label: 'Check In', value: employee.checkIn === '-' ? 'N/A' : employee.checkIn, sub: 'Log Time' },
+                  { label: 'Check Out', value: employee.checkOut === '-' ? 'N/A' : employee.checkOut, sub: 'Log Time', icon: true },
+                  { label: 'Working', value: employee.hours, sub: 'Effective' },
+                ].map((stat, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className={`p-8 rounded-[2rem] shadow-lg shadow-blue-500/5 border-2 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'} group hover:-translate-y-1 transition-all duration-300`}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                       <span className="text-[10px] font-black text-slate-400 tracking-widest ml-auto">{stat.label}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {stat.icon && (
+                        <div className="p-3 rounded-xl bg-orange-400 shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform">
+                          <FiCoffee className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black text-slate-800 dark:text-white tabular-nums">{stat.value}</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{stat.sub}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-4 pt-4">
+                <button
+                  onClick={onBack}
+                  className={`flex-1 py-5 rounded-[1.5rem] text-[11px] font-black tracking-widest transition-all ${isDarkMode
+                      ? 'bg-slate-800 text-white hover:bg-slate-700'
+                      : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                    }`}
+                >
+                  Close Details
+                </button>
+                <button className="flex-[2] py-5 rounded-[1.5rem] bg-gradient-to-r from-[#1E88E5] to-[#0D47A1] text-white text-[11px] font-black tracking-widest shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:scale-[1.01] transition-all">
+                  Update Information
+                </button>
               </div>
             </div>
           </div>
@@ -132,46 +176,27 @@ const EmployeeDetailView = ({ employee, onBack, isDarkMode, getStatusConfig, get
 const AttendanceTab = ({ isDarkMode, selectedClient }) => {
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(getLocalISODate());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+  // Mock data - Replace with API call
   useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        setLoading(true);
-        const response = await getDeptAttendance({ 
-          department: 'HR Operations', 
-          date: parseFloat(selectedDate) ? selectedDate : getLocalISODate()
-        });
-        
-        if (response.success) {
-          const mappedData = response.records.map(record => ({
-            id: record.id,
-            empId: record.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
-            name: record.memberName,
-            date: record.date,
-            checkIn: record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-',
-            checkOut: record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-',
-            status: record.status.toLowerCase().replace(/\s+/g, ''),
-            hours: record.workHours ? `${Math.floor(record.workHours)}h ${Math.round((record.workHours % 1) * 60)}m` : '0h',
-            overtime: record.workHours > 8 ? `${(record.workHours - 8).toFixed(1)}h` : '0h',
-            avatar: record.memberName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
-            photo: null
-          }));
-          setAttendanceData(mappedData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch attendance:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAttendance();
+    const mockData = [
+      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', date: '2026-03-17', checkIn: '09:00', checkOut: '18:00', status: 'present', hours: '9h 0m', overtime: '0h', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
+      { id: 2, empId: 'EMP002', name: 'Priya Singh', date: '2026-03-17', checkIn: '09:15', checkOut: '18:30', status: 'present', hours: '9h 15m', overtime: '15m', avatar: 'PS', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
+      { id: 3, empId: 'EMP003', name: 'Amit Kumar', date: '2026-03-17', checkIn: '-', checkOut: '-', status: 'absent', hours: '0h', overtime: '0h', avatar: 'AK', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
+      { id: 4, empId: 'EMP004', name: 'Sneha Patel', date: '2026-03-17', checkIn: '10:00', checkOut: '17:00', status: 'halfday', hours: '7h 0m', overtime: '0h', avatar: 'SP', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
+      { id: 5, empId: 'EMP005', name: 'Vikram Rao', date: '2026-03-17', checkIn: '09:00', checkOut: '20:00', status: 'present', hours: '11h 0m', overtime: '2h', avatar: 'VR', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
+      { id: 6, empId: 'EMP006', name: 'Anjali Gupta', date: '2026-03-17', checkIn: '-', checkOut: '-', status: 'leave', hours: '0h', overtime: '0h', avatar: 'AG', photo: 'https://randomuser.me/api/portraits/women/65.jpg' },
+    ];
+    setTimeout(() => {
+      setAttendanceData(mockData);
+      setLoading(false);
+    }, 500);
   }, [selectedDate, selectedClient]);
 
   const stats = {
@@ -187,41 +212,49 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
       key: 'present',
       label: 'Present',
       value: stats.present,
+      total: stats.total,
       icon: FiCheckCircle,
-      gradient: 'from-green-500 to-green-600',
-      bgGlow: 'shadow-blue-500/20',
-      lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
-      percentage: Math.round((stats.present / stats.total) * 100) || 0
+      color: 'text-[#00df9a]',
+      bgColor: 'bg-[#00df9a]/10',
+      barColor: 'bg-[#00df9a]',
+      glowColor: 'shadow-[#00df9a]/50',
+      subtext: `${stats.present} employees present today`
     },
     {
       key: 'absent',
       label: 'Absent',
       value: stats.absent,
+      total: stats.total,
       icon: FiXCircle,
-      gradient: 'from-red-500 to-red-600',
-      bgGlow: 'shadow-blue-500/20',
-      lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
-      percentage: Math.round((stats.absent / stats.total) * 100) || 0
+      color: 'text-[#ff4b2b]',
+      bgColor: 'bg-[#ff4b2b]/10',
+      barColor: 'bg-[#ff4b2b]',
+      glowColor: 'shadow-[#ff4b2b]/50',
+      subtext: `${stats.absent} employees absent today`
     },
     {
       key: 'halfday',
       label: 'Half Day',
       value: stats.halfday,
+      total: stats.total,
       icon: FiCoffee,
-      gradient: 'from-amber-500 to-orange-600',
-      bgGlow: 'shadow-blue-500/20',
-      lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
-      percentage: Math.round((stats.halfday / stats.total) * 100) || 0
+      color: 'text-amber-500',
+      bgColor: 'bg-amber-500/10',
+      barColor: 'bg-amber-500',
+      glowColor: 'shadow-amber-500/50',
+      subtext: `${stats.halfday} on half day shift`
     },
     {
       key: 'onLeave',
-      label: 'On Leave',
+      label: 'Leaves',
       value: stats.onLeave,
+      total: stats.total,
       icon: FiCalendar,
-      gradient: 'from-blue-500 to-indigo-600',
-      bgGlow: 'shadow-blue-500/20',
-      lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
-      percentage: Math.round((stats.onLeave / stats.total) * 100) || 0
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
+      barColor: 'bg-blue-500',
+      glowColor: 'shadow-blue-500/50',
+      subtext: `${stats.onLeave} approved leaves`
     },
   ];
 
@@ -231,7 +264,7 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
         bg: 'bg-green-100 dark:bg-green-900/30',
         text: 'text-green-700 dark:text-green-400',
         dot: 'bg-green-500',
-        label: 'Present'
+        label: 'Approved'
       },
       absent: {
         bg: 'bg-red-100 dark:bg-red-900/30',
@@ -299,7 +332,10 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
   }
 
   return (
-    <div className={`relative ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+    <div 
+      className={`w-full min-h-screen ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-[#fcfdff] text-slate-800'}`}
+      style={{ fontFamily: "'Calibri', sans-serif" }}
+    >
       <AnimatePresence mode="wait">
         {!selectedEmployee ? (
           <motion.div
@@ -310,287 +346,259 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
             className="space-y-8"
           >
             {/* Header */}
+            {/* Modern Banner Header (Matched with Payroll/Performance Layout) */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+              className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-12"
             >
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-lg shadow-[#1E88E5]/25`}>
-                    <FiClock className="w-6 h-6 text-white" />
-                  </div>
-                  <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent">
+              <div className="flex items-center gap-4">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-xl shadow-blue-500/20">
+                  <FiClock className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent tracking-tight mb-1">
                     Attendance
                   </h2>
+                  <div className="flex items-center gap-3">
+                    <p className={`text-sm font-bold flex items-center gap-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      <FiUsers className="w-4 h-4" />
+                      {selectedClient ? `Client: ${selectedClient}` : 'All Employees'}
+                    </p>
+                    <span className="text-slate-300 dark:text-slate-700">|</span>
+                    <p className={`text-sm font-bold flex items-center gap-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      <FiCalendar className="w-4 h-4" />
+                      {formatDate(selectedDate)}
+                    </p>
+                  </div>
                 </div>
-                <p className={`text-base font-semibold mt-3 tracking-wide ${isDarkMode ? 'text-white' : 'text-black'} flex items-center gap-2`}>
-                  <span className="flex items-center gap-1.5 text-black dark:text-white">
-                    <FiUsers className="w-4 h-4 text-black dark:text-white" />
-                    {selectedClient ? `Client: ${selectedClient}` : 'All Employees'}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-600">|</span>
-                  <span className="flex items-center gap-1.5 text-black dark:text-white">
-                    <FiCalendar className="w-4 h-4 text-black dark:text-white" />
-                    {formatDate(selectedDate)}
-                  </span>
-                </p>
               </div>
+
               <div className="flex items-center gap-3">
-                <div className="relative">
+                <div className="relative group">
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                     onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                    className={`rounded-xl border-2 px-4 py-2.5 text-sm font-medium cursor-pointer transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
-                      ? 'bg-slate-800/80 border-slate-700 text-white hover:border-slate-600'
-                      : 'bg-white border-slate-200 hover:border-violet-300'
+                    className={`rounded-2xl border-2 px-6 py-3.5 text-sm font-black cursor-pointer transition-all focus:ring-4 focus:ring-blue-500/10 ${isDarkMode
+                      ? 'bg-slate-900 border-slate-800 text-white hover:border-slate-700'
+                      : 'bg-white border-slate-100 text-slate-700 hover:border-blue-200 shadow-sm'
                       }`}
                   />
                 </div>
               </div>
             </motion.div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            {/* Premium Stats Containers (Matched with v1 Reference Image) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {statCards.map((card, index) => (
                 <motion.div
                   key={card.key}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  onMouseEnter={() => setHoveredCard(card.key)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer ${isDarkMode
-                    ? 'bg-slate-800/80 border border-slate-700/50 hover:border-slate-600'
-                    : `${card.lightBg} border border-white/50 hover:shadow-xl ${card.bgGlow}`
-                    } ${hoveredCard === card.key ? 'scale-[1.02]' : ''}`}
+                  className={`group relative overflow-hidden rounded-[2.5rem] p-8 border-2 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] ${isDarkMode
+                    ? 'bg-slate-900 border-slate-800 shadow-xl'
+                    : 'bg-gradient-to-br from-[#eff6ff] to-[#f8faff] border-white shadow-xl shadow-blue-500/10'
+                    }`}
                 >
-                  {/* Background Pattern */}
-                  <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                      <circle cx="80" cy="20" r="40" fill="currentColor" />
-                    </svg>
+                  {/* Floating Icon Button */}
+                  <div className="absolute top-6 right-6">
+                    <div className={`p-2.5 rounded-xl bg-[#0052cc] shadow-lg shadow-blue-700/30 group-hover:scale-110 transition-transform`}>
+                      <card.icon className="w-4 h-4 text-white" />
+                    </div>
                   </div>
 
-                  <div className="relative flex items-start justify-between">
-                    <div className="text-left">
-                      <p className={`text-base font-extrabold mb-1 tracking-wide ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <div className="relative z-10 flex flex-col h-full gap-5">
+                    {/* Header Label - Left Aligned, Large & Bold */}
+                    <div className="flex flex-col items-start gap-1">
+                      <p className={`text-[15px] font-black tracking-tight ${isDarkMode ? 'text-slate-400' : 'text-slate-800'}`}>
                         {card.label}
                       </p>
-                      <p className={`text-4xl font-bold bg-gradient-to-r ${card.gradient} bg-clip-text text-transparent`}>
-                        {card.value}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-2 justify-start">
-                        <FiTrendingUp className={`w-3.5 h-3.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                        <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                          {card.percentage}% of total
-                        </span>
+                    </div>
+
+                    {/* Main Value and Trend - Left Aligned */}
+                    <div className="flex items-baseline gap-2 mt-1">
+                       <span className={`text-4xl font-black ${isDarkMode ? 'text-white' : 'text-[#004fb1]'} tracking-tighter`}>
+                        {/* Format numbers like "3%" or "01" */}
+                        {card.label === 'Present' ? `${card.value}%` : card.value < 10 ? `0${card.value}` : card.value}
+                      </span>
+                      <span className={`text-[11px] font-bold tracking-tight ${isDarkMode ? 'text-blue-400/50' : 'text-[#004fb1]/60'}`}>
+                        {card.label === 'Present' ? 'Growth' : card.label === 'Absent' ? 'Critical' : 'Trend'}
+                      </span>
+                    </div>
+
+                    {/* Clean Progress Bar (Bottom Aligned) */}
+                    <div className="mt-auto pt-6">
+                      <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-blue-200/50'} overflow-hidden`}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${card.total > 0 ? Math.min((card.value / card.total) * 100, 100) : 0}%` }}
+                          transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 + index * 0.1 }}
+                          className={`h-full rounded-full bg-[#0052cc] shadow-[0_0_10px_rgba(0,82,204,0.3)]`}
+                        />
                       </div>
                     </div>
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient} shadow-lg`}>
-                      <card.icon className="w-5 h-5 text-white" />
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-white/50'}`}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${card.percentage}%` }}
-                      transition={{ duration: 1, delay: 0.5 + index * 0.1 }}
-                      className={`h-full rounded-full bg-gradient-to-r ${card.gradient}`}
-                    />
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            {/* Filters */}
+            {/* Filters */}            {/* Modern Filters */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3"
+              className="flex flex-col sm:flex-row gap-4 items-center"
             >
-              <div className="relative flex-1">
-                <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-400' : 'text-slate-400'}`} />
+              <div className="relative flex-1 w-full">
+                <FiSearch className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                 <input
                   type="text"
-                  placeholder="Search by name or ID..."
+                  placeholder="Search by name or Employee ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full rounded-xl border-2 px-4 py-3 pl-12 transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
-                    ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500 hover:border-slate-600 focus:border-violet-500'
-                    : 'bg-white border-slate-200 placeholder:text-slate-400 hover:border-violet-300 focus:border-violet-500'
+                  className={`w-full rounded-2xl border-2 px-4 py-3.5 pl-12 transition-all focus:ring-4 focus:ring-blue-500/10 ${isDarkMode
+                    ? 'bg-slate-900 border-slate-800 text-white placeholder:text-slate-600'
+                    : 'bg-white border-slate-100 placeholder:text-slate-400 shadow-sm'
                     }`}
                 />
               </div>
-            <div className="relative">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className={`appearance-none rounded-xl border-2 px-4 py-3 pr-10 font-medium transition-all focus:ring-2 focus:ring-violet-500/50 cursor-pointer ${isDarkMode
-                    ? 'bg-slate-800/80 border-slate-700 text-white hover:border-slate-600'
-                    : 'bg-white border-slate-200 hover:border-violet-300'
-                    }`}
-                >
-                  <option value="all">All Status</option>
-                  <option value="present">Present</option>
-                  <option value="absent">Absent</option>
-                  <option value="halfday">Half Day</option>
-                  <option value="leave">On Leave</option>
-                </select>
-                <FiChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none transition-transform duration-300 ${isDarkMode ? 'text-slate-400' : 'text-slate-400'}`} />
-              </div>
 
-              <div className="relative">
-                <select
-                  value={selectedDept}
-                  onChange={(e) => setSelectedDept(e.target.value)}
-                  className={`appearance-none rounded-xl border-2 px-4 py-3 pr-10 font-medium transition-all focus:ring-2 focus:ring-violet-500/50 cursor-pointer ${isDarkMode
-                    ? 'bg-slate-800/80 border-slate-700 text-white hover:border-slate-600'
-                    : 'bg-white border-slate-200 hover:border-violet-300'
-                    }`}
-                >
-                  <option value="all">Selection</option>
-                  <option value="hr">HR Dept</option>
-                  <option value="it">IT Team</option>
-                  <option value="sales">Sales Hub</option>
-                  <option value="ops">Operations</option>
-                </select>
-                <FiChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none transition-transform duration-300 ${isDarkMode ? 'text-slate-400' : 'text-slate-400'}`} />
-              </div>
-            </motion.div>
+              <div className="flex gap-4 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-44">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className={`w-full appearance-none rounded-2xl border-2 px-5 py-3.5 pr-10 font-bold transition-all focus:ring-4 focus:ring-blue-500/10 cursor-pointer ${isDarkMode
+                      ? 'bg-slate-900 border-slate-800 text-white'
+                      : 'bg-white border-slate-100 text-slate-700 shadow-sm'
+                      }`}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                    <option value="halfday">Half Day</option>
+                    <option value="leave">On Leave</option>
+                  </select>
+                  <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-slate-400" />
+                </div>
 
-            {/* Table */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className={`rounded-2xl border-2 overflow-hidden shadow-xl ${isDarkMode
-                ? 'bg-slate-800/50 border-slate-700/50 shadow-black/20'
-                : 'bg-white border-slate-200/50 shadow-slate-200/50'
-                }`}
-            >
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className={`${isDarkMode ? 'bg-slate-800' : 'bg-gradient-to-r from-slate-50 to-slate-100'}`}>
-                      <th className="px-6 py-4 text-left text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Employee</th>
-                      <th className="px-6 py-4 text-left text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Date</th>
-                      <th className="px-6 py-4 text-left text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Check In</th>
-                      <th className="px-6 py-4 text-left text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Check Out</th>
-                      <th className="px-6 py-4 text-left text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Hours</th>
-                      <th className="px-6 py-4 text-left text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Overtime</th>
-                      <th className="px-6 py-4 text-left text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${isDarkMode ? 'divide-slate-700/50' : 'divide-slate-100'}`}>
-                    <AnimatePresence>
-                      {filteredData.map((emp, index) => {
-                        const statusConfig = getStatusConfig(emp.status);
-                        return (
-                          <motion.tr
-                            key={emp.id}
-                            onClick={() => setSelectedEmployee(emp)}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            transition={{ delay: index * 0.05 }}
-                            className={`group cursor-pointer transition-colors ${isDarkMode
-                              ? 'hover:bg-slate-700/30'
-                              : 'hover:bg-violet-50/50'
-                              }`}
-                          >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="relative">
-                                  <div
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-white dark:ring-slate-700 bg-gradient-to-br ${getAvatarColor(emp.name)}`}
-                                  >
-                                    {emp.name.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-800 ${statusConfig.dot}`}></div>
-                                </div>
-                                <div>
-                                  <p className="font-semibold">{emp.name}</p>
-                                  <p className={`text-xs font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{emp.empId}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                                {new Date(emp.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${emp.checkIn === '-'
-                                ? isDarkMode ? 'bg-slate-700/50 text-slate-500' : 'bg-slate-100 text-slate-400'
-                                : isDarkMode ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
-                                }`}>
-                                <FiClock className="w-4 h-4" />
-                                <span className="font-medium text-sm">{emp.checkIn}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${emp.checkOut === '-'
-                                ? isDarkMode ? 'bg-slate-700/50 text-slate-500' : 'bg-slate-100 text-slate-400'
-                                : isDarkMode ? 'bg-rose-900/30 text-rose-400' : 'bg-rose-50 text-rose-600'
-                                }`}>
-                                <FiClock className="w-4 h-4" />
-                                <span className="font-medium text-sm">{emp.checkOut}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{emp.hours}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              {emp.overtime !== '0h' ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                                  <FiTrendingUp className="w-3.5 h-3.5" />
-                                  +{emp.overtime}
-                                </span>
-                              ) : (
-                                <span className={`text-sm ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>—</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${statusConfig.bg} ${statusConfig.text}`}>
-                                <span className={`w-2 h-2 rounded-full ${statusConfig.dot} animate-pulse`}></span>
-                                {statusConfig.label}
-                              </span>
-                            </td>
-                          </motion.tr>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Table Footer */}
-              <div className={`px-6 py-4 border-t ${isDarkMode ? 'border-slate-700/50 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
-                <div className="flex items-center justify-between">
-                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Showing <span className="font-semibold">{filteredData.length}</span> of <span className="font-semibold">{attendanceData.length}</span> employees
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                      Last updated: {new Date().toLocaleTimeString()}
-                    </span>
-                  </div>
+                <div className="relative flex-1 sm:w-44">
+                  <select
+                    value={selectedDept}
+                    onChange={(e) => setSelectedDept(e.target.value)}
+                    className={`w-full appearance-none rounded-2xl border-2 px-5 py-3.5 pr-10 font-bold transition-all focus:ring-4 focus:ring-blue-500/10 cursor-pointer ${isDarkMode
+                      ? 'bg-slate-900 border-slate-800 text-white'
+                      : 'bg-white border-slate-100 text-slate-700 shadow-sm'
+                      }`}
+                  >
+                    <option value="all">Departments</option>
+                    <option value="hr">HR Dept</option>
+                    <option value="it">IT Team</option>
+                    <option value="sales">Sales Hub</option>
+                    <option value="ops">Operations</option>
+                  </select>
+                  <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-slate-400" />
                 </div>
               </div>
             </motion.div>
+
+            <div className="flex flex-col gap-4">
+              <AnimatePresence mode="popLayout">
+                {filteredData.map((emp, index) => {
+                  const statusConfig = getStatusConfig(emp.status);
+                  return (
+                    <motion.div
+                      key={emp.id}
+                      layout
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => setSelectedEmployee(emp)}
+                      className={`group relative overflow-hidden rounded-[1.5rem] border-b transition-all duration-300 cursor-pointer ${isDarkMode
+                        ? 'bg-slate-900/40 border-slate-800 hover:bg-slate-800'
+                        : index % 2 === 0 ? 'bg-[#f8faff] border-slate-100 hover:bg-[#f0f7ff]' : 'bg-white border-slate-100 hover:bg-slate-50'
+                        }`}
+                    >
+                      <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        {/* Left: User Info (Matched v1 avatar/text style) */}
+                        <div className="flex items-center gap-5 lg:min-w-[280px]">
+                          <div className="relative">
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-black text-xl shadow-lg ring-2 ring-white bg-gradient-to-br ${getAvatarColor(emp.name)} group-hover:rotate-6 transition-transform`}>
+                              {emp.name.charAt(0).toUpperCase()}
+                            </div>
+                          </div>
+                          <div>
+                            <h3 className="font-black text-[16px] tracking-tight text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors leading-tight">
+                              {emp.name}
+                            </h3>
+                            <p className="text-[10px] font-bold text-slate-400 tracking-widest mt-1">
+                              {emp.empId}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Center: Time Stats (Clean Columns) */}
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-8">
+                          <div className="flex flex-col items-center lg:items-start">
+                            <p className="text-[9px] font-black text-slate-400 tracking-[0.2em] mb-2">Check In</p>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${emp.checkIn === '-' ? 'bg-slate-300' : 'bg-emerald-500'}`}></div>
+                              <span className="font-black text-sm text-slate-700 dark:text-slate-300 tracking-tighter">{emp.checkIn === '-' ? 'Not In' : emp.checkIn}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center lg:items-start">
+                            <p className="text-[9px] font-black text-slate-400 tracking-[0.2em] mb-2">Check Out</p>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${emp.checkOut === '-' ? 'bg-slate-300' : 'bg-rose-500'}`}></div>
+                              <span className="font-black text-sm text-slate-700 dark:text-slate-300 tracking-tighter">{emp.checkOut === '-' ? 'Not Out' : emp.checkOut}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center lg:items-start">
+                            <p className="text-[9px] font-black text-slate-400 tracking-[0.2em] mb-2">Total Hours</p>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-sm text-slate-700 dark:text-slate-300 tracking-tighter">{emp.hours}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center lg:items-start">
+                            <p className="text-[9px] font-black text-slate-400 tracking-[0.2em] mb-2">Overtime</p>
+                            <span className={`font-black text-sm tracking-tighter ${emp.overtime !== '0h' ? 'text-emerald-600' : 'text-slate-300'}`}>
+                              {emp.overtime !== '0h' ? emp.overtime : '—'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Right: Status & Action (Pill + Icons) */}
+                        <div className="flex items-center justify-between lg:justify-end gap-6 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
+                          <span className={`${statusConfig.bg} ${statusConfig.text} px-5 py-2 rounded-full text-[10px] font-black tracking-widest flex items-center gap-2 shadow-sm`}>
+                            <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`}></span>
+                            {statusConfig.label}
+                          </span>
+                          <div className="flex items-center gap-2">
+                             <button className="p-2.5 rounded-full border border-slate-200 bg-white text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 hover:border-emerald-200 transition-all shadow-sm">
+                               <FiCheckCircle className="w-4 h-4" />
+                             </button>
+                             <button className="p-2.5 rounded-full border border-slate-200 bg-white text-slate-400 hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm">
+                               <FiXCircle className="w-4 h-4" />
+                             </button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
           </motion.div>
         ) : (
-          <EmployeeDetailView 
+          <EmployeeDetailView
             key="detail-view"
-            employee={selectedEmployee} 
-            onBack={() => setSelectedEmployee(null)} 
-            isDarkMode={isDarkMode} 
+            employee={selectedEmployee}
+            onBack={() => setSelectedEmployee(null)}
+            isDarkMode={isDarkMode}
             getStatusConfig={getStatusConfig}
             getAvatarColor={getAvatarColor}
           />

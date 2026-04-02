@@ -18,7 +18,7 @@ import {
   FiTarget,
 } from 'react-icons/fi';
 import { jwtDecode } from 'jwt-decode';
-import logo from '../../../assets/images/mabicons-logo.svg';
+import logo from '../../../assets/images/mabicons logo blue.png';
 import { getClientDetails } from '../service/api';
 import ClientOverviewTab from './Tabs/Client/ClientOverviewTab';
 
@@ -79,12 +79,7 @@ const allSidebarConfig = [
       { id: 4, title: 'Master Data', short: 'Master Data', icon: FiUsers, service: 'both' },
     ],
   },
-  {
-    heading: 'ENGAGEMENT',
-    items: [
-      { id: 6, title: 'Employee Engagement', short: 'Engagement', icon: FiHeart, service: 'both' },
-    ],
-  },
+
 ];
 
 /* ── Page Transition Wrapper ─────────────────────────── */
@@ -184,7 +179,7 @@ const ClientModularDashboard = () => {
       case 'Policy & Documents':        return <ClientPolicyTab {...tabProps} />;
       case 'Master Data':               return <ClientMasterDataTab {...tabProps} />;
       case 'Assign Task to KAM':        return <ClientTaskTab {...tabProps} />;
-      case 'Employee Engagement':       return <ClientEngagementTab {...tabProps} />;
+
       case 'Recruitment Process':       return <ClientRecruitmentProgressTab {...tabProps} />;
       default: return <p className="text-xl text-slate-500 font-medium">{activeTab}</p>;
     }
@@ -219,19 +214,22 @@ const ClientModularDashboard = () => {
         `}
       >
         {/* Logo + Toggle */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-white/10 bg-white/5 backdrop-blur-sm">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <img src={logo} alt="Mabicons" className="h-7 w-auto brightness-0 invert" />
-          </div>
+        <div className={`flex items-center h-16 border-b border-slate-200 bg-white ${sidebarCollapsed ? 'justify-center px-3' : 'justify-between px-4'}`}>
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-3 overflow-hidden">
+              <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain" />
+            </div>
+          )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/10 transition-all duration-200 group"
+            className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100/50 hover:bg-slate-100 border border-slate-200 transition-all duration-300 group shadow-sm"
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <FiMenu style={{ width: '20px', height: '20px' }} className="group-hover:text-blue-400 transition-colors" />
+            <FiMenu style={{ width: '20px', height: '20px' }} className="text-[#1E88E5] group-hover:scale-110 transition-transform" />
           </button>
           <button
             onClick={() => setMobileSidebarOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            className="lg:hidden p-2.5 rounded-xl bg-slate-100 hover:bg-red-50 text-[#1E88E5] hover:text-red-500 border border-slate-200 transition-all duration-300"
           >
             <FiX style={{ width: '20px', height: '20px' }} />
           </button>
@@ -336,13 +334,15 @@ const ClientModularDashboard = () => {
         {/* Top Header */}
         <header className="h-16 bg-white flex items-center justify-between px-4 lg:px-6 shadow-sm">
           {/* Left: Mobile Hamburger */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+              className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl bg-white text-[#1E88E5] shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300 border border-slate-200"
+              aria-label="Open menu"
             >
-              <FiMenu style={{ width: '20px', height: '20px' }} />
+              <FiMenu style={{ width: '22px', height: '22px' }} className="stroke-[2]" />
             </button>
+            <img src={logo} alt="Mabicons" className="lg:hidden h-7 w-auto object-contain" />
           </div>
 
           {/* Right: Actions */}

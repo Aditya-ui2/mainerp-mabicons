@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { FiDollarSign, FiFileText, FiDownload, FiCheck, FiClock, FiAlertCircle, FiEye, FiPlus, FiSearch, FiChevronDown, FiX, FiTrendingUp, FiTrendingDown, FiPercent, FiArrowLeft, FiArrowRight, FiBriefcase } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getFnFList } from '../../../service/api';
 
 const FnFDetailView = ({ employee, onBack, isDarkMode, formatCurrency, getStatusConfig }) => {
   const statusConfig = getStatusConfig(employee.status);
@@ -159,47 +159,39 @@ const FnFTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    const fetchFnF = async () => {
-      try {
-        setLoading(true);
-        const response = await getFnFList({ 
-          department: 'HR Operations' 
-        });
-        
-        if (response.success) {
-          const mappedData = (response.list || []).map(f => ({
-            id: f.id,
-            empId: f.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
-            name: f.memberName,
-            department: f.department || 'HR Operations',
-            lastWorkingDay: f.lastWorkingDay || new Date().toISOString(),
-            status: f.status?.toLowerCase() || 'pending',
-            photo: null,
-            settlement: {
-              basicSalary: parseFloat(f.basicSalary) || 0,
-              hra: parseFloat(f.hra) || 0,
-              leavesEncashed: parseFloat(f.leavesEncashed) || 0,
-              leaveAmount: parseFloat(f.leaveAmount) || 0,
-              bonus: parseFloat(f.bonus) || 0,
-              gratuity: parseFloat(f.gratuity) || 0,
-              pf: parseFloat(f.pf) || 0,
-              professionalTax: parseFloat(f.professionalTax) || 0,
-              otherDeductions: parseFloat(f.otherDeductions) || 0,
-              grossEarnings: parseFloat(f.grossEarnings) || 0,
-              grossDeductions: parseFloat(f.grossDeductions) || 0,
-              netPayable: parseFloat(f.netPayable) || 0
-            }
-          }));
-          setFnfData(mappedData);
+    const mockData = [
+      {
+        id: 1, empId: 'EMP010', name: 'Rajesh Khanna', department: 'Engineering', lastWorkingDay: '2026-03-15', status: 'pending',
+        photo: 'https://randomuser.me/api/portraits/men/52.jpg',
+        settlement: {
+          basicSalary: 50000, hra: 20000, leavesEncashed: 8, leaveAmount: 15385, bonus: 10000, gratuity: 0,
+          pf: 12000, professionalTax: 200, otherDeductions: 500,
+          grossEarnings: 95385, grossDeductions: 12700, netPayable: 82685
         }
-      } catch (error) {
-        console.error('Failed to fetch FnF:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFnF();
+      },
+      {
+        id: 2, empId: 'EMP011', name: 'Suman Devi', department: 'Marketing', lastWorkingDay: '2026-03-31', status: 'processing',
+        photo: 'https://randomuser.me/api/portraits/women/55.jpg',
+        settlement: {
+          basicSalary: 45000, hra: 18000, leavesEncashed: 12, leaveAmount: 20769, bonus: 8000, gratuity: 25000,
+          pf: 10800, professionalTax: 200, otherDeductions: 300,
+          grossEarnings: 116769, grossDeductions: 11300, netPayable: 105469
+        }
+      },
+      {
+        id: 3, empId: 'EMP012', name: 'Anil Kapoor', department: 'Sales', lastWorkingDay: '2026-02-10', status: 'completed',
+        photo: 'https://randomuser.me/api/portraits/men/58.jpg',
+        settlement: {
+          basicSalary: 60000, hra: 24000, leavesEncashed: 5, leaveAmount: 11538, bonus: 15000, gratuity: 50000,
+          pf: 14400, professionalTax: 200, otherDeductions: 1000,
+          grossEarnings: 160538, grossDeductions: 15600, netPayable: 144938
+        }
+      },
+    ];
+    setTimeout(() => {
+      setFnfData(mockData);
+      setLoading(false);
+    }, 500);
   }, [selectedClient]);
 
   const formatCurrency = (amount) => `₹${amount.toLocaleString('en-IN')}`;
@@ -246,12 +238,12 @@ const FnFTab = ({ isDarkMode, selectedClient }) => {
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {[1,2,3,4,5].map(i => (
+          {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className={`h-28 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
           ))}
         </div>
         <div className="space-y-4">
-          {[1,2,3].map(i => (
+          {[1, 2, 3].map(i => (
             <div key={i} className={`h-48 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
           ))}
         </div>
@@ -270,33 +262,54 @@ const FnFTab = ({ isDarkMode, selectedClient }) => {
             exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
             className="space-y-10"
           >
-            {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-2xl shadow-blue-500/30 ring-4 ring-blue-500/10">
-                    <FiDollarSign className="w-7 h-7 text-white" />
-                  </div>
-                  <h2 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent tracking-tight">
+            {/* Modern Header (Matched with Screenshot) */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-12"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-xl shadow-blue-500/20">
+                  <FiDollarSign className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-3xl lg:text-4xl font-black text-[#1E88E5] tracking-tight mb-1">
                     Full & Final Settlement
                   </h2>
+                  <p className="text-sm font-black text-slate-900">
+                    Manage final dues, clearances, and exit payouts.
+                  </p>
                 </div>
-                <p className={`text-sm font-bold ${isDarkMode ? 'text-blue-400' : 'text-[#1E88E5]'} tracking-wide ml-1`}>
-                  Manage final dues, clearancess, and exit payouts
-                </p>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setView('form')}
-                className="flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[1.5rem] font-black shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all uppercase tracking-widest text-xs mt-1"
-              >
-                <FiPlus className="w-5 h-5" />
-                Initiate Settlement
-              </motion.button>
-            </div>
 
-            {/* Stats Cards */}
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="relative group">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className={`appearance-none rounded-[1.2rem] border-2 px-6 py-2.5 pr-12 font-extrabold cursor-pointer transition-all focus:ring-4 focus:ring-blue-500/10 outline-none text-[10px] ${isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-100 text-slate-700 shadow-sm'
+                      }`}
+                  >
+                    <option value="all">ALL SETTLEMENTS</option>
+                    <option value="pending">PENDING</option>
+                    <option value="processing">PROCESSING</option>
+                    <option value="completed">COMPLETED</option>
+                  </select>
+                  <FiChevronDown className={`absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setView('form')}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[1.2rem] font-black shadow-xl shadow-blue-500/30 transition-all uppercase tracking-widest text-[9px]"
+                >
+                  <FiPlus className="w-3.5 h-3.5" />
+                  Initiate Settlement
+                </motion.button>
+              </div>
+            </motion.div>
+
+            {/* Stats Cards - Reverted to previous style */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
               {statCards.map((stat, index) => (
                 <motion.div
@@ -306,29 +319,30 @@ const FnFTab = ({ isDarkMode, selectedClient }) => {
                   transition={{ type: "spring", stiffness: 260, damping: 20, delay: index * 0.1 }}
                   onMouseEnter={() => setHoveredCard(stat.key)}
                   onMouseLeave={() => setHoveredCard(null)}
-                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${
-                    isDarkMode 
-                      ? 'bg-slate-800/80 border-slate-700/50 text-white' 
-                      : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-white shadow-sm hover:shadow-xl'
+                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${isDarkMode
+                    ? 'bg-slate-800/80 border-slate-700/50 text-white'
+                    : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-white shadow-sm hover:shadow-xl'
                     } ${hoveredCard === stat.key ? 'scale-[1.02] border-blue-200 dark:border-blue-800' : ''}`}
                 >
-                  <div className="relative text-left">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className={`text-[10px] font-extrabold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {stat.label}
-                      </p>
-                      <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg flex-shrink-0`}>
-                        <stat.icon className="w-4 h-4 text-white" />
+                  <div className="relative text-left flex flex-col h-full justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <p className={`text-[10px] font-extrabold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {stat.label}
+                        </p>
+                        <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg flex-shrink-0`}>
+                          <stat.icon className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <p className={`text-3xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-[#0D47A1]'}`}>
+                          {stat.value}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-end gap-2">
-                      <p className={`text-3xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-[#0D47A1]'}`}>
-                        {stat.value}
-                      </p>
-                    </div>
-                    
+
                     <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-white/50'}`}>
-                      <motion.div 
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: '65%' }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -339,33 +353,32 @@ const FnFTab = ({ isDarkMode, selectedClient }) => {
                 </motion.div>
               ))}
 
-              {/* Total Amount Card - Special */}
+              {/* Total Amount Card - Reverted to previous special style */}
               <motion.div
                 initial={{ opacity: 0, y: 30, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                className={`relative overflow-hidden rounded-2xl p-5 border-2 col-span-2 lg:col-span-1 border-blue-200 shadow-lg ${
-                    isDarkMode 
-                      ? 'bg-slate-800/80 border-slate-700/50' 
-                      : 'bg-gradient-to-br from-indigo-500 via-blue-600 to-blue-700 text-white'
-                }`}
+                className={`relative overflow-hidden rounded-2xl p-5 border-2 col-span-2 lg:col-span-1 border-blue-200 shadow-lg ${isDarkMode
+                  ? 'bg-slate-800/80 border-slate-700/50'
+                  : 'bg-gradient-to-br from-indigo-500 via-blue-600 to-blue-700 text-white'
+                  }`}
               >
                 <div className="relative flex flex-col h-full justify-between">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className={`text-[10px] font-extrabold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-400' : 'text-white/80'}`}>
-                        Total Payable
-                      </p>
-                      <div className={`p-2 rounded-xl bg-white/20 backdrop-blur-md shadow-lg`}>
-                        <FiDollarSign className="w-4 h-4 text-white" />
-                      </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className={`text-[10px] font-extrabold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-400' : 'text-white/80'}`}>
+                      Total Payable
+                    </p>
+                    <div className={`p-2 rounded-xl bg-white/20 backdrop-blur-md shadow-lg`}>
+                      <FiDollarSign className="w-4 h-4 text-white" />
                     </div>
-                    <div>
-                      <p className="text-2xl font-black tracking-tighter drop-shadow-md">
-                        {formatCurrency(totalAmount)}
-                      </p>
-                      <p className={`text-[9px] font-bold mt-1 uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-white/60'}`}>
-                        System Audit Ready
-                      </p>
-                    </div>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black tracking-tighter drop-shadow-md">
+                      {formatCurrency(totalAmount)}
+                    </p>
+                    <p className={`text-[9px] font-bold mt-1 uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-white/60'}`}>
+                      System Audit Ready
+                    </p>
+                  </div>
                 </div>
               </motion.div>
             </div>
@@ -399,75 +412,69 @@ const FnFTab = ({ isDarkMode, selectedClient }) => {
               </div>
             </div>
 
-            {/* List */}
-            <div className="grid grid-cols-1 gap-8 pb-12">
-              <AnimatePresence mode="popLayout">
+            {/* Settlement Employee Row List */}
+            <div className="flex flex-col gap-4 pb-12 max-w-6xl mx-auto">
+              <AnimatePresence>
                 {filteredData.map((emp, index) => {
                   const statusConfig = getStatusConfig(emp.status);
                   return (
                     <motion.div
                       key={emp.id}
-                      initial={{ opacity: 0, x: -30 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ delay: index * 0.1, type: "spring", stiffness: 100, damping: 15 }}
-                      whileHover={{ y: -8, shadow: "0 40px 60px -20px rgba(0,0,0,0.2)" }}
+                      transition={{ delay: index * 0.05 }}
                       onClick={() => { setSelectedEmployee(emp); setView('details'); }}
-                      className={`group relative overflow-hidden rounded-[3rem] border-2 transition-all duration-500 cursor-pointer ${isDarkMode ? 'bg-slate-900/40 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-2xl'
+                      className={`group relative overflow-hidden rounded-[2rem] border transition-all duration-300 cursor-pointer ${isDarkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-[#f8fbff] border-white shadow-sm hover:shadow-md'
                         }`}
                     >
-                      <div className={`absolute top-0 right-0 w-64 h-64 opacity-[0.03] group-hover:opacity-10 blur-3xl rounded-full bg-gradient-to-br transition-opacity duration-700 ${statusConfig.gradient}`}></div>
-
-                      <div className="p-10">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-                          {/* Profile */}
-                          <div className="flex items-center gap-8">
-                            <motion.div className={`w-24 h-24 rounded-[2rem] bg-white flex items-center justify-center text-[#1E88E5] font-black text-5xl shadow-xl border border-slate-100 group-hover:scale-105 transition-transform duration-300 uppercase`}>
-                              {(emp.name || '').trim().charAt(0)}
-                            </motion.div>
-                            <div>
-                              <h3 className="font-black text-3xl tracking-tight mb-2 group-hover:text-[#1E88E5] transition-colors uppercase">{emp.name}</h3>
-                              <div className="flex flex-wrap items-center gap-3">
-                                <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                                  {emp.empId}
-                                </span>
-                                <span className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">{emp.department}</span>
-                              </div>
-                            </div>
+                      <div className="p-4 px-8 flex items-center justify-between gap-6">
+                        {/* Avatar and Identity */}
+                        <div className="flex items-center gap-6 min-w-[250px]">
+                          <div className={`w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center text-white font-black text-xl shadow-lg ring-2 ring-white dark:ring-slate-800`}>
+                            {emp.name.charAt(0).toUpperCase()}
                           </div>
-
-                          {/* Amounts */}
-                          <div className="flex-1 max-w-2xl lg:px-6">
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Net Payable</span>
-                                <p className="text-2xl font-black text-[#1E88E5] tracking-tight">{formatCurrency(emp.settlement.netPayable)}</p>
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Exit Date</span>
-                                <p className="font-bold text-sm tracking-tight">{new Date(emp.lastWorkingDay).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                              </div>
-                              <div className="hidden md:flex flex-col gap-1">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gross Earnings</span>
-                                <p className="font-bold text-sm tracking-tight text-emerald-600">{formatCurrency(emp.settlement.grossEarnings)}</p>
-                              </div>
-                            </div>
+                          <div className="text-left">
+                            <h3 className="font-extrabold text-lg text-slate-900 dark:text-white leading-tight uppercase">{emp.name}</h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{emp.empId}</p>
                           </div>
+                        </div>
 
-                          {/* Action */}
-                          <div className="flex flex-row lg:flex-row items-center justify-between gap-8 pt-10 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-100/50 dark:border-slate-800/50 lg:pl-10">
-                            <div className="text-center lg:text-right">
-                              <span className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg transition-all border ${statusConfig.bg} ${statusConfig.text}`}>
-                                <span className={`w-2.5 h-2.5 rounded-full bg-current animate-pulse`}></span>
-                                {emp.status}
-                              </span>
-                            </div>
-                            <motion.button
-                              whileHover={{ x: 5, scale: 1.1 }}
-                              className="p-4 rounded-2xl bg-blue-50 text-blue-600 dark:bg-slate-800 dark:text-blue-400"
-                            >
-                              <FiArrowRight className="w-6 h-6" />
-                            </motion.button>
+                        {/* Amount Details */}
+                        <div className="hidden md:block text-left min-w-[150px]">
+                          <p className="text-[14px] font-black text-[#1E88E5] uppercase tracking-tighter">
+                            {formatCurrency(emp.settlement.netPayable)}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
+                            Net Payable
+                          </p>
+                        </div>
+
+                        {/* Department */}
+                        <div className="hidden lg:flex items-center gap-3 text-left min-w-[150px]">
+                          <div className="flex flex-col">
+                            <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest leading-tight">
+                              {emp.department}
+                            </p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Department</p>
+                          </div>
+                        </div>
+
+                        {/* Exit Date */}
+                        <div className="hidden sm:flex flex-col min-w-[120px]">
+                          <p className="text-[12px] font-black text-slate-800 dark:text-slate-200 leading-tight">
+                            {new Date(emp.lastWorkingDay).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Exit Date</p>
+                        </div>
+
+                        {/* Status Pill Badge */}
+                        <div className="flex items-center gap-4">
+                          <div className={`px-5 py-2.5 rounded-full flex items-center gap-2.5 border ${statusConfig.bg} ${statusConfig.border}`}>
+                            <div className={`w-2 h-2 rounded-full ${statusConfig.dot} animate-pulse ${statusConfig.glow}`}></div>
+                            <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${statusConfig.text}`}>
+                              {emp.status}
+                            </span>
                           </div>
                         </div>
                       </div>

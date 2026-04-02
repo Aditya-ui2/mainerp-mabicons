@@ -79,7 +79,7 @@ const sidebarConfig = [
       { id: 1, title: 'Attendance', icon: FiClock },
       { id: 2, title: 'Payroll', icon: FaIndianRupeeSign },
       { id: 13, title: 'Leave Management', icon: FiCalendar },
-      { id: 6, title: 'Performance Management', icon: FiTrendingUp },
+      { id: 6, title: 'Performance', icon: FiTrendingUp },
     ]
   },
   {
@@ -103,7 +103,6 @@ const sidebarConfig = [
   {
     heading: 'ENGAGEMENT',
     items: [
-      { id: 11, title: 'Employee Engagement', icon: FiHeart },
       { id: 12, title: 'Task by Client', icon: FiClipboard },
       { id: 10, title: 'Notes', icon: FiEdit3 },
     ]
@@ -111,7 +110,6 @@ const sidebarConfig = [
   {
     heading: 'COMMUNICATION',
     items: [
-      { id: 17, title: 'Client Chat', icon: FiMessageSquare },
       { id: 18, title: 'Work Handover', icon: FiRefreshCw },
       { id: 15, title: 'KAM Productivity', icon: FiTrendingUp },
     ]
@@ -223,7 +221,7 @@ const HROperationsDashboard = () => {
               return <PolicyTab />;
             case 'Master Data (Emp)':
               return <MasterDataTab />;
-            case 'Performance Management':
+            case 'Performance':
               return <PerformanceTab />;
             case 'Offboarding':
               return <OffboardingTab />;
@@ -233,8 +231,7 @@ const HROperationsDashboard = () => {
               return <DocumentVerifyTab />;
             case 'Notes':
               return <NotesTab />;
-            case 'Employee Engagement':
-              return <EmployeeEngagementTab />;
+
             case 'Task by Client':
               return <TaskByClientTab />;
             case 'Leave Management':
@@ -245,8 +242,7 @@ const HROperationsDashboard = () => {
               return <KamProductivityTab />;
             case 'Work Agreements':
               return <WorkAgreementTab />;
-            case 'Client Chat':
-              return <ChatUpdatesTab />;
+
             case 'Work Handover':
               return <WorkHandoverTab />;
             case 'Team Members':
@@ -419,7 +415,7 @@ const HROperationsDashboard = () => {
                           <span className="text-sm font-medium text-gray-700">Verify Documents</span>
                         </button>
                         <button
-                          onClick={() => setActiveTab('Performance Management')}
+                          onClick={() => setActiveTab('Performance')}
                           className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/50 transition-all duration-200 text-left group"
                         >
                           <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600 group-hover:scale-105 transition-transform">

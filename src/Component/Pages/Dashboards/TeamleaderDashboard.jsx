@@ -18,7 +18,7 @@ import {
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-import logo from "../../../assets/images/ERP LOGO.png";
+import logo from "../../../assets/images/mabicons logo blue.png";
 import onboardingIllustration from "../../../assets/images/a-cheerful-professional-with-a-tidy-desk-and-an-op.svg";
 
 import TeamTabs from "./Tabs/Teamtabs";
@@ -120,9 +120,8 @@ const TeamleaderDashboard = () => {
         <div className="absolute -bottom-14 right-24 h-52 w-[28rem] rounded-full bg-[#d6d0ff]/50 blur-2xl" />
 
         <aside className="relative z-10 w-[250px] border-r border-[#e0dcec] bg-gradient-to-b from-[#f4f1fd] via-[#f2effb] to-[#ddd5fa]/45 p-5 flex flex-col">
-          <div className="flex items-center gap-2 pb-6 pt-1 px-1">
-            <img src={logo} alt="Logo" className="h-8 w-8 object-contain" />
-            <h1 className="text-[43px] leading-none font-semibold text-slate-700">Logo</h1>
+          <div className="flex items-center h-16 border-b border-slate-200 bg-white -mx-5 -mt-5 px-4 mb-4">
+            <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain" />
           </div>
 
           <nav className="space-y-1.5">

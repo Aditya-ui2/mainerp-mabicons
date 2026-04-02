@@ -12,7 +12,7 @@ import { jwtDecode } from 'jwt-decode';
 import TaskTab from './Tabs/TaskTab';
 import OnboardingTab from './Tabs/OnboardingTab';
 import { getEmployeeTasks, getAllNotifications } from '../service/api';
-import logo from '../../../assets/images/ERP LOGO.png';
+import logo from '../../../assets/images/mabicons logo blue.png';
 import taskErrorIllustration from '../../../assets/images/a-cheerful-professional-with-a-tidy-desk-and-an-op.svg';
 
 const sidebarItems = [
@@ -153,9 +153,8 @@ const Dashboard = () => {
         <div className="absolute -bottom-14 right-24 h-52 w-[28rem] rounded-full bg-[#d6d0ff]/50 blur-2xl" />
 
         <aside className="relative z-10 w-[270px] border-r border-[#e0dcec] bg-gradient-to-b from-[#f4f1fd] via-[#f2effb] to-[#ddd5fa]/45 p-5 flex flex-col">
-          <div className="flex items-center gap-3 pb-6 pt-1 px-1">
-            <img src={logo} alt="CRM Pro" className="h-8 w-8 object-contain" />
-            <h1 className="text-[24px] leading-none font-semibold text-slate-700">CRM Pro</h1>
+          <div className="flex items-center h-16 border-b border-slate-200 bg-white -mx-5 -mt-5 px-4 mb-4">
+            <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain" />
           </div>
 
           <nav className="space-y-2">

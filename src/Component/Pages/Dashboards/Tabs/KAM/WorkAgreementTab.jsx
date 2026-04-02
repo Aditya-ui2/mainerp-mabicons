@@ -52,7 +52,7 @@ const StatusBadge = ({ status }) => {
     Terminated: 'from-red-500 to-rose-600 text-white shadow-red-500/25',
   };
   return (
-    <motion.span 
+    <motion.span
       whileHover={{ scale: 1.05 }}
       className={`text-[11px] font-semibold px-3 py-1.5 rounded-full bg-gradient-to-r shadow-lg ${map[status] || 'from-slate-500 to-slate-600 text-white'}`}
     >
@@ -66,7 +66,7 @@ const MiniBar = ({ value, max, color = 'from-violet-500 to-purple-600', delay = 
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
     <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
-      <motion.div 
+      <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
         transition={{ duration: 0.8, delay }}
@@ -78,7 +78,7 @@ const MiniBar = ({ value, max, color = 'from-violet-500 to-purple-600', delay = 
 
 /* ── Scope chip with animation ── */
 const ScopeChip = ({ label, onRemove }) => (
-  <motion.span 
+  <motion.span
     initial={{ opacity: 0, scale: 0.8 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.8 }}
@@ -260,7 +260,7 @@ const WorkAgreementTab = ({ isDarkMode }) => {
   /* ── Error ── */
   if (error && agreements.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="flex flex-col items-center justify-center h-96 gap-4"
@@ -269,10 +269,10 @@ const WorkAgreementTab = ({ isDarkMode }) => {
           <FiAlertTriangle className="w-12 h-12 text-red-500" />
         </div>
         <p className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{error}</p>
-        <motion.button 
+        <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={fetchData} 
+          onClick={fetchData}
           className="px-5 py-2.5 text-sm bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
         >
           Try Again
@@ -290,13 +290,13 @@ const WorkAgreementTab = ({ isDarkMode }) => {
   ];
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
       {/* ── Header ── */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
@@ -320,11 +320,10 @@ const WorkAgreementTab = ({ isDarkMode }) => {
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.3 }}
             onClick={fetchData}
-            className={`p-2.5 rounded-xl border-2 transition-colors ${
-              isDarkMode 
-                ? 'bg-slate-800 border-slate-700 text-slate-400 hover:border-violet-500 hover:text-violet-400' 
-                : 'bg-white border-slate-200 text-slate-500 hover:border-violet-300 hover:text-violet-600'
-            }`}
+            className={`p-2.5 rounded-xl border-2 transition-colors ${isDarkMode
+              ? 'bg-slate-800 border-slate-700 text-slate-400 hover:border-violet-500 hover:text-violet-400'
+              : 'bg-white border-slate-200 text-slate-500 hover:border-violet-300 hover:text-violet-600'
+              }`}
           >
             <FiRefreshCw className="w-5 h-5" />
           </motion.button>
@@ -345,17 +344,16 @@ const WorkAgreementTab = ({ isDarkMode }) => {
         {statCards.map((card, i) => {
           const Icon = card.icon;
           return (
-            <motion.div 
-              key={i} 
+            <motion.div
+              key={i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               whileHover={{ scale: 1.02, y: -2 }}
-              className={`relative overflow-hidden rounded-2xl p-5 cursor-pointer transition-shadow ${
-                isDarkMode 
-                  ? 'bg-slate-800/80 border border-slate-700/50 hover:border-slate-600' 
-                  : 'bg-white border border-slate-200/50 hover:shadow-xl'
-              } ${card.shadow}`}
+              className={`relative overflow-hidden rounded-2xl p-5 cursor-pointer transition-shadow ${isDarkMode
+                ? 'bg-slate-800/80 border border-slate-700/50 hover:border-slate-600'
+                : 'bg-white border border-slate-200/50 hover:shadow-xl'
+                } ${card.shadow}`}
             >
               <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
                 <div className={`w-full h-full rounded-full bg-gradient-to-br ${card.gradient}`}></div>
@@ -386,7 +384,7 @@ const WorkAgreementTab = ({ isDarkMode }) => {
       </div>
 
       {/* ── Search & Filter bar ── */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -399,22 +397,20 @@ const WorkAgreementTab = ({ isDarkMode }) => {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Search by client, company, or title…"
-            className={`w-full rounded-xl border-2 py-3 pl-12 pr-4 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${
-              isDarkMode 
-                ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500 hover:border-slate-600 focus:border-violet-500' 
-                : 'bg-white border-slate-200 placeholder:text-slate-400 hover:border-violet-300 focus:border-violet-500'
-            }`}
+            className={`w-full rounded-xl border-2 py-3 pl-12 pr-4 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+              ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500 hover:border-slate-600 focus:border-violet-500'
+              : 'bg-white border-slate-200 placeholder:text-slate-400 hover:border-violet-300 focus:border-violet-500'
+              }`}
           />
         </div>
         <div className="relative">
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            className={`appearance-none rounded-xl border-2 px-4 py-3 pr-10 font-medium transition-all cursor-pointer focus:ring-2 focus:ring-violet-500/50 ${
-              isDarkMode 
-                ? 'bg-slate-800/80 border-slate-700 text-white hover:border-slate-600' 
-                : 'bg-white border-slate-200 hover:border-violet-300'
-            }`}
+            className={`appearance-none rounded-xl border-2 px-4 py-3 pr-10 font-medium transition-all cursor-pointer focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+              ? 'bg-slate-800/80 border-slate-700 text-white hover:border-slate-600'
+              : 'bg-white border-slate-200 hover:border-violet-300'
+              }`}
           >
             <option value="all">All Statuses</option>
             <option value="Active">Active</option>
@@ -426,13 +422,12 @@ const WorkAgreementTab = ({ isDarkMode }) => {
       </motion.div>
 
       {/* ── Agreements table ── */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className={`rounded-2xl border-2 overflow-hidden ${
-          isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'
-        }`}
+        className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'
+          }`}
       >
         {filtered.length === 0 ? (
           <div className="p-12 text-center">
@@ -463,17 +458,16 @@ const WorkAgreementTab = ({ isDarkMode }) => {
                     const limitReached = ag.maxTasks && ag.currentTasks >= ag.maxTasks;
                     const avatarColors = ['from-violet-500 to-purple-600', 'from-blue-500 to-cyan-600', 'from-emerald-500 to-teal-600', 'from-amber-500 to-orange-600', 'from-rose-500 to-pink-600'];
                     const avatarGradient = avatarColors[(ag.companyName || ag.clientName || '').charCodeAt(0) % avatarColors.length];
-                    
+
                     return (
-                      <motion.tr 
+                      <motion.tr
                         key={ag.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: idx * 0.05 }}
-                        className={`transition-colors ${
-                          isDarkMode ? 'hover:bg-slate-700/30' : 'hover:bg-violet-50/50'
-                        }`}
+                        className={`transition-colors ${isDarkMode ? 'hover:bg-slate-700/30' : 'hover:bg-violet-50/50'
+                          }`}
                       >
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
@@ -494,11 +488,10 @@ const WorkAgreementTab = ({ isDarkMode }) => {
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap gap-1 max-w-[220px]">
                             {ag.allowedScopes.slice(0, 3).map(s => (
-                              <span key={s} className={`text-[10px] font-medium rounded-full px-2 py-0.5 ${
-                                isDarkMode 
-                                  ? 'bg-violet-900/40 text-violet-300 border border-violet-700/50' 
-                                  : 'bg-gradient-to-r from-violet-50 to-purple-50 text-violet-600 border border-violet-100'
-                              }`}>{s}</span>
+                              <span key={s} className={`text-[10px] font-medium rounded-full px-2 py-0.5 ${isDarkMode
+                                ? 'bg-violet-900/40 text-violet-300 border border-violet-700/50'
+                                : 'bg-gradient-to-r from-violet-50 to-purple-50 text-violet-600 border border-violet-100'
+                                }`}>{s}</span>
                             ))}
                             {ag.allowedScopes.length > 3 && (
                               <span className={`text-[10px] font-medium px-2 py-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -517,11 +510,10 @@ const WorkAgreementTab = ({ isDarkMode }) => {
                                 delay={idx * 0.1}
                               />
                             </div>
-                            <span className={`text-xs font-bold whitespace-nowrap ${
-                              limitReached 
-                                ? 'text-red-500' 
-                                : isDarkMode ? 'text-slate-300' : 'text-slate-600'
-                            }`}>
+                            <span className={`text-xs font-bold whitespace-nowrap ${limitReached
+                              ? 'text-red-500'
+                              : isDarkMode ? 'text-slate-300' : 'text-slate-600'
+                              }`}>
                               {ag.currentTasks}{ag.maxTasks ? `/${ag.maxTasks}` : ''}
                             </span>
                           </div>
@@ -549,11 +541,10 @@ const WorkAgreementTab = ({ isDarkMode }) => {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => openEdit(ag)}
-                              className={`p-2 rounded-lg transition-colors ${
-                                isDarkMode 
-                                  ? 'hover:bg-violet-900/40 text-slate-400 hover:text-violet-400' 
-                                  : 'hover:bg-violet-100 text-slate-500 hover:text-violet-600'
-                              }`}
+                              className={`p-2 rounded-lg transition-colors ${isDarkMode
+                                ? 'hover:bg-violet-900/40 text-slate-400 hover:text-violet-400'
+                                : 'hover:bg-violet-100 text-slate-500 hover:text-violet-600'
+                                }`}
                               title="Edit"
                             >
                               <FiEdit2 className="w-4 h-4" />
@@ -562,11 +553,10 @@ const WorkAgreementTab = ({ isDarkMode }) => {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => setConfirmDelete(ag.id)}
-                              className={`p-2 rounded-lg transition-colors ${
-                                isDarkMode 
-                                  ? 'hover:bg-red-900/40 text-slate-400 hover:text-red-400' 
-                                  : 'hover:bg-red-100 text-slate-500 hover:text-red-600'
-                              }`}
+                              className={`p-2 rounded-lg transition-colors ${isDarkMode
+                                ? 'hover:bg-red-900/40 text-slate-400 hover:text-red-400'
+                                : 'hover:bg-red-100 text-slate-500 hover:text-red-600'
+                                }`}
                               title="Delete"
                             >
                               <FiTrash2 className="w-4 h-4" />
@@ -584,15 +574,14 @@ const WorkAgreementTab = ({ isDarkMode }) => {
       </motion.div>
 
       {/* ── Scope enforcement info ── */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className={`rounded-2xl border-2 p-5 ${
-          isDarkMode 
-            ? 'bg-gradient-to-r from-violet-900/30 to-purple-900/30 border-violet-700/50' 
-            : 'bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200'
-        }`}
+        className={`rounded-2xl border-2 p-5 ${isDarkMode
+          ? 'bg-gradient-to-r from-violet-900/30 to-purple-900/30 border-violet-700/50'
+          : 'bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200'
+          }`}
       >
         <div className="flex items-start gap-3">
           <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-violet-800/50' : 'bg-white shadow-sm'}`}>
@@ -614,25 +603,23 @@ const WorkAgreementTab = ({ isDarkMode }) => {
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
-              onClick={() => setShowModal(false)} 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowModal(false)}
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className={`relative rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto ${
-                isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'
-              }`}
+              className={`relative rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'
+                }`}
             >
               {/* Modal header */}
-              <div className={`sticky top-0 border-b px-6 py-4 rounded-t-2xl flex items-center justify-between ${
-                isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
-              }`}>
+              <div className={`sticky top-0 border-b px-6 py-4 rounded-t-2xl flex items-center justify-between ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
+                }`}>
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25">
                     <FiFileText className="w-4 h-4 text-white" />
@@ -641,268 +628,256 @@ const WorkAgreementTab = ({ isDarkMode }) => {
                     {editingAgreement ? 'Edit Agreement' : 'New Work Agreement'}
                   </h3>
                 </div>
-                <motion.button 
+                <motion.button
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowModal(false)} 
+                  onClick={() => setShowModal(false)}
                   className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
                 >
                   <FiX className="w-5 h-5" />
                 </motion.button>
               </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              {formError && (
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-2 p-3 rounded-xl bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 text-sm text-red-700"
-                >
-                  <FiAlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  {formError}
-                </motion.div>
-              )}
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                {formError && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-2 p-3 rounded-xl bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 text-sm text-red-700"
+                  >
+                    <FiAlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    {formError}
+                  </motion.div>
+                )}
 
-              {/* Client ID */}
-              <div>
-                <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Client ID *
-                </label>
-                <input
-                  type="text"
-                  value={form.clientId}
-                  onChange={e => setForm(p => ({ ...p, clientId: e.target.value }))}
-                  disabled={!!editingAgreement}
-                  placeholder="Enter client UUID"
-                  className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${
-                    isDarkMode 
-                      ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500 disabled:bg-slate-800 disabled:text-slate-500' 
-                      : 'bg-white border-slate-200 placeholder:text-slate-400 focus:border-violet-500 disabled:bg-slate-50 disabled:text-slate-400'
-                  }`}
-                />
-              </div>
-
-              {/* Title */}
-              <div>
-                <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Agreement Title *
-                </label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                  placeholder="e.g. Payroll & Compliance 2026"
-                  className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${
-                    isDarkMode 
-                      ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500' 
-                      : 'bg-white border-slate-200 placeholder:text-slate-400 focus:border-violet-500'
-                  }`}
-                />
-              </div>
-
-              {/* Allowed Scopes */}
-              <div>
-                <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Allowed Scopes *
-                </label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  <AnimatePresence>
-                    {form.allowedScopes.map(s => (
-                      <ScopeChip key={s} label={s} onRemove={() => removeScope(s)} />
-                    ))}
-                  </AnimatePresence>
-                </div>
-                <div className="relative">
+                {/* Client ID */}
+                <div>
+                  <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    Client ID *
+                  </label>
                   <input
                     type="text"
-                    value={scopeInput}
-                    onChange={e => { setScopeInput(e.target.value); setShowScopeDropdown(true); }}
-                    onFocus={() => setShowScopeDropdown(true)}
-                    placeholder="Type or select a scope…"
-                    className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${
-                      isDarkMode 
-                        ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500' 
+                    value={form.clientId}
+                    onChange={e => setForm(p => ({ ...p, clientId: e.target.value }))}
+                    disabled={!!editingAgreement}
+                    placeholder="Enter client UUID"
+                    className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500 disabled:bg-slate-800 disabled:text-slate-500'
+                      : 'bg-white border-slate-200 placeholder:text-slate-400 focus:border-violet-500 disabled:bg-slate-50 disabled:text-slate-400'
+                      }`}
+                  />
+                </div>
+
+                {/* Title */}
+                <div>
+                  <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    Agreement Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={form.title}
+                    onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                    placeholder="e.g. Payroll & Compliance 2026"
+                    className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500'
+                      : 'bg-white border-slate-200 placeholder:text-slate-400 focus:border-violet-500'
+                      }`}
+                  />
+                </div>
+
+                {/* Allowed Scopes */}
+                <div>
+                  <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    Allowed Scopes *
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    <AnimatePresence>
+                      {form.allowedScopes.map(s => (
+                        <ScopeChip key={s} label={s} onRemove={() => removeScope(s)} />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={scopeInput}
+                      onChange={e => { setScopeInput(e.target.value); setShowScopeDropdown(true); }}
+                      onFocus={() => setShowScopeDropdown(true)}
+                      placeholder="Type or select a scope…"
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+                        ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500'
                         : 'bg-white border-slate-200 placeholder:text-slate-400 focus:border-violet-500'
-                    }`}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (scopeInput.trim()) addScope(scopeInput.trim());
-                      }
-                    }}
-                  />
-                  <AnimatePresence>
-                    {showScopeDropdown && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className={`absolute z-10 top-full mt-1 w-full rounded-xl shadow-xl max-h-40 overflow-y-auto ${
-                          isDarkMode ? 'bg-slate-700 border border-slate-600' : 'bg-white border border-slate-200'
                         }`}
-                      >
-                        {SCOPE_OPTIONS
-                          .filter(s => !form.allowedScopes.includes(s) && s.toLowerCase().includes(scopeInput.toLowerCase()))
-                          .map(s => (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => addScope(s)}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                                isDarkMode 
-                                  ? 'text-slate-200 hover:bg-slate-600' 
-                                  : 'text-slate-700 hover:bg-violet-50'
-                              }`}
-                            >
-                              {s}
-                            </button>
-                          ))
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (scopeInput.trim()) addScope(scopeInput.trim());
                         }
-                        {scopeInput.trim() && !SCOPE_OPTIONS.some(s => s.toLowerCase() === scopeInput.toLowerCase()) && (
-                          <button
-                            type="button"
-                            onClick={() => addScope(scopeInput.trim())}
-                            className={`w-full text-left px-4 py-2 text-sm font-medium ${
-                              isDarkMode 
-                                ? 'text-violet-400 hover:bg-slate-600' 
-                                : 'text-violet-600 hover:bg-violet-50'
+                      }}
+                    />
+                    <AnimatePresence>
+                      {showScopeDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className={`absolute z-10 top-full mt-1 w-full rounded-xl shadow-xl max-h-40 overflow-y-auto ${isDarkMode ? 'bg-slate-700 border border-slate-600' : 'bg-white border border-slate-200'
                             }`}
-                          >
-                            + Add "{scopeInput.trim()}"
-                          </button>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        >
+                          {SCOPE_OPTIONS
+                            .filter(s => !form.allowedScopes.includes(s) && s.toLowerCase().includes(scopeInput.toLowerCase()))
+                            .map(s => (
+                              <button
+                                key={s}
+                                type="button"
+                                onClick={() => addScope(s)}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${isDarkMode
+                                  ? 'text-slate-200 hover:bg-slate-600'
+                                  : 'text-slate-700 hover:bg-violet-50'
+                                  }`}
+                              >
+                                {s}
+                              </button>
+                            ))
+                          }
+                          {scopeInput.trim() && !SCOPE_OPTIONS.some(s => s.toLowerCase() === scopeInput.toLowerCase()) && (
+                            <button
+                              type="button"
+                              onClick={() => addScope(scopeInput.trim())}
+                              className={`w-full text-left px-4 py-2 text-sm font-medium ${isDarkMode
+                                ? 'text-violet-400 hover:bg-slate-600'
+                                : 'text-violet-600 hover:bg-violet-50'
+                                }`}
+                            >
+                              + Add "{scopeInput.trim()}"
+                            </button>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
-              </div>
 
-              {/* Max Tasks */}
-              <div>
-                <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Max Concurrent Tasks
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={form.maxTasks}
-                  onChange={e => setForm(p => ({ ...p, maxTasks: e.target.value }))}
-                  placeholder="Leave empty for unlimited"
-                  className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${
-                    isDarkMode 
-                      ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500' 
-                      : 'bg-white border-slate-200 placeholder:text-slate-400 focus:border-violet-500'
-                  }`}
-                />
-              </div>
-
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
+                {/* Max Tasks */}
                 <div>
                   <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                    Start Date *
+                    Max Concurrent Tasks
                   </label>
                   <input
-                    type="date"
-                    value={form.startDate}
-                    onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))}
-                    className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${
-                      isDarkMode 
-                        ? 'bg-slate-700 border-slate-600 text-white focus:border-violet-500' 
-                        : 'bg-white border-slate-200 focus:border-violet-500'
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={form.endDate}
-                    onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))}
-                    className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${
-                      isDarkMode 
-                        ? 'bg-slate-700 border-slate-600 text-white focus:border-violet-500' 
-                        : 'bg-white border-slate-200 focus:border-violet-500'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              {/* Status (edit only) */}
-              {editingAgreement && (
-                <div>
-                  <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                    Status
-                  </label>
-                  <select
-                    value={form.status || editingAgreement.status}
-                    onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-                    className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${
-                      isDarkMode 
-                        ? 'bg-slate-700 border-slate-600 text-white focus:border-violet-500' 
-                        : 'bg-white border-slate-200 focus:border-violet-500'
-                    }`}
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Expired">Expired</option>
-                    <option value="Terminated">Terminated</option>
-                  </select>
-                </div>
-              )}
-
-              {/* Notes */}
-              <div>
-                <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Notes
-                </label>
-                <textarea
-                  value={form.notes}
-                  onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-                  rows={3}
-                  placeholder="Additional details about this agreement…"
-                  className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all resize-none focus:ring-2 focus:ring-violet-500/50 ${
-                    isDarkMode 
-                      ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500' 
+                    type="number"
+                    min="1"
+                    value={form.maxTasks}
+                    onChange={e => setForm(p => ({ ...p, maxTasks: e.target.value }))}
+                    placeholder="Leave empty for unlimited"
+                    className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500'
                       : 'bg-white border-slate-200 placeholder:text-slate-400 focus:border-violet-500'
-                  }`}
-                />
-              </div>
+                      }`}
+                  />
+                </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowModal(false)}
-                  className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
-                    isDarkMode 
-                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                {/* Dates */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={form.startDate}
+                      onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))}
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+                        ? 'bg-slate-700 border-slate-600 text-white focus:border-violet-500'
+                        : 'bg-white border-slate-200 focus:border-violet-500'
+                        }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={form.endDate}
+                      onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))}
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+                        ? 'bg-slate-700 border-slate-600 text-white focus:border-violet-500'
+                        : 'bg-white border-slate-200 focus:border-violet-500'
+                        }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Status (edit only) */}
+                {editingAgreement && (
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Status
+                    </label>
+                    <select
+                      value={form.status || editingAgreement.status}
+                      onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
+                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+                        ? 'bg-slate-700 border-slate-600 text-white focus:border-violet-500'
+                        : 'bg-white border-slate-200 focus:border-violet-500'
+                        }`}
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Expired">Expired</option>
+                      <option value="Terminated">Terminated</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Notes */}
+                <div>
+                  <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    Notes
+                  </label>
+                  <textarea
+                    value={form.notes}
+                    onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
+                    rows={3}
+                    placeholder="Additional details about this agreement…"
+                    className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm transition-all resize-none focus:ring-2 focus:ring-violet-500/50 ${isDarkMode
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500'
+                      : 'bg-white border-slate-200 placeholder:text-slate-400 focus:border-violet-500'
+                      }`}
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowModal(false)}
+                    className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${isDarkMode
+                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  type="submit"
-                  disabled={submitting}
-                  whileHover={{ scale: submitting ? 1 : 1.02 }}
-                  whileTap={{ scale: submitting ? 1 : 0.98 }}
-                  className="px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {submitting ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                      Saving…
-                    </span>
-                  ) : editingAgreement ? 'Update Agreement' : 'Create Agreement'}
-                </motion.button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
+                      }`}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    type="submit"
+                    disabled={submitting}
+                    whileHover={{ scale: submitting ? 1 : 1.02 }}
+                    whileTap={{ scale: submitting ? 1 : 0.98 }}
+                    className="px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        Saving…
+                      </span>
+                    ) : editingAgreement ? 'Update Agreement' : 'Create Agreement'}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
@@ -910,20 +885,19 @@ const WorkAgreementTab = ({ isDarkMode }) => {
       <AnimatePresence>
         {confirmDelete && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
-              onClick={() => setConfirmDelete(null)} 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setConfirmDelete(null)}
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className={`relative rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center ${
-                isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'
-              }`}
+              className={`relative rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'
+                }`}
             >
               <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-red-100 to-rose-100 flex items-center justify-center mb-4">
                 <FiTrash2 className="w-8 h-8 text-red-500" />
@@ -935,22 +909,21 @@ const WorkAgreementTab = ({ isDarkMode }) => {
                 This will permanently remove the agreement. Tasks already created won't be affected.
               </p>
               <div className="flex items-center justify-center gap-3">
-                <motion.button 
+                <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setConfirmDelete(null)} 
-                  className={`px-5 py-2.5 text-sm font-semibold rounded-xl ${
-                    isDarkMode 
-                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  onClick={() => setConfirmDelete(null)}
+                  className={`px-5 py-2.5 text-sm font-semibold rounded-xl ${isDarkMode
+                    ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
                 >
                   Cancel
                 </motion.button>
-                <motion.button 
+                <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => handleDelete(confirmDelete)} 
+                  onClick={() => handleDelete(confirmDelete)}
                   className="px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl shadow-lg shadow-red-500/25 hover:shadow-red-500/40"
                 >
                   Delete

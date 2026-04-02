@@ -553,10 +553,8 @@ const Dashboard = () => {
       <div className="flex rounded-2xl overflow-hidden border border-slate-200/80 bg-[#f7f8fc] min-h-[calc(100vh-1rem)] md:min-h-[calc(100vh-1.5rem)]">
         {/* Sidebar */}
         <aside className="w-64 bg-[#f8f8fd] border-r border-slate-200 h-auto flex flex-col shrink-0">
-          <div className="p-4">
-            <div className="flex items-center justify-center">
-              <img src="/ERP LOGO.png" alt="ERP Logo" className="h-14 w-auto object-contain" />
-            </div>
+          <div className="flex items-center h-16 border-b border-slate-200 bg-white px-4">
+            <img src="/src/assets/images/mabicons logo blue.png" alt="Mabicons" className="h-8 w-auto object-contain" />
           </div>
           <nav className="mt-2 px-3 space-y-1.5 flex-1">
             {sidebarItems.map((item) => (

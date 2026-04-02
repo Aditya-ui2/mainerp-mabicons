@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import toggleSound from '../../assets/sound/20170101-light-switch-on-80675.mp3';
-import logo from '../../assets/images/ERP LOGO.png';
+import logo from '../../assets/images/mabicons logo blue.png';
 
 const Navbar = ({ activeSection, sectionRefs }) => {
   const [isOpen, setIsOpen] = useState(false);

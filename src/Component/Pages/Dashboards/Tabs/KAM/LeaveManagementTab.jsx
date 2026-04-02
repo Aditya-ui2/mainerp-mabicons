@@ -1,7 +1,8 @@
+
+
 import { useState, useEffect } from 'react';
 import { FiCalendar, FiClock, FiCheck, FiX, FiPlus, FiSearch, FiDownload, FiChevronDown, FiSun, FiMoon, FiCoffee, FiAward, FiTrendingUp, FiArrowLeft, FiSend, FiFileText } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getDeptLeaveRequests, approveRejectLeave } from '../../../service/api';
 
 const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
   const [leaveMode, setLeaveMode] = useState('Full Day');
@@ -14,15 +15,14 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
       className={`w-full ${isDarkMode ? 'text-white' : 'text-slate-800'}`}
     >
       <div className="flex items-center gap-4 mb-8 text-left">
-        <button 
+        <button
           onClick={onBack}
-          className={`p-2.5 rounded-xl transition-all shadow-sm ${
-            isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
-          }`}
+          className={`p-2.5 rounded-xl transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
+            }`}
         >
           <FiArrowLeft className="w-5 h-5" />
         </button>
-        <h2 
+        <h2
           onClick={onBack}
           className="text-2xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity select-none"
         >
@@ -30,8 +30,7 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
         </h2>
       </div>
 
-      <div className={`max-w-4xl mx-auto p-8 rounded-3xl border-2 shadow-xl ${
-          isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
+      <div className={`max-w-4xl mx-auto p-8 rounded-3xl border-2 shadow-xl ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
         }`}
       >
         <form className="space-y-8" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
@@ -42,9 +41,8 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
               </label>
               <div className="relative">
                 <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                <select className={`w-full appearance-none rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
-                  isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
-                }`}>
+                <select className={`w-full appearance-none rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                  }`}>
                   <option>Sick Leave</option>
                   <option>Casual Leave</option>
                   <option>Earned Leave</option>
@@ -59,25 +57,23 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
                 Leave Mode
               </label>
               <div className={`flex gap-4 p-1 rounded-2xl border-2 transition-all ${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setLeaveMode('Full Day')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${
-                    leaveMode === 'Full Day' 
-                      ? 'bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white shadow-lg' 
-                      : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`
-                  }`}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${leaveMode === 'Full Day'
+                    ? 'bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white shadow-lg'
+                    : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`
+                    }`}
                 >
                   Full Day
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setLeaveMode('Half Day')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${
-                    leaveMode === 'Half Day' 
-                      ? 'bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white shadow-lg' 
-                      : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`
-                  }`}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${leaveMode === 'Half Day'
+                    ? 'bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white shadow-lg'
+                    : `${isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'}`
+                    }`}
                 >
                   Half Day
                 </button>
@@ -88,12 +84,11 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
               <label className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
                 From Date
               </label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
-                    isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
-                }`} 
+                className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                  }`}
               />
             </div>
 
@@ -101,12 +96,11 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
               <label className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
                 To Date
               </label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
-                    isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
-                }`} 
+                className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                  }`}
               />
             </div>
           </div>
@@ -115,31 +109,29 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
             <label className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
               Reason for Leave
             </label>
-            <textarea 
-              rows={4} 
-              className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none resize-none ${
-                isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
-              }`} 
-              placeholder="Please provide a clear reason for your leave request..." 
+            <textarea
+              rows={4}
+              className={`w-full rounded-2xl border-2 px-5 py-4 font-medium transition-all focus:ring-4 focus:ring-blue-500/10 outline-none resize-none ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`}
+              placeholder="Please provide a clear reason for your leave request..."
             />
           </div>
 
           <div className="flex gap-4 pt-4">
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              type="button" 
-              onClick={onBack} 
-              className={`flex-1 px-8 py-4 rounded-2xl font-bold border-2 transition-all ${
-                isDarkMode ? 'border-slate-700 hover:bg-slate-700 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-              }`}
+              type="button"
+              onClick={onBack}
+              className={`flex-1 px-8 py-4 rounded-2xl font-bold border-2 transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-700 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                }`}
             >
               Discard Request
             </motion.button>
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              type="submit" 
+              type="submit"
               className="flex-[1.5] px-8 py-4 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
             >
               <FiSend className="w-5 h-5" />
@@ -156,9 +148,9 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
   if (!employee) return null;
 
   const leaveBalanceMock = [
-    { type: 'Sick', total: 12, used: 0, remaining: 12, icon: FiSun, gradient: 'from-rose-600 to-pink-700' },
-    { type: 'Casual', total: 12, used: 0, remaining: 12, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600' },
-    { type: 'Earned', total: 15, used: 0, remaining: 15, icon: FiAward, gradient: 'from-emerald-600 to-teal-800' },
+    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-600 to-pink-700' },
+    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600' },
+    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-600 to-teal-800' },
   ];
 
   return (
@@ -169,15 +161,14 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
       className={`w-full ${isDarkMode ? 'text-white' : 'text-slate-800'}`}
     >
       <div className="flex items-center gap-4 mb-8 text-left">
-        <button 
+        <button
           onClick={onBack}
-          className={`p-2.5 rounded-xl transition-all shadow-sm ${
-            isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
-          }`}
+          className={`p-2.5 rounded-xl transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
+            }`}
         >
           <FiArrowLeft className="w-5 h-5" />
         </button>
-        <h2 
+        <h2
           onClick={onBack}
           className="text-2xl font-bold bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity select-none"
         >
@@ -187,9 +178,8 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {/* Left Column: Profile Card */}
-        <div className={`lg:col-span-1 p-8 rounded-3xl border-2 shadow-xl flex flex-col items-center text-center space-y-6 ${
-          isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
-        }`}>
+        <div className={`lg:col-span-1 p-8 rounded-3xl border-2 shadow-xl flex flex-col items-center text-center space-y-6 ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
+          }`}>
           <div className="relative">
             <div className={`w-32 h-32 rounded-3xl bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] flex items-center justify-center text-white text-5xl font-black shadow-2xl ring-4 ring-white`}>
               {employee.name.charAt(0).toUpperCase()}
@@ -198,7 +188,7 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
               <FiCheck className="w-6 h-6" />
             </div>
           </div>
-          
+
           <div className="space-y-1">
             <h3 className="text-2xl font-black tracking-tight">{employee.name}</h3>
             <p className="text-blue-500 font-bold tracking-widest text-xs uppercase">{employee.empId}</p>
@@ -223,14 +213,13 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
         {/* Right Column: Details & Leave Info */}
         <div className="lg:col-span-2 space-y-8">
           {/* Current Request Card */}
-          <div className={`p-8 rounded-3xl border-2 shadow-xl space-y-6 ${
-            isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
-          }`}>
+          <div className={`p-8 rounded-3xl border-2 shadow-xl space-y-6 ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
+            }`}>
             <h4 className="text-lg font-black flex items-center gap-2">
               <FiFileText className="text-blue-500" />
               Current Leave Request
             </h4>
-            
+
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Leave Type</p>
@@ -250,9 +239,8 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-6">
             {leaveBalanceMock.map((leave, idx) => (
-              <div key={idx} className={`p-5 rounded-3xl border-2 shadow-lg transition-all hover:-translate-y-1 ${
-                isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
-              }`}>
+              <div key={idx} className={`p-5 rounded-3xl border-2 shadow-lg transition-all hover:-translate-y-1 ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100'
+                }`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className={`p-2 rounded-xl bg-gradient-to-br ${leave.gradient} text-white`}>
                     <leave.icon className="w-4 h-4" />
@@ -268,11 +256,10 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode }) => {
           </div>
 
           <div className="flex gap-4 pt-4">
-             <button 
+            <button
               onClick={onBack}
-              className={`flex-1 px-8 py-4 rounded-2xl font-bold border-2 transition-all ${
-                isDarkMode ? 'border-slate-700 hover:bg-slate-700 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-              }`}
+              className={`flex-1 px-8 py-4 rounded-2xl font-bold border-2 transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-700 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                }`}
             >
               Close Details
             </button>
@@ -296,60 +283,31 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    const fetchLeaves = async () => {
-      try {
-        setLoading(true);
-        const response = await getDeptLeaveRequests({ 
-          department: 'HR Operations'
-        });
-        
-        if (response.success) {
-          const mappedData = (response.leaves || []).map(leave => ({
-            id: leave.id,
-            empId: leave.memberId?.substring(0, 8).toUpperCase() || 'EMP-TEMP',
-            name: leave.memberName,
-            type: leave.leaveType,
-            from: leave.startDate,
-            to: leave.endDate,
-            days: Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1,
-            reason: leave.reason,
-            status: leave.status.toLowerCase(),
-            appliedOn: leave.createdAt,
-            avatar: leave.memberName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
-            photo: null
-          }));
-          setLeaveRequests(mappedData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch leaves:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeaves();
+    const mockData = [
+      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', type: 'Sick Leave', from: '2026-03-18', to: '2026-03-19', days: 2, reason: 'Fever and cold', status: 'pending', appliedOn: '2026-03-16', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
+      { id: 2, empId: 'EMP002', name: 'Priya Singh', type: 'Casual Leave', from: '2026-03-20', to: '2026-03-20', days: 1, reason: 'Personal work', status: 'approved', appliedOn: '2026-03-15', avatar: 'PS', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
+      { id: 3, empId: 'EMP003', name: 'Amit Kumar', type: 'Earned Leave', from: '2026-03-25', to: '2026-03-28', days: 4, reason: 'Family vacation', status: 'pending', appliedOn: '2026-03-16', avatar: 'AK', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
+      { id: 4, empId: 'EMP004', name: 'Sneha Patel', type: 'Maternity Leave', from: '2026-04-01', to: '2026-06-30', days: 90, reason: 'Maternity', status: 'approved', appliedOn: '2026-03-10', avatar: 'SP', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
+      { id: 5, empId: 'EMP005', name: 'Vikram Rao', type: 'Compensatory Off', from: '2026-03-22', to: '2026-03-22', days: 1, reason: 'Worked on weekend', status: 'rejected', appliedOn: '2026-03-14', avatar: 'VR', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
+    ];
+    setTimeout(() => {
+      setLeaveRequests(mockData);
+      setLoading(false);
+    }, 500);
   }, [selectedClient]);
 
-  const leaveStats = (leaveRequests || []).reduce((acc, req) => {
-    if (req.status.toLowerCase() === 'approved') {
-      acc[req.type] = (acc[req.type] || 0) + (Number(req.days) || 0);
-    }
-    return acc;
-  }, {});
-
   const leaveBalance = [
-    { type: 'Sick', total: 12, used: leaveStats['Sick Leave'] || 0, icon: FiSun, gradient: 'from-rose-600 to-pink-700', lightBg: 'bg-gradient-to-br from-rose-50 to-pink-50', iconColor: 'text-rose-600' },
-    { type: 'Casual', total: 12, used: leaveStats['Casual Leave'] || 0, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-gradient-to-br from-amber-50 to-orange-50', iconColor: 'text-amber-600' },
-    { type: 'Earned', total: 15, used: leaveStats['Earned Leave'] || 0, icon: FiAward, gradient: 'from-emerald-600 to-teal-800', lightBg: 'bg-gradient-to-br from-emerald-50 to-teal-100', iconColor: 'text-emerald-600' },
-    { type: 'Comp Off', total: 4, used: leaveStats['Compensatory Off'] || 0, icon: FiMoon, gradient: 'from-[#3FA9F5] to-[#0D47A1]', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-blue-600' },
-  ].map(b => ({ ...b, remaining: Math.max(0, b.total - b.used) }));
+    { type: 'Sick', total: 12, used: 3, remaining: 9, icon: FiSun, gradient: 'from-rose-600 to-pink-700', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-rose-600' },
+    { type: 'Casual', total: 12, used: 5, remaining: 7, icon: FiCoffee, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-amber-600' },
+    { type: 'Earned', total: 15, used: 2, remaining: 13, icon: FiAward, gradient: 'from-emerald-600 to-teal-800', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-emerald-600' },
+    { type: 'Comp Off', total: 4, used: 1, remaining: 3, icon: FiMoon, gradient: 'from-[#3FA9F5] to-[#0D47A1]', lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-100', iconColor: 'text-blue-600' },
+  ];
 
   const stats = {
     pending: leaveRequests.filter(l => l.status === 'pending').length,
     approved: leaveRequests.filter(l => l.status === 'approved').length,
     rejected: leaveRequests.filter(l => l.status === 'rejected').length,
   };
-
 
   const getStatusConfig = (status = '') => {
     const s = status.toLowerCase();
@@ -361,7 +319,7 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
     return config[s] || config.pending;
   };
 
-   const getAvatarColor = (name = 'E') => {
+  const getAvatarColor = (name = 'E') => {
     const colors = [
       { bg: '#2563eb', grad: 'from-blue-600 to-indigo-900' },
       { bg: '#059669', grad: 'from-emerald-600 to-teal-900' },
@@ -372,17 +330,8 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
     return colors[name.charCodeAt(0) % colors.length];
   };
 
-  const handleAction = async (id, action) => {
-    try {
-      const response = await approveRejectLeave(id, { 
-        status: action === 'approved' ? 'Approved' : 'Rejected' 
-      });
-      if (response.success) {
-        setLeaveRequests(prev => prev.map(req => req.id === id ? { ...req, status: action } : req));
-      }
-    } catch (error) {
-      console.error('Failed to update leave status:', error);
-    }
+  const handleAction = (id, action) => {
+    setLeaveRequests(prev => prev.map(req => req.id === id ? { ...req, status: action } : req));
   };
 
   const filteredData = leaveRequests.filter(req => {
@@ -401,7 +350,7 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => (
+          {[1, 2, 3, 4].map(i => (
             <div key={i} className={`h-32 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
           ))}
         </div>
@@ -422,7 +371,7 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
             className="space-y-8"
           >
             {/* Header */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
@@ -436,19 +385,13 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                     Leave Management Dashboard
                   </h2>
                 </div>
-                <p className={`text-base font-semibold mt-4 ml-2 tracking-wide text-left ${isDarkMode ? 'text-blue-400' : 'text-[#1E88E5]'} flex items-center gap-2`}>
-                  Manage employee leave requests
+                <p
+                  style={{ color: isDarkMode ? '' : '#000000' }}
+                  className={`text-base font-semibold mt-4 ml-2 tracking-wide text-left ${isDarkMode ? 'text-blue-400' : '!text-black'} flex items-center gap-2`}
+                >
+                  Manage employee leave requests.
                 </p>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setView('apply')}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
-              >
-                <FiPlus className="w-5 h-5" />
-                Apply Leave
-              </motion.button>
             </motion.div>
 
             {/* Leave Balance Cards */}
@@ -461,11 +404,10 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                   transition={{ delay: index * 0.1 }}
                   onMouseEnter={() => setHoveredCard(leave.type)}
                   onMouseLeave={() => setHoveredCard(null)}
-                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${
-                    isDarkMode 
-                      ? 'bg-slate-800/80 border-slate-700/50' 
-                      : `${leave.lightBg} border-white/50 shadow-sm hover:shadow-xl`
-                  } ${hoveredCard === leave.type ? 'scale-[1.02] border-blue-200 dark:border-blue-800' : ''}`}
+                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${isDarkMode
+                    ? 'bg-slate-800/80 border-slate-700/50'
+                    : `${leave.lightBg} border-white/50 shadow-sm hover:shadow-xl`
+                    } ${hoveredCard === leave.type ? 'scale-[1.02] border-blue-200 dark:border-blue-800' : ''}`}
                 >
                   <div className="relative text-left">
                     <div className="flex items-center justify-between mb-4">
@@ -478,7 +420,7 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                       <span className={`text-sm pb-1 font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-600'}`}>/ {leave.total}</span>
                     </div>
                     <div className={`h-2.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                      <motion.div 
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${(leave.remaining / leave.total) * 100}%` }}
                         transition={{ duration: 1.2, ease: "easeOut" }}
@@ -492,7 +434,7 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
             </div>
 
             {/* Request Stats summary cards */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
@@ -513,7 +455,7 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
             </motion.div>
 
             {/* Filters */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
@@ -526,9 +468,8 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                   placeholder="Search leave requests by name or ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full rounded-2xl border-2 px-4 py-4 pl-12 transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
-                    isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'
-                  }`}
+                  className={`w-full rounded-2xl border-2 px-4 py-4 pl-12 transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'
+                    }`}
                 />
               </div>
               <div className="relative min-w-[200px]">
@@ -536,9 +477,8 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className={`w-full appearance-none rounded-2xl border-2 px-6 py-4 pr-12 font-bold cursor-pointer transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${
-                    isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'
-                  }`}
+                  className={`w-full appearance-none rounded-2xl border-2 px-6 py-4 pr-12 font-bold cursor-pointer transition-all focus:ring-4 focus:ring-blue-500/10 outline-none ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                    }`}
                 >
                   <option value="all">All Request Status</option>
                   <option value="pending">Pending</option>
@@ -549,13 +489,12 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
             </motion.div>
 
             {/* Table */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className={`rounded-3xl border-2 overflow-hidden shadow-2xl ${
-                isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'
-              }`}
+              className={`rounded-3xl border-2 overflow-hidden shadow-2xl ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'
+                }`}
             >
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -576,7 +515,7 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                         const statusConfig = getStatusConfig(req.status);
                         const avatarTheme = getAvatarColor(req.name);
                         return (
-                          <motion.tr 
+                          <motion.tr
                             key={req.id}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -591,12 +530,12 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                             <td className="px-8 py-5">
                               <div className="flex items-center gap-4">
                                 <div className="relative">
-                                    <div 
-                                      className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${avatarTheme.grad} flex items-center justify-center text-white font-black text-lg shadow-lg ring-2 ring-white`}
-                                      style={{ backgroundColor: avatarTheme.bg }}
-                                    >
-                                      {req.name.charAt(0).toUpperCase()}
-                                    </div>
+                                  <div
+                                    className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${avatarTheme.grad} flex items-center justify-center text-white font-black text-lg shadow-lg ring-2 ring-white`}
+                                    style={{ backgroundColor: avatarTheme.bg }}
+                                  >
+                                    {req.name.charAt(0).toUpperCase()}
+                                  </div>
                                 </div>
                                 <div>
                                   <p className="font-bold text-base">{req.name}</p>
@@ -613,7 +552,7 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                               <div className="flex items-center gap-2 text-sm font-bold">
                                 <FiCalendar className={`w-4 h-4 ${isDarkMode ? 'text-blue-500' : 'text-blue-600'}`} />
                                 <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>
-                                    {new Date(req.from).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - {new Date(req.to).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                                  {new Date(req.from).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - {new Date(req.to).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                                 </span>
                               </div>
                             </td>
@@ -623,14 +562,14 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                               </span>
                             </td>
                             <td className="px-8 py-5">
-                                <p className={`text-sm font-medium max-w-[200px] truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{req.reason}</p>
+                              <p className={`text-sm font-medium max-w-[200px] truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{req.reason}</p>
                             </td>
-                             <td className="px-8 py-5 text-center" onClick={(e) => e.stopPropagation()}>
-                               <span className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[11px] font-black ${statusConfig.bg} ${statusConfig.text} uppercase tracking-widest shadow-sm ring-1 ring-inset ${statusConfig.text === 'text-green-700' ? 'ring-green-600/20' : statusConfig.text === 'text-red-700' ? 'ring-red-600/20' : 'ring-amber-600/20'}`}>
-                                 <span className={`w-2.5 h-2.5 rounded-full ${statusConfig.dot} animate-pulse shadow-sm`}></span>
-                                 {statusConfig.label}
-                               </span>
-                             </td>
+                            <td className="px-8 py-5 text-center" onClick={(e) => e.stopPropagation()}>
+                              <span className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[11px] font-black ${statusConfig.bg} ${statusConfig.text} uppercase tracking-widest shadow-sm ring-1 ring-inset ${statusConfig.text === 'text-green-700' ? 'ring-green-600/20' : statusConfig.text === 'text-red-700' ? 'ring-red-600/20' : 'ring-amber-600/20'}`}>
+                                <span className={`w-2.5 h-2.5 rounded-full ${statusConfig.dot} animate-pulse shadow-sm`}></span>
+                                {statusConfig.label}
+                              </span>
+                            </td>
                             <td className="px-8 py-5" onClick={(e) => e.stopPropagation()}>
                               {req.status.toLowerCase() === 'pending' ? (
                                 <div className="flex items-center justify-center gap-3">
@@ -668,29 +607,29 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                   </tbody>
                 </table>
               </div>
-              
+
               {/* Table Footer */}
               <div className={`px-8 py-5 border-t ${isDarkMode ? 'border-slate-700/50 bg-slate-800/50' : 'border-slate-100 bg-slate-50'}`}>
                 <div className="flex items-center justify-between">
-                    <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Total <span className="text-blue-600 dark:text-blue-400">{filteredData.length}</span> leave requests found
-                    </p>
-                    <div className="flex gap-2">
-                        <FiFileText className="w-4 h-4 text-[#3FA9F5]" />
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Digital Record System</span>
-                    </div>
+                  <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Total <span className="text-blue-600 dark:text-blue-400">{filteredData.length}</span> leave requests found
+                  </p>
+                  <div className="flex gap-2">
+                    <FiFileText className="w-4 h-4 text-[#3FA9F5]" />
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Digital Record System</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
           </motion.div>
         ) : view === 'apply' ? (
-          <ApplyLeaveView 
-            onBack={() => setView('list')} 
-            onSubmit={() => setView('list')} 
-            isDarkMode={isDarkMode} 
+          <ApplyLeaveView
+            onBack={() => setView('list')}
+            onSubmit={() => setView('list')}
+            isDarkMode={isDarkMode}
           />
         ) : (
-          <EmployeeDetailsView 
+          <EmployeeDetailsView
             employee={selectedEmployee}
             onBack={() => setView('list')}
             isDarkMode={isDarkMode}

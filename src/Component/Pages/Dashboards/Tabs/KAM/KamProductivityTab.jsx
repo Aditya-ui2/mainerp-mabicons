@@ -26,7 +26,7 @@ const StatusBadge = ({ status }) => {
     Resolved: 'bg-gradient-to-r from-emerald-500 to-green-500 text-white',
   };
   return (
-    <motion.span 
+    <motion.span
       whileHover={{ scale: 1.05 }}
       className={`text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm ${map[status] || 'bg-slate-500 text-white'}`}
     >
@@ -42,7 +42,7 @@ const PriorityBadge = ({ priority }) => {
     Low: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white',
   };
   return (
-    <motion.span 
+    <motion.span
       whileHover={{ scale: 1.05 }}
       className={`text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm ${map[priority] || 'bg-slate-500 text-white'}`}
     >
@@ -82,7 +82,7 @@ const MiniBar = ({ value, max, color = 'bg-violet-500', delay = 0 }) => {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
     <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
-      <motion.div 
+      <motion.div
         className={`h-full rounded-full ${color}`}
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
@@ -166,7 +166,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
   /* ── Error state ── */
   if (error) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center h-96 gap-4"
@@ -178,8 +178,8 @@ const KamProductivityTab = ({ isDarkMode }) => {
           <FiAlertTriangle className="w-16 h-16 text-red-400" />
         </motion.div>
         <p className="text-slate-600 font-medium text-lg">{error}</p>
-        <motion.button 
-          onClick={fetchData} 
+        <motion.button
+          onClick={fetchData}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="px-6 py-3 text-sm bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-violet-500/25 hover:shadow-xl transition-shadow"
@@ -198,7 +198,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
   const maxStatus = Math.max(...Object.values(statusCounts), 1);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -207,7 +207,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <motion.div 
+          <motion.div
             className="p-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25"
             whileHover={{ scale: 1.05, rotate: 5 }}
           >
@@ -251,7 +251,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
               <div className="relative flex items-start justify-between">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wider text-slate-400">{card.label}</p>
-                  <motion.p 
+                  <motion.p
                     className="text-3xl font-extrabold text-slate-800 mt-1"
                     initial={{ opacity: 0, scale: 0.5 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -273,7 +273,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
       {/* ══════════ MID-ROW: Status + Priority + Completion ══════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Status distribution */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
@@ -298,10 +298,10 @@ const KamProductivityTab = ({ isDarkMode }) => {
                   delay={idx * 0.1}
                   color={
                     status === 'Resolved' ? 'bg-gradient-to-r from-emerald-500 to-green-500' :
-                    status === 'Active' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
-                    status === 'Work in Progress' ? 'bg-gradient-to-r from-amber-500 to-yellow-500' :
-                    status === 'Review' ? 'bg-gradient-to-r from-purple-500 to-violet-500' :
-                    'bg-gradient-to-r from-orange-500 to-amber-500'
+                      status === 'Active' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                        status === 'Work in Progress' ? 'bg-gradient-to-r from-amber-500 to-yellow-500' :
+                          status === 'Review' ? 'bg-gradient-to-r from-purple-500 to-violet-500' :
+                            'bg-gradient-to-r from-orange-500 to-amber-500'
                   }
                 />
               </div>
@@ -310,7 +310,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
         </motion.div>
 
         {/* Priority breakdown */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -328,8 +328,8 @@ const KamProductivityTab = ({ isDarkMode }) => {
               { label: 'Medium', count: priorityCounts.Medium, color: '#f59e0b' },
               { label: 'Low', count: priorityCounts.Low, color: '#22c55e' },
             ].map((p, idx) => (
-              <motion.div 
-                key={p.label} 
+              <motion.div
+                key={p.label}
                 className="flex flex-col items-center gap-2"
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -346,7 +346,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
         </motion.div>
 
         {/* Overall completion ring */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
@@ -361,7 +361,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
           <div className="relative flex items-center justify-center">
             <ProgressRing percent={summary.completionRate} size={130} stroke={12} color="#7c3aed" delay={0.6} />
             <div className="absolute text-center">
-              <motion.span 
+              <motion.span
                 className="text-3xl font-extrabold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -379,7 +379,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
       </div>
 
       {/* ══════════ TEAM PERFORMANCE TABLE ══════════ */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
@@ -421,8 +421,8 @@ const KamProductivityTab = ({ isDarkMode }) => {
               <tbody className="divide-y divide-slate-100">
                 <AnimatePresence>
                   {sortedAssignees.map((a, i) => (
-                    <motion.tr 
-                      key={a.id} 
+                    <motion.tr
+                      key={a.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0 }}
@@ -431,7 +431,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
                     >
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <motion.div 
+                          <motion.div
                             whileHover={{ scale: 1.1 }}
                             className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-md"
                           >
@@ -467,7 +467,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
       {/* ══════════ BOTTOM ROW: Clients + Weekly Trend + Recent Tasks ══════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Client coverage */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
@@ -484,8 +484,8 @@ const KamProductivityTab = ({ isDarkMode }) => {
           ) : (
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
               {clientStats.map((c, idx) => (
-                <motion.div 
-                  key={c.id} 
+                <motion.div
+                  key={c.id}
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -508,7 +508,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
         </motion.div>
 
         {/* Weekly trend */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
@@ -527,8 +527,8 @@ const KamProductivityTab = ({ isDarkMode }) => {
               {(() => {
                 const maxVal = Math.max(...weeklyTrend.map(w => w.resolved), 1);
                 return weeklyTrend.map((w, i) => (
-                  <motion.div 
-                    key={i} 
+                  <motion.div
+                    key={i}
                     className="flex-1 flex flex-col items-center gap-1"
                     initial={{ opacity: 0, scaleY: 0 }}
                     animate={{ opacity: 1, scaleY: 1 }}
@@ -551,7 +551,7 @@ const KamProductivityTab = ({ isDarkMode }) => {
         </motion.div>
 
         {/* Recent tasks */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
@@ -568,8 +568,8 @@ const KamProductivityTab = ({ isDarkMode }) => {
           ) : (
             <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
               {recentTasks.map((t, idx) => (
-                <motion.div 
-                  key={t.id} 
+                <motion.div
+                  key={t.id}
                   className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}

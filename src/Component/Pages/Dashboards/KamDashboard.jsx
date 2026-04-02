@@ -28,7 +28,7 @@ import {
   FiRefreshCw,
   FiTarget,
 } from 'react-icons/fi';
-import logo from '../../../assets/images/mabicons-logo.svg';
+import logo from '../../../assets/images/mabicons logo blue.png';
 
 // Lazy load KAM Tab Components
 const DashboardOverviewTab = lazy(() => import('./Tabs/KAM/DashboardOverviewTab'));
@@ -110,7 +110,6 @@ const sidebarGroups = [
   {
     heading: 'Engagement & Tasks',
     items: [
-      { id: 11, title: 'Employee Engagement', short: 'Engagement', icon: FiHeart },
       { id: 12, title: 'Task by Client', short: 'Tasks', icon: FiClipboard },
       { id: 10, title: 'Notes', short: 'Notes', icon: FiEdit3 },
     ]
@@ -118,7 +117,6 @@ const sidebarGroups = [
   {
     heading: 'Communication',
     items: [
-      { id: 17, title: 'Client Chat', short: 'Chat', icon: FiMessageSquare },
       { id: 18, title: 'Work Handover', short: 'Handover', icon: FiRefreshCw },
       { id: 15, title: 'KAM Productivity', short: 'Productivity', icon: FiTrendingUp },
     ]
@@ -236,13 +234,11 @@ const KamDashboard = () => {
       case 'FnF': return <FnFTab {...tabProps} />;
       case 'Document Verify': return <DocumentVerifyTab {...tabProps} />;
       case 'Notes': return <NotesTab {...tabProps} />;
-      case 'Employee Engagement': return <EmployeeEngagementTab {...tabProps} />;
       case 'Task by Client': return <TaskByClientTab {...tabProps} />;
       case 'Leave Management': return <LeaveManagementTab {...tabProps} />;
       case 'Compliance Management': return <ComplianceTab {...tabProps} />;
       case 'KAM Productivity': return <KamProductivityTab {...tabProps} />;
       case 'Work Agreements': return <WorkAgreementTab {...tabProps} />;
-      case 'Client Chat': return <ChatUpdatesTab {...tabProps} />;
       case 'Work Handover': return <WorkHandoverTab {...tabProps} />;
       default: return <p className="text-xl text-slate-500 font-medium">{activeTab}</p>;
     }
@@ -378,19 +374,19 @@ const KamDashboard = () => {
           <header className="flex-shrink-0 z-30 bg-white border-b border-slate-200 shadow-sm">
             <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
               {/* Left: Logo + Hamburger */}
-              <div className="flex items-center justify-between w-full">
-                <img src={logo} alt="Mabicons" className="h-8 md:hidden object-contain" />
-                
+              <div className="flex items-center gap-3 w-full">
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className={`md:hidden p-2 transition-all duration-300 rounded-xl active:scale-95 ${
+                  className={`md:hidden flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 active:scale-95 border border-slate-200 shadow-sm ${
                     sidebarOpen 
-                    ? 'bg-[#0f1629] text-white shadow-lg shadow-blue-900/20' 
-                    : 'text-[#1E88E5] bg-transparent'
+                    ? 'bg-slate-50 text-slate-400' 
+                    : 'bg-white text-[#1E88E5] hover:shadow-md'
                   }`}
+                  aria-label="Toggle Menu"
                 >
-                  <FiMenu className="w-6 h-6" />
+                  <FiMenu className="w-5 h-5 stroke-[2]" />
                 </button>
+                <img src={logo} alt="Mabicons" className="h-7 md:hidden object-contain" />
               </div>
 
               {/* Right: profile */}

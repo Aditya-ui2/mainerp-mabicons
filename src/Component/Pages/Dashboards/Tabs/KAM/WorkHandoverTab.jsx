@@ -160,7 +160,7 @@ export default function WorkHandoverTab({ isDarkMode }) {
     if (search) {
       const q = search.toLowerCase();
       const matchName = (h.fromUser?.name || '').toLowerCase().includes(q) ||
-                        (h.toUser?.name || '').toLowerCase().includes(q);
+        (h.toUser?.name || '').toLowerCase().includes(q);
       const matchReason = (h.reason || '').toLowerCase().includes(q);
       const matchClient = (h.clients || []).some(c => (c.name || c.companyName || '').toLowerCase().includes(q));
       return matchName || matchReason || matchClient;
@@ -241,11 +241,10 @@ export default function WorkHandoverTab({ isDarkMode }) {
         <div className="flex gap-2">
           {['All', 'Active', 'Completed', 'Cancelled'].map(s => (
             <button key={s} onClick={() => setFilterStatus(s)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                filterStatus === s
-                  ? 'bg-violet-500 text-white'
-                  : `${bgSub} ${text} ${border} border`
-              }`}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${filterStatus === s
+                ? 'bg-violet-500 text-white'
+                : `${bgSub} ${text} ${border} border`
+                }`}
             >{s}</button>
           ))}
         </div>
@@ -435,15 +434,13 @@ export default function WorkHandoverTab({ isDarkMode }) {
                     clients.map(c => (
                       <button key={c.id} type="button"
                         onClick={() => toggleClientSelection(c.id)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
-                          form.clientIds.includes(c.id)
-                            ? isDarkMode ? 'bg-violet-900/40 text-violet-300' : 'bg-violet-50 text-violet-700'
-                            : `${bgSub} ${text}`
-                        }`}>
-                        <span className={`h-4 w-4 rounded border flex items-center justify-center text-[10px] ${
-                          form.clientIds.includes(c.id)
-                            ? 'bg-violet-500 border-violet-500 text-white' : `${border} border`
-                        }`}>
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${form.clientIds.includes(c.id)
+                          ? isDarkMode ? 'bg-violet-900/40 text-violet-300' : 'bg-violet-50 text-violet-700'
+                          : `${bgSub} ${text}`
+                          }`}>
+                        <span className={`h-4 w-4 rounded border flex items-center justify-center text-[10px] ${form.clientIds.includes(c.id)
+                          ? 'bg-violet-500 border-violet-500 text-white' : `${border} border`
+                          }`}>
                           {form.clientIds.includes(c.id) && '✓'}
                         </span>
                         <span className="truncate">{c.clientName || c.name} {c.companyName ? `(${c.companyName})` : ''}</span>
