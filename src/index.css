@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    @apply font-['Inter',sans-serif];
+    font-family: 'Inter', sans-serif;
     color: #1e293b;
   }
 }
@@ -23,26 +23,26 @@
 /* Spinner animation */
 @keyframes spin { to { transform: rotate(360deg); } }
 
-
 .tree-menu {
-    @apply list-none p-0;
-  }
-  
-  .tree-item {
-    @apply mb-1;
-  }
-  
-  .level-1 {
-    @apply ml-4;
-  }
-  
-  .level-2 {
-    @apply ml-8;
-  }
-  
-  .level-3 {
-    @apply ml-12;
-  }
+  list-style: none;
+  padding: 0;
+}
+
+.tree-item {
+  margin-bottom: 0.25rem;
+}
+
+.level-1 {
+  margin-left: 1rem;
+}
+
+.level-2 {
+  margin-left: 2rem;
+}
+
+.level-3 {
+  margin-left: 3rem;
+}
 
 
 
