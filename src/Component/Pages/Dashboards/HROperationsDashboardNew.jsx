@@ -74,7 +74,7 @@ const TabLoader = () => (
 // Sidebar configuration
 const sidebarConfig = [
   {
-    heading: 'HR OPERATIONS',
+    heading: 'HR Operations',
     items: [
       { id: 1, title: 'Attendance', icon: FiClock },
       { id: 2, title: 'Payroll', icon: FaIndianRupeeSign },
@@ -83,7 +83,7 @@ const sidebarConfig = [
     ]
   },
   {
-    heading: 'EMPLOYEE LIFECYCLE',
+    heading: 'Employee Lifecycle',
     items: [
       { id: 3, title: 'Onboarding', icon: FiUserPlus },
       { id: 7, title: 'Offboarding', icon: FiUserMinus },
@@ -92,7 +92,7 @@ const sidebarConfig = [
     ]
   },
   {
-    heading: 'DOCUMENTATION',
+    heading: 'Documentation',
     items: [
       { id: 9, title: 'Document Verify', icon: FiFile },
       { id: 4, title: 'Policy Making', icon: FiFileText },
@@ -101,21 +101,21 @@ const sidebarConfig = [
     ]
   },
   {
-    heading: 'ENGAGEMENT',
+    heading: 'Engagement',
     items: [
       { id: 12, title: 'Task by Client', icon: FiClipboard },
       { id: 10, title: 'Notes', icon: FiEdit3 },
     ]
   },
   {
-    heading: 'COMMUNICATION',
+    heading: 'Communication',
     items: [
       { id: 18, title: 'Work Handover', icon: FiRefreshCw },
       { id: 15, title: 'KAM Productivity', icon: FiTrendingUp },
     ]
   },
   {
-    heading: 'TEAM',
+    heading: 'Team',
     items: [
       { id: 19, title: 'Team Members', icon: FiUsers },
       { id: 20, title: 'Activity Feed', icon: FiActivity },

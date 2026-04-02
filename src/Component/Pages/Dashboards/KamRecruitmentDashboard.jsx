@@ -2,26 +2,11 @@ import { useState, useEffect, useRef, Suspense, lazy, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { hasAccessTo } from '../DepartmentProtectedRoute';
 import {
-  FiSearch,
-  FiBriefcase,
-  FiUsers,
-  FiCalendar,
-  FiFileText,
-  FiAward,
-  FiBarChart2,
-  FiUser,
-  FiLogOut,
-  FiChevronDown,
-  FiMenu,
-  FiX,
-  FiSun,
-  FiMoon,
-  FiTarget,
-  FiArrowLeft,
-  FiUserPlus,
-  FiCheckSquare,
-  FiDatabase,
   FiRepeat,
+  FiChevronRight,
+  FiGrid,
+  FiSettings,
+  FiHelpCircle,
 } from 'react-icons/fi';
 import logo from '../../../assets/images/mabicons logo blue.png';
 
@@ -102,14 +87,20 @@ class TabErrorBoundary extends Component {
 
 /* ── Sidebar Items ───────────────────────────────────── */
 const moduleItems = [
-  { id: 1, title: 'Job Openings', short: 'Openings', icon: FiBriefcase },
-  { id: 2, title: 'Candidate Pipeline', short: 'Pipeline', icon: FiUsers },
-  { id: 3, title: 'Interview Schedule', short: 'Interviews', icon: FiCalendar },
-  { id: 5, title: 'Offer Management', short: 'Offers', icon: FiAward },
-  { id: 7, title: 'Resume Bank', short: 'Resumes', icon: FiDatabase },
-  { id: 8, title: 'Team Members', short: 'Team', icon: FiUserPlus, section: 'TEAM' },
-  { id: 9, title: 'Task Assignment', short: 'Tasks', icon: FiCheckSquare, section: 'TEAM' },
-  { id: 10, title: 'Work Handover', short: 'Handover', icon: FiRepeat, section: 'TEAM' },
+  { section: 'MAIN', items: [
+    { id: 0, title: 'Dashboard', icon: FiGrid },
+    { id: 1, title: 'Job Openings', icon: FiBriefcase },
+    { id: 2, title: 'Candidate Pipeline', icon: FiUsers },
+    { id: 3, title: 'Interview Schedule', icon: FiCalendar },
+    { id: 5, title: 'Offer Management', icon: FiAward },
+    { id: 7, title: 'Resume Bank', icon: FiDatabase },
+  ]},
+  { section: 'OTHERS', items: [
+    { id: 8, title: 'Team Members', icon: FiUserPlus },
+    { id: 9, title: 'Task Assignment', icon: FiCheckSquare },
+    { id: 11, title: 'Settings', icon: FiSettings },
+    { id: 12, title: 'Support', icon: FiHelpCircle },
+  ]}
 ];
 
 /* ── Page Transition Wrapper ─────────────────────────── */
@@ -248,7 +239,7 @@ const KamRecruitmentDashboard = () => {
     );
   };
 
-  const activeModule = moduleItems.find(m => m.title === activeTab);
+  const activeModule = moduleItems.flatMap(s => s.items).find(m => m.title === activeTab);
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'} p-0 md:p-3 select-none transition-colors duration-300`}>
@@ -271,90 +262,91 @@ const KamRecruitmentDashboard = () => {
           ref={sidebarRef}
           className={`
             fixed md:relative z-50 md:z-10 top-0 left-0 h-full
-            w-[280px] border-r
-            ${isDarkMode
-              ? 'border-slate-700 bg-gradient-to-b from-slate-800 via-slate-800 to-slate-900/90'
-              : 'border-slate-200 bg-gradient-to-b from-slate-100 via-slate-50 to-indigo-50/50'
-            }
-            p-5 flex flex-col
+            w-[260px] border-r border-slate-200 bg-white
+            flex flex-col shadow-sm
             transform transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           `}
         >
-          {/* Logo + close */}
-          <div className="flex items-center justify-between pb-4 pt-4 px-4 bg-white mb-4 -mx-5 -mt-5 border-b border-slate-100 shadow-sm">
-            <div className="flex items-center gap-2">
-              <img src={logo} alt="Mabicons" className="h-10 w-auto object-contain" />
+          {/* Logo Section (VANTUS Style) */}
+          <div className="flex items-center justify-between p-6 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                <FiTarget className="text-white text-xl" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-lg font-bold text-slate-800 leading-tight tracking-tight">MABICONS</span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">ERP Solution</span>
+              </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden rounded-lg p-1.5 hover:bg-slate-50 text-[#1E88E5] transition-colors"
+              className="md:hidden rounded-lg p-1.5 hover:bg-slate-50 text-slate-400 transition-colors"
             >
-              <FiX className="w-6 h-6 stroke-[3]" />
+              <FiX className="w-5 h-5" />
             </button>
-          </div>
-
-          {/* Dashboard Type Badge */}
-          <div className={`mb-4 px-4 py-3 rounded-xl ${isDarkMode ? 'bg-indigo-900/30 border border-indigo-800/50' : 'bg-indigo-100 border border-indigo-200'}`}>
-            <div className="flex items-center gap-2">
-              <FiTarget className={`w-4 h-4 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
-              <span className={`text-sm font-semibold ${isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>HR Recruitment</span>
+            <div className="hidden md:flex h-6 w-6 items-center justify-center rounded bg-slate-50 border border-slate-100">
+              <div className="h-1 w-1 bg-slate-300 rounded-full mx-[1px]" />
+              <div className="h-1 w-1 bg-slate-300 rounded-full mx-[1px]" />
             </div>
-            <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>Talent Acquisition Hub</p>
           </div>
 
-          {/* Back to KAM Operations Dashboard - only show if user has HR Operations access */}
-          {hasAccessTo('HR Operations') && (
-            <button
-              onClick={() => navigate('/kam-operations-dashboard')}
-              className={`mb-4 w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${isDarkMode ? 'bg-slate-700/50 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
-            >
-              <FiArrowLeft className="w-4 h-4" />
-              Back to HR Operations
-            </button>
-          )}
+          <div className="h-[1px] bg-slate-100 mx-6 mb-6" />
 
           {/* Nav scrollable */}
-          <nav className="flex-1 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
-            {moduleItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.title;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => switchTab(item.title)}
-                  className={`
-                    group w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left
-                    transition-all duration-200 relative overflow-hidden
-                    ${isActive
-                      ? isDarkMode
-                        ? 'bg-indigo-900/50 text-indigo-300 shadow-sm shadow-indigo-500/20'
-                        : 'bg-indigo-100 text-indigo-700 shadow-sm shadow-indigo-200/50'
-                      : isDarkMode
-                        ? 'text-slate-400 hover:bg-slate-700/50 active:scale-[0.98]'
-                        : 'text-slate-600 hover:bg-white/50 active:scale-[0.98]'
-                    }
-                  `}
-                >
-                  {/* Active indicator bar */}
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-indigo-500 transition-all duration-300" />
-                  )}
-                  <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? isDarkMode ? 'text-indigo-400' : 'text-indigo-600' : isDarkMode ? 'text-slate-500' : 'text-slate-400'} group-hover:${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`} />
-                  <span className="text-sm leading-none font-medium truncate">{item.title}</span>
-                </button>
-              );
-            })}
+          <nav className="flex-1 overflow-y-auto px-4 space-y-6 scrollbar-thin">
+            {moduleItems.map((section) => (
+              <div key={section.section} className="space-y-1.5">
+                <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  {section.section}
+                </h3>
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.title;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => switchTab(item.title)}
+                      className={`
+                        group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
+                        transition-all duration-200
+                        ${isActive
+                          ? 'bg-[#00B4FF] text-white shadow-lg shadow-sky-100'
+                          : 'text-slate-500 hover:bg-slate-50'
+                        }
+                      `}
+                    >
+                      <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                      <span className={`text-sm font-semibold flex-1 ${isActive ? 'text-white' : 'text-slate-600'}`}>{item.title}</span>
+                      {!isActive && <FiChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-400" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
 
-          {/* Logout button */}
-          <button
-            onClick={handleLogout}
-            className={`mt-4 flex items-center justify-center gap-2 w-full rounded-xl ${isDarkMode ? 'bg-red-900/30 hover:bg-red-900/50 border-red-800 text-red-400' : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600'} border py-3 text-sm font-medium transition-all duration-200 active:scale-[0.97]`}
-          >
-            <FiLogOut className="w-4 h-4" />
-            Logout
-          </button>
+          {/* User Profile Footer (Emma Style) */}
+          <div className="p-4 mt-auto border-t border-slate-100">
+            <div className="flex items-center gap-3 px-2 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm font-bold text-orange-600">
+                  {localStorage.getItem('userName')?.charAt(0) || 'S'}
+                </div>
+                <div className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold text-slate-800 truncate">{localStorage.getItem('userName') || 'Sachin'}</span>
+                  <div className="h-3 w-3 bg-sky-400 rounded-full flex items-center justify-center">
+                    <span className="text-[6px] text-white italic">✓</span>
+                  </div>
+                </div>
+                <span className="text-[10px] text-slate-400 truncate leading-none">{localStorage.getItem('userEmail') || 'design@mabicons.com'}</span>
+              </div>
+              <FiChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-transform group-hover:translate-x-0.5" />
+            </div>
+          </div>
         </aside>
 
         {/* ═══════ MAIN CONTENT ═══════ */}

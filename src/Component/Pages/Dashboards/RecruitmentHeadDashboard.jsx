@@ -174,7 +174,7 @@ const transformKAMData = (apiData) => {
 // Sidebar Configuration for Recruitment Head
 const sidebarConfig = [
   {
-    heading: 'MY TEAM',
+    heading: 'My Team',
     items: [
       { id: 1, title: 'Team Overview', icon: FiUsers },
       { id: 2, title: 'KAM Performance', icon: FiTrendingUp },
@@ -182,7 +182,7 @@ const sidebarConfig = [
     ],
   },
   {
-    heading: 'RECRUITMENT',
+    heading: 'Recruitment',
     items: [
       { id: 4, title: 'Job Openings', icon: FiBriefcase },
       { id: 5, title: 'Candidate Pipeline', icon: FiUsers },
@@ -190,19 +190,19 @@ const sidebarConfig = [
     ],
   },
   {
-    heading: 'ASSESSMENT',
+    heading: 'Assessment',
     items: [
       { id: 8, title: 'Offer Management', icon: FiAward },
     ],
   },
   {
-    heading: 'ANALYTICS',
+    heading: 'Analytics',
     items: [
       { id: 10, title: 'Resume Bank', icon: FiDatabase },
     ],
   },
   {
-    heading: 'ACTIVITY',
+    heading: 'Activity',
     items: [
       { id: 11, title: 'Activity Feed', icon: FiActivity },
       { id: 12, title: 'Team MIS Reports', icon: FiFileText },

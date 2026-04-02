@@ -2,31 +2,11 @@ import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { hasAccessTo } from '../DepartmentProtectedRoute';
 import {
-  FiSearch,
-  FiSettings,
-  FiClock,
-  FiDollarSign,
-  FiUserPlus,
-  FiFileText,
-  FiUsers,
-  FiTrendingUp,
-  FiUserMinus,
-  FiCheckSquare,
-  FiFile,
-  FiEdit3,
-  FiHeart,
-  FiClipboard,
-  FiCalendar,
-  FiShield,
-  FiUser,
-  FiLogOut,
-  FiChevronDown,
-  FiMenu,
-  FiX,
-  FiChevronLeft,
-  FiMessageSquare,
   FiRefreshCw,
   FiTarget,
+  FiChevronRight,
+  FiGrid,
+  FiDatabase,
 } from 'react-icons/fi';
 import logo from '../../../assets/images/mabicons logo blue.png';
 
@@ -81,53 +61,46 @@ const TabLoader = () => (
 /* ── Sidebar Items with Categories ───────────────────────────────────── */
 const sidebarGroups = [
   {
-    heading: 'HR Operations',
+    heading: 'Main',
     items: [
-      { id: 1, title: 'Attendance', short: 'Attendance', icon: FiClock },
+      { id: 0, title: 'Dashboard', short: 'Dash', icon: FiGrid },
+      { id: 1, title: 'Attendance', short: 'Attend', icon: FiClock },
       { id: 2, title: 'Payroll', short: 'Payroll', icon: FiDollarSign },
       { id: 13, title: 'Leave Management', short: 'Leaves', icon: FiCalendar },
-      { id: 6, title: 'Performance', short: 'Performance', icon: FiTrendingUp },
+      { id: 6, title: 'Performance', short: 'Perf', icon: FiTrendingUp },
     ]
   },
   {
     heading: 'Employee Lifecycle',
     items: [
-      { id: 3, title: 'Onboarding', short: 'Onboarding', icon: FiUserPlus },
-      { id: 7, title: 'Offboarding', short: 'Offboarding', icon: FiUserMinus },
+      { id: 3, title: 'Onboarding', short: 'Onboard', icon: FiUserPlus },
+      { id: 7, title: 'Offboarding', short: 'Offboard', icon: FiUserMinus },
       { id: 8, title: 'FnF', short: 'FnF', icon: FiCheckSquare },
-      { id: 5, title: 'Master Data (Emp)', short: 'Employees', icon: FiUsers },
+      { id: 5, title: 'Master Data (Emp)', short: 'Master', icon: FiUsers },
     ]
   },
   {
     heading: 'Documentation',
     items: [
-      { id: 9, title: 'Document Verify', short: 'Documents', icon: FiFile },
-      { id: 4, title: 'Policy Making', short: 'Policies', icon: FiFileText },
-      { id: 14, title: 'Compliance Management', short: 'Compliance', icon: FiShield },
-      { id: 16, title: 'Work Agreements', short: 'Agreements', icon: FiFileText },
+      { id: 9, title: 'Document Verify', short: 'Verify', icon: FiFile },
+      { id: 4, title: 'Policy Making', short: 'Policy', icon: FiFileText },
+      { id: 14, title: 'Compliance Management', short: 'Compl', icon: FiShield },
+      { id: 16, title: 'Work Agreements', short: 'Agreem', icon: FiFileText },
     ]
   },
   {
-    heading: 'Engagement & Tasks',
+    heading: 'Others',
     items: [
       { id: 12, title: 'Task by Client', short: 'Tasks', icon: FiClipboard },
       { id: 10, title: 'Notes', short: 'Notes', icon: FiEdit3 },
-    ]
-  },
-  {
-    heading: 'Communication',
-    items: [
-      { id: 18, title: 'Work Handover', short: 'Handover', icon: FiRefreshCw },
-      { id: 15, title: 'KAM Productivity', short: 'Productivity', icon: FiTrendingUp },
+      { id: 18, title: 'Work Handover', short: 'Handov', icon: FiRefreshCw },
+      { id: 15, title: 'KAM Productivity', short: 'Product', icon: FiTrendingUp },
     ]
   },
 ];
 
-// Dashboard item (separate from groups)
-const dashboardItem = { id: 0, title: 'Dashboard', short: 'Dashboard', icon: FiTrendingUp };
-
-// Flatten for backwards compatibility
-const moduleItems = [dashboardItem, ...sidebarGroups.flatMap(group => group.items)];
+// Flatten for utility functions
+const moduleItems = sidebarGroups.flatMap(group => group.items);
 
 /* ── Page Transition Wrapper ─────────────────────────── */
 const PageTransition = ({ children, tabKey }) => {
@@ -140,9 +113,8 @@ const PageTransition = ({ children, tabKey }) => {
 
   return (
     <div
-      className={`transition-all duration-300 ease-out ${
-        show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-      }`}
+      className={`transition-all duration-300 ease-out ${show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+        }`}
     >
       {children}
     </div>
@@ -268,104 +240,92 @@ const KamDashboard = () => {
           ref={sidebarRef}
           className={`
             fixed md:relative z-50 md:z-10 top-0 left-0 h-full
-            w-[280px] border-r border-[#e0dcec]
-            bg-gradient-to-b from-slate-100 via-slate-50 to-indigo-50/50
-            p-5 flex flex-col overflow-hidden flex-shrink-0
+            w-[260px] border-r border-slate-200 bg-white
+            flex flex-col shadow-sm
             transform transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           `}
         >
-          {/* Logo + close */}
-          <div className="flex items-center justify-between pb-5 pt-1 px-1">
-            <div className="flex items-center gap-2">
-              <img src={logo} alt="Mabicons" className="h-10 w-auto object-contain" />
+          {/* Logo Section (VANTUS Style) */}
+          <div className="flex items-center justify-between p-6 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                <FiTarget className="text-white text-xl" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-lg font-bold text-slate-800 leading-tight tracking-tight">MABICONS</span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">ERP Solution</span>
+              </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden rounded-lg p-1.5 hover:bg-white/60 text-slate-500 transition-colors"
+              className="md:hidden rounded-lg p-1.5 hover:bg-slate-50 text-slate-400 transition-colors"
             >
               <FiX className="w-5 h-5" />
             </button>
+            {/* VANTUS style toggle decoration */}
+            <div className="hidden md:flex h-6 w-6 items-center justify-center rounded bg-slate-50 border border-slate-100">
+              <div className="h-1 w-1 bg-slate-300 rounded-full mx-[1px]" />
+              <div className="h-1 w-1 bg-slate-300 rounded-full mx-[1px]" />
+            </div>
           </div>
 
+          <div className="h-[1px] bg-slate-100 mx-6 mb-6" />
+
           {/* Nav scrollable */}
-          <nav className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-violet-300 scrollbar-track-transparent hover:scrollbar-thumb-violet-400">
-            {/* Dashboard Button - Always on top */}
-            <div className="mb-3 space-y-2">
-              <button
-                onClick={() => switchTab('Dashboard')}
-                className={`
-                  group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left
-                  transition-all duration-200 relative overflow-hidden
-                  ${activeTab === 'Dashboard'
-                    ? 'bg-gradient-to-r from-indigo-600 to-slate-700 text-white shadow-lg shadow-indigo-500/30'
-                    : 'text-slate-600 hover:bg-white/70 active:scale-[0.98] border-2 border-dashed border-slate-300 hover:border-slate-400'
-                  }
-                `}
-              >
-                <FiTrendingUp className={`w-5 h-5 flex-shrink-0 ${activeTab === 'Dashboard' ? 'text-white' : 'text-indigo-600'}`} />
-                <span className="text-sm font-bold truncate">Dashboard Overview</span>
-              </button>
-
-              {/* HR Recruitment Dashboard Link - Only show if user has access */}
-              {hasAccessTo('HR Recruitment') && (
-                <button
-                  onClick={() => navigate('/kam-recruitment-dashboard')}
-                  className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 bg-gradient-to-r from-indigo-500 to-cyan-600 text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <FiTarget className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm font-bold truncate">HR Recruitment</span>
-                </button>
-              )}
-            </div>
-
-            {/* Grouped Navigation */}
-            {sidebarGroups.map((group, groupIdx) => (
-              <div key={group.heading} className={groupIdx > 0 ? 'mt-4' : ''}>
-                {/* Group Heading */}
-                <h3 className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  {group.heading}
+          <nav className="flex-1 overflow-y-auto px-4 space-y-6 scrollbar-thin">
+            {sidebarGroups.map((section) => (
+              <div key={section.heading} className="space-y-1.5">
+                <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  {section.heading}
                 </h3>
-                {/* Group Items */}
-                <div className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.title;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => switchTab(item.title)}
-                        className={`
-                          group w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left
-                          transition-all duration-200 relative overflow-hidden
-                          ${isActive
-                            ? 'bg-indigo-100 text-indigo-700 shadow-sm shadow-indigo-200/50'
-                            : 'text-slate-600 hover:bg-white/70 active:scale-[0.98]'
-                          }
-                        `}
-                      >
-                        {/* Active indicator bar */}
-                        {isActive && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-indigo-500 transition-all duration-300" />
-                        )}
-                        <Icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                        <span className="text-sm leading-none font-medium truncate">{item.title}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.title;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => switchTab(item.title)}
+                      className={`
+                        group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
+                        transition-all duration-200
+                        ${isActive
+                          ? 'bg-[#00B4FF] text-white shadow-lg shadow-sky-100'
+                          : 'text-slate-500 hover:bg-slate-50'
+                        }
+                      `}
+                    >
+                      <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                      <span className={`text-sm font-semibold flex-1 ${isActive ? 'text-white' : 'text-slate-600'}`}>{item.title}</span>
+                      {!isActive && <FiChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-400" />}
+                    </button>
+                  );
+                })}
               </div>
             ))}
           </nav>
 
-          {/* Logout button */}
-          <button
-            onClick={handleLogout}
-            className="mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 py-3 text-sm font-medium transition-all duration-200 active:scale-[0.97]"
-          >
-            <FiLogOut className="w-4 h-4" />
-            Logout
-          </button>
+          {/* User Profile Footer (Emma Style) */}
+          <div className="p-4 mt-auto border-t border-slate-100">
+            <div className="flex items-center gap-3 px-2 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm font-bold text-orange-600">
+                  {localStorage.getItem('userName')?.charAt(0) || 'K'}
+                </div>
+                <div className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold text-slate-800 truncate">{localStorage.getItem('userName') || 'KAM User'}</span>
+                  <div className="h-3 w-3 bg-sky-400 rounded-full flex items-center justify-center">
+                    <span className="text-[6px] text-white italic">✓</span>
+                  </div>
+                </div>
+                <span className="text-[10px] text-slate-400 truncate leading-none">{localStorage.getItem('userEmail') || 'kam@mabicons.com'}</span>
+              </div>
+              <FiChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-transform group-hover:translate-x-0.5" />
+            </div>
+          </div>
         </aside>
 
         {/* ═══════ MAIN CONTENT ═══════ */}
@@ -377,82 +337,16 @@ const KamDashboard = () => {
               <div className="flex items-center gap-3 w-full">
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className={`md:hidden flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 active:scale-95 border border-slate-200 shadow-sm ${
-                    sidebarOpen 
-                    ? 'bg-slate-50 text-slate-400' 
-                    : 'bg-white text-[#1E88E5] hover:shadow-md'
-                  }`}
+                  className={`md:hidden flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 active:scale-95 border border-slate-200 shadow-sm ${sidebarOpen
+                    ? 'bg-slate-50 text-slate-400'
+                    : 'bg-white text-indigo-600 hover:shadow-md'
+                    }`}
                   aria-label="Toggle Menu"
                 >
                   <FiMenu className="w-5 h-5 stroke-[2]" />
                 </button>
                 <img src={logo} alt="Mabicons" className="h-7 md:hidden object-contain" />
               </div>
-
-              {/* Right: profile */}
-              <div className="flex items-center gap-1.5 md:gap-3 text-slate-600 flex-shrink-0">
-                {/* Profile Dropdown */}
-                <div className="relative" ref={profileRef}>
-                  <button
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="flex items-center gap-2 rounded-xl p-1.5 md:p-2 hover:bg-white/60 transition-all duration-200 active:scale-[0.97]"
-                  >
-                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-indigo-500 to-slate-700 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-200/50">
-                      K
-                    </div>
-                    <div className="hidden lg:block text-left">
-                      <p className="text-sm font-semibold text-slate-700">KAM User</p>
-                      <p className="text-[11px] text-slate-500 leading-tight">Key Account Manager</p>
-                    </div>
-                    <FiChevronDown className={`hidden md:block h-3.5 w-3.5 text-slate-400 transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {/* Dropdown */}
-                  <div className={`
-                    absolute right-0 top-full mt-2 w-60 rounded-2xl bg-white shadow-2xl shadow-slate-200/60 border border-slate-100 py-2 z-50
-                    transition-all duration-200 origin-top-right
-                    ${showProfileMenu ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}
-                  `}>
-                    <div className="px-4 py-3 border-b border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-slate-700 text-white flex items-center justify-center font-bold text-sm">K</div>
-                        <div>
-                          <p className="font-semibold text-slate-700 text-sm">KAM User</p>
-                          <p className="text-xs text-slate-500">kam@mabicons.com</p>
-                        </div>
-                      </div>
-                    </div>
-                    {[
-                      { icon: FiUser, label: 'My Profile' },
-                      { icon: FiSettings, label: 'Settings' },
-                    ].map(item => (
-                      <button key={item.label} className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-slate-600 hover:bg-slate-50 transition-colors active:bg-slate-100">
-                        <item.icon className="h-4 w-4 text-slate-400" />
-                        <span className="text-sm">{item.label}</span>
-                      </button>
-                    ))}
-                    <div className="border-t border-slate-100 mt-1 pt-1">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <FiLogOut className="h-4 w-4" />
-                        <span className="text-sm">Logout</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Mobile: Active tab breadcrumb ── */}
-            <div className="md:hidden flex items-center gap-2 px-4 pb-3 -mt-1">
-              {activeModule && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-100">
-                  <activeModule.icon className="w-3.5 h-3.5 text-violet-500" />
-                  <span className="text-xs font-semibold text-violet-700">{activeModule.short}</span>
-                </div>
-              )}
             </div>
           </header>
 

@@ -5,16 +5,16 @@ import {
   FiHome,
   FiUsers,
   FiSettings,
-  FiSearch,
-  FiBell,
-  FiChevronDown,
-  FiChevronRight,
-  FiLogOut,
-  FiUser,
   FiMenu,
   FiX,
   FiGrid,
   FiList,
+  FiTarget,
+  FiChevronRight,
+  FiChevronDown,
+  FiLogOut,
+  FiBell,
+  FiUser,
 } from 'react-icons/fi';
 import logo from '../../../assets/images/mabicons logo blue.png';
 
@@ -45,10 +45,11 @@ const AdminLayout = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [expandedSections, setExpandedSections] = useState({});
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
   const contentRef = useRef(null);
@@ -79,6 +80,22 @@ const AdminLayout = ({
       [menuId]: !prev[menuId]
     }));
   };
+
+  const toggleSection = (heading) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [heading]: !prev[heading]
+    }));
+  };
+
+  // Initialize expandedSections to false (closed) for all on mount
+  useEffect(() => {
+    const initialSections = {};
+    sidebarItems.forEach(section => {
+      if (section.heading) initialSections[section.heading] = false;
+    });
+    setExpandedSections(initialSections);
+  }, [sidebarItems]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -111,169 +128,239 @@ const AdminLayout = ({
       <motion.aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          ${sidebarCollapsed ? 'w-20' : 'w-64'}
+          ${sidebarCollapsed ? 'w-20' : 'w-[260px]'}
           ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          bg-gradient-to-b from-[#0f1629] via-[#1a1f3c] to-[#1e2545] text-gray-300 flex flex-col transition-all duration-300
-          shadow-2xl
+          bg-white border-r border-slate-200 flex flex-col transition-all duration-300
+          shadow-sm
         `}
       >
-        {/* Logo Section */}
-        <div className={`flex items-center h-16 border-b border-slate-200 bg-white ${sidebarCollapsed ? 'justify-center px-3' : 'justify-between px-4'}`}>
-          {!sidebarCollapsed && (
-            <div className="flex items-center gap-3 overflow-hidden">
-              <img src={logo} alt="Mabicons" className="h-8 w-auto object-contain" />
+        {/* Logo Section (VANTUS Style) */}
+        <div className={`flex items-center h-20 px-6 ${sidebarCollapsed ? 'justify-center overflow-hidden' : 'justify-between'}`}>
+          {!sidebarCollapsed ? (
+            <div className="flex items-center justify-start w-full h-10">
+              <img
+                src={logo}
+                alt="Mabicons Logo"
+                className="h-full w-auto max-w-[160px] object-contain transition-transform duration-300 hover:scale-[1.02]"
+              />
             </div>
+          ) : (
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="group flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 hover:bg-slate-50 border border-transparent hover:border-slate-100"
+              title="Expand sidebar"
+            >
+              <FiMenu className="w-5 h-5 text-[#3FA9F5] group-hover:scale-110 transition-transform" />
+            </button>
           )}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100/50 hover:bg-slate-100 border border-slate-200 transition-all duration-300 group shadow-sm"
-            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <FiMenu style={{ width: '20px', height: '20px' }} className="text-[#1E88E5] group-hover:scale-110 transition-transform" />
-          </button>
-          <button
-            onClick={() => setMobileSidebarOpen(false)}
-            className="lg:hidden p-2.5 rounded-xl bg-slate-100 hover:bg-red-50 text-[#1E88E5] hover:text-red-500 border border-slate-200 transition-all duration-300"
-          >
-            <FiX style={{ width: '20px', height: '20px' }} />
-          </button>
+
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(true)}
+              className="group flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300 hover:bg-slate-50 border border-transparent hover:border-slate-100 shadow-sm sm:shadow-none"
+              title="Collapse sidebar"
+            >
+              <FiMenu className="w-5 h-5 text-[#3FA9F5] group-hover:scale-110 transition-transform" />
+            </button>
+          )}
         </div>
 
+        <div className="h-[1px] bg-slate-100 mx-6 mb-4" />
+
         {/* Dashboard Link */}
-        <div className="px-3 py-4">
+        <div className="px-4 py-2">
           <button
             onClick={() => setActiveTab && setActiveTab('Dashboard')}
             className={`
               w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-              ${activeTab === 'Dashboard' 
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                : 'hover:bg-white/10 text-gray-300 hover:text-white'
+              ${activeTab === 'Dashboard'
+                ? 'bg-slate-100/80 text-[#3FA9F5] shadow-sm'
+                : 'text-slate-500 hover:bg-slate-50'
               }
             `}
           >
-            <FiHome style={{width:'20px',height:'20px',flexShrink:0}} />
-            {!sidebarCollapsed && <span className="font-medium">Dashboard</span>}
+            <FiGrid style={{ width: '20px', height: '20px', flexShrink: 0 }} className={activeTab === 'Dashboard' ? 'text-[#3FA9F5]' : ''} />
+            {!sidebarCollapsed && <span style={{ fontFamily: 'Calibri, sans-serif' }} className={`text-sm font-semibold ${activeTab === 'Dashboard' ? 'text-slate-800' : ''}`}>Dashboard</span>}
           </button>
         </div>
 
         {/* Scrollable Menu */}
-        <nav className="flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-          {sidebarItems.map((section, sectionIdx) => (
-            <div key={section.heading || sectionIdx} className="mb-4">
-              {/* Section Heading */}
-              {section.heading && !sidebarCollapsed && (
-                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-blue-400/70">
-                  {section.heading}
-                </div>
-              )}
+        <nav className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-thin">
+          {sidebarItems.map((section, sectionIdx) => {
+            const isExpanded = !!expandedSections[section.heading];
 
-              {/* Menu Items */}
-              {section.items?.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.title;
-                const hasSubmenu = item.submenu && item.submenu.length > 0;
-                const isExpanded = expandedMenus[item.id];
+            return (
+              <div key={section.heading || sectionIdx} className="mb-4">
+                {/* Section Heading Dropdown */}
+                {section.heading && !sidebarCollapsed && (
+                  <button
+                    onClick={() => toggleSection(section.heading)}
+                    className="w-full flex items-center justify-between px-3 py-2 text-[12px] font-bold text-slate-400 hover:text-slate-600 transition-colors group mb-1"
+                  >
+                    <span style={{ fontFamily: 'Calibri, sans-serif' }}>{section.heading}</span>
+                    <FiChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                )}
 
-                return (
-                  <div key={item.id}>
-                    <button
-                      onClick={() => {
-                        if (hasSubmenu) {
-                          toggleMenu(item.id);
-                        } else {
-                          setActiveTab && setActiveTab(item.title);
-                          setMobileSidebarOpen(false);
-                        }
-                      }}
-                      className={`
-                        w-full flex items-center justify-between px-3 py-2.5 rounded-xl mb-1
-                        transition-all duration-200 group
-                        ${isActive && !hasSubmenu
-                          ? 'bg-gradient-to-r from-blue-600/30 to-indigo-600/20 text-blue-400 border-l-2 border-blue-500 shadow-sm'
-                          : 'hover:bg-white/10 text-gray-400 hover:text-white'
-                        }
-                      `}
+                {/* Collapsible Section Items */}
+                <AnimatePresence initial={false}>
+                  {(isExpanded || sidebarCollapsed) && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="overflow-hidden"
                     >
-                      <div className="flex items-center gap-3">
-                        <Icon style={{width:'20px',height:'20px',flexShrink:0}} className={`transition-colors ${isActive ? 'text-blue-400' : 'group-hover:text-blue-400'}`} />
-                        {!sidebarCollapsed && (
-                          <span className="text-sm font-medium">{item.title}</span>
-                        )}
-                      </div>
-                      {hasSubmenu && !sidebarCollapsed && (
-                        <FiChevronDown
-                          style={{width:'16px',height:'16px',transition:'transform 0.2s',transform:isExpanded?'rotate(180deg)':'rotate(0)'}}
-                        />
-                      )}
-                    </button>
+                      {section.items?.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.title;
+                        const hasSubmenu = item.submenu && item.submenu.length > 0;
+                        const isChildActive = hasSubmenu && item.submenu.some(sub => activeTab === sub.title);
+                        const isParentHighlighted = (isActive && !hasSubmenu) || (hasSubmenu && (isSubExpanded || isChildActive));
 
-                    {/* Submenu */}
-                    {hasSubmenu && isExpanded && !sidebarCollapsed && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="ml-4 pl-4 border-l border-blue-500/30"
-                      >
-                        {item.submenu.map((subItem) => (
-                          <button
-                            key={subItem.id}
-                            onClick={() => {
-                              setActiveTab && setActiveTab(subItem.title);
-                              setMobileSidebarOpen(false);
-                            }}
-                            className={`
-                              w-full text-left px-3 py-2 text-sm rounded-lg mb-0.5
-                              transition-all duration-200
-                              ${activeTab === subItem.title
-                                ? 'text-blue-400 bg-blue-600/10'
-                                : 'text-gray-400 hover:text-white hover:bg-white/5'
-                              }
-                            `}
-                          >
-                            {subItem.title}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+                        return (
+                          <div key={item.id}>
+                            <button
+                              onClick={() => {
+                                if (hasSubmenu) {
+                                  toggleMenu(item.id);
+                                } else {
+                                  setActiveTab && setActiveTab(item.title);
+                                  setMobileSidebarOpen(false);
+                                }
+                              }}
+                              className={`
+                                w-full flex items-center justify-between px-3 py-2 rounded-full mb-1
+                                transition-all duration-300 group
+                                ${isParentHighlighted
+                                  ? 'bg-[#3FA9F5] text-white shadow-md'
+                                  : 'text-slate-500 hover:bg-slate-50'
+                                }
+                              `}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Icon
+                                  style={{ width: '20px', height: '20px', flexShrink: 0 }}
+                                  className={`transition-colors duration-300 ${isParentHighlighted ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`}
+                                />
+                                {!sidebarCollapsed && (
+                                  <span
+                                    style={{ fontFamily: 'Calibri, sans-serif' }}
+                                    className={`text-sm font-semibold transition-colors duration-300 ${isParentHighlighted ? 'text-white' : 'text-slate-600'}`}
+                                  >
+                                    {item.title}
+                                  </span>
+                                )}
+                              </div>
+                              {!sidebarCollapsed && (
+                                hasSubmenu ? (
+                                  <FiChevronDown
+                                    style={{
+                                      width: '16px',
+                                      height: '16px',
+                                      transition: 'all 0.3s',
+                                      transform: isSubExpanded ? 'rotate(180deg)' : 'rotate(0)',
+                                      color: isParentHighlighted ? '#fff' : '#cbd5e1'
+                                    }}
+                                  />
+                                ) : !isParentHighlighted && (
+                                  <FiChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-400" />
+                                )
+                              )}
+                            </button>
+
+                            {/* Submenu */}
+                            {hasSubmenu && isSubExpanded && !sidebarCollapsed && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="ml-[22px] pl-4 border-l border-slate-200 flex flex-col my-1"
+                              >
+                                {item.submenu.map((subItem) => {
+                                  const isSubActive = activeTab === subItem.title;
+                                  return (
+                                    <button
+                                      key={subItem.id}
+                                      onClick={() => {
+                                        setActiveTab && setActiveTab(subItem.title);
+                                        setMobileSidebarOpen(false);
+                                      }}
+                                      className={`
+                                        relative w-full text-left px-3 py-2 text-sm
+                                        transition-all duration-200
+                                        ${isSubActive
+                                          ? 'text-[#3FA9F5] font-bold'
+                                          : 'text-slate-500 hover:text-slate-900'
+                                        }
+                                      `}
+                                    >
+                                      {/* Horizontal branch line */}
+                                      <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-3.5 h-[1px] bg-slate-200" />
+                                      
+                                      <span style={{ fontFamily: 'Calibri, sans-serif' }}>
+                                        {subItem.title}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </motion.div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </nav>
 
-        {/* User Profile in Sidebar */}
-        <div className="p-4 border-t border-white/10 bg-white/5">
+        {/* User Profile Footer (Emma Style) */}
+        <div className="p-4 mt-auto border-t border-slate-100">
           {!sidebarCollapsed ? (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-purple-500/20">
-                {userInfo.name?.charAt(0) || 'A'}
+            <div className="flex items-center gap-3 px-2 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm font-bold text-orange-600">
+                  {userInfo.name?.charAt(0) || 'A'}
+                </div>
+                <div className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{userInfo.name}</p>
-                <p className="text-xs text-blue-400/80 truncate">{userInfo.role}</p>
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <span style={{ fontFamily: 'Calibri, sans-serif' }} className="text-sm font-bold text-slate-800 truncate">{userInfo.name}</span>
+                  <div className="h-3 w-3 bg-sky-400 rounded-full flex items-center justify-center">
+                    <span className="text-[6px] text-white italic font-bold leading-none">✓</span>
+                  </div>
+                </div>
+                <span style={{ fontFamily: 'Calibri, sans-serif' }} className="text-[10px] text-slate-400 truncate leading-none">{userInfo.role || 'Administrator'}</span>
               </div>
               <button
-                onClick={handleLogout}
-                className="p-2 rounded-xl hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all duration-200 hover:scale-105"
+                onClick={(e) => { e.stopPropagation(); handleLogout(); }}
+                className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
                 title="Logout"
               >
-                <FiLogOut style={{width:'16px',height:'16px'}} />
+                <FiLogOut className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-purple-500/20">
-                {userInfo.name?.charAt(0) || 'A'}
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-slate-700 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-200">
+                  {userInfo.name?.charAt(0) || 'A'}
+                </div>
+                <div className="absolute -right-1 -bottom-1 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-xl hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all duration-200"
+                className="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all duration-200"
                 title="Logout"
               >
-                <FiLogOut style={{width:'16px',height:'16px'}} />
+                <FiLogOut style={{ width: '18px', height: '18px' }} />
               </button>
             </div>
           )}
@@ -291,7 +378,7 @@ const AdminLayout = ({
               className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl bg-white text-[#1E88E5] shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300 border border-slate-200"
               aria-label="Open menu"
             >
-              <FiMenu style={{width:'22px',height:'22px'}} className="stroke-[2]" />
+              <FiMenu style={{ width: '22px', height: '22px' }} className="stroke-[2]" />
             </button>
             <img src={logo} alt="Mabicons" className="lg:hidden h-7 w-auto object-contain" />
           </div>
@@ -304,7 +391,7 @@ const AdminLayout = ({
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-600"
               >
-                <FiBell style={{width:'20px',height:'20px'}} />
+                <FiBell style={{ width: '20px', height: '20px' }} />
                 {unreadNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                     {unreadNotifications > 9 ? '9+' : unreadNotifications}
@@ -329,7 +416,7 @@ const AdminLayout = ({
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="p-8 text-center text-gray-500">
-                          <FiBell style={{width:'32px',height:'32px',margin:'0 auto 8px',opacity:0.5}} />
+                          <FiBell style={{ width: '32px', height: '32px', margin: '0 auto 8px', opacity: 0.5 }} />
                           <p className="text-sm">No notifications yet</p>
                         </div>
                       ) : (
@@ -382,11 +469,11 @@ const AdminLayout = ({
                     </div>
                     <div className="py-2">
                       <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                        <FiUser style={{width:'16px',height:'16px'}} />
+                        <FiUser style={{ width: '16px', height: '16px' }} />
                         My Profile
                       </button>
                       <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                        <FiSettings style={{width:'16px',height:'16px'}} />
+                        <FiSettings style={{ width: '16px', height: '16px' }} />
                         Settings
                       </button>
                     </div>
@@ -395,7 +482,7 @@ const AdminLayout = ({
                         onClick={handleLogout}
                         className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3"
                       >
-                        <FiLogOut style={{width:'16px',height:'16px'}} />
+                        <FiLogOut style={{ width: '16px', height: '16px' }} />
                         Logout
                       </button>
                     </div>
@@ -451,11 +538,10 @@ export const StatCard = ({
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-gray-900">{value}</span>
             {change && (
-              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${
-                changeType === 'increase' 
-                  ? 'bg-emerald-100 text-emerald-700' 
-                  : 'bg-red-100 text-red-700'
-              }`}>
+              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${changeType === 'increase'
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-red-100 text-red-700'
+                }`}>
                 {changeType === 'increase' ? '+' : ''}{change}
               </span>
             )}
@@ -501,7 +587,7 @@ export const TrafficChart = ({ data, title = 'Traffic', subtitle }) => {
           <button className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700">Year</button>
         </div>
       </div>
-      
+
       {/* Chart Placeholder - Replace with actual chart */}
       <div className="h-64 flex items-center justify-center bg-gradient-to-b from-blue-50 to-white rounded-lg border border-gray-100">
         <p className="text-gray-400">Chart Component Here</p>
