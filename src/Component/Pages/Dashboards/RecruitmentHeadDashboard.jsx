@@ -84,11 +84,11 @@ const TabLoader = () => (
 
 // Color assignment for team members - using inline gradients for reliable rendering
 const AVATAR_COLORS = [
-  { gradient: 'linear-gradient(to right, #ec4899, #f43f5e)', from: '#ec4899', to: '#f43f5e' }, // pink-500 to rose-500
-  { gradient: 'linear-gradient(to right, #8b5cf6, #a855f7)', from: '#8b5cf6', to: '#a855f7' }, // violet-500 to purple-500
-  { gradient: 'linear-gradient(to right, #10b981, #14b8a6)', from: '#10b981', to: '#14b8a6' }, // emerald-500 to teal-500
-  { gradient: 'linear-gradient(to right, #3b82f6, #06b6d4)', from: '#3b82f6', to: '#06b6d4' }, // blue-500 to cyan-500
-  { gradient: 'linear-gradient(to right, #f59e0b, #f97316)', from: '#f59e0b', to: '#f97316' }, // amber-500 to orange-500
+  { gradient: 'bg-slate-100', from: '#94a3b8', to: '#64748b', text: 'text-slate-600' },
+  { gradient: 'bg-blue-50', from: '#60a5fa', to: '#3b82f6', text: 'text-blue-600' },
+  { gradient: 'bg-indigo-50', from: '#818cf8', to: '#6366f1', text: 'text-indigo-600' },
+  { gradient: 'bg-cyan-50', from: '#22d3ee', to: '#0891b2', text: 'text-cyan-600' },
+  { gradient: 'bg-slate-200', from: '#475569', to: '#1e293b', text: 'text-slate-700' },
 ];
 
 const hasMeaningfulStats = (stats = {}) =>
@@ -230,15 +230,14 @@ const sidebarConfig = [
 const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => {
   const [showMenu, setShowMenu] = useState(false);
   
-  // Hardcoded gradients for each card index
-  const CARD_GRADIENTS = [
-    'linear-gradient(to right, #ec4899, #f43f5e)', // pink
-    'linear-gradient(to right, #8b5cf6, #a855f7)', // violet
-    'linear-gradient(to right, #10b981, #14b8a6)', // emerald
-    'linear-gradient(to right, #3b82f6, #06b6d4)', // blue
-    'linear-gradient(to right, #f59e0b, #f97316)', // amber
+  const CARD_BG_COLORS = [
+    '#F8FAFC', // slate-50
+    '#F1F5F9', // slate-100
+    '#EFF6FF', // blue-50
+    '#F0FDF4', // emerald-50
+    '#F5F3FF', // violet-50
   ];
-  const cardGradient = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
+  const cardBg = CARD_BG_COLORS[index % CARD_BG_COLORS.length];
 
   return (
     <motion.div
@@ -257,8 +256,8 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
     >
       {/* Header with gradient */}
       <div 
-        className="h-24 relative"
-        style={{ background: cardGradient }}
+        className="h-20 relative"
+        style={{ backgroundColor: cardBg }}
       >
         <div className="absolute -bottom-8 left-6">
           <div className="w-16 h-16 rounded-xl bg-white shadow-lg flex items-center justify-center text-xl font-bold text-gray-700 border-4 border-white">
@@ -364,57 +363,56 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
   return (
     <div className="space-y-8">
       {/* Team Stats Summary */}
-      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-8 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-white/10 rounded-full translate-y-1/2" />
+      <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full -translate-y-1/2 translate-x-1/4" />
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold">KAM Team Dashboard</h1>
+            <h1 className="text-3xl font-bold text-slate-800">KAM Team Dashboard</h1>
             {onRefresh && (
               <button
                 onClick={onRefresh}
                 disabled={loading}
-                className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 text-slate-500"
                 title="Refresh team data"
               >
                 <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
               </button>
             )}
           </div>
-          <p className="text-blue-100 mb-6">Manage your Key Account Managers and track their recruitment performance</p>
+          <p className="text-slate-500 mb-6">Manage your Key Account Managers and track their recruitment performance</p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{teamData.length}</p>
-              <p className="text-sm text-blue-100">KAMs</p>
+            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+              <p className="text-3xl font-bold text-slate-800">{teamData.length}</p>
+              <p className="text-sm text-slate-500">KAMs</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{displayStats.activePositions}</p>
-              <p className="text-sm text-blue-100">Total Jobs</p>
+            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+              <p className="text-3xl font-bold text-slate-800">{displayStats.activePositions}</p>
+              <p className="text-sm text-slate-500">Total Jobs</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{displayStats.candidatesPipeline}</p>
-              <p className="text-sm text-blue-100">Candidates</p>
+            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+              <p className="text-3xl font-bold text-slate-800">{displayStats.candidatesPipeline}</p>
+              <p className="text-sm text-slate-500">Candidates</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{displayStats.interviewsScheduled}</p>
-              <p className="text-sm text-blue-100">Interviews</p>
+            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+              <p className="text-3xl font-bold text-slate-800">{displayStats.interviewsScheduled}</p>
+              <p className="text-sm text-slate-500">Interviews</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{displayStats.thisWeekHires}</p>
-              <p className="text-sm text-blue-100">This Week</p>
+            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+              <p className="text-3xl font-bold text-slate-800">{displayStats.thisWeekHires}</p>
+              <p className="text-sm text-slate-500">This Week</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold">{displayStats.profilesShared}</p>
-              <p className="text-sm text-blue-100">Profiles Shared</p>
+            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+              <p className="text-3xl font-bold text-slate-800">{displayStats.profilesShared}</p>
+              <p className="text-sm text-slate-500">Profiles Shared</p>
             </div>
             <button
               type="button"
               onClick={onViewCallsBreakdown}
-              className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center hover:bg-white/25 transition-colors"
+              className="bg-slate-50 rounded-xl p-4 text-center hover:bg-slate-100 transition-colors border border-slate-100"
             >
-              <p className="text-3xl font-bold">{displayStats.callsDone}</p>
-              <p className="text-sm text-blue-100">Phone Calls</p>
+              <p className="text-3xl font-bold text-slate-800">{displayStats.callsDone}</p>
+              <p className="text-sm text-slate-500">Phone Calls</p>
             </button>
           </div>
         </div>
@@ -1598,51 +1596,48 @@ const RecruitmentHeadDashboard = () => {
               return (
                 <div className="space-y-6">
                   {/* Welcome Banner - Enhanced */}
-                  <div className="relative rounded-3xl overflow-hidden shadow-xl">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700" />
-                    <div className="absolute inset-0 opacity-30">
-                      <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-                      <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-400/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-                      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-blue-400/20 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
+                  <div className="relative rounded-3xl overflow-hidden border border-slate-200 bg-white">
+                    <div className="absolute inset-0 opacity-5">
+                      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
                     </div>
                     <div className="relative z-10 p-8 lg:p-10">
                       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                         <div>
                           <div className="flex items-center gap-3 mb-2">
-                            <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-sm font-medium text-white/80">Online Now</span>
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+                            <span className="text-sm font-medium text-slate-500">Online Now</span>
                           </div>
-                          <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                          <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
                             Welcome back, {userInfo.name} <span className="inline-block animate-bounce">👋</span>
                           </h1>
-                          <p className="text-lg text-white/80">
-                            Recruitment Head Dashboard - Managing {kamTeam.length} KAMs
+                          <p className="text-lg text-slate-500 font-medium">
+                            Recruitment Head Dashboard <span className="text-slate-300 mx-2">|</span> Managing {kamTeam.length} KAMs
                           </p>
                           <div className="flex flex-wrap items-center gap-3 mt-5">
                             <button 
                               onClick={() => setActiveTab('Job Openings')}
-                              className="px-4 py-2.5 bg-white/10 backdrop-blur-sm rounded-xl text-sm font-semibold text-white border border-white/20 flex items-center gap-2 hover:bg-white/20 hover:scale-105 transition-all cursor-pointer"
+                              className="px-4 py-2.5 bg-slate-50 rounded-xl text-sm font-semibold text-slate-700 border border-slate-200 flex items-center gap-2 hover:bg-slate-100 hover:scale-[1.02] transition-all cursor-pointer shadow-sm"
                             >
-                              <FiBriefcase className="w-4 h-4" /> {stats.activePositions} Active Positions
+                              <FiBriefcase className="w-4 h-4 text-blue-500" /> {stats.activePositions} Active Positions
                             </button>
                             <button 
                               onClick={() => setActiveTab('Candidate Pipeline')}
-                              className="px-4 py-2.5 bg-white/10 backdrop-blur-sm rounded-xl text-sm font-semibold text-white border border-white/20 flex items-center gap-2 hover:bg-white/20 hover:scale-105 transition-all cursor-pointer"
+                              className="px-4 py-2.5 bg-slate-50 rounded-xl text-sm font-semibold text-slate-700 border border-slate-200 flex items-center gap-2 hover:bg-slate-100 hover:scale-[1.02] transition-all cursor-pointer shadow-sm"
                             >
-                              <FiUsers className="w-4 h-4" /> {stats.totalCandidates} Total Candidates
+                              <FiUsers className="w-4 h-4 text-indigo-500" /> {stats.totalCandidates} Total Candidates
                             </button>
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-4 lg:gap-4">
                           {/* Live Time Display */}
-                          <div className="bg-white/10 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20 group hover:bg-white/20 transition-all">
-                            <div className="flex items-center gap-3">
-                              <FiClock className="w-5 h-5 text-cyan-300 group-hover:animate-spin" />
+                          <div className="bg-slate-50 rounded-2xl px-5 py-3.5 border border-slate-100 group hover:border-slate-200 transition-all shadow-sm">
+                            <div className="flex items-center gap-4">
+                              <FiClock className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
                               <div className="text-right">
-                                <div className="text-lg font-bold text-white tabular-nums font-mono">
+                                <div className="text-lg font-bold text-slate-800 tabular-nums font-['Outfit']">
                                   {formatTime(currentTime)}
                                 </div>
-                                <div className="text-xs text-white/70 font-medium">
+                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                                   {formatDateFull(currentTime)}
                                 </div>
                               </div>
@@ -1650,11 +1645,11 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                           <button
                             onClick={() => setActiveTab('Team Overview')}
-                            className="flex items-center gap-3 px-6 py-3.5 bg-white hover:bg-white/90 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl group"
+                            className="flex items-center gap-3 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(37,99,235,0.3)] hover:shadow-blue-200 group"
                           >
-                            <FiUsers className="w-5 h-5 text-indigo-600" />
-                            <span className="font-bold text-indigo-600">View Team</span>
-                            <FiTrendingUp className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
+                            <FiUsers className="w-5 h-5" />
+                            <span className="font-bold">View Team</span>
+                            <FiTrendingUp className="w-4 h-4 text-blue-200 group-hover:translate-x-1 transition-transform" />
                           </button>
                         </div>
                       </div>
@@ -1804,7 +1799,7 @@ const RecruitmentHeadDashboard = () => {
                               {/* Apply Button */}
                               <button
                                 onClick={applyDateFilter}
-                                className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-600 hover:to-purple-700 transition-all"
+                                className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 mt-2"
                               >
                                 Apply Filter
                               </button>
@@ -1820,102 +1815,106 @@ const RecruitmentHeadDashboard = () => {
                     {/* Active Positions */}
                     <div 
                       onClick={() => handleOpenStatsInsight('activePositions')}
-                      className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-pink-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Active Positions</p>
-                          <p className="text-3xl font-bold text-gray-900 mt-1">{stats.activePositions}</p>
-                          <div className="flex items-center gap-1 mt-2">
-                            <FiTrendingUp className="w-3.5 h-3.5" style={{ color: '#10b981', stroke: '#10b981' }} />
-                            <span className="text-xs font-semibold text-emerald-600">+12%</span>
-                          </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl bg-blue-50 text-blue-600 transition-colors">
+                          <FiBriefcase className="w-6 h-6" />
                         </div>
-                        <div className="p-2 rounded-lg" style={{ background: '#fce7f3' }}>
-                          <FiBriefcase className="w-5 h-5" style={{ color: '#db2777', stroke: '#db2777', strokeWidth: 2.5 }} />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Jobs</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="text-3xl font-bold text-slate-800 tabular-nums leading-none">{stats.activePositions}</h3>
+                          <span className="text-xs font-bold text-emerald-500 flex items-center bg-emerald-50 px-1.5 py-0.5 rounded">+12%</span>
                         </div>
+                        <p className="text-sm font-medium text-slate-500 mt-2">Active Positions</p>
                       </div>
                     </div>
 
                     {/* Total Candidates */}
                     <div 
                       onClick={() => handleOpenStatsInsight('totalCandidates')}
-                      className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-gray-400 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Candidates</p>
-                          <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalCandidates}</p>
-                          <div className="flex items-center gap-1 mt-2">
-                            <FiTrendingUp className="w-3.5 h-3.5" style={{ color: '#10b981', stroke: '#10b981' }} />
-                            <span className="text-xs font-semibold text-emerald-600">+8%</span>
-                          </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 transition-colors">
+                          <FiUsers className="w-6 h-6" />
                         </div>
-                        <div className="p-2 rounded-lg" style={{ background: '#f3f4f6' }}>
-                          <FiUsers className="w-5 h-5" style={{ color: '#4b5563', stroke: '#4b5563', strokeWidth: 2.5 }} />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Talent</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="text-3xl font-bold text-slate-800 tabular-nums leading-none">{stats.totalCandidates}</h3>
+                          <span className="text-xs font-bold text-blue-500 flex items-center bg-blue-50 px-1.5 py-0.5 rounded">Live</span>
                         </div>
+                        <p className="text-sm font-medium text-slate-500 mt-2">Total Candidates</p>
                       </div>
                     </div>
 
                     {/* Profiles Shared */}
                     <div 
                       onClick={() => handleOpenStatsInsight('sharedProfiles')}
-                      className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-cyan-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Profiles Shared</p>
-                          <p className="text-3xl font-bold text-gray-900 mt-1">{stats.sharedProfiles || 0}</p>
-                          <div className="flex items-center gap-1 mt-2">
-                            <FiShare2 className="w-3.5 h-3.5" style={{ color: '#0891b2', stroke: '#0891b2' }} />
-                            <span className="text-xs font-semibold text-cyan-600">Client Shared</span>
-                          </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl bg-cyan-50 text-cyan-600 transition-colors">
+                          <FiShare2 className="w-6 h-6" />
                         </div>
-                        <div className="p-2 rounded-lg" style={{ background: '#ecfeff' }}>
-                          <FiShare2 className="w-5 h-5" style={{ color: '#0891b2', stroke: '#0891b2', strokeWidth: 2.5 }} />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clients</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="text-3xl font-bold text-slate-800 tabular-nums leading-none">{stats.sharedProfiles || 0}</h3>
+                          <span className="text-xs font-bold text-cyan-500 flex items-center bg-cyan-50 px-1.5 py-0.5 rounded">Shared</span>
                         </div>
+                        <p className="text-sm font-medium text-slate-500 mt-2">Profiles Shared</p>
                       </div>
                     </div>
 
                     {/* Phone Screening Calls */}
                     <div 
                       onClick={handleViewCallsBreakdown}
-                      className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-blue-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Phone Calls</p>
-                          <p className="text-3xl font-bold text-gray-900 mt-1">{stats.phoneScreeningCalls || 0}</p>
-                          <div className="flex items-center gap-1 mt-2">
-                            <FiClock className="w-3.5 h-3.5" style={{ color: '#3b82f6', stroke: '#3b82f6' }} />
-                            <span className="text-xs font-semibold text-blue-600">Phone Screening</span>
-                          </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                          <FiPhone className="w-6 h-6" />
                         </div>
-                        <div className="p-2 rounded-lg" style={{ background: '#dbeafe' }}>
-                          <FiClock className="w-5 h-5" style={{ color: '#2563eb', stroke: '#2563eb', strokeWidth: 2.5 }} />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Calls</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="text-3xl font-bold text-slate-800 tabular-nums leading-none">{stats.phoneScreeningCalls || 0}</h3>
+                          <span className="text-[10px] font-bold text-blue-500 uppercase ml-auto">Screened</span>
                         </div>
+                        <p className="text-sm font-medium text-slate-500 mt-2">Phone Screening Calls</p>
                       </div>
                     </div>
 
                     {/* Candidates Summary */}
                     <div 
                       onClick={() => handleOpenStatsInsight('candidatesSummary')}
-                      className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-indigo-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="w-full">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-gray-500">Total Candidates</span>
-                            <span className="text-sm font-bold text-gray-900">{stats.totalCandidates}</span>
-                          </div>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-gray-500">Candidates Selected</span>
-                            <span className="text-sm font-bold text-gray-900">{stats.selected ?? 0}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">Total Hires</span>
-                            <span className="text-sm font-bold text-gray-900">{stats.totalHires || 0}</span>
-                          </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                          <FiUsers className="w-6 h-6" />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pipeline</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-slate-500">Total Talent</span>
+                          <span className="text-sm font-bold text-slate-800">{stats.totalCandidates}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-slate-500">Selected</span>
+                          <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">{stats.selected ?? 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-50">
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Total Hires</span>
+                          <span className="text-sm font-black text-slate-900">{stats.totalHires || 0}</span>
                         </div>
                       </div>
                     </div>
@@ -1923,53 +1922,61 @@ const RecruitmentHeadDashboard = () => {
                     {/* Offers Management */}
                     <div 
                       onClick={() => handleOpenStatsInsight('offersManagement')}
-                      className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-amber-500 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Offers Management</p>
-                        <div className="p-2 rounded-lg" style={{ background: '#fef3c7' }}>
-                          <FiAward className="w-5 h-5" style={{ color: '#d97706', stroke: '#d97706', strokeWidth: 2.5 }} />
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                          <FiAward className="w-6 h-6" />
                         </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Offers</span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 mt-2">
-                        <div className="text-center">
-                          <p className="text-xl font-bold text-amber-600">{stats.pendingOffers ?? 0}</p>
-                          <p className="text-[10px] text-gray-500">Pending</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="text-center p-2 rounded-xl bg-slate-50/50">
+                          <p className="text-lg font-black text-amber-600">{stats.pendingOffers ?? 0}</p>
+                          <p className="text-[8px] font-bold text-slate-400 uppercase">Pending</p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-xl font-bold text-emerald-600">{stats.acceptedOffers ?? 0}</p>
-                          <p className="text-[10px] text-gray-500">Accepted</p>
+                        <div className="text-center p-2 rounded-xl bg-emerald-50/50">
+                          <p className="text-lg font-black text-emerald-600">{stats.acceptedOffers ?? 0}</p>
+                          <p className="text-[8px] font-bold text-slate-400 uppercase">Accept</p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-xl font-bold text-red-500">{stats.rejectedOffers ?? 0}</p>
-                          <p className="text-[10px] text-gray-500">Rejected</p>
+                        <div className="text-center p-2 rounded-xl bg-red-50/50">
+                          <p className="text-lg font-black text-red-500">{stats.rejectedOffers ?? 0}</p>
+                          <p className="text-[8px] font-bold text-slate-400 uppercase">Reject</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Stats Bar - Enhanced */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center justify-between mb-5">
-                      <h3 className="font-bold text-lg text-gray-900">Recruitment Pipeline</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">Last 30 days</span>
-                        <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-                          <FiRefreshCw className="w-4 h-4 text-gray-400" />
-                        </button>
+                  <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-800 tracking-tight">Recruitment Pipeline</h3>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Real-time status tracking</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                         <div className="flex -space-x-2">
+                            {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-100" />)}
+                         </div>
+                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Stream</span>
                       </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                       {statsBarData.map((stat, idx) => (
                         <div 
                           key={idx} 
                           onClick={() => setActiveTab('Candidate Pipeline')}
-                          className="text-center cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition-all"
+                          className="group cursor-pointer"
                         >
-                          <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                          <p className="text-sm text-gray-500 mb-2">{stat.label}</p>
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div className={`h-full ${stat.color} rounded-full transition-all duration-500`} style={{ width: stat.percentage }} />
+                          <div className="flex items-end justify-between mb-3">
+                            <div>
+                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-1">{stat.label}</p>
+                               <p className="text-2xl font-black text-slate-800 tabular-nums">{stat.value}</p>
+                            </div>
+                            <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{stat.percentage}</span>
+                          </div>
+                          <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                            <div className={`h-full ${stat.color} transition-all duration-700 ease-out group-hover:brightness-110`} style={{ width: stat.percentage }} />
                           </div>
                         </div>
                       ))}
@@ -1977,52 +1984,45 @@ const RecruitmentHeadDashboard = () => {
                   </div>
 
                   {/* Team Quick View - Enhanced */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white">
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl" style={{ background: '#e0e7ff' }}>
-                          <FiUsers className="w-5 h-5" style={{ color: '#4f46e5', stroke: '#4f46e5', strokeWidth: 2.5 }} />
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                          <FiUsers className="w-4 h-4 text-slate-400" />
                         </div>
-                        <h3 className="font-bold text-lg text-gray-900">My KAM Team</h3>
+                        <h3 className="font-bold text-lg text-slate-800 tracking-tight">Active Team</h3>
                       </div>
                       <button
                         onClick={() => setActiveTab('Team Overview')}
-                        className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm flex items-center gap-1 hover:gap-2 transition-all"
+                        className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
                       >
-                        View All <FiTrendingUp className="w-4 h-4" style={{ color: 'currentColor', stroke: 'currentColor' }} />
+                        Details →
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-50 border-b border-slate-100">
                       {kamTeam.slice(0, 4).map((kam, idx) => {
-                        const gradients = [
-                          'linear-gradient(135deg, #ec4899, #f43f5e)',
-                          'linear-gradient(135deg, #8b5cf6, #a855f7)', 
-                          'linear-gradient(135deg, #10b981, #14b8a6)',
-                          'linear-gradient(135deg, #3b82f6, #06b6d4)',
-                          'linear-gradient(135deg, #f59e0b, #f97316)'
-                        ];
                         const avatarInitials = kam.avatar || kam.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'KM';
+                        const colorSet = AVATAR_COLORS[idx % AVATAR_COLORS.length];
                         
                         return (
                           <div
                             key={kam.id}
-                            className="p-5 bg-white hover:bg-gradient-to-br hover:from-indigo-50/50 hover:to-white cursor-pointer transition-all"
+                            className="p-5 bg-white hover:bg-slate-50 cursor-pointer transition-all border-r border-slate-50 last:border-r-0"
                             onClick={() => handleViewKAM(kam)}
                           >
                             <div className="flex items-center gap-4">
                               <div 
-                                className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg text-sm"
-                                style={{ background: gradients[idx % 5] }}
+                                className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold shadow-sm text-sm ${colorSet.gradient} ${colorSet.text}`}
                               >
                                 {avatarInitials}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-gray-900 truncate">{kam.name}</h4>
-                                <p className="text-xs text-gray-500">{kam.stats?.activePositions || 0} jobs · {kam.stats?.candidatesPipeline || 0} candidates</p>
+                                <h4 className="font-bold text-slate-800 truncate">{kam.name}</h4>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{kam.stats?.activePositions || 0} Open Positions</p>
                               </div>
                               <div className="text-right">
-                                <p className="text-xl font-black text-emerald-600">{kam.stats?.thisWeekHires || 0}</p>
-                                <p className="text-[10px] font-semibold text-gray-400 uppercase">Hires</p>
+                                <p className="text-xl font-black text-emerald-500">{kam.stats?.thisWeekHires || 0}</p>
+                                <p className="text-[8px] font-bold text-slate-300 uppercase">Hires</p>
                               </div>
                             </div>
                           </div>
@@ -2034,79 +2034,75 @@ const RecruitmentHeadDashboard = () => {
                   {/* Quick Actions & Recent Activity - Enhanced */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Quick Actions */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                      <div className="flex items-center gap-3 mb-5">
-                        <div className="p-2 rounded-xl" style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)' }}>
-                          <FiTarget className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col h-full">
+                      <div className="flex items-center gap-3 mb-8">
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                          <FiTarget className="w-5 h-5 text-slate-400" />
                         </div>
-                        <h3 className="font-bold text-lg text-gray-900">Quick Actions</h3>
+                        <h3 className="font-bold text-lg text-slate-800 tracking-tight">Quick Actions</h3>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
                         <button
                           onClick={() => setActiveTab('Job Openings')}
-                          className="flex items-center gap-3 p-4 rounded-2xl border hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group"
-                          style={{ borderColor: '#bfdbfe', background: 'linear-gradient(135deg, #f8fbff, #eef4ff)' }}
+                          className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-blue-100 transition-all group"
                         >
-                          <div className="p-2.5 rounded-xl shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)' }}>
-                            <FiBriefcase className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                          <div className="p-3 rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
+                            <FiBriefcase className="w-5 h-5" />
                           </div>
                           <div>
-                            <span className="text-sm font-bold block" style={{ color: '#1e3a8a' }}>View Jobs</span>
-                            <span className="text-[10px] font-semibold" style={{ color: '#334155' }}>{stats.activePositions} Open</span>
+                            <span className="text-sm font-bold block text-slate-800">Job Openings</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">{stats.activePositions} Open Positions</span>
                           </div>
                         </button>
                         <button
                           onClick={() => setActiveTab('Candidate Pipeline')}
-                          className="flex items-center gap-3 p-4 rounded-2xl border hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group"
-                          style={{ borderColor: '#99f6e4', background: 'linear-gradient(135deg, #f4fffc, #ecfdf5)' }}
+                          className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-indigo-100 transition-all group"
                         >
-                          <div className="p-2.5 rounded-xl shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #059669, #0d9488)' }}>
-                            <FiUserPlus className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                          <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                            <FiUserPlus className="w-5 h-5" />
                           </div>
                           <div>
-                            <span className="text-sm font-bold block" style={{ color: '#064e3b' }}>Pipeline</span>
-                            <span className="text-[10px] font-semibold" style={{ color: '#334155' }}>{stats.totalCandidates} Total</span>
+                            <span className="text-sm font-bold block text-slate-800">Pipeline</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">{stats.totalCandidates} Total</span>
                           </div>
                         </button>
                         <button
                           onClick={() => setActiveTab('Task Assignment')}
-                          className="flex items-center gap-3 p-4 rounded-2xl border hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group"
-                          style={{ borderColor: '#c4b5fd', background: 'linear-gradient(135deg, #fbf9ff, #f5f3ff)' }}
+                          className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-violet-100 transition-all group"
                         >
-                          <div className="p-2.5 rounded-xl shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #7c3aed, #9333ea)' }}>
-                            <FiCheckSquare className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                          <div className="p-3 rounded-xl bg-violet-50 text-violet-600 group-hover:scale-110 transition-transform">
+                            <FiCheckSquare className="w-5 h-5" />
                           </div>
                           <div>
-                            <span className="text-sm font-bold block" style={{ color: '#2e1065' }}>Assign Tasks</span>
-                            <span className="text-[10px] font-semibold" style={{ color: '#334155' }}>To KAMs</span>
+                            <span className="text-sm font-bold block text-slate-800">Tasks</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Team Load</span>
                           </div>
                         </button>
                         <button
                           onClick={() => setActiveTab('Notes')}
-                          className="flex items-center gap-3 p-4 rounded-2xl border hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group"
-                          style={{ borderColor: '#fcd34d', background: 'linear-gradient(135deg, #fffaf0, #fff7ed)' }}
+                          className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-amber-100 transition-all group"
                         >
-                          <div className="p-2.5 rounded-xl shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #d97706, #ea580c)' }}>
-                            <FiEdit3 className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                          <div className="p-3 rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
+                            <FiEdit3 className="w-5 h-5" />
                           </div>
                           <div>
-                            <span className="text-sm font-bold block" style={{ color: '#451a03' }}>Notes</span>
-                            <span className="text-[10px] font-semibold" style={{ color: '#334155' }}>Open Notes Tab</span>
+                            <span className="text-sm font-bold block text-slate-800">Shared Notes</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Manage All</span>
                           </div>
                         </button>
                       </div>
                     </div>
 
-                    {/* Recent Activity - Enhanced */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                      <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white">
+                    {/* Recent Activity */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                      <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl" style={{ background: 'linear-gradient(135deg, #06b6d4, #3b82f6)' }}>
-                            <FiActivity className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <FiActivity className="w-4 h-4 text-slate-400" />
                           </div>
-                          <h3 className="font-bold text-lg text-gray-900">Recent Team Activity</h3>
+                          <h3 className="font-bold text-lg text-slate-800 tracking-tight">Team History</h3>
                         </div>
-                        <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Live</span>
+                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wider">Live Now</span>
                       </div>
                       <div className="divide-y divide-gray-50 max-h-[300px] overflow-y-auto">
                         {kamTeam
@@ -2122,20 +2118,20 @@ const RecruitmentHeadDashboard = () => {
                               }))
                           )
                           .map((activity, idx) => (
-                            <div key={idx} className="p-4 flex items-center gap-4 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-white transition-colors">
+                            <div key={idx} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0">
                               <div 
-                                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg"
-                                style={{ background: activity.color?.gradient || 'linear-gradient(135deg, #3b82f6, #06b6d4)' }}
+                                className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm border border-slate-100"
+                                style={{ backgroundColor: '#F8FAFC', color: '#64748B' }}
                               >
                                 {activity.avatar}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm text-gray-800">
-                                  <span className="font-bold">{activity.kamName}</span>{' '}
-                                  <span className="text-gray-600">{activity.action}:</span>{' '}
-                                  <span className="font-medium text-indigo-600">{activity.candidate || activity.position}</span>
+                                <p className="text-sm text-slate-700">
+                                  <span className="font-bold text-slate-900">{activity.kamName}</span>{' '}
+                                  <span className="text-slate-500">{activity.action}:</span>{' '}
+                                  <span className="font-bold text-blue-600">{activity.candidate || activity.position}</span>
                                 </p>
-                                <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mt-1 uppercase tracking-tighter">
                                   <FiClock className="w-3 h-3" /> {activity.time}
                                 </p>
                               </div>
@@ -2156,38 +2152,46 @@ const RecruitmentHeadDashboard = () => {
                   </div>
 
                   {/* Live Notes */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-amber-50 to-white">
+                  <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
+                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl" style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)' }}>
-                          <FiEdit3 className="w-5 h-5" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.5 }} />
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                          <FiEdit3 className="w-4 h-4 text-slate-400" />
                         </div>
-                        <h3 className="font-bold text-lg text-gray-900">Live Notes</h3>
+                        <h3 className="font-bold text-lg text-slate-800 tracking-tight">Strategy Notes</h3>
                       </div>
                       <button
                         onClick={() => setActiveTab('Notes')}
-                        className="px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold hover:bg-amber-200 transition-colors"
+                        className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
                       >
-                        Manage
+                        Manage →
                       </button>
                     </div>
-                    <div className="divide-y divide-gray-50 max-h-[280px] overflow-y-auto">
+                    <div className="divide-y divide-slate-50 max-h-[350px] overflow-y-auto flex-1 bg-white">
                       {notesLoading ? (
-                        <div className="p-5 text-sm text-gray-500">Loading notes...</div>
+                        <div className="p-8 text-center text-slate-400 animate-pulse font-medium text-sm">Synchronizing notes...</div>
                       ) : recentNotes.length > 0 ? (
                         recentNotes.map((note) => (
-                          <div key={note.id} className="p-4 hover:bg-amber-50/40 transition-colors">
-                            <p className="font-semibold text-gray-900 line-clamp-1">{note.title}</p>
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{note.content}</p>
-                            <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                              <span>{note.createdByName || 'System'}</span>
-                              <span>{new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                          <div key={note.id} className="p-6 hover:bg-slate-50 transition-colors group">
+                            <div className="flex items-center justify-between mb-2">
+                               <p className="font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{note.title}</p>
+                               <span className="text-[10px] font-bold text-slate-300 uppercase">{new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                            </div>
+                            <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{note.content}</p>
+                            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-50">
+                               <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500">
+                                  {note.createdByName?.[0] || 'S'}
+                               </div>
+                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{note.createdByName || 'System Office'}</span>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="p-6 text-center text-sm text-gray-500">
-                          No notes yet. Add notes from the Notes tab.
+                        <div className="p-8 text-center">
+                          <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
+                             <FiEdit3 className="w-5 h-5 text-slate-200" />
+                          </div>
+                          <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">No active strategy notes</p>
                         </div>
                       )}
                     </div>
