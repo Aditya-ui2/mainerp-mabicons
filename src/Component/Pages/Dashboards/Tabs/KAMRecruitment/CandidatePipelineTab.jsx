@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import {
   FiUsers,
   FiPlus,
@@ -162,9 +163,32 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
   const [resumeBankLoading, setResumeBankLoading] = useState(false);
   const [resumeBankRole, setResumeBankRole] = useState('');
 
-  // ── View & UI State ── (Kanban removed, default to list)
+  // ── View & UI State ──
+  const [isKanbanView, setIsKanbanView] = useState(true);
   const [selectedCandidateDetail, setSelectedCandidateDetail] = useState(null);
   const [showDetailSidebar, setShowDetailSidebar] = useState(false);
+
+  // ── Kanban Logic ──
+  const onDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    const candidateId = draggableId;
+    const newStage = destination.droppableId;
+    const now = new Date().toISOString().split('T')[0];
+
+    // Local update
+    setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, stage: newStage, lastActivity: now, stageChangedAt: now } : c));
+
+    // Backend update
+    try {
+      await updateCandidateStatus(candidateId, { stage: newStage });
+    } catch (error) {
+      console.error('Failed to update candidate stage after drag:', error);
+      // Optional: rollback on failure, but for snappy UI we keep it local for now
+    }
+  };
 
   // ── Bulk Actions ──
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -514,10 +538,10 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
   };
 
   const statCards = [
-    { label: 'Total Candidates', value: stats.total, icon: FiUsers, bgGradient: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', shadowColor: '63, 169, 245' },
-    { label: 'In Pipeline', value: stats.inPipeline, icon: FiClock, bgGradient: 'linear-gradient(135deg, #3b82f6, #1E88E5)', shadowColor: '59, 130, 246' },
-    { label: 'Offers Sent', value: stats.offersSent, icon: FiMail, bgGradient: 'linear-gradient(135deg, #f59e0b, #ea580c)', shadowColor: '245, 158, 11' },
-    { label: 'Joined', value: stats.joined, icon: FiCheckCircle, bgGradient: 'linear-gradient(135deg, #10b981, #0d9488)', shadowColor: '16, 185, 129' },
+    { label: 'Total Candidates', value: stats.total, icon: FiUsers, color: '#3FA9F5' },
+    { label: 'In Pipeline', value: stats.inPipeline, icon: FiClock, color: '#3b82f6' },
+    { label: 'Offers Sent', value: stats.offersSent, icon: FiMail, color: '#f59e0b' },
+    { label: 'Joined', value: stats.joined, icon: FiCheckCircle, color: '#10b981' },
   ];
 
   // Filter candidates (advanced)
@@ -555,14 +579,14 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
   ].filter(Boolean).length;
 
   const getAvatarGradient = (name) => {
-    const gradients = [
-      'linear-gradient(135deg, #3FA9F5, #0D47A1)',
-      'linear-gradient(135deg, #3b82f6, #1E88E5)',
-      'linear-gradient(135deg, #10b981, #0d9488)',
-      'linear-gradient(135deg, #f43f5e, #ec4899)',
-      'linear-gradient(135deg, #f59e0b, #ea580c)'
+    const colors = [
+      '#64748b', // Slate
+      '#3b82f6', // Blue
+      '#1e293b', // Dark Slate
+      '#334155', // Slate 700
+      '#475569'  // Slate 600
     ];
-    return gradients[(name || '').charCodeAt(0) % gradients.length];
+    return colors[(name || '').charCodeAt(0) % colors.length];
   };
 
   const getInitials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -2307,20 +2331,29 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
         >
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: '0 10px 15px -3px rgba(31,136,229,0.25)' }}>
-              <FiUsers className="w-6 h-6" style={{ color: 'white' }} />
-            </div>
-            <div className="flex flex-col justify-center items-start">
-              <h2 className="text-2xl font-bold leading-tight text-left" style={{ background: 'linear-gradient(90deg, #3FA9F5, #0D47A1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                Candidate Pipeline
-              </h2>
-              <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Track and manage candidates through hiring stages
-              </p>
-            </div>
+          <div className="flex flex-col">
+            <h2 className={`text-2xl font-bold leading-tight text-left ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+              Candidate Pipeline
+            </h2>
+            <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              Track and manage candidates through hiring stages
+            </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <div className={`flex items-center p-1 rounded-xl border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+              <button
+                onClick={() => setIsKanbanView(true)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isKanbanView ? 'bg-white text-[#1E88E5] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                <FiGrid className="w-3.5 h-3.5" /> Kanban
+              </button>
+              <button
+                onClick={() => setIsKanbanView(false)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!isKanbanView ? 'bg-white text-[#1E88E5] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                <FiList className="w-3.5 h-3.5" /> List
+              </button>
+            </div>
             <motion.button
               whileHover={{ scale: 1.06, y: -2 }}
               whileTap={{ scale: 0.94 }}
@@ -2328,12 +2361,11 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               className={`relative flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl overflow-hidden
                 transition-all duration-200
                 ${showAnalytics
-                  ? 'text-white shadow-lg shadow-[#1E88E5]/40'
+                  ? 'bg-[#1E88E5] text-white shadow-lg'
                   : isDarkMode
                     ? 'bg-slate-700 text-slate-300 hover:text-white border border-slate-600 hover:border-[#1E88E5]'
                     : 'bg-white text-slate-600 hover:text-[#1E88E5] border border-slate-200 hover:border-[#1E88E5] shadow-sm hover:shadow-md'
                 }`}
-              style={showAnalytics ? { background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)' } : {}}
             >
               {/* Animated glow ring on active */}
               {showAnalytics && (
@@ -2395,8 +2427,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
             </motion.button>
             {/* Add Candidate */}
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white rounded-xl"
-              style={{ background: 'linear-gradient(90deg, #3FA9F5, #0D47A1)', boxShadow: '0 10px 15px -3px rgba(31,136,229,0.25)' }}>
+              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white rounded-xl bg-slate-900 border border-slate-800 shadow-lg hover:bg-black transition-all">
               <FiPlus className="w-3.5 h-3.5" /> Add Candidate
             </motion.button>
           </div>
@@ -2472,7 +2503,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               <div className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className={`text-sm font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                    <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}><FiBarChart2 className="w-3.5 h-3.5 text-white" /></div>
+                    <div className="p-1.5 rounded-lg bg-[#1E88E5]"><FiBarChart2 className="w-3.5 h-3.5 text-white" /></div>
                     Stage Conversion Funnel
                   </h3>
                   <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Rejected: {candidates.filter(c => c.stage === 'Rejected').length}</span>
@@ -2504,11 +2535,11 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
         {/* Job Openings Positions */}
         {jobOpenings.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className={`rounded-2xl border-2 p-5 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            className={`rounded-2xl border p-5 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'}`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}><FiTarget className="w-4 h-4 text-white" /></div>
+                <div className="p-2 rounded-lg bg-[#3FA9F5]"><FiTarget className="w-4 h-4 text-white" /></div>
                 <h3 className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Open Positions from Job Openings</h3>
               </div>
               <span className={`text-xs font-medium px-3 py-1 rounded-full ${isDarkMode ? 'bg-[#1E88E5]/40 text-[#3FA9F5]' : 'bg-[#1E88E5]/10 text-[#1E88E5]'}`}>
@@ -2521,16 +2552,13 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                 const candidatesForJob = candidates.filter(c => c.jobTitle === job.title && c.client === job.client).length;
                 const percent = Math.min((job.filled / job.openings) * 100, 100);
 
-                // Status logic
-                const isError = job.filled <= 1;
-                const isWarning = job.filled >= 2 && job.filled <= 3;
-                const isSuccess = job.filled >= 4;
-
-                const statusConfig = isSuccess
-                  ? { color: '#10b981', blobColor: '#10b981', barGradient: 'linear-gradient(90deg, #10b981, #059669)', badgeBg: 'bg-emerald-500 shadow-emerald-300', cardBg: isDarkMode ? 'bg-emerald-900/20 border-emerald-700/30' : 'bg-emerald-50 border-emerald-200', icon: '✅', label: 'Filled', labelClass: 'text-emerald-500' }
-                  : isWarning
-                    ? { color: '#f59e0b', blobColor: '#f59e0b', barGradient: 'linear-gradient(90deg, #f59e0b, #d97706)', badgeBg: 'bg-amber-500 shadow-amber-300', cardBg: isDarkMode ? 'bg-amber-900/20 border-amber-700/30 hover:border-amber-500' : 'bg-amber-50/50 border-amber-200 hover:border-amber-400 hover:shadow-amber-100', icon: '⚠️', label: 'In Progress', labelClass: 'text-amber-500' }
-                    : { color: '#ef4444', blobColor: '#ef4444', barGradient: 'linear-gradient(90deg, #ef4444, #dc2626)', badgeBg: 'bg-red-500 shadow-red-300', cardBg: isDarkMode ? 'bg-red-900/20 border-red-700/30 hover:border-red-500' : 'bg-red-50/50 border-red-200 hover:border-red-400 hover:shadow-red-100', icon: '🔴', label: 'Critical', labelClass: 'text-red-500' };
+                // Status logic - Simplified to neutral slate/blue theme
+                const statusConfig = {
+                  color: isDarkMode ? '#94a3b8' : '#64748b',
+                  cardBg: isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200/60',
+                  label: 'Project Status',
+                  labelClass: isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                };
 
                 return (
                   <motion.div
@@ -2548,13 +2576,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                       }
                     }}
                   >
-                    {/* Background glow blob */}
-                    <motion.div
-                      className="absolute -right-6 -top-6 w-20 h-20 rounded-full opacity-10 blur-xl"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                      style={{ backgroundColor: statusConfig.blobColor }}
-                    />
+                    {/* Removed simplified background glow blobs */}
 
                     {/* Top row */}
                     <div className="flex items-start justify-between gap-2">
@@ -2575,32 +2597,14 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     </div>
 
                     {/* Progress bar */}
-                    <div className={`w-full h-1.5 rounded-full mt-3 overflow-hidden ${isDarkMode ? 'bg-slate-600' : 'bg-slate-100'}`}>
-                      <motion.div
-                        className="h-full rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${percent}%` }}
-                        transition={{ duration: 0.8, delay: idx * 0.07, ease: 'easeOut' }}
-                        style={{ background: statusConfig.barGradient }}
-                      />
-                    </div>
-
-                    {/* Bottom row */}
-                    <div className="flex items-center justify-between mt-2.5">
+                    {/* Simplified bottom row */}
+                    <div className="flex items-center justify-between mt-3">
                       <span className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                         {candidatesForJob} in pipeline
                       </span>
-
-                      <motion.span
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        whileHover={{ x: isSuccess ? 0 : 2 }}
-                        className={`text-[11px] font-bold flex items-center gap-1 ${statusConfig.labelClass}`}
-                        onClick={e => { if (!isSuccess) { e.stopPropagation(); setNewCandidate(prev => ({ ...prev, jobTitle: job.title, client: job.client })); setShowAddModal(true); } }}
-                      >
-                        <span>{statusConfig.icon}</span>
-                        {isSuccess ? 'Filled' : isWarning ? 'In Progress' : 'Critical'}
-                      </motion.span>
+                      <span className={`text-[11px] font-bold ${statusConfig.labelClass}`}>
+                        {job.filled}/{job.openings} Openings
+                      </span>
                     </div>
                   </motion.div>
                 );
@@ -2622,8 +2626,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
             return (
               <motion.button
                 key={key}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setFilterPipelineStatus(filterPipelineStatus === key ? 'all' : key)}
                 className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 overflow-hidden flex-shrink-0
                   ${isActive
@@ -2700,12 +2704,12 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         </div> */}
 
         {/* Search, Filter, Sort & Bulk */}
-        <div className={`space-y-3 rounded-2xl border-2 p-4 ${isDarkMode ? 'bg-slate-800/60 border-slate-700' : 'bg-gradient-to-r from-white to-blue-50/40 border-blue-100'}`}>
+        <div className={`space-y-3 rounded-2xl border p-4 ${isDarkMode ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Candidate Filters</p>
             <div className="flex items-center gap-3">
-              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-blue-100 text-blue-700'}`}>
-                {activePipelineFiltersCount} active
+              <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                {activePipelineFiltersCount} Filters Active
               </span>
               <button
                 onClick={() => {
@@ -2730,14 +2734,14 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Search Candidates</label>
               <FiSearch className={`absolute left-4 top-[38px] w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
               <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by name, email, skills..."
-                className={`w-full rounded-xl border-2 py-3 pl-12 pr-4 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/50 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
+                className={`w-full rounded-xl border py-3 pl-12 pr-4 text-sm transition-all focus:ring-1 focus:ring-[#1E88E5]/50 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="relative min-w-[140px]">
                 <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Position</label>
                 <select value={filterJob} onChange={(e) => setFilterJob(e.target.value)}
-                  className={`appearance-none w-full rounded-xl border-2 px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+                  className={`appearance-none w-full rounded-xl border px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
                   <option value="all">All Positions</option>
                   {uniqueJobs.map(job => (<option key={job} value={job}>{job}</option>))}
                 </select>
@@ -2747,7 +2751,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               <div className="relative min-w-[140px]">
                 <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Sort By</label>
                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-                  className={`appearance-none w-full rounded-xl border-2 px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+                  className={`appearance-none w-full rounded-xl border px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
                   <option value="date">Date Added</option>
                   <option value="name">Name</option>
                   <option value="rating">Rating</option>
@@ -2762,7 +2766,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               </button>
 
               <button onClick={() => setShowAdvancedFilters(f => !f)}
-                className={`h-[46px] mt-[22px] flex items-center justify-center gap-1.5 px-3 rounded-xl border-2 text-sm font-medium ${showAdvancedFilters ? 'border-[#1E88E5] text-[#1E88E5]' : isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'} transition-colors`}>
+                className={`h-[46px] mt-[22px] flex items-center justify-center gap-1.5 px-3 rounded-xl border text-sm font-medium ${showAdvancedFilters ? 'border-[#1E88E5] text-[#1E88E5]' : isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'} transition-all`}>
                 <FiSliders className="w-4 h-4" />
                 More
               </button>
@@ -2814,6 +2818,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                       <option value="">Move to stage...</option>
                       {stageOrder.map(s => (<option key={s} value={s}>{s}</option>))}
                     </select>
+                    <FiChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   </div>
                   <button onClick={bulkReject}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-red-500 hover:bg-red-600 transition-colors">
@@ -2825,8 +2830,110 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           </AnimatePresence>
         </div>
 
-        {/* ═══════════ LIST VIEW ═══════════ */}
-        {filteredCandidates.length === 0 ? (
+        {/* ═══════════ MAIN VIEW ═══════════ */}
+        {isKanbanView ? (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="flex gap-4 overflow-x-auto pb-6 no-scrollbar items-start" style={{ minHeight: 'calc(100vh - 400px)' }}>
+              {stageOrder.map(stage => {
+                const stageCandidates = filteredCandidates.filter(c => c.stage === stage);
+                const config = stageConfig[stage] || stageConfig.Screening;
+                return (
+                  <Droppable key={stage} droppableId={stage}>
+                    {(provided, snapshot) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className={`flex-shrink-0 w-72 rounded-2xl transition-all duration-200 border ${snapshot.isDraggingOver ? 'bg-slate-50 border-[#1E88E5]/30' : isDarkMode ? 'bg-slate-800/40 border-slate-700/50' : 'bg-white border-slate-200'}`}
+                      >
+                        {/* Column Header */}
+                        <div className="p-4 flex items-center justify-between border-b border-inherit">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: config.color }} />
+                            <h3 className={`text-sm font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{stage}</h3>
+                          </div>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400 border border-slate-600' : 'bg-white text-slate-500 border border-slate-100 shadow-sm'}`}>
+                            {stageCandidates.length}
+                          </span>
+                        </div>
+
+                        {/* Drop Zone */}
+                        <div className="p-3 space-y-3 min-h-[300px]">
+                          {stageCandidates.length === 0 && !snapshot.isDraggingOver && (
+                            <div className="flex flex-col items-center justify-center py-12 opacity-20 grayscale scale-90">
+                              <FiUsers size={32} className="text-slate-400 mb-2" />
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Empty</p>
+                            </div>
+                          )}
+                          {stageCandidates.map((candidate, index) => (
+                            <Draggable key={candidate.id.toString()} draggableId={candidate.id.toString()} index={index}>
+                              {(provided, snapshot) => (
+                                <motion.div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  initial={{ opacity: 0, y: 5 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  whileHover={{ y: 0 }}
+                                  onClick={() => openDetail(candidate)}
+                                  className={`group relative rounded-xl border p-4 transition-all duration-200 cursor-pointer overflow-hidden ${
+                                    snapshot.isDragging 
+                                      ? 'bg-white border-[#1E88E5] shadow-lg z-50' 
+                                      : isDarkMode 
+                                        ? 'bg-slate-900/60 border-slate-700/50 hover:border-slate-500' 
+                                        : 'bg-white border-slate-100 hover:border-blue-200'
+                                  }`}
+                                >
+                                  {/* Glass highlight on hover */}
+                                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity" />
+
+                                  <div className="flex flex-col gap-3 relative z-10">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-inner flex-shrink-0" style={{ background: getAvatarGradient(candidate.name) }}>
+                                          {getInitials(candidate.name)}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <h4 className={`text-xs font-black truncate leading-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                                            {candidate.name}
+                                          </h4>
+                                          <p className={`text-[10px] font-medium mt-0.5 truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                            {candidate.jobTitle}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <FiChevronRight className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-40 transition-all transform group-hover:translate-x-0.5 ${isDarkMode ? 'text-white' : 'text-slate-600'}`} />
+                                    </div>
+
+                                    {/* Footer Info */}
+                                    <div className="flex items-center justify-between mt-1 pt-3 border-t border-dashed border-inherit">
+                                      <div className="flex gap-1.5 flex-wrap flex-1 min-w-0 pr-2">
+                                        {(candidate.skills || []).slice(0, 2).map(skill => (
+                                          <span key={skill} className={`text-[9px] font-black px-2 py-0.5 rounded-lg whitespace-nowrap ${isDarkMode ? 'bg-blue-900/30 text-blue-400 border border-blue-800/30' : 'bg-blue-50 text-blue-500'}`}>
+                                            {skill}
+                                          </span>
+                                        ))}
+                                      </div>
+                                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                                        <span className={`text-[9px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                          {getStageDuration(candidate)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      </div>
+                    )}
+                  </Droppable>
+                );
+              })}
+            </div>
+          </DragDropContext>
+        ) : filteredCandidates.length === 0 ? (
           <div className={`text-center py-16 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
             <FiUsers size={40} className="mx-auto mb-3 opacity-30" />
             <p className="font-medium">No candidates found</p>
