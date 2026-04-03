@@ -70,36 +70,54 @@ const TabLoader = () => (
 // Sidebar Configuration for KAM Member
 const sidebarConfig = [
   {
-    heading: 'MY WORK',
+    heading: 'MAIN',
     items: [
-      { id: 1, title: 'My Tasks', icon: FiCheckSquare },
-      { id: 2, title: 'Daily Report', icon: FiClipboard },
-      { id: 3, title: 'My Performance', icon: FiTrendingUp },
-    ],
+      {
+        id: 'work',
+        title: 'MY WORK',
+        icon: FiClipboard,
+        submenu: [
+          { id: 1, title: 'My Tasks' },
+          { id: 2, title: 'Daily Report' },
+          { id: 3, title: 'My Performance' },
+        ],
+      },
+      {
+        id: 'recruitment',
+        title: 'RECRUITMENT',
+        icon: FiBriefcase,
+        submenu: [
+          { id: 4, title: 'Job Openings' },
+          { id: 5, title: 'Candidate Pipeline' },
+          { id: 6, title: 'Interview Schedule' },
+        ],
+      },
+    ]
   },
   {
-    heading: 'RECRUITMENT',
+    heading: 'GENERAL',
     items: [
-      { id: 4, title: 'Job Openings', icon: FiBriefcase },
-      { id: 5, title: 'Candidate Pipeline', icon: FiUsers },
-      { id: 6, title: 'Interview Schedule', icon: FiCalendar },
-    ],
+      {
+        id: 'assessment',
+        title: 'ASSESSMENT',
+        icon: FiAward,
+        submenu: [
+          { id: 8, title: 'Offer Management' },
+        ],
+      },
+      {
+        id: 'resources',
+        title: 'RESOURCES',
+        icon: FiDatabase,
+        submenu: [
+          { id: 9, title: 'Resume Bank' },
+          { id: 10, title: 'Activity Feed' },
+        ],
+      },
+    ]
   },
   {
-    heading: 'ASSESSMENT',
-    items: [
-      { id: 8, title: 'Offer Management', icon: FiAward },
-    ],
-  },
-  {
-    heading: 'RESOURCES',
-    items: [
-      { id: 9, title: 'Resume Bank', icon: FiDatabase },
-      { id: 10, title: 'Activity Feed', icon: FiActivity },
-    ],
-  },
-  {
-    heading: 'PROFILE',
+    heading: 'OTHERS',
     items: [
       { id: 11, title: 'My Profile', icon: FiUsers },
     ],

@@ -29,23 +29,32 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 // Sidebar menu configuration
 const sidebarConfig = [
   {
-    heading: 'MANAGEMENT',
+    heading: 'MAIN',
     items: [
-      { id: 1, title: 'Clients', icon: FiUsers },
-      { id: 2, title: 'Team', icon: FiUserPlus },
-      { id: 3, title: 'Tasks', icon: FiCheckSquare },
-      { id: 4, title: 'Onboarding', icon: FiBriefcase },
+      {
+        id: 'mgmt',
+        title: 'MANAGEMENT',
+        icon: FiBriefcase,
+        submenu: [
+          { id: 1, title: 'Clients' },
+          { id: 2, title: 'Team' },
+          { id: 3, title: 'Tasks' },
+          { id: 4, title: 'Onboarding' },
+        ]
+      },
+      {
+        id: 'analytics',
+        title: 'ANALYTICS',
+        icon: FiPieChart,
+        submenu: [
+          { id: 5, title: 'Reports' },
+          { id: 6, title: 'Performance' },
+        ]
+      },
     ]
   },
   {
-    heading: 'ANALYTICS',
-    items: [
-      { id: 5, title: 'Reports', icon: FiBarChart2 },
-      { id: 6, title: 'Performance', icon: FiTrendingUp },
-    ]
-  },
-  {
-    heading: 'SETTINGS',
+    heading: 'OTHERS',
     items: [
       { id: 7, title: 'Settings', icon: FiSettings },
     ]

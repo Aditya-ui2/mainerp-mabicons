@@ -144,37 +144,36 @@ const AdminLayout = ({
           )}
         </div>
 
-        <div className="h-[1px] bg-slate-100 mx-6 mb-4 opacity-50" />
-
-        {/* Dashboard Link */}
-        <div className="px-4 py-2">
-          <button
-            onClick={() => setActiveTab && setActiveTab('Dashboard')}
-            title={sidebarCollapsed ? 'Dashboard' : undefined}
-            className={`
-              w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 group relative
-              ${activeTab === 'Dashboard'
-                ? 'bg-[#3FA9F5]/10 text-[#3FA9F5] ring-1 ring-[#3FA9F5]/20'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-              }
-            `}
-          >
-            {activeTab === 'Dashboard' && (
-              <motion.div
-                layoutId="active-pill"
-                className="absolute left-0 w-1 h-6 bg-[#3FA9F5] rounded-r-full"
-              />
-            )}
-            <div className="flex items-center gap-3 min-w-0">
-              <FiGrid className={`w-5 h-5 flex-shrink-0 transition-colors ${activeTab === 'Dashboard' ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-500'}`} />
-              {!sidebarCollapsed && <span className={`text-sm font-semibold truncate ${activeTab === 'Dashboard' ? 'text-slate-800' : 'text-slate-600'}`}>Dashboard</span>}
-            </div>
-            {!sidebarCollapsed && activeTab === 'Dashboard' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#3FA9F5]" />}
-          </button>
-        </div>
+        <div className="h-[1px] bg-slate-100 mx-6 mb-2 opacity-50" />
 
         {/* Scrollable Menu */}
         <nav className="flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin">
+          {/* Dashboard Link */}
+          <div className="px-1 py-2">
+            <button
+              onClick={() => setActiveTab && setActiveTab('Dashboard')}
+              title={sidebarCollapsed ? 'Dashboard' : undefined}
+              className={`
+                w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 group relative
+                ${activeTab === 'Dashboard'
+                  ? 'bg-[#3FA9F5]/10 text-[#3FA9F5] ring-1 ring-[#3FA9F5]/20'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                }
+              `}
+            >
+              {activeTab === 'Dashboard' && (
+                <motion.div
+                  layoutId="active-pill"
+                  className="absolute left-0 w-1 h-6 bg-[#3FA9F5] rounded-r-full"
+                />
+              )}
+              <div className="flex items-center gap-3 min-w-0">
+                <FiGrid className={`w-5 h-5 flex-shrink-0 transition-colors ${activeTab === 'Dashboard' ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-500'}`} />
+                {!sidebarCollapsed && <span className={`text-[13.5px] font-semibold truncate ${activeTab === 'Dashboard' ? 'text-slate-800' : 'text-slate-600'}`}>Dashboard</span>}
+              </div>
+              {!sidebarCollapsed && activeTab === 'Dashboard' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#3FA9F5]" />}
+            </button>
+          </div>
           {sidebarItems.map((section, sectionIdx) => (
             <div key={section.heading || sectionIdx} className="mb-2">
               {/* Section Heading — plain label, always visible, never clickable */}
@@ -295,39 +294,38 @@ const AdminLayout = ({
               </div>
             </div>
           ))}
-        </nav>
-
-        {/* OTHERS SECTION */}
-        <div className="px-3 mb-2 border-t border-slate-50 pt-4">
-          {!sidebarCollapsed && (
-            <p className="px-3 pb-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase select-none font-['Inter']">
-              OTHERS
-            </p>
-          )}
-          <div className="flex flex-col gap-0.5">
-            <button
-               onClick={() => setActiveTab && setActiveTab('Settings')}
-               className={`w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 group
-                  ${activeTab === 'Settings' ? 'bg-[#3FA9F5]/10 text-[#3FA9F5]' : 'text-slate-500 hover:bg-slate-50'}
-               `}
-            >
-               <FiSettings className={`w-5 h-5 flex-shrink-0 ${activeTab === 'Settings' ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-600'}`} />
-               {!sidebarCollapsed && <span className="ml-3 text-[13.5px] font-medium font-['Inter']">Settings</span>}
-            </button>
+          {/* OTHERS SECTION */}
+          <div className="px-1 mb-2 border-t border-slate-50 pt-4">
+            {!sidebarCollapsed && (
+              <p className="px-3 pb-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase select-none font-['Inter']">
+                OTHERS
+              </p>
+            )}
+            <div className="flex flex-col gap-0.5">
+              <button
+                 onClick={() => setActiveTab && setActiveTab('Settings')}
+                 className={`w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 group
+                    ${activeTab === 'Settings' ? 'bg-[#3FA9F5]/10 text-[#3FA9F5]' : 'text-slate-500 hover:bg-slate-50'}
+                 `}
+              >
+                 <FiSettings className={`w-5 h-5 flex-shrink-0 ${activeTab === 'Settings' ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                 {!sidebarCollapsed && <span className="ml-3 text-[13.5px] font-medium font-['Inter']">Settings</span>}
+              </button>
+            </div>
           </div>
-        </div>
+        </nav>
 
         {/* User Profile Footer (Enhanced Emma Style) */}
         <div className="p-4 mt-auto border-t border-slate-100">
           {!sidebarCollapsed ? (
-            <div className="flex items-center gap-3 px-2 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group">
+            <div className="relative flex items-center gap-2 px-2 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group">
               <div className="relative">
                 <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm font-bold text-blue-600">
                   {userInfo.name?.charAt(0) || 'A'}
                 </div>
                 <div className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
               </div>
-              <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex flex-col min-w-0 flex-1 ml-1">
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold text-slate-800 truncate font-['Inter']">{userInfo.name}</span>
                   <div className="h-3 w-3 bg-sky-400 rounded-full flex items-center justify-center">
@@ -336,12 +334,11 @@ const AdminLayout = ({
                 </div>
                 <span className="text-[10px] text-slate-400 truncate leading-none font-['Inter']">{userInfo.role || 'Administrator'}</span>
               </div>
-              <FiChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-all" />
 
-              {/* Secret logout tool visible only on hover or click */}
+              {/* Logout button - Always visible now */}
               <button
                 onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-50 text-red-500 shadow-sm transition-all"
+                className="flex items-center justify-center p-1.5 rounded-lg bg-red-50 text-red-500 shadow-sm transition-all hover:bg-red-100"
                 title="Logout"
               >
                 <FiLogOut className="w-4 h-4" />
@@ -497,12 +494,8 @@ export const StatCard = ({
           </div>
         </div>
         {Icon && (
-          <div className={`p-2 rounded-lg ${isHighlighted
-            ? 'bg-[#3FA9F5]'
-            : 'bg-gray-100 group-hover:bg-gray-200'
-            }`}>
-            <Icon className={`${isHighlighted ? 'text-white' : 'text-gray-500'
-              }`} />
+          <div className={`p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200`}>
+            <Icon className="text-gray-500" />
           </div>
         )}
       </div>

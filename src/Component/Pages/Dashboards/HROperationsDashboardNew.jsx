@@ -74,52 +74,79 @@ const TabLoader = () => (
 // Sidebar configuration
 const sidebarConfig = [
   {
-    heading: 'HR Operations',
+    heading: 'MAIN',
     items: [
-      { id: 1, title: 'Attendance', icon: FiClock },
-      { id: 2, title: 'Payroll', icon: FaIndianRupeeSign },
-      { id: 13, title: 'Leave Management', icon: FiCalendar },
-      { id: 6, title: 'Performance', icon: FiTrendingUp },
+      {
+        id: 'hr_ops',
+        title: 'HR OPERATIONS',
+        icon: FiBriefcase,
+        submenu: [
+          { id: 1, title: 'Attendance' },
+          { id: 2, title: 'Payroll' },
+          { id: 13, title: 'Leave Management' },
+          { id: 6, title: 'Performance' },
+        ]
+      },
+      {
+        id: 'lifecycle',
+        title: 'EMPLOYEE LIFECYCLE',
+        icon: FiUsers,
+        submenu: [
+          { id: 3, title: 'Onboarding' },
+          { id: 7, title: 'Offboarding' },
+          { id: 8, title: 'FnF' },
+          { id: 5, title: 'Master Data (Emp)' },
+        ]
+      },
     ]
   },
   {
-    heading: 'Employee Lifecycle',
+    heading: 'GENERAL',
     items: [
-      { id: 3, title: 'Onboarding', icon: FiUserPlus },
-      { id: 7, title: 'Offboarding', icon: FiUserMinus },
-      { id: 8, title: 'FnF', icon: FiCheckSquare },
-      { id: 5, title: 'Master Data (Emp)', icon: FiUsers },
+      {
+        id: 'docs',
+        title: 'DOCUMENTATION',
+        icon: FiFileText,
+        submenu: [
+          { id: 9, title: 'Document Verify' },
+          { id: 4, title: 'Policy Making' },
+          { id: 14, title: 'Compliance Management' },
+          { id: 16, title: 'Work Agreements' },
+        ]
+      },
+      {
+        id: 'engagement',
+        title: 'ENGAGEMENT',
+        icon: FiActivity,
+        submenu: [
+          { id: 12, title: 'Task by Client' },
+          { id: 10, title: 'Notes' },
+        ]
+      },
+      {
+        id: 'communication',
+        title: 'COMMUNICATION',
+        icon: FiRefreshCw,
+        submenu: [
+          { id: 18, title: 'Work Handover' },
+          { id: 15, title: 'KAM Productivity' },
+        ]
+      },
     ]
   },
   {
-    heading: 'Documentation',
+    heading: 'MANAGEMENT',
     items: [
-      { id: 9, title: 'Document Verify', icon: FiFile },
-      { id: 4, title: 'Policy Making', icon: FiFileText },
-      { id: 14, title: 'Compliance Management', icon: FiShield },
-      { id: 16, title: 'Work Agreements', icon: FiFileText },
-    ]
-  },
-  {
-    heading: 'Engagement',
-    items: [
-      { id: 12, title: 'Task by Client', icon: FiClipboard },
-      { id: 10, title: 'Notes', icon: FiEdit3 },
-    ]
-  },
-  {
-    heading: 'Communication',
-    items: [
-      { id: 18, title: 'Work Handover', icon: FiRefreshCw },
-      { id: 15, title: 'KAM Productivity', icon: FiTrendingUp },
-    ]
-  },
-  {
-    heading: 'Team',
-    items: [
-      { id: 19, title: 'Team Members', icon: FiUsers },
-      { id: 20, title: 'Activity Feed', icon: FiActivity },
-      { id: 21, title: 'Task Assignment', icon: FiCheckSquare },
+      {
+        id: 'team',
+        title: 'TEAM',
+        icon: FiUsers,
+        submenu: [
+          { id: 19, title: 'Team Members' },
+          { id: 20, title: 'Activity Feed' },
+          { id: 21, title: 'Task Assignment' },
+        ]
+      }
     ]
   },
 ];
