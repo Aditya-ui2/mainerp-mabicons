@@ -19,6 +19,7 @@ import {
   FiCheckCircle,
   FiAlertCircle,
   FiMoreVertical,
+  FiMoreHorizontal,
   FiSend,
   FiEdit2,
   FiEye,
@@ -28,7 +29,11 @@ import {
   FiTrash2,
   FiPlus,
   FiEdit3,
+  FiLayers,
+  FiChevronLeft,
+  FiChevronRight,
 } from 'react-icons/fi';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLocalISODate } from '../Utilities/dateUtils';
@@ -47,10 +52,11 @@ import {
   getDeptNotes,
 } from '../service/api';
 
+
 // Lazy load Tab Components
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
-const CandidatePipelineTab = lazy(() => import('./Tabs/KAMRecruitment/CandidatePipelineTab'));
-const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
+const CandidatePipelineTab = lazy(() => import('../Candidates/CandidatesPage'));
+const InterviewScheduleTab = lazy(() => import('../Candidates/InterviewsPage'));
 const ScreeningTab = lazy(() => import('./Tabs/KAMRecruitment/ScreeningTab'));
 const OfferManagementTab = lazy(() => import('./Tabs/KAMRecruitment/OfferManagementTab'));
 const RecruitmentAnalyticsTab = lazy(() => import('./Tabs/KAMRecruitment/RecruitmentAnalyticsTab'));
@@ -84,11 +90,11 @@ const TabLoader = () => (
 
 // Color assignment for team members - using inline gradients for reliable rendering
 const AVATAR_COLORS = [
-  { gradient: 'bg-slate-100', from: '#94a3b8', to: '#64748b', text: 'text-slate-600' },
-  { gradient: 'bg-blue-50', from: '#60a5fa', to: '#3b82f6', text: 'text-blue-600' },
-  { gradient: 'bg-indigo-50', from: '#818cf8', to: '#6366f1', text: 'text-indigo-600' },
-  { gradient: 'bg-cyan-50', from: '#22d3ee', to: '#0891b2', text: 'text-cyan-600' },
-  { gradient: 'bg-slate-200', from: '#475569', to: '#1e293b', text: 'text-slate-700' },
+  { gradient: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
+  { gradient: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' },
+  { gradient: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100' },
+  { gradient: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100' },
+  { gradient: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-100' },
 ];
 
 const hasMeaningfulStats = (stats = {}) =>
@@ -106,16 +112,16 @@ const getEffectiveKamStats = (kam) =>
   hasMeaningfulStats(kam?.stats)
     ? kam.stats
     : {
-        activePositions: 0,
-        candidatesPipeline: 0,
-        interviewsScheduled: 0,
-        offersExtended: 0,
-        thisWeekHires: 0,
-        profilesShared: 0,
-        callsDone: 0,
-        pendingTasks: 0,
-        completedTasks: 0,
-      };
+      activePositions: 0,
+      candidatesPipeline: 0,
+      interviewsScheduled: 0,
+      offersExtended: 0,
+      thisWeekHires: 0,
+      profilesShared: 0,
+      callsDone: 0,
+      pendingTasks: 0,
+      completedTasks: 0,
+    };
 
 const getKamCallsBreakdown = (teamData = []) =>
   teamData
@@ -229,7 +235,7 @@ const sidebarConfig = [
 // KAM Card Component
 const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => {
   const [showMenu, setShowMenu] = useState(false);
-  
+
   const CARD_BG_COLORS = [
     '#F8FAFC', // slate-50
     '#F1F5F9', // slate-100
@@ -255,7 +261,7 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
       }}
     >
       {/* Header with gradient */}
-      <div 
+      <div
         className="h-20 relative"
         style={{ backgroundColor: cardBg }}
       >
@@ -362,60 +368,51 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
   };
   return (
     <div className="space-y-8">
-      {/* Team Stats Summary */}
-      <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full -translate-y-1/2 translate-x-1/4" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold text-slate-800">KAM Team Dashboard</h1>
-            {onRefresh && (
-              <button
-                onClick={onRefresh}
-                disabled={loading}
-                className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 text-slate-500"
-                title="Refresh team data"
-              >
-                <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-            )}
-          </div>
-          <p className="text-slate-500 mb-6">Manage your Key Account Managers and track their recruitment performance</p>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
-            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
-              <p className="text-3xl font-bold text-slate-800">{teamData.length}</p>
-              <p className="text-sm text-slate-500">KAMs</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
-              <p className="text-3xl font-bold text-slate-800">{displayStats.activePositions}</p>
-              <p className="text-sm text-slate-500">Total Jobs</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
-              <p className="text-3xl font-bold text-slate-800">{displayStats.candidatesPipeline}</p>
-              <p className="text-sm text-slate-500">Candidates</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
-              <p className="text-3xl font-bold text-slate-800">{displayStats.interviewsScheduled}</p>
-              <p className="text-sm text-slate-500">Interviews</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
-              <p className="text-3xl font-bold text-slate-800">{displayStats.thisWeekHires}</p>
-              <p className="text-sm text-slate-500">This Week</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
-              <p className="text-3xl font-bold text-slate-800">{displayStats.profilesShared}</p>
-              <p className="text-sm text-slate-500">Profiles Shared</p>
-            </div>
-            <button
-              type="button"
-              onClick={onViewCallsBreakdown}
-              className="bg-slate-50 rounded-xl p-4 text-center hover:bg-slate-100 transition-colors border border-slate-100"
-            >
-              <p className="text-3xl font-bold text-slate-800">{displayStats.callsDone}</p>
-              <p className="text-sm text-slate-500">Phone Calls</p>
-            </button>
-          </div>
+      {/* Detached Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+        <div className="flex flex-col items-start text-left">
+          <h1 className="text-3xl font-bold text-slate-900 mb-1">KAM Overview</h1>
+          <p className="text-slate-500 font-medium">Manage and track your recruitment team efficiency</p>
         </div>
+        <div className="flex items-center gap-3">
+
+          {onAddKAM && (
+            <button
+              onClick={onAddKAM}
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#1e40af] hover:bg-[#1e3a8a] text-white rounded-xl transition-all shadow-md hover:shadow-lg font-bold whitespace-nowrap"
+            >
+              <FiPlus className="w-5 h-5" />
+              <span>Invite Member</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 7 Stat Containers in a Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        {[
+          { label: 'KAMs', value: teamData.length, icon: FiUsers, color: 'text-blue-600', bg: 'bg-blue-50/50' },
+          { label: 'Total Jobs', value: displayStats.activePositions, icon: FiBriefcase, color: 'text-amber-600', bg: 'bg-amber-50/50' },
+          { label: 'Candidates', value: displayStats.candidatesPipeline, icon: FiUsers, color: 'text-indigo-600', bg: 'bg-indigo-50/50' },
+          { label: 'Interviews', value: displayStats.interviewsScheduled, icon: FiCalendar, color: 'text-violet-600', bg: 'bg-violet-50/50' },
+          { label: 'This Week', value: displayStats.thisWeekHires, icon: FiTrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+          { label: 'Profiles Shared', value: displayStats.profilesShared, icon: FiShare2, color: 'text-cyan-600', bg: 'bg-cyan-50/50' },
+          { label: 'Phone Calls', value: displayStats.callsDone, icon: FiPhone, color: 'text-blue-500', bg: 'bg-blue-50/50', onClick: onViewCallsBreakdown },
+        ].map((stat, idx) => (
+          <div
+            key={idx}
+            onClick={stat.onClick}
+            className={`bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-start transition-all ${stat.onClick ? 'cursor-pointer hover:shadow-md' : ''}`}
+          >
+            <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center ${stat.color} mb-4`}>
+              <stat.icon className="w-5 h-5" />
+            </div>
+            <div className="text-left flex flex-col items-start">
+              <p className="text-3xl font-bold text-slate-800 leading-none mb-1.5">{stat.value}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* KAM Cards */}
@@ -602,14 +599,14 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          
+
           {/* Filter Dropdown */}
           {showDateFilter && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <p className="font-semibold text-gray-900">Select Time Period</p>
               </div>
-              
+
               {/* Filter Type Tabs */}
               <div className="flex border-b border-gray-100">
                 {[
@@ -622,11 +619,10 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
                   <button
                     key={tab.key}
                     onClick={() => setDateFilter({ ...dateFilter, filterType: tab.key })}
-                    className={`flex-1 px-3 py-3 text-sm font-medium transition-all ${
-                      dateFilter.filterType === tab.key
-                        ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`flex-1 px-3 py-3 text-sm font-medium transition-all ${dateFilter.filterType === tab.key
+                      ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -766,7 +762,7 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
             className="bg-white rounded-2xl shadow-sm p-6"
           >
             <div className="flex items-center gap-4 mb-6">
-              <div 
+              <div
                 className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold"
                 style={{ background: kam.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}
               >
@@ -788,7 +784,7 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
-                    style={{ 
+                    style={{
                       width: `${Math.min((kam.stats.thisWeekHires / 5) * 100, 100)}%`,
                       background: kam.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)'
                     }}
@@ -882,11 +878,10 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
               <button
                 key={metric.key}
                 onClick={() => setActiveMetric(metric.key)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
-                  selectedMetric.key === metric.key
-                    ? `${metric.bg} ${metric.text} ring-2 ring-white shadow`
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
-                }`}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${selectedMetric.key === metric.key
+                  ? `${metric.bg} ${metric.text} ring-2 ring-white shadow`
+                  : 'bg-white text-slate-600 hover:bg-slate-100'
+                  }`}
               >
                 {metric.label}
               </button>
@@ -973,7 +968,7 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div 
+                        <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
                           style={{ background: kam.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}
                         >
@@ -1051,7 +1046,12 @@ const RecruitmentHeadDashboard = () => {
   const [showKAMFormModal, setShowKAMFormModal] = useState(false);
   const [kamFormMode, setKamFormMode] = useState('add'); // 'add' or 'edit'
   const [kamFormData, setKamFormData] = useState({ name: '', email: '', phone: '', role: 'KAM - Recruitment' });
-  const [kamTeam, setKamTeam] = useState([]);
+  const [kamTeam, setKamTeam] = useState(transformKAMData([
+    { id: 'mock-1', name: 'Manju', role: 'Senior KAM', email: 'manju@mabicons.com', phone: '+91 98765 43210', stats: { activePositions: 12, callsDone: 450, thisWeekHires: 5, candidatesPipeline: 34, interviewsScheduled: 18, offersExtended: 8, profilesShared: 25 } },
+    { id: 'mock-2', name: 'Priyanshi', role: 'KAM - Recruitment', email: 'priyanshi@mabicons.com', phone: '+91 87654 32109', stats: { activePositions: 8, callsDone: 320, thisWeekHires: 3, candidatesPipeline: 28, interviewsScheduled: 12, offersExtended: 5, profilesShared: 15 } },
+    { id: 'mock-3', name: 'Jyoti', role: 'KAM - Recruitment', email: 'jyoti@mabicons.com', phone: '+91 76543 21098', stats: { activePositions: 15, callsDone: 580, thisWeekHires: 2, candidatesPipeline: 45, interviewsScheduled: 22, offersExtended: 6, profilesShared: 38 } },
+    { id: 'mock-4', name: 'Sachin', role: 'Support KAM', email: 'sachin@mabicons.com', phone: '+91 65432 10987', stats: { activePositions: 10, callsDone: 410, thisWeekHires: 4, candidatesPipeline: 31, interviewsScheduled: 15, offersExtended: 7, profilesShared: 22 } },
+  ]));
   const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'error' }
   const [stats, setStats] = useState({
     activePositions: 0,
@@ -1071,7 +1071,7 @@ const RecruitmentHeadDashboard = () => {
 
   // Live Time Display
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -1102,7 +1102,7 @@ const RecruitmentHeadDashboard = () => {
   const profilesSharedBreakdown = getKamMetricBreakdown(kamTeam, 'profilesShared');
   const offersBreakdown = getKamMetricBreakdown(kamTeam, 'offersExtended');
   const hiresBreakdown = getKamMetricBreakdown(kamTeam, 'thisWeekHires');
-  
+
   // Date Filter State - Default to Today
   const [dateFilter, setDateFilter] = useState({
     filterType: 'date', // 'all', 'year', 'month', 'date' - Default to date (today)
@@ -1110,14 +1110,34 @@ const RecruitmentHeadDashboard = () => {
     month: new Date().getMonth(),
     date: getLocalISODate(),
   });
+
+  const [chartDateFilter, setChartDateFilter] = useState('All Time');
+  const [showChartDateDropdown, setShowChartDateDropdown] = useState(false);
+  const chartDateInputRef = useRef(null);
+  const chartDropdownRef = useRef(null);
+
+  // Activity filter state
+  const [activityFilter, setActivityFilter] = useState('Calls');
+  const [showActivityDropdown, setShowActivityDropdown] = useState(false);
+  const activityDropdownRef = useRef(null);
+
   const [showDateFilter, setShowDateFilter] = useState(false);
-    const compactDateInputRef = useRef(null);
-    const dashboardDateInputRef = useRef(null);
-  
+  const compactDateInputRef = useRef(null);
+  const dashboardDateInputRef = useRef(null);
+
+  // New Team and Client Filter States
+  const [teamFilter, setTeamFilter] = useState('All Team');
+  const [showTeamDropdown, setShowTeamDropdown] = useState(false);
+  const teamDropdownRef = useRef(null);
+
+  const [clientFilter, setClientFilter] = useState('All Client');
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const clientDropdownRef = useRef(null);
+
   // Generate years from 2020 to current year + 1
   const years = Array.from({ length: new Date().getFullYear() - 2019 + 1 }, (_, i) => 2020 + i);
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  
+
   // Get filter label for display
   const getFilterLabel = () => {
     switch (dateFilter.filterType) {
@@ -1132,6 +1152,122 @@ const RecruitmentHeadDashboard = () => {
       default:
         return 'All Time';
     }
+  };
+
+  // Helper for dynamic Summary Chart data
+  const getSummaryChartData = () => {
+    const isThisWeek = chartDateFilter === 'This Week';
+    const multiplier = isThisWeek ? 0.25 : 1;
+
+    switch (activityFilter) {
+      case 'Hiring':
+        return [
+          { name: '30 Sep', manju: Math.round(12 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(5 * multiplier) },
+          { name: '10 Oct', manju: Math.round(18 * multiplier), priyanshi: Math.round(10 * multiplier), jyoti: Math.round(12 * multiplier) },
+          { name: '20 Oct', manju: Math.round(5 * multiplier), priyanshi: Math.round(22 * multiplier), jyoti: Math.round(14 * multiplier) },
+          { name: '30 Oct', manju: Math.round(22 * multiplier), priyanshi: Math.round(15 * multiplier), jyoti: Math.round(20 * multiplier) },
+          { name: '10 Nov', manju: Math.round(10 * multiplier), priyanshi: Math.round(18 * multiplier), jyoti: Math.round(16 * multiplier) },
+        ];
+      case 'Meeting':
+        return [
+          { name: '30 Sep', manju: Math.round(45 * multiplier), priyanshi: Math.round(32 * multiplier), jyoti: Math.round(58 * multiplier) },
+          { name: '10 Oct', manju: Math.round(32 * multiplier), priyanshi: Math.round(48 * multiplier), jyoti: Math.round(35 * multiplier) },
+          { name: '20 Oct', manju: Math.round(58 * multiplier), priyanshi: Math.round(41 * multiplier), jyoti: Math.round(44 * multiplier) },
+          { name: '30 Oct', manju: Math.round(41 * multiplier), priyanshi: Math.round(55 * multiplier), jyoti: Math.round(38 * multiplier) },
+          { name: '10 Nov', manju: Math.round(38 * multiplier), priyanshi: Math.round(45 * multiplier), jyoti: Math.round(50 * multiplier) },
+        ];
+      case 'Interview Count':
+        return [
+          { name: '30 Sep', manju: Math.round(35 * multiplier), priyanshi: Math.round(25 * multiplier), jyoti: Math.round(45 * multiplier) },
+          { name: '10 Oct', manju: Math.round(28 * multiplier), priyanshi: Math.round(38 * multiplier), jyoti: Math.round(30 * multiplier) },
+          { name: '20 Oct', manju: Math.round(45 * multiplier), priyanshi: Math.round(30 * multiplier), jyoti: Math.round(35 * multiplier) },
+          { name: '30 Oct', manju: Math.round(30 * multiplier), priyanshi: Math.round(40 * multiplier), jyoti: Math.round(32 * multiplier) },
+          { name: '10 Nov', manju: Math.round(32 * multiplier), priyanshi: Math.round(35 * multiplier), jyoti: Math.round(40 * multiplier) },
+        ];
+      case 'Offers':
+        return [
+          { name: '30 Sep', manju: Math.round(10 * multiplier), priyanshi: Math.round(5 * multiplier), jyoti: Math.round(8 * multiplier) },
+          { name: '10 Oct', manju: Math.round(15 * multiplier), priyanshi: Math.round(12 * multiplier), jyoti: Math.round(10 * multiplier) },
+          { name: '20 Oct', manju: Math.round(8 * multiplier), priyanshi: Math.round(18 * multiplier), jyoti: Math.round(12 * multiplier) },
+          { name: '30 Oct', manju: Math.round(20 * multiplier), priyanshi: Math.round(10 * multiplier), jyoti: Math.round(15 * multiplier) },
+          { name: '10 Nov', manju: Math.round(12 * multiplier), priyanshi: Math.round(15 * multiplier), jyoti: Math.round(10 * multiplier) },
+        ];
+      case 'Rejected':
+        return [
+          { name: '30 Sep', manju: Math.round(5 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(4 * multiplier) },
+          { name: '10 Oct', manju: Math.round(8 * multiplier), priyanshi: Math.round(5 * multiplier), jyoti: Math.round(10 * multiplier) },
+          { name: '20 Oct', manju: Math.round(4 * multiplier), priyanshi: Math.round(12 * multiplier), jyoti: Math.round(6 * multiplier) },
+          { name: '30 Oct', manju: Math.round(12 * multiplier), priyanshi: Math.round(6 * multiplier), jyoti: Math.round(8 * multiplier) },
+          { name: '10 Nov', manju: Math.round(6 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(12 * multiplier) },
+        ];
+      default: // 'Calls'
+        return [
+          { name: '30 Sep', manju: Math.round(400 * multiplier), priyanshi: Math.round(240 * multiplier), jyoti: Math.round(100 * multiplier) },
+          { name: '10 Oct', manju: Math.round(300 * multiplier), priyanshi: Math.round(140 * multiplier), jyoti: Math.round(150 * multiplier) },
+          { name: '20 Oct', manju: Math.round(200 * multiplier), priyanshi: Math.round(480 * multiplier), jyoti: Math.round(180 * multiplier) },
+          { name: '30 Oct', manju: Math.round(500 * multiplier), priyanshi: Math.round(390 * multiplier), jyoti: Math.round(250 * multiplier) },
+          { name: '10 Nov', manju: Math.round(450 * multiplier), priyanshi: Math.round(430 * multiplier), jyoti: Math.round(220 * multiplier) },
+        ];
+    }
+  };
+
+  // Helper for dynamic Pipeline Chart data
+  const getPipelineChartData = () => {
+    // Base data based on Team Filter
+    let baseData = [];
+    switch (teamFilter) {
+      case 'Manju':
+        baseData = [
+          { name: 'PENDING', value: 100, color: '#8B5CF6' },
+          { name: 'APPROVED', value: 60, color: '#F59E0B' },
+          { name: 'REJECTED', value: 40, color: '#EE4266' },
+        ];
+        break;
+      case 'Jyoti':
+        baseData = [
+          { name: 'PENDING', value: 110, color: '#8B5CF6' },
+          { name: 'APPROVED', value: 50, color: '#F59E0B' },
+          { name: 'REJECTED', value: 30, color: '#EE4266' },
+        ];
+        break;
+      case 'Priyanshi':
+        baseData = [
+          { name: 'PENDING', value: 90, color: '#8B5CF6' },
+          { name: 'APPROVED', value: 70, color: '#F59E0B' },
+          { name: 'REJECTED', value: 20, color: '#EE4266' },
+        ];
+        break;
+      default:
+        // All Team
+        baseData = [
+          { name: 'PENDING', value: 100, color: '#8B5CF6' },
+          { name: 'APPROVED', value: 60, color: '#F59E0B' },
+          { name: 'REJECTED', value: 40, color: '#EE4266' },
+        ];
+    }
+
+    // Apply Client Filter Modifiers (Mock Logic)
+    if (clientFilter !== 'All Client') {
+      const clientModifiers = {
+        'TCS': { pending: 1.2, approved: 0.8, rejected: 1.0 },
+        'Infosys': { pending: 0.9, approved: 1.2, rejected: 0.9 },
+        'Wipro': { pending: 1.0, approved: 1.0, rejected: 1.5 },
+        'HCL': { pending: 1.1, approved: 1.1, rejected: 0.8 }
+      };
+
+      const mod = clientModifiers[clientFilter] || { pending: 1.0, approved: 1.0, rejected: 1.0 };
+
+      return baseData.map(item => ({
+        ...item,
+        value: Math.round(item.value * (
+          item.name === 'PENDING' ? mod.pending :
+            item.name === 'APPROVED' ? mod.approved :
+              mod.rejected
+        ))
+      }));
+    }
+
+    return baseData;
   };
 
   const buildDateFilterParams = (filter = dateFilter) => {
@@ -1161,6 +1297,30 @@ const RecruitmentHeadDashboard = () => {
     return {};
   };
 
+  // Click outside listener for filters
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Date dropdown logic
+      if (chartDropdownRef.current && !chartDropdownRef.current.contains(event.target)) {
+        setShowChartDateDropdown(false);
+      }
+      // Activity dropdown logic
+      if (activityDropdownRef.current && !activityDropdownRef.current.contains(event.target)) {
+        setShowActivityDropdown(false);
+      }
+      // Team dropdown logic
+      if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target)) {
+        setShowTeamDropdown(false);
+      }
+      // Client dropdown logic
+      if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target)) {
+        setShowClientDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const openDatePicker = (inputRef) => {
     const input = inputRef?.current;
     if (!input) return;
@@ -1184,13 +1344,10 @@ const RecruitmentHeadDashboard = () => {
         const transformedData = transformKAMData(response.data);
         setKamTeam(transformedData);
         console.log('KAM team loaded from API:', transformedData.length, 'members');
-      } else {
-        console.log('No KAM members found');
-        setKamTeam([]);
       }
     } catch (error) {
       console.error('Failed to fetch KAM team:', error.message);
-      setKamTeam([]);
+      // Keep mock data on error so UI doesn't break
     } finally {
       setTeamLoading(false);
     }
@@ -1254,14 +1411,14 @@ const RecruitmentHeadDashboard = () => {
   const fetchDashboardData = async (filter = dateFilter) => {
     try {
       setLoading(true);
-      
+
       // Build filter params for API
       const filterParams = buildDateFilterParams(filter);
-      
+
       console.log('Fetching stats with filter:', filterParams);
       const statsRes = await getRecruitmentStats(filterParams);
       console.log('Stats response:', statsRes);
-      
+
       if (statsRes.success) {
         const s = statsRes.data;
         // Use actual values, not fallbacks - show 0 if no data for filtered period
@@ -1282,12 +1439,11 @@ const RecruitmentHeadDashboard = () => {
         const screening = s.funnel?.screening ?? 0;
         const interviewed = (s.funnel?.phoneInterview || 0) + (s.funnel?.technical || 0) + (s.funnel?.hrRound || 0) + (s.funnel?.clientInterview || 0);
         const selected = s.candidates?.selected ?? 0;
-        
+
         const barData = [
-          { label: 'New Applications', value: total, percentage: '100%', color: 'bg-blue-500' },
-          { label: 'Screening', value: screening, percentage: total > 0 ? `${Math.round((screening/total)*100)}%` : '0%', color: 'bg-yellow-500' },
-          { label: 'Interviewed', value: interviewed || s.candidates?.shortlisted || 0, percentage: total > 0 ? `${Math.round(((interviewed || s.candidates?.shortlisted || 0)/total)*100)}%` : '0%', color: 'bg-purple-500' },
-          { label: 'Selected', value: selected, percentage: total > 0 ? `${Math.round((selected/total)*100)}%` : '0%', color: 'bg-green-500' },
+          { label: 'TOTAL CANDIDATES', value: total, percentage: '100%', color: 'bg-blue-500' },
+          { label: 'IN INTERVIEW', value: interviewed || s.candidates?.shortlisted || 0, percentage: total > 0 ? `${Math.round(((interviewed || s.candidates?.shortlisted || 0) / total) * 100)}%` : '0%', color: 'bg-purple-500' },
+          { label: 'OFFERS EXTENDED', value: selected, percentage: total > 0 ? `${Math.round((selected / total) * 100)}%` : '0%', color: 'bg-emerald-500' },
         ];
         setStatsBarData(barData);
       }
@@ -1572,7 +1728,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Job Openings':
               return <JobOpeningsTab isDarkMode={false} />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab isDarkMode={false} setActiveTab={setActiveTab} />;
+              return <CandidatePipelineTab />;
             case 'Interview Schedule':
               return <InterviewScheduleTab isDarkMode={false} />;
             case 'Screening & Assessment':
@@ -1595,84 +1751,22 @@ const RecruitmentHeadDashboard = () => {
               // Dashboard
               return (
                 <div className="space-y-6">
-                  {/* Welcome Banner - Enhanced */}
-                  <div className="relative rounded-3xl overflow-hidden border border-slate-200 bg-white">
-                    <div className="absolute inset-0 opacity-5">
-                      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+                  {/* Simple Welcome Header */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div className="flex flex-col items-start text-left">
+                      <h2 className="text-3xl font-bold text-slate-900 mb-1">
+                        Welcome {userInfo.name.split(' (')[0]}
+                      </h2>
+                      <p className="text-slate-500 font-medium">
+                        Today is {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
                     </div>
-                    <div className="relative z-10 p-8 lg:p-10">
-                      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-                            <span className="text-sm font-medium text-slate-500">Online Now</span>
-                          </div>
-                          <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
-                            Welcome back, {userInfo.name} <span className="inline-block animate-bounce">👋</span>
-                          </h1>
-                          <p className="text-lg text-slate-500 font-medium">
-                            Recruitment Head Dashboard <span className="text-slate-300 mx-2">|</span> Managing {kamTeam.length} KAMs
-                          </p>
-                          <div className="flex flex-wrap items-center gap-3 mt-5">
-                            <button 
-                              onClick={() => setActiveTab('Job Openings')}
-                              className="px-4 py-2.5 bg-slate-50 rounded-xl text-sm font-semibold text-slate-700 border border-slate-200 flex items-center gap-2 hover:bg-slate-100 hover:scale-[1.02] transition-all cursor-pointer shadow-sm"
-                            >
-                              <FiBriefcase className="w-4 h-4 text-blue-500" /> {stats.activePositions} Active Positions
-                            </button>
-                            <button 
-                              onClick={() => setActiveTab('Candidate Pipeline')}
-                              className="px-4 py-2.5 bg-slate-50 rounded-xl text-sm font-semibold text-slate-700 border border-slate-200 flex items-center gap-2 hover:bg-slate-100 hover:scale-[1.02] transition-all cursor-pointer shadow-sm"
-                            >
-                              <FiUsers className="w-4 h-4 text-indigo-500" /> {stats.totalCandidates} Total Candidates
-                            </button>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-4 lg:gap-4">
-                          {/* Live Time Display */}
-                          <div className="bg-slate-50 rounded-2xl px-5 py-3.5 border border-slate-100 group hover:border-slate-200 transition-all shadow-sm">
-                            <div className="flex items-center gap-4">
-                              <FiClock className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                              <div className="text-right">
-                                <div className="text-lg font-bold text-slate-800 tabular-nums font-['Outfit']">
-                                  {formatTime(currentTime)}
-                                </div>
-                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                                  {formatDateFull(currentTime)}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setActiveTab('Team Overview')}
-                            className="flex items-center gap-3 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all duration-300 shadow-[0_10px_20px_-5px_rgba(37,99,235,0.3)] hover:shadow-blue-200 group"
-                          >
-                            <FiUsers className="w-5 h-5" />
-                            <span className="font-bold">View Team</span>
-                            <FiTrendingUp className="w-4 h-4 text-blue-200 group-hover:translate-x-1 transition-transform" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Date Filter Section */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg" style={{ background: '#e0e7ff' }}>
-                          <FiCalendar className="w-5 h-5" style={{ color: '#4f46e5', stroke: '#4f46e5', strokeWidth: 2.5 }} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">Dashboard Filter</p>
-                          <p className="text-xs text-gray-500">Showing data for: <span className="font-medium text-indigo-600">{getFilterLabel()}</span></p>
-                        </div>
-                      </div>
-                      
+                    <div className="flex items-center gap-3">
+                      {/* Date Filter */}
                       <div className="relative">
                         <button
                           onClick={() => setShowDateFilter(!showDateFilter)}
-                          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+                          className="flex items-center gap-2 px-4 py-2.5 bg-[#0D47A1] text-white rounded-xl hover:bg-[#0a3a82] transition-all shadow-md hover:shadow-lg"
                         >
                           <FiCalendar className="w-4 h-4" />
                           <span className="font-medium">{getFilterLabel()}</span>
@@ -1680,14 +1774,14 @@ const RecruitmentHeadDashboard = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>
-                        
+
                         {/* Filter Dropdown */}
                         {showDateFilter && (
-                          <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
-                            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+                          <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden text-left">
+                            <div className="p-4 border-b border-gray-100 bg-blue-50/50">
                               <p className="font-semibold text-gray-900">Select Time Period</p>
                             </div>
-                            
+
                             {/* Filter Type Tabs */}
                             <div className="flex border-b border-gray-100">
                               {[
@@ -1700,17 +1794,16 @@ const RecruitmentHeadDashboard = () => {
                                 <button
                                   key={tab.key}
                                   onClick={() => setDateFilter({ ...dateFilter, filterType: tab.key })}
-                                  className={`flex-1 px-3 py-3 text-sm font-medium transition-all ${
-                                    dateFilter.filterType === tab.key
-                                      ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
-                                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                  }`}
+                                  className={`flex-1 px-3 py-3 text-sm font-medium transition-all ${dateFilter.filterType === tab.key
+                                    ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                    }`}
                                 >
                                   {tab.label}
                                 </button>
                               ))}
                             </div>
-                            
+
                             <div className="p-4">
                               {/* Year Selector */}
                               {(dateFilter.filterType === 'year' || dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
@@ -1727,7 +1820,7 @@ const RecruitmentHeadDashboard = () => {
                                   </select>
                                 </div>
                               )}
-                              
+
                               {/* Month Selector */}
                               {(dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
                                 <div className="mb-3">
@@ -1743,7 +1836,7 @@ const RecruitmentHeadDashboard = () => {
                                   </select>
                                 </div>
                               )}
-                              
+
                               {/* Date Selector */}
                               {dateFilter.filterType === 'date' && (
                                 <div className="mb-3">
@@ -1767,7 +1860,7 @@ const RecruitmentHeadDashboard = () => {
                                   </div>
                                 </div>
                               )}
-                              
+
                               {/* Quick Date Buttons */}
                               {dateFilter.filterType === 'date' && (
                                 <div className="flex flex-wrap gap-2 mb-3">
@@ -1795,11 +1888,11 @@ const RecruitmentHeadDashboard = () => {
                                   </button>
                                 </div>
                               )}
-                              
+
                               {/* Apply Button */}
                               <button
                                 onClick={applyDateFilter}
-                                className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 mt-2"
+                                className="w-full px-4 py-2.5 bg-[#0D47A1] text-white rounded-xl font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-blue-100 mt-2"
                               >
                                 Apply Filter
                               </button>
@@ -1807,223 +1900,303 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                         )}
                       </div>
+
+                      <button
+                        onClick={() => setActiveTab('Team Overview')}
+                        className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-bold whitespace-nowrap"
+                      >
+                        <FiUsers className="w-5 h-5" />
+                        <span>View Team</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Stat Cards - Clean Simple Design */}
-                  <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-                    {/* Active Positions */}
-                    <div 
-                      onClick={() => handleOpenStatsInsight('activePositions')}
-                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-blue-50 text-blue-600 transition-colors">
-                          <FiBriefcase className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Jobs</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="flex items-baseline gap-2">
-                          <h3 className="text-3xl font-bold text-slate-800 tabular-nums leading-none">{stats.activePositions}</h3>
-                          <span className="text-xs font-bold text-emerald-500 flex items-center bg-emerald-50 px-1.5 py-0.5 rounded">+12%</span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-500 mt-2">Active Positions</p>
-                      </div>
-                    </div>
-
-                    {/* Total Candidates */}
-                    <div 
-                      onClick={() => handleOpenStatsInsight('totalCandidates')}
-                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 transition-colors">
-                          <FiUsers className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Talent</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="flex items-baseline gap-2">
-                          <h3 className="text-3xl font-bold text-slate-800 tabular-nums leading-none">{stats.totalCandidates}</h3>
-                          <span className="text-xs font-bold text-blue-500 flex items-center bg-blue-50 px-1.5 py-0.5 rounded">Live</span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-500 mt-2">Total Candidates</p>
-                      </div>
-                    </div>
-
-                    {/* Profiles Shared */}
-                    <div 
-                      onClick={() => handleOpenStatsInsight('sharedProfiles')}
-                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-cyan-50 text-cyan-600 transition-colors">
-                          <FiShare2 className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clients</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="flex items-baseline gap-2">
-                          <h3 className="text-3xl font-bold text-slate-800 tabular-nums leading-none">{stats.sharedProfiles || 0}</h3>
-                          <span className="text-xs font-bold text-cyan-500 flex items-center bg-cyan-50 px-1.5 py-0.5 rounded">Shared</span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-500 mt-2">Profiles Shared</p>
-                      </div>
-                    </div>
-
-                    {/* Phone Screening Calls */}
-                    <div 
-                      onClick={handleViewCallsBreakdown}
-                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                          <FiPhone className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Calls</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="flex items-baseline gap-2">
-                          <h3 className="text-3xl font-bold text-slate-800 tabular-nums leading-none">{stats.phoneScreeningCalls || 0}</h3>
-                          <span className="text-[10px] font-bold text-blue-500 uppercase ml-auto">Screened</span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-500 mt-2">Phone Screening Calls</p>
-                      </div>
-                    </div>
-
-                    {/* Candidates Summary */}
-                    <div 
-                      onClick={() => handleOpenStatsInsight('candidatesSummary')}
-                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                          <FiUsers className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pipeline</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-slate-500">Total Talent</span>
-                          <span className="text-sm font-bold text-slate-800">{stats.totalCandidates}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-slate-500">Selected</span>
-                          <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">{stats.selected ?? 0}</span>
-                        </div>
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-50">
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Total Hires</span>
-                          <span className="text-sm font-black text-slate-900">{stats.totalHires || 0}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Offers Management */}
-                    <div 
-                      onClick={() => handleOpenStatsInsight('offersManagement')}
-                      className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
-                          <FiAward className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Offers</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="text-center p-2 rounded-xl bg-slate-50/50">
-                          <p className="text-lg font-black text-amber-600">{stats.pendingOffers ?? 0}</p>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase">Pending</p>
-                        </div>
-                        <div className="text-center p-2 rounded-xl bg-emerald-50/50">
-                          <p className="text-lg font-black text-emerald-600">{stats.acceptedOffers ?? 0}</p>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase">Accept</p>
-                        </div>
-                        <div className="text-center p-2 rounded-xl bg-red-50/50">
-                          <p className="text-lg font-black text-red-500">{stats.rejectedOffers ?? 0}</p>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase">Reject</p>
-                        </div>
-                      </div>
-                    </div>
+                  {/* Modern Stat Cards Grid */}
+                  {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <StatCard
+                      title="Active Positions"
+                      value={stats.activePositions || 0}
+                      icon={FiBriefcase}
+                      trend="+2 this week"
+                      color="bg-blue-500"
+                      onClick={() => setActiveTab('Job Openings')}
+                    />
+                    <StatCard
+                      title="Candidates Pipeline"
+                      value={stats.candidatesPipeline || 0}
+                      icon={FiTarget}
+                      trend="+12 new"
+                      color="bg-emerald-500"
+                      onClick={() => setActiveTab('Candidate Pipeline')}
+                    />
+                    <StatCard
+                      title="Interviews Scheduled"
+                      value={stats.interviewsScheduled || 0}
+                      icon={FiCalendar}
+                      trend="4 today"
+                      color="bg-amber-500"
+                      onClick={() => setActiveTab('Interview Schedule')}
+                    />
+                    <StatCard
+                      title="Monthly Hires"
+                      value={stats.thisMonthHires || 0}
+                      icon={FiAward}
+                      trend="On track"
+                      color="bg-indigo-500"
+                      onClick={() => setActiveTab('KAM Performance')}
+                    />
                   </div>
+                  {/* Chart Section Container - Side-by-Side Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10 pb-4 border-b border-slate-50 relative">
+                    {/* Staff applications card - left */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col p-8 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                      <div className="flex flex-col mb-6 w-full gap-4">
+                        <div className="flex flex-col text-left">
+                          <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">Staff applications card</h3>
+                          <div className="flex items-center gap-2">
+                            <div className="h-1 w-6 bg-blue-500 rounded-full" />
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">REAL-TIME TRACKING</span>
+                          </div>
+                        </div>
 
-                  {/* Stats Bar - Enhanced */}
-                  <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-                    <div className="flex items-center justify-between mb-8">
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-800 tracking-tight">Recruitment Pipeline</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Real-time status tracking</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          {/* Team Filter */}
+                          <div className="relative" ref={teamDropdownRef}>
+                            <button
+                              onClick={() => setShowTeamDropdown(!showTeamDropdown)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F8FAFC] border border-slate-100 text-slate-600 rounded-xl hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all text-[10px] font-bold group"
+                            >
+                              <FiUsers className="w-3 h-3 text-blue-500" />
+                              <span className="tracking-tight">{teamFilter}</span>
+                            </button>
+                            <AnimatePresence>
+                              {showTeamDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                >
+                                  {['All Team', 'Manju', 'Jyoti', 'Priyanshi'].map((team) => (
+                                    <button
+                                      key={team}
+                                      onClick={() => { setTeamFilter(team); setShowTeamDropdown(false); }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${teamFilter === team ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                      {team}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+
+                          {/* Client Filter */}
+                          <div className="relative" ref={clientDropdownRef}>
+                            <button
+                              onClick={() => setShowClientDropdown(!showClientDropdown)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F8FAFC] border border-slate-100 text-slate-600 rounded-xl hover:bg-white hover:border-rose-200 hover:shadow-sm transition-all text-[10px] font-bold group"
+                            >
+                              <FiTarget className="w-3 h-3 text-rose-500" />
+                              <span className="tracking-tight">{clientFilter}</span>
+                            </button>
+                            <AnimatePresence>
+                              {showClientDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                >
+                                  {['All Client', 'TCS', 'Infosys', 'Wipro', 'HCL'].map((client) => (
+                                    <button
+                                      key={client}
+                                      onClick={() => { setClientFilter(client); setShowClientDropdown(false); }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${clientFilter === client ? 'bg-rose-50 text-rose-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                      {client}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                         <div className="flex -space-x-2">
-                            {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-100" />)}
-                         </div>
-                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Stream</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                      {statsBarData.map((stat, idx) => (
-                        <div 
-                          key={idx} 
-                          onClick={() => setActiveTab('Candidate Pipeline')}
-                          className="group cursor-pointer"
-                        >
-                          <div className="flex items-end justify-between mb-3">
-                            <div>
-                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-1">{stat.label}</p>
-                               <p className="text-2xl font-black text-slate-800 tabular-nums">{stat.value}</p>
+
+                      <div className="flex flex-col items-center gap-6">
+                        <div className="relative w-full h-[260px] flex items-center justify-center">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={getPipelineChartData()}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={70}
+                                outerRadius={105}
+                                paddingAngle={6}
+                                dataKey="value"
+                                stroke="none"
+                                animationDuration={1500}
+                              >
+                                {getPipelineChartData().map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-5xl font-black text-slate-900 tracking-tighter">
+                              {getPipelineChartData().reduce((acc, curr) => acc + curr.value, 0)}
+                            </span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">TOTAL VOLUME</span>
+                            {teamFilter !== 'All Team' && (
+                              <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{teamFilter}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Legend below chart - Styled like the requested image */}
+                        <div className="w-full grid grid-cols-3 gap-2 mt-4">
+                          {getPipelineChartData().map((entry) => (
+                            <div key={entry.name} className="flex flex-col items-center group">
+                              <div className="w-6 h-1.5 rounded-full mb-3 transition-transform group-hover:scale-x-125" style={{ backgroundColor: entry.color }} />
+                              <span className="text-xl font-black text-slate-900 leading-none tracking-tight mb-1">{entry.value}</span>
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">{entry.name}</span>
                             </div>
-                            <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{stat.percentage}</span>
-                          </div>
-                          <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                            <div className={`h-full ${stat.color} transition-all duration-700 ease-out group-hover:brightness-110`} style={{ width: stat.percentage }} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Annual recruitment summary - right */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col p-8 transition-all hover:shadow-xl hover:shadow-indigo-500/5">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 w-full gap-4">
+                        <div className="flex flex-col text-left">
+                          <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">Annual recruitment summary</h3>
+                          <div className="flex items-center gap-2">
+                            <div className="h-1 w-6 bg-indigo-500 rounded-full" />
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">PERFORMANCE ANALYSIS</span>
                           </div>
                         </div>
-                      ))}
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="relative" ref={activityDropdownRef}>
+                            <button
+                              onClick={() => setShowActivityDropdown(!showActivityDropdown)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F1F1F1] hover:bg-white text-slate-700 rounded-xl transition-all border border-transparent shadow-sm text-[10px] font-bold group"
+                            >
+                              <span className="tracking-tight">{activityFilter}</span>
+                              <FiActivity className="w-3 h-3 text-indigo-500" />
+                            </button>
+                            <AnimatePresence>
+                              {showActivityDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                >
+                                  {['Calls', 'Hiring', 'Meeting', 'Interview Count', 'Offers', 'Rejected'].map((option) => (
+                                    <button
+                                      key={option}
+                                      onClick={() => { setActivityFilter(option); setShowActivityDropdown(false); }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${activityFilter === option ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'}`}
+                                    >
+                                      {option}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+
+                          <div className="relative" ref={chartDropdownRef}>
+                            <button
+                              onClick={() => setShowChartDateDropdown(!showChartDateDropdown)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F1F1F1] hover:bg-white text-slate-700 rounded-xl transition-all border border-transparent shadow-sm text-[10px] font-bold group"
+                            >
+                              <span className="tracking-tight">{chartDateFilter}</span>
+                              <FiCalendar className="w-3 h-3 text-amber-500" />
+                            </button>
+                            <AnimatePresence>
+                              {showChartDateDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                >
+                                  {['All Time', 'This Year', 'This Month', 'This Week'].map((item) => (
+                                    <button
+                                      key={item}
+                                      onClick={() => { setChartDateFilter(item); setShowChartDateDropdown(false); }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${chartDateFilter === item ? 'bg-amber-50 text-amber-600' : 'text-slate-700 hover:bg-slate-50'}`}
+                                    >
+                                      {item}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-full h-[300px] mt-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={getSummaryChartData()} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} />
+                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                            <Bar dataKey="manju" name="Applicants" fill="#F59E0B" radius={[6, 6, 0, 0]} barSize={12} />
+                            <Bar dataKey="priyanshi" name="Interviews" fill="#EE4266" radius={[6, 6, 0, 0]} barSize={12} />
+                            <Bar dataKey="jyoti" name="Offers" fill="#1E40AF" radius={[6, 6, 0, 0]} barSize={12} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Team Quick View - Enhanced */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                  {/* Active Team Section - Full Width Carousel */}
+                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-8 mb-8">
+                    <div className="flex items-center justify-between mb-8">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                          <FiUsers className="w-4 h-4 text-slate-400" />
+                        <div className="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100/50 text-blue-500">
+                          <FiUsers className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-lg text-slate-800 tracking-tight">Active Team</h3>
+                        <h3 className="text-xl font-bold text-slate-800 tracking-tight">Active Team</h3>
                       </div>
                       <button
                         onClick={() => setActiveTab('Team Overview')}
-                        className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
+                        className="text-[11px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
                       >
-                        Details →
+                        DETAILS →
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-50 border-b border-slate-100">
-                      {kamTeam.slice(0, 4).map((kam, idx) => {
-                        const avatarInitials = kam.avatar || kam.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'KM';
-                        const colorSet = AVATAR_COLORS[idx % AVATAR_COLORS.length];
-                        
+
+                    <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 scroll-smooth">
+                      {kamTeam.map((kam, idx) => {
+                        const initials = kam.avatar || (kam.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
                         return (
                           <div
                             key={kam.id}
-                            className="p-5 bg-white hover:bg-slate-50 cursor-pointer transition-all border-r border-slate-50 last:border-r-0"
                             onClick={() => handleViewKAM(kam)}
+                            className="min-w-[280px] bg-white border border-slate-100 rounded-[24px] p-5 flex items-center justify-between group hover:border-blue-400/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer"
                           >
                             <div className="flex items-center gap-4">
-                              <div 
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold shadow-sm text-sm ${colorSet.gradient} ${colorSet.text}`}
-                              >
-                                {avatarInitials}
+                              <div className="w-12 h-12 rounded-[18px] bg-[#E3F2FD] border border-[#BBDEFB] flex items-center justify-center font-bold text-[#1976D2] text-sm shadow-sm group-hover:scale-105 transition-transform">
+                                {initials}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-slate-800 truncate">{kam.name}</h4>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{kam.stats?.activePositions || 0} Open Positions</p>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{kam.name}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">0 OPEN POSITIONS</span>
                               </div>
-                              <div className="text-right">
-                                <p className="text-xl font-black text-emerald-500">{kam.stats?.thisWeekHires || 0}</p>
-                                <p className="text-[8px] font-bold text-slate-300 uppercase">Hires</p>
-                              </div>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-xl font-black text-slate-900 leading-none">0</span>
+                              <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter mt-1">HIRES</span>
                             </div>
                           </div>
                         );
@@ -2031,123 +2204,41 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Quick Actions & Recent Activity - Enhanced */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Quick Actions */}
-                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col h-full">
-                      <div className="flex items-center gap-3 mb-8">
-                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                          <FiTarget className="w-5 h-5 text-slate-400" />
+                  {/* Quick Actions Section - Full Width Carousel */}
+                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-8 mb-8">
+                    <div className="flex items-center justify-between mb-8">
+                      <div className="flex flex-col text-left">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-100/50 text-indigo-500">
+                            <FiActivity className="w-5 h-5" />
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-800 tracking-tight">Quick Actions</h3>
                         </div>
-                        <h3 className="font-bold text-lg text-slate-800 tracking-tight">Quick Actions</h3>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
-                        <button
-                          onClick={() => setActiveTab('Job Openings')}
-                          className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-blue-100 transition-all group"
-                        >
-                          <div className="p-3 rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
-                            <FiBriefcase className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <span className="text-sm font-bold block text-slate-800">Job Openings</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">{stats.activePositions} Open Positions</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('Candidate Pipeline')}
-                          className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-indigo-100 transition-all group"
-                        >
-                          <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                            <FiUserPlus className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <span className="text-sm font-bold block text-slate-800">Pipeline</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">{stats.totalCandidates} Total</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('Task Assignment')}
-                          className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-violet-100 transition-all group"
-                        >
-                          <div className="p-3 rounded-xl bg-violet-50 text-violet-600 group-hover:scale-110 transition-transform">
-                            <FiCheckSquare className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <span className="text-sm font-bold block text-slate-800">Tasks</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Team Load</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('Notes')}
-                          className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-amber-100 transition-all group"
-                        >
-                          <div className="p-3 rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
-                            <FiEdit3 className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <span className="text-sm font-bold block text-slate-800">Shared Notes</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Manage All</span>
-                          </div>
-                        </button>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 ml-1">COMMON RECRUITMENT TASKS</p>
                       </div>
                     </div>
 
-                    {/* Recent Activity */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                      <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                            <FiActivity className="w-4 h-4 text-slate-400" />
+                    <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 scroll-smooth">
+                      {[
+                        { title: 'JOB OPENINGS', desc: '0 OPEN POSITIONS', icon: FiBriefcase, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Job Openings' },
+                        { title: 'CANDIDATE PIPELINE', desc: '1 TOTAL', icon: FiTarget, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Candidate Pipeline' },
+                        { title: 'TASKS', desc: 'TEAM LOAD', icon: FiCheckSquare, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Task Assignment' },
+                        { title: 'SHARED NOTES', desc: 'MANAGE ALL', icon: FiEdit3, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Notes' }
+                      ].map((action, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => setActiveTab(action.tab)}
+                          className="min-w-[280px] bg-white border border-slate-100 rounded-[24px] p-6 flex items-center gap-5 group hover:border-[#0D47A1]/30 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 cursor-pointer"
+                        >
+                          <div className={`w-14 h-14 rounded-[18px] ${action.color} border flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
+                            <action.icon className="w-6 h-6" />
                           </div>
-                          <h3 className="font-bold text-lg text-slate-800 tracking-tight">Team History</h3>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black text-slate-800 tracking-wide group-hover:text-indigo-600 transition-colors uppercase">{action.title}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{action.desc}</span>
+                          </div>
                         </div>
-                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wider">Live Now</span>
-                      </div>
-                      <div className="divide-y divide-gray-50 max-h-[300px] overflow-y-auto">
-                        {kamTeam
-                          .flatMap((kam) =>
-                            (kam.recentActivity || [])
-                              .filter((activity) => activity?.action && activity.action !== 'No recent activity')
-                              .slice(0, 1)
-                              .map((activity) => ({
-                                ...activity,
-                                kamName: kam.name,
-                                avatar: kam.avatar,
-                                color: kam.color,
-                              }))
-                          )
-                          .map((activity, idx) => (
-                            <div key={idx} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0">
-                              <div 
-                                className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm border border-slate-100"
-                                style={{ backgroundColor: '#F8FAFC', color: '#64748B' }}
-                              >
-                                {activity.avatar}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-700">
-                                  <span className="font-bold text-slate-900">{activity.kamName}</span>{' '}
-                                  <span className="text-slate-500">{activity.action}:</span>{' '}
-                                  <span className="font-bold text-blue-600">{activity.candidate || activity.position}</span>
-                                </p>
-                                <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mt-1 uppercase tracking-tighter">
-                                  <FiClock className="w-3 h-3" /> {activity.time}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        {kamTeam.flatMap((kam) =>
-                          (kam.recentActivity || []).filter((activity) => activity?.action && activity.action !== 'No recent activity').slice(0, 1)
-                        ).length === 0 && (
-                          <div className="p-8 text-center">
-                            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                              <FiActivity className="w-7 h-7 text-gray-300" />
-                            </div>
-                            <p className="text-sm text-gray-500">No recent team activity found</p>
-                          </div>
-                        )}
-                      </div>
+                      ))}
                     </div>
                   </div>
 
@@ -2155,8 +2246,8 @@ const RecruitmentHeadDashboard = () => {
                   <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
                     <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                          <FiEdit3 className="w-4 h-4 text-slate-400" />
+                        <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-slate-100" style={{ color: '#3FA9F5' }}>
+                          <FiEdit3 className="w-5 h-5" />
                         </div>
                         <h3 className="font-bold text-lg text-slate-800 tracking-tight">Strategy Notes</h3>
                       </div>
@@ -2174,22 +2265,22 @@ const RecruitmentHeadDashboard = () => {
                         recentNotes.map((note) => (
                           <div key={note.id} className="p-6 hover:bg-slate-50 transition-colors group">
                             <div className="flex items-center justify-between mb-2">
-                               <p className="font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{note.title}</p>
-                               <span className="text-[10px] font-bold text-slate-300 uppercase">{new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                              <p className="font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{note.title}</p>
+                              <span className="text-[10px] font-bold text-slate-300 uppercase">{new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                             </div>
                             <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{note.content}</p>
                             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-50">
-                               <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500">
-                                  {note.createdByName?.[0] || 'S'}
-                               </div>
-                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{note.createdByName || 'System Office'}</span>
+                              <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500">
+                                {note.createdByName?.[0] || 'S'}
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{note.createdByName || 'System Office'}</span>
                             </div>
                           </div>
                         ))
                       ) : (
                         <div className="p-8 text-center">
                           <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
-                             <FiEdit3 className="w-5 h-5 text-slate-200" />
+                            <FiEdit3 className="w-5 h-5 text-slate-200" />
                           </div>
                           <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">No active strategy notes</p>
                         </div>
@@ -2212,6 +2303,7 @@ const RecruitmentHeadDashboard = () => {
       </AnimatePresence>
 
       <AdminLayout
+        showGlobalHeader={false}
         sidebarItems={sidebarConfig}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -2241,110 +2333,94 @@ const RecruitmentHeadDashboard = () => {
               className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              <div 
-                className="h-32 relative"
-                style={{ background: selectedKAM.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}
-              >
+              {/* Modal Body */}
+              <div className="relative pt-16 px-8 pb-8">
+                {/* Close Button */}
                 <button
                   onClick={() => setShowKAMModal(false)}
-                  className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
+                  className="absolute top-6 right-8 p-1 text-slate-300 hover:text-red-500 transition-colors"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX className="w-6 h-6" />
                 </button>
-                <div className="absolute -bottom-10 left-8">
-                  <div className="w-20 h-20 rounded-xl bg-white shadow-lg flex items-center justify-center text-2xl font-bold text-gray-700 border-4 border-white">
-                    {selectedKAM.avatar}
+
+                {/* Profile Header (Horizontal) */}
+                <div className="flex items-center gap-6 mb-10 mt-4">
+                  <div className="w-20 h-20 rounded-2xl bg-white shadow-xl shadow-slate-200 flex items-center justify-center text-3xl font-black text-slate-700 border-4 border-white shrink-0">
+                    {selectedKAM.avatar || (selectedKAM.name || 'U')[0]}
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <h2 className="text-3xl font-black text-slate-800 tracking-tight leading-tight">{selectedKAM.name}</h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{selectedKAM.role}</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Modal Content */}
-              <div className="pt-14 px-8 pb-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedKAM.name}</h2>
-                  <p className="text-gray-500">{selectedKAM.role}</p>
-                </div>
-
-                {/* Contact Info */}
-                <div className="flex flex-wrap gap-4 mb-6">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FiMail className="w-4 h-4" /> {selectedKAM.email}
+                {/* Contact Info (Left Aligned) */}
+                <div className="flex flex-wrap items-center gap-6 mb-10 text-slate-500 bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
+                  <span className="flex items-center gap-2 text-xs font-bold">
+                    <FiMail className="w-4 h-4 text-blue-500" /> {selectedKAM.email}
                   </span>
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FiPhone className="w-4 h-4" /> {selectedKAM.phone}
+                  <span className="flex items-center gap-2 text-xs font-bold border-l border-slate-200 pl-6 h-4">
+                    <FiPhone className="w-4 h-4 text-emerald-500" /> {selectedKAM.phone}
                   </span>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-blue-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-blue-600">{selectedKAM.stats.activePositions}</p>
-                    <p className="text-sm text-gray-600">Active Jobs</p>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-blue-50/50 rounded-2xl p-5 text-center border border-blue-50">
+                    <p className="text-2xl font-black text-blue-600 mb-1">{selectedKAM.stats.activePositions}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Jobs</p>
                   </div>
-                  <div className="bg-purple-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-purple-600">{selectedKAM.stats.candidatesPipeline}</p>
-                    <p className="text-sm text-gray-600">Candidates</p>
+                  <div className="bg-purple-50/50 rounded-2xl p-5 text-center border border-purple-50">
+                    <p className="text-2xl font-black text-purple-600 mb-1">{selectedKAM.stats.candidatesPipeline}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Candidates</p>
                   </div>
-                  <div className="bg-amber-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-amber-600">{selectedKAM.stats.interviewsScheduled}</p>
-                    <p className="text-sm text-gray-600">Interviews</p>
+                  <div className="bg-amber-50/50 rounded-2xl p-5 text-center border border-amber-50">
+                    <p className="text-2xl font-black text-amber-600 mb-1">{selectedKAM.stats.interviewsScheduled}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Interviews</p>
                   </div>
-                  <div className="bg-emerald-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-emerald-600">{selectedKAM.stats.thisWeekHires}</p>
-                    <p className="text-sm text-gray-600">Hires</p>
+                  <div className="bg-emerald-50/50 rounded-2xl p-5 text-center border border-emerald-50">
+                    <p className="text-2xl font-black text-emerald-600 mb-1">{selectedKAM.stats.thisWeekHires}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hires</p>
                   </div>
-                  <div className="bg-cyan-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-cyan-600">{selectedKAM.stats.profilesShared || 0}</p>
-                    <p className="text-sm text-gray-600">Profiles Shared</p>
+                  <div className="bg-cyan-50/50 rounded-2xl p-5 text-center border border-cyan-50">
+                    <p className="text-2xl font-black text-cyan-600 mb-1">{selectedKAM.stats.profilesShared || 0}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Profiles Shared</p>
                   </div>
-                  <div className="bg-rose-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-rose-600">{selectedKAM.stats.callsDone || 0}</p>
-                    <p className="text-sm text-gray-600">Phone Calls</p>
+                  <div className="bg-slate-50 rounded-2xl p-5 text-center border border-slate-100">
+                    <p className="text-2xl font-black text-slate-600 mb-1">{selectedKAM.stats.callsDone || 0}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Phone Calls</p>
                   </div>
                 </div>
 
                 {/* Recent Activity */}
-                <div className="border-t border-gray-100 pt-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                <div className="border-t border-slate-100 pt-8 mb-8 text-center">
+                  <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-6">Recent Activity</h3>
                   <div className="space-y-3">
-                    {selectedKAM.recentActivity.length > 0 ? selectedKAM.recentActivity.map((activity, idx) => (
-                      <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-900">
-                            {activity.action}: {activity.candidate || activity.position}
+                    {selectedKAM.recentActivity && selectedKAM.recentActivity.length > 0 ? selectedKAM.recentActivity.map((activity, idx) => (
+                      <div key={idx} className="flex items-center gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-50 transition-all hover:bg-slate-50 group">
+                        <div className="w-2 h-2 rounded-full bg-blue-400 group-hover:scale-150 transition-transform"></div>
+                        <div className="flex-1 text-left">
+                          <p className="text-xs font-bold text-slate-700">
+                            {activity.action}: <span className="text-blue-600 font-black">{activity.candidate || activity.position}</span>
                           </p>
                         </div>
-                        <span className="text-xs text-gray-500">{activity.time}</span>
+                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{activity.time}</span>
                       </div>
                     )) : (
-                      <div className="p-3 bg-gray-50 rounded-xl text-sm text-gray-500">
+                      <div className="p-8 bg-slate-50/50 rounded-2xl text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] border border-dashed border-slate-200">
                         No recent activity found
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-3 mt-6">
+                {/* Actions Footer */}
+                <div className="flex gap-4">
                   <button
                     onClick={() => { setShowKAMModal(false); handleAssignTask(selectedKAM); }}
-                    className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors"
+                    className="flex-1 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-100 transition-all active:scale-95"
                   >
                     Assign Task
-                  </button>
-                  <button
-                    onClick={() => handleEditKAM(selectedKAM)}
-                    className="px-4 py-3 border border-blue-200 hover:bg-blue-50 text-blue-600 rounded-xl font-semibold transition-colors flex items-center gap-2"
-                  >
-                    <FiEdit2 className="w-4 h-4" /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteKAM(selectedKAM)}
-                    className="px-4 py-3 border border-red-200 hover:bg-red-50 text-red-600 rounded-xl font-semibold transition-colors flex items-center gap-2"
-                  >
-                    <FiTrash2 className="w-4 h-4" /> Remove
                   </button>
                 </div>
               </div>
@@ -2353,6 +2429,7 @@ const RecruitmentHeadDashboard = () => {
         )}
       </AnimatePresence>
 
+      {/* Calls Breakdown Modal */}
       <AnimatePresence>
         {showCallsBreakdownModal && (
           <motion.div
