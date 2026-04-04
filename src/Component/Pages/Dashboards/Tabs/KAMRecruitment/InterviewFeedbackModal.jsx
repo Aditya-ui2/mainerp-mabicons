@@ -387,7 +387,7 @@ const InterviewFeedbackModal = ({
                       Submitting...
                     </span>
                   ) : (
-                    'Submit Feedback'
+                    'Submit'
                   )}
                 </motion.button>
               </div>

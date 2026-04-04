@@ -2805,8 +2805,12 @@ export const getAllRecruitmentPositions = async (filters = {}) => {
 // Create recruitment position
 export const createRecruitmentPosition = async (positionData) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/positions', positionData, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' 
+      }
     });
     return response.data;
   } catch (error) {
@@ -2818,8 +2822,12 @@ export const createRecruitmentPosition = async (positionData) => {
 // Update recruitment position
 export const updateRecruitmentPosition = async (positionId, updateData) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/recruitment/positions/${positionId}`, updateData, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' 
+      }
     });
     return response.data;
   } catch (error) {
@@ -2883,6 +2891,20 @@ export const updateCandidateStatus = async (candidateId, statusData) => {
   } catch (error) {
     console.error('Failed to update candidate status:', error);
     throw error.response?.data || { message: 'Failed to update candidate' };
+  }
+};
+
+// Update candidate core profile
+export const updateCandidate = async (candidateId, candidateData) => {
+  try {
+    const response = await axiosInstance.put(`/recruitment/candidates/${candidateId}`, candidateData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update candidate:', error);
+    // Throw only the data or a standard message to ensure consistent catch blocks in components
+    throw error.response?.data || { message: error.message || 'Failed to update candidate' };
   }
 };
 
@@ -2950,6 +2972,586 @@ export const getDepartmentStats = async (department) => {
 };
 
 
+
+// ====================== NEWLY ADDED APIs ======================
+
+export const getClientsForTeamLeader = async (payload) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/client/getClientsForTeamLeader', 
+      payload,  // Send the payload object
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch clients:', error);
+    throw error.response?.data || error.message;
+  }
+};
+
+export const getClosedDeals = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get('http://localhost:3000/deals/closed', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching closed deals:', error);
+    throw new Error('Failed to fetch closed deals');
+  }
+};
+
+export const getPendingAgreements = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get('http://localhost:3000/agreements/pending', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching pending agreements:', error);
+    throw new Error('Failed to fetch pending agreements');
+  }
+};
+
+export const getUpcomingActivities = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get('http://localhost:3000/activities/upcoming', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching upcoming activities:', error);
+    throw new Error('Failed to fetch upcoming activities');
+  }
+};
+
+export const getBDMetrics = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get('http://localhost:3000/bd/metrics', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching BD metrics:', error);
+    throw new Error('Failed to fetch BD metrics');
+  }
+};
+
+export const bdExecutiveLogin = async (credentials) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.post('http://localhost:3000/bd/login', credentials, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error during BD executive login:', error);
+    throw new Error('Failed to login as BD executive');
+  }
+};
+
+// ====================== RECRUITMENT APIs ======================
+
+export const getKamsWithRecruitment = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/recruitment/kams', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching KAMs with recruitment:', error);
+    throw error.response?.data || {
+      message: 'Failed to fetch KAM data'
+    };
+  }
+};
+
+export const getClientRecruitmentProgress = async (clientId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get(`/recruitment/client-progress/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client recruitment progress:', error);
+    throw error.response?.data || { message: 'Failed to fetch recruitment progress' };
+  }
+};
+
+export const getClientDashboardOverview = async (clientId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get(`/client/dashboard-overview/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client dashboard overview:', error);
+    throw error.response?.data || { message: 'Failed to fetch dashboard overview' };
+  }
+};
+
+export const getDepartmentActivityLogs = async (department, limit = 50, actionType = null) => {
+  try {
+    const token = localStorage.getItem('token');
+    const params = { department, limit };
+    if (actionType) params.actionType = actionType;
+    
+    const response = await axiosInstance.get('/department/activities', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching activity logs:', error);
+    throw error.response?.data || { message: 'Failed to fetch activity logs' };
+  }
+};
+
+export const createDepartmentActivityLog = async (activityData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/activities', activityData, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating activity log:', error);
+    throw error.response?.data || { message: 'Failed to create activity log' };
+  }
+};
+
+export const getDepartmentTasks = async (department, status = null, assignedTo = null) => {
+  try {
+    const token = localStorage.getItem('token');
+    const params = { department };
+    if (status) params.status = status;
+    if (assignedTo) params.assignedTo = assignedTo;
+    
+    const response = await axiosInstance.get('/department/tasks', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching department tasks:', error);
+    throw error.response?.data || { message: 'Failed to fetch tasks' };
+  }
+};
+
+export const createDepartmentTask = async (taskData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/tasks', taskData, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating department task:', error);
+    throw error.response?.data || { message: 'Failed to create task' };
+  }
+};
+
+export const updateDepartmentTask = async (taskId, updateData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put(`/department/tasks/${taskId}`, updateData, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating department task:', error);
+    throw error.response?.data || { message: 'Failed to update task' };
+  }
+};
+
+export const deleteDepartmentTask = async (taskId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete(`/department/tasks/${taskId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting department task:', error);
+    throw error.response?.data || { message: 'Failed to delete task' };
+  }
+};
+
+export const getMyDepartmentTasks = async (status = null) => {
+  try {
+    const token = localStorage.getItem('token');
+    const params = {};
+    if (status) params.status = status;
+
+    const response = await axiosInstance.get('/department/my-tasks', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my tasks:', error);
+    throw error.response?.data || { message: 'Failed to fetch tasks' };
+  }
+};
+
+export const getMyDepartmentStats = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/my-stats', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my stats:', error);
+    throw error.response?.data || { message: 'Failed to fetch stats' };
+  }
+};
+
+export const getMyProfile = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/my-profile', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch profile' };
+  }
+};
+
+export const updateMyProfile = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put('/department/my-profile', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to update profile' };
+  }
+};
+
+export const getMyLeaves = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/leaves', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch leaves' };
+  }
+};
+
+export const applyLeave = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/leaves', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to apply leave' };
+  }
+};
+
+export const approveRejectLeave = async (id, data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put(`/department/leaves/${id}/approve`, data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to update leave status' };
+  }
+};
+
+export const checkIn = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/attendance/check-in', {}, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to check in' };
+  }
+};
+
+export const checkOut = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/attendance/check-out', {}, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to check out' };
+  }
+};
+
+export const getMyAttendance = async (month, year) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/my-attendance', {
+      params: { month, year },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch attendance' };
+  }
+};
+
+export const getPerformanceStats = async (period) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/performance', {
+      params: { period },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch performance stats' };
+  }
+};
+
+export const submitDailyReport = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/daily-report', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to submit report' };
+  }
+};
+
+export const getMyReports = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/my-reports', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch reports' };
+  }
+};
+
+export const getMISReports = async (params = {}) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/mis-reports', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch MIS reports' };
+  }
+};
+
+export const addHeadComment = async (reportId, comment) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post(`/department/daily-report/${reportId}/comment`, { comment }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to add comment' };
+  }
+};
+
+export const getAnnouncements = async (department) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/announcements', {
+      params: { department },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch announcements' };
+  }
+};
+
+export const createAnnouncement = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/announcements', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to create announcement' };
+  }
+};
+
+export const deleteAnnouncement = async (id) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete(`/department/announcements/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to delete announcement' };
+  }
+};
+
+export const uploadDeptDocument = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/documents', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to upload document' };
+  }
+};
+
+export const deleteDeptDocument = async (id) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete(`/department/documents/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to delete document' };
+  }
+};
+
+export const getMyTrainings = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/my-trainings', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch trainings' };
+  }
+};
+
+export const updateTraining = async (id, data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put(`/department/trainings/${id}`, data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to update training' };
+  }
+};
+
+export const assignTraining = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/trainings', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to assign training' };
+  }
+};
+
+export const getMyPayslips = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/my-payslips', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch payslips' };
+  }
+};
+
+export const generatePayslip = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/payslips', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to generate payslip' };
+  }
+};
+
+export const getChatMessages = async (department) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/chat', {
+      params: { department },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch messages' };
+  }
+};
+
+export const sendChatMessage = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/chat', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to send message' };
+  }
+};
+
+export const getCalendarEvents = async (month, year) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/calendar', {
+      params: { month, year },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch calendar events' };
+  }
+};
 
 // Then, include it in the default export
 const api = {
@@ -3041,6 +3643,7 @@ const api = {
   getInterviewFeedbackForm,
   submitInterviewFeedback,
   updateInterviewStatus,
+  updateInterview,
   sendInterviewReminder,
   cancelInterview,
   // Resume Bank Management
@@ -3056,654 +3659,52 @@ const api = {
   getResumeDownloadUrl,
   getSharePointFolders,
   searchS3Resumes,
+  getClientsForTeamLeader,
+  getClosedDeals,
+  getPendingAgreements,
+  getUpcomingActivities,
+  getBDMetrics,
+  bdExecutiveLogin,
+  getKamsWithRecruitment,
+  getClientRecruitmentProgress,
+  getClientDashboardOverview,
+  getDepartmentActivityLogs,
+  createDepartmentActivityLog,
+  getDepartmentTasks,
+  createDepartmentTask,
+  updateDepartmentTask,
+  deleteDepartmentTask,
+  getMyDepartmentTasks,
+  getMyDepartmentStats,
+  getMyProfile,
+  updateMyProfile,
+  getMyLeaves,
+  applyLeave,
+  approveRejectLeave,
+  checkIn,
+  checkOut,
+  getMyAttendance,
+  getPerformanceStats,
+  submitDailyReport,
+  getMyReports,
+  getMISReports,
+  addHeadComment,
+  getAnnouncements,
+  createAnnouncement,
+  deleteAnnouncement,
+  uploadDeptDocument,
+  deleteDeptDocument,
+  getMyTrainings,
+  updateTraining,
+  assignTraining,
+  getMyPayslips,
+  generatePayslip,
+  getChatMessages,
+  sendChatMessage,
+  getCalendarEvents,
 };
 
 export default api;
-
-// Keep your existing named exports
-
-const handleGlobalAddTask = async () => {
-  try {
-    const taskData = {
-      ...newTaskData,
-      dueDate: newTaskData.category === 'Deadline' ? new Date(newTaskData.dueDate).toISOString() : undefined
-    };
-
-    await createTaskByTL(taskData);
-    
-    // Reset form and close modal
-    setIsAddingTask(false);
-    setNewTaskData({
-      title: '',
-      description: '',
-      clientId: '',
-      category: 'Deadline',
-      dueDate: '',
-      frequency: '',
-      priority: 'Medium',
-      assignedUserId: '',
-      assignedUserType: 'TeamLeader'
-    });
-
-    // Refresh tasks
-    fetchTasks();
-  } catch (error) {
-    console.error('Failed to create task:', error);
-    // You might want to show an error message to the user here
-  }
-};
-
-export const getClientsForTeamLeader = async (payload) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/client/getClientsForTeamLeader', 
-      payload,  // Send the payload object
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Failed to fetch clients:', error);
-    throw error.response?.data || error.message;
-  }
-};
-
-// Add this new API endpoint to edit client details
-
-export const getClosedDeals = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/deals/closed', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response;
-  } catch (error) {
-    console.error('Error fetching closed deals:', error);
-    throw new Error('Failed to fetch closed deals');
-  }
-};
-
-export const getPendingAgreements = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/agreements/pending', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response;
-  } catch (error) {
-    console.error('Error fetching pending agreements:', error);
-    throw new Error('Failed to fetch pending agreements');
-  }
-};
-
-export const getUpcomingActivities = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/activities/upcoming', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response;
-  } catch (error) {
-    console.error('Error fetching upcoming activities:', error);
-    throw new Error('Failed to fetch upcoming activities');
-  }
-};
-
-export const getBDMetrics = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/bd/metrics', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response;
-  } catch (error) {
-    console.error('Error fetching BD metrics:', error);
-    throw new Error('Failed to fetch BD metrics');
-  }
-};
-
-export const bdExecutiveLogin = async (credentials) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.post('http://localhost:3000/bd/login', credentials, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response;
-  } catch (error) {
-    console.error('Error during BD executive login:', error);
-    throw new Error('Failed to login as BD executive');
-  }
-};
-
-// ====================== RECRUITMENT APIs ======================
-
-// Get all KAMs with their clients and recruitment positions
-export const getKamsWithRecruitment = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/recruitment/kams', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching KAMs with recruitment:', error);
-    throw error.response?.data || {
-      message: 'Failed to fetch KAM data'
-    };
-  }
-};
-
-// Get recruitment progress for a specific client (client-facing)
-export const getClientRecruitmentProgress = async (clientId) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/recruitment/client-progress/${clientId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching client recruitment progress:', error);
-    throw error.response?.data || { message: 'Failed to fetch recruitment progress' };
-  }
-};
-
-// Unified client dashboard overview (recruitment + operations)
-export const getClientDashboardOverview = async (clientId) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get(`/client/dashboard-overview/${clientId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching client dashboard overview:', error);
-    throw error.response?.data || { message: 'Failed to fetch dashboard overview' };
-  }
-};
-
-// Get activity logs for department
-export const getDepartmentActivityLogs = async (department, limit = 50, actionType = null) => {
-  try {
-    const token = localStorage.getItem('token');
-    const params = { department, limit };
-    if (actionType) params.actionType = actionType;
-    
-    const response = await axiosInstance.get('/department/activities', {
-      params,
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching activity logs:', error);
-    throw error.response?.data || { message: 'Failed to fetch activity logs' };
-  }
-};
-
-// Create activity log
-export const createDepartmentActivityLog = async (activityData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/activities', activityData, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error creating activity log:', error);
-    throw error.response?.data || { message: 'Failed to create activity log' };
-  }
-};
-
-// Get department tasks
-export const getDepartmentTasks = async (department, status = null, assignedTo = null) => {
-  try {
-    const token = localStorage.getItem('token');
-    const params = { department };
-    if (status) params.status = status;
-    if (assignedTo) params.assignedTo = assignedTo;
-    
-    const response = await axiosInstance.get('/department/tasks', {
-      params,
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching department tasks:', error);
-    throw error.response?.data || { message: 'Failed to fetch tasks' };
-  }
-};
-
-// Create department task
-export const createDepartmentTask = async (taskData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/tasks', taskData, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error creating department task:', error);
-    throw error.response?.data || { message: 'Failed to create task' };
-  }
-};
-
-// Update department task
-export const updateDepartmentTask = async (taskId, updateData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.put(`/department/tasks/${taskId}`, updateData, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating department task:', error);
-    throw error.response?.data || { message: 'Failed to update task' };
-  }
-};
-
-// Delete department task
-export const deleteDepartmentTask = async (taskId) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.delete(`/department/tasks/${taskId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting department task:', error);
-    throw error.response?.data || { message: 'Failed to delete task' };
-  }
-};
-
-// Get my tasks (for logged-in team member)
-export const getMyDepartmentTasks = async (status = null) => {
-  try {
-    const token = localStorage.getItem('token');
-    const params = {};
-    if (status) params.status = status;
-
-    const response = await axiosInstance.get('/department/my-tasks', {
-      params,
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching my tasks:', error);
-    throw error.response?.data || { message: 'Failed to fetch tasks' };
-  }
-};
-
-// Get my stats (for logged-in team member)
-export const getMyDepartmentStats = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/my-stats', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching my stats:', error);
-    throw error.response?.data || { message: 'Failed to fetch stats' };
-  }
-};
-
-// ========== MEMBER FEATURES ==========
-
-// My Profile
-export const getMyProfile = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/my-profile', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch profile' };
-  }
-};
-
-export const updateMyProfile = async (data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.put('/department/my-profile', data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to update profile' };
-  }
-};
-
-// Leave Requests
-export const getMyLeaves = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/leaves', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch leaves' };
-  }
-};
-
-export const applyLeave = async (data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/leaves', data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to apply leave' };
-  }
-};
-
-// ... removed duplicate getDeptLeaveRequests ...
-
-export const approveRejectLeave = async (id, data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.put(`/department/leaves/${id}/approve`, data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to update leave status' };
-  }
-};
-
-// Attendance
-export const checkIn = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/attendance/check-in', {}, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to check in' };
-  }
-};
-
-export const checkOut = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/attendance/check-out', {}, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to check out' };
-  }
-};
-
-export const getMyAttendance = async (month, year) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/my-attendance', {
-      params: { month, year },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch attendance' };
-  }
-};
-
-// ... removed duplicate getDeptAttendance ...
-
-// Performance Stats
-export const getPerformanceStats = async (period) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/performance', {
-      params: { period },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch performance stats' };
-  }
-};
-
-// Daily Reports
-export const submitDailyReport = async (data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/daily-report', data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to submit report' };
-  }
-};
-
-export const getMyReports = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/my-reports', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch reports' };
-  }
-};
-
-// ... removed duplicate getDeptReports ...
-
-export const getMISReports = async (params = {}) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/mis-reports', {
-      params,
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch MIS reports' };
-  }
-};
-
-export const addHeadComment = async (reportId, comment) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post(`/department/daily-report/${reportId}/comment`, { comment }, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to add comment' };
-  }
-};
-
-// Announcements
-export const getAnnouncements = async (department) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/announcements', {
-      params: { department },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch announcements' };
-  }
-};
-
-export const createAnnouncement = async (data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/announcements', data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to create announcement' };
-  }
-};
-
-export const deleteAnnouncement = async (id) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.delete(`/department/announcements/${id}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to delete announcement' };
-  }
-};
-
-// Documents
-// ... removed duplicate getDeptDocuments ...
-
-export const uploadDeptDocument = async (data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/documents', data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to upload document' };
-  }
-};
-
-export const deleteDeptDocument = async (id) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.delete(`/department/documents/${id}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to delete document' };
-  }
-};
-
-// Training
-export const getMyTrainings = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/my-trainings', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch trainings' };
-  }
-};
-
-export const updateTraining = async (id, data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.put(`/department/trainings/${id}`, data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to update training' };
-  }
-};
-
-export const assignTraining = async (data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/trainings', data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to assign training' };
-  }
-};
-
-// Payslips
-export const getMyPayslips = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/my-payslips', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch payslips' };
-  }
-};
-
-export const generatePayslip = async (data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/payslips', data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to generate payslip' };
-  }
-};
-
-// Team Chat
-export const getChatMessages = async (department) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/chat', {
-      params: { department },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch messages' };
-  }
-};
-
-export const sendChatMessage = async (data) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/department/chat', data, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to send message' };
-  }
-};
-
-// Calendar Events
-export const getCalendarEvents = async (month, year) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axiosInstance.get('/department/calendar', {
-      params: { month, year },
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch calendar events' };
-  }
-};
 
 
 

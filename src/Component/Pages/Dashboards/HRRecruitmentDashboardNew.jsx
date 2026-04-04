@@ -23,8 +23,8 @@ import { getLocalISODate } from '../Utilities/dateUtils';
 
 // Lazy load Recruitment Tab Components
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
-const CandidatePipelineTab = lazy(() => import('./Tabs/KAMRecruitment/CandidatePipelineTab'));
-const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
+const CandidatePipelineTab = lazy(() => import('../Candidates/CandidatesPage'));
+const InterviewScheduleTab = lazy(() => import('../Candidates/InterviewsPage'));
 const ScreeningTab = lazy(() => import('./Tabs/KAMRecruitment/ScreeningTab'));
 const OfferManagementTab = lazy(() => import('./Tabs/KAMRecruitment/OfferManagementTab'));
 const RecruitmentAnalyticsTab = lazy(() => import('./Tabs/KAMRecruitment/RecruitmentAnalyticsTab'));
@@ -206,6 +206,7 @@ const HRRecruitmentDashboard = () => {
     { label: activeTab }
   ];
 
+
   const renderContent = () => {
     return (
       <Suspense fallback={<TabLoader />}>
@@ -214,7 +215,7 @@ const HRRecruitmentDashboard = () => {
             case 'Job Openings':
               return <JobOpeningsTab />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab setActiveTab={setActiveTab} />;
+              return <CandidatePipelineTab />;
             case 'Interview Schedule':
               return <InterviewScheduleTab />;
             case 'Screening & Assessment':
@@ -453,8 +454,6 @@ const HRRecruitmentDashboard = () => {
       sidebarItems={sidebarConfig}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
-      dashboardTitle="HR Recruitment"
-      breadcrumbs={breadcrumbs}
       userInfo={userInfo}
       notifications={notifications}
       onNotificationClick={handleNotificationClick}

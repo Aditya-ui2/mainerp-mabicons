@@ -24,6 +24,8 @@ import ForgotPassword from './Component/Pages/forgetpassword'
 import ClientLogin from './Component/Pages/ClientLogin'
 import DepartmentProtectedRoute from './Component/Pages/DepartmentProtectedRoute'
 import ProtectedRoute from './Component/Pages/ProtectedRoute'
+import CandidatesPage from './Component/Pages/Candidates/CandidatesPage'
+import InterviewsPage from './Component/Pages/Candidates/InterviewsPage'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -101,9 +103,16 @@ function App() {
       
       {/* KAM Member Dashboard - Priyanshi, Manju, Jyoti */}
       <Route path='/kam-member-dashboard' element={
-        <DepartmentProtectedRoute allowedDepartment="HR Recruitment">
+        <ProtectedRoute allowedRoles={['HR Recruitment', 'admin', 'teamleader', 'superadmin']}>
           <KAMMemberDashboard />
-        </DepartmentProtectedRoute>
+        </ProtectedRoute>
+      } />
+
+      <Route path='/candidate-management' element={
+        <CandidatesPage />
+      } />
+      <Route path='/interview-schedule' element={
+        <InterviewsPage />
       } />
      
     </Routes>

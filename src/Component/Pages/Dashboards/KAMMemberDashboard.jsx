@@ -37,8 +37,8 @@ import {
 
 // Lazy load Tab Components
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
-const CandidatePipelineTab = lazy(() => import('./Tabs/KAMRecruitment/CandidatePipelineTab'));
-const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
+const CandidatePipelineTab = lazy(() => import('../Candidates/CandidatesPage'));
+const InterviewScheduleTab = lazy(() => import('../Candidates/InterviewsPage'));
 const ScreeningTab = lazy(() => import('./Tabs/KAMRecruitment/ScreeningTab'));
 const OfferManagementTab = lazy(() => import('./Tabs/KAMRecruitment/OfferManagementTab'));
 const ResumeBankTab = lazy(() => import('./Tabs/KAMRecruitment/ResumeBankTab'));
@@ -645,11 +645,7 @@ const KAMMemberDashboard = () => {
               return <JobOpeningsTab />;
             case 'Candidate Pipeline':
               return (
-                <CandidatePipelineTab
-                  setActiveTab={setActiveTab}
-                  quickAction={quickActionIntent}
-                  onQuickActionHandled={() => setQuickActionIntent(null)}
-                />
+                <CandidatePipelineTab />
               );
             case 'Interview Schedule':
               return (

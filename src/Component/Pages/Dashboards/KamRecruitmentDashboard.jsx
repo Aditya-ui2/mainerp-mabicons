@@ -12,8 +12,8 @@ import logo from '../../../assets/images/mabicons logo blue.png';
 
 // Eagerly load the 3 main tabs for instant render (no lazy = no Suspense delay)
 import JobOpeningsTab from './Tabs/KAMRecruitment/JobOpeningsTab';
-import CandidatePipelineTab from './Tabs/KAMRecruitment/CandidatePipelineTab';
-import InterviewScheduleTab from './Tabs/KAMRecruitment/InterviewScheduleTab';
+import CandidatePipelineTab from '../Candidates/CandidatesPage';
+import InterviewScheduleTab from '../Candidates/InterviewsPage';
 
 // Lazy load other tabs (loaded on demand)
 const ScreeningTab = lazy(() => import('./Tabs/KAMRecruitment/ScreeningTab'));

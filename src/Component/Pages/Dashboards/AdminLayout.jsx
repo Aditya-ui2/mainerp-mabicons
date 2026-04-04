@@ -1,24 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FiHome,
-  FiUsers,
-  FiSettings,
-  FiMenu,
-  FiX,
-  FiGrid,
-  FiList,
-  FiTarget,
-  FiChevronRight,
-  FiChevronsLeft,
-  FiChevronsRight,
-  FiLogOut,
-  FiBell,
-  FiUser,
-  FiSearch,
-  FiHelpCircle,
-} from 'react-icons/fi';
+import { 
+  LayoutDashboard, 
+  ChevronRight, 
+  ChevronLeft, 
+  LogOut, 
+  Bell, 
+  Menu, 
+  Search,
+  Settings,
+  X,
+  Grid,
+  List,
+  Target,
+  User,
+  HelpCircle
+} from 'lucide-react';
 import logo from '../../../assets/images/mabicons logo blue.png';
 
 /**
@@ -42,6 +40,7 @@ const AdminLayout = ({
   userInfo = { name: 'Admin', role: 'Administrator' },
   notifications = [],
   onNotificationClick,
+  showGlobalHeader = true,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -96,7 +95,7 @@ const AdminLayout = ({
   const unreadNotifications = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-[#FDFDFD] dark:bg-gray-950 overflow-hidden font-['Plus_Jakarta_Sans']">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {mobileSidebarOpen && (
@@ -110,86 +109,67 @@ const AdminLayout = ({
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
-      <motion.aside
-        animate={{ width: sidebarCollapsed ? 80 : 260 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+      {/* Sidebar - Consolidated Unified Component */}
+      <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-50
-          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          bg-white border-r border-slate-200 flex flex-col
-          transition-transform duration-300
+          fixed lg:static inset-y-0 left-0 z-50 flex flex-col h-full bg-white dark:bg-gray-900 border-r border-[#E8E7E2] dark:border-gray-800 transition-all duration-300 ease-in-out
+          ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${sidebarCollapsed ? "w-[72px]" : "w-[240px]"}
         `}
+        style={{ boxShadow: "2px 0 12px rgba(0,0,0,0.02)" }}
       >
-        {/* Logo & Toggle - Inside Sidebar */}
-        <div className={`flex items-center h-20 px-6 ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
-          {!sidebarCollapsed ? (
-            <div className="flex items-center justify-between w-full h-10">
-              <img src={logo} alt="Mabicons Logo" className="h-[44px] w-auto object-contain" />
-              <button
-                onClick={() => setSidebarCollapsed(true)}
-                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-400"
-              >
-                <FiMenu className="w-5 h-5" />
-              </button>
+        {/* Logo & Toggle */}
+        <div className={`h-16 flex items-center flex-shrink-0 border-b border-[#F4F3EF] dark:border-gray-800 ${
+          sidebarCollapsed ? "justify-center px-0" : "px-5 justify-between"
+        }`}>
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="mabicons" className="h-8 w-auto object-contain" />
             </div>
-          ) : (
-            <button
-               onClick={() => setSidebarCollapsed(false)}
-               className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-[#3FA9F5] transition-all"
-               title="Expand Menu"
-            >
-               <FiMenu className="w-5 h-5" />
-            </button>
           )}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`w-8 h-8 rounded-xl flex items-center justify-center text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#EEF2FB] transition-all duration-200 ${
+              sidebarCollapsed ? "mx-auto" : ""
+            }`}
+          >
+            {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
         </div>
 
-        <div className="h-[1px] bg-slate-100 mx-6 mb-2 opacity-50" />
+        {/* Scrollable Navigation */}
+        <nav className="flex-1 py-4 overflow-y-auto scrollbar-none flex flex-col gap-1">
+          {/* Dashboard Item (Always First) */}
+          <button
+            onClick={() => { setActiveTab && setActiveTab('Dashboard'); setMobileSidebarOpen(false); }}
+            title={sidebarCollapsed ? 'Dashboard' : undefined}
+            className={`
+              w-[calc(100%-16px)] flex items-center gap-3 px-3.5 py-3 mx-2 rounded-2xl transition-all duration-200 text-left relative group
+              ${activeTab === 'Dashboard' ? "bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
+            `}
+          >
+            <LayoutDashboard size={20} className="flex-shrink-0" />
+            {!sidebarCollapsed && <span className="text-sm font-semibold">Dashboard</span>}
+            {activeTab === 'Dashboard' && sidebarCollapsed && (
+              <div className="absolute left-[-8px] w-1.5 h-6 bg-[#1B4DA0] rounded-r-full" />
+            )}
+          </button>
 
-        {/* Scrollable Menu */}
-        <nav className="flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin">
-          {/* Dashboard Link */}
-          <div className="px-1 py-2">
-            <button
-              onClick={() => setActiveTab && setActiveTab('Dashboard')}
-              title={sidebarCollapsed ? 'Dashboard' : undefined}
-              className={`
-                w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 group relative
-                ${activeTab === 'Dashboard'
-                  ? 'bg-[#3FA9F5]/10 text-[#3FA9F5] ring-1 ring-[#3FA9F5]/20'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                }
-              `}
-            >
-              {activeTab === 'Dashboard' && (
-                <motion.div
-                  layoutId="active-pill"
-                  className="absolute left-0 w-1 h-6 bg-[#3FA9F5] rounded-r-full"
-                />
-              )}
-              <div className="flex items-center gap-3 min-w-0">
-                <FiGrid className={`w-5 h-5 flex-shrink-0 transition-colors ${activeTab === 'Dashboard' ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-500'}`} />
-                {!sidebarCollapsed && <span className={`text-[13.5px] font-semibold truncate ${activeTab === 'Dashboard' ? 'text-slate-800' : 'text-slate-600'}`}>Dashboard</span>}
-              </div>
-              {!sidebarCollapsed && activeTab === 'Dashboard' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#3FA9F5]" />}
-            </button>
-          </div>
+          {/* Dynamic Sidebar Items */}
           {sidebarItems.map((section, sectionIdx) => (
-            <div key={section.heading || sectionIdx} className="mb-2">
-              {/* Section Heading — plain label, always visible, never clickable */}
+            <div key={section.heading || sectionIdx} className="mt-2">
               {section.heading && !sidebarCollapsed && (
-                <p className="px-3 pt-4 pb-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase select-none">
+                <p className="px-6 pt-4 pb-2 text-[10px] font-bold tracking-[0.1em] text-[#9B9BAD] uppercase select-none opacity-50">
                   {section.heading}
                 </p>
               )}
               {section.heading && sidebarCollapsed && (
-                <div className="my-2 mx-3 h-[1px] bg-slate-100" />
+                <div className="my-3 mx-4 h-[1px] bg-[#F4F3EF] dark:bg-gray-800" />
               )}
-
-              {/* Section Items — always visible */}
-              <div className="flex flex-col gap-0.5">
+              
+              <div className="flex flex-col gap-1 px-2">
                 {section.items?.map((item) => {
-                  const Icon = item.icon;
+                  const Icon = item.icon || Grid;
                   const isActive = activeTab === item.title;
                   const hasSubmenu = item.submenu && item.submenu.length > 0;
                   const isSubExpanded = !!expandedMenus[item.id];
@@ -197,91 +177,55 @@ const AdminLayout = ({
                   const isHighlighted = isActive || (hasSubmenu && isChildActive);
 
                   return (
-                    <div key={item.id} className="px-2">
+                    <div key={item.id}>
                       <button
                         onClick={() => {
-                          if (hasSubmenu) {
-                            toggleMenu(item.id);
-                          } else {
-                            setActiveTab && setActiveTab(item.title);
-                            setMobileSidebarOpen(false);
-                          }
+                          if (hasSubmenu) toggleMenu(item.id);
+                          else { setActiveTab && setActiveTab(item.title); setMobileSidebarOpen(false); }
                         }}
                         title={sidebarCollapsed ? item.title : undefined}
                         className={`
-                          w-full flex items-center justify-between px-4 py-2.5 rounded-xl
-                          transition-all duration-300 group mb-1
-                          ${isSubExpanded && !sidebarCollapsed
-                            ? 'bg-[#3FA9F5] text-white shadow-md shadow-blue-100'
-                            : isHighlighted
-                              ? 'bg-[#3FA9F5]/10 text-[#3FA9F5]'
-                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                          }
+                          w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200 text-left relative
+                          ${isHighlighted ? "bg-[#1B4DA0]/10 text-[#1B4DA0]" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
                         `}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Icon
-                            className={`w-[20px] h-[20px] flex-shrink-0 transition-colors duration-300 stroke-[1.8]
-                              ${isSubExpanded && !sidebarCollapsed ? 'text-white' : isHighlighted ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-600'}
-                            `}
-                          />
+                        <div className="flex items-center gap-3">
+                          <Icon size={20} className="flex-shrink-0" />
                           {!sidebarCollapsed && (
-                            <span className={`text-[13.5px] font-medium truncate transition-colors duration-300 font-['Inter']
-                              ${isSubExpanded && !sidebarCollapsed ? 'text-white' : isHighlighted ? 'text-slate-800' : 'text-slate-600'}
-                            `}>
+                            <span className={`text-sm font-semibold ${isHighlighted ? "font-bold" : ""}`}>
                               {item.title}
                             </span>
                           )}
                         </div>
                         {!sidebarCollapsed && hasSubmenu && (
-                          <motion.div
-                            animate={{ rotate: isSubExpanded ? 90 : 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <FiChevronRight className={`w-3.5 h-3.5 flex-shrink-0 stroke-[2.5] ${isSubExpanded ? 'text-white' : 'text-slate-400'}`} />
-                          </motion.div>
+                          <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform duration-300 ${isSubExpanded ? "rotate-90" : ""}`} />
+                        )}
+                        {isHighlighted && sidebarCollapsed && (
+                          <div className="absolute left-[-8px] w-1.5 h-6 bg-[#1B4DA0] rounded-r-full" />
                         )}
                       </button>
 
-                      {/* Sub-items with Connectors */}
+                      {/* Sub-items Animation */}
                       <AnimatePresence initial={false}>
                         {hasSubmenu && isSubExpanded && !sidebarCollapsed && (
                           <motion.div
-                            key="submenu"
                             initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
+                            animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: 'easeInOut' }}
-                            className="relative ml-[34px] pl-4 border-l border-slate-100 flex flex-col gap-0.5 my-1"
+                            className="ml-8 mt-1 border-l border-[#F4F3EF] flex flex-col gap-1 pl-2 mb-2"
                           >
-                            {item.submenu.map((subItem) => {
-                              const isSubActive = activeTab === subItem.title;
+                            {item.submenu.map((sub) => {
+                              const isSubActive = activeTab === sub.title;
                               return (
                                 <button
-                                  key={subItem.id}
-                                  onClick={() => {
-                                    setActiveTab && setActiveTab(subItem.title);
-                                    setMobileSidebarOpen(false);
-                                  }}
-                                  className="relative w-full text-left py-2.5 px-3 group"
+                                  key={sub.id}
+                                  onClick={() => { setActiveTab && setActiveTab(sub.title); setMobileSidebarOpen(false); }}
+                                  className={`
+                                    w-full text-left py-2 px-3 text-[13px] font-semibold transition-all duration-200 rounded-xl
+                                    ${isSubActive ? "bg-[#1B4DA0]/5 text-[#1B4DA0]" : "text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF]"}
+                                  `}
                                 >
-                                  {/* Connector Line */}
-                                  <div className="absolute -left-4 top-1/2 w-4 h-[1px] bg-slate-100" />
-                                  <span className={`
-                                    text-[13px] font-semibold transition-all duration-200 font-['Inter']
-                                    ${isSubActive
-                                      ? 'text-[#3FA9F5] translate-x-1'
-                                      : 'text-slate-400 hover:text-slate-800 hover:translate-x-1'
-                                    }
-                                  `}>
-                                    {subItem.title}
-                                  </span>
-                                  {isSubActive && (
-                                    <motion.div
-                                      layoutId={`sub-dot-${item.id}`}
-                                      className="absolute -left-[18.2px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#3FA9F5] z-10"
-                                    />
-                                  )}
+                                  {sub.title}
                                 </button>
                               );
                             })}
@@ -294,154 +238,131 @@ const AdminLayout = ({
               </div>
             </div>
           ))}
-          {/* OTHERS SECTION */}
-          <div className="px-1 mb-2 border-t border-slate-50 pt-4">
-            {!sidebarCollapsed && (
-              <p className="px-3 pb-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase select-none font-['Inter']">
-                OTHERS
-              </p>
-            )}
-            <div className="flex flex-col gap-0.5">
-              <button
-                 onClick={() => setActiveTab && setActiveTab('Settings')}
-                 className={`w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 group
-                    ${activeTab === 'Settings' ? 'bg-[#3FA9F5]/10 text-[#3FA9F5]' : 'text-slate-500 hover:bg-slate-50'}
-                 `}
-              >
-                 <FiSettings className={`w-5 h-5 flex-shrink-0 ${activeTab === 'Settings' ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                 {!sidebarCollapsed && <span className="ml-3 text-[13.5px] font-medium font-['Inter']">Settings</span>}
-              </button>
-            </div>
+
+          {/* Bottom Settings Link */}
+          <div className="mt-auto pt-4 border-t border-[#F4F3EF] dark:border-gray-800 mx-2 mb-2">
+            <button
+              onClick={() => { setActiveTab && setActiveTab('Settings'); setMobileSidebarOpen(false); }}
+              title={sidebarCollapsed ? 'Settings' : undefined}
+              className={`
+                w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200 text-left relative
+                ${activeTab === 'Settings' ? "bg-[#1B4DA0]/10 text-[#1B4DA0]" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
+              `}
+            >
+              <Settings size={20} className="flex-shrink-0" />
+              {!sidebarCollapsed && <span className="text-sm font-semibold">Settings</span>}
+            </button>
           </div>
         </nav>
 
-        {/* User Profile Footer (Enhanced Emma Style) */}
-        <div className="p-4 mt-auto border-t border-slate-100">
-          {!sidebarCollapsed ? (
-            <div className="relative flex items-center gap-2 px-2 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group">
-              <div className="relative">
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm font-bold text-blue-600">
-                  {userInfo.name?.charAt(0) || 'A'}
-                </div>
-                <div className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
+        {/* User Footer Profile */}
+        <div className="p-3 border-t border-[#F4F3EF] dark:border-gray-800">
+          <div className={`flex items-center gap-2.5 p-2 rounded-2xl transition-all ${sidebarCollapsed ? 'justify-center border-0' : 'bg-[#FAFAFA] dark:bg-gray-800/50 border border-[#F4F3EF] dark:border-gray-700'}`}>
+            <div className="h-9 w-9 rounded-xl bg-[#1B4DA0] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-lg shadow-blue-500/20">
+              {userInfo.name?.charAt(0) || 'U'}
+            </div>
+            {!sidebarCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-[#1A1A2E] dark:text-gray-100 truncate">{userInfo.name}</p>
+                <p className="text-[10px] text-[#9B9BAD] dark:text-gray-500 truncate font-bold uppercase tracking-wider">{userInfo.role}</p>
               </div>
-              <div className="flex flex-col min-w-0 flex-1 ml-1">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-bold text-slate-800 truncate font-['Inter']">{userInfo.name}</span>
-                  <div className="h-3 w-3 bg-sky-400 rounded-full flex items-center justify-center">
-                    <span className="text-[6px] text-white italic font-bold leading-none">✓</span>
-                  </div>
-                </div>
-                <span className="text-[10px] text-slate-400 truncate leading-none font-['Inter']">{userInfo.role || 'Administrator'}</span>
-              </div>
-
-              {/* Logout button - Always visible now */}
-              <button
-                onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-                className="flex items-center justify-center p-1.5 rounded-lg bg-red-50 text-red-500 shadow-sm transition-all hover:bg-red-100"
+            )}
+            {!sidebarCollapsed && (
+              <button 
+                onClick={handleLogout} 
+                className="p-1.5 rounded-xl hover:bg-rose-50 text-[#9B9BAD] hover:text-rose-500 transition-colors"
                 title="Logout"
               >
-                <FiLogOut className="w-4 h-4" />
+                <LogOut size={16} />
               </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <button
-                onClick={() => setSidebarCollapsed(false)}
-                className="relative group h-10 w-10"
-              >
-                <div className="h-full w-full rounded-xl bg-gradient-to-br from-[#3FA9F5] to-blue-700 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-blue-100">
-                  {userInfo.name?.charAt(0) || 'A'}
-                </div>
-                <div className="absolute -right-1 -bottom-1 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
-              </button>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all duration-200"
-                title="Logout"
-              >
-                <FiLogOut style={{ width: '18px', height: '18px' }} />
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </motion.aside>
+      </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="h-16 bg-white flex items-center justify-between px-6 shadow-sm border-b border-slate-100 sticky top-0 z-40">
-          {/* Left: Desktop/Mobile Toggle & Breadcrumbs */}
-          <div className="flex items-center gap-6">
-            <div className="flex flex-col">
-              <h2 className="text-[18px] font-semibold text-slate-800 tracking-tight leading-tight font-['Outfit']">{activeTab || dashboardTitle}</h2>
-            </div>
-          </div>
-
-          {/* Right: Actions - Decluttered */}
-          <div className="flex items-center gap-3">
-             {/* Only Notification Bell remains for minimalism */}
-            <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="h-9 w-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:text-[#3FA9F5] transition-all"
+      {/* Main Content Hub */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Modern Top Header */}
+        {showGlobalHeader && (
+          <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-[#F4F3EF] dark:border-gray-800 flex items-center justify-between px-6">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setMobileSidebarOpen(true)}
+                className="lg:hidden p-2 -ml-2 text-[#6B6B7E] hover:text-[#1A1A2E]"
               >
-                <FiBell className="w-5 h-5" />
-                {unreadNotifications > 0 && (
-                  <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-pink-500 border border-white rounded-full"></span>
-                )}
+                <Menu size={20} />
               </button>
-
-              <AnimatePresence>
-                {showNotifications && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
-                  >
-                    <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900">Notifications</h3>
-                      <span className="text-xs text-blue-600 cursor-pointer hover:underline">
-                        Mark all as read
-                      </span>
-                    </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500">
-                          <FiBell style={{ width: '32px', height: '32px', margin: '0 auto 8px', opacity: 0.5 }} />
-                          <p className="text-sm">No notifications yet</p>
-                        </div>
-                      ) : (
-                        notifications.slice(0, 5).map((notification, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => onNotificationClick && onNotificationClick(notification)}
-                            className={`p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-blue-50/50' : ''}`}
-                          >
-                            <p className="text-sm text-gray-800">{notification.message}</p>
-                            <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    {notifications.length > 5 && (
-                      <div className="p-3 text-center border-t border-gray-100">
-                        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                          View all notifications
-                        </button>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <h2 className="text-lg font-bold text-[#1A1A2E] dark:text-white tracking-tight">
+                {activeTab || dashboardTitle}
+              </h2>
             </div>
-          </div>
-        </header>
 
-        {/* Page Content */}
-        <main ref={contentRef} className="flex-1 overflow-auto bg-gray-100 p-4 lg:p-6">
-          {children}
+            <div className="flex items-center gap-3">
+               {/* Search - Subtle */}
+               <div className="hidden sm:flex items-center gap-2 bg-[#F4F3EF] dark:bg-gray-800 px-3 py-2 rounded-xl border border-transparent focus-within:border-[#1B4DA0]/20 transition-all">
+                                  <Search size={14} className="text-[#9B9BAD]" />
+                                  <input type="text" placeholder="Search..." className="bg-transparent border-0 outline-none text-xs text-[#1A1A2E] dark:text-white w-32 focus:w-48 transition-all placeholder-[#9B9BAD]" />
+                              </div>
+
+              {/* Notification Hub */}
+              <div className="relative" ref={notificationRef}>
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F8FAFF] dark:bg-gray-800 text-[#6B6B7E] hover:text-[#1B4DA0] transition-all relative"
+                >
+                  <Bell size={18} />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute top-3 right-3 w-2 h-2 bg-rose-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
+                  )}
+                </button>
+
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 12, scale: 0.95 }}
+                      className="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-[#F4F3EF] dark:border-gray-700 overflow-hidden z-50"
+                    >
+                      <div className="p-4 border-b border-[#F4F3EF] dark:border-gray-700 bg-[#FAFAFA] dark:bg-gray-900/50 flex items-center justify-between">
+                        <h3 className="text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest">Notifications</h3>
+                        <button className="text-[10px] font-bold text-[#1B4DA0] hover:underline">Mark all read</button>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto divide-y divide-[#F4F3EF] dark:divide-gray-700">
+                        {notifications.length === 0 ? (
+                          <div className="p-8 text-center text-[#9B9BAD]">
+                            <Bell size={32} className="mx-auto mb-3 opacity-20" />
+                            <p className="text-sm font-medium">No new alerts</p>
+                          </div>
+                        ) : (
+                          notifications.map((n, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => onNotificationClick?.(n)}
+                              className={`p-4 hover:bg-[#F8FAFF] dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${!n.read ? 'bg-[#EEF2FB]/30' : ''}`}
+                            >
+                              <p className="text-[13px] text-[#1A1A2E] dark:text-gray-100 font-semibold">{n.message}</p>
+                              <p className="text-[10px] text-[#9B9BAD] mt-1 font-bold uppercase tracking-wider">{n.time}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      {notifications.length > 5 && (
+                        <button className="w-full py-3 text-[10px] font-bold text-[#1B4DA0] hover:bg-[#F8FAFF] uppercase tracking-widest border-t border-[#F4F3EF]">View All</button>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </header>
+        )}
+
+        {/* Dynamic Page Surface */}
+        <main ref={contentRef} className="flex-1 overflow-auto bg-[#FDFDFD] dark:bg-gray-950 p-4 lg:p-6 pb-20">
+          <div className="max-w-[1600px] mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
@@ -449,166 +370,92 @@ const AdminLayout = ({
 };
 
 /**
- * StatCard - Clean professional stat card component
+ * StatCard - High Fidelity recruitment stat cards
  */
-export const StatCard = ({
-  title,
-  value,
-  change,
-  changeType = 'increase', // 'increase' | 'decrease'
-  icon: Icon,
-  color = 'blue', // 'blue' | 'teal' | 'yellow' | 'pink' | 'purple' | 'green'
-  sparklineData,
-}) => {
-  const colorConfig = {
-    blue: { accent: 'bg-blue-500', iconStyle: { background: 'linear-gradient(135deg, #1d4ed8, #4338ca)', boxShadow: '0 8px 18px rgba(37, 99, 235, 0.28)' } },
-    teal: { accent: 'bg-cyan-500', iconStyle: { background: 'linear-gradient(135deg, #0f766e, #0369a1)', boxShadow: '0 8px 18px rgba(8, 145, 178, 0.28)' } },
-    yellow: { accent: 'bg-amber-500', iconStyle: { background: 'linear-gradient(135deg, #b45309, #c2410c)', boxShadow: '0 8px 18px rgba(180, 83, 9, 0.28)' } },
-    pink: { accent: 'bg-rose-500', iconStyle: { background: 'linear-gradient(135deg, #be123c, #be185d)', boxShadow: '0 8px 18px rgba(190, 24, 93, 0.26)' } },
-    purple: { accent: 'bg-violet-500', iconStyle: { background: 'linear-gradient(135deg, #6d28d9, #7c3aed)', boxShadow: '0 8px 18px rgba(109, 40, 217, 0.28)' } },
-    green: { accent: 'bg-emerald-500', iconStyle: { background: 'linear-gradient(135deg, #047857, #059669)', boxShadow: '0 8px 18px rgba(5, 150, 105, 0.28)' } },
+export const StatCard = ({ title, value, change, changeType = 'increase', icon: Icon, color = 'blue' }) => {
+  const colors = {
+    blue: "bg-blue-50 text-blue-600",
+    emerald: "bg-emerald-50 text-emerald-600",
+    rose: "bg-rose-50 text-rose-600",
+    amber: "bg-amber-50 text-amber-600",
+    violet: "bg-violet-50 text-violet-600",
   };
-
-  const colors = colorConfig[color] || colorConfig.blue;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200"
+      className="bg-white rounded-3xl p-6 shadow-sm border border-[#F4F3EF] hover:shadow-xl hover:shadow-blue-500/5 transition-all group"
     >
       <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-gray-900">{value}</span>
-            {change && (
-              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${changeType === 'increase'
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-red-100 text-red-700'
-                }`}>
-                {changeType === 'increase' ? '+' : ''}{change}
-              </span>
-            )}
-          </div>
+        <div className={`p-3 rounded-2xl ${colors[color] || colors.blue} transition-transform group-hover:scale-110 duration-300`}>
+          {Icon && <Icon size={22} />}
         </div>
-        {Icon && (
-          <div className={`p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200`}>
-            <Icon className="text-gray-500" />
-          </div>
+        {change && (
+          <span className={`text-[11px] font-bold px-2 py-1 rounded-lg ${changeType === 'increase' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+            {changeType === 'increase' ? '↑' : '↓'} {change}
+          </span>
         )}
       </div>
-
-      {/* Mini Sparkline */}
-      {sparklineData && (
-        <div className="mt-4 h-10 flex items-end gap-0.5">
-          {sparklineData.map((val, idx) => (
-            <div
-              key={idx}
-              className={`flex-1 ${colors.accent} rounded-t opacity-70 hover:opacity-100 transition-opacity`}
-              style={{ height: `${(val / Math.max(...sparklineData)) * 100}%` }}
-            />
-          ))}
-        </div>
-      )}
+      <div className="mt-4">
+        <p className="text-[#9B9BAD] text-xs font-bold uppercase tracking-widest">{title}</p>
+        <p className="text-2xl font-black text-[#1A1A2E] mt-1">{value}</p>
+      </div>
     </motion.div>
   );
 };
 
-/**
- * TrafficChart - Area chart component for traffic visualization
- */
-export const TrafficChart = ({ data, title = 'Traffic', subtitle }) => {
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+export const StatsBar = ({ stats }) => (
+  <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden">
+    <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-[#F4F3EF]">
+      {stats.map((stat, idx) => (
+        <div key={idx} className="p-6 text-center hover:bg-[#FAFAFA] transition-colors cursor-default">
+          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1.5">{stat.label}</p>
+          <p className="text-xl font-black text-[#1A1A2E]">{stat.value}</p>
+          {stat.percentage && (
+            <div className="mt-3 h-1.5 bg-[#F4F3EF] rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${stat.color || 'bg-[#1B4DA0]'}`} style={{ width: stat.percentage }} />
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-          <button className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700">Day</button>
-          <button className="px-3 py-1.5 text-sm bg-white rounded-md shadow-sm text-gray-900 font-medium">Month</button>
-          <button className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700">Year</button>
-        </div>
-      </div>
-
-      {/* Chart Placeholder - Replace with actual chart */}
-      <div className="h-64 flex items-center justify-center bg-gradient-to-b from-blue-50 to-white rounded-lg border border-gray-100">
-        <p className="text-gray-400">Chart Component Here</p>
-      </div>
+      ))}
     </div>
-  );
-};
+  </div>
+);
 
-/**
- * StatsBar - Bottom stats bar component
- */
-export const StatsBar = ({ stats }) => {
-  return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-gray-100">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="p-4 text-center">
-            <p className="text-sm text-gray-500 mb-1">{stat.label}</p>
-            <p className="text-lg font-semibold text-gray-900">{stat.value}</p>
-            {stat.percentage && (
-              <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${stat.color || 'bg-blue-500'}`}
-                  style={{ width: stat.percentage }}
-                />
-              </div>
-            )}
-          </div>
-        ))}
+export const DataTable = ({ columns, data, title, actions }) => (
+  <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden">
+    {title && (
+      <div className="px-8 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-[#FAFAFA]/50">
+        <h3 className="font-bold text-[#1A1A2E]">{title}</h3>
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-    </div>
-  );
-};
-
-/**
- * DataTable - Clean data table component
- */
-export const DataTable = ({ columns, data, title, actions }) => {
-  return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      {title && (
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">{title}</h3>
-          {actions && <div className="flex items-center gap-2">{actions}</div>}
-        </div>
-      )}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              {columns.map((col, idx) => (
-                <th
-                  key={idx}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  {col.header}
-                </th>
+    )}
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="bg-[#FAFAFA]">
+            {columns.map((col, idx) => (
+              <th key={idx} className="px-8 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.1em]">
+                {col.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#F4F3EF]">
+          {data.map((row, rowIdx) => (
+            <tr key={rowIdx} className="hover:bg-[#F8FAFF] transition-colors group">
+              {columns.map((col, colIdx) => (
+                <td key={colIdx} className="px-8 py-4.5 text-sm font-semibold text-[#6B6B7E] group-hover:text-[#1A1A2E]">
+                  {col.render ? col.render(row) : row[col.accessor]}
+                </td>
               ))}
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {data.map((row, rowIdx) => (
-              <tr key={rowIdx} className="hover:bg-gray-50">
-                {columns.map((col, colIdx) => (
-                  <td key={colIdx} className="px-4 py-3 text-sm text-gray-700">
-                    {col.render ? col.render(row) : row[col.accessor]}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
-  );
-};
+  </div>
+);
 
 export default AdminLayout;
