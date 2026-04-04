@@ -19,6 +19,7 @@ import {
   FiCheckCircle,
   FiAlertCircle,
   FiMoreVertical,
+  FiMoreHorizontal,
   FiSend,
   FiEdit2,
   FiEye,
@@ -29,8 +30,10 @@ import {
   FiPlus,
   FiEdit3,
   FiLayers,
+  FiChevronLeft,
+  FiChevronRight,
 } from 'react-icons/fi';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLocalISODate } from '../Utilities/dateUtils';
@@ -49,10 +52,11 @@ import {
   getDeptNotes,
 } from '../service/api';
 
+
 // Lazy load Tab Components
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
-const CandidatePipelineTab = lazy(() => import('./Tabs/KAMRecruitment/CandidatePipelineTab'));
-const InterviewScheduleTab = lazy(() => import('./Tabs/KAMRecruitment/InterviewScheduleTab'));
+const CandidatePipelineTab = lazy(() => import('../Candidates/CandidatesPage'));
+const InterviewScheduleTab = lazy(() => import('../Candidates/InterviewsPage'));
 const ScreeningTab = lazy(() => import('./Tabs/KAMRecruitment/ScreeningTab'));
 const OfferManagementTab = lazy(() => import('./Tabs/KAMRecruitment/OfferManagementTab'));
 const RecruitmentAnalyticsTab = lazy(() => import('./Tabs/KAMRecruitment/RecruitmentAnalyticsTab'));
@@ -86,11 +90,11 @@ const TabLoader = () => (
 
 // Color assignment for team members - using inline gradients for reliable rendering
 const AVATAR_COLORS = [
-  { gradient: 'bg-slate-100', from: '#94a3b8', to: '#64748b', text: 'text-slate-600' },
-  { gradient: 'bg-blue-50', from: '#60a5fa', to: '#3b82f6', text: 'text-blue-600' },
-  { gradient: 'bg-indigo-50', from: '#818cf8', to: '#6366f1', text: 'text-indigo-600' },
-  { gradient: 'bg-cyan-50', from: '#22d3ee', to: '#0891b2', text: 'text-cyan-600' },
-  { gradient: 'bg-slate-200', from: '#475569', to: '#1e293b', text: 'text-slate-700' },
+  { gradient: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
+  { gradient: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' },
+  { gradient: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100' },
+  { gradient: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100' },
+  { gradient: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-100' },
 ];
 
 const hasMeaningfulStats = (stats = {}) =>
@@ -1042,7 +1046,12 @@ const RecruitmentHeadDashboard = () => {
   const [showKAMFormModal, setShowKAMFormModal] = useState(false);
   const [kamFormMode, setKamFormMode] = useState('add'); // 'add' or 'edit'
   const [kamFormData, setKamFormData] = useState({ name: '', email: '', phone: '', role: 'KAM - Recruitment' });
-  const [kamTeam, setKamTeam] = useState([]);
+  const [kamTeam, setKamTeam] = useState(transformKAMData([
+    { id: 'mock-1', name: 'Manju', role: 'Senior KAM', email: 'manju@mabicons.com', phone: '+91 98765 43210', stats: { activePositions: 12, callsDone: 450, thisWeekHires: 5, candidatesPipeline: 34, interviewsScheduled: 18, offersExtended: 8, profilesShared: 25 } },
+    { id: 'mock-2', name: 'Priyanshi', role: 'KAM - Recruitment', email: 'priyanshi@mabicons.com', phone: '+91 87654 32109', stats: { activePositions: 8, callsDone: 320, thisWeekHires: 3, candidatesPipeline: 28, interviewsScheduled: 12, offersExtended: 5, profilesShared: 15 } },
+    { id: 'mock-3', name: 'Jyoti', role: 'KAM - Recruitment', email: 'jyoti@mabicons.com', phone: '+91 76543 21098', stats: { activePositions: 15, callsDone: 580, thisWeekHires: 2, candidatesPipeline: 45, interviewsScheduled: 22, offersExtended: 6, profilesShared: 38 } },
+    { id: 'mock-4', name: 'Sachin', role: 'Support KAM', email: 'sachin@mabicons.com', phone: '+91 65432 10987', stats: { activePositions: 10, callsDone: 410, thisWeekHires: 4, candidatesPipeline: 31, interviewsScheduled: 15, offersExtended: 7, profilesShared: 22 } },
+  ]));
   const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'error' }
   const [stats, setStats] = useState({
     activePositions: 0,
@@ -1101,9 +1110,29 @@ const RecruitmentHeadDashboard = () => {
     month: new Date().getMonth(),
     date: getLocalISODate(),
   });
+
+  const [chartDateFilter, setChartDateFilter] = useState('All Time');
+  const [showChartDateDropdown, setShowChartDateDropdown] = useState(false);
+  const chartDateInputRef = useRef(null);
+  const chartDropdownRef = useRef(null);
+
+  // Activity filter state
+  const [activityFilter, setActivityFilter] = useState('Calls');
+  const [showActivityDropdown, setShowActivityDropdown] = useState(false);
+  const activityDropdownRef = useRef(null);
+
   const [showDateFilter, setShowDateFilter] = useState(false);
   const compactDateInputRef = useRef(null);
   const dashboardDateInputRef = useRef(null);
+
+  // New Team and Client Filter States
+  const [teamFilter, setTeamFilter] = useState('All Team');
+  const [showTeamDropdown, setShowTeamDropdown] = useState(false);
+  const teamDropdownRef = useRef(null);
+
+  const [clientFilter, setClientFilter] = useState('All Client');
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const clientDropdownRef = useRef(null);
 
   // Generate years from 2020 to current year + 1
   const years = Array.from({ length: new Date().getFullYear() - 2019 + 1 }, (_, i) => 2020 + i);
@@ -1123,6 +1152,122 @@ const RecruitmentHeadDashboard = () => {
       default:
         return 'All Time';
     }
+  };
+
+  // Helper for dynamic Summary Chart data
+  const getSummaryChartData = () => {
+    const isThisWeek = chartDateFilter === 'This Week';
+    const multiplier = isThisWeek ? 0.25 : 1;
+
+    switch (activityFilter) {
+      case 'Hiring':
+        return [
+          { name: '30 Sep', manju: Math.round(12 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(5 * multiplier) },
+          { name: '10 Oct', manju: Math.round(18 * multiplier), priyanshi: Math.round(10 * multiplier), jyoti: Math.round(12 * multiplier) },
+          { name: '20 Oct', manju: Math.round(5 * multiplier), priyanshi: Math.round(22 * multiplier), jyoti: Math.round(14 * multiplier) },
+          { name: '30 Oct', manju: Math.round(22 * multiplier), priyanshi: Math.round(15 * multiplier), jyoti: Math.round(20 * multiplier) },
+          { name: '10 Nov', manju: Math.round(10 * multiplier), priyanshi: Math.round(18 * multiplier), jyoti: Math.round(16 * multiplier) },
+        ];
+      case 'Meeting':
+        return [
+          { name: '30 Sep', manju: Math.round(45 * multiplier), priyanshi: Math.round(32 * multiplier), jyoti: Math.round(58 * multiplier) },
+          { name: '10 Oct', manju: Math.round(32 * multiplier), priyanshi: Math.round(48 * multiplier), jyoti: Math.round(35 * multiplier) },
+          { name: '20 Oct', manju: Math.round(58 * multiplier), priyanshi: Math.round(41 * multiplier), jyoti: Math.round(44 * multiplier) },
+          { name: '30 Oct', manju: Math.round(41 * multiplier), priyanshi: Math.round(55 * multiplier), jyoti: Math.round(38 * multiplier) },
+          { name: '10 Nov', manju: Math.round(38 * multiplier), priyanshi: Math.round(45 * multiplier), jyoti: Math.round(50 * multiplier) },
+        ];
+      case 'Interview Count':
+        return [
+          { name: '30 Sep', manju: Math.round(35 * multiplier), priyanshi: Math.round(25 * multiplier), jyoti: Math.round(45 * multiplier) },
+          { name: '10 Oct', manju: Math.round(28 * multiplier), priyanshi: Math.round(38 * multiplier), jyoti: Math.round(30 * multiplier) },
+          { name: '20 Oct', manju: Math.round(45 * multiplier), priyanshi: Math.round(30 * multiplier), jyoti: Math.round(35 * multiplier) },
+          { name: '30 Oct', manju: Math.round(30 * multiplier), priyanshi: Math.round(40 * multiplier), jyoti: Math.round(32 * multiplier) },
+          { name: '10 Nov', manju: Math.round(32 * multiplier), priyanshi: Math.round(35 * multiplier), jyoti: Math.round(40 * multiplier) },
+        ];
+      case 'Offers':
+        return [
+          { name: '30 Sep', manju: Math.round(10 * multiplier), priyanshi: Math.round(5 * multiplier), jyoti: Math.round(8 * multiplier) },
+          { name: '10 Oct', manju: Math.round(15 * multiplier), priyanshi: Math.round(12 * multiplier), jyoti: Math.round(10 * multiplier) },
+          { name: '20 Oct', manju: Math.round(8 * multiplier), priyanshi: Math.round(18 * multiplier), jyoti: Math.round(12 * multiplier) },
+          { name: '30 Oct', manju: Math.round(20 * multiplier), priyanshi: Math.round(10 * multiplier), jyoti: Math.round(15 * multiplier) },
+          { name: '10 Nov', manju: Math.round(12 * multiplier), priyanshi: Math.round(15 * multiplier), jyoti: Math.round(10 * multiplier) },
+        ];
+      case 'Rejected':
+        return [
+          { name: '30 Sep', manju: Math.round(5 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(4 * multiplier) },
+          { name: '10 Oct', manju: Math.round(8 * multiplier), priyanshi: Math.round(5 * multiplier), jyoti: Math.round(10 * multiplier) },
+          { name: '20 Oct', manju: Math.round(4 * multiplier), priyanshi: Math.round(12 * multiplier), jyoti: Math.round(6 * multiplier) },
+          { name: '30 Oct', manju: Math.round(12 * multiplier), priyanshi: Math.round(6 * multiplier), jyoti: Math.round(8 * multiplier) },
+          { name: '10 Nov', manju: Math.round(6 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(12 * multiplier) },
+        ];
+      default: // 'Calls'
+        return [
+          { name: '30 Sep', manju: Math.round(400 * multiplier), priyanshi: Math.round(240 * multiplier), jyoti: Math.round(100 * multiplier) },
+          { name: '10 Oct', manju: Math.round(300 * multiplier), priyanshi: Math.round(140 * multiplier), jyoti: Math.round(150 * multiplier) },
+          { name: '20 Oct', manju: Math.round(200 * multiplier), priyanshi: Math.round(480 * multiplier), jyoti: Math.round(180 * multiplier) },
+          { name: '30 Oct', manju: Math.round(500 * multiplier), priyanshi: Math.round(390 * multiplier), jyoti: Math.round(250 * multiplier) },
+          { name: '10 Nov', manju: Math.round(450 * multiplier), priyanshi: Math.round(430 * multiplier), jyoti: Math.round(220 * multiplier) },
+        ];
+    }
+  };
+
+  // Helper for dynamic Pipeline Chart data
+  const getPipelineChartData = () => {
+    // Base data based on Team Filter
+    let baseData = [];
+    switch (teamFilter) {
+      case 'Manju':
+        baseData = [
+          { name: 'PENDING', value: 100, color: '#8B5CF6' },
+          { name: 'APPROVED', value: 60, color: '#F59E0B' },
+          { name: 'REJECTED', value: 40, color: '#EE4266' },
+        ];
+        break;
+      case 'Jyoti':
+        baseData = [
+          { name: 'PENDING', value: 110, color: '#8B5CF6' },
+          { name: 'APPROVED', value: 50, color: '#F59E0B' },
+          { name: 'REJECTED', value: 30, color: '#EE4266' },
+        ];
+        break;
+      case 'Priyanshi':
+        baseData = [
+          { name: 'PENDING', value: 90, color: '#8B5CF6' },
+          { name: 'APPROVED', value: 70, color: '#F59E0B' },
+          { name: 'REJECTED', value: 20, color: '#EE4266' },
+        ];
+        break;
+      default:
+        // All Team
+        baseData = [
+          { name: 'PENDING', value: 100, color: '#8B5CF6' },
+          { name: 'APPROVED', value: 60, color: '#F59E0B' },
+          { name: 'REJECTED', value: 40, color: '#EE4266' },
+        ];
+    }
+
+    // Apply Client Filter Modifiers (Mock Logic)
+    if (clientFilter !== 'All Client') {
+      const clientModifiers = {
+        'TCS': { pending: 1.2, approved: 0.8, rejected: 1.0 },
+        'Infosys': { pending: 0.9, approved: 1.2, rejected: 0.9 },
+        'Wipro': { pending: 1.0, approved: 1.0, rejected: 1.5 },
+        'HCL': { pending: 1.1, approved: 1.1, rejected: 0.8 }
+      };
+
+      const mod = clientModifiers[clientFilter] || { pending: 1.0, approved: 1.0, rejected: 1.0 };
+
+      return baseData.map(item => ({
+        ...item,
+        value: Math.round(item.value * (
+          item.name === 'PENDING' ? mod.pending :
+            item.name === 'APPROVED' ? mod.approved :
+              mod.rejected
+        ))
+      }));
+    }
+
+    return baseData;
   };
 
   const buildDateFilterParams = (filter = dateFilter) => {
@@ -1152,6 +1297,30 @@ const RecruitmentHeadDashboard = () => {
     return {};
   };
 
+  // Click outside listener for filters
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Date dropdown logic
+      if (chartDropdownRef.current && !chartDropdownRef.current.contains(event.target)) {
+        setShowChartDateDropdown(false);
+      }
+      // Activity dropdown logic
+      if (activityDropdownRef.current && !activityDropdownRef.current.contains(event.target)) {
+        setShowActivityDropdown(false);
+      }
+      // Team dropdown logic
+      if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target)) {
+        setShowTeamDropdown(false);
+      }
+      // Client dropdown logic
+      if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target)) {
+        setShowClientDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const openDatePicker = (inputRef) => {
     const input = inputRef?.current;
     if (!input) return;
@@ -1175,13 +1344,10 @@ const RecruitmentHeadDashboard = () => {
         const transformedData = transformKAMData(response.data);
         setKamTeam(transformedData);
         console.log('KAM team loaded from API:', transformedData.length, 'members');
-      } else {
-        console.log('No KAM members found');
-        setKamTeam([]);
       }
     } catch (error) {
       console.error('Failed to fetch KAM team:', error.message);
-      setKamTeam([]);
+      // Keep mock data on error so UI doesn't break
     } finally {
       setTeamLoading(false);
     }
@@ -1562,7 +1728,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Job Openings':
               return <JobOpeningsTab isDarkMode={false} />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab isDarkMode={false} setActiveTab={setActiveTab} />;
+              return <CandidatePipelineTab />;
             case 'Interview Schedule':
               return <InterviewScheduleTab isDarkMode={false} />;
             case 'Screening & Assessment':
@@ -1600,7 +1766,7 @@ const RecruitmentHeadDashboard = () => {
                       <div className="relative">
                         <button
                           onClick={() => setShowDateFilter(!showDateFilter)}
-                          className="flex items-center gap-2 px-4 py-2.5 bg-[#3FA9F5] text-white rounded-xl hover:bg-[#3598dc] transition-all shadow-md hover:shadow-lg"
+                          className="flex items-center gap-2 px-4 py-2.5 bg-[#0D47A1] text-white rounded-xl hover:bg-[#0a3a82] transition-all shadow-md hover:shadow-lg"
                         >
                           <FiCalendar className="w-4 h-4" />
                           <span className="font-medium">{getFilterLabel()}</span>
@@ -1611,7 +1777,7 @@ const RecruitmentHeadDashboard = () => {
 
                         {/* Filter Dropdown */}
                         {showDateFilter && (
-                          <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
+                          <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden text-left">
                             <div className="p-4 border-b border-gray-100 bg-blue-50/50">
                               <p className="font-semibold text-gray-900">Select Time Period</p>
                             </div>
@@ -1726,7 +1892,7 @@ const RecruitmentHeadDashboard = () => {
                               {/* Apply Button */}
                               <button
                                 onClick={applyDateFilter}
-                                className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 mt-2"
+                                className="w-full px-4 py-2.5 bg-[#0D47A1] text-white rounded-xl font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-blue-100 mt-2"
                               >
                                 Apply Filter
                               </button>
@@ -1737,371 +1903,300 @@ const RecruitmentHeadDashboard = () => {
 
                       <button
                         onClick={() => setActiveTab('Team Overview')}
-                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-bold whitespace-nowrap"
+                        className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-bold whitespace-nowrap"
                       >
                         <FiUsers className="w-5 h-5" />
                         <span>View Team</span>
-
                       </button>
                     </div>
                   </div>
 
-
-
-                  {/* Stat Cards - Clean Simple Design */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Active Positions */}
-                    <div
-                      className="bg-white rounded-[32px] p-7 shadow-sm border border-slate-100 transition-all flex flex-col justify-between"
-                    >
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-50/50 flex items-center justify-center text-amber-600">
-                          <FiBriefcase className="w-6 h-6" />
-                        </div>
-                        <button className="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-                          <FiMoreVertical className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="text-left flex flex-col items-start">
-                        <h3 className="text-4xl font-bold text-slate-900 leading-none mb-2">
-                          {stats.activePositions}
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-4">
-                          ACTIVE ROLES
-                        </p>
-                        <div className="flex items-center gap-1.5 text-emerald-500 font-bold">
-                          <FiTrendingUp className="w-4 h-4 stroke-[3]" />
-                          <span className="text-xs">+12</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Total Candidates */}
-                    <div
-                      className="bg-white rounded-[32px] p-7 shadow-sm border border-slate-100 transition-all flex flex-col justify-between"
-                    >
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50/50 flex items-center justify-center text-indigo-600">
-                          <FiUsers className="w-6 h-6" />
-                        </div>
-                        <button className="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-                          <FiMoreVertical className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="text-left flex flex-col items-start">
-                        <h3 className="text-4xl font-bold text-slate-900 leading-none mb-2">
-                          {stats.totalCandidates}
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-4">
-                          TOTAL CANDIDATES
-                        </p>
-                        <div className="flex items-center gap-1.5 text-emerald-500 font-bold">
-                          <FiTrendingUp className="w-4 h-4 stroke-[3]" />
-                          <span className="text-xs">+8%</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Total Interviews */}
-                    <div
-                      className="bg-white rounded-[32px] p-7 shadow-sm border border-slate-100 transition-all flex flex-col justify-between"
-                    >
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-violet-50/50 flex items-center justify-center text-violet-600">
-                          <FiCalendar className="w-6 h-6" />
-                        </div>
-                        <button className="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-                          <FiMoreVertical className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="text-left flex flex-col items-start">
-                        <h3 className="text-4xl font-bold text-slate-900 leading-none mb-2">
-                          {stats.scheduledInterviews}
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-4">
-                          INTERVIEWS
-                        </p>
-                        <div className="flex items-center gap-1.5 text-emerald-500 font-bold">
-                          <FiTrendingUp className="w-4 h-4 stroke-[3]" />
-                          <span className="text-xs">+14</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Profiles Shared */}
-                    <div
-                      className="bg-white rounded-[32px] p-7 shadow-sm border border-slate-100 transition-all flex flex-col justify-between"
-                    >
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-cyan-50/50 flex items-center justify-center text-cyan-600">
-                          <FiShare2 className="w-6 h-6" />
-                        </div>
-                        <button className="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-                          <FiMoreVertical className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="text-left flex flex-col items-start">
-                        <h3 className="text-4xl font-bold text-slate-900 leading-none mb-2">
-                          {stats.sharedProfiles || 0}
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-4">
-                          PROFILES SHARED
-                        </p>
-                        <div className="flex items-center gap-1.5 text-emerald-500 font-bold">
-                          <FiTrendingUp className="w-4 h-4 stroke-[3]" />
-                          <span className="text-xs">+8</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Phone Screening Calls */}
-                    <div
-                      className="bg-white rounded-[32px] p-7 shadow-sm border border-slate-100 transition-all flex flex-col justify-between"
-                    >
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50/50 flex items-center justify-center text-blue-600">
-                          <FiPhone className="w-6 h-6" />
-                        </div>
-                        <button className="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-                          <FiMoreVertical className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="text-left flex flex-col items-start">
-                        <h3 className="text-4xl font-bold text-slate-900 leading-none mb-2">
-                          {stats.phoneScreeningCalls || 0}
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-4">
-                          SCREENING CALLS
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Hired Pipeline Summary */}
-                    <div
-                      className="bg-white rounded-[32px] p-7 shadow-sm border border-slate-100 transition-all flex flex-col justify-between"
-                    >
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-purple-50/50 flex items-center justify-center text-purple-600">
-                          <FiLayers className="w-6 h-6" />
-                        </div>
-                        <button className="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-                          <FiMoreVertical className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="text-left flex flex-col items-start">
-                        <h3 className="text-4xl font-bold text-slate-900 leading-none mb-2">
-                          {stats.selected || 0}
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-4">
-                          HIRED PIPELINE
-                        </p>
-                        <div className="flex items-center gap-1.5 text-emerald-500 font-bold">
-                          <FiTrendingUp className="w-4 h-4 stroke-[3]" />
-                          <span className="text-xs">+5</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Successful Offers */}
-                    <div
-                      className="bg-white rounded-[32px] p-7 shadow-sm border border-slate-100 transition-all flex flex-col justify-between"
-                    >
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-rose-50/50 flex items-center justify-center text-rose-600">
-                          <FiAward className="w-6 h-6" />
-                        </div>
-                        <button className="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-                          <FiMoreVertical className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="text-left flex flex-col items-start">
-                        <h3 className="text-4xl font-bold text-slate-900 leading-none mb-2">
-                          {stats.acceptedOffers || 0}
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-4">
-                          SUCCESSFUL OFFERS
-                        </p>
-                        <div className="flex items-center gap-1.5 text-emerald-500 font-bold">
-                          <FiTrendingUp className="w-4 h-4 stroke-[3]" />
-                          <span className="text-sm font-bold">+10</span>
-                        </div>
-                      </div>
-                    </div>
+                  {/* Modern Stat Cards Grid */}
+                  {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <StatCard
+                      title="Active Positions"
+                      value={stats.activePositions || 0}
+                      icon={FiBriefcase}
+                      trend="+2 this week"
+                      color="bg-blue-500"
+                      onClick={() => setActiveTab('Job Openings')}
+                    />
+                    <StatCard
+                      title="Candidates Pipeline"
+                      value={stats.candidatesPipeline || 0}
+                      icon={FiTarget}
+                      trend="+12 new"
+                      color="bg-emerald-500"
+                      onClick={() => setActiveTab('Candidate Pipeline')}
+                    />
+                    <StatCard
+                      title="Interviews Scheduled"
+                      value={stats.interviewsScheduled || 0}
+                      icon={FiCalendar}
+                      trend="4 today"
+                      color="bg-amber-500"
+                      onClick={() => setActiveTab('Interview Schedule')}
+                    />
+                    <StatCard
+                      title="Monthly Hires"
+                      value={stats.thisMonthHires || 0}
+                      icon={FiAward}
+                      trend="On track"
+                      color="bg-indigo-500"
+                      onClick={() => setActiveTab('KAM Performance')}
+                    />
                   </div>
+                  {/* Chart Section Container - Side-by-Side Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10 pb-4 border-b border-slate-50 relative">
+                    {/* Staff applications card - left */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col p-8 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                      <div className="flex flex-col mb-6 w-full gap-4">
+                        <div className="flex flex-col text-left">
+                          <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">Staff applications card</h3>
+                          <div className="flex items-center gap-2">
+                            <div className="h-1 w-6 bg-blue-500 rounded-full" />
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">REAL-TIME TRACKING</span>
+                          </div>
+                        </div>
 
-                  {/* Main Dashboard Grid - 40/60 Split */}
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Left: Recruitment Pipeline (Circular) - 40% */}
-                    <div className="lg:w-[40%] bg-white rounded-[32px] shadow-sm border border-slate-100 p-8 flex flex-col items-center">
-                      <div className="w-full mb-6">
-                        <h3 className="text-xl font-bold text-slate-900 tracking-tight text-center">Recruitment Pipeline</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 text-center font-black">
-                          Real-time status tracking
-                        </p>
-                      </div>
-
-                      <div className="relative w-full h-64 flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'IN INTERVIEW', value: 7, color: '#8b5cf6' },
-                                { name: 'OFFERS DONE', value: 3, color: '#f59e0b' },
-                                { name: 'REJECTED', value: 1, color: '#ef4444' },
-                              ]}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={8}
-                              dataKey="value"
-                              stroke="none"
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          {/* Team Filter */}
+                          <div className="relative" ref={teamDropdownRef}>
+                            <button
+                              onClick={() => setShowTeamDropdown(!showTeamDropdown)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F8FAFC] border border-slate-100 text-slate-600 rounded-xl hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all text-[10px] font-bold group"
                             >
-                              {[
-                                { color: '#8b5cf6' },
-                                { color: '#f59e0b' },
-                                { color: '#ef4444' }
-                              ].map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                          <span className="text-4xl font-black text-slate-900">11</span>
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 text-center">Total Candidates</span>
+                              <FiUsers className="w-3 h-3 text-blue-500" />
+                              <span className="tracking-tight">{teamFilter}</span>
+                            </button>
+                            <AnimatePresence>
+                              {showTeamDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                >
+                                  {['All Team', 'Manju', 'Jyoti', 'Priyanshi'].map((team) => (
+                                    <button
+                                      key={team}
+                                      onClick={() => { setTeamFilter(team); setShowTeamDropdown(false); }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${teamFilter === team ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                      {team}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+
+                          {/* Client Filter */}
+                          <div className="relative" ref={clientDropdownRef}>
+                            <button
+                              onClick={() => setShowClientDropdown(!showClientDropdown)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F8FAFC] border border-slate-100 text-slate-600 rounded-xl hover:bg-white hover:border-rose-200 hover:shadow-sm transition-all text-[10px] font-bold group"
+                            >
+                              <FiTarget className="w-3 h-3 text-rose-500" />
+                              <span className="tracking-tight">{clientFilter}</span>
+                            </button>
+                            <AnimatePresence>
+                              {showClientDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                >
+                                  {['All Client', 'TCS', 'Infosys', 'Wipro', 'HCL'].map((client) => (
+                                    <button
+                                      key={client}
+                                      onClick={() => { setClientFilter(client); setShowClientDropdown(false); }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${clientFilter === client ? 'bg-rose-50 text-rose-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                      {client}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Legend below chart */}
-                      <div className="mt-8 grid grid-cols-3 gap-8 w-full">
-                        <div className="flex flex-col items-center">
-                          <div className="w-1.5 h-4 bg-[#8b5cf6] rounded-full mb-2" />
-                          <span className="text-xl font-black text-slate-900">7</span>
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight">IN INTERVIEW</span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-1.5 h-4 bg-[#f59e0b] rounded-full mb-2" />
-                          <span className="text-xl font-black text-slate-900">3</span>
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight">OFFERS DONE</span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-1.5 h-4 bg-[#ef4444] rounded-full mb-2" />
-                          <span className="text-xl font-black text-slate-900">1</span>
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight">REJECTED</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Team History (Recent Activity) - 60% */}
-                    <div className="flex-1 bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                      <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] flex items-center justify-center" style={{ color: '#3FA9F5' }}>
-                            <FiActivity className="w-5 h-5" />
-                          </div>
-                          <div className="flex flex-col text-left">
-                            <h3 className="font-bold text-lg text-slate-800 tracking-tight leading-tight">Team History</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em] mt-1">RECENT ACTIVITY LOGS</p>
-                          </div>
-                        </div>
-                        <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest">Live Now</span>
-                      </div>
-                      <div className="divide-y divide-gray-50 max-h-[320px] overflow-y-auto">
-                        {kamTeam
-                          .flatMap((kam) =>
-                            (kam.recentActivity || [])
-                              .filter((activity) => activity?.action && activity.action !== 'No recent activity')
-                              .slice(0, 1)
-                              .map((activity) => ({
-                                ...activity,
-                                kamName: kam.name,
-                                avatar: kam.avatar,
-                                color: kam.color,
-                              }))
-                          )
-                          .map((activity, idx) => (
-                            <div key={idx} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0">
-                              <div
-                                className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm border border-slate-100"
-                                style={{ backgroundColor: '#F8FAFC', color: '#64748B' }}
+                      <div className="flex flex-col items-center gap-6">
+                        <div className="relative w-full h-[260px] flex items-center justify-center">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={getPipelineChartData()}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={70}
+                                outerRadius={105}
+                                paddingAngle={6}
+                                dataKey="value"
+                                stroke="none"
+                                animationDuration={1500}
                               >
-                                {activity.avatar}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-700">
-                                  <span className="font-bold text-slate-900">{activity.kamName}</span>{' '}
-                                  <span className="text-slate-500">{activity.action}:</span>{' '}
-                                  <span className="font-bold text-blue-600">{activity.candidate || activity.position}</span>
-                                </p>
-                                <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mt-1 uppercase tracking-tighter">
-                                  <FiClock className="w-3 h-3" /> {activity.time}
-                                </p>
-                              </div>
+                                {getPipelineChartData().map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-5xl font-black text-slate-900 tracking-tighter">
+                              {getPipelineChartData().reduce((acc, curr) => acc + curr.value, 0)}
+                            </span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">TOTAL VOLUME</span>
+                            {teamFilter !== 'All Team' && (
+                              <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{teamFilter}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Legend below chart - Styled like the requested image */}
+                        <div className="w-full grid grid-cols-3 gap-2 mt-4">
+                          {getPipelineChartData().map((entry) => (
+                            <div key={entry.name} className="flex flex-col items-center group">
+                              <div className="w-6 h-1.5 rounded-full mb-3 transition-transform group-hover:scale-x-125" style={{ backgroundColor: entry.color }} />
+                              <span className="text-xl font-black text-slate-900 leading-none tracking-tight mb-1">{entry.value}</span>
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">{entry.name}</span>
                             </div>
                           ))}
-                        {kamTeam.flatMap((kam) =>
-                          (kam.recentActivity || []).filter((activity) => activity?.action && activity.action !== 'No recent activity').slice(0, 1)
-                        ).length === 0 && (
-                            <div className="p-12 text-center">
-                              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                                <FiActivity className="w-7 h-7 text-gray-300" />
-                              </div>
-                              <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">No recent team activity found</p>
-                            </div>
-                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Annual recruitment summary - right */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col p-8 transition-all hover:shadow-xl hover:shadow-indigo-500/5">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 w-full gap-4">
+                        <div className="flex flex-col text-left">
+                          <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">Annual recruitment summary</h3>
+                          <div className="flex items-center gap-2">
+                            <div className="h-1 w-6 bg-indigo-500 rounded-full" />
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">PERFORMANCE ANALYSIS</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="relative" ref={activityDropdownRef}>
+                            <button
+                              onClick={() => setShowActivityDropdown(!showActivityDropdown)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F1F1F1] hover:bg-white text-slate-700 rounded-xl transition-all border border-transparent shadow-sm text-[10px] font-bold group"
+                            >
+                              <span className="tracking-tight">{activityFilter}</span>
+                              <FiActivity className="w-3 h-3 text-indigo-500" />
+                            </button>
+                            <AnimatePresence>
+                              {showActivityDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                >
+                                  {['Calls', 'Hiring', 'Meeting', 'Interview Count', 'Offers', 'Rejected'].map((option) => (
+                                    <button
+                                      key={option}
+                                      onClick={() => { setActivityFilter(option); setShowActivityDropdown(false); }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${activityFilter === option ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'}`}
+                                    >
+                                      {option}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+
+                          <div className="relative" ref={chartDropdownRef}>
+                            <button
+                              onClick={() => setShowChartDateDropdown(!showChartDateDropdown)}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F1F1F1] hover:bg-white text-slate-700 rounded-xl transition-all border border-transparent shadow-sm text-[10px] font-bold group"
+                            >
+                              <span className="tracking-tight">{chartDateFilter}</span>
+                              <FiCalendar className="w-3 h-3 text-amber-500" />
+                            </button>
+                            <AnimatePresence>
+                              {showChartDateDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                >
+                                  {['All Time', 'This Year', 'This Month', 'This Week'].map((item) => (
+                                    <button
+                                      key={item}
+                                      onClick={() => { setChartDateFilter(item); setShowChartDateDropdown(false); }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${chartDateFilter === item ? 'bg-amber-50 text-amber-600' : 'text-slate-700 hover:bg-slate-50'}`}
+                                    >
+                                      {item}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-full h-[300px] mt-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={getSummaryChartData()} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} />
+                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                            <Bar dataKey="manju" name="Applicants" fill="#F59E0B" radius={[6, 6, 0, 0]} barSize={12} />
+                            <Bar dataKey="priyanshi" name="Interviews" fill="#EE4266" radius={[6, 6, 0, 0]} barSize={12} />
+                            <Bar dataKey="jyoti" name="Offers" fill="#1E40AF" radius={[6, 6, 0, 0]} barSize={12} />
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
                   </div>
 
-                  {/* Team Quick View - Enhanced */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                  {/* Active Team Section - Full Width Carousel */}
+                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-8 mb-8">
+                    <div className="flex items-center justify-between mb-8">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-slate-100" style={{ color: '#3FA9F5' }}>
+                        <div className="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100/50 text-blue-500">
                           <FiUsers className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-lg text-slate-800 tracking-tight">Active Team</h3>
+                        <h3 className="text-xl font-bold text-slate-800 tracking-tight">Active Team</h3>
                       </div>
                       <button
                         onClick={() => setActiveTab('Team Overview')}
-                        className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
+                        className="text-[11px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
                       >
-                        Details →
+                        DETAILS →
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-50 border-b border-slate-100">
-                      {kamTeam.slice(0, 4).map((kam, idx) => {
-                        const avatarInitials = kam.avatar || kam.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'KM';
-                        const colorSet = AVATAR_COLORS[idx % AVATAR_COLORS.length];
 
+                    <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 scroll-smooth">
+                      {kamTeam.map((kam, idx) => {
+                        const initials = kam.avatar || (kam.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
                         return (
                           <div
                             key={kam.id}
-                            className="p-5 bg-white hover:bg-slate-50 cursor-pointer transition-all border-r border-slate-50 last:border-r-0"
                             onClick={() => handleViewKAM(kam)}
+                            className="min-w-[280px] bg-white border border-slate-100 rounded-[24px] p-5 flex items-center justify-between group hover:border-blue-400/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer"
                           >
                             <div className="flex items-center gap-4">
-                              <div
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold shadow-sm text-sm ${colorSet.gradient} ${colorSet.text}`}
-                              >
-                                {avatarInitials}
+                              <div className="w-12 h-12 rounded-[18px] bg-[#E3F2FD] border border-[#BBDEFB] flex items-center justify-center font-bold text-[#1976D2] text-sm shadow-sm group-hover:scale-105 transition-transform">
+                                {initials}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-slate-800 truncate">{kam.name}</h4>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{kam.stats?.activePositions || 0} Open Positions</p>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{kam.name}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">0 OPEN POSITIONS</span>
                               </div>
-                              <div className="text-right">
-                                <p className="text-xl font-black text-emerald-500">{kam.stats?.thisWeekHires || 0}</p>
-                                <p className="text-[8px] font-bold text-slate-300 uppercase">Hires</p>
-                              </div>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-xl font-black text-slate-900 leading-none">0</span>
+                              <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter mt-1">HIRES</span>
                             </div>
                           </div>
                         );
@@ -2109,72 +2204,41 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                   </div>
 
-
-
-                  {/* Quick Actions (Full Width Bottom) */}
-                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-8">
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] flex items-center justify-center" style={{ color: '#3FA9F5' }}>
-                        <FiTarget className="w-5 h-5" />
-                      </div>
+                  {/* Quick Actions Section - Full Width Carousel */}
+                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-8 mb-8">
+                    <div className="flex items-center justify-between mb-8">
                       <div className="flex flex-col text-left">
-                        <h3 className="font-bold text-lg text-slate-800 tracking-tight leading-tight">Quick Actions</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em] mt-1">COMMON RECRUITMENT TASKS</p>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-100/50 text-indigo-500">
+                            <FiActivity className="w-5 h-5" />
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-800 tracking-tight">Quick Actions</h3>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 ml-1">COMMON RECRUITMENT TASKS</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      <button
-                        onClick={() => setActiveTab('Job Openings')}
-                        className="flex items-center gap-4 p-6 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-blue-100 transition-all group flex-1"
-                      >
-                        <div className="p-4 rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
-                          <FiBriefcase className="w-6 h-6" />
+                    <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 scroll-smooth">
+                      {[
+                        { title: 'JOB OPENINGS', desc: '0 OPEN POSITIONS', icon: FiBriefcase, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Job Openings' },
+                        { title: 'CANDIDATE PIPELINE', desc: '1 TOTAL', icon: FiTarget, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Candidate Pipeline' },
+                        { title: 'TASKS', desc: 'TEAM LOAD', icon: FiCheckSquare, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Task Assignment' },
+                        { title: 'SHARED NOTES', desc: 'MANAGE ALL', icon: FiEdit3, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Notes' }
+                      ].map((action, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => setActiveTab(action.tab)}
+                          className="min-w-[280px] bg-white border border-slate-100 rounded-[24px] p-6 flex items-center gap-5 group hover:border-[#0D47A1]/30 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 cursor-pointer"
+                        >
+                          <div className={`w-14 h-14 rounded-[18px] ${action.color} border flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
+                            <action.icon className="w-6 h-6" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black text-slate-800 tracking-wide group-hover:text-indigo-600 transition-colors uppercase">{action.title}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{action.desc}</span>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <span className="text-sm font-bold block text-slate-800 uppercase tracking-tight">Job Openings</span>
-                          <span className="text-[11px] font-bold text-slate-400 uppercase">{stats.activePositions} Open Positions</span>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setActiveTab('Candidate Pipeline')}
-                        className="flex items-center gap-4 p-6 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-indigo-100 transition-all group flex-1"
-                      >
-                        <div className="p-4 rounded-xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                          <FiUserPlus className="w-6 h-6" />
-                        </div>
-                        <div className="text-left">
-                          <span className="text-sm font-bold block text-slate-800 uppercase tracking-tight">Candidate Pipeline</span>
-                          <span className="text-[11px] font-bold text-slate-400 uppercase">{stats.totalCandidates} Total</span>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setActiveTab('Task Assignment')}
-                        className="flex items-center gap-4 p-6 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-violet-100 transition-all group flex-1"
-                      >
-                        <div className="p-4 rounded-xl bg-violet-50 text-violet-600 group-hover:scale-110 transition-transform">
-                          <FiCheckSquare className="w-6 h-6" />
-                        </div>
-                        <div className="text-left">
-                          <span className="text-sm font-bold block text-slate-800 uppercase tracking-tight">Tasks</span>
-                          <span className="text-[11px] font-bold text-slate-400 uppercase">Team Load</span>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setActiveTab('Notes')}
-                        className="flex items-center gap-4 p-6 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-amber-100 transition-all group flex-1"
-                      >
-                        <div className="p-4 rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
-                          <FiEdit3 className="w-6 h-6" />
-                        </div>
-                        <div className="text-left">
-                          <span className="text-sm font-bold block text-slate-800 uppercase tracking-tight">Shared Notes</span>
-                          <span className="text-[11px] font-bold text-slate-400 uppercase">Manage All</span>
-                        </div>
-                      </button>
+                      ))}
                     </div>
                   </div>
 
@@ -2239,6 +2303,7 @@ const RecruitmentHeadDashboard = () => {
       </AnimatePresence>
 
       <AdminLayout
+        showGlobalHeader={false}
         sidebarItems={sidebarConfig}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -2268,110 +2333,94 @@ const RecruitmentHeadDashboard = () => {
               className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              <div
-                className="h-32 relative"
-                style={{ background: selectedKAM.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}
-              >
+              {/* Modal Body */}
+              <div className="relative pt-16 px-8 pb-8">
+                {/* Close Button */}
                 <button
                   onClick={() => setShowKAMModal(false)}
-                  className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
+                  className="absolute top-6 right-8 p-1 text-slate-300 hover:text-red-500 transition-colors"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX className="w-6 h-6" />
                 </button>
-                <div className="absolute -bottom-10 left-8">
-                  <div className="w-20 h-20 rounded-xl bg-white shadow-lg flex items-center justify-center text-2xl font-bold text-gray-700 border-4 border-white">
-                    {selectedKAM.avatar}
+
+                {/* Profile Header (Horizontal) */}
+                <div className="flex items-center gap-6 mb-10 mt-4">
+                  <div className="w-20 h-20 rounded-2xl bg-white shadow-xl shadow-slate-200 flex items-center justify-center text-3xl font-black text-slate-700 border-4 border-white shrink-0">
+                    {selectedKAM.avatar || (selectedKAM.name || 'U')[0]}
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <h2 className="text-3xl font-black text-slate-800 tracking-tight leading-tight">{selectedKAM.name}</h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{selectedKAM.role}</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Modal Content */}
-              <div className="pt-14 px-8 pb-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedKAM.name}</h2>
-                  <p className="text-gray-500">{selectedKAM.role}</p>
-                </div>
-
-                {/* Contact Info */}
-                <div className="flex flex-wrap gap-4 mb-6">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FiMail className="w-4 h-4" /> {selectedKAM.email}
+                {/* Contact Info (Left Aligned) */}
+                <div className="flex flex-wrap items-center gap-6 mb-10 text-slate-500 bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
+                  <span className="flex items-center gap-2 text-xs font-bold">
+                    <FiMail className="w-4 h-4 text-blue-500" /> {selectedKAM.email}
                   </span>
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FiPhone className="w-4 h-4" /> {selectedKAM.phone}
+                  <span className="flex items-center gap-2 text-xs font-bold border-l border-slate-200 pl-6 h-4">
+                    <FiPhone className="w-4 h-4 text-emerald-500" /> {selectedKAM.phone}
                   </span>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-blue-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-blue-600">{selectedKAM.stats.activePositions}</p>
-                    <p className="text-sm text-gray-600">Active Jobs</p>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-blue-50/50 rounded-2xl p-5 text-center border border-blue-50">
+                    <p className="text-2xl font-black text-blue-600 mb-1">{selectedKAM.stats.activePositions}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Jobs</p>
                   </div>
-                  <div className="bg-purple-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-purple-600">{selectedKAM.stats.candidatesPipeline}</p>
-                    <p className="text-sm text-gray-600">Candidates</p>
+                  <div className="bg-purple-50/50 rounded-2xl p-5 text-center border border-purple-50">
+                    <p className="text-2xl font-black text-purple-600 mb-1">{selectedKAM.stats.candidatesPipeline}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Candidates</p>
                   </div>
-                  <div className="bg-amber-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-amber-600">{selectedKAM.stats.interviewsScheduled}</p>
-                    <p className="text-sm text-gray-600">Interviews</p>
+                  <div className="bg-amber-50/50 rounded-2xl p-5 text-center border border-amber-50">
+                    <p className="text-2xl font-black text-amber-600 mb-1">{selectedKAM.stats.interviewsScheduled}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Interviews</p>
                   </div>
-                  <div className="bg-emerald-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-emerald-600">{selectedKAM.stats.thisWeekHires}</p>
-                    <p className="text-sm text-gray-600">Hires</p>
+                  <div className="bg-emerald-50/50 rounded-2xl p-5 text-center border border-emerald-50">
+                    <p className="text-2xl font-black text-emerald-600 mb-1">{selectedKAM.stats.thisWeekHires}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hires</p>
                   </div>
-                  <div className="bg-cyan-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-cyan-600">{selectedKAM.stats.profilesShared || 0}</p>
-                    <p className="text-sm text-gray-600">Profiles Shared</p>
+                  <div className="bg-cyan-50/50 rounded-2xl p-5 text-center border border-cyan-50">
+                    <p className="text-2xl font-black text-cyan-600 mb-1">{selectedKAM.stats.profilesShared || 0}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Profiles Shared</p>
                   </div>
-                  <div className="bg-rose-50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-rose-600">{selectedKAM.stats.callsDone || 0}</p>
-                    <p className="text-sm text-gray-600">Phone Calls</p>
+                  <div className="bg-slate-50 rounded-2xl p-5 text-center border border-slate-100">
+                    <p className="text-2xl font-black text-slate-600 mb-1">{selectedKAM.stats.callsDone || 0}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Phone Calls</p>
                   </div>
                 </div>
 
                 {/* Recent Activity */}
-                <div className="border-t border-gray-100 pt-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                <div className="border-t border-slate-100 pt-8 mb-8 text-center">
+                  <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-6">Recent Activity</h3>
                   <div className="space-y-3">
-                    {selectedKAM.recentActivity.length > 0 ? selectedKAM.recentActivity.map((activity, idx) => (
-                      <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-900">
-                            {activity.action}: {activity.candidate || activity.position}
+                    {selectedKAM.recentActivity && selectedKAM.recentActivity.length > 0 ? selectedKAM.recentActivity.map((activity, idx) => (
+                      <div key={idx} className="flex items-center gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-50 transition-all hover:bg-slate-50 group">
+                        <div className="w-2 h-2 rounded-full bg-blue-400 group-hover:scale-150 transition-transform"></div>
+                        <div className="flex-1 text-left">
+                          <p className="text-xs font-bold text-slate-700">
+                            {activity.action}: <span className="text-blue-600 font-black">{activity.candidate || activity.position}</span>
                           </p>
                         </div>
-                        <span className="text-xs text-gray-500">{activity.time}</span>
+                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{activity.time}</span>
                       </div>
                     )) : (
-                      <div className="p-3 bg-gray-50 rounded-xl text-sm text-gray-500">
+                      <div className="p-8 bg-slate-50/50 rounded-2xl text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] border border-dashed border-slate-200">
                         No recent activity found
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-3 mt-6">
+                {/* Actions Footer */}
+                <div className="flex gap-4">
                   <button
                     onClick={() => { setShowKAMModal(false); handleAssignTask(selectedKAM); }}
-                    className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors"
+                    className="flex-1 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-100 transition-all active:scale-95"
                   >
                     Assign Task
-                  </button>
-                  <button
-                    onClick={() => handleEditKAM(selectedKAM)}
-                    className="px-4 py-3 border border-blue-200 hover:bg-blue-50 text-blue-600 rounded-xl font-semibold transition-colors flex items-center gap-2"
-                  >
-                    <FiEdit2 className="w-4 h-4" /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteKAM(selectedKAM)}
-                    className="px-4 py-3 border border-red-200 hover:bg-red-50 text-red-600 rounded-xl font-semibold transition-colors flex items-center gap-2"
-                  >
-                    <FiTrash2 className="w-4 h-4" /> Remove
                   </button>
                 </div>
               </div>
@@ -2380,6 +2429,7 @@ const RecruitmentHeadDashboard = () => {
         )}
       </AnimatePresence>
 
+      {/* Calls Breakdown Modal */}
       <AnimatePresence>
         {showCallsBreakdownModal && (
           <motion.div
