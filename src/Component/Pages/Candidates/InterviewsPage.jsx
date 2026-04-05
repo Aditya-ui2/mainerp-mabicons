@@ -608,6 +608,34 @@ export default function InterviewsPage() {
                     </div>
                   </div>
 
+                  {/* Google Meet / Meeting Link */}
+                  {selectedInterview.meetingLink && (
+                    <div className="space-y-2">
+                       <h4 className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Meeting Link</h4>
+                       <div className="p-4 bg-[#FAFAF8] rounded-2xl border border-[#F4F3EF] space-y-3">
+                          <div className="flex items-center gap-3">
+                             <div className="w-8 h-8 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
+                                <Video size={14} />
+                             </div>
+                             <a 
+                                href={selectedInterview.meetingLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs font-bold text-[#1B4DA0] hover:underline truncate flex-1"
+                             >
+                                {selectedInterview.meetingLink}
+                             </a>
+                          </div>
+                          <button
+                             onClick={() => window.open(selectedInterview.meetingLink, '_blank', 'noopener,noreferrer')}
+                             className="w-full h-10 bg-[#1B4DA0] text-white rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all"
+                          >
+                             <Video size={12} /> Join Meeting
+                          </button>
+                       </div>
+                    </div>
+                  )}
+
                   {selectedInterview.notes && (
                     <div className="space-y-2">
                        <h4 className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Briefing Notes</h4>

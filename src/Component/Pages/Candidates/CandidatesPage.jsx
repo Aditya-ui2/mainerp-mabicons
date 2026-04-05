@@ -13,7 +13,8 @@ import {
   updateCandidate,
   addCandidate, 
   getAllRecruitmentPositions, 
-  getAllClients 
+  getAllClients,
+  BASE_URL 
 } from "../service/api";
 
 const STAGE_COLORS = {
@@ -72,6 +73,7 @@ export default function CandidatesPage() {
   const [targetRoleFilter, setTargetRoleFilter] = useState("");
   const [tempTargetRoleFilter, setTempTargetRoleFilter] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [dateFilter, setDateFilter] = useState("all");
 
   // New Candidate Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -158,6 +160,8 @@ export default function CandidatesPage() {
           skills: c.skills ? (Array.isArray(c.skills) ? c.skills : c.skills.split(',')) : ["General"],
           avatar: c.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
           lastMovedDate: c.updatedAt,
+          cvUrl: c.cvUrl || null,
+          cvFileName: c.cvFileName || null,
           stageHistory: c.stageHistory || [{ stage: mapBackendToFrontendStage(c.stage, c.status), date: c.createdAt }],
           raw: c // Keep raw data for debugging/advanced use
         }));
@@ -404,8 +408,29 @@ export default function CandidatesPage() {
         c.skills.some(s => s.toLowerCase().includes(lower))
       );
     }
+    if (dateFilter !== "all") {
+      const now = new Date();
+      result = result.filter(c => {
+        const appliedDate = c.appliedDate ? new Date(c.appliedDate) : (c.createdAt ? new Date(c.createdAt) : null);
+        if (!appliedDate) return true;
+        if (dateFilter === "today") {
+          return appliedDate.toDateString() === now.toDateString();
+        } else if (dateFilter === "week") {
+          const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+          return appliedDate >= weekStart;
+        } else if (dateFilter === "month") {
+          return appliedDate.getMonth() === now.getMonth() && appliedDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === "quarter") {
+          const q = Math.floor(now.getMonth() / 3);
+          return Math.floor(appliedDate.getMonth() / 3) === q && appliedDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === "year") {
+          return appliedDate.getFullYear() === now.getFullYear();
+        }
+        return true;
+      });
+    }
     return result;
-  }, [candidates, searchTerm, selectedClientFilter, targetRoleFilter]);
+  }, [candidates, searchTerm, selectedClientFilter, targetRoleFilter, dateFilter]);
 
   const activeClientNames = useMemo(() => {
     return Array.from(new Set(candidates.map(c => c.clientName?.trim() || 'Internal Team'))).sort();
@@ -545,9 +570,25 @@ export default function CandidatesPage() {
         </div>
       </div>
 
+      {/* Date Filter Dropdown */}
+      <div className="flex items-center gap-2 mb-4">
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+        >
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="quarter">This Quarter</option>
+          <option value="year">This Year</option>
+        </select>
+      </div>
+
       {/* Kanban / Table Content Area */}
       {viewMode === "kanban" ? (
-        <div className="flex gap-4 overflow-x-auto pb-6 min-h-[600px] scrollbar-thin scrollbar-thumb-gray-200">
+        <div className="grid grid-cols-5 gap-2 min-h-[500px]">
           {PIPELINE_STAGES.map((stage) => {
             const stageCandidates = filteredCandidates.filter((c) => c.stage === stage);
             const colors = STAGE_COLORS[stage] || STAGE_COLORS.Applied;
@@ -556,15 +597,15 @@ export default function CandidatesPage() {
             return (
               <div
                 key={stage}
-                className={`flex-shrink-0 w-[280px] rounded-[24px] border transition-all duration-200 ${colors.border} ${
-                  isDragOver ? "ring-2 ring-[#1B4DA0]/40 scale-[1.02] bg-[#F8FAFF]" : colors.bg
+                className={`rounded-[24px] border-2 transition-all duration-200 ${colors.border} ${
+                  isDragOver ? "ring-2 ring-[#1B4DA0]/40 scale-[1.01] bg-[#F8FAFF]" : colors.bg
                 }`}
                 onDragOver={(e) => handleDragOver(e, stage)}
                 onDrop={(e) => handleDrop(e, stage)}
                 onDragLeave={() => setDragOverStage(null)}
               >
                 {/* Column Header */}
-                <div className="px-5 py-4 flex items-center justify-between border-b border-black/5 rounded-t-[24px]">
+                <div className="px-3 py-3 flex items-center justify-between border-b border-black/5 rounded-t-[24px]">
                   <div className="flex items-center gap-2.5">
                     <span className={`w-2 h-2 rounded-full ${colors.dot}`} />
                     <span className="text-sm font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
@@ -577,7 +618,7 @@ export default function CandidatesPage() {
                 </div>
 
                 {/* Column Cards */}
-                <div className="p-3.5 space-y-3.5 min-h-[100px]">
+                <div className="p-2 space-y-2 min-h-[100px]">
                   {!loading ? stageCandidates.map((candidate) => {
                     const isDragging = dragId === candidate.id;
                     const avatarColor = getAvatarColor(candidate.name, candidate.avatar);
@@ -590,15 +631,15 @@ export default function CandidatesPage() {
                         onDragStart={(e) => handleDragStart(e, candidate.id)}
                         onDragEnd={handleDragEnd}
                         onClick={() => setSelectedCandidate(candidate)}
-                        className={`bg-white rounded-2xl p-4 cursor-grab active:cursor-grabbing transition-all duration-200 select-none group border border-[#F4F3EF] ${
+                        className={`bg-white rounded-xl p-2.5 cursor-grab active:cursor-grabbing transition-all duration-200 select-none group border-2 border-[#E8E7E2] ${
                           isDragging
                             ? "opacity-40 scale-95"
-                            : "hover:-translate-y-1 hover:shadow-xl hover:border-[#1B4DA0]/10"
+                            : "hover:-translate-y-1 hover:shadow-lg hover:border-[#1B4DA0]/20"
                         } ${selectedIds.includes(candidate.id) ? 'ring-2 ring-[#1B4DA0] border-transparent' : 'shadow-sm'}`}
                       >
-                        <div className="flex items-start gap-3.5">
+                        <div className="flex items-start gap-2">
                           <div
-                            className={`w-14 h-14 rounded-[20px] flex items-center justify-center text-sm font-bold flex-shrink-0 relative ${avatarColor} ${
+                            className={`w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-bold flex-shrink-0 relative ${avatarColor} ${
                                isStuck
                                ? "ring-2 ring-amber-400 ring-offset-2 animate-pulse shadow-[0_0_12px_rgba(251,191,36,0.3)]"
                                : "shadow-sm border border-white/20"
@@ -614,7 +655,7 @@ export default function CandidatesPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start">
                                <div className="flex items-center gap-1.5 min-w-0">
-                                 <p className="text-base font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors pb-0.5" style={{ fontFamily: "'Syne', sans-serif" }}>
+                                 <p className="text-sm font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors pb-0.5" style={{ fontFamily: "'Syne', sans-serif" }}>
                                    {candidate.name}
                                  </p>
                                  <CheckSquare size={12} className="text-emerald-500 flex-shrink-0" />
@@ -632,7 +673,7 @@ export default function CandidatesPage() {
                           </div>
                         </div>
 
-                        <div className="mt-5 space-y-2">
+                        <div className="mt-3 space-y-1.5">
                            <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-[#9B9BAD]">
                               <span className="flex items-center gap-1.5 opacity-70">
                                  <Briefcase size={10} />
@@ -648,7 +689,7 @@ export default function CandidatesPage() {
                            </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-1.5 mt-4">
+                        <div className="flex flex-wrap gap-1 mt-2.5">
                            {(candidate.skills || []).slice(0, 2).map((skill) => (
                               <span
                                 key={skill}
@@ -816,7 +857,20 @@ export default function CandidatesPage() {
                        <Trash2 size={18} />
                     </button>
                     <button 
-                       onClick={() => { toast.success("Accessing batch CVs..."); setSelectedIds([]); }}
+                       onClick={() => {
+                         const selected = candidates.filter(c => selectedIds.includes(c.id));
+                         const withCV = selected.filter(c => c.cvUrl);
+                         if (withCV.length === 0) {
+                           toast.error("No CVs available for selected candidates");
+                           return;
+                         }
+                         withCV.forEach(c => {
+                           const url = c.cvUrl.startsWith('http') ? c.cvUrl : `${BASE_URL}${c.cvUrl.startsWith('/') ? '' : '/'}${c.cvUrl}`;
+                           window.open(url, '_blank');
+                         });
+                         toast.success(`Opening ${withCV.length} CV(s)...`);
+                         setSelectedIds([]);
+                       }}
                        className="px-4 h-10 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center justify-center border border-white/5 gap-2 text-[10px] font-bold"
                     >
                        <FileText size={16} />

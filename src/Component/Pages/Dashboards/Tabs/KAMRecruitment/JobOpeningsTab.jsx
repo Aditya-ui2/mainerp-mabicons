@@ -411,37 +411,19 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
       </div>
 
       <div className="p-10 space-y-12 pb-32 overflow-y-auto">
-         {/* Meta Matrix */}
-         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+         {/* Meta Info Grid - Clean & Minimal */}
+         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
             {[
-               { label: 'Experience', val: job.experience || 'Flexible', icon: Award, color: 'text-blue-500' },
-               { label: 'Location', val: job.location || 'Remote', icon: MapPin, color: 'text-indigo-500' },
-               { label: 'Priority', val: job.priority || 'Medium', icon: ShieldCheck, color: 'text-amber-500' },
-               { label: 'Deadline', val: job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Active', icon: Clock, color: 'text-emerald-500' }
+               { label: 'Experience', val: job.experience || 'Flexible', icon: Award },
+               { label: 'Location', val: job.location || 'Remote', icon: MapPin },
+               { label: 'Priority', val: job.priority || 'Medium', icon: ShieldCheck },
+               { label: 'Deadline', val: job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Active', icon: Clock },
+               { label: 'Applicants', val: job.candidateCount || 0, icon: Users },
+               { label: 'Target Openings', val: job.openings || 1, icon: Target }
             ].map((stat, i) => (
-               <div key={i} className="bg-[#FAFAF8] p-5 rounded-[28px] border border-[#F4F3EF] group hover:bg-white hover:shadow-xl transition-all duration-300">
-                  <div className={`w-8 h-8 rounded-xl bg-white border border-[#F4F3EF] flex items-center justify-center ${stat.color} mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
-                     <stat.icon size={14} />
-                  </div>
-                  <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{stat.label}</p>
-                  <p className="text-xs font-bold text-[#1A1A2E] mt-1 truncate">{stat.val}</p>
-               </div>
-            ))}
-         </div>
-
-         {/* Meta Matrix Enhanced */}
-         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-               { label: 'Experience', val: job.experience || 'Flexible', icon: Award, color: 'text-blue-500' },
-               { label: 'Location', val: job.location || 'Remote', icon: MapPin, color: 'text-indigo-500' },
-               { label: 'Priority', val: job.priority || 'Medium', icon: ShieldCheck, color: 'text-amber-500' },
-               { label: 'Deadline', val: job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Active', icon: Clock, color: 'text-emerald-500' },
-               { label: 'Applicants', val: job.candidateCount || 0, icon: Users, color: 'text-violet-500' },
-               { label: 'Target Openings', val: job.openings || 1, icon: Target, color: 'text-orange-500' }
-            ].map((stat, i) => (
-               <div key={i} className="bg-[#FAFAF8] p-5 rounded-[28px] border border-[#F4F3EF] group hover:bg-white hover:shadow-xl transition-all duration-300">
-                  <div className={`w-8 h-8 rounded-xl bg-white border border-[#F4F3EF] flex items-center justify-center ${stat.color} mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
-                     <stat.icon size={14} />
+               <div key={i} className="bg-[#FAFAF8] p-4 rounded-2xl border border-[#F4F3EF] group hover:bg-white hover:shadow-md transition-all duration-200">
+                  <div className="w-7 h-7 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#6B6B7E] mb-2">
+                     <stat.icon size={13} />
                   </div>
                   <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{stat.label}</p>
                   <p className="text-xs font-bold text-[#1A1A2E] mt-1 truncate">{stat.val}</p>
@@ -466,8 +448,8 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
                   <ul className="space-y-3">
                      {(Array.isArray(job.requirements) ? job.requirements : (job.requirements || "").split("\n")).filter(Boolean).map((req, i) => (
                         <li key={i} className="flex items-start gap-3 group">
-                           <div className="w-5 h-5 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-emerald-500 transition-all">
-                              <Check size={10} className="text-emerald-500 group-hover:text-white" />
+                           <div className="w-5 h-5 rounded-lg bg-[#F4F3EF] border border-[#E8E7E2] flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-[#1A1A2E] transition-all">
+                              <Check size={10} className="text-[#6B6B7E] group-hover:text-white" />
                            </div>
                            <span className="text-sm text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">{req}</span>
                         </li>
@@ -481,7 +463,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
                   <ul className="space-y-3">
                      {(Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || "").split("\n")).filter(Boolean).map((res, i) => (
                         <li key={i} className="flex items-start gap-3 group">
-                           <div className="w-1.5 h-1.5 rounded-full bg-blue-300 mt-2 flex-shrink-0 group-hover:scale-150 transition-transform" />
+                           <div className="w-1.5 h-1.5 rounded-full bg-[#9B9BAD] mt-2 flex-shrink-0 group-hover:scale-150 transition-transform" />
                            <span className="text-sm text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">{res}</span>
                         </li>
                      )) || <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">Standard Technical Duties</li>}
@@ -1112,24 +1094,28 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     const matchesPosition = filterPosition === 'all' || job.status === filterPosition;
     
     let matchesDate = true;
-    if (filterDate !== 'all' && job.postedDate) {
-      const jobDate = new Date(job.postedDate);
+    if (filterDate !== 'all' && job.deadline) {
+      const deadlineDate = new Date(job.deadline);
       const now = new Date();
       if (filterDate === 'week') {
-        const weekAgo = new Date(now);
-        weekAgo.setDate(now.getDate() - 7);
-        matchesDate = jobDate >= weekAgo;
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0,0,0,0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23,59,59,999);
+        matchesDate = deadlineDate >= weekStart && deadlineDate <= weekEnd;
       } else if (filterDate === 'month') {
-        const monthAgo = new Date(now);
-        monthAgo.setMonth(now.getMonth() - 1);
-        matchesDate = jobDate >= monthAgo;
+        matchesDate = deadlineDate.getMonth() === now.getMonth() && deadlineDate.getFullYear() === now.getFullYear();
+      } else if (filterDate === 'quarter') {
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const deadlineQuarter = Math.floor(deadlineDate.getMonth() / 3);
+        matchesDate = deadlineQuarter === currentQuarter && deadlineDate.getFullYear() === now.getFullYear();
       } else if (filterDate === 'year') {
-        const yearAgo = new Date(now);
-        yearAgo.setFullYear(now.getFullYear() - 1);
-        matchesDate = jobDate >= yearAgo;
+        matchesDate = deadlineDate.getFullYear() === now.getFullYear();
       } else if (filterDate === 'custom') {
-        if (customStartDate) matchesDate = jobDate >= new Date(customStartDate);
-        if (customEndDate && matchesDate) matchesDate = jobDate <= new Date(customEndDate);
+        if (customStartDate) matchesDate = deadlineDate >= new Date(customStartDate);
+        if (customEndDate && matchesDate) matchesDate = deadlineDate <= new Date(customEndDate + 'T23:59:59');
       }
     }
     return matchesSearch && matchesClient && matchesPosition && matchesDate;
@@ -1576,6 +1562,29 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   <option key={c.id} value={c.name}>{c.displayName}</option>
                 ))}
               </select>
+
+              {/* Deadline Date Filter */}
+              <select
+                value={filterDate}
+                onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
+                className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+              >
+                <option value="all">All Dates</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="quarter">This Quarter</option>
+                <option value="year">This Year</option>
+                <option value="custom">Custom</option>
+              </select>
+              {filterDate === 'custom' && (
+                <div className="flex items-center gap-2">
+                  <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
+                    className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+                  <span className="text-[10px] text-[#9B9BAD] font-bold">to</span>
+                  <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
+                    className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+                </div>
+              )}
             </div>
 
             {/* Table Interface */}

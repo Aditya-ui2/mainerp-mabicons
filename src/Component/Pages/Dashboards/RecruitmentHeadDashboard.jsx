@@ -2150,9 +2150,9 @@ const RecruitmentHeadDashboard = () => {
                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} dy={10} />
                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} />
                             <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                            <Bar dataKey="manju" name="Applicants" fill="#F59E0B" radius={[6, 6, 0, 0]} barSize={12} />
-                            <Bar dataKey="priyanshi" name="Interviews" fill="#EE4266" radius={[6, 6, 0, 0]} barSize={12} />
-                            <Bar dataKey="jyoti" name="Offers" fill="#1E40AF" radius={[6, 6, 0, 0]} barSize={12} />
+                            <Bar dataKey="manju" name="Manju" fill="#F59E0B" radius={[6, 6, 0, 0]} barSize={12} />
+                            <Bar dataKey="priyanshi" name="Priyanshi" fill="#EE4266" radius={[6, 6, 0, 0]} barSize={12} />
+                            <Bar dataKey="jyoti" name="Jyoti" fill="#1E40AF" radius={[6, 6, 0, 0]} barSize={12} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
