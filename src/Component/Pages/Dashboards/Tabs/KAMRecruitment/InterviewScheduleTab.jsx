@@ -115,6 +115,9 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
   const [viewMode, setViewMode] = useState('list');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterDate, setFilterDate] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState(null);
@@ -289,7 +292,47 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
   // Filter interviews
   const filteredInterviews = interviews.filter(i => {
     const matchesStatus = filterStatus === 'all' || i.status === filterStatus;
-    return matchesStatus;
+
+    // Date filter
+    let matchesDate = true;
+    if (filterDate !== 'all' && i.date) {
+      const interviewDate = new Date(i.date);
+      const now = new Date();
+      if (filterDate === 'today') {
+        matchesDate = i.date === today;
+      } else if (filterDate === 'week') {
+        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+        matchesDate = interviewDate >= weekStart && interviewDate <= weekEnd;
+      } else if (filterDate === 'prev-week') {
+        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() - 7); weekStart.setHours(0,0,0,0);
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+        matchesDate = interviewDate >= weekStart && interviewDate <= weekEnd;
+      } else if (filterDate === 'month') {
+        matchesDate = interviewDate.getMonth() === now.getMonth() && interviewDate.getFullYear() === now.getFullYear();
+      } else if (filterDate === 'prev-month') {
+        const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        const prevMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        matchesDate = interviewDate.getMonth() === prevMonth && interviewDate.getFullYear() === prevMonthYear;
+      } else if (filterDate === 'quarter') {
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const interviewQuarter = Math.floor(interviewDate.getMonth() / 3);
+        matchesDate = interviewQuarter === currentQuarter && interviewDate.getFullYear() === now.getFullYear();
+      } else if (filterDate === 'prev-quarter') {
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+        const prevQuarterYear = currentQuarter === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        const interviewQuarter = Math.floor(interviewDate.getMonth() / 3);
+        matchesDate = interviewQuarter === prevQuarter && interviewDate.getFullYear() === prevQuarterYear;
+      } else if (filterDate === 'year') {
+        matchesDate = interviewDate.getFullYear() === now.getFullYear();
+      } else if (filterDate === 'custom') {
+        if (customStartDate) matchesDate = interviewDate >= new Date(customStartDate);
+        if (customEndDate && matchesDate) matchesDate = interviewDate <= new Date(customEndDate + 'T23:59:59');
+      }
+    }
+
+    return matchesStatus && matchesDate;
   });
 
   // Group by date
@@ -1110,8 +1153,9 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex gap-2 overflow-x-auto pb-2"
+              className="flex flex-col gap-3"
             >
+              <div className="flex gap-2 overflow-x-auto pb-2">
               {['all', 'Scheduled', 'In Progress', 'Completed', 'Cancelled', 'Rescheduled'].map((status) => (
                 <motion.button
                   key={status}
@@ -1128,6 +1172,44 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                   {status === 'all' ? 'All Status' : status}
                 </motion.button>
               ))}
+              </div>
+
+              {/* Date Filter */}
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  value={filterDate}
+                  onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
+                  className={`rounded-xl px-4 py-2.5 text-sm font-medium border cursor-pointer outline-none ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'}`}
+                >
+                  <option value="all">All Dates</option>
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="prev-week">Previous Week</option>
+                  <option value="month">This Month</option>
+                  <option value="prev-month">Previous Month</option>
+                  <option value="quarter">This Quarter</option>
+                  <option value="prev-quarter">Previous Quarter</option>
+                  <option value="year">This Year</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+                {filterDate === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
+                      className={`rounded-xl px-3 py-2.5 text-sm font-medium border cursor-pointer outline-none ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
+                    <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>to</span>
+                    <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
+                      className={`rounded-xl px-3 py-2.5 text-sm font-medium border cursor-pointer outline-none ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
+                  </div>
+                )}
+                {(filterDate !== 'all' || filterStatus !== 'all') && (
+                  <button
+                    onClick={() => { setFilterDate('all'); setFilterStatus('all'); setCustomStartDate(''); setCustomEndDate(''); }}
+                    className="text-xs font-semibold text-[#1E88E5] hover:underline"
+                  >
+                    Reset Filters
+                  </button>
+                )}
+              </div>
             </motion.div>
 
             {/* Interview List */}

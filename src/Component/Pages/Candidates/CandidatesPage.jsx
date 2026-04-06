@@ -74,6 +74,8 @@ export default function CandidatesPage() {
   const [tempTargetRoleFilter, setTempTargetRoleFilter] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
 
   // New Candidate Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -418,19 +420,37 @@ export default function CandidatesPage() {
         } else if (dateFilter === "week") {
           const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
           return appliedDate >= weekStart;
+        } else if (dateFilter === "prev-week") {
+          const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() - 7); weekStart.setHours(0,0,0,0);
+          const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+          return appliedDate >= weekStart && appliedDate <= weekEnd;
         } else if (dateFilter === "month") {
           return appliedDate.getMonth() === now.getMonth() && appliedDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === "prev-month") {
+          const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+          const prevMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+          return appliedDate.getMonth() === prevMonth && appliedDate.getFullYear() === prevMonthYear;
         } else if (dateFilter === "quarter") {
           const q = Math.floor(now.getMonth() / 3);
           return Math.floor(appliedDate.getMonth() / 3) === q && appliedDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === "prev-quarter") {
+          const currentQ = Math.floor(now.getMonth() / 3);
+          const prevQ = currentQ === 0 ? 3 : currentQ - 1;
+          const prevQYear = currentQ === 0 ? now.getFullYear() - 1 : now.getFullYear();
+          return Math.floor(appliedDate.getMonth() / 3) === prevQ && appliedDate.getFullYear() === prevQYear;
         } else if (dateFilter === "year") {
           return appliedDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === "custom") {
+          let match = true;
+          if (customStartDate) match = appliedDate >= new Date(customStartDate);
+          if (customEndDate && match) match = appliedDate <= new Date(customEndDate + 'T23:59:59');
+          return match;
         }
         return true;
       });
     }
     return result;
-  }, [candidates, searchTerm, selectedClientFilter, targetRoleFilter, dateFilter]);
+  }, [candidates, searchTerm, selectedClientFilter, targetRoleFilter, dateFilter, customStartDate, customEndDate]);
 
   const activeClientNames = useMemo(() => {
     return Array.from(new Set(candidates.map(c => c.clientName?.trim() || 'Internal Team'))).sort();
@@ -517,73 +537,53 @@ export default function CandidatesPage() {
               ))}
            </datalist>
         </div>
-        <div className="relative">
-          <button 
-            onClick={() => { 
-                setIsFilterOpen(!isFilterOpen); 
-                if (!isFilterOpen) setTempTargetRoleFilter(targetRoleFilter); 
-            }}
-            className={`p-2 rounded-xl transition-colors ${
-              isFilterOpen ? "bg-[#1B4DA0] text-white shadow-md shadow-blue-500/20" : "bg-[#F4F3EF] text-[#6B6B7E] hover:bg-[#E8E7E2]"
-            }`}
-          >
-            <Filter size={16} />
-          </button>
-          
-          {/* Simple Filter Dropdown */}
-          {isFilterOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-3xl shadow-xl border border-[#F4F3EF] p-5 z-30 animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between mb-4 border-b border-[#F4F3EF] pb-3">
-                 <h4 className="text-[11px] font-bold text-[#1A1A2E] uppercase tracking-widest">Global Filters</h4>
-                 <button onClick={() => setIsFilterOpen(false)} className="text-[#9B9BAD] hover:text-rose-500 transition-colors">
-                    <X size={14} />
-                 </button>
-              </div>
-              <div className="space-y-4">
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#9B9BAD] ml-1">Target Role</label>
-                    <select 
-                       value={tempTargetRoleFilter}
-                       onChange={(e) => setTempTargetRoleFilter(e.target.value)}
-                       className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-4 py-3 text-xs font-bold text-[#1A1A2E] outline-none focus:bg-[#EEF2FB] hover:bg-[#E8E7E2] transition-all cursor-pointer"
-                    >
-                       <option value="">All Roles</option>
-                       {positions.map(p => (
-                         <option key={p.id} value={p.title}>{p.title}</option>
-                       ))}
-                    </select>
-                 </div>
-
-                 <button 
-                    onClick={() => { 
-                        setTargetRoleFilter(tempTargetRoleFilter); 
-                        setIsFilterOpen(false); 
-                        toast.success("Filters applied!"); 
-                    }}
-                    className="w-full bg-[#1A1A2E] text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest mt-2 hover:bg-[#1B4DA0] transition-colors shadow-lg"
-                 >
-                    Apply Filters
-                 </button>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Date Filter Dropdown */}
-      <div className="flex items-center gap-2 mb-4">
+      {/* Date & Role Filters */}
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <select
           value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
+          onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
           className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
         >
           <option value="all">All Time</option>
           <option value="today">Today</option>
           <option value="week">This Week</option>
+          <option value="prev-week">Previous Week</option>
           <option value="month">This Month</option>
+          <option value="prev-month">Previous Month</option>
           <option value="quarter">This Quarter</option>
+          <option value="prev-quarter">Previous Quarter</option>
           <option value="year">This Year</option>
+          <option value="custom">Custom Range</option>
         </select>
+        {dateFilter === 'custom' && (
+          <div className="flex items-center gap-2">
+            <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+            <span className="text-[10px] text-[#9B9BAD] font-bold">to</span>
+            <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+          </div>
+        )}
+        <select
+          value={targetRoleFilter}
+          onChange={(e) => setTargetRoleFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+        >
+          <option value="">All Roles</option>
+          {positions.map(p => (
+            <option key={p.id} value={p.title}>{p.title}</option>
+          ))}
+        </select>
+        {(dateFilter !== 'all' || targetRoleFilter) && (
+          <button
+            onClick={() => { setDateFilter('all'); setTargetRoleFilter(''); setCustomStartDate(''); setCustomEndDate(''); }}
+            className="text-xs font-semibold text-[#1B4DA0] hover:underline"
+          >
+            Reset Filters
+          </button>
+        )}
       </div>
 
       {/* Kanban / Table Content Area */}

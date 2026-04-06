@@ -220,6 +220,11 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
   // ── Pipeline Status Filter ──
   const [filterPipelineStatus, setFilterPipelineStatus] = useState('all'); // 'all' | 'pending' | 'hold' | 'approved' | 'rejected'
 
+  // ── Date Filter ──
+  const [filterDate, setFilterDate] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+
   // ── Approve Modal ──
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [approveCandidateId, setApproveCandidateId] = useState(null);
@@ -555,7 +560,48 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     const matchesClient = filterClient === 'all' || c.client === filterClient;
     const matchesSource = filterSource === 'all' || c.source === filterSource;
     const matchesPipelineStatus = filterPipelineStatus === 'all' || (c.pipelineStatus || 'pending') === filterPipelineStatus;
-    return matchesSearch && matchesStage && matchesJob && matchesClient && matchesSource && matchesPipelineStatus;
+
+    // Date filter
+    let matchesDate = true;
+    if (filterDate !== 'all' && c.appliedDate) {
+      const candidateDate = new Date(c.appliedDate);
+      const now = new Date();
+      if (filterDate === 'today') {
+        const todayStr = now.toISOString().split('T')[0];
+        matchesDate = c.appliedDate === todayStr;
+      } else if (filterDate === 'week') {
+        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+        matchesDate = candidateDate >= weekStart && candidateDate <= weekEnd;
+      } else if (filterDate === 'prev-week') {
+        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() - 7); weekStart.setHours(0,0,0,0);
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+        matchesDate = candidateDate >= weekStart && candidateDate <= weekEnd;
+      } else if (filterDate === 'month') {
+        matchesDate = candidateDate.getMonth() === now.getMonth() && candidateDate.getFullYear() === now.getFullYear();
+      } else if (filterDate === 'prev-month') {
+        const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        const prevMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        matchesDate = candidateDate.getMonth() === prevMonth && candidateDate.getFullYear() === prevMonthYear;
+      } else if (filterDate === 'quarter') {
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const candidateQuarter = Math.floor(candidateDate.getMonth() / 3);
+        matchesDate = candidateQuarter === currentQuarter && candidateDate.getFullYear() === now.getFullYear();
+      } else if (filterDate === 'prev-quarter') {
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+        const prevQuarterYear = currentQuarter === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        const candidateQuarter = Math.floor(candidateDate.getMonth() / 3);
+        matchesDate = candidateQuarter === prevQuarter && candidateDate.getFullYear() === prevQuarterYear;
+      } else if (filterDate === 'year') {
+        matchesDate = candidateDate.getFullYear() === now.getFullYear();
+      } else if (filterDate === 'custom') {
+        if (customStartDate) matchesDate = candidateDate >= new Date(customStartDate);
+        if (customEndDate && matchesDate) matchesDate = candidateDate <= new Date(customEndDate + 'T23:59:59');
+      }
+    }
+
+    return matchesSearch && matchesStage && matchesJob && matchesClient && matchesSource && matchesPipelineStatus && matchesDate;
   }).sort((a, b) => {
     let cmp = 0;
     if (sortBy === 'name') cmp = (a.name || '').localeCompare(b.name || '');
@@ -574,6 +620,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     filterJob !== 'all',
     filterClient !== 'all',
     filterSource !== 'all',
+    filterDate !== 'all',
     sortBy !== 'date',
     sortOrder !== 'desc',
   ].filter(Boolean).length;
@@ -2718,6 +2765,9 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   setFilterStage('all');
                   setFilterPipelineStatus('all');
                   setFilterJob('all');
+                  setFilterDate('all');
+                  setCustomStartDate('');
+                  setCustomEndDate('');
                   setSortBy('date');
                   setSortOrder('desc');
                   setSearchTerm('');
@@ -2737,7 +2787,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                 className={`w-full rounded-xl border py-3 pl-12 pr-4 text-sm transition-all focus:ring-1 focus:ring-[#1E88E5]/50 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               <div className="relative min-w-[140px]">
                 <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Position</label>
                 <select value={filterJob} onChange={(e) => setFilterJob(e.target.value)}
@@ -2747,6 +2797,39 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                 </select>
                 <FiChevronDown className={`absolute right-3 top-[38px] w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
               </div>
+
+              <div className="relative min-w-[140px]">
+                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Date</label>
+                <select value={filterDate} onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
+                  className={`appearance-none w-full rounded-xl border px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
+                  <option value="all">All Dates</option>
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="prev-week">Previous Week</option>
+                  <option value="month">This Month</option>
+                  <option value="prev-month">Previous Month</option>
+                  <option value="quarter">This Quarter</option>
+                  <option value="prev-quarter">Previous Quarter</option>
+                  <option value="year">This Year</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+                <FiChevronDown className={`absolute right-3 top-[38px] w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+              </div>
+
+              {filterDate === 'custom' && (
+                <>
+                  <div className="relative min-w-[130px]">
+                    <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>From</label>
+                    <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
+                      className={`w-full rounded-xl border px-3 py-3 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`} />
+                  </div>
+                  <div className="relative min-w-[130px]">
+                    <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>To</label>
+                    <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
+                      className={`w-full rounded-xl border px-3 py-3 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`} />
+                  </div>
+                </>
+              )}
 
               <div className="relative min-w-[140px]">
                 <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Sort By</label>
@@ -2796,7 +2879,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     <option value="Referral">Referral</option>
                   </select>
                 </div>
-                <button onClick={() => { setFilterClient('all'); setFilterSource('all'); setFilterStage('all'); setFilterPipelineStatus('all'); setFilterJob('all'); setSortBy('date'); setSortOrder('desc'); setSearchTerm(''); }}
+                <button onClick={() => { setFilterClient('all'); setFilterSource('all'); setFilterStage('all'); setFilterPipelineStatus('all'); setFilterJob('all'); setFilterDate('all'); setCustomStartDate(''); setCustomEndDate(''); setSortBy('date'); setSortOrder('desc'); setSearchTerm(''); }}
                   className="text-xs text-[#1E88E5] font-semibold hover:underline">Clear all filters</button>
               </motion.div>
             )}

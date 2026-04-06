@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { toast } from "sonner";
-import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers, createDepartmentTask, getAllCandidates, assignResumesToPosition } from '../../../service/api';
+import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers, createDepartmentTask, getAllCandidates, assignResumesToPosition, distributeJobToPlatforms } from '../../../service/api';
 
 const STATUS_STYLES = {
   Open: "bg-emerald-50 text-emerald-700 border border-emerald-200",
@@ -555,7 +555,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     description: '',
     requirements: '',
     responsibilities: '',
-    roleType: ''
+    roleType: '',
+    postPlatforms: ['google_jobs', 'mabicons_website'],
   });
   const positionDeadlineInputRef = useRef(null);
 
@@ -903,6 +904,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         deadline: newJobForm.deadline || undefined,
         roleType: newJobForm.roleType,
         departmentTeamId,
+        postPlatforms: newJobForm.postPlatforms || [],
       };
 
       // FINAL BRUTE-FORCE CLEANUP: Remove ANY mock IDs or invalid UUID strings
@@ -944,6 +946,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         postedByEmail: created.postedByEmail || '',
       };
       setJobs(prev => [newJob, ...prev]);
+
+      // Distribute to selected platforms
+      const platforms = newJobForm.postPlatforms || [];
+      if (platforms.length > 0 && created._id) {
+        try {
+          await distributeJobToPlatforms(created._id, platforms);
+          toast.success(`Job posted to ${platforms.length} platform(s)`);
+        } catch (distErr) {
+          console.error('Distribution error:', distErr);
+          toast.error('Job created but platform distribution failed');
+        }
+      }
     } catch (error) {
       console.error('Backend create failed:', error);
       alert(error?.message || error?.error || 'Position create failed. Please check required fields and try again.');
@@ -1094,28 +1108,55 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     const matchesPosition = filterPosition === 'all' || job.status === filterPosition;
     
     let matchesDate = true;
-    if (filterDate !== 'all' && job.deadline) {
-      const deadlineDate = new Date(job.deadline);
-      const now = new Date();
-      if (filterDate === 'week') {
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
-        weekStart.setHours(0,0,0,0);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        weekEnd.setHours(23,59,59,999);
-        matchesDate = deadlineDate >= weekStart && deadlineDate <= weekEnd;
-      } else if (filterDate === 'month') {
-        matchesDate = deadlineDate.getMonth() === now.getMonth() && deadlineDate.getFullYear() === now.getFullYear();
-      } else if (filterDate === 'quarter') {
-        const currentQuarter = Math.floor(now.getMonth() / 3);
-        const deadlineQuarter = Math.floor(deadlineDate.getMonth() / 3);
-        matchesDate = deadlineQuarter === currentQuarter && deadlineDate.getFullYear() === now.getFullYear();
-      } else if (filterDate === 'year') {
-        matchesDate = deadlineDate.getFullYear() === now.getFullYear();
-      } else if (filterDate === 'custom') {
-        if (customStartDate) matchesDate = deadlineDate >= new Date(customStartDate);
-        if (customEndDate && matchesDate) matchesDate = deadlineDate <= new Date(customEndDate + 'T23:59:59');
+    if (filterDate !== 'all') {
+      const dateStr = job.postedDate || job.deadline || job.createdAt;
+      if (!dateStr) {
+        matchesDate = false;
+      } else {
+        const jobDate = new Date(dateStr);
+        const now = new Date();
+        if (filterDate === 'today') {
+          const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+          const todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
+          matchesDate = jobDate >= todayStart && jobDate <= todayEnd;
+        } else if (filterDate === 'week') {
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay());
+          weekStart.setHours(0,0,0,0);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          weekEnd.setHours(23,59,59,999);
+          matchesDate = jobDate >= weekStart && jobDate <= weekEnd;
+        } else if (filterDate === 'prev-week') {
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay() - 7);
+          weekStart.setHours(0,0,0,0);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          weekEnd.setHours(23,59,59,999);
+          matchesDate = jobDate >= weekStart && jobDate <= weekEnd;
+        } else if (filterDate === 'month') {
+          matchesDate = jobDate.getMonth() === now.getMonth() && jobDate.getFullYear() === now.getFullYear();
+        } else if (filterDate === 'prev-month') {
+          const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+          const prevMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+          matchesDate = jobDate.getMonth() === prevMonth && jobDate.getFullYear() === prevMonthYear;
+        } else if (filterDate === 'quarter') {
+          const currentQuarter = Math.floor(now.getMonth() / 3);
+          const jobQuarter = Math.floor(jobDate.getMonth() / 3);
+          matchesDate = jobQuarter === currentQuarter && jobDate.getFullYear() === now.getFullYear();
+        } else if (filterDate === 'prev-quarter') {
+          const currentQuarter = Math.floor(now.getMonth() / 3);
+          const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+          const prevQuarterYear = currentQuarter === 0 ? now.getFullYear() - 1 : now.getFullYear();
+          const jobQuarter = Math.floor(jobDate.getMonth() / 3);
+          matchesDate = jobQuarter === prevQuarter && jobDate.getFullYear() === prevQuarterYear;
+        } else if (filterDate === 'year') {
+          matchesDate = jobDate.getFullYear() === now.getFullYear();
+        } else if (filterDate === 'custom') {
+          if (customStartDate) matchesDate = jobDate >= new Date(customStartDate);
+          if (customEndDate && matchesDate) matchesDate = jobDate <= new Date(customEndDate + 'T23:59:59');
+        }
       }
     }
     return matchesSearch && matchesClient && matchesPosition && matchesDate;
@@ -1382,6 +1423,47 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] resize-none"
                         />
                       </div>
+
+                      {/* Auto-Post to Job Platforms */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] pl-1 mb-3 flex items-center gap-2">
+                          <Globe size={14} /> Post to Job Platforms
+                        </label>
+                        <div className="space-y-2">
+                          {[
+                            { key: 'google_jobs', label: 'Google Jobs', desc: 'Auto-index via structured data', icon: '🔍' },
+                            { key: 'mabicons_website', label: 'Mabicons Website', desc: 'mabicons.com/careers', icon: '🌐' },
+                            { key: 'linkedin', label: 'LinkedIn', desc: 'Post via LinkedIn Jobs API', icon: '💼' },
+                            { key: 'indeed', label: 'Indeed', desc: 'Free job posting via XML feed', icon: '📋' },
+                            { key: 'jooble', label: 'Jooble', desc: 'Free job aggregator', icon: '🔎' },
+                            { key: 'adzuna', label: 'Adzuna', desc: 'Free job board distribution', icon: '📢' },
+                          ].map(platform => {
+                            const isChecked = (newJobForm.postPlatforms || []).includes(platform.key);
+                            return (
+                              <label key={platform.key} className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all border ${isChecked ? 'bg-blue-50/50 border-[#1B4DA0]/20' : 'bg-[#FAFAF8] border-transparent hover:bg-[#F0F2FF]'}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => {
+                                    setNewJobForm(f => ({
+                                      ...f,
+                                      postPlatforms: isChecked
+                                        ? f.postPlatforms.filter(p => p !== platform.key)
+                                        : [...(f.postPlatforms || []), platform.key]
+                                    }));
+                                  }}
+                                  className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0]/30"
+                                />
+                                <span className="text-lg">{platform.icon}</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-bold text-[#1A1A2E]">{platform.label}</p>
+                                  <p className="text-[10px] text-[#9B9BAD]">{platform.desc}</p>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -1534,22 +1616,15 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               </div>
 
               {/* Status Filter */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Filter size={14} className="text-[#9B9BAD]" />
-                {["all", "Open", "On Hold"].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setFilterPosition(s)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
-                      filterPosition === s
-                        ? "bg-[#1A1A2E] text-white"
-                        : "bg-[#F4F3EF] text-[#6B6B7E] hover:bg-[#ECEAE5]"
-                    }`}
-                  >
-                    {s === 'all' ? 'All' : s}
-                  </button>
-                ))}
-              </div>
+              <select
+                value={filterPosition}
+                onChange={(e) => setFilterPosition(e.target.value)}
+                className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+              >
+                <option value="all">All Status</option>
+                <option value="Open">Open</option>
+                <option value="On Hold">On Hold</option>
+              </select>
 
               {/* Client Filter Dropdown */}
               <select
@@ -1570,11 +1645,15 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
               >
                 <option value="all">All Dates</option>
+                <option value="today">Today</option>
                 <option value="week">This Week</option>
+                <option value="prev-week">Previous Week</option>
                 <option value="month">This Month</option>
+                <option value="prev-month">Previous Month</option>
                 <option value="quarter">This Quarter</option>
+                <option value="prev-quarter">Previous Quarter</option>
                 <option value="year">This Year</option>
-                <option value="custom">Custom</option>
+                <option value="custom">Custom Range</option>
               </select>
               {filterDate === 'custom' && (
                 <div className="flex items-center gap-2">

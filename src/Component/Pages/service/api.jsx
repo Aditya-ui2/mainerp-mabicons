@@ -2251,6 +2251,16 @@ export const getOfferCandidateSuggestions = async (search) => {
   }
 };
 
+export const deleteOffer = async (candidateId) => {
+  try {
+    const response = await axiosInstance.delete(`/recruitment/offers/${candidateId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete offer:', error);
+    throw error.response?.data || { message: 'Failed to delete offer' };
+  }
+};
+
 // Update resume details
 export const updateResumeDetails = async (resumeId, data) => {
   try {
@@ -2816,6 +2826,23 @@ export const createRecruitmentPosition = async (positionData) => {
   } catch (error) {
     console.error('Failed to create position:', error);
     throw error.response?.data || { message: 'Failed to create position' };
+  }
+};
+
+// Distribute job to external platforms
+export const distributeJobToPlatforms = async (positionId, platforms) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post(`/recruitment/positions/${positionId}/distribute`, { platforms }, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to distribute job:', error);
+    throw error.response?.data || { message: 'Failed to distribute job to platforms' };
   }
 };
 

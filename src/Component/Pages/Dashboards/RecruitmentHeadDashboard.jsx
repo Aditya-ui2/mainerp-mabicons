@@ -1211,63 +1211,17 @@ const RecruitmentHeadDashboard = () => {
     }
   };
 
-  // Helper for dynamic Pipeline Chart data
+  // Helper for dynamic Pipeline Chart data - uses real API stats
   const getPipelineChartData = () => {
-    // Base data based on Team Filter
-    let baseData = [];
-    switch (teamFilter) {
-      case 'Manju':
-        baseData = [
-          { name: 'PENDING', value: 100, color: '#8B5CF6' },
-          { name: 'APPROVED', value: 60, color: '#F59E0B' },
-          { name: 'REJECTED', value: 40, color: '#EE4266' },
-        ];
-        break;
-      case 'Jyoti':
-        baseData = [
-          { name: 'PENDING', value: 110, color: '#8B5CF6' },
-          { name: 'APPROVED', value: 50, color: '#F59E0B' },
-          { name: 'REJECTED', value: 30, color: '#EE4266' },
-        ];
-        break;
-      case 'Priyanshi':
-        baseData = [
-          { name: 'PENDING', value: 90, color: '#8B5CF6' },
-          { name: 'APPROVED', value: 70, color: '#F59E0B' },
-          { name: 'REJECTED', value: 20, color: '#EE4266' },
-        ];
-        break;
-      default:
-        // All Team
-        baseData = [
-          { name: 'PENDING', value: 100, color: '#8B5CF6' },
-          { name: 'APPROVED', value: 60, color: '#F59E0B' },
-          { name: 'REJECTED', value: 40, color: '#EE4266' },
-        ];
-    }
+    const pending = (stats.totalCandidates || 0) - (stats.selected || 0) - (stats.rejectedOffers || 0);
+    const approved = stats.selected || 0;
+    const rejected = stats.rejectedOffers || 0;
 
-    // Apply Client Filter Modifiers (Mock Logic)
-    if (clientFilter !== 'All Client') {
-      const clientModifiers = {
-        'TCS': { pending: 1.2, approved: 0.8, rejected: 1.0 },
-        'Infosys': { pending: 0.9, approved: 1.2, rejected: 0.9 },
-        'Wipro': { pending: 1.0, approved: 1.0, rejected: 1.5 },
-        'HCL': { pending: 1.1, approved: 1.1, rejected: 0.8 }
-      };
-
-      const mod = clientModifiers[clientFilter] || { pending: 1.0, approved: 1.0, rejected: 1.0 };
-
-      return baseData.map(item => ({
-        ...item,
-        value: Math.round(item.value * (
-          item.name === 'PENDING' ? mod.pending :
-            item.name === 'APPROVED' ? mod.approved :
-              mod.rejected
-        ))
-      }));
-    }
-
-    return baseData;
+    return [
+      { name: 'PENDING', value: Math.max(pending, 0), color: '#8B5CF6' },
+      { name: 'APPROVED', value: approved, color: '#F59E0B' },
+      { name: 'REJECTED', value: rejected, color: '#EE4266' },
+    ];
   };
 
   const buildDateFilterParams = (filter = dateFilter) => {

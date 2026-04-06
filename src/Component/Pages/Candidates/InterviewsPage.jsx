@@ -20,6 +20,9 @@ export default function InterviewsPage() {
   const [editMode, setEditMode] = useState(false);
   const [editInterview, setEditInterview] = useState(null);
   const [filter, setFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   
   // New Appointment / Scheduler state
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -227,13 +230,52 @@ export default function InterviewsPage() {
 
   const filteredInterviews = useMemo(() => {
     return interviews.filter(i => {
-      if (filter === "All") return true;
-      if (filter === "Today") return i.date === new Date().toISOString().split('T')[0];
-      if (filter === "Video") return i.type === "Video";
-      if (filter === "Pending") return i.feedbackStatus === "Pending" && i.status === "Completed";
-      return true;
+      // Status/type filter
+      let matchesFilter = true;
+      if (filter === "Today") matchesFilter = i.date === new Date().toISOString().split('T')[0];
+      else if (filter === "Video") matchesFilter = i.type === "Video";
+      else if (filter === "Pending") matchesFilter = i.feedbackStatus === "Pending" && i.status === "Completed";
+
+      // Date filter
+      let matchesDate = true;
+      if (dateFilter !== "all" && i.date) {
+        const interviewDate = new Date(i.date);
+        const now = new Date();
+        if (dateFilter === "today") {
+          matchesDate = i.date === now.toISOString().split('T')[0];
+        } else if (dateFilter === "week") {
+          const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+          const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+          matchesDate = interviewDate >= weekStart && interviewDate <= weekEnd;
+        } else if (dateFilter === "prev-week") {
+          const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() - 7); weekStart.setHours(0,0,0,0);
+          const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+          matchesDate = interviewDate >= weekStart && interviewDate <= weekEnd;
+        } else if (dateFilter === "month") {
+          matchesDate = interviewDate.getMonth() === now.getMonth() && interviewDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === "prev-month") {
+          const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+          const prevMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+          matchesDate = interviewDate.getMonth() === prevMonth && interviewDate.getFullYear() === prevMonthYear;
+        } else if (dateFilter === "quarter") {
+          const q = Math.floor(now.getMonth() / 3);
+          matchesDate = Math.floor(interviewDate.getMonth() / 3) === q && interviewDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === "prev-quarter") {
+          const currentQ = Math.floor(now.getMonth() / 3);
+          const prevQ = currentQ === 0 ? 3 : currentQ - 1;
+          const prevQYear = currentQ === 0 ? now.getFullYear() - 1 : now.getFullYear();
+          matchesDate = Math.floor(interviewDate.getMonth() / 3) === prevQ && interviewDate.getFullYear() === prevQYear;
+        } else if (dateFilter === "year") {
+          matchesDate = interviewDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === "custom") {
+          if (customStartDate) matchesDate = interviewDate >= new Date(customStartDate);
+          if (customEndDate && matchesDate) matchesDate = interviewDate <= new Date(customEndDate + 'T23:59:59');
+        }
+      }
+
+      return matchesFilter && matchesDate;
     });
-  }, [interviews, filter]);
+  }, [interviews, filter, dateFilter, customStartDate, customEndDate]);
 
   // Dynamically generate unique interview dates for the timeline
   const interviewDates = useMemo(() => {
@@ -314,18 +356,53 @@ export default function InterviewsPage() {
       </div>
 
       {/* Refined Filters Bar */}
-      <div className="flex items-center gap-1.5 mb-8 bg-white p-1 rounded-xl border border-[#F4F3EF] w-fit shadow-xs">
-        {["All", "Today", "Video", "Pending"].map((f) => (
+      <div className="flex items-center gap-3 mb-8 flex-wrap">
+        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#F4F3EF] w-fit shadow-xs">
+          {["All", "Today", "Video", "Pending"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                filter === f ? "bg-[#1A1A2E] text-white" : "text-[#9B9BAD] hover:text-[#1A1A2E]"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+        <select
+          value={dateFilter}
+          onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+        >
+          <option value="all">All Dates</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="prev-week">Previous Week</option>
+          <option value="month">This Month</option>
+          <option value="prev-month">Previous Month</option>
+          <option value="quarter">This Quarter</option>
+          <option value="prev-quarter">Previous Quarter</option>
+          <option value="year">This Year</option>
+          <option value="custom">Custom Range</option>
+        </select>
+        {dateFilter === 'custom' && (
+          <div className="flex items-center gap-2">
+            <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+            <span className="text-[10px] text-[#9B9BAD] font-bold">to</span>
+            <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+          </div>
+        )}
+        {(dateFilter !== 'all' || filter !== 'All') && (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-              filter === f ? "bg-[#1A1A2E] text-white" : "text-[#9B9BAD] hover:text-[#1A1A2E]"
-            }`}
+            onClick={() => { setDateFilter('all'); setFilter('All'); setCustomStartDate(''); setCustomEndDate(''); }}
+            className="text-xs font-semibold text-[#1B4DA0] hover:underline"
           >
-            {f}
+            Reset Filters
           </button>
-        ))}
+        )}
       </div>
 
       {/* Refined Timeline by Date */}
