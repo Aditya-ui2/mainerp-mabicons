@@ -1,49 +1,251 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  FiRefreshCw,
-  FiChevronDown,
-  FiDownload,
-  FiEye,
-  FiStar,
-  FiFileText,
-  FiFile,
-  FiX,
-  FiLoader,
-  FiDatabase,
-  FiClock,
-  FiCheckCircle,
-  FiUsers,
-  FiArrowLeft,
-  FiUpload,
-} from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Search, Filter, Download, UserPlus, FileText, CheckCircle2, ChevronRight,
+  Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye
+} from 'lucide-react';
+import { toast } from "sonner";
 import {
   getResumeBankStats,
   getResumeRoleTypes,
   getResumeBankResumes,
   getResumeDetails,
-  updateResumeDetails,
-  syncResumesFromSharePoint,
-  syncResumesFromSharePointDrive,
   toggleStarResumes,
-  bulkUpdateResumeStatus,
-  assignResumesToPosition,
   getResumeDownloadUrl,
   uploadResumes,
+  assignResumesToPosition,
+  getAllRecruitmentPositions,
+  getAllClients,
 } from '../../../service/api';
 
+// --- Helper Functions ---
+const getInitials = (name) => {
+  if (!name) return '??';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
+
+// --- Sub-Components (Moved outside to prevent re-mounting "blinking") ---
+
+const StatusBadge = ({ status }) => {
+  const styles = {
+    'Available': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    'Shortlisted': 'bg-blue-50 text-blue-600 border-blue-100',
+    'Contacted': 'bg-amber-50 text-amber-600 border-amber-100',
+    'Hired': 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    'Rejected': 'bg-rose-50 text-rose-600 border-rose-100',
+    'Not Interested': 'bg-slate-50 text-slate-600 border-slate-100',
+    'default': 'bg-slate-50 text-slate-500 border-slate-100'
+  };
+  const currentStyle = styles[status] || styles['default'];
+  return (
+    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${currentStyle}`}>
+      {status || 'Unknown'}
+    </span>
+  );
+};
+
+const ResumeCard = ({ resume, isDarkMode, onViewDetails, onPreviewResume }) => (
+  <div 
+    onClick={() => onViewDetails(resume.id)}
+    className="group bg-white dark:bg-slate-800 p-6 rounded-[32px] border border-transparent hover:border-[#F4F3EF] dark:hover:border-slate-700 shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden relative"
+  >
+    <div className="flex flex-wrap items-center justify-between gap-8 relative z-10">
+      <div className="flex items-center gap-6 flex-1 min-w-[300px]">
+        <div className="w-16 h-16 rounded-[22px] bg-[#EEF2FB] dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0] dark:text-blue-400 font-bold text-xl shadow-sm border border-[#EEF2FB] dark:border-slate-700 group-hover:scale-105 transition-transform duration-500">
+          {getInitials(resume.candidateName || resume.fileName)}
+        </div>
+        <div className="flex-1 flex flex-col items-start">
+          <div className="flex items-center gap-2 mb-0.5">
+            <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white group-hover:text-[#1B4DA0] dark:group-hover:text-blue-400 transition-colors">
+              {resume.candidateName || resume.fileName.split('.')[0]}
+            </h3>
+            <CheckCircle2 size={16} className="text-emerald-500" />
+          </div>
+          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">{resume.roleType || 'General Profile'}</p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {(resume.skills || ['React', 'TypeScript', 'Node.js']).map((skill, i) => (
+              <span key={i} className="px-3 py-1 bg-[#FAFAF8] dark:bg-slate-900 text-[#1A1A2E]/60 dark:text-slate-400 text-[10px] font-bold rounded-lg border border-[#F4F3EF] dark:border-slate-700 uppercase tracking-wider">{skill}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Removed middle section as these are not actual dedicated tenant/location fields in the DB schema for now */}
+
+      <div className="flex items-center gap-3">
+        <button 
+          onClick={(e) => { e.stopPropagation(); onPreviewResume(resume.id, resume.fileName); }}
+          className="flex items-center gap-2 px-6 py-3 bg-[#F4F3EF] dark:bg-slate-700 text-[#6B6B7E] dark:text-slate-300 rounded-2xl text-xs font-bold hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+        >
+          <FileText size={16} />
+          View CV
+        </button>
+        <div className="w-12 h-12 rounded-2xl bg-[#F4F3EF] dark:bg-slate-700 flex items-center justify-center text-[#9B9BAD] dark:text-slate-400 group-hover:bg-[#1B4DA0] group-hover:text-white transition-all">
+           <ChevronRight size={20} />
+        </div>
+      </div>
+    </div>
+    
+    {/* Design Element */}
+    <div className="absolute top-0 right-0 w-24 h-24 bg-[#1B4DA0]/5 rounded-bl-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700 opacity-0 group-hover:opacity-100" />
+  </div>
+);
+
+const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onUpdatePosition }) => {
+  if (!resume) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden pointer-events-none">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm pointer-events-auto" />
+      <motion.div
+        initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className={`relative w-full max-w-2xl h-full shadow-2xl flex flex-col pointer-events-auto ${isDarkMode ? 'bg-slate-900 border-l border-slate-800' : 'bg-white border-l border-[#F4F3EF]'}`}
+      >
+        <div className={`p-8 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800' : 'border-[#F4F3EF]'}`}>
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <StatusBadge status={resume.status} />
+              {resume.isStarred && <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded-full uppercase">Top Choice</span>}
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight font-syne">{resume.candidateName || resume.fileName.split('.')[0]}</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={onClose} className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${isDarkMode ? 'text-slate-400 border-slate-700 hover:bg-slate-800' : 'text-[#6B6B7E] border-[#F4F3EF] hover:text-[#1A1A2E] hover:bg-[#F4F3EF]'}`}>
+              <X size={24} />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+           <div className="grid grid-cols-2 gap-6">
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><User size={13} /> Email Address</p>
+                <p className="text-sm font-bold truncate">{resume.email || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><Briefcase size={13} /> Contact Number</p>
+                <p className="text-sm font-bold">{resume.phone || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Target Role</p>
+                <p className="text-sm font-bold">{resume.roleType || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Company</p>
+                <p className="text-sm font-bold">{resume.currentCompany || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Experience</p>
+                <p className="text-sm font-bold">{resume.experience || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Location</p>
+                <p className="text-sm font-bold">{resume.currentLocation || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Salary</p>
+                <p className="text-sm font-bold">{resume.currentSalary || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Expected Salary</p>
+                <p className="text-sm font-bold">{resume.expectedSalary || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Notice Period</p>
+                <p className="text-sm font-bold">{resume.noticePeriod || 'N/A'}</p>
+              </div>
+              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Preferred Location</p>
+                <p className="text-sm font-bold">{resume.preferredLocation || 'N/A'}</p>
+              </div>
+           </div>
+           <div className="space-y-4">
+             <h3 className={`text-xs font-bold uppercase tracking-[2px] ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>Expertise Stack</h3>
+             <div className="flex flex-wrap gap-2">
+               {(resume.skills || ['React', 'Node.js', 'Typescript', 'AWS']).map((skill, i) => (
+                 <span key={i} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-[#F4F3EF] text-[#1B4DA0]'}`}>{skill}</span>
+               ))}
+             </div>
+           </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const AssignPositionModal = ({ isOpen, onClose, positions, onConfirm, isAssigning, selectedId, onSelect, isDarkMode }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm pointer-events-auto" />
+       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className={`relative w-full max-w-md rounded-[32px] p-8 shadow-2xl overflow-hidden pointer-events-auto ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-[#1A1A2E]'}`}>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold font-syne">Assign to Position</h3>
+            <button onClick={onClose} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}><X size={20} /></button>
+          </div>
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            {positions.length === 0 ? (
+              <p className="text-center py-10 text-slate-500 font-medium text-sm">No open positions found</p>
+            ) : positions.map(pos => (
+              <div 
+                key={pos.id} 
+                onClick={() => onSelect(pos.id)}
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedId === pos.id ? 'border-[#1B4DA0] bg-[#1B4DA0]/5' : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-[#F4F3EF] hover:border-slate-300')}`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-bold text-sm">{pos.title}</p>
+                    <p className={`text-[10px] font-bold uppercase mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{pos.location} • {pos.type}</p>
+                  </div>
+                  {selectedId === pos.id && <CheckCircle2 size={16} className="text-[#1B4DA0]" />}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button 
+            disabled={isAssigning || !selectedId}
+            onClick={onConfirm}
+            className="w-full h-14 bg-[#1B4DA0] text-white rounded-2xl mt-8 font-bold text-sm shadow-xl shadow-blue-500/20 hover:bg-[#153e82] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+          >
+            {isAssigning ? <RefreshCw className="animate-spin" size={18} /> : <Briefcase size={18} />} Confirm Assignment
+          </button>
+       </motion.div>
+    </div>
+  );
+};
+
+// --- Main Page Component ---
+
 const ResumeBankTab = () => {
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
+  
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
   // State
   const [resumes, setResumes] = useState([]);
   const [stats, setStats] = useState(null);
   const [roleTypes, setRoleTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [syncSource, setSyncSource] = useState(null);
   const [showSyncMenu, setShowSyncMenu] = useState(false);
-  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
-  const [selectedResumes, setSelectedResumes] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, totalPages: 0 });
   const [selectedResume, setSelectedResume] = useState(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showDetailDrawer, setShowDetailDrawer] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewFileName, setPreviewFileName] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -52,8 +254,14 @@ const ResumeBankTab = () => {
   const [pendingUploadFiles, setPendingUploadFiles] = useState([]);
   const [selectedUploadRoleType, setSelectedUploadRoleType] = useState('');
   const [customUploadRoleType, setCustomUploadRoleType] = useState('');
-  const [uploadDialog, setUploadDialog] = useState(null);
   
+  // Assignment Modal State
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [allPositions, setAllPositions] = useState([]);
+  const [assigningResumeId, setAssigningResumeId] = useState(null);
+  const [selectedPositionId, setSelectedPositionId] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [allClients, setAllClients] = useState([]);
   // Filters
   const [filters, setFilters] = useState({
     search: '',
@@ -61,22 +269,9 @@ const ResumeBankTab = () => {
     status: '',
     isStarred: '',
     sortBy: 'createdAt',
-    sortOrder: 'desc'
+    sortOrder: 'desc',
+    clientId: ''
   });
-
-  const statusOptions = [
-    'Available', 'Shortlisted', 'Contacted', 'Interview Scheduled', 'Hired', 'Rejected', 'Not Interested'
-  ];
-
-  const statusColors = {
-    'Available': { backgroundColor: '#dcfce7', color: '#166534' },
-    'Shortlisted': { backgroundColor: '#dbeafe', color: '#1e40af' },
-    'Contacted': { backgroundColor: '#fef9c3', color: '#854d0e' },
-    'Interview Scheduled': { backgroundColor: '#ede9fe', color: '#6b21a8' },
-    'Hired': { backgroundColor: '#d1fae5', color: '#065f46' },
-    'Rejected': { backgroundColor: '#fee2e2', color: '#991b1b' },
-    'Not Interested': { backgroundColor: '#f3f4f6', color: '#374151' }
-  };
 
   // Fetch data
   const fetchResumes = useCallback(async () => {
@@ -117,25 +312,42 @@ const ResumeBankTab = () => {
     }
   };
 
+  const fetchPositions = async () => {
+    try {
+      const response = await getAllRecruitmentPositions({ status: 'Open' });
+      setAllPositions(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch positions:', error);
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const response = await getAllClients();
+      // The API returns { success: true, data: { count, clients: [...] } }
+      const clientList = response.data?.clients || response?.clients || (Array.isArray(response) ? response : []);
+      setAllClients(clientList);
+    } catch (error) {
+      console.error('Failed to fetch clients:', error);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
     fetchRoleTypes();
+    fetchPositions();
+    fetchClients();
   }, []);
 
   useEffect(() => {
     fetchResumes();
-  }, [fetchResumes]);
-
-  // State for sync error message
-  const [syncError, setSyncError] = useState(null);
+  }, [filters, pagination.page, pagination.limit]);
 
   // Handlers
   const handleSync = async (source = 's3') => {
     try {
       setSyncing(true);
-      setSyncSource(source);
       setShowSyncMenu(false);
-      setSyncError(null);
       
       if (source === 'sharepoint') {
         await syncResumesFromSharePointDrive({});
@@ -143,47 +355,11 @@ const ResumeBankTab = () => {
         await syncResumesFromSharePoint({});
       }
       
-      await fetchStats();
-      await fetchRoleTypes();
-      await fetchResumes();
-      alert(`Resumes synced successfully from ${source === 'sharepoint' ? 'SharePoint' : 'AWS S3'}!`);
+      toast.success(`Successfully synced from ${source}`);
+      await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes()]);
     } catch (error) {
       console.error('Sync failed:', error);
-      
-      // Provide more user-friendly error messages
-      let errorMsg = error.message || 'Unknown error occurred';
-      
-      if (error.status === 404) {
-        errorMsg = `${source === 'sharepoint' ? 'SharePoint' : 'S3'} sync service not available. Please contact administrator.`;
-      } else if (error.status === 401 || error.status === 403) {
-        errorMsg = 'Authentication failed. Please refresh and try again.';
-      } else if (error.status === 'timeout') {
-        errorMsg = 'Sync operation timed out. Please try again with a smaller batch.';
-      } else if (error.status === 500) {
-        errorMsg = 'Server error. Please try again later or contact support.';
-      }
-      
-      setSyncError(errorMsg);
-      alert(`Sync failed: ${errorMsg}`);
-    } finally {
-      setSyncing(false);
-      setSyncSource(null);
-    }
-  };
-
-  const handleSyncRole = async (roleType) => {
-    try {
-      setSyncing(true);
-      setSyncError(null);
-      await syncResumesFromSharePoint({ roleType });
-      await fetchStats();
-      await fetchResumes();
-      alert(`Resumes for ${roleType} synced successfully!`);
-    } catch (error) {
-      console.error('Sync failed:', error);
-      const errorMsg = error.message || 'Unknown error occurred';
-      setSyncError(errorMsg);
-      alert('Failed to sync: ' + errorMsg);
+      toast.error('Sync failed');
     } finally {
       setSyncing(false);
     }
@@ -198,53 +374,60 @@ const ResumeBankTab = () => {
     }
   };
 
-  const handleBulkStar = async (isStarred) => {
-    if (selectedResumes.length === 0) return;
+  const handleUpdatePosition = (resumeId) => {
+    setAssigningResumeId(resumeId);
+    setSelectedPositionId('');
+    setShowAssignModal(true);
+  };
+
+  const handleConfirmAssign = async () => {
+    if (!selectedPositionId) {
+      toast.error("Please select a position");
+      return;
+    }
     try {
-      await toggleStarResumes(selectedResumes, isStarred);
-      setSelectedResumes([]);
+      setIsAssigning(true);
+      await assignResumesToPosition([assigningResumeId], selectedPositionId);
+      toast.success("Candidate successfully updated to position");
+      setShowAssignModal(false);
+      setShowDetailDrawer(false);
       fetchResumes();
     } catch (error) {
-      console.error('Failed to update:', error);
+      console.error('Assignment failed:', error);
+      toast.error(error.message || "Failed to update position");
+    } finally {
+      setIsAssigning(false);
     }
   };
 
-  const handleBulkStatus = async (status) => {
-    if (selectedResumes.length === 0) return;
-    try {
-      await bulkUpdateResumeStatus(selectedResumes, status);
-      setSelectedResumes([]);
-      fetchResumes();
-    } catch (error) {
-      console.error('Failed to update status:', error);
-    }
-  };
-
-  const handleDownload = async (resumeId) => {
-    try {
-      const response = await getResumeDownloadUrl(resumeId);
-      const link = document.createElement('a');
-      link.href = response.downloadUrl;
-      link.setAttribute('download', response.fileName || 'resume');
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Download failed:', error);
-      alert('Failed to get download link');
-    }
+  const handleResetFilters = () => {
+    setFilters({
+      search: '',
+      roleType: '',
+      status: '',
+      isStarred: '',
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      clientId: ''
+    });
+    // The fetchResumes is called by the useEffect [filters]
   };
 
   const handlePreviewResume = async (resumeId, fileName) => {
+    console.log('Previewing resume:', resumeId, fileName);
+    toast.info("Opening resume preview...");
     try {
       const response = await getResumeDownloadUrl(resumeId);
-      setPreviewUrl(response.downloadUrl);
-      setPreviewFileName(fileName || response.fileName || 'Resume');
-      setShowPreviewModal(true);
+      if (response && response.downloadUrl) {
+        setPreviewUrl(response.downloadUrl);
+        setPreviewFileName(fileName || response.fileName || 'Resume');
+        setShowPreviewModal(true);
+      } else {
+        toast.error("Could not retrieve preview URL");
+      }
     } catch (error) {
       console.error('Preview failed:', error);
-      alert('Failed to load resume preview');
+      toast.error(error.message || "Failed to load resume preview");
     }
   };
 
@@ -252,36 +435,10 @@ const ResumeBankTab = () => {
     try {
       const response = await getResumeDetails(resumeId);
       setSelectedResume(response.data);
-      setShowDetailModal(true);
+      setShowDetailDrawer(true);
     } catch (error) {
       console.error('Failed to fetch details:', error);
     }
-  };
-
-  const handleUpdateResume = async (resumeId, data) => {
-    try {
-      await updateResumeDetails(resumeId, data);
-      setShowDetailModal(false);
-      fetchResumes();
-    } catch (error) {
-      console.error('Failed to update:', error);
-    }
-  };
-
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedResumes(resumes.map(r => r.id));
-    } else {
-      setSelectedResumes([]);
-    }
-  };
-
-  const handleSelectResume = (resumeId) => {
-    setSelectedResumes(prev => 
-      prev.includes(resumeId) 
-        ? prev.filter(id => id !== resumeId)
-        : [...prev, resumeId]
-    );
   };
 
   const handleFilterChange = (key, value) => {
@@ -289,14 +446,9 @@ const ResumeBankTab = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
-  const handlePageChange = (newPage) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
-  };
-
   const handleUploadResumes = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-
     setPendingUploadFiles(files);
     setSelectedUploadRoleType(filters.roleType || '');
     setCustomUploadRoleType('');
@@ -309,17 +461,8 @@ const ResumeBankTab = () => {
       ? customUploadRoleType.trim()
       : selectedUploadRoleType.trim()) || '';
 
-    if (!pendingUploadFiles.length) {
-      setShowUploadModal(false);
-      return;
-    }
-
-    if (!resolvedRoleType) {
-      setUploadDialog({
-        type: 'error',
-        title: 'Role Type Required',
-        message: 'Please select or enter a role type before uploading.'
-      });
+    if (!pendingUploadFiles.length || !resolvedRoleType) {
+      toast.error("Please select a role type");
       return;
     }
 
@@ -330,878 +473,220 @@ const ResumeBankTab = () => {
       formData.append('roleType', resolvedRoleType);
 
       await uploadResumes(formData);
+      toast.success("Resumes uploaded successfully");
       await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes()]);
       setShowUploadModal(false);
-      setUploadDialog({
-        type: 'success',
-        title: 'Upload Complete',
-        message: `${pendingUploadFiles.length} resume(s) uploaded successfully for ${resolvedRoleType}.`
-      });
       setPendingUploadFiles([]);
-      setSelectedUploadRoleType('');
-      setCustomUploadRoleType('');
     } catch (error) {
-      setUploadDialog({
-        type: 'error',
-        title: 'Upload Failed',
-        message: error?.message || 'Failed to upload resumes.'
-      });
+      console.error('Upload failed:', error);
+      toast.error("Upload failed");
     } finally {
       setUploading(false);
     }
   };
 
-  const formatFileSize = (bytes) => {
-    if (!bytes) return '-';
-    const kb = bytes / 1024;
-    if (kb < 1024) return `${kb.toFixed(1)} KB`;
-    return `${(kb / 1024).toFixed(1)} MB`;
-  };
-
   return (
-    <div className="p-6 space-y-6" style={{ fontFamily: 'Calibri, sans-serif' }}>
-      {/* Sync Error Banner */}
-      {syncError && (
-        <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-800 flex items-center justify-center">
-              <FiX className="w-4 h-4 text-red-600 dark:text-red-300" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-red-800 dark:text-red-200">Sync Failed</p>
-              <p className="text-xs text-red-600 dark:text-red-300">{syncError}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleSync('s3')}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
-            >
-              Retry S3
-            </button>
-            <button
-              onClick={() => setSyncError(null)}
-              className="p-1.5 rounded-lg text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-800 transition-colors"
-            >
-              <FiX size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+    <div className={`p-6 lg:p-10 max-w-full min-h-screen transition-colors duration-500 text-left ${isDarkMode ? 'bg-[#0F172A]' : 'bg-[#FAFAF8]'}`}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
+        .font-syne { font-family: 'Syne', sans-serif; }
+        .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+      `}</style>
 
       {/* Header */}
-      <div className="flex justify-between items-center gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-11 h-11 rounded-xl 
-                          bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] 
-                          shadow-lg shadow-[#1E88E5]/30 dark:shadow-[#1E88E5]/30">
-            <FiDatabase className="w-5 h-5 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-br from-[#3FA9F5] to-[#0D47A1] bg-clip-text text-transparent">
+      <div className="mb-10 flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-[#1A1A2E] dark:text-white font-syne text-left">
             Resume Bank
           </h1>
+          <p className="text-[#9B9BAD] text-sm mt-2 font-medium tracking-wide text-left">Historical archive of {stats?.total || 0} vetted candidate profiles</p>
         </div>
-        <div className="flex items-center gap-2">
-          <label
-            className="px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer"
-            style={{ backgroundColor: uploading ? '#64748b' : '#0d9488', color: '#fff' }}
-          >
-            {uploading ? <FiLoader className="animate-spin" size={18} /> : <FiUpload size={18} />}
-            {uploading ? 'Uploading...' : 'Upload Resume'}
-            <input
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx"
-              onChange={handleUploadResumes}
-              disabled={uploading}
-              className="hidden"
-            />
+        <div className="flex gap-3">
+          <label className="cursor-pointer">
+            <div className="flex items-center gap-2 px-5 py-2.5 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+              <UserPlus size={18} /> Add Candidate
+            </div>
+            <input type="file" multiple accept=".pdf,.doc,.docx" onChange={handleUploadResumes} className="hidden" />
           </label>
-
-          <div className="relative">
-            {syncing ? (
-              <button disabled className="px-4 py-2 rounded-lg opacity-50 flex items-center gap-2" style={{ backgroundColor: '#1E88E5', color: '#fff' }}>
-                <FiLoader className="animate-spin" size={20} />
-                Syncing from {syncSource === 'sharepoint' ? 'SharePoint' : 'S3'}...
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setShowSyncMenu(!showSyncMenu)}
-                  className="px-4 py-2 rounded-lg flex items-center gap-2"
-                  style={{ backgroundColor: '#1E88E5', color: '#fff' }}
-                >
-                  <FiRefreshCw size={18} />
-                  Refresh Resumes
-                  <FiChevronDown size={16} />
-                </button>
-                {showSyncMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50">
-                    <button
-                      onClick={() => handleSync('s3')}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg flex items-center gap-3"
-                    >
-                      <span className="text-orange-500 text-lg">☁️</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-white">Sync from AWS S3</p>
-                        <p className="text-xs text-gray-500">Import from S3 bucket</p>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleSync('sharepoint')}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-lg flex items-center gap-3 border-t dark:border-gray-700"
-                    >
-                      <span className="text-blue-500 text-lg">📁</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-white">Sync from SharePoint</p>
-                        <p className="text-xs text-gray-500">Import from SharePoint drive</p>
-                      </div>
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
-          <div
-            className="relative overflow-hidden rounded-2xl p-5"
-            style={{
-              background: 'var(--bg-modal, #fff)',
-              border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.15)'
-            }}
+      {/* Sync Menu (If open) */}
+      <AnimatePresence>
+        {showSyncMenu && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            className={`mb-8 p-1 rounded-[22px] flex gap-1 border shadow-xl ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-[#F4F3EF]'}`}
           >
-            <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
-              <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)' }}></div>
-            </div>
-            <div className="relative flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Total Resumes</p>
-                <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  {stats.total?.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.3)' }}>
-                <FiDatabase size={20} color="#ffffff" />
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="relative overflow-hidden rounded-2xl p-5"
-            style={{
-              background: 'var(--bg-modal, #fff)',
-              border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.15)'
-            }}
-          >
-            <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
-              <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #3b82f6, #1E88E5)' }}></div>
-            </div>
-            <div className="relative flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Recently Added</p>
-                <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #3b82f6, #1E88E5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  {stats.recentlyAdded?.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #3b82f6, #1E88E5)', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}>
-                <FiClock size={20} color="#ffffff" />
-              </div>
-            </div>
-          </div>
-
-          {stats.byStatus && Object.entries(stats.byStatus).slice(0, 4).map(([status, count]) => (
-            <div
-              key={status}
-              className="relative overflow-hidden rounded-2xl p-5"
-              style={{
-                background: 'var(--bg-modal, #fff)',
-                border: '1px solid var(--border-color, #e5e7eb)',
-                boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.15)'
-              }}
+            <button 
+              onClick={() => handleSync('s3')}
+              className={`flex-1 p-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-[#FAFAF8] text-[#5B5B7E]'}`}
             >
-              <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
-                <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)' }}></div>
-              </div>
-              <div className="relative flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>{status}</p>
-                  <p className="text-3xl font-extrabold mt-1" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    {count?.toLocaleString()}
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)' }}>
-                  <FiCheckCircle size={20} color="#ffffff" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              <Database size={18} className="text-orange-500" /> Sync from AWS S3
+            </button>
+            <div className={`w-px h-8 self-center ${isDarkMode ? 'bg-slate-700' : 'bg-[#F4F3EF]'}`} />
+            <button 
+              onClick={() => handleSync('sharepoint')}
+              className={`flex-1 p-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-[#FAFAF8] text-[#5B5B7E]'}`}
+            >
+              <Share size={18} className="text-blue-500" /> Sync from SharePoint
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <input
-              type="text"
-              placeholder="Search by name, skills, role..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-          </div>
-          
-          <select
-            value={filters.roleType}
-            onChange={(e) => handleFilterChange('roleType', e.target.value)}
-            className="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+      {/* Control Bar */}
+      <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-2 w-full">
+        <div className="flex items-center gap-3 bg-[#F4F3EF] dark:bg-slate-900 rounded-2xl px-5 py-3 min-w-[300px] flex-[2]">
+          <Search size={18} className="text-[#9B9BAD]" />
+          <input 
+            type="text" 
+            value={filters.search}
+            onChange={(e) => handleFilterChange('search', e.target.value)}
+            placeholder="Search by name, expertise, or tech stack..." 
+            className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD] outline-none w-full font-bold" 
+          />
+        </div>
+        <div className="flex items-center gap-2 justify-end flex-initial">
+          <select 
+            value={filters.status}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+            className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#6B6B7E] dark:text-slate-400 rounded-xl px-4 py-3 border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
           >
-            <option value="">All Roles</option>
+            <option value="">Status (All)</option>
+            <option value="Available">Available</option>
+            <option value="Shortlisted">Shortlisted</option>
+            <option value="Contacted">Contacted</option>
+            <option value="Assigned">Assigned</option>
+            <option value="Hired">Hired</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+          <select 
+            value={filters.clientId}
+            onChange={(e) => handleFilterChange('clientId', e.target.value)}
+            className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#6B6B7E] dark:text-slate-400 rounded-xl px-4 py-3 border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
+          >
+            <option value="">Clients (All)</option>
+            {Array.isArray(allClients) && allClients.map(client => (
+              <option key={client.id} value={client.id}>{client.name}</option>
+            ))}
+          </select>
+          <select 
+            onChange={(e) => handleFilterChange('roleType', e.target.value)}
+            className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#6B6B7E] dark:text-slate-400 rounded-xl px-4 py-3 border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
+          >
+            <option value="">Roles (Global)</option>
             {roleTypes.map(role => (
               <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
             ))}
           </select>
+          <button 
+            onClick={handleResetFilters}
+            className="p-3 bg-[#1A1A2E] dark:bg-blue-600 rounded-xl text-white hover:bg-[#2A2A3E] dark:hover:bg-blue-700 transition-colors shadow-lg shadow-black/10 active:scale-95"
+            title="Reset Filters"
+          >
+            <Filter size={18} />
+          </button>
         </div>
       </div>
 
-      {/* Bulk Actions */}
-      {selectedResumes.length > 0 && (
-        <div className="bg-[#1E88E5]/10 dark:bg-[#1E88E5]/20 p-4 rounded-lg flex items-center justify-between">
-          <span className="text-[#1E88E5] dark:text-[#3FA9F5]">
-            {selectedResumes.length} resume(s) selected
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleBulkStar(true)}
-              className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-            >
-              ⭐ Star Selected
-            </button>
-            <select
-              onChange={(e) => e.target.value && handleBulkStatus(e.target.value)}
-              className="px-3 py-1 border rounded bg-white dark:bg-gray-700"
-              defaultValue=""
-            >
-              <option value="" disabled>Change Status</option>
-              {statusOptions.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-            <button
-              onClick={() => setSelectedResumes([])}
-              className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-            >
-              Clear Selection
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Resume Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-4 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedResumes.length === resumes.length && resumes.length > 0}
-                    onChange={handleSelectAll}
-                    className="rounded"
-                  />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Star</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">File Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Role Type</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Candidate</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Size</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {loading ? (
-                <tr>
-                  <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
-                    <svg className="animate-spin mx-auto" style={{ width: 32, height: 32, color: '#1E88E5' }} viewBox="0 0 24 24">
-                      <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    <p className="mt-2">Loading resumes...</p>
-                  </td>
-                </tr>
-              ) : resumes.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
-                    No resumes found. Click "Sync Resumes" to import from S3 or SharePoint.
-                  </td>
-                </tr>
-              ) : (
-                resumes.map((resume) => (
-                  <tr key={resume.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedResumes.includes(resume.id)}
-                        onChange={() => handleSelectResume(resume.id)}
-                        className="rounded"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleToggleStar(resume.id, resume.isStarred)}
-                        className="hover:scale-110 transition-transform"
-                      >
-                        <FiStar size={18} style={{ color: resume.isStarred ? '#eab308' : '#9ca3af', fill: resume.isStarred ? '#eab308' : 'none' }} />
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {resume.fileType === 'pdf' ? <FiFileText size={18} style={{ color: '#ef4444' }} /> : <FiFile size={18} style={{ color: '#6b7280' }} />}
-                        <button
-                          onClick={() => handlePreviewResume(resume.id, resume.fileName)}
-                          className="text-sm text-[#1E88E5] dark:text-[#3FA9F5] hover:underline truncate max-w-[200px] text-left"
-                          title="Click to preview"
-                        >
-                          {resume.fileName}
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded text-sm">
-                        {resume.roleType}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm">
-                        <p className="font-medium text-gray-800 dark:text-white">
-                          {resume.candidateName || '-'}
-                        </p>
-                        {resume.email && (
-                          <p className="text-gray-500 text-xs">{resume.email}</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-1 rounded-full text-xs font-medium" style={statusColors[resume.status] || { backgroundColor: '#f3f4f6', color: '#374151' }}>
-                        {resume.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      {formatFileSize(resume.fileSize)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleDownload(resume.id)}
-                          className="p-1 rounded hover:opacity-80"
-                          title="Download"
-                        >
-                          <FiDownload size={18} style={{ color: '#1E88E5' }} />
-                        </button>
-                        <button
-                          onClick={() => handlePreviewResume(resume.id, resume.fileName)}
-                          className="p-1 rounded hover:opacity-80"
-                          title="Preview Resume"
-                        >
-                          <FiEye size={18} style={{ color: '#16a34a' }} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <p className="text-sm text-gray-500">
-              Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
-                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-1">
-                Page {pagination.page} of {pagination.totalPages}
-              </span>
-              <button
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page === pagination.totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+      {/* Profile Deck */}
+      <div className="grid grid-cols-1 gap-4 mb-20">
+        {loading ? (
+           <div className="flex flex-col items-center justify-center py-40 gap-4">
+              <div className="w-16 h-16 rounded-full border-4 border-[#1B4DA0] border-t-transparent animate-spin" />
+              <p className="text-xs font-bold uppercase tracking-widest text-[#9B9BAD]">Fetching Talent...</p>
+           </div>
+        ) : resumes.length === 0 ? (
+           <div className="flex flex-col items-center justify-center py-32 text-center text-[#9B9BAD]">
+              <Database size={40} className="mx-auto mb-4 opacity-20" />
+              <h3 className="text-xl font-bold mb-2 font-syne">No Profiles Found</h3>
+           </div>
+        ) : (
+           resumes.map(resume => (
+             <ResumeCard 
+               key={resume.id} 
+               resume={resume} 
+               isDarkMode={isDarkMode}
+               onViewDetails={handleViewDetails}
+               onPreviewResume={handlePreviewResume}
+             />
+           ))
         )}
       </div>
 
-      {/* Role Type Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-white mb-4">Roles Overview</h3>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {roleTypes.map(role => (
-                <div 
-                  key={role.name}
-                  className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer"
-                  onClick={() => handleFilterChange('roleType', filters.roleType === role.name ? '' : role.name)}
-                >
-                  <span className={`text-sm truncate ${filters.roleType === role.name ? 'font-semibold text-[#1E88E5]' : 'text-gray-700 dark:text-gray-300'}`}>
-                    {role.name}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
-                      {role.count}
-                    </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleSyncRole(role.name); }}
-                      title={`Sync ${role.name}`}
-                    >
-                      <FiRefreshCw size={14} style={{ color: '#1E88E5' }} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-white mb-4">Top Roles Distribution</h3>
-            <div className="space-y-3">
-              {stats?.topRoles?.slice(0, 5).map(role => {
-                const percentage = (role.count / stats.total) * 100;
-                return (
-                  <div key={role._id} className="flex items-center gap-3">
-                    <span className="w-32 text-sm text-gray-600 dark:text-gray-400 truncate">{role._id}</span>
-                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-                      <div 
-                        className="bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] h-full rounded-full transition-all duration-500"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm text-gray-500 w-16 text-right">{role.count}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+      {/* Bottom Info */}
+      <div className="mt-12 py-10 border-t border-[#F4F3EF] dark:border-slate-700 text-center">
+         <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[4px]">Verified Talent Ecosystem • Managed by Human Intelligence</p>
       </div>
 
-      {/* Resume Preview Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Upload Resume</h3>
-                <p className="text-sm text-slate-500 mt-1">Select a role type for the uploaded resume set.</p>
+      {/* Overlays */}
+      <AnimatePresence>
+        {showDetailDrawer && selectedResume && (
+          <ResumeDetailDrawer 
+            resume={selectedResume}
+            isDarkMode={isDarkMode}
+            onClose={() => setShowDetailDrawer(false)}
+            onUpdatePosition={handleUpdatePosition}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAssignModal && (
+          <AssignPositionModal 
+            isOpen={showAssignModal}
+            isDarkMode={isDarkMode}
+            onClose={() => setShowAssignModal(false)}
+            positions={allPositions}
+            selectedId={selectedPositionId}
+            onSelect={setSelectedPositionId}
+            onConfirm={handleConfirmAssign}
+            isAssigning={isAssigning}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showPreviewModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPreviewModal(false)} className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" />
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden flex flex-col">
+              <div className="p-6 border-b flex items-center justify-between">
+                <h3 className="font-bold text-lg">{previewFileName}</h3>
+                <button onClick={() => setShowPreviewModal(false)} className="w-10 h-10 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><X size={20} /></button>
               </div>
-              <button
-                onClick={() => {
-                  setShowUploadModal(false);
-                  setPendingUploadFiles([]);
-                  setSelectedUploadRoleType('');
-                  setCustomUploadRoleType('');
-                }}
-                className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
-              >
-                <FiX size={18} />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600">
-                {pendingUploadFiles.length} file(s) selected
+              <div className="flex-1 bg-slate-100 p-4">
+                <iframe src={previewUrl} className="w-full h-full rounded-2xl" title="Resume Preview" />
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Role Type *</label>
-                <select
-                  value={selectedUploadRoleType}
-                  onChange={(e) => setSelectedUploadRoleType(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm"
-                >
-                  <option value="">Select role type</option>
-                  {roleTypes.map((role) => (
-                    <option key={role.name} value={role.name}>{role.name}</option>
-                  ))}
-                  <option value="__custom__">Other role type</option>
-                </select>
-              </div>
-
-              {selectedUploadRoleType === '__custom__' && (
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Custom Role Type</label>
-                  <input
-                    type="text"
-                    value={customUploadRoleType}
-                    onChange={(e) => setCustomUploadRoleType(e.target.value)}
-                    placeholder="e.g. HR Executive"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="px-5 py-4 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUploadModal(false);
-                  setPendingUploadFiles([]);
-                  setSelectedUploadRoleType('');
-                  setCustomUploadRoleType('');
-                }}
-                className="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmUploadResumes}
-                disabled={uploading}
-                className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}
-              >
-                {uploading ? 'Uploading...' : 'Upload Resume'}
-              </button>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      {uploadDialog && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h3 className={`text-lg font-bold ${uploadDialog.type === 'success' ? 'text-emerald-700' : 'text-red-700'}`}>
-                {uploadDialog.title}
-              </h3>
-            </div>
-            <div className="px-5 py-4">
-              <p className="text-sm text-slate-600">{uploadDialog.message}</p>
-            </div>
-            <div className="px-5 py-4 border-t border-slate-100 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setUploadDialog(null)}
-                className="px-4 py-2.5 text-sm font-semibold text-white rounded-xl"
-                style={{ background: uploadDialog.type === 'success' ? 'linear-gradient(135deg, #10b981, #0f766e)' : 'linear-gradient(135deg, #ef4444, #dc2626)' }}
-              >
-                OK
-              </button>
-            </div>
+      <AnimatePresence>
+        {showUploadModal && (
+          <div className="fixed inset-0 z-[150] bg-black/50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-8">
+              <div>
+                <h3 className="text-2xl font-bold font-syne">Upload Talent</h3>
+                <p className="text-sm text-[#9B9BAD] mt-2 font-bold uppercase tracking-widest">Target Role Designation</p>
+              </div>
+              <select value={selectedUploadRoleType} onChange={(e) => setSelectedUploadRoleType(e.target.value)} className="w-full h-14 px-6 rounded-2xl border text-sm focus:outline-none dark:bg-slate-800">
+                <option value="">Select Target Role</option>
+                {roleTypes.map(role => (<option key={role.name} value={role.name}>{role.name}</option>))}
+                <option value="__custom__">+ Custom Role</option>
+              </select>
+              {selectedUploadRoleType === '__custom__' && (<input type="text" value={customUploadRoleType} onChange={(e) => setCustomUploadRoleType(e.target.value)} placeholder="Enter custom role name" className="w-full h-14 px-6 rounded-2xl border text-sm" />)}
+              <div className="flex gap-4">
+                <button onClick={() => setShowUploadModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-xs uppercase tracking-widest">Cancel</button>
+                <button onClick={handleConfirmUploadResumes} disabled={uploading} className="flex-1 h-14 bg-[#1B4DA0] text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20">{uploading ? 'Processing...' : 'Upload Now'}</button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
-
-      {/* Resume Preview Modal */}
-      {showPreviewModal && previewUrl && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-5xl h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-              <h3 className="font-semibold text-gray-800 dark:text-white truncate">{previewFileName}</h3>
-              <div className="flex items-center gap-3">
-                <a
-                  href={previewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1"
-                  style={{ backgroundColor: '#1E88E5', color: '#fff' }}
-                >
-                  <FiDownload size={16} />
-                  Download
-                </a>
-                <button
-                  onClick={() => { setShowPreviewModal(false); setPreviewUrl(null); }}
-                  className="p-1"
-                  style={{ color: '#6b7280' }}
-                >
-                  <FiX size={24} />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              {previewFileName.toLowerCase().endsWith('.pdf') ? (
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full border-0"
-                  title="Resume Preview"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-4">
-                  <FiFileText size={64} style={{ color: '#9ca3af' }} />
-                  <p className="text-gray-500 dark:text-gray-400">Preview not available for this file type</p>
-                  <a
-                    href={previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-[#1E88E5] text-white rounded-lg hover:bg-[#0D47A1]"
-                  >
-                    Download to View
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Detail Modal */}
-      {showDetailModal && selectedResume && (
-        <ResumeDetailModal
-          resume={selectedResume}
-          onClose={() => setShowDetailModal(false)}
-          onUpdate={handleUpdateResume}
-          statusOptions={statusOptions}
-        />
-      )}
-    </div>
-  );
-};
-
-// Resume Detail Modal Component
-const ResumeDetailModal = ({ resume, onClose, onUpdate, statusOptions }) => {
-  const [formData, setFormData] = useState({
-    candidateName: resume.candidateName || '',
-    email: resume.email || '',
-    phone: resume.phone || '',
-    experience: resume.experience || '',
-    skills: resume.skills?.join(', ') || '',
-    currentCompany: resume.currentCompany || '',
-    currentLocation: resume.currentLocation || '',
-    preferredLocation: resume.preferredLocation || '',
-    currentSalary: resume.currentSalary || '',
-    expectedSalary: resume.expectedSalary || '',
-    noticePeriod: resume.noticePeriod || '',
-    status: resume.status || 'Available',
-    rating: resume.rating || 0,
-    contactNotes: resume.contactNotes || '',
-    tags: resume.tags?.join(', ') || ''
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const updateData = {
-      ...formData,
-      skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
-      tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean)
-    };
-    onUpdate(resume.id, updateData);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto" style={{ fontFamily: 'Calibri, sans-serif' }}>
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white">{resume.fileName}</h2>
-              <p className="text-sm text-gray-500">{resume.roleType}</p>
-            </div>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-              <FiX size={24} />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Candidate Name</label>
-                <input
-                  type="text"
-                  value={formData.candidateName}
-                  onChange={(e) => setFormData({...formData, candidateName: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone</label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Experience</label>
-                <input
-                  type="text"
-                  placeholder="e.g., 3-5 years"
-                  value={formData.experience}
-                  onChange={(e) => setFormData({...formData, experience: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Company</label>
-                <input
-                  type="text"
-                  value={formData.currentCompany}
-                  onChange={(e) => setFormData({...formData, currentCompany: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Location</label>
-                <input
-                  type="text"
-                  value={formData.currentLocation}
-                  onChange={(e) => setFormData({...formData, currentLocation: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preferred Location</label>
-                <input
-                  type="text"
-                  value={formData.preferredLocation}
-                  onChange={(e) => setFormData({...formData, preferredLocation: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notice Period</label>
-                <input
-                  type="text"
-                  placeholder="e.g., 30 days"
-                  value={formData.noticePeriod}
-                  onChange={(e) => setFormData({...formData, noticePeriod: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Salary</label>
-                <input
-                  type="text"
-                  value={formData.currentSalary}
-                  onChange={(e) => setFormData({...formData, currentSalary: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Salary</label>
-                <input
-                  type="text"
-                  value={formData.expectedSalary}
-                  onChange={(e) => setFormData({...formData, expectedSalary: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Skills (comma separated)</label>
-              <input
-                type="text"
-                value={formData.skills}
-                onChange={(e) => setFormData({...formData, skills: e.target.value})}
-                className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                placeholder="React, Node.js, Python"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma separated)</label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                placeholder="urgent, senior, remote"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
-                  className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                >
-                  {statusOptions.map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rating</label>
-                <div className="flex gap-1 mt-2">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setFormData({...formData, rating: star})}
-                      className={`text-2xl ${formData.rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Notes</label>
-              <textarea
-                value={formData.contactNotes}
-                onChange={(e) => setFormData({...formData, contactNotes: e.target.value})}
-                rows={3}
-                className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                placeholder="Notes about conversations..."
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border rounded hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-[#1E88E5] text-white rounded hover:bg-[#0D47A1]"
-              >
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

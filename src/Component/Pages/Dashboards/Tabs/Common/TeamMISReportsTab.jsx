@@ -1,19 +1,18 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiUsers, FiPhone, FiEye, FiShare2, FiCalendar,
-  FiClock, FiMessageSquare, FiCheckCircle, FiRefreshCw,
-  FiSmile, FiMeh, FiFrown, FiStar, FiX, FiSend,
-  FiAlertCircle, FiBarChart2, FiDownload,
-} from 'react-icons/fi';
+  Users, Phone, Eye, Share2, Calendar, Clock, MessageSquare, CheckCircle2, 
+  RefreshCw, Smile, Meh, Frown, Star, X, Send, AlertCircle, BarChart2, 
+  Download, Activity, ShieldCheck, MoreVertical
+} from 'lucide-react';
 import { getMISReports, addHeadComment } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const moodConfig = {
-  Great: { icon: FiStar,   color: '#10b981', bg: '#d1fae5', label: 'Great 🌟' },
-  Good:  { icon: FiSmile,  color: '#3b82f6', bg: '#dbeafe', label: 'Good 😊' },
-  Okay:  { icon: FiMeh,    color: '#f59e0b', bg: '#fef3c7', label: 'Okay 😐' },
-  Tough: { icon: FiFrown,  color: '#ef4444', bg: '#fee2e2', label: 'Tough 😓' },
+  Great: { icon: Star,   color: 'text-[#10B981]', bg: 'bg-[#ECFDF5]', label: 'GREAT' },
+  Good:  { icon: Smile,  color: 'text-[#3B82F6]', bg: 'bg-[#EFF6FF]', label: 'GOOD' },
+  Okay:  { icon: Meh,    color: 'text-[#F59E0B]', bg: 'bg-[#FFFBEB]', label: 'OKAY' },
+  Tough: { icon: Frown,  color: 'text-[#EF4444]', bg: 'bg-[#FEF2F2]', label: 'TOUGH' },
 };
 
 const formatTime = (t) => {
@@ -27,19 +26,19 @@ const formatTime = (t) => {
 const Toast = ({ message, type }) => (
   <motion.div
     initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -24 }}
-    className="fixed top-4 right-4 z-50 px-5 py-3 rounded-xl shadow-xl text-white font-medium flex items-center gap-2"
-    style={{ background: type === 'error' ? '#ef4444' : '#10b981' }}
+    className="fixed top-4 right-4 z-[9999] px-5 py-3 rounded-2xl shadow-xl text-white text-[12px] font-bold tracking-widest uppercase flex items-center gap-2 font-['Plus_Jakarta_Sans']"
+    style={{ background: type === 'error' ? '#EF4444' : '#1B4DA0' }}
   >
-    {type === 'error' ? <FiAlertCircle className="w-4 h-4" /> : <FiCheckCircle className="w-4 h-4" />}
+    {type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
     {message}
   </motion.div>
 );
 
 const StatBadge = ({ icon: Icon, value, label, color, bg }) => (
-  <div className="flex flex-col items-center p-2 rounded-xl min-w-[56px]" style={{ background: bg }}>
-    <Icon className="w-3.5 h-3.5 mb-0.5" style={{ color }} />
-    <span className="text-sm font-black" style={{ color }}>{value ?? 0}</span>
-    <span className="text-[9px] text-gray-500 font-medium mt-0.5">{label}</span>
+  <div className={`flex flex-col items-center justify-center p-3 rounded-2xl min-w-[75px] ${bg}`}>
+    <Icon className={`w-4 h-4 mb-2 ${color}`} />
+    <span className={`text-[16px] leading-none font-black ${color}`}>{value ?? 0}</span>
+    <span className={`text-[9px] font-bold uppercase tracking-widest mt-1.5 opacity-80 ${color}`}>{label}</span>
   </div>
 );
 
@@ -65,49 +64,49 @@ const CommentModal = ({ report, onClose, onSaved }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.55)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 font-['Plus_Jakarta_Sans'] text-left"
+      style={{ background: 'rgba(26,26,46,0.5)', backdropFilter: 'blur(8px)' }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-        className="bg-white rounded-3xl w-full max-w-md shadow-2xl"
+        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+        className="bg-white dark:bg-slate-900 rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden border border-[#F4F3EF] dark:border-slate-800 text-left relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-8 py-7 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50">
           <div>
-            <h3 className="font-bold text-gray-900">Add / Edit Comment</h3>
-            <p className="text-sm text-gray-500 mt-0.5">{report?.memberName}</p>
+            <h3 className="text-[22px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Review Intel</h3>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#9B9BAD] mt-1">{report?.memberName}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500">
-            <FiX className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#F8FAFF] dark:hover:bg-slate-800 text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors relative z-10">
+            <X size={20} />
           </button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-8 space-y-6 relative z-10">
           {report?.headComment && (
-            <div className="p-3 rounded-xl text-sm" style={{ background: '#ede9fe', color: '#6d28d9' }}>
-              <p className="font-semibold text-xs mb-1">Previous comment:</p>
-              {report.headComment}
+            <div className="p-5 rounded-[22px] bg-[#EEF2FB] dark:bg-slate-800 text-[#1B4DA0] dark:text-blue-400 border border-[#DBEAFE] dark:border-slate-700">
+              <p className="font-bold text-[9px] uppercase tracking-[0.15em] mb-2 opacity-60 flex items-center gap-1.5"><ShieldCheck size={12} /> Existing Intelligence</p>
+              <p className="text-[13px] font-bold leading-relaxed">{report.headComment}</p>
             </div>
           )}
           <textarea
             value={comment}
             onChange={(e) => { setComment(e.target.value); setError(''); }}
-            rows={4}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
-            placeholder="Write your feedback or notes for this report..."
+            rows={5}
+            className="w-full px-6 py-5 bg-[#FAFAFA] dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-[22px] text-sm font-medium text-[#1A1A2E] dark:text-white focus:outline-none focus:border-[#1B4DA0] focus:ring-4 focus:ring-[#1B4DA0]/10 transition-all resize-none placeholder-[#9B9BAD]"
+            placeholder="Log operational directives for this agent..."
             autoFocus
           />
-          {error && <p className="text-red-500 text-xs font-medium">{error}</p>}
+          {error && <p className="text-[#EF4444] text-[10px] font-bold uppercase tracking-widest">{error}</p>}
           <button
             onClick={handleSave} disabled={saving}
-            className="w-full py-3 rounded-xl text-white font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-70"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+            className="w-full py-4 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-[0.15em] flex items-center justify-center gap-2 hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
           >
-            <FiSend className="w-4 h-4" />
-            {saving ? 'Saving...' : 'Save Comment'}
+            <Send size={16} />
+            {saving ? 'Transmitting...' : 'Commit Intel Entry'}
           </button>
         </div>
+        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-[#1B4DA0]/5 rounded-full blur-[64px] pointer-events-none" />
       </motion.div>
     </motion.div>
   );
@@ -116,103 +115,133 @@ const CommentModal = ({ report, onClose, onSaved }) => {
 const ReportRow = ({ report, onComment }) => {
   const [expanded, setExpanded] = useState(false);
   const mc = moodConfig[report.mood] || moodConfig.Good;
+  const MoodIcon = mc.icon;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="p-4 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setExpanded(!expanded)}>
-        <div className="flex items-center gap-4 flex-wrap">
-          {/* Avatar + Name */}
-          <div className="flex items-center gap-3 min-w-[180px]">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+    <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative group text-left mb-6">
+      <div className="p-6 lg:p-8 cursor-pointer relative z-10" onClick={() => setExpanded(!expanded)}>
+        <div className="flex items-center justify-between flex-wrap gap-6">
+          
+          {/* Identity Block */}
+          <div className="flex items-center gap-5 min-w-[240px]">
+            <div className="w-14 h-14 rounded-[20px] flex items-center justify-center font-bold text-white text-xl flex-shrink-0 shadow-lg shadow-blue-500/20"
+              style={{ background: '#1B4DA0' }}>
               {(report.memberName || '?').charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">{report.memberName}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <FiClock className="w-3 h-3 text-gray-400" />
-                <span className="text-xs text-gray-500">
-                  {formatTime(report.checkInTime)} – {formatTime(report.checkOutTime)}
+              <p className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2.5">{report.memberName}</p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAFAFA] dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 rounded-lg">
+                <Clock size={12} className="text-[#9B9BAD]" />
+                <span className="text-[9px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-widest">
+                  {formatTime(report.checkInTime)} — {formatTime(report.checkOutTime)}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* KPI Stats */}
-          <div className="flex items-center gap-2 flex-wrap flex-1">
-            <StatBadge icon={FiPhone}    value={report.callsCount}          label="Calls"      color="#3b82f6" bg="#dbeafe" />
-            <StatBadge icon={FiEye}      value={report.profilesVisited}     label="Visited"    color="#8b5cf6" bg="#ede9fe" />
-            <StatBadge icon={FiShare2}   value={report.profilesShared}      label="Shared"     color="#0891b2" bg="#ecfeff" />
-            <StatBadge icon={FiUsers}    value={report.candidatesContacted} label="Contacted"  color="#10b981" bg="#d1fae5" />
-            <StatBadge icon={FiCalendar} value={report.interviewsArranged}  label="Interviews" color="#f59e0b" bg="#fef3c7" />
+          {/* Core Metrics Palette */}
+          <div className="flex items-center gap-3 flex-wrap flex-1 justify-center lg:justify-start">
+            <StatBadge icon={Phone}    value={report.callsCount}          label="Dials"      color="text-[#3B82F6]" bg="bg-[#EFF6FF]" />
+            <StatBadge icon={Eye}      value={report.profilesVisited}     label="Visits"     color="text-[#8B5CF6]" bg="bg-[#F5F3FF]" />
+            <StatBadge icon={Share2}   value={report.profilesShared}      label="Shares"     color="text-[#0891B2]" bg="bg-[#ECFEFF]" />
+            <StatBadge icon={Users}    value={report.candidatesContacted} label="Touches"    color="text-[#10B981]" bg="bg-[#ECFDF5]" />
+            <StatBadge icon={Calendar} value={report.interviewsArranged}  label="Books"      color="text-[#F59E0B]" bg="bg-[#FFFBEB]" />
           </div>
 
-          {/* Mood + Work hrs + Comment button */}
-          <div className="flex items-center gap-3 ml-auto flex-shrink-0">
-            {report.workHours > 0 && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: '#d1fae5', color: '#10b981' }}>
-                {report.workHours}h
-              </span>
-            )}
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ color: mc.color, background: mc.bg }}>
-              {mc.label}
-            </span>
+          {/* Operational Status */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              {report.workHours > 0 && (
+                <div className="inline-flex px-3 py-2 bg-[#F8FAFF] border border-[#EEF2FB] rounded-xl flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-[#1B4DA0] tracking-widest uppercase">
+                    {report.workHours} HRS Active
+                  </span>
+                </div>
+              )}
+              <div className={`inline-flex px-3 py-2 rounded-xl flex items-center gap-1.5 ${mc.bg}`}>
+                <MoodIcon size={14} className={mc.color} />
+                <span className={`text-[9px] font-bold tracking-[0.15em] uppercase ${mc.color}`}>{mc.label}</span>
+              </div>
+            </div>
             <button
               onClick={(e) => { e.stopPropagation(); onComment(report); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors hover:bg-violet-50"
-              style={report.headComment ? { borderColor: '#7c3aed', color: '#7c3aed' } : { borderColor: '#e5e7eb', color: '#6b7280' }}
+              className={`flex items-center gap-2 px-5 py-3 rounded-[16px] text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm ${
+                report.headComment 
+                  ? 'bg-[#1B4DA0] text-white shadow-blue-500/20 hover:bg-[#153e82]' 
+                  : 'bg-white border border-[#F4F3EF] text-[#9B9BAD] hover:bg-[#F8FAFF] hover:text-[#1A1A2E] hover:border-[#EEF2FB]'
+              }`}
             >
-              <FiMessageSquare className="w-3.5 h-3.5" />
-              {report.headComment ? 'Edit Comment' : 'Add Comment'}
+              <MessageSquare size={14} />
+              {report.headComment ? 'Edit Intel' : 'Log Intel'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Expanded section */}
+      {/* Expanded Metrics Area */}
       <AnimatePresence>
         {expanded && (
           <motion.div
-            initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-            className="overflow-hidden border-t border-gray-100"
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden border-t border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50 relative z-10 rounded-b-[32px]"
           >
-            <div className="p-4 grid sm:grid-cols-2 gap-4">
+            <div className="p-8 grid lg:grid-cols-2 gap-8">
               {report.summary && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Summary</p>
-                  <p className="text-sm text-gray-700">{report.summary}</p>
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[24px] border border-[#F4F3EF] dark:border-slate-800 hover:shadow-lg transition-all duration-300">
+                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em] mb-3">Field Action Summary</p>
+                  <p className="text-[14px] font-medium text-[#1A1A2E] dark:text-white leading-relaxed">{report.summary}</p>
                 </div>
               )}
+              
               {Array.isArray(report.tasksCompleted) && report.tasksCompleted.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Tasks Completed</p>
-                  <div className="space-y-1">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[24px] border border-[#F4F3EF] dark:border-slate-800 hover:shadow-lg transition-all duration-300">
+                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em] mb-4">Tactical Objectives Hit</p>
+                  <div className="space-y-4">
                     {report.tasksCompleted.map((t, i) => (
-                      <p key={i} className="text-sm text-gray-700 flex items-start gap-1.5">
-                        <FiCheckCircle className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />{t}
-                      </p>
+                      <div key={i} className="flex items-start gap-4 p-3 bg-[#FAFAFA] dark:bg-slate-800/50 rounded-xl">
+                        <CheckCircle2 size={18} className="text-[#10B981] flex-shrink-0" />
+                        <p className="text-[13px] font-bold text-[#1A1A2E] dark:text-white leading-tight">{t}</p>
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
+
               {report.blockers && (
-                <div className="p-3 rounded-xl sm:col-span-2" style={{ background: '#fef3c7' }}>
-                  <p className="text-xs font-semibold text-amber-700 mb-1">⚠ Blockers</p>
-                  <p className="text-sm text-amber-800">{report.blockers}</p>
+                <div className="bg-white dark:bg-amber-900/10 p-8 rounded-[24px] border border-[#FEF3C7] dark:border-amber-900 lg:col-span-2 shadow-sm hover:shadow-lg transition-all">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#FEF3C7] flex items-center justify-center text-[#F59E0B]">
+                       <AlertCircle size={16} />
+                    </div>
+                    <p className="text-[11px] font-bold text-[#F59E0B] uppercase tracking-[0.15em]">Detected Blockers</p>
+                  </div>
+                  <p className="text-[14px] font-bold text-[#B45309] dark:text-amber-500 leading-relaxed ml-10">{report.blockers}</p>
                 </div>
               )}
+
               {report.headComment && (
-                <div className="p-3 rounded-xl sm:col-span-2" style={{ background: '#ede9fe' }}>
-                  <p className="text-xs font-semibold text-violet-700 mb-1">
-                    💬 Your Comment{report.headCommentBy && <span className="font-normal"> – {report.headCommentBy}</span>}
-                  </p>
-                  <p className="text-sm text-violet-800">{report.headComment}</p>
+                <div className="bg-[#1B4DA0] dark:bg-slate-800 p-8 rounded-[24px] border border-[#1B4DA0] dark:border-slate-700 lg:col-span-2 shadow-lg shadow-blue-900/10 text-white relative overflow-hidden group/intel">
+                  <div className="flex items-center gap-2 mb-4 relative z-10">
+                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white backdrop-blur-sm">
+                      <ShieldCheck size={16} />
+                    </div>
+                    <p className="text-[11px] font-bold text-blue-100 uppercase tracking-[0.2em]">
+                      Command Intel Logged {report.headCommentBy && `• BY ${report.headCommentBy}`}
+                    </p>
+                  </div>
+                  <p className="text-[15px] font-medium text-white leading-relaxed ml-10 relative z-10">{report.headComment}</p>
+                  
+                  {/* Intel Card Glow */}
+                  <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover/intel:bg-white/20 transition-all pointer-events-none -translate-y-1/2 translate-x-1/4" />
                 </div>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Atmospheric Hover Glow (Behind everything) */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#1B4DA0]/0 rounded-full blur-[80px] group-hover:bg-[#1B4DA0]/5 transition-colors duration-1000 pointer-events-none -z-10" />
     </div>
   );
 };
@@ -248,7 +277,7 @@ const TeamMISReportsTab = () => {
 
   useEffect(() => { fetchReports(); }, [fetchReports]);
 
-  // Totals row
+  // Totals row calculation
   const totals = reports.reduce((acc, r) => ({
     callsCount:          acc.callsCount          + (r.callsCount          || 0),
     profilesVisited:     acc.profilesVisited     + (r.profilesVisited     || 0),
@@ -263,68 +292,37 @@ const TeamMISReportsTab = () => {
 
   const openDatePicker = () => {
     if (!dateInputRef.current) return;
-
     if (typeof dateInputRef.current.showPicker === 'function') {
       dateInputRef.current.showPicker();
       return;
     }
-
     dateInputRef.current.focus();
     dateInputRef.current.click();
   };
 
   const downloadMISCSV = () => {
     const header = [
-      'Date',
-      'Member Name',
-      'Calls',
-      'Profiles Visited',
-      'Profiles Shared',
-      'Candidates Contacted',
-      'Interviews Arranged',
-      'Work Hours',
-      'Mood',
-      'Summary',
-      'Blockers',
-      'Head Comment',
+      'Date', 'Member Name', 'Calls', 'Profiles Visited', 'Profiles Shared', 
+      'Candidates Contacted', 'Interviews Arranged', 'Work Hours', 'Mood', 
+      'Summary', 'Blockers', 'Head Comment'
     ];
-
     const escapeCSV = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
     const rows = reports.map((report) => [
-      selectedDate,
-      report.memberName || '',
-      report.callsCount || 0,
-      report.profilesVisited || 0,
-      report.profilesShared || 0,
-      report.candidatesContacted || 0,
-      report.interviewsArranged || 0,
-      report.workHours || 0,
-      report.mood || '',
-      report.summary || '',
-      report.blockers || '',
-      report.headComment || '',
+      selectedDate, report.memberName || '', report.callsCount || 0,
+      report.profilesVisited || 0, report.profilesShared || 0,
+      report.candidatesContacted || 0, report.interviewsArranged || 0,
+      report.workHours || 0, report.mood || '', report.summary || '',
+      report.blockers || '', report.headComment || ''
     ]);
 
     rows.push([
-      selectedDate,
-      'TOTAL',
-      totals.callsCount,
-      totals.profilesVisited,
-      totals.profilesShared,
-      totals.candidatesContacted,
-      totals.interviewsArranged,
-      '',
-      '',
-      '',
-      '',
-      '',
+      selectedDate, 'TOTAL', totals.callsCount, totals.profilesVisited,
+      totals.profilesShared, totals.candidatesContacted, totals.interviewsArranged,
+      '', '', '', '', ''
     ]);
 
-    const csvContent = [header, ...rows]
-      .map((row) => row.map(escapeCSV).join(','))
-      .join('\n');
-
+    const csvContent = [header, ...rows].map((row) => row.map(escapeCSV).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -335,124 +333,156 @@ const TeamMISReportsTab = () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showToast('MIS report downloaded');
+    showToast('MIS Report Acquired');
   };
 
   return (
-    <div className="space-y-6">
-      <AnimatePresence>
-        {toast && <Toast message={toast.message} type={toast.type} />}
-      </AnimatePresence>
+    <div className="p-8 lg:p-12 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
+        .font-syne { font-family: 'Syne', sans-serif !important; }
+        .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+      `}</style>
 
-      {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      <div className="w-full font-jakarta">
+        <AnimatePresence>
+          {toast && <Toast message={toast.message} type={toast.type} />}
+        </AnimatePresence>
+
+        {/* Global Toolbar */}
+        <div className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 text-left">
+          <div>
+            <h1 className="text-[36px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Team MIS Reports</h1>
+            <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide">Daily performance metric summary & team intelligence</p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={downloadMISCSV}
+              disabled={loading || reports.length === 0}
+              className="flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-[#F4F3EF] text-[#9B9BAD] text-[11px] font-bold uppercase tracking-widest hover:bg-[#F8FAFF] hover:text-[#1A1A2E] hover:border-[#EEF2FB] transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            >
+              <Download size={14} /> Download CSV
+            </button>
+            <button 
+              onClick={fetchReports} 
+              className="p-3 rounded-full bg-white border border-[#F4F3EF] hover:bg-[#F8FAFF] text-[#9B9BAD] hover:text-[#1B4DA0] transition-colors shadow-sm active:scale-95 text-center flex items-center justify-center h-[42px] w-[42px]"
+              title="Refresh Radar"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin text-[#1B4DA0]' : ''} />
+            </button>
+            
+            <button
+              type="button"
+              onClick={openDatePicker}
+              className="relative flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95 h-[42px]"
+            >
+              <Calendar size={14} />
+              <span>{new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-GB')}</span>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Temporal Navigation Banner */}
+        <div className="flex items-center gap-4 mb-12 px-6 py-4 bg-white border border-[#F4F3EF] rounded-[24px] shadow-sm max-w-fit cursor-pointer hover:shadow-md hover:border-[#1B4DA0]/20 transition-all group" onClick={openDatePicker}>
+          <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] group-hover:scale-110 transition-transform">
+            <Calendar size={18} strokeWidth={2} />
+          </div>
+          <div>
+            <p className="text-[17px] font-bold text-[#1A1A2E] leading-none">{formattedDate}</p>
+          </div>
+          {!loading && (
+            <div className="ml-6 pl-6 border-l border-[#F4F3EF]">
+              <span className="inline-flex px-3 py-1.5 bg-[#ECFDF5] text-[#10B981] rounded-lg text-[9px] font-bold tracking-[0.15em] uppercase">
+                {reports.length} ACTIVE LOGS
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Overarching Totals Gallery */}
+        {!loading && reports.length > 0 && (
+          <div className="mb-12 bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm p-8 lg:p-10 relative overflow-hidden group/metrics">
+            <div className="flex items-center justify-between mb-10 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-[20px] bg-[#1B4DA0] flex items-center justify-center text-white shadow-xl shadow-blue-500/30">
+                  <BarChart2 size={24} strokeWidth={2.5} />
+                </div>
+                <h3 className="text-[24px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Team Efficiency Matrix</h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-[#F4F3EF] dark:divide-slate-800 relative z-10">
+              {[
+                { label: 'Outbound Dials', value: totals.callsCount,          color: 'text-[#3B82F6]' },
+                { label: 'Profiles Visited',value: totals.profilesVisited,     color: 'text-[#8B5CF6]' },
+                { label: 'Network Shares',  value: totals.profilesShared,      color: 'text-[#0891B2]' },
+                { label: 'Talent Touches',  value: totals.candidatesContacted, color: 'text-[#10B981]' },
+                { label: 'Verified Bookings',value: totals.interviewsArranged,  color: 'text-[#F59E0B]' },
+              ].map((m, idx) => (
+                <div key={m.label} className={`px-4 lg:px-8 text-center ${idx === 0 ? 'pl-0' : ''} ${idx === 4 ? 'border-r-0' : ''}`}>
+                  <p className={`text-[46px] font-black font-syne leading-none mb-3 ${m.color}`}>{m.value}</p>
+                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">{m.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#1B4DA0]/5 rounded-full blur-[80px] pointer-events-none group-hover/metrics:bg-[#1B4DA0]/10 transition-colors duration-1000" />
+          </div>
+        )}
+
+        {/* Report Stream */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Team MIS Reports</h2>
-          <p className="text-sm text-gray-500 mt-1">Daily performance summary — HR Recruitment team</p>
+          {loading ? (
+            <div className="space-y-6">
+              {Array(3).fill(0).map((_, i) => (
+                <div key={i} className="h-40 rounded-[32px] bg-[#FAFAFA] dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 animate-pulse relative overflow-hidden">
+                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 dark:via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                </div>
+              ))}
+            </div>
+          ) : reports.length === 0 ? (
+            <div className="text-center py-40 bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden">
+               <div className="w-24 h-24 bg-[#FAFAFA] dark:bg-slate-800 rounded-[32px] mx-auto flex items-center justify-center text-[#9B9BAD] mb-8 rotate-12">
+                 <Activity size={40} strokeWidth={1.5} />
+               </div>
+               <p className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white capitalize mb-2">Radar Silence Mode</p>
+               <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">Awaiting operational intel for this specific temporal dimension.</p>
+            </div>
+          ) : (
+            <div>
+               {reports.map((report, idx) => (
+                 <motion.div key={report.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
+                   <ReportRow report={report} onComment={setCommentTarget} />
+                 </motion.div>
+               ))}
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={downloadMISCSV}
-            disabled={loading || reports.length === 0}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Download MIS report as CSV"
-          >
-            <FiDownload className="w-4 h-4" />
-            Download CSV
-          </button>
-          <button onClick={fetchReports} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors" title="Refresh">
-            <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            type="button"
-            onClick={openDatePicker}
-            className="relative flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors"
-            title="Select report date"
-          >
-            <FiCalendar className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">{new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-GB')}</span>
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              aria-label="Select report date"
-            />
-          </button>
+
+        {/* Global Footer Branding */}
+        <div className="mt-24 py-16 border-t border-[#F4F3EF] dark:border-slate-800 text-center space-y-3 opacity-50">
+           <div className="w-1 h-1 bg-[#1B4DA0] rounded-full mx-auto mb-6" />
+           <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.5em]">Studio Minimalist Reporting Engine</p>
+           <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Unified High-Fidelity Data Matrix V4.8</p>
         </div>
+
       </div>
 
-      {/* Date label */}
-      <button
-        type="button"
-        onClick={openDatePicker}
-        className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-indigo-50/60 transition-colors"
-        title="Open calendar"
-      >
-        <FiCalendar className="w-4 h-4 text-indigo-500" />
-        <p className="text-sm font-semibold text-gray-700">{formattedDate}</p>
-        {!loading && (
-          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: '#ede9fe', color: '#7c3aed' }}>
-            {reports.length} report{reports.length !== 1 ? 's' : ''} submitted
-          </span>
-        )}
-      </button>
-
-      {/* Team Totals Banner */}
-      {!loading && reports.length > 0 && (
-        <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-700 rounded-2xl p-5 text-white">
-          <div className="flex items-center gap-2 mb-4">
-            <FiBarChart2 className="w-5 h-5" />
-            <p className="font-bold">Team Total for the Day</p>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-            {[
-              { label: 'Total Calls',      value: totals.callsCount,          icon: FiPhone    },
-              { label: 'Profiles Visited', value: totals.profilesVisited,     icon: FiEye      },
-              { label: 'Profiles Shared',  value: totals.profilesShared,      icon: FiShare2   },
-              { label: 'Contacted',        value: totals.candidatesContacted, icon: FiUsers    },
-              { label: 'Interviews Set',   value: totals.interviewsArranged,  icon: FiCalendar },
-            ].map((m) => (
-              <div key={m.label} className="bg-white/10 rounded-xl p-3 text-center">
-                <m.icon className="w-5 h-5 mx-auto mb-1 opacity-80" />
-                <p className="text-2xl font-black">{m.value}</p>
-                <p className="text-[11px] opacity-75 font-medium">{m.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Reports List */}
-      {loading ? (
-        <div className="animate-pulse space-y-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200" />)}
-        </div>
-      ) : reports.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
-          <FiUsers className="w-12 h-12 text-gray-300 mx-auto" />
-          <p className="text-gray-400 font-medium mt-3">No MIS reports submitted for this date</p>
-          <p className="text-gray-400 text-sm mt-1">Team members haven&apos;t filed their reports yet, or select a different date.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {reports.map((report, idx) => (
-            <motion.div key={report.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
-              <ReportRow report={report} onComment={setCommentTarget} />
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Comment Modal */}
       <AnimatePresence>
         {commentTarget && (
           <CommentModal
             report={commentTarget}
             onClose={() => setCommentTarget(null)}
             onSaved={() => {
-              showToast('Comment saved successfully');
+              showToast('Intel Signal Successfully Registered!');
               fetchReports();
             }}
           />

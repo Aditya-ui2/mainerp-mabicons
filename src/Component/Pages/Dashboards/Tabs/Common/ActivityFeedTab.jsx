@@ -1,381 +1,206 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FiActivity,
-  FiUser,
-  FiCheckCircle,
-  FiClock,
-  FiCalendar,
-  FiFileText,
-  FiUsers,
-  FiBriefcase,
-  FiDollarSign,
-  FiMail,
-  FiRefreshCw,
-  FiFilter,
-} from 'react-icons/fi';
+import { 
+  Activity, Briefcase, UserPlus, CheckCircle2, MoreVertical, 
+  ShieldCheck, RefreshCw
+} from 'lucide-react';
+import { toast } from "sonner";
 import { getDepartmentActivityLogs } from '../../../service/api';
-
-const getDateRangeByPreset = (preset) => {
-  const now = new Date();
-  const end = new Date(now);
-  const start = new Date(now);
-
-  if (preset === 'week') {
-    start.setDate(now.getDate() - 7);
-    return { start, end };
-  }
-  if (preset === 'month') {
-    start.setMonth(now.getMonth() - 1);
-    return { start, end };
-  }
-  if (preset === 'year') {
-    start.setFullYear(now.getFullYear() - 1);
-    return { start, end };
-  }
-
-  return null;
-};
-
-const extractClientName = (activity) => {
-  if (activity?.metadata?.clientName) return activity.metadata.clientName;
-  if (activity?.metadata?.client) return activity.metadata.client;
-
-  const text = `${activity?.description || ''} ${activity?.action || ''}`;
-  const quoted = text.match(/"([^"]+)"/);
-  if (activity?.relatedEntityType === 'Client' && quoted?.[1]) return quoted[1];
-
-  const forClientMatch = text.match(/for\s+([A-Za-z0-9&\-\s]+)/i);
-  if (forClientMatch?.[1]) return forClientMatch[1].trim();
-
-  return null;
-};
-
-const ActivityTypeIcon = ({ type }) => {
-  const icons = {
-    task: FiCheckCircle,
-    leave: FiCalendar,
-    payroll: FiDollarSign,
-    attendance: FiClock,
-    candidate: FiUser,
-    interview: FiBriefcase,
-    offer: FiMail,
-    general: FiActivity,
-  };
-  const Icon = icons[type] || icons.general;
-  return <Icon style={{width:'16px',height:'16px'}} />;
-};
-
-const getActionGradient = (action) => {
-  if (action?.includes('completed') || action?.includes('approved') || action?.includes('accepted')) {
-    return 'linear-gradient(135deg, #10b981, #0d9488)';
-  }
-  if (action?.includes('rejected') || action?.includes('deleted')) {
-    return 'linear-gradient(135deg, #ef4444, #e11d48)';
-  }
-  if (action?.includes('assigned') || action?.includes('scheduled')) {
-    return 'linear-gradient(135deg, #3b82f6, #4f46e5)';
-  }
-  if (action?.includes('updated') || action?.includes('modified')) {
-    return 'linear-gradient(135deg, #f59e0b, #ea580c)';
-  }
-  return 'linear-gradient(135deg, #8b5cf6, #9333ea)';
-};
 
 const formatTimeAgo = (date) => {
   const now = new Date();
   const past = new Date(date);
   const diffInSeconds = Math.floor((now - past) / 1000);
 
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  return past.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+  if (diffInSeconds < 60) return 'JUST NOW';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} MINS AGO`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} HOURS AGO`;
+  return past.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
+};
+
+const formatActionName = (text) => {
+  if (!text) return 'Registry Activity';
+  // Humanize common backend strings
+  const map = {
+    'job_opening_created': 'Job Opening Created',
+    'new_candidate_applied': 'New Candidate Applied',
+    'interview_scheduled': 'Interview Scheduled',
+    'task_assigned': 'Task Assigned',
+    'offer_letter_generated': 'Offer Letter Generated'
+  };
+  const key = text.toLowerCase();
+  if (map[key]) return map[key];
+
+  return text.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+};
+
+const ActivityIcon = ({ type }) => {
+  const map = {
+    job: { icon: Briefcase, bg: 'bg-[#EFF6FF]', color: 'text-[#3B82F6]' },
+    candidate: { icon: UserPlus, bg: 'bg-[#F5F3FF]', color: 'text-[#8B5CF6]' },
+    task: { icon: CheckCircle2, bg: 'bg-[#ECFDF5]', color: 'text-[#10B981]' },
+    default: { icon: Activity, bg: 'bg-[#F8FAFC]', color: 'text-[#64748B]' }
+  };
+  const config = map[type.toLowerCase()] || map.default;
+  const Icon = config.icon;
+  return (
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${config.bg} ${config.color}`}>
+      <Icon size={18} strokeWidth={1.5} />
+    </div>
+  );
 };
 
 const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all');
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedKam, setSelectedKam] = useState('all');
-  const [selectedClient, setSelectedClient] = useState('all');
-  const [datePreset, setDatePreset] = useState('all');
-  const [customDate, setCustomDate] = useState({ from: '', to: '' });
-
-  const actionTypes = ['all', 'task', 'leave', 'payroll', 'attendance', 'candidate', 'interview', 'general'];
 
   useEffect(() => {
     fetchActivities();
-  }, [department, filter]);
+  }, [department]);
 
   const fetchActivities = async () => {
     try {
       setLoading(true);
-      setError(null);
-      const actionType = filter === 'all' ? null : filter;
-      const response = await getDepartmentActivityLogs(department, 50, actionType);
+      const response = await getDepartmentActivityLogs(department, 50);
       setActivities(response.activities || []);
     } catch (error) {
       console.error('Error fetching activities:', error);
-      setError(error.message || 'Failed to load activities');
-      setActivities([]);
+      toast.error("Failed to load Registry Feed");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchActivities();
-    setRefreshing(false);
-  };
-
-  const kamOptions = ['all', ...new Set(activities.map((a) => a.performedByName).filter(Boolean))];
-  const clientOptions = ['all', ...new Set(activities.map((a) => extractClientName(a)).filter(Boolean))];
-
-  const filteredActivities = activities.filter((a) => {
-    const typeOk = filter === 'all' || a.actionType === filter;
-    const kamOk = selectedKam === 'all' || a.performedByName === selectedKam;
-
-    const clientName = extractClientName(a);
-    const clientOk = selectedClient === 'all' || clientName === selectedClient;
-
-    const activityDate = new Date(a.createdAt);
-    let dateOk = true;
-    if (datePreset === 'custom' && customDate.from && customDate.to) {
-      const from = new Date(customDate.from);
-      const to = new Date(customDate.to);
-      to.setHours(23, 59, 59, 999);
-      dateOk = activityDate >= from && activityDate <= to;
-    } else if (datePreset !== 'all') {
-      const range = getDateRangeByPreset(datePreset);
-      if (range) dateOk = activityDate >= range.start && activityDate <= range.end;
-    }
-
-    return typeOk && kamOk && clientOk && dateOk;
-  });
-
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="h-8 w-48 rounded-lg bg-gray-200 animate-pulse" />
-          <div className="h-10 w-24 rounded-lg bg-gray-200 animate-pulse" />
-        </div>
-        {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="flex items-start gap-4 p-4 bg-gray-100 rounded-xl animate-pulse">
-            <div className="w-10 h-10 rounded-full bg-gray-200" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 w-32 bg-gray-200 rounded" />
-              <div className="h-3 w-full bg-gray-200 rounded" />
-            </div>
-          </div>
-        ))}
+      <div className="flex flex-col items-center justify-center py-40 gap-3 font-sans">
+        <div className="w-10 h-10 rounded-full border-2 border-[#1B4DA0] border-t-transparent animate-spin" />
+        <p className="text-[10px] font-bold tracking-widest text-[#94A3B8] uppercase">Syncing Intelligence...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Error Banner */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
-          <p className="text-red-700 text-sm">{error}. Click refresh to try again.</p>
-          <button
-            onClick={handleRefresh}
-            className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 flex items-center gap-1"
-          >
-            <FiRefreshCw className="w-3 h-3" /> Retry
-          </button>
-        </div>
-      )}
-      
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-            <FiActivity style={{width:'24px',height:'24px',color:'#fff'}} />
-          </div>
+    <div className="p-8 lg:p-12 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
+        .font-syne { font-family: 'Syne', sans-serif !important; }
+        .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+      `}</style>
+      <div className="w-full font-jakarta">
+        {/* Structural Header (Match Screenshot exactly) */}
+        <div className="mb-10 flex justify-between items-center text-left">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Activity Feed</h2>
-            <p className="text-sm text-gray-500">Recent activity from your team</p>
+            <h1 className="text-[36px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Activity Feed</h1>
+            <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide">Historical log of all recruitment events and team operations</p>
           </div>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-        >
-          <FiRefreshCw style={{width:'16px',height:'16px'}} className={refreshing ? 'animate-spin' : ''} />
-          Refresh
-        </motion.button>
-      </div>
 
-      {/* Filter Pills */}
-      <div className="flex flex-wrap gap-2">
-        {actionTypes.map(type => (
-          <button
-            key={type}
-            onClick={() => setFilter(type)}
-            style={filter === type ? {
-              background: 'linear-gradient(to right, #7c3aed, #9333ea)',
-              color: '#fff',
-              boxShadow: '0 10px 15px -3px rgba(139,92,246,0.25)',
-              padding: '6px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 500,
-              textTransform: 'capitalize', border: 'none', cursor: 'pointer',
-            } : {
-              background: '#f3f4f6', color: '#4b5563',
-              padding: '6px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 500,
-              textTransform: 'capitalize', border: 'none', cursor: 'pointer',
-            }}
-          >
-            {type}
-          </button>
-        ))}
-      </div>
-
-      {/* Advanced Filters */}
-      <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <select
-            value={selectedKam}
-            onChange={(e) => setSelectedKam(e.target.value)}
-            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
-          >
-            <option value="all">All KAMs / Members</option>
-            {kamOptions.filter((k) => k !== 'all').map((kam) => (
-              <option key={kam} value={kam}>{kam}</option>
-            ))}
-          </select>
-
-          <select
-            value={selectedClient}
-            onChange={(e) => setSelectedClient(e.target.value)}
-            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
-          >
-            <option value="all">All Clients</option>
-            {clientOptions.filter((c) => c !== 'all').map((client) => (
-              <option key={client} value={client}>{client}</option>
-            ))}
-          </select>
-
-          <select
-            value={datePreset}
-            onChange={(e) => setDatePreset(e.target.value)}
-            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
-          >
-            <option value="all">All Time</option>
-            <option value="week">Week</option>
-            <option value="month">Month</option>
-            <option value="year">Year</option>
-            <option value="custom">Custom Range</option>
-          </select>
-
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedKam('all');
-              setSelectedClient('all');
-              setDatePreset('all');
-              setCustomDate({ from: '', to: '' });
-              setFilter('all');
-            }}
-            className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Reset Filters
-          </button>
-        </div>
-
-        {datePreset === 'custom' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-            <input
-              type="date"
-              value={customDate.from}
-              onChange={(e) => setCustomDate((prev) => ({ ...prev, from: e.target.value }))}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
-            />
-            <input
-              type="date"
-              value={customDate.to}
-              onChange={(e) => setCustomDate((prev) => ({ ...prev, to: e.target.value }))}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
-            />
+        {/* Main Feed Container */}
+        <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
+          
+          {/* Timeline Header Area */}
+          <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
+                <Activity size={20} strokeWidth={2} />
+              </div>
+              <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Operation Timeline</h3>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 rounded-full shadow-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981]" />
+              <span className="text-[10px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-widest">Active Monitoring</span>
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Activity List */}
-      {filteredActivities.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
-          <FiActivity style={{width:'48px',height:'48px',margin:'0 auto 12px',opacity:0.3}} />
-          <p className="font-medium">No activities found</p>
-          <p className="text-sm mt-1">Activity will appear here as your team works</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <AnimatePresence>
-            {filteredActivities.map((activity, idx) => (
-              <motion.div
-                key={activity._id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ delay: idx * 0.03 }}
-                className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start gap-4">
-                  {/* Avatar with action color */}
-                  <div style={{
-                    flexShrink: 0, width: '40px', height: '40px', borderRadius: '50%',
-                    background: getActionGradient(activity.action),
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                  }}>
-                    <ActivityTypeIcon type={activity.actionType} />
+          {/* Vertical Bridge Line */}
+          <div className="absolute left-[88px] lg:left-[108px] top-[140px] bottom-[40px] w-px bg-[#F4F3EF] dark:bg-slate-800 pointer-events-none hidden sm:block" />
+
+          {/* Timeline List */}
+          <div className="px-8 py-12 space-y-12 relative z-10">
+            <AnimatePresence>
+              {activities.map((activity, index) => (
+                <motion.div 
+                  key={activity._id || index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.02 }}
+                  className="flex items-start group relative text-left"
+                >
+                  {/* 1. Time Column */}
+                  <div className="w-20 lg:w-28 flex-shrink-0 pt-3 text-right pr-6 lg:pr-8 hidden sm:block">
+                    <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
+                      {formatTimeAgo(activity.createdAt)}
+                    </span>
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-gray-900">{activity.performedByName}</span>
-                      <span style={{
-                        fontSize: '12px', padding: '2px 8px', borderRadius: '9999px', textTransform: 'capitalize',
-                        ...(activity.actionType === 'task' ? { background: '#d1fae5', color: '#047857' } :
-                           activity.actionType === 'leave' ? { background: '#dbeafe', color: '#1d4ed8' } :
-                           activity.actionType === 'payroll' ? { background: '#fef3c7', color: '#b45309' } :
-                           activity.actionType === 'attendance' ? { background: '#ede9fe', color: '#6d28d9' } :
-                           { background: '#f3f4f6', color: '#4b5563' })
-                      }}>
-                        {activity.actionType}
-                      </span>
+                  {/* 2. Marker Column */}
+                  <div className="relative z-10 flex-shrink-0 hidden sm:block">
+                    <div className="group-hover:scale-110 transition-transform duration-500">
+                      <ActivityIcon type={activity.actionType || 'default'} />
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
                   </div>
 
-                  {/* Time */}
-                  <div className="flex-shrink-0 text-xs text-gray-400">
-                    {formatTimeAgo(activity.createdAt)}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
+                  {/* 3. Card Column */}
+                  <div className="ml-0 sm:ml-6 lg:ml-8 flex-1">
+                    <div className="bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative group-hover:-translate-y-1 text-left">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-4 flex-1">
+                          {/* Type Chip */}
+                          <div className="inline-flex px-3 py-1 bg-[#EEF2FB] dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 rounded-lg">
+                            <span className="text-[9px] font-bold text-[#1B4DA0] dark:text-blue-400 uppercase tracking-widest">
+                              {activity.actionType || 'GENERIC'}
+                            </span>
+                          </div>
 
-      {/* Load More */}
-      {filteredActivities.length >= 10 && (
-        <div className="text-center">
-          <button className="px-4 py-2 text-sm font-medium text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-colors">
-            Load More Activities
-          </button>
+                          {/* Text Content */}
+                          <div>
+                            <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2">
+                               {formatActionName(activity.action)}
+                            </h4>
+                            <p className="text-[#64748B] dark:text-slate-400 text-[13px] font-medium leading-relaxed opacity-80 mt-2">
+                              {activity.description}
+                            </p>
+                          </div>
+
+                          {/* Card Footer: Logged By */}
+                          <div className="flex items-center gap-2 pt-2 border-t border-[#F4F3EF] dark:border-slate-800 mt-4">
+                             <div className="w-6 h-6 rounded-lg bg-[#F8FAFC] dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-[#1B4DA0] dark:text-blue-400 border border-[#F1F5F9] dark:border-slate-700 mt-2">
+                               {activity.performedByName?.charAt(0) || 'U'}
+                             </div>
+                             <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mt-2">
+                               Logged by <span className="text-[#1A1A2E] dark:text-white ml-0.5 font-bold">{activity.performedByName || 'System Process'}</span>
+                             </span>
+                          </div>
+                        </div>
+
+                        {/* Side Action */}
+                        <button className="text-[#94A3B8] hover:text-[#1A1A2E] dark:hover:text-white transition-colors relative z-10">
+                          <MoreVertical size={16} />
+                        </button>
+                      </div>
+
+                      {/* Design Glow */}
+                      <div className="absolute -right-2 -bottom-2 w-24 h-24 bg-[#1B4DA0]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            
+            {activities.length === 0 && (
+              <div className="text-center py-20">
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Awaiting operation signals...</p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Neural Branding Footer */}
+        <div className="mt-16 py-10 opacity-30 text-center">
+           <p className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-[6px]">Neural Intelligence Feed • Managed Architecture</p>
+        </div>
+      </div>
     </div>
   );
 };

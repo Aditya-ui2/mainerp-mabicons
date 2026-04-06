@@ -127,7 +127,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
           setLoadingCandidates(false);
         }
       };
-      
+
       const fetchBankSuggestions = async () => {
         if (!job.roleType) return;
         setLoadingBank(true);
@@ -152,11 +152,11 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
   const handleSubmit = async () => {
     if (!taskTitle && !taskType) return;
-    
+
     setLoadingCandidates(true); // Reuse loading state for submission
     try {
       let finalCandidateId = selectedCandidate?.id || selectedCandidate?._id;
-      
+
       // If candidate is from Resume Bank, onboard them to the position first
       if (selectedCandidate?.isFromBank) {
         const onboardRes = await assignResumesToPosition(
@@ -179,14 +179,14 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
         assigneeColor: member ? member.color : '#1E88E5',
         priority: taskPriority,
         deadline: taskDeadline,
-        description: selectedCandidate 
-          ? `[Candidate: ${selectedCandidate.name}] ${taskDescription}` 
+        description: selectedCandidate
+          ? `[Candidate: ${selectedCandidate.name}] ${taskDescription}`
           : taskDescription,
         candidateId: finalCandidateId,
         createdAt: new Date().toISOString(),
         status: 'Pending',
       };
-      
+
       if (onAssign) await onAssign(job?.id, taskData);
       setSubmitted(true);
       setTimeout(() => { onClose(); }, 1200);
@@ -209,7 +209,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
           </motion.div>
           <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Task Assigned!</h3>
           <p className={`text-sm mt-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-             Assignment Successful
+            Assignment Successful
           </p>
         </motion.div>
       </div>
@@ -255,114 +255,114 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
         {/* ── Body ── */}
         <div className="px-4 sm:px-6 pb-6 space-y-5">
-            {/* Selected Candidate Badge (Bulk Info) */}
-            <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-blue-500/20'}`}>
-                    {selectedCandidate.id === 'MEGA_BULK' ? <Users /> : (selectedCandidate.name || 'C').substring(0, 1)}
-                </div>
-                <div className="flex-1">
-                    <span className={`text-[12px] font-bold block ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-700')}`}>
-                    {selectedCandidate.id === 'MEGA_BULK' ? 'Target: All Matching Candidates (Automatic)' : `Task for: ${selectedCandidate.name}`}
-                    </span>
-                    {selectedCandidate.id === 'MEGA_BULK' && (
-                    <span className={`text-[10px] opacity-70 block ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
-                        Includes pipeline candidates & matching profiles from Resume Bank
-                    </span>
-                    )}
-                </div>
+          {/* Selected Candidate Badge (Bulk Info) */}
+          <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-blue-500/20'}`}>
+              {selectedCandidate.id === 'MEGA_BULK' ? <Users /> : (selectedCandidate.name || 'C').substring(0, 1)}
             </div>
-
-            {/* Quick Task Type Chips */}
-            <div>
-                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Quick Select Task Type</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {taskTypes.map(t => (
-                    <motion.button key={t.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                        onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center ${taskType === t.label
-                        ? 'border-[#1E88E5] shadow-lg ' + (isDarkMode ? 'bg-[#1E88E5]/30' : 'bg-[#1E88E5]/10')
-                        : isDarkMode ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
-                        }`}>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md mb-1" style={{ background: 'linear-gradient(135deg, #5fa8f0, #76A8DB)' }}>
-                        <t.icon className="w-5 h-5" />
-                        </div>
-                        <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? (isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]') : isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.label}</span>
-                    </motion.button>
-                    ))}
-                </div>
+            <div className="flex-1">
+              <span className={`text-[12px] font-bold block ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-700')}`}>
+                {selectedCandidate.id === 'MEGA_BULK' ? 'Target: All Matching Candidates (Automatic)' : `Task for: ${selectedCandidate.name}`}
+              </span>
+              {selectedCandidate.id === 'MEGA_BULK' && (
+                <span className={`text-[10px] opacity-70 block ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
+                  Includes pipeline candidates & matching profiles from Resume Bank
+                </span>
+              )}
             </div>
+          </div>
 
-              {/* Task Title */}
-              <div>
-                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Task Title *</label>
-                <input type="text" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="e.g. Screen 10 candidates for shortlist"
-                  className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-                />
-              </div>
+          {/* Quick Task Type Chips */}
+          <div>
+            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Quick Select Task Type</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {taskTypes.map(t => (
+                <motion.button key={t.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                  onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center ${taskType === t.label
+                    ? 'border-[#1E88E5] shadow-lg ' + (isDarkMode ? 'bg-[#1E88E5]/30' : 'bg-[#1E88E5]/10')
+                    : isDarkMode ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
+                    }`}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md mb-1" style={{ background: 'linear-gradient(135deg, #5fa8f0, #76A8DB)' }}>
+                    <t.icon className="w-5 h-5" />
+                  </div>
+                  <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? (isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]') : isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.label}</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
 
-              {/* Assign To — Team Member Cards */}
-              <div>
-                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assign To *</label>
-                <div className="space-y-2">
-                  {teamMembers.map(m => (
-                    <motion.button key={m.id} whileHover={{ x: 2 }} whileTap={{ scale: 0.99 }}
-                      onClick={() => setAssignee(m.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${assignee === m.id
-                        ? 'border-[#1E88E5] shadow-md ' + (isDarkMode ? 'bg-[#1E88E5]/20' : 'bg-[#1E88E5]/10')
-                        : isDarkMode ? 'border-slate-700 hover:border-slate-600 bg-slate-800/30' : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}>
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: m.color }}>
-                        {m.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{m.name}</p>
-                        <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.role}</p>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${assignee === m.id ? 'border-[#1E88E5] bg-[#1E88E5]' : isDarkMode ? 'border-slate-600' : 'border-slate-300'
-                        }`}>
-                        {assignee === m.id && <Check className="w-3 h-3 text-white" />}
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+          {/* Task Title */}
+          <div>
+            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Task Title *</label>
+            <input type="text" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="e.g. Screen 10 candidates for shortlist"
+              className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+            />
+          </div>
 
-              {/* Priority — Pill Selection */}
-              <div>
-                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Priority</label>
-                <div className="flex gap-2">
-                  {priorities.map(p => (
-                    <motion.button key={p.value} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                      onClick={() => setTaskPriority(p.value)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${taskPriority === p.value ? p.bg + ' border-current shadow-sm' : isDarkMode ? 'border-slate-700 text-slate-400 bg-slate-800/30' : 'border-slate-200 text-slate-500 bg-white'}`}>
-                      <span className="text-xs">{p.icon}</span> {p.value}
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+          {/* Assign To — Team Member Cards */}
+          <div>
+            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assign To *</label>
+            <div className="space-y-2">
+              {teamMembers.map(m => (
+                <motion.button key={m.id} whileHover={{ x: 2 }} whileTap={{ scale: 0.99 }}
+                  onClick={() => setAssignee(m.id)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${assignee === m.id
+                    ? 'border-[#1E88E5] shadow-md ' + (isDarkMode ? 'bg-[#1E88E5]/20' : 'bg-[#1E88E5]/10')
+                    : isDarkMode ? 'border-slate-700 hover:border-slate-600 bg-slate-800/30' : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: m.color }}>
+                    {m.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{m.name}</p>
+                    <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.role}</p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${assignee === m.id ? 'border-[#1E88E5] bg-[#1E88E5]' : isDarkMode ? 'border-slate-600' : 'border-slate-300'
+                    }`}>
+                    {assignee === m.id && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </div>
 
-              {/* Deadline */}
-              <div>
-                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Deadline</label>
-                <div onClick={() => openNativeDatePicker(taskDeadlineInputRef)} className="cursor-pointer">
-                  <input
-                    ref={taskDeadlineInputRef}
-                    type="date"
-                    value={taskDeadline}
-                    onChange={e => setTaskDeadline(e.target.value)}
-                    onClick={() => openNativeDatePicker(taskDeadlineInputRef)}
-                    className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                  />
-                </div>
-              </div>
+          {/* Priority — Pill Selection */}
+          <div>
+            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Priority</label>
+            <div className="flex gap-2">
+              {priorities.map(p => (
+                <motion.button key={p.value} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={() => setTaskPriority(p.value)}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${taskPriority === p.value ? p.bg + ' border-current shadow-sm' : isDarkMode ? 'border-slate-700 text-slate-400 bg-slate-800/30' : 'border-slate-200 text-slate-500 bg-white'}`}>
+                  <span className="text-xs">{p.icon}</span> {p.value}
+                </motion.button>
+              ))}
+            </div>
+          </div>
 
-              {/* Description */}
-              <div>
-                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Notes (optional)</label>
-                <textarea value={taskDescription} onChange={e => setTaskDescription(e.target.value)} rows={3} placeholder="Add any specific instructions..."
-                  className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-                />
-              </div>
+          {/* Deadline */}
+          <div>
+            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Deadline</label>
+            <div onClick={() => openNativeDatePicker(taskDeadlineInputRef)} className="cursor-pointer">
+              <input
+                ref={taskDeadlineInputRef}
+                type="date"
+                value={taskDeadline}
+                onChange={e => setTaskDeadline(e.target.value)}
+                onClick={() => openNativeDatePicker(taskDeadlineInputRef)}
+                className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Notes (optional)</label>
+            <textarea value={taskDescription} onChange={e => setTaskDescription(e.target.value)} rows={3} placeholder="Add any specific instructions..."
+              className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+            />
+          </div>
         </div>
 
         {/* ── Footer ── */}
@@ -395,9 +395,9 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
             {job.title}
           </h2>
           <div className="flex items-center gap-2 mt-1">
-             <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.client}</span>
-             <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-             <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{job.type}</span>
+            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.client}</span>
+            <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+            <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{job.type}</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -411,89 +411,89 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
       </div>
 
       <div className="p-10 space-y-12 pb-32 overflow-y-auto">
-         {/* Meta Info Grid - Clean & Minimal */}
-         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-            {[
-               { label: 'Experience', val: job.experience || 'Flexible', icon: Award },
-               { label: 'Location', val: job.location || 'Remote', icon: MapPin },
-               { label: 'Priority', val: job.priority || 'Medium', icon: ShieldCheck },
-               { label: 'Deadline', val: job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Active', icon: Clock },
-               { label: 'Applicants', val: job.candidateCount || 0, icon: Users },
-               { label: 'Target Openings', val: job.openings || 1, icon: Target }
-            ].map((stat, i) => (
-               <div key={i} className="bg-[#FAFAF8] p-4 rounded-2xl border border-[#F4F3EF] group hover:bg-white hover:shadow-md transition-all duration-200">
-                  <div className="w-7 h-7 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#6B6B7E] mb-2">
-                     <stat.icon size={13} />
-                  </div>
-                  <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{stat.label}</p>
-                  <p className="text-xs font-bold text-[#1A1A2E] mt-1 truncate">{stat.val}</p>
-               </div>
-            ))}
-         </div>
-
-         {/* Deep Info Sections */}
-         <div className="space-y-12">
-            <div className="space-y-4">
-               <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
-                  <FileText size={14} className="text-[#1B4DA0]" /> Overview
-               </h3>
-               <p className="text-sm text-[#4B4B5E] leading-relaxed whitespace-pre-wrap">
-                  {job.description || "Leading market position requires top-tier expertise in modern technology stacks."}
-               </p>
+        {/* Meta Info Grid - Clean & Minimal */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          {[
+            { label: 'Experience', val: job.experience || 'Flexible', icon: Award },
+            { label: 'Location', val: job.location || 'Remote', icon: MapPin },
+            { label: 'Priority', val: job.priority || 'Medium', icon: ShieldCheck },
+            { label: 'Deadline', val: job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Active', icon: Clock },
+            { label: 'Applicants', val: job.candidateCount || 0, icon: Users },
+            { label: 'Target Openings', val: job.openings || 1, icon: Target }
+          ].map((stat, i) => (
+            <div key={i} className="bg-[#FAFAF8] p-4 rounded-2xl border border-[#F4F3EF] group hover:bg-white hover:shadow-md transition-all duration-200">
+              <div className="w-7 h-7 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#6B6B7E] mb-2">
+                <stat.icon size={13} />
+              </div>
+              <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{stat.label}</p>
+              <p className="text-xs font-bold text-[#1A1A2E] mt-1 truncate">{stat.val}</p>
             </div>
+          ))}
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-               <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Key Requirements</h3>
-                  <ul className="space-y-3">
-                     {(Array.isArray(job.requirements) ? job.requirements : (job.requirements || "").split("\n")).filter(Boolean).map((req, i) => (
-                        <li key={i} className="flex items-start gap-3 group">
-                           <div className="w-5 h-5 rounded-lg bg-[#F4F3EF] border border-[#E8E7E2] flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-[#1A1A2E] transition-all">
-                              <Check size={10} className="text-[#6B6B7E] group-hover:text-white" />
-                           </div>
-                           <span className="text-sm text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">{req}</span>
-                        </li>
-                     )) || <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">General Qualifications Apply</li>}
-                     {(!job.requirements || job.requirements.length === 0) && <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">General Qualifications Apply</li>}
-                  </ul>
-               </div>
+        {/* Deep Info Sections */}
+        <div className="space-y-12">
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
+              <FileText size={14} className="text-[#1B4DA0]" /> Overview
+            </h3>
+            <p className="text-sm text-[#4B4B5E] leading-relaxed whitespace-pre-wrap">
+              {job.description || "Leading market position requires top-tier expertise in modern technology stacks."}
+            </p>
+          </div>
 
-               <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Major Responsibilities</h3>
-                  <ul className="space-y-3">
-                     {(Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || "").split("\n")).filter(Boolean).map((res, i) => (
-                        <li key={i} className="flex items-start gap-3 group">
-                           <div className="w-1.5 h-1.5 rounded-full bg-[#9B9BAD] mt-2 flex-shrink-0 group-hover:scale-150 transition-transform" />
-                           <span className="text-sm text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">{res}</span>
-                        </li>
-                     )) || <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">Standard Technical Duties</li>}
-                     {(!job.responsibilities || job.responsibilities.length === 0) && <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">Standard Technical Duties</li>}
-                  </ul>
-               </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Key Requirements</h3>
+              <ul className="space-y-3">
+                {(Array.isArray(job.requirements) ? job.requirements : (job.requirements || "").split("\n")).filter(Boolean).map((req, i) => (
+                  <li key={i} className="flex items-start gap-3 group">
+                    <div className="w-5 h-5 rounded-lg bg-[#F4F3EF] border border-[#E8E7E2] flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-[#1A1A2E] transition-all">
+                      <Check size={10} className="text-[#6B6B7E] group-hover:text-white" />
+                    </div>
+                    <span className="text-sm text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">{req}</span>
+                  </li>
+                )) || <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">General Qualifications Apply</li>}
+                {(!job.requirements || job.requirements.length === 0) && <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">General Qualifications Apply</li>}
+              </ul>
             </div>
 
             <div className="space-y-4">
-               <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Essential Tech Stack</h3>
-               <div className="flex flex-wrap gap-2 pt-2">
-                  {(Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean).map((skill, i) => (
-                     <span key={i} className="px-5 py-2.5 rounded-xl bg-[#F4F3EF] text-[#1A1A2E] text-[10px] font-bold uppercase tracking-widest border border-transparent hover:border-[#1B4DA0] hover:bg-white transition-all cursor-default">
-                        {typeof skill === 'string' ? skill.trim() : skill}
-                     </span>
-                  ))}
-                  {(!job.skills || job.skills.length === 0 || job.skills === "") && <span className="text-[11px] text-[#9B9BAD] italic uppercase tracking-widest opacity-60">Global Tech Standard</span>}
-               </div>
+              <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Major Responsibilities</h3>
+              <ul className="space-y-3">
+                {(Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || "").split("\n")).filter(Boolean).map((res, i) => (
+                  <li key={i} className="flex items-start gap-3 group">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#9B9BAD] mt-2 flex-shrink-0 group-hover:scale-150 transition-transform" />
+                    <span className="text-sm text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">{res}</span>
+                  </li>
+                )) || <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">Standard Technical Duties</li>}
+                {(!job.responsibilities || job.responsibilities.length === 0) && <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">Standard Technical Duties</li>}
+              </ul>
             </div>
-         </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Essential Tech Stack</h3>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {(Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean).map((skill, i) => (
+                <span key={i} className="px-5 py-2.5 rounded-xl bg-[#F4F3EF] text-[#1A1A2E] text-[10px] font-bold uppercase tracking-widest border border-transparent hover:border-[#1B4DA0] hover:bg-white transition-all cursor-default">
+                  {typeof skill === 'string' ? skill.trim() : skill}
+                </span>
+              ))}
+              {(!job.skills || job.skills.length === 0 || job.skills === "") && <span className="text-[11px] text-[#9B9BAD] italic uppercase tracking-widest opacity-60">Global Tech Standard</span>}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Sticky Bottom Actions */}
       <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-[#F4F3EF] p-8 flex flex-col gap-3 z-30 shadow-[0_-15px_40px_rgba(0,0,0,0.04)]">
-         <button 
-           onClick={() => onEdit(job)} 
-           className="w-full h-15 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-[#1B4DA0] transition-all shadow-xl shadow-gray-200 active:scale-[0.98] py-4"
-         >
-            <Pencil size={18} /> Edit Position Details
-         </button>
+        <button
+          onClick={() => onEdit(job)}
+          className="w-full h-15 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-[#1B4DA0] transition-all shadow-xl shadow-gray-200 active:scale-[0.98] py-4"
+        >
+          <Pencil size={18} /> Edit Position Details
+        </button>
       </div>
     </div>
   );
@@ -514,9 +514,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       { id: '00000000-0000-0000-0000-000000000000', name: 'Mabicons ERP (Internal)', companyName: 'Mabicons', displayName: 'Mabicons ERP (Internal)' },
       { id: '11111111-1111-1111-1111-111111111111', name: 'Standard Partner', companyName: 'General Partner', displayName: 'Standard Partner' }
     ];
-    try { 
-      const c = localStorage.getItem(CACHE_KEY_CLIENTS); 
-      const parsed = c ? JSON.parse(c) : []; 
+    try {
+      const c = localStorage.getItem(CACHE_KEY_CLIENTS);
+      const parsed = c ? JSON.parse(c) : [];
       return (Array.isArray(parsed) && parsed.length > 0) ? parsed : defaultClients;
     } catch { return defaultClients; }
   });
@@ -566,7 +566,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       const response = await getAllClients();
       // Handle various response structures
       const apiClients = response.data?.clients || response.clients || (Array.isArray(response.data) ? response.data : (Array.isArray(response) ? response : []));
-      
+
       // If no clients found, provide defaults as requested
       const rawClients = apiClients.length > 0 ? apiClients : [
         { id: '00000000-0000-0000-0000-000000000000', name: 'Internal', companyName: 'Mabicons ERP' },
@@ -578,7 +578,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         const id = c.id || c._id || c.clientId || '';
         const clientName = (c.name || c.clientName || c.fullName || c.client_name || '').trim();
         const companyName = (c.companyName || c.company || '').trim();
-        
+
         let displayName = companyName || clientName || 'Unnamed Client';
         if (clientName && companyName && clientName.toLowerCase() !== companyName.toLowerCase()) {
           displayName = `${clientName} / ${companyName}`;
@@ -594,7 +594,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       });
 
       setClients(clientsData);
-      try { localStorage.setItem(CACHE_KEY_CLIENTS, JSON.stringify(clientsData)); } catch {}
+      try { localStorage.setItem(CACHE_KEY_CLIENTS, JSON.stringify(clientsData)); } catch { }
     } catch (error) {
       console.error('Failed to fetch clients:', error);
       // Fallback on error too
@@ -725,9 +725,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         const response = await getResumeRoleTypes();
         // Handle various response structures
         const rawRoles = response.data || response.roles || (Array.isArray(response) ? response : []);
-        const mapped = rawRoles.map(r => ({ 
-          role: r.role || r.name || r.roleType || '', 
-          count: r.count || r.candidateCount || 0 
+        const mapped = rawRoles.map(r => ({
+          role: r.role || r.name || r.roleType || '',
+          count: r.count || r.candidateCount || 0
         }));
         setRoleTypes(mapped);
         try { localStorage.setItem(CACHE_KEY_ROLES, JSON.stringify(mapped)); } catch { }
@@ -747,7 +747,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         if (!selectedPosition) return;
 
         let totalTargetIds = [];
-        
+
         // 1. Fetch Pipeline Candidates
         const candidatesRes = await getAllCandidates({ positionId: jobId });
         const pipelineCandidates = candidatesRes?.success ? (candidatesRes.data || []) : [];
@@ -755,25 +755,25 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
         // 2. For MEGA_BULK, fetch and onboard Resume Bank profiles
         if (taskData.candidateId === 'MEGA_BULK') {
-            const roleName = selectedPosition.roleType?.split(' (')[0];
-            if (roleName) {
-                const bankRes = await getResumeBankResumes({ role: roleName });
-                const bankResumes = bankRes?.success ? (bankRes.data || []) : [];
-                
-                if (bankResumes.length > 0) {
-                    const bankResumeIds = bankResumes.map(r => r._id || r.id);
-                    // Bulk onboard bank profiles to the position
-                    await assignResumesToPosition(bankResumeIds, jobId, taskData.assigneeId);
-                    
-                    // Add bank candidates to the target list
-                    bankResumes.forEach(r => {
-                      // Check if already in pipeline to avoid duplicate task creation if possible
-                      if (!totalTargetIds.find(tid => tid.id === (r._id || r.id))) {
-                        totalTargetIds.push({ id: r._id || r.id, name: r.name });
-                      }
-                    });
+          const roleName = selectedPosition.roleType?.split(' (')[0];
+          if (roleName) {
+            const bankRes = await getResumeBankResumes({ role: roleName });
+            const bankResumes = bankRes?.success ? (bankRes.data || []) : [];
+
+            if (bankResumes.length > 0) {
+              const bankResumeIds = bankResumes.map(r => r._id || r.id);
+              // Bulk onboard bank profiles to the position
+              await assignResumesToPosition(bankResumeIds, jobId, taskData.assigneeId);
+
+              // Add bank candidates to the target list
+              bankResumes.forEach(r => {
+                // Check if already in pipeline to avoid duplicate task creation if possible
+                if (!totalTargetIds.find(tid => tid.id === (r._id || r.id))) {
+                  totalTargetIds.push({ id: r._id || r.id, name: r.name });
                 }
+              });
             }
+          }
         }
 
         if (totalTargetIds.length === 0) {
@@ -914,10 +914,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         // Skip if undefined, null, or a mock-prefix string
         if (val === undefined || val === null) return;
         if (typeof val === 'string' && (val.startsWith('mock-') || val === '')) return;
-        
+
         cleanPositionData[key] = val;
       });
-      
+
       console.log('Sending Clean Payload:', cleanPositionData);
       const result = await createRecruitmentPosition(cleanPositionData);
       const created = result.data || {};
@@ -1018,13 +1018,13 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         responsibilities: parseListInput(newJobForm.responsibilities),
         roleType: newJobForm.roleType,
       } : j);
-      
+
       // Update selectedJob if it's the one being edited
       if (selectedJob && selectedJob.id === editingJob.id) {
         const updatedSelected = updatedJobs.find(j => j.id === editingJob.id);
         setSelectedJob(updatedSelected);
       }
-      
+
       return updatedJobs;
     });
     setShowFullPageForm(false);
@@ -1102,11 +1102,11 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     const matchesSearch = (job.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (job.client || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (job.location || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClient = filterClient === 'all' || 
+    const matchesClient = filterClient === 'all' ||
       (job.client || '').toLowerCase().trim() === filterClient.toLowerCase().trim();
-    
+
     const matchesPosition = filterPosition === 'all' || job.status === filterPosition;
-    
+
     let matchesDate = true;
     if (filterDate !== 'all') {
       const dateStr = job.postedDate || job.deadline || job.createdAt;
@@ -1116,24 +1116,24 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         const jobDate = new Date(dateStr);
         const now = new Date();
         if (filterDate === 'today') {
-          const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
-          const todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
+          const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+          const todayEnd = new Date(now); todayEnd.setHours(23, 59, 59, 999);
           matchesDate = jobDate >= todayStart && jobDate <= todayEnd;
         } else if (filterDate === 'week') {
           const weekStart = new Date(now);
           weekStart.setDate(now.getDate() - now.getDay());
-          weekStart.setHours(0,0,0,0);
+          weekStart.setHours(0, 0, 0, 0);
           const weekEnd = new Date(weekStart);
           weekEnd.setDate(weekStart.getDate() + 6);
-          weekEnd.setHours(23,59,59,999);
+          weekEnd.setHours(23, 59, 59, 999);
           matchesDate = jobDate >= weekStart && jobDate <= weekEnd;
         } else if (filterDate === 'prev-week') {
           const weekStart = new Date(now);
           weekStart.setDate(now.getDate() - now.getDay() - 7);
-          weekStart.setHours(0,0,0,0);
+          weekStart.setHours(0, 0, 0, 0);
           const weekEnd = new Date(weekStart);
           weekEnd.setDate(weekStart.getDate() + 6);
-          weekEnd.setHours(23,59,59,999);
+          weekEnd.setHours(23, 59, 59, 999);
           matchesDate = jobDate >= weekStart && jobDate <= weekEnd;
         } else if (filterDate === 'month') {
           matchesDate = jobDate.getMonth() === now.getMonth() && jobDate.getFullYear() === now.getFullYear();
@@ -1231,14 +1231,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               {/* Modal Header */}
               <div className="sticky top-0 z-20 flex items-center justify-between px-10 py-8 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF]">
                 <div>
-                   <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                     {editingJob ? 'Edit Position' : 'Create New Position'}
-                   </h2>
-                   <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Recruitment Module</span>
-                      <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">Step {modalStep} of 2</span>
-                   </div>
+                  <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    {editingJob ? 'Edit Position' : 'Create New Position'}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Recruitment Module</span>
+                    <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                    <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">Step {modalStep} of 2</span>
+                  </div>
                 </div>
                 <button
                   onClick={handleBackToJobs}
@@ -1367,17 +1367,17 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           />
                         </div>
                         <div className="col-span-1">
-                           <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Deadline</label>
-                           <div onClick={() => openNativeDatePicker(positionDeadlineInputRef)} className="cursor-pointer relative group">
-                             <input
-                               ref={positionDeadlineInputRef}
-                               type="date"
-                               value={newJobForm.deadline}
-                               onChange={e => setNewJobForm(f => ({ ...f, deadline: e.target.value }))}
-                               className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] cursor-pointer"
-                             />
-                             <Calendar size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
-                           </div>
+                          <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Deadline</label>
+                          <div onClick={() => openNativeDatePicker(positionDeadlineInputRef)} className="cursor-pointer relative group">
+                            <input
+                              ref={positionDeadlineInputRef}
+                              type="date"
+                              value={newJobForm.deadline}
+                              onChange={e => setNewJobForm(f => ({ ...f, deadline: e.target.value }))}
+                              className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] cursor-pointer"
+                            />
+                            <Calendar size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1495,11 +1495,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: idx * 0.05 }}
                               onClick={() => toggleResumeSelection(resume.id)}
-                              className={`group p-6 rounded-[32px] border-2 cursor-pointer transition-all ${
-                                isSelected 
-                                  ? 'border-[#1B4DA0] bg-blue-50/50 shadow-xl shadow-blue-500/5' 
+                              className={`group p-6 rounded-[32px] border-2 cursor-pointer transition-all ${isSelected
+                                  ? 'border-[#1B4DA0] bg-blue-50/50 shadow-xl shadow-blue-500/5'
                                   : 'border-[#F4F3EF] bg-white hover:border-[#1B4DA0]/30'
-                              }`}
+                                }`}
                             >
                               <div className="flex items-start gap-4">
                                 <div className="w-12 h-12 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] font-bold text-lg group-hover:scale-110 transition-transform">
@@ -1509,9 +1508,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                                   <p className="text-sm font-bold text-[#1A1A2E] truncate">{resume.candidateName || 'Unknown'}</p>
                                   <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5 truncate">{resume.email}</p>
                                 </div>
-                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                                  isSelected ? 'bg-[#1B4DA0] border-[#1B4DA0]' : 'border-[#E8E7E2]'
-                                }`}>
+                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#1B4DA0] border-[#1B4DA0]' : 'border-[#E8E7E2]'
+                                  }`}>
                                   {isSelected && <Check size={14} className="text-white" />}
                                 </div>
                               </div>
@@ -1526,42 +1524,41 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
               {/* Modal Footer Actions */}
               <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-8 flex items-center justify-end gap-4">
-                 <button 
-                   onClick={handleBackToJobs}
-                   className="px-8 py-4 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
-                 >
-                   Cancel
-                 </button>
-                 {modalStep === 1 ? (
-                   <button 
-                     onClick={editingJob ? handleUpdatePosition : handleCreatePosition}
-                     className="px-10 py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl active:scale-95"
-                   >
-                     {editingJob ? (
-                       <><Check size={18} /> Update Position</>
-                     ) : (
-                       <><Plus size={18} /> Create Position</>
-                     )}
-                   </button>
-                 ) : (
-                   <div className="flex gap-4">
-                      <button 
-                        onClick={handleBackToJobs}
-                        className="px-8 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-bold hover:bg-[#E8E7E2] transition-colors"
-                      >
-                        Skip for Now
-                      </button>
-                      <button 
-                        onClick={handleAddSelectedToPipeline}
-                        disabled={selectedResumes.size === 0}
-                        className={`px-10 py-4 bg-[#1B4DA0] text-white rounded-2xl font-bold flex items-center gap-2 transition-all shadow-xl ${
-                          selectedResumes.size === 0 ? 'opacity-50 grayscale' : 'hover:bg-[#153e82] active:scale-95'
+                <button
+                  onClick={handleBackToJobs}
+                  className="px-8 py-4 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
+                >
+                  Cancel
+                </button>
+                {modalStep === 1 ? (
+                  <button
+                    onClick={editingJob ? handleUpdatePosition : handleCreatePosition}
+                    className="px-10 py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl active:scale-95"
+                  >
+                    {editingJob ? (
+                      <><Check size={18} /> Update Position</>
+                    ) : (
+                      <><Plus size={18} /> Create Position</>
+                    )}
+                  </button>
+                ) : (
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleBackToJobs}
+                      className="px-8 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-bold hover:bg-[#E8E7E2] transition-colors"
+                    >
+                      Skip for Now
+                    </button>
+                    <button
+                      onClick={handleAddSelectedToPipeline}
+                      disabled={selectedResumes.size === 0}
+                      className={`px-10 py-4 bg-[#1B4DA0] text-white rounded-2xl font-bold flex items-center gap-2 transition-all shadow-xl ${selectedResumes.size === 0 ? 'opacity-50 grayscale' : 'hover:bg-[#153e82] active:scale-95'
                         }`}
-                      >
-                        <Check size={18} /> Add Selected Candidates
-                      </button>
-                   </div>
-                 )}
+                    >
+                      <Check size={18} /> Add Selected Candidates
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -1587,7 +1584,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 <p className="text-[#6B6B7E] text-sm mt-1">{filteredJobs.length} active positions in recruitment</p>
               </div>
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => { setShowFullPageForm(true); setEditingJob(null); resetModal(); }}
                   className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg active:scale-95"
                 >
@@ -1739,23 +1736,23 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             >
               {assignTaskJob ? (
                 <div className="flex-1 overflow-y-auto">
-                    <AssignTaskModal 
-                        isDarkMode={isDarkMode} 
-                        job={assignTaskJob} 
-                        onClose={() => setAssignTaskJob(null)} 
-                        onAssign={handleAssignTask} 
-                        teamMembers={teamMembers} 
-                    />
+                  <AssignTaskModal
+                    isDarkMode={isDarkMode}
+                    job={assignTaskJob}
+                    onClose={() => setAssignTaskJob(null)}
+                    onAssign={handleAssignTask}
+                    teamMembers={teamMembers}
+                  />
                 </div>
               ) : selectedJob && (
                 <div className="flex-1 overflow-y-auto">
-                    <JobDetailView
-                      isDarkMode={isDarkMode}
-                      job={selectedJob}
-                      onBack={() => setSelectedJob(null)}
-                      onAssignTask={(job) => setAssignTaskJob(job)}
-                      onEdit={(job) => handleEditJob(job)}
-                    />
+                  <JobDetailView
+                    isDarkMode={isDarkMode}
+                    job={selectedJob}
+                    onBack={() => setSelectedJob(null)}
+                    onAssignTask={(job) => setAssignTaskJob(job)}
+                    onEdit={(job) => handleEditJob(job)}
+                  />
                 </div>
               )}
             </motion.div>

@@ -3580,7 +3580,57 @@ export const getCalendarEvents = async (month, year) => {
   }
 };
 
-// Then, include it in the default export
+// ============== NOTES ==============
+export const getNotes = async (params = {}) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/department/notes', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch notes' };
+  }
+};
+
+export const createNote = async (noteData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/department/notes', noteData, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to create note' };
+  }
+};
+
+export const updateNote = async (id, noteData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put(`/department/notes/${id}`, noteData, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to update note' };
+  }
+};
+
+export const deleteNote = async (id) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete(`/department/notes/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to delete note' };
+  }
+};
+
+
 const api = {
   superAdminLogin,
   adminLogin,
@@ -3729,6 +3779,10 @@ const api = {
   getChatMessages,
   sendChatMessage,
   getCalendarEvents,
+  getNotes,
+  createNote,
+  updateNote,
+  deleteNote,
 };
 
 export default api;
