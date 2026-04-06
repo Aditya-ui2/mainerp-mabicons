@@ -197,8 +197,10 @@ const sidebarConfig = [
       { id: 'interviews', title: 'Interview Schedule', icon: FiCalendar },
       { id: 'offers', title: 'Offer Management', icon: FiAward },
       { id: 'resume-bank', title: 'Resume Bank', icon: FiDatabase },
-      { id: 'selection-mis', title: 'Selection MIS', icon: FiFileText },
       { id: 'activity-feed', title: 'Activity Feed', icon: FiActivity },
+      { id: 'mis-reports', title: 'Team MIS Reports', icon: FiBarChart2 },
+      { id: 'notes', title: 'Notes', icon: FiEdit2 },
+
     ],
   },
 ];
