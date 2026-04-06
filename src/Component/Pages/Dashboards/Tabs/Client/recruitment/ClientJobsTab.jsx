@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiBriefcase,
   FiMapPin,
@@ -7,9 +8,12 @@ import {
   FiPlus,
   FiSearch,
   FiRefreshCw,
+  FiCalendar,
+  FiX,
 } from 'react-icons/fi';
+import { Briefcase, FileText, Settings, DollarSign, MapPin, Clock, Users, Target, Calendar, AlignLeft } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
-import { getClientDashboardOverview } from '../../../../service/api';
+import { getClientDashboardOverview, createRecruitmentPosition } from '../../../../service/api';
 
 const StatusBadge = ({ status }) => {
   const config = {
@@ -43,6 +47,17 @@ export default function ClientJobsTab() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [expandedPosition, setExpandedPosition] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [showAddJob, setShowAddJob] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [clientId, setClientId] = useState(null);
+  const [newJob, setNewJob] = useState({
+    title: '', description: '', location: '', type: 'Full-time',
+    salary: '', priority: 'Medium', openings: 1, experience: '', skills: '',
+    deadline: '', requirements: '', responsibilities: '', roleType: '',
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -50,6 +65,7 @@ export default function ClientJobsTab() {
       const token = localStorage.getItem('token');
       if (!token) return;
       const decoded = jwtDecode(token);
+      setClientId(decoded.id);  
       const res = await getClientDashboardOverview(decoded.id);
       if (res?.success && res.data?.recruitment) {
         setPositions(res.data.recruitment.positions || []);
@@ -64,9 +80,56 @@ export default function ClientJobsTab() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const filteredPositions = (positions || [])
-    .filter(p => filterStatus === 'all' || p.status === filterStatus)
-    .filter(p => !searchQuery || p.title?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredPositions = useMemo(() => {
+    const now = new Date();
+    return (positions || [])
+      .filter(p => filterStatus === 'all' || p.status === filterStatus)
+      .filter(p => !searchQuery || p.title?.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter(p => {
+        if (dateFilter === 'all') return true;
+        const d = new Date(p.postedDate || p.createdAt);
+        if (isNaN(d)) return true;
+        if (dateFilter === 'today') { const t = new Date(); t.setHours(0,0,0,0); return d >= t; }
+        if (dateFilter === 'week') { const s = new Date(now); s.setDate(s.getDate() - s.getDay()); s.setHours(0,0,0,0); return d >= s; }
+        if (dateFilter === 'month') { return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }
+        if (dateFilter === 'prev-month') { const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1); const pe = new Date(now.getFullYear(), now.getMonth(), 0); return d >= pm && d <= pe; }
+        if (dateFilter === 'quarter') { const qm = Math.floor(now.getMonth() / 3) * 3; return d >= new Date(now.getFullYear(), qm, 1) && d <= now; }
+        if (dateFilter === 'custom') { const s = customStartDate ? new Date(customStartDate) : null; const e = customEndDate ? new Date(customEndDate) : null; if (s && d < s) return false; if (e) { e.setHours(23,59,59); if (d > e) return false; } return true; }
+        return true;
+      });
+  }, [positions, filterStatus, searchQuery, dateFilter, customStartDate, customEndDate]);
+
+  const handleAddJob = async () => {
+    if (!newJob.title.trim()) return;
+    setSubmitting(true);
+    try {
+      const positionData = {
+        title: newJob.title,
+        clientId,
+        description: newJob.description,
+        location: newJob.location || 'Remote',
+        type: newJob.type,
+        salary: newJob.salary,
+        status: 'Open',
+        priority: newJob.priority,
+        openings: parseInt(newJob.openings) || 1,
+        skills: newJob.skills ? newJob.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+        experience: newJob.experience,
+        deadline: newJob.deadline || undefined,
+        requirements: newJob.requirements ? newJob.requirements.split('\n').filter(Boolean) : [],
+        responsibilities: newJob.responsibilities ? newJob.responsibilities.split('\n').filter(Boolean) : [],
+      };
+      await createRecruitmentPosition(positionData);
+      setShowAddJob(false);
+      setNewJob({ title: '', description: '', location: '', type: 'Full-time', salary: '', priority: 'Medium', openings: 1, experience: '', skills: '', deadline: '', requirements: '', responsibilities: '', roleType: '' });
+      fetchData();
+    } catch (err) {
+      console.error('Failed to create position:', err);
+      alert(err?.message || 'Failed to create position');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -92,7 +155,7 @@ export default function ClientJobsTab() {
         </div>
       </div>
 
-      {/* Search & Filter Bar */}
+      {/* Search, Date Filter & Add Job */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B9BAD]" />
@@ -105,6 +168,25 @@ export default function ClientJobsTab() {
           />
         </div>
         <select
+          value={dateFilter}
+          onChange={e => setDateFilter(e.target.value)}
+          className="text-xs font-semibold px-3 py-2.5 rounded-xl border border-[#E8E7E2] bg-white text-[#1A1A2E] outline-none cursor-pointer focus:ring-2 focus:ring-blue-200"
+        >
+          <option value="all">All Dates</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="prev-month">Previous Month</option>
+          <option value="quarter">This Quarter</option>
+          <option value="custom">Custom Range</option>
+        </select>
+        {dateFilter === 'custom' && (
+          <>
+            <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="text-xs px-2 py-2 rounded-xl border border-[#E8E7E2] bg-white outline-none" />
+            <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="text-xs px-2 py-2 rounded-xl border border-[#E8E7E2] bg-white outline-none" />
+          </>
+        )}
+        <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
           className="text-xs font-semibold px-3 py-2.5 rounded-xl border border-[#E8E7E2] bg-white text-[#1A1A2E] outline-none cursor-pointer focus:ring-2 focus:ring-blue-200"
@@ -115,22 +197,247 @@ export default function ClientJobsTab() {
           <option value="In Progress">In Progress</option>
           <option value="Closed">Closed</option>
         </select>
+        <button
+          onClick={() => setShowAddJob(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#1B4DA0] text-white text-xs font-bold rounded-xl hover:bg-[#164090] transition-colors shadow-sm"
+        >
+          <FiPlus className="w-4 h-4" /> Post New Job
+        </button>
       </div>
 
-      {/* Stats Row */}
+      {/* Stats Row — black icons, light blue on hover */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total', count: positions?.length || 0, color: 'text-[#1A1A2E]' },
-          { label: 'Open', count: positions?.filter(p => p.status === 'Open').length || 0, color: 'text-blue-600' },
-          { label: 'Urgent', count: positions?.filter(p => p.status === 'Urgent').length || 0, color: 'text-amber-600' },
-          { label: 'Closed', count: positions?.filter(p => p.status === 'Closed').length || 0, color: 'text-slate-400' },
+          { label: 'Total', count: filteredPositions?.length || 0 },
+          { label: 'Open', count: filteredPositions?.filter(p => p.status === 'Open').length || 0 },
+          { label: 'Urgent', count: filteredPositions?.filter(p => p.status === 'Urgent').length || 0 },
+          { label: 'Closed', count: filteredPositions?.filter(p => p.status === 'Closed').length || 0 },
         ].map((s, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-[#E8E7E2] p-4 shadow-sm">
-            <p className={`text-2xl font-extrabold ${s.color}`}>{s.count}</p>
+          <div key={i} className="bg-white rounded-2xl border border-[#E8E7E2] p-4 shadow-sm group hover:shadow-md transition-all cursor-default">
+            <p className="text-2xl font-extrabold text-black group-hover:text-[#5B9DF0] transition-colors duration-300">{s.count}</p>
             <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">{s.label}</p>
           </div>
         ))}
       </div>
+
+      {/* Add Job Modal — exact KAM-style overlay */}
+      <AnimatePresence>
+        {showAddJob && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-8">
+            {/* Backdrop Blur Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAddJob(false)}
+              className="absolute inset-0 bg-slate-950/40 backdrop-blur-xl"
+            />
+
+            {/* Modal Content Card */}
+            <motion.div
+              key="client-job-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-[40px] w-full max-w-6xl max-h-[92vh] overflow-hidden shadow-[0_32px_128px_rgba(0,0,0,0.25)] relative z-10 flex flex-col animate-in zoom-in-95 duration-300 border border-white/20"
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 z-20 flex items-center justify-between px-10 py-8 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF]">
+                <div>
+                   <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                     Create New Position
+                   </h2>
+                   <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Client Portal</span>
+                      <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">New Request</span>
+                   </div>
+                </div>
+                <button
+                  onClick={() => setShowAddJob(false)}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#1A1A2E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95 group shadow-sm"
+                >
+                  <FiX size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                </button>
+              </div>
+
+              {/* Scrollable Form Body */}
+              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                  {/* Column 1: Basic Information */}
+                  <div className="space-y-6">
+                    <h3 className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
+                      <Briefcase size={14} /> Basic Information
+                    </h3>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Job Title *</label>
+                        <input type="text" value={newJob.title} onChange={e => setNewJob(f => ({ ...f, title: e.target.value }))}
+                          placeholder="e.g. Senior Software Engineer"
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] border border-transparent focus:border-[#1B4DA0]/20"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Role Type *</label>
+                        <div className="relative">
+                          <select value={newJob.roleType || ''} onChange={e => setNewJob(f => ({ ...f, roleType: e.target.value }))}
+                            className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] appearance-none pr-10"
+                          >
+                            <option value="">Select Role Category</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Design">Design</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Operations">Operations</option>
+                            <option value="Finance">Finance</option>
+                            <option value="HR">HR</option>
+                            <option value="Product">Product</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="Other">Other</option>
+                          </select>
+                          <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Location</label>
+                        <input type="text" value={newJob.location} onChange={e => setNewJob(f => ({ ...f, location: e.target.value }))}
+                          placeholder="e.g. Bangalore, Remote"
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Job Details & Compensation */}
+                  <div className="space-y-6">
+                    <h3 className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
+                      <FileText size={14} /> Job Details
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-1">
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Type</label>
+                        <select value={newJob.type} onChange={e => setNewJob(f => ({ ...f, type: e.target.value }))}
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] appearance-none"
+                        >
+                          <option value="Full-time">Full-time</option>
+                          <option value="Part-time">Part-time</option>
+                          <option value="Contract">Contract</option>
+                          <option value="Internship">Internship</option>
+                        </select>
+                      </div>
+                      <div className="col-span-1">
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Priority</label>
+                        <select value={newJob.priority} onChange={e => setNewJob(f => ({ ...f, priority: e.target.value }))}
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] appearance-none"
+                        >
+                          <option value="Low">Low</option>
+                          <option value="Medium">Medium</option>
+                          <option value="High">High</option>
+                          <option value="Critical">Critical</option>
+                        </select>
+                      </div>
+                      <div className="col-span-1">
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Salary</label>
+                        <input type="text" value={newJob.salary} onChange={e => setNewJob(f => ({ ...f, salary: e.target.value }))}
+                          placeholder="15-25 LPA"
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Experience</label>
+                        <input type="text" value={newJob.experience} onChange={e => setNewJob(f => ({ ...f, experience: e.target.value }))}
+                          placeholder="3-5 yrs"
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Openings</label>
+                        <input type="number" value={newJob.openings} onChange={e => setNewJob(f => ({ ...f, openings: e.target.value }))} min="1"
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Deadline</label>
+                        <div className="relative">
+                          <input type="date" value={newJob.deadline} onChange={e => setNewJob(f => ({ ...f, deadline: e.target.value }))}
+                            className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] cursor-pointer"
+                          />
+                          <Calendar size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column 3: Skills & Technical Requirements */}
+                  <div className="space-y-6">
+                    <h3 className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
+                      <Target size={14} /> Skills & Detailed Info
+                    </h3>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Skills (comma separated)</label>
+                      <input type="text" value={newJob.skills} onChange={e => setNewJob(f => ({ ...f, skills: e.target.value }))}
+                        placeholder="e.g. React, Node.js, MongoDB"
+                        className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Requirements (one per line)</label>
+                        <textarea value={newJob.requirements} onChange={e => setNewJob(f => ({ ...f, requirements: e.target.value }))}
+                          rows={4}
+                          placeholder="Detailed requirements..."
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Responsibilities (one per line)</label>
+                        <textarea value={newJob.responsibilities} onChange={e => setNewJob(f => ({ ...f, responsibilities: e.target.value }))}
+                          rows={4}
+                          placeholder="Key responsibilities..."
+                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Short Description</label>
+                      <textarea value={newJob.description} onChange={e => setNewJob(f => ({ ...f, description: e.target.value }))}
+                        rows={3}
+                        placeholder="Describe the role..."
+                        className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-8 flex items-center justify-end gap-4">
+                 <button 
+                   onClick={() => setShowAddJob(false)}
+                   className="px-8 py-4 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
+                 >
+                   Cancel
+                 </button>
+                 <button 
+                   onClick={handleAddJob}
+                   disabled={submitting || !newJob.title.trim()}
+                   className="px-10 py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl active:scale-95 disabled:opacity-50"
+                 >
+                   <FiPlus size={18} /> {submitting ? 'Creating...' : 'Create Position'}
+                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Positions List */}
       <div className="bg-white rounded-[32px] p-6 border border-[#E8E7E2] shadow-sm">

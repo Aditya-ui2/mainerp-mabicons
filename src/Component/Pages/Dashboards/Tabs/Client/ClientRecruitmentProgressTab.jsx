@@ -249,10 +249,10 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
   const maxFunnel = Math.max(...funnelStages.map(s => computedFunnel[s] || 0), 1);
 
   const kpiCards = [
-    { label: 'Open Positions', value: computedSummary.openPositions, change: `${computedSummary.totalPositions} total`, up: computedSummary.openPositions > 0, color: 'text-amber-500', icon: Briefcase },
-    { label: 'Candidates', value: computedSummary.inPipeline, change: `${computedSummary.totalCandidates} total`, up: computedSummary.inPipeline > 0 ? true : null, color: 'text-[#1B4DA0]', icon: LuUsers },
-    { label: 'Interviews', value: computedSummary.scheduledInterviews, change: `${computedSummary.totalInterviews} total`, up: computedSummary.scheduledInterviews > 0, color: 'text-slate-500', icon: LuTarget },
-    { label: 'Hired', value: computedSummary.hired, change: `${computedSummary.totalCandidates} total`, up: computedSummary.hired > 0, color: 'text-[#1B4DA0]', icon: UserCheck },
+    { label: 'Open Positions', value: computedSummary.openPositions, change: `${computedSummary.totalPositions} total`, up: computedSummary.openPositions > 0, icon: Briefcase },
+    { label: 'Candidates', value: computedSummary.inPipeline, change: `${computedSummary.totalCandidates} total`, up: computedSummary.inPipeline > 0 ? true : null, icon: LuUsers },
+    { label: 'Interviews', value: computedSummary.scheduledInterviews, change: `${computedSummary.totalInterviews} total`, up: computedSummary.scheduledInterviews > 0, icon: LuTarget },
+    { label: 'Hired', value: computedSummary.hired, change: `${computedSummary.totalCandidates} total`, up: computedSummary.hired > 0, icon: UserCheck },
   ];
 
   return (
@@ -360,7 +360,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
           return (
             <div key={i} className="bg-white p-6 rounded-[24px] border border-[#E8E7E2] shadow-sm hover:shadow-md transition-all duration-300 group">
               <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center bg-[#F4F3EF] ${kpi.color}`}>
+                <div className="w-10 h-10 rounded-[14px] flex items-center justify-center bg-[#F4F3EF] text-black group-hover:text-[#5B9DF0] transition-colors duration-300">
                   <Icon size={20} />
                 </div>
               </div>

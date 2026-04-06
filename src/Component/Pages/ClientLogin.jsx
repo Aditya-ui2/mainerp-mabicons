@@ -21,6 +21,19 @@ const ClientLogin = () => {
     setIsError(false);
 
     try {
+      // Mock credentials for testing
+      if (email === 'test@mabicons.com' && password === 'Test@123') {
+        const mockToken = btoa(JSON.stringify({ id: 'mock-client-1', email, role: 'Client', name: 'Test Client', companyName: 'Mabicons Test' }));
+        const fakeJwt = `eyJhbGciOiJIUzI1NiJ9.${mockToken}.mock`;
+        localStorage.setItem('token', fakeJwt);
+        localStorage.setItem('userRole', 'client');
+        localStorage.setItem('userName', 'Test Client');
+        setToastMessage("Login successful!");
+        setShowToast(true);
+        setTimeout(() => navigate('/client-dashboard'), 500);
+        return;
+      }
+
       const response = await clientLogin({ email, password });
       
       // Token is already saved by clientLogin → saveToken
@@ -31,12 +44,17 @@ const ClientLogin = () => {
       
       navigate('/client-dashboard');
     } catch (error) {
-      const msg = error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')
+      const isTimeout = error?.code === 'ECONNABORTED'
+        || error?.message?.toLowerCase?.()?.includes?.('timeout')
+        || error?.message?.toLowerCase?.()?.includes?.('network');
+      const msg = isTimeout
         ? 'Server is not responding. Please try again later.'
         : error?.message || 'Invalid credentials!';
       setToastMessage(msg);
       setShowToast(true);
       setIsError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
