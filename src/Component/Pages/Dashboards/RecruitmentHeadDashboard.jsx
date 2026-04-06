@@ -73,6 +73,7 @@ const TaskAssignmentTab = lazy(() => import('./Tabs/Common/TaskAssignmentTab'));
 const TeamMISReportsTab = lazy(() => import('./Tabs/Common/TeamMISReportsTab'));
 const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 const SettingsTab = lazy(() => import('./Tabs/SettingsTab'));
+const SelectionMISTab = lazy(() => import('./Tabs/KAMRecruitment/SelectionMISTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -188,52 +189,16 @@ const transformKAMData = (apiData) => {
 const sidebarConfig = [
   {
     items: [
-      {
-        id: 'team',
-        title: 'MY TEAM',
-        icon: FiUsers,
-        submenu: [
-          { id: 1, title: 'Team Overview' },
-          { id: 2, title: 'KAM Performance' },
-          { id: 3, title: 'Task Assignment' },
-        ]
-      },
-      {
-        id: 'recruitment',
-        title: 'RECRUITMENT',
-        icon: FiBriefcase,
-        submenu: [
-          { id: 4, title: 'Job Openings' },
-          { id: 5, title: 'Candidate Pipeline' },
-          { id: 6, title: 'Interview Schedule' },
-        ]
-      },
-      {
-        id: 'assessment',
-        title: 'ASSESSMENT',
-        icon: FiAward,
-        submenu: [
-          { id: 8, title: 'Offer Management' },
-        ]
-      },
-      {
-        id: 'analytics',
-        title: 'ANALYTICS',
-        icon: FiTrendingUp,
-        submenu: [
-          { id: 10, title: 'Resume Bank' },
-        ]
-      },
-      {
-        id: 'activity',
-        title: 'ACTIVITY',
-        icon: FiActivity,
-        submenu: [
-          { id: 11, title: 'Activity Feed' },
-          { id: 12, title: 'Team MIS Reports' },
-          { id: 13, title: 'Notes' },
-        ]
-      },
+      { id: 'team-overview', title: 'Team Overview', icon: FiUsers },
+      { id: 'kam-performance', title: 'KAM Performance', icon: FiStar },
+      { id: 'task-assignment', title: 'Task Assignment', icon: FiCheckSquare },
+      { id: 'job-openings', title: 'Job Openings', icon: FiBriefcase },
+      { id: 'candidates', title: 'Candidate Pipeline', icon: FiUserPlus },
+      { id: 'interviews', title: 'Interview Schedule', icon: FiCalendar },
+      { id: 'offers', title: 'Offer Management', icon: FiAward },
+      { id: 'resume-bank', title: 'Resume Bank', icon: FiDatabase },
+      { id: 'selection-mis', title: 'Selection MIS', icon: FiFileText },
+      { id: 'activity-feed', title: 'Activity Feed', icon: FiActivity },
     ],
   },
 ];
@@ -1885,7 +1850,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Job Openings':
               return <JobOpeningsTab isDarkMode={false} />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab />;
+              return <CandidatePipelineTab setActiveTab={setActiveTab} />;
             case 'Interview Schedule':
               return <InterviewScheduleTab isDarkMode={false} />;
             case 'Screening & Assessment':
@@ -1896,6 +1861,8 @@ const RecruitmentHeadDashboard = () => {
               return <RecruitmentAnalyticsTab isDarkMode={false} />;
             case 'Resume Bank':
               return <ResumeBankTab isDarkMode={false} />;
+            case 'Selection MIS':
+              return <SelectionMISTab />;
             case 'Activity Feed':
               return <ActivityFeedTab department="HR Recruitment" />;
             case 'Team MIS Reports':
@@ -2107,7 +2074,7 @@ const RecruitmentHeadDashboard = () => {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10 pb-4 border-b border-slate-50 relative">
                     {/* Staff applications card - left */}
                     <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col p-8 transition-all hover:shadow-xl hover:shadow-blue-500/5">
-                      <div className="flex flex-col mb-6 w-full gap-4">
+                      <div className="flex items-center justify-between mb-6 w-full">
                         <div className="flex flex-col text-left">
                           <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">Staff applications card</h3>
                           <div className="flex items-center gap-2">
@@ -2116,7 +2083,7 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <div className="flex items-center gap-2">
                           {/* Team Filter */}
                           <div className="relative" ref={teamDropdownRef}>
                             <button

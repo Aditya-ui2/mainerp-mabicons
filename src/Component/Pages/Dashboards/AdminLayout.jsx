@@ -185,11 +185,12 @@ const AdminLayout = ({
                         }}
                         title={sidebarCollapsed ? item.title : undefined}
                         className={`
-                          w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200 text-left relative
+                          w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200 text-left relative
+                          ${sidebarCollapsed ? 'justify-center' : 'justify-between'}
                           ${isHighlighted ? "bg-[#1B4DA0]/10 text-[#1B4DA0]" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
                         `}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center' : ''}`}>
                           <Icon size={20} className="flex-shrink-0" />
                           {!sidebarCollapsed && (
                             <span className={`text-sm font-semibold ${isHighlighted ? "font-bold" : ""}`}>

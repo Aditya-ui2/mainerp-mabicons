@@ -355,21 +355,47 @@ const TeamMISReportsTab = () => {
           {toast && <Toast message={toast.message} type={toast.type} />}
         </AnimatePresence>
 
-        {/* Global Toolbar */}
-        <div className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 text-left">
+        {/* Header */}
+        <div className="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 text-left">
           <div>
             <h1 className="text-[36px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Team MIS Reports</h1>
             <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide">Daily performance metric summary & team intelligence</p>
           </div>
 
           <div className="flex items-center gap-3">
+            <select
+              value={selectedKAM}
+              onChange={(e) => setSelectedKAM(e.target.value)}
+              className="bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-full px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-[#1A1A2E] dark:text-white outline-none cursor-pointer shadow-sm hover:border-[#1B4DA0]/20 transition-all appearance-none pr-8"
+            >
+              <option value="all">All Members</option>
+              {[...new Set(reports.map(r => r.memberName))].filter(Boolean).map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+            <button
+              onClick={downloadMISCSV}
+              disabled={loading || reports.length === 0}
+              className="w-11 h-11 flex items-center justify-center rounded-full bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              title="Download CSV"
+            >
+              <Download size={16} />
+            </button>
+            <button
+              onClick={fetchReports}
+              disabled={loading}
+              className="w-11 h-11 flex items-center justify-center rounded-full bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              title="Refresh"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin text-[#1B4DA0]' : ''} />
+            </button>
             <button
               type="button"
               onClick={openDatePicker}
               className="relative flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95 h-[42px]"
             >
               <Calendar size={14} />
-              <span>{new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-GB')}</span>
+              <span>{formattedDate}</span>
               <input
                 ref={dateInputRef}
                 type="date"
@@ -381,127 +407,109 @@ const TeamMISReportsTab = () => {
           </div>
         </div>
 
-        {/* Temporal Navigation Banner */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-12">
-          <div 
-            className="flex items-center gap-4 px-6 py-3 bg-white border border-[#F4F3EF] rounded-[24px] shadow-sm cursor-pointer hover:shadow-md hover:border-[#1B4DA0]/20 transition-all group" 
-            onClick={openDatePicker}
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] group-hover:scale-110 transition-transform">
-              <Calendar size={18} strokeWidth={2} />
+        {/* Main Timeline Container */}
+        <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
+          
+          {/* Timeline Header */}
+          <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
+                <BarChart2 size={20} strokeWidth={2} />
+              </div>
+              <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Performance Timeline</h3>
             </div>
-            <div>
-              <p className="text-[17px] font-bold text-[#1A1A2E] leading-none whitespace-nowrap">{formattedDate}</p>
-            </div>
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="absolute opacity-0 pointer-events-none"
-            />
-            {!loading && (
-              <div className="ml-4 pl-4 border-l border-[#F4F3EF]">
-                <span className="inline-flex px-3 py-1.5 bg-[#ECFDF5] text-[#10B981] rounded-lg text-[9px] font-bold tracking-[0.15em] uppercase whitespace-nowrap">
-                  {filteredReports.length} ACTIVE LOGS
+            <div className="flex items-center gap-4">
+              {!loading && (
+                <span className="inline-flex px-3 py-1.5 bg-[#ECFDF5] text-[#10B981] rounded-lg text-[9px] font-bold tracking-[0.15em] uppercase">
+                  {filteredReports.length} Active Logs
                 </span>
-              </div>
-            )}
-          </div>
-
-          {/* Action Row - Integrated to the right as requested */}
-          <div className="flex items-center gap-3 bg-white border border-[#F4F3EF] p-2 rounded-[24px] shadow-sm">
-            <button
-              onClick={downloadMISCSV}
-              disabled={loading || reports.length === 0}
-              className="flex items-center gap-2 px-6 h-11 rounded-xl bg-[#FAFAFA] text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest hover:bg-[#F8FAFF] hover:text-[#1A1A2E] transition-all disabled:opacity-50"
-            >
-              <Download size={14} /> Download CSV
-            </button>
-
-            <div className="w-px h-6 bg-[#F4F3EF]" />
-
-            <select
-              value={selectedKAM}
-              onChange={(e) => setSelectedKAM(e.target.value)}
-              className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-[#1A1A2E] outline-none cursor-pointer px-2 h-11"
-            >
-              <option value="all">Filter by KAM (All)</option>
-              <option value="Priyanshi">Priyanshi</option>
-              <option value="Jyoti">Jyoti</option>
-              <option value="Manju">Manju</option>
-            </select>
-
-            <div className="w-px h-6 bg-[#F4F3EF]" />
-
-            <button 
-              onClick={fetchReports} 
-              className="w-11 h-11 rounded-xl flex items-center justify-center text-[#9B9BAD] hover:bg-[#F8FAFF] hover:text-[#1B4DA0] transition-all"
-              title="Refresh Radar"
-            >
-              <RefreshCw size={16} className={loading ? 'animate-spin text-[#1B4DA0]' : ''} />
-            </button>
-          </div>
-        </div>
-
-        {/* Overarching Totals Gallery */}
-        {!loading && filteredReports.length > 0 && (
-          <div className="mb-12 bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm p-8 lg:p-10 relative overflow-hidden group/metrics">
-            <div className="flex items-center justify-between mb-10 relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-[20px] bg-[#1B4DA0] flex items-center justify-center text-white shadow-xl shadow-blue-500/30">
-                  <BarChart2 size={24} strokeWidth={2.5} />
-                </div>
-                <h3 className="text-[24px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Team Efficiency Matrix</h3>
+              )}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 rounded-full shadow-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981]" />
+                <span className="text-[10px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-widest">Live Feed</span>
               </div>
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-[#F4F3EF] dark:divide-slate-800 relative z-10">
-              {[
-                { label: 'Outbound Dials', value: totals.callsCount,          color: 'text-[#3B82F6]' },
-                { label: 'Profiles Visited',value: totals.profilesVisited,     color: 'text-[#8B5CF6]' },
-                { label: 'Network Shares',  value: totals.profilesShared,      color: 'text-[#0891B2]' },
-                { label: 'Talent Touches',  value: totals.candidatesContacted, color: 'text-[#10B981]' },
-                { label: 'Verified Bookings',value: totals.interviewsArranged,  color: 'text-[#F59E0B]' },
-              ].map((m, idx) => (
-                <div key={m.label} className={`px-4 lg:px-8 text-center ${idx === 0 ? 'pl-0' : ''} ${idx === 4 ? 'border-r-0' : ''}`}>
-                  <p className={`text-[46px] font-black font-syne leading-none mb-3 ${m.color}`}>{m.value}</p>
-                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">{m.label}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#1B4DA0]/5 rounded-full blur-[80px] pointer-events-none group-hover/metrics:bg-[#1B4DA0]/10 transition-colors duration-1000" />
           </div>
-        )}
 
-        {/* Report Stream */}
-        <div>
-          {loading ? (
-            <div className="space-y-6">
-              {Array(3).fill(0).map((_, i) => (
-                <div key={i} className="h-40 rounded-[32px] bg-[#FAFAFA] dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 animate-pulse relative overflow-hidden">
-                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 dark:via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                </div>
-              ))}
-            </div>
-          ) : filteredReports.length === 0 ? (
-            <div className="text-center py-40 bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden">
-               <div className="w-24 h-24 bg-[#FAFAFA] dark:bg-slate-800 rounded-[32px] mx-auto flex items-center justify-center text-[#9B9BAD] mb-8 rotate-12">
-                 <Activity size={40} strokeWidth={1.5} />
-               </div>
-               <p className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white capitalize mb-2">Radar Silence Mode</p>
-               <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">{selectedKAM !== 'all' ? `No report logs found for ${selectedKAM}` : 'Awaiting operational intel for this specific temporal dimension.'}</p>
-            </div>
-          ) : (
-            <div>
-               {filteredReports.map((report, idx) => (
-                 <motion.div key={report.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
-                   <ReportRow report={report} onComment={setCommentTarget} />
-                 </motion.div>
-               ))}
+          {/* Totals Band */}
+          {!loading && filteredReports.length > 0 && (
+            <div className="px-8 py-6 border-b border-[#F4F3EF] dark:border-slate-800 bg-white dark:bg-slate-900/50 relative z-10">
+              <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-[#F4F3EF] dark:divide-slate-800">
+                {[
+                  { label: 'Outbound Dials', value: totals.callsCount,          color: 'text-[#3B82F6]' },
+                  { label: 'Profiles Visited',value: totals.profilesVisited,     color: 'text-[#8B5CF6]' },
+                  { label: 'Network Shares',  value: totals.profilesShared,      color: 'text-[#0891B2]' },
+                  { label: 'Talent Touches',  value: totals.candidatesContacted, color: 'text-[#10B981]' },
+                  { label: 'Verified Bookings',value: totals.interviewsArranged,  color: 'text-[#F59E0B]' },
+                ].map((m, idx) => (
+                  <div key={m.label} className="px-4 lg:px-6 text-center">
+                    <p className={`text-[28px] font-black font-syne leading-none mb-1 ${m.color}`}>{m.value}</p>
+                    <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em]">{m.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Vertical Bridge Line */}
+          <div className="absolute left-[88px] lg:left-[108px] top-[200px] bottom-[40px] w-px bg-[#F4F3EF] dark:bg-slate-800 pointer-events-none hidden sm:block" />
+
+          {/* Timeline Content */}
+          <div className="px-8 py-12 space-y-10 relative z-10">
+            {loading ? (
+              <div className="space-y-6">
+                {Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="h-32 rounded-[24px] bg-[#FAFAFA] dark:bg-slate-900 animate-pulse" />
+                ))}
+              </div>
+            ) : filteredReports.length === 0 ? (
+              <div className="text-center py-32">
+                <div className="w-24 h-24 bg-[#FAFAFA] dark:bg-slate-800 rounded-[32px] mx-auto flex items-center justify-center text-[#9B9BAD] mb-8 rotate-12">
+                  <Activity size={40} strokeWidth={1.5} />
+                </div>
+                <p className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white capitalize mb-2">Radar Silence Mode</p>
+                <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">
+                  {selectedKAM !== 'all' ? `No report logs found for ${selectedKAM}` : 'Awaiting operational intel for this specific temporal dimension.'}
+                </p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                {filteredReports.map((report, idx) => {
+                  const mc = moodConfig[report.mood] || moodConfig.Good;
+                  const MoodIcon = mc.icon;
+
+                  return (
+                    <motion.div
+                      key={report.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.04 }}
+                      className="flex items-start group relative text-left"
+                    >
+                      {/* Time Column */}
+                      <div className="w-20 lg:w-28 flex-shrink-0 pt-5 text-right pr-6 lg:pr-8 hidden sm:block">
+                        <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
+                          {formatTime(report.checkInTime)}
+                        </span>
+                      </div>
+
+                      {/* Avatar Marker */}
+                      <div className="relative z-10 flex-shrink-0 hidden sm:block">
+                        <div className="w-10 h-10 rounded-xl bg-[#1B4DA0] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-500">
+                          {(report.memberName || '?').charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+
+                      {/* Report Card */}
+                      <div className="ml-0 sm:ml-6 lg:ml-8 flex-1">
+                        <ReportRow report={report} onComment={setCommentTarget} />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            )}
+          </div>
         </div>
 
         {/* Global Footer Branding */}

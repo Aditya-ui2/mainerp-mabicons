@@ -175,115 +175,67 @@ const InterviewFeedbackModal = ({
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          onClick={(e) => e.stopPropagation()}
-          className={`w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-white'} shadow-2xl`}
-        >
+      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300" onClick={onClose}>
+        <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-500" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
-          <div className={`sticky top-0 z-10 flex items-center justify-between p-5 border-b ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600">
-                <FiStar className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                  Interview Feedback
-                </h2>
-                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {interview?.candidate?.name || interview?.candidateName} • {interview?.position?.title || interview?.position}
-                </p>
-              </div>
+          <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+            <div>
+              <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Interview Feedback</h3>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                {interview?.candidate?.name || interview?.candidateName} • {interview?.position?.title || interview?.position}
+              </p>
             </div>
-            <button
-              onClick={onClose}
-              className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
-            >
-              <FiX className="w-5 h-5" />
+            <button onClick={onClose}
+              className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+              <FiX size={20} />
             </button>
           </div>
 
           {/* Success State */}
           {success && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-12 text-center"
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-12 text-center">
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
                 <FiCheck className="w-10 h-10 text-green-600" />
               </div>
-              <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                Feedback Submitted!
-              </h3>
-              <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Thank you for your evaluation
-              </p>
+              <h3 className="text-xl font-bold mb-2 text-[#1A1A2E]">Feedback Submitted!</h3>
+              <p className="text-[#9B9BAD]">Thank you for your evaluation</p>
             </motion.div>
           )}
 
           {/* Form */}
           {!success && (
-            <form onSubmit={handleSubmit} className="p-5 space-y-6">
+            <form onSubmit={handleSubmit} className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-8">
               {/* Error Alert */}
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-red-100 text-red-700"
-                >
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-red-100 text-red-700">
                   <FiAlertCircle className="w-5 h-5" />
                   <span className="text-sm font-medium">{error}</span>
                 </motion.div>
               )}
 
-              {/* Overall Score Display */}
-              <div className={`p-5 rounded-xl ${isDarkMode ? 'bg-slate-700/50' : 'bg-gradient-to-r from-purple-50 to-pink-50'}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                      Overall Rating
-                    </h3>
-                    <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Auto-calculated based on criteria
-                    </p>
-                  </div>
+              {/* Overall Score */}
+              <div className="md:col-span-2">
+                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-4">
+                  <FiStar size={14} /> Overall Rating
+                </h4>
+                <div className="flex items-center justify-between p-5 rounded-2xl bg-[#F4F3EF]">
+                  <p className="text-sm font-bold text-[#9B9BAD]">Auto-calculated based on criteria</p>
                   <div className="flex items-center gap-3">
-                    <div 
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-2xl text-white"
-                      style={{ 
-                        background: calculateOverall() <= 3 
-                          ? 'linear-gradient(135deg, #ef4444, #dc2626)' 
-                          : calculateOverall() <= 5 
-                            ? 'linear-gradient(135deg, #f59e0b, #d97706)' 
-                            : calculateOverall() <= 7 
-                              ? 'linear-gradient(135deg, #3b82f6, #2563eb)' 
-                              : 'linear-gradient(135deg, #10b981, #059669)'
-                      }}
-                    >
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-2xl text-white"
+                      style={{ background: calculateOverall() <= 3 ? 'linear-gradient(135deg, #ef4444, #dc2626)' : calculateOverall() <= 5 ? 'linear-gradient(135deg, #f59e0b, #d97706)' : calculateOverall() <= 7 ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'linear-gradient(135deg, #10b981, #059669)' }}>
                       {calculateOverall()}
                     </div>
-                    <span className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      / 10
-                    </span>
+                    <span className="text-sm font-medium text-[#9B9BAD]">/ 10</span>
                   </div>
                 </div>
               </div>
 
               {/* Rating Criteria */}
               <div>
-                <h3 className={`text-sm font-semibold mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Evaluation Criteria
-                </h3>
+                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-4">
+                  <FiBriefcase size={14} /> Evaluation Criteria
+                </h4>
                 <div className="space-y-4">
                   {evaluationCriteria.map((criteria) => (
                     <RatingSlider
@@ -294,7 +246,7 @@ const InterviewFeedbackModal = ({
                       onChange={(val) => setFeedback(prev => ({ ...prev, [criteria.key]: val }))}
                       icon={criteria.icon}
                       color={criteria.color}
-                      isDarkMode={isDarkMode}
+                      isDarkMode={false}
                     />
                   ))}
                 </div>
@@ -302,9 +254,9 @@ const InterviewFeedbackModal = ({
 
               {/* Recommendation */}
               <div>
-                <h3 className={`text-sm font-semibold mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Recommendation *
-                </h3>
+                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-4">
+                  <FiThumbsUp size={14} /> Recommendation *
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                   {['Strongly Recommend', 'Recommend', 'Neutral', 'Not Recommend', 'Strongly Not Recommend'].map((rec) => (
                     <RecommendationButton
@@ -312,89 +264,62 @@ const InterviewFeedbackModal = ({
                       value={rec}
                       selected={feedback.recommendation === rec}
                       onClick={(val) => setFeedback(prev => ({ ...prev, recommendation: val }))}
-                      isDarkMode={isDarkMode}
+                      isDarkMode={false}
                     />
                   ))}
                 </div>
               </div>
 
               {/* Strengths & Weaknesses */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                    Strengths
-                  </label>
-                  <textarea
-                    value={feedback.strengths}
-                    onChange={(e) => setFeedback(prev => ({ ...prev, strengths: e.target.value }))}
-                    rows={3}
-                    className={`w-full mt-2 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-purple-500/50 resize-none ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
-                    placeholder="Key strengths observed..."
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-7">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Strengths</label>
+                  <textarea value={feedback.strengths} onChange={(e) => setFeedback(prev => ({ ...prev, strengths: e.target.value }))}
+                    rows={3} placeholder="Key strengths observed..."
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 resize-none placeholder:text-[#9B9BAD]/50"
                   />
                 </div>
-                <div>
-                  <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                    Areas for Improvement
-                  </label>
-                  <textarea
-                    value={feedback.weaknesses}
-                    onChange={(e) => setFeedback(prev => ({ ...prev, weaknesses: e.target.value }))}
-                    rows={3}
-                    className={`w-full mt-2 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-purple-500/50 resize-none ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
-                    placeholder="Areas that need improvement..."
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Areas for Improvement</label>
+                  <textarea value={feedback.weaknesses} onChange={(e) => setFeedback(prev => ({ ...prev, weaknesses: e.target.value }))}
+                    rows={3} placeholder="Areas that need improvement..."
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 resize-none placeholder:text-[#9B9BAD]/50"
                   />
                 </div>
               </div>
 
               {/* Additional Notes */}
-              <div>
-                <label className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Additional Notes
-                </label>
-                <textarea
-                  value={feedback.notes}
-                  onChange={(e) => setFeedback(prev => ({ ...prev, notes: e.target.value }))}
-                  rows={3}
-                  className={`w-full mt-2 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-purple-500/50 resize-none ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
-                  placeholder="Any additional observations or comments..."
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Additional Notes</label>
+                <textarea value={feedback.notes} onChange={(e) => setFeedback(prev => ({ ...prev, notes: e.target.value }))}
+                  rows={3} placeholder="Any additional observations or comments..."
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 resize-none placeholder:text-[#9B9BAD]/50"
                 />
               </div>
 
-              {/* Submit Button */}
-              <div className="flex gap-3 pt-4">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onClose}
-                  className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-colors ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                >
+              {/* Footer Buttons */}
+              <div className="pt-4 flex gap-4">
+                <button type="button" onClick={onClose}
+                  className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
                   Cancel
-                </motion.button>
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={submitting}
-                  className="flex-1 py-3 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-600 shadow-lg shadow-purple-500/25 disabled:opacity-50"
-                >
+                </button>
+                <button type="submit" disabled={submitting}
+                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                   {submitting ? (
-                    <span className="flex items-center justify-center gap-2">
+                    <span className="flex items-center gap-2">
                       <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
                       Submitting...
                     </span>
-                  ) : (
-                    'Submit'
-                  )}
-                </motion.button>
+                  ) : 'Submit Feedback'}
+                </button>
               </div>
             </form>
           )}
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </AnimatePresence>
   );
 };

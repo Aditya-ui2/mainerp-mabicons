@@ -1,13 +1,14 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { toast } from 'sonner';
 
 // API base URL from environment variable
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // Create axios instance with specific headers
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 8000,
+  timeout: 30000,
   headers: {
     'Accept': 'application/json'
   },
@@ -59,8 +60,26 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-
-// Add request interceptor to always use fresh token from localStorage
+// Response interceptor — handle expired/invalid tokens globally
+let _sessionExpiredShown = false;
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && !_sessionExpiredShown) {
+      const isLoginRoute = window.location.pathname.includes('/login') || window.location.pathname === '/';
+      if (!isLoginRoute) {
+        _sessionExpiredShown = true;
+        toast.error('Session expired. Please log in again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('department');
+        setTimeout(() => { _sessionExpiredShown = false; window.location.href = '/'; }, 1500);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 
 // Update the login function to include specific headers
@@ -2394,6 +2413,28 @@ export const getSharePointFolders = async () => {
   } catch (error) {
     console.error('Failed to fetch folders:', error);
     throw error.response?.data || { message: 'Failed to fetch S3 folders' };
+  }
+};
+
+// Get SharePoint Excel workbook sheet names
+export const getSharePointExcelSheets = async (fileName) => {
+  try {
+    const response = await axiosInstance.get(`/sharepoint/excel/sheets?file=${encodeURIComponent(fileName)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch Excel sheets:', error);
+    throw error.response?.data || { message: 'Failed to fetch Excel sheets' };
+  }
+};
+
+// Get data from a SharePoint Excel worksheet
+export const getSharePointExcelData = async (fileName, sheetName) => {
+  try {
+    const response = await axiosInstance.get(`/sharepoint/excel/data?file=${encodeURIComponent(fileName)}&sheet=${encodeURIComponent(sheetName)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch Excel data:', error);
+    throw error.response?.data || { message: 'Failed to fetch Excel data' };
   }
 };
 

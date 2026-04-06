@@ -613,446 +613,288 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
   return (
     <div style={{ fontFamily: 'Calibri, sans-serif' }}>
-      <AnimatePresence mode="wait">
-        {showFullPageForm ? (
-          <motion.div
-            key="fullpage-form"
-            initial={{ opacity: 0, x: 300 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -300 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="w-full"
-          >
-            {/* Back Button Header */}
-            <div className={`sticky top-0 z-20 flex items-center justify-between p-4 sm:p-6 mb-4 rounded-xl ${isDarkMode ? 'bg-slate-800/95 backdrop-blur-sm border-b border-slate-700' : 'bg-white/95 backdrop-blur-sm border-b border-slate-200'}`}>
-              <motion.button
-                whileHover={{ x: -4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleBackToInterviews}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all ${isDarkMode ? 'text-blue-400 hover:bg-slate-700' : 'text-blue-600 hover:bg-blue-50'}`}
-              >
-                <FiArrowLeft className="w-5 h-5" />
-                Back to Interviews
-              </motion.button>
-              <h2 className={`text-xl sm:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                {editingInterview ? 'Edit Interview' : 'Schedule New Interview'}
-              </h2>
-              <div className="w-24"></div>
-            </div>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+      `}</style>
+      {/* Schedule Interview Dialog Modal */}
+      <AnimatePresence>
+        {showFullPageForm && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
+            <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-500">
+              {/* Header */}
+              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                <div>
+                  <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    {editingInterview ? 'Edit Interview' : 'Schedule New Interview'}
+                  </h3>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Interview Scheduling</p>
+                </div>
+                <button
+                  onClick={handleBackToInterviews}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
 
-            {/* Form Content */}
-            <div className="px-4 sm:px-6 pb-8">
-              {/* 3-Column Grid for Maximum Horizontal Space */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Column 1: Candidate Details */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
-                      <FiUser className={`w-3 h-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                    </div>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Candidate Details
-                    </span>
+              <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-7">
+
+                  {/* Section: Candidate Details */}
+                  <div className="mt-2">
+                    <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
+                      <FiUser size={14} /> Candidate Details
+                    </h4>
                   </div>
-                  
-                  <div className="relative">
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Candidate Name *</label>
-                    <input
-                      type="text"
-                      value={newInterview.candidateName}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNewInterview(prev => ({ ...prev, candidateName: val }));
-                        setShowCandidateSuggestions(val.length > 0);
-                      }}
+
+                  <div className="space-y-1.5 relative">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name *</label>
+                    <input type="text" value={newInterview.candidateName}
+                      onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, candidateName: val })); setShowCandidateSuggestions(val.length > 0); }}
                       onFocus={() => setShowCandidateSuggestions(newInterview.candidateName.length > 0)}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                       placeholder="Enter candidate name"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                     />
-                    
-                    {/* Candidate Suggestions Dropdown */}
                     <AnimatePresence>
                       {showCandidateSuggestions && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
-                        >
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                          className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
                           {availableCandidates
-                            .filter(c => {
-                              const search = (newInterview.candidateName || '').toLowerCase().trim();
-                              return (c.name || '').toLowerCase().includes(search) || 
-                                     (c.email || '').toLowerCase().includes(search);
-                            })
+                            .filter(c => { const search = (newInterview.candidateName || '').toLowerCase().trim(); return (c.name || '').toLowerCase().includes(search) || (c.email || '').toLowerCase().includes(search); })
                             .map((candidate) => (
-                              <button
-                                key={candidate.id}
-                                className={`w-full text-left px-4 py-3 flex flex-col transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
-                                onClick={() => {
-                                  setNewInterview(prev => ({
-                                    ...prev,
-                                    candidateId: candidate.id,
-                                    candidateName: candidate.name,
-                                    candidateEmail: candidate.email || '',
-                                    positionId: candidate.positionId || '',
-                                    position: candidate.position?.title || candidate.jobTitle || '',
-                                    clientId: candidate.clientId || '',
-                                    client: (candidate.client?.companyName || candidate.client?.name) || '',
-                                  }));
-                                  setShowCandidateSuggestions(false);
-                                }}
-                              >
-                                <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{candidate.name}</span>
-                                <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{candidate.email} • {candidate.jobTitle || 'No Title'}</span>
+                              <button key={candidate.id} className="w-full text-left px-4 py-3 flex flex-col transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                                onClick={() => { setNewInterview(prev => ({ ...prev, candidateId: candidate.id, candidateName: candidate.name, candidateEmail: candidate.email || '', positionId: candidate.positionId || '', position: candidate.position?.title || candidate.jobTitle || '', clientId: candidate.clientId || '', client: (candidate.client?.companyName || candidate.client?.name) || '' })); setShowCandidateSuggestions(false); }}>
+                                <span className="font-semibold text-sm text-[#1A1A2E]">{candidate.name}</span>
+                                <span className="text-[10px] text-[#9B9BAD]">{candidate.email} • {candidate.jobTitle || 'No Title'}</span>
                               </button>
                             ))}
-                          {availableCandidates.filter(c => {
-                            const search = (newInterview.candidateName || '').toLowerCase().trim();
-                            return (c.name || '').toLowerCase().includes(search) || 
-                                   (c.email || '').toLowerCase().includes(search);
-                          }).length === 0 && (
-                            <div className={`p-4 text-center text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                              No matching candidates found
-                            </div>
+                          {availableCandidates.filter(c => { const search = (newInterview.candidateName || '').toLowerCase().trim(); return (c.name || '').toLowerCase().includes(search) || (c.email || '').toLowerCase().includes(search); }).length === 0 && (
+                            <div className="p-4 text-center text-xs text-[#9B9BAD]">No matching candidates found</div>
                           )}
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
 
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Candidate Email</label>
-                    <input
-                      type="email"
-                      value={newInterview.candidateEmail}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
+                      <FiMail size={12} className="text-[#1B4DA0]" /> Candidate Email
+                    </label>
+                    <input type="email" value={newInterview.candidateEmail}
                       onChange={(e) => setNewInterview(prev => ({ ...prev, candidateEmail: e.target.value }))}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
                       placeholder="Enter candidate email"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                     />
                   </div>
-                </div>
 
-                {/* Column 2: Position Details */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
-                      <FiBriefcase className={`w-3 h-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                    </div>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Position Details
-                    </span>
+                  {/* Section: Position Details */}
+                  <div className="mt-4">
+                    <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
+                      <FiBriefcase size={14} /> Position Details
+                    </h4>
                   </div>
-                  
-                  <div className="relative">
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Position</label>
-                    <input
-                      type="text"
-                      value={newInterview.position}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNewInterview(prev => ({ ...prev, position: val }));
-                        setShowPositionSuggestions(val.length > 0);
-                      }}
+
+                  <div className="space-y-1.5 relative">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
+                    <input type="text" value={newInterview.position}
+                      onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, position: val })); setShowPositionSuggestions(val.length > 0); }}
                       onFocus={() => setShowPositionSuggestions(newInterview.position.length > 0)}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-                      placeholder="e.g., Senior Software Engineer"
+                      placeholder="e.g. Senior Software Engineer"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
                     />
-                    
-                    {/* Position Suggestions Dropdown */}
                     <AnimatePresence>
                       {showPositionSuggestions && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
-                        >
-                          {availablePositions
-                            .filter(p => (p.title || '').toLowerCase().includes((newInterview.position || '').toLowerCase().trim()))
-                            .map((pos) => (
-                              <button
-                                key={pos.id}
-                                className={`w-full text-left px-4 py-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
-                                onClick={() => {
-                                  setNewInterview(prev => ({
-                                    ...prev,
-                                    positionId: pos.id,
-                                    position: pos.title,
-                                    clientId: pos.clientId || prev.clientId,
-                                    client: pos.client?.companyName || pos.client?.name || prev.client
-                                  }));
-                                  setShowPositionSuggestions(false);
-                                }}
-                              >
-                                <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{pos.title}</span>
-                              </button>
-                            ))}
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                          className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
+                          {availablePositions.filter(p => (p.title || '').toLowerCase().includes((newInterview.position || '').toLowerCase().trim())).map((pos) => (
+                            <button key={pos.id} className="w-full text-left px-4 py-3 transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                              onClick={() => { setNewInterview(prev => ({ ...prev, positionId: pos.id, position: pos.title, clientId: pos.clientId || prev.clientId, client: pos.client?.companyName || pos.client?.name || prev.client })); setShowPositionSuggestions(false); }}>
+                              <span className="font-semibold text-sm text-[#1A1A2E]">{pos.title}</span>
+                            </button>
+                          ))}
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
 
-                  <div className="relative">
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client</label>
-                    <input
-                      type="text"
-                      value={newInterview.client}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNewInterview(prev => ({ ...prev, client: val }));
-                        setShowClientSuggestions(val.length > 0);
-                      }}
+                  <div className="space-y-1.5 relative">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
+                    <input type="text" value={newInterview.client}
+                      onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, client: val })); setShowClientSuggestions(val.length > 0); }}
                       onFocus={() => setShowClientSuggestions(newInterview.client.length > 0)}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-                      placeholder="e.g., TechCorp India"
+                      placeholder="e.g. TechCorp India"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
                     />
-                    
-                    {/* Client Suggestions Dropdown */}
                     <AnimatePresence>
                       {showClientSuggestions && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
-                        >
-                          {availableClients
-                            .filter(cl => (cl.companyName || cl.name || '').toLowerCase().includes((newInterview.client || '').toLowerCase().trim()))
-                            .map((cl) => (
-                              <button
-                                key={cl.id}
-                                className={`w-full text-left px-4 py-3 transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
-                                onClick={() => {
-                                  setNewInterview(prev => ({
-                                    ...prev,
-                                    clientId: cl.id,
-                                    client: cl.companyName || cl.name
-                                  }));
-                                  setShowClientSuggestions(false);
-                                }}
-                              >
-                                <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{cl.companyName || cl.name}</span>
-                              </button>
-                            ))}
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                          className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
+                          {availableClients.filter(cl => (cl.companyName || cl.name || '').toLowerCase().includes((newInterview.client || '').toLowerCase().trim())).map((cl) => (
+                            <button key={cl.id} className="w-full text-left px-4 py-3 transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                              onClick={() => { setNewInterview(prev => ({ ...prev, clientId: cl.id, client: cl.companyName || cl.name })); setShowClientSuggestions(false); }}>
+                              <span className="font-semibold text-sm text-[#1A1A2E]">{cl.companyName || cl.name}</span>
+                            </button>
+                          ))}
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
 
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Round</label>
-                    <select
-                      value={newInterview.round}
-                      onChange={(e) => setNewInterview(prev => ({ ...prev, round: e.target.value }))}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                    >
-                      <option value="">Select Round</option>
-                      <option value="Phone Screening">Phone Screening</option>
-                      <option value="Technical Round">Technical Round</option>
-                      <option value="HR Round">HR Round</option>
-                      <option value="Client Interview">Client Interview</option>
-                      <option value="Final Round">Final Round</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Column 3: Interview Details */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-emerald-900/40' : 'bg-emerald-100'}`}>
-                      <FiCalendar className={`w-3 h-3 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
-                    </div>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Interview Details
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Date *</label>
-                      <input
-                        type="date"
-                        value={newInterview.date}
-                        onChange={(e) => setNewInterview(prev => ({ ...prev, date: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Time *</label>
-                      <input
-                        type="time"
-                        value={newInterview.time}
-                        onChange={(e) => setNewInterview(prev => ({ ...prev, time: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                      />
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
+                    <div className="relative group">
+                      <select value={newInterview.round} onChange={(e) => setNewInterview(prev => ({ ...prev, round: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
+                        <option value="">Select Round</option>
+                        <option value="Phone Screening">Phone Screening</option>
+                        <option value="Technical Round">Technical Round</option>
+                        <option value="HR Round">HR Round</option>
+                        <option value="Client Interview">Client Interview</option>
+                        <option value="Final Round">Final Round</option>
+                      </select>
+                      <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Duration</label>
-                      <select
-                        value={newInterview.duration}
-                        onChange={(e) => setNewInterview(prev => ({ ...prev, duration: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                      >
+                  {/* Section: Interview Details */}
+                  <div className="mt-4">
+                    <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
+                      <FiCalendar size={14} /> Interview Details
+                    </h4>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
+                      <FiCalendar size={12} className="text-[#1B4DA0]" /> Date *
+                    </label>
+                    <input type="date" value={newInterview.date}
+                      onChange={(e) => setNewInterview(prev => ({ ...prev, date: e.target.value }))}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
+                      <FiClock size={12} className="text-[#1B4DA0]" /> Time *
+                    </label>
+                    <input type="time" value={newInterview.time}
+                      onChange={(e) => setNewInterview(prev => ({ ...prev, time: e.target.value }))}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
+                    <div className="relative group">
+                      <select value={newInterview.duration} onChange={(e) => setNewInterview(prev => ({ ...prev, duration: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
                         <option value="30 mins">30 mins</option>
                         <option value="45 mins">45 mins</option>
                         <option value="60 mins">60 mins</option>
                         <option value="90 mins">90 mins</option>
                       </select>
+                      <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
                     </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Type</label>
-                      <select
-                        value={newInterview.type}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
+                    <div className="relative group">
+                      <select value={newInterview.type}
                         onChange={(e) => setNewInterview(prev => ({ ...prev, type: e.target.value, meetLink: e.target.value === 'Video' ? prev.meetLink : '' }))}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                      >
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
                         <option value="Video">Video Call</option>
                         <option value="Phone">Phone</option>
                         <option value="In-Person">In-Person</option>
                       </select>
+                      <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
                     </div>
                   </div>
 
                   {/* Google Meet Link - Only for Video */}
                   {newInterview.type === 'Video' && (
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                        <FiVideo className="inline w-3 h-3 mr-1" />
-                        Google Meet Link
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
+                        <FiVideo size={12} className="text-[#1B4DA0]" /> Google Meet Link
                       </label>
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
-                          <input
-                            type="text"
-                            value={newInterview.meetLink}
+                          <input type="text" value={newInterview.meetLink}
                             onChange={(e) => setNewInterview(prev => ({ ...prev, meetLink: e.target.value }))}
-                            className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
                             placeholder="Click generate or paste your meet link"
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
                           />
                           {newInterview.meetLink && (
-                            <button
-                              onClick={() => copyToClipboard(newInterview.meetLink, setToast)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600"
-                            >
-                              <FiCopy className="w-4 h-4 text-slate-400" />
+                            <button onClick={() => copyToClipboard(newInterview.meetLink, setToast)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100">
+                              <FiCopy className="w-4 h-4 text-[#9B9BAD]" />
                             </button>
                           )}
                         </div>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={handleGenerateMeetLink}
-                          className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-xl shadow-lg"
-                          style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 8px 20px rgba(63, 169, 245, 0.35)' }}
-                        >
-                          <FiRefreshCw className="w-4 h-4" />
-                          Generate
-                        </motion.button>
+                        <button onClick={handleGenerateMeetLink}
+                          className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
+                          style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
+                          <FiRefreshCw className="w-4 h-4" /> Generate
+                        </button>
                       </div>
                     </div>
                   )}
 
                   {/* Interviewer Details */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="relative">
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interviewer Name</label>
-                      <input
-                        type="text"
-                        value={newInterview.interviewer}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setNewInterview(prev => ({ ...prev, interviewer: val }));
-                          setShowInterviewerSuggestions(val.length > 0);
-                        }}
-                        onFocus={() => setShowInterviewerSuggestions(newInterview.interviewer.length > 0)}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-                        placeholder="Interviewer name"
-                      />
-                      
-                      {/* Interviewer Suggestions Dropdown */}
-                      <AnimatePresence>
-                        {showInterviewerSuggestions && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className={`absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
-                          >
-                            {availableInterviewers
-                              .filter(hr => (hr.name || '').toLowerCase().includes((newInterview.interviewer || '').toLowerCase().trim()))
-                              .map((hr) => (
-                                <button
-                                  key={hr.id}
-                                  type="button"
-                                  className={`w-full text-left px-4 py-3 flex flex-col transition-colors ${isDarkMode ? 'hover:bg-slate-700 border-b border-slate-700 last:border-0' : 'hover:bg-blue-50 border-b border-slate-100 last:border-0'}`}
-                                  onClick={() => {
-                                    setNewInterview(prev => ({
-                                      ...prev,
-                                      interviewer: hr.name,
-                                      interviewerRole: hr.role || 'HR Executive'
-                                    }));
-                                    setShowInterviewerSuggestions(false);
-                                  }}
-                                >
-                                  <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{hr.name}</span>
-                                  <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{hr.department} • {hr.role}</span>
-                                </button>
-                              ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Role</label>
-                      <input
-                        type="text"
-                        value={newInterview.interviewerRole}
-                        onChange={(e) => setNewInterview(prev => ({ ...prev, interviewerRole: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-                        placeholder="e.g., Tech Lead"
-                      />
-                    </div>
+                  <div className="space-y-1.5 relative">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name</label>
+                    <input type="text" value={newInterview.interviewer}
+                      onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, interviewer: val })); setShowInterviewerSuggestions(val.length > 0); }}
+                      onFocus={() => setShowInterviewerSuggestions(newInterview.interviewer.length > 0)}
+                      placeholder="Interviewer name"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                    />
+                    <AnimatePresence>
+                      {showInterviewerSuggestions && (
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                          className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
+                          {availableInterviewers.filter(hr => (hr.name || '').toLowerCase().includes((newInterview.interviewer || '').toLowerCase().trim())).map((hr) => (
+                            <button key={hr.id} type="button" className="w-full text-left px-4 py-3 flex flex-col transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                              onClick={() => { setNewInterview(prev => ({ ...prev, interviewer: hr.name, interviewerRole: hr.role || 'HR Executive' })); setShowInterviewerSuggestions(false); }}>
+                              <span className="font-semibold text-sm text-[#1A1A2E]">{hr.name}</span>
+                              <span className="text-[10px] text-[#9B9BAD]">{hr.department} • {hr.role}</span>
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
+                    <input type="text" value={newInterview.interviewerRole}
+                      onChange={(e) => setNewInterview(prev => ({ ...prev, interviewerRole: e.target.value }))}
+                      placeholder="e.g. Tech Lead"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                    />
+                  </div>
+
+                {/* Footer Buttons */}
+                <div className="pt-4 flex gap-4">
+                  <button type="button" onClick={handleBackToInterviews}
+                    className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
+                    Cancel
+                  </button>
+                  <button type="button" onClick={handleScheduleInterview}
+                    className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                    <FiCalendar size={18} /> {editingInterview ? 'Update Interview' : 'Schedule Interview'}
+                  </button>
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className={`flex flex-col sm:flex-row items-center justify-end gap-3 mt-8 pt-6 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                <motion.button 
-                  whileHover={{ scale: 1.02 }} 
-                  whileTap={{ scale: 0.98 }} 
-                  onClick={handleBackToInterviews}
-                  className={`w-full sm:w-auto px-6 py-3 text-sm font-semibold rounded-xl transition-colors ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                >
-                  Cancel
-                </motion.button>
-                <motion.button 
-                  whileHover={{ scale: 1.02 }} 
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleScheduleInterview}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 text-sm font-bold text-white rounded-xl shadow-lg transition-all"
-                  style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5, #0D47A1)', boxShadow: '0 8px 20px rgba(63, 169, 245, 0.35)' }}
-                >
-                  <FiCalendar className="w-4 h-4" /> 
-                  {editingInterview ? 'Update Interview' : 'Schedule Interview'}
-                </motion.button>
-              </div>
             </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="main-content"
-            initial={{ opacity: 0, x: -300 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 300 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="space-y-6"
-          >
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <div className="space-y-6">
             {/* Error Banner */}
             {error && (
               <div className={`flex items-center justify-between gap-3 px-5 py-3 rounded-xl ${isDarkMode ? 'bg-red-900/30 border border-red-700/50 text-red-300' : 'bg-red-50 border border-red-200 text-red-600'}`}>
@@ -1415,9 +1257,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                 </div>
               </motion.div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
 
       {/* ── Confirmation Modals ── */}
       <AnimatePresence>

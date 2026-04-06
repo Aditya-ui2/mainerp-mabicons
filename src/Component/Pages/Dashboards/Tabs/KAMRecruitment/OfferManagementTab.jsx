@@ -753,8 +753,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
                 <div className={`flex-1 grid grid-cols-2 gap-8 px-0 lg:px-8 lg:border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
                   <div>
-                    <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-2 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Compensation</p>
-                    <p className={`text-[16px] font-bold ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.offeredCTC} LPA</p>
+                    <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-2 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Client</p>
+                    <p className={`text-[16px] font-bold ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.client || '—'}</p>
                   </div>
                   <div>
                     <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-2 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Hiring Stage</p>

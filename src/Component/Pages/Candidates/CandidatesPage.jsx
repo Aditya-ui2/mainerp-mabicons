@@ -3,7 +3,7 @@ import {
   X, Mail, Phone, Calendar, ChevronRight, Plus, Download, Search, Filter, 
   User, Briefcase, Tag, AlignLeft, LayoutGrid, List, AlertCircle, 
   CheckSquare, Square, Trash2, Send, MapPin, DollarSign, Clock, Award,
-  FileText, Upload
+  FileText, Upload, Eye, Video
 } from "lucide-react";
 import { toast } from "sonner";
 import { PIPELINE_STAGES, AVATAR_COLORS, getAvatarColor } from "./mockData";
@@ -14,6 +14,7 @@ import {
   addCandidate, 
   getAllRecruitmentPositions, 
   getAllClients,
+  scheduleNewInterview,
   BASE_URL 
 } from "../service/api";
 
@@ -56,7 +57,7 @@ const Edit2 = (props) => (
   </svg>
 );
 
-export default function CandidatesPage() {
+export default function CandidatesPage({ setActiveTab }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [positions, setPositions] = useState([]);
@@ -76,6 +77,12 @@ export default function CandidatesPage() {
   const [dateFilter, setDateFilter] = useState("all");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+
+  // Schedule Interview Modal state
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ candidateId: '', candidateName: '', candidateEmail: '', positionTitle: '', clientName: '', date: '', time: '', duration: '60', meetingType: 'Video', meetingLink: '', round: 'Technical Round', interviewerName: '', interviewerRole: '' });
+  const [schedulingLoading, setSchedulingLoading] = useState(false);
+  const [showCvPreview, setShowCvPreview] = useState(false);
 
   // New Candidate Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -234,6 +241,27 @@ export default function CandidatesPage() {
         })
       );
       toast.success(`Moved ${candidate.name} to ${stage}`);
+
+      // Show detail drawer when moved to Screening
+      if (stage === 'Screening') {
+        const updatedCandidate = { ...candidate, stage, lastMovedDate: new Date().toISOString() };
+        setSelectedCandidate(updatedCandidate);
+      }
+
+      // Open Schedule Interview dialog when moved to Interview
+      if (stage === 'Interview') {
+        const updatedC = { ...candidate, stage, lastMovedDate: new Date().toISOString() };
+        setScheduleForm({
+          candidateId: updatedC.id,
+          candidateName: updatedC.name,
+          candidateEmail: updatedC.email || '',
+          positionTitle: updatedC.role || '',
+          clientName: updatedC.clientName || '',
+          date: '', time: '', duration: '60', meetingType: 'Video', meetingLink: '',
+          round: 'Technical Round', interviewerName: '', interviewerRole: ''
+        });
+        setIsScheduleOpen(true);
+      }
     } catch (error) {
       toast.error("Failed to update candidate stage");
     } finally {
@@ -1115,6 +1143,38 @@ export default function CandidatesPage() {
                      </div>
                   </div>
 
+                  {/* Resume / CV Preview */}
+                  {selectedCandidate.cvUrl && (
+                    <div className="space-y-4 pt-2">
+                      <h4 className="text-[10px] font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-3">Resume / CV</h4>
+                      {showCvPreview ? (
+                        <div className="space-y-3">
+                          <iframe
+                            src={`${selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`}`}
+                            className="w-full h-[400px] rounded-2xl border border-[#F4F3EF]"
+                            title="CV Preview"
+                          />
+                          <button onClick={() => setShowCvPreview(false)}
+                            className="w-full py-3 rounded-xl border border-[#F4F3EF] text-xs font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
+                            Hide Preview
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button onClick={() => setShowCvPreview(true)}
+                            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] hover:bg-[#EEF2FB] hover:text-[#1B4DA0] transition-all">
+                            <Eye size={14} /> View CV
+                          </button>
+                          <a href={`${selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#1B4DA0] text-xs font-bold text-white hover:bg-[#153D80] transition-all">
+                            <Download size={14} /> Download
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Timeline History */}
                   <div className="space-y-6 pt-4">
                      <h4 className="text-[10px] font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-3">Application History</h4>
@@ -1471,6 +1531,189 @@ export default function CandidatesPage() {
                   className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
                 >
                   <Plus size={18} /> Add Candidate
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Interview Dialog */}
+      {isScheduleOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
+          onClick={() => setIsScheduleOpen(false)}>
+          <style>{`
+            .schedule-scrollbar::-webkit-scrollbar { width: 6px; }
+            .schedule-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .schedule-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+            .schedule-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+          `}</style>
+          <div className="bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500"
+            onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+              <div>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Schedule Interview</h3>
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                  {scheduleForm.candidateName} • {scheduleForm.positionTitle}
+                </p>
+              </div>
+              <button onClick={() => setIsScheduleOpen(false)}
+                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setSchedulingLoading(true);
+              try {
+                await scheduleNewInterview({
+                  candidateId: scheduleForm.candidateId,
+                  candidateName: scheduleForm.candidateName,
+                  candidateEmail: scheduleForm.candidateEmail,
+                  position: scheduleForm.positionTitle,
+                  client: scheduleForm.clientName,
+                  date: scheduleForm.date,
+                  time: scheduleForm.time,
+                  duration: scheduleForm.duration + ' mins',
+                  type: scheduleForm.meetingType,
+                  meetLink: scheduleForm.meetingLink,
+                  round: scheduleForm.round,
+                  interviewer: scheduleForm.interviewerName,
+                  interviewerRole: scheduleForm.interviewerRole
+                });
+                toast.success('Interview scheduled successfully!');
+                setIsScheduleOpen(false);
+              } catch (err) {
+                toast.error(err.message || 'Failed to schedule interview');
+              } finally {
+                setSchedulingLoading(false);
+              }
+            }} className="p-10 max-h-[75vh] overflow-y-auto schedule-scrollbar space-y-7">
+
+              {/* Candidate Info (read-only) */}
+              <div>
+                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
+                  <User size={14} /> Candidate
+                </h4>
+                <div className="bg-[#F4F3EF] rounded-2xl px-6 py-4">
+                  <p className="text-sm font-bold text-[#1A1A2E]">{scheduleForm.candidateName}</p>
+                  <p className="text-[10px] text-[#9B9BAD] font-bold mt-0.5">{scheduleForm.candidateEmail} • {scheduleForm.positionTitle}</p>
+                </div>
+              </div>
+
+              {/* Interview Details */}
+              <div>
+                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
+                  <Calendar size={14} /> Interview Details
+                </h4>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
+                <div className="relative">
+                  <select value={scheduleForm.round} onChange={(e) => setScheduleForm({...scheduleForm, round: e.target.value})}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
+                    <option value="Phone Screening">Phone Screening</option>
+                    <option value="Technical Round">Technical Round</option>
+                    <option value="HR Round">HR Round</option>
+                    <option value="Client Interview">Client Interview</option>
+                    <option value="Final Round">Final Round</option>
+                  </select>
+                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Date *</label>
+                <input type="date" value={scheduleForm.date} onChange={(e) => setScheduleForm({...scheduleForm, date: e.target.value})}
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]" required />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Time *</label>
+                <input type="time" value={scheduleForm.time} onChange={(e) => setScheduleForm({...scheduleForm, time: e.target.value})}
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]" required />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
+                <div className="relative">
+                  <select value={scheduleForm.duration} onChange={(e) => setScheduleForm({...scheduleForm, duration: e.target.value})}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
+                    <option value="30">30 mins</option>
+                    <option value="45">45 mins</option>
+                    <option value="60">60 mins</option>
+                    <option value="90">90 mins</option>
+                  </select>
+                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
+                <div className="relative">
+                  <select value={scheduleForm.meetingType} onChange={(e) => setScheduleForm({...scheduleForm, meetingType: e.target.value})}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
+                    <option value="Video">Video Call</option>
+                    <option value="In-Person">In-Person</option>
+                    <option value="Phone">Phone Call</option>
+                  </select>
+                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Google Meet Link</label>
+                <div className="flex gap-2">
+                  <input value={scheduleForm.meetingLink} onChange={(e) => setScheduleForm({...scheduleForm, meetingLink: e.target.value})}
+                    className="flex-1 bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx" />
+                  <button type="button"
+                    onClick={() => setScheduleForm({...scheduleForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`})}
+                    className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
+                    style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
+                    Generate
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name</label>
+                <input value={scheduleForm.interviewerName} onChange={(e) => setScheduleForm({...scheduleForm, interviewerName: e.target.value})}
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                  placeholder="Assign interviewer" />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
+                <input value={scheduleForm.interviewerRole} onChange={(e) => setScheduleForm({...scheduleForm, interviewerRole: e.target.value})}
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                  placeholder="e.g., Tech Lead" />
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="pt-4 flex gap-4">
+                <button type="button" onClick={() => setIsScheduleOpen(false)}
+                  className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
+                  Cancel
+                </button>
+                <button type="submit" disabled={schedulingLoading}
+                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                  {schedulingLoading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Scheduling...
+                    </span>
+                  ) : (
+                    <>
+                      <Calendar size={18} /> Schedule Interview
+                    </>
+                  )}
                 </button>
               </div>
             </form>

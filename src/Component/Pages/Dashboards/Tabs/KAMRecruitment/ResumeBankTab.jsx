@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search, Filter, Download, UserPlus, FileText, CheckCircle2, ChevronRight,
+  Search, Filter, Download, UserPlus, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye
 } from 'lucide-react';
 import { toast } from "sonner";
@@ -16,6 +16,8 @@ import {
   assignResumesToPosition,
   getAllRecruitmentPositions,
   getAllClients,
+  syncResumesFromSharePoint,
+  syncResumesFromSharePointDrive,
 } from '../../../service/api';
 
 // --- Helper Functions ---
@@ -53,9 +55,9 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const ResumeCard = ({ resume, isDarkMode, onViewDetails, onPreviewResume }) => (
+const ResumeCard = ({ resume, isDarkMode, onPreviewResume }) => (
   <div 
-    onClick={() => onViewDetails(resume.id)}
+    onClick={() => onPreviewResume(resume.id, resume.fileName)}
     className="group bg-white dark:bg-slate-800 p-6 rounded-[32px] border border-transparent hover:border-[#F4F3EF] dark:hover:border-slate-700 shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden relative"
   >
     <div className="flex flex-wrap items-center justify-between gap-8 relative z-10">
@@ -79,8 +81,6 @@ const ResumeCard = ({ resume, isDarkMode, onViewDetails, onPreviewResume }) => (
         </div>
       </div>
 
-      {/* Removed middle section as these are not actual dedicated tenant/location fields in the DB schema for now */}
-
       <div className="flex items-center gap-3">
         <button 
           onClick={(e) => { e.stopPropagation(); onPreviewResume(resume.id, resume.fileName); }}
@@ -89,9 +89,6 @@ const ResumeCard = ({ resume, isDarkMode, onViewDetails, onPreviewResume }) => (
           <FileText size={16} />
           View CV
         </button>
-        <div className="w-12 h-12 rounded-2xl bg-[#F4F3EF] dark:bg-slate-700 flex items-center justify-center text-[#9B9BAD] dark:text-slate-400 group-hover:bg-[#1B4DA0] group-hover:text-white transition-all">
-           <ChevronRight size={20} />
-        </div>
       </div>
     </div>
     
@@ -254,6 +251,8 @@ const ResumeBankTab = () => {
   const [pendingUploadFiles, setPendingUploadFiles] = useState([]);
   const [selectedUploadRoleType, setSelectedUploadRoleType] = useState('');
   const [customUploadRoleType, setCustomUploadRoleType] = useState('');
+  const [uploadCandidateName, setUploadCandidateName] = useState('');
+  const [uploadPhone, setUploadPhone] = useState('');
   
   // Assignment Modal State
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -289,6 +288,7 @@ const ResumeBankTab = () => {
       setPagination(prev => ({ ...prev, ...response.pagination }));
     } catch (error) {
       console.error('Failed to fetch resumes:', error);
+      toast.error('Failed to load resumes. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -337,6 +337,18 @@ const ResumeBankTab = () => {
     fetchRoleTypes();
     fetchPositions();
     fetchClients();
+
+    // Auto-sync from SharePoint on page load (background, silent)
+    const autoSync = async () => {
+      try {
+        await syncResumesFromSharePointDrive({});
+        // Refresh data after sync completes
+        await Promise.all([fetchStats(), fetchRoleTypes()]);
+      } catch (err) {
+        console.warn('Auto SharePoint sync skipped:', err.message);
+      }
+    };
+    autoSync();
   }, []);
 
   useEffect(() => {
@@ -414,14 +426,18 @@ const ResumeBankTab = () => {
   };
 
   const handlePreviewResume = async (resumeId, fileName) => {
-    console.log('Previewing resume:', resumeId, fileName);
-    toast.info("Opening resume preview...");
+    toast.info("Opening resume...");
     try {
       const response = await getResumeDownloadUrl(resumeId);
       if (response && response.downloadUrl) {
-        setPreviewUrl(response.downloadUrl);
-        setPreviewFileName(fileName || response.fileName || 'Resume');
-        setShowPreviewModal(true);
+        let url = response.downloadUrl;
+        // If it's a relative path (local file), prepend the backend base URL
+        if (url.startsWith('/uploads/')) {
+          const { BASE_URL } = await import('../../../service/api');
+          url = `${BASE_URL}${url}`;
+        }
+        // Open directly in new tab — Edge blocks iframes for external URLs
+        window.open(url, '_blank', 'noopener,noreferrer');
       } else {
         toast.error("Could not retrieve preview URL");
       }
@@ -446,34 +462,39 @@ const ResumeBankTab = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
-  const handleUploadResumes = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    setPendingUploadFiles(files);
+  const handleOpenAddCandidate = () => {
+    setUploadCandidateName('');
+    setUploadPhone('');
+    setPendingUploadFiles([]);
     setSelectedUploadRoleType(filters.roleType || '');
     setCustomUploadRoleType('');
     setShowUploadModal(true);
-    e.target.value = '';
   };
 
   const handleConfirmUploadResumes = async () => {
-    const resolvedRoleType = (selectedUploadRoleType === '__custom__'
-      ? customUploadRoleType.trim()
-      : selectedUploadRoleType.trim()) || '';
-
-    if (!pendingUploadFiles.length || !resolvedRoleType) {
-      toast.error("Please select a role type");
+    if (!uploadCandidateName.trim()) {
+      toast.error("Please enter candidate name");
       return;
     }
+    if (!pendingUploadFiles.length) {
+      toast.error("Please upload a resume");
+      return;
+    }
+
+    const resolvedRoleType = (selectedUploadRoleType === '__custom__'
+      ? customUploadRoleType.trim()
+      : selectedUploadRoleType.trim()) || 'Uncategorized';
 
     try {
       setUploading(true);
       const formData = new FormData();
       pendingUploadFiles.forEach((file) => formData.append('resume', file));
       formData.append('roleType', resolvedRoleType);
+      formData.append('candidateName', uploadCandidateName.trim());
+      if (uploadPhone.trim()) formData.append('phone', uploadPhone.trim());
 
       await uploadResumes(formData);
-      toast.success("Resumes uploaded successfully");
+      toast.success("Candidate added successfully");
       await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes()]);
       setShowUploadModal(false);
       setPendingUploadFiles([]);
@@ -503,12 +524,12 @@ const ResumeBankTab = () => {
           <p className="text-[#9B9BAD] text-sm mt-2 font-medium tracking-wide text-left">Historical archive of {stats?.total || 0} vetted candidate profiles</p>
         </div>
         <div className="flex gap-3">
-          <label className="cursor-pointer">
-            <div className="flex items-center gap-2 px-5 py-2.5 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95">
-              <UserPlus size={18} /> Add Candidate
-            </div>
-            <input type="file" multiple accept=".pdf,.doc,.docx" onChange={handleUploadResumes} className="hidden" />
-          </label>
+          <button
+            onClick={handleOpenAddCandidate}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+          >
+            <UserPlus size={18} /> Add Candidate
+          </button>
         </div>
       </div>
 
@@ -550,29 +571,7 @@ const ResumeBankTab = () => {
         </div>
         <div className="flex items-center gap-2 justify-end flex-initial">
           <select 
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#6B6B7E] dark:text-slate-400 rounded-xl px-4 py-3 border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
-          >
-            <option value="">Status (All)</option>
-            <option value="Available">Available</option>
-            <option value="Shortlisted">Shortlisted</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Assigned">Assigned</option>
-            <option value="Hired">Hired</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-          <select 
-            value={filters.clientId}
-            onChange={(e) => handleFilterChange('clientId', e.target.value)}
-            className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#6B6B7E] dark:text-slate-400 rounded-xl px-4 py-3 border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
-          >
-            <option value="">Clients (All)</option>
-            {Array.isArray(allClients) && allClients.map(client => (
-              <option key={client.id} value={client.id}>{client.name}</option>
-            ))}
-          </select>
-          <select 
+            value={filters.roleType}
             onChange={(e) => handleFilterChange('roleType', e.target.value)}
             className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#6B6B7E] dark:text-slate-400 rounded-xl px-4 py-3 border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
           >
@@ -593,7 +592,7 @@ const ResumeBankTab = () => {
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
-          {(filters.search || filters.roleType || filters.status || filters.clientId) && (
+          {(filters.search || filters.roleType) && (
             <button 
               onClick={handleResetFilters}
               className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
@@ -622,15 +621,37 @@ const ResumeBankTab = () => {
                key={resume.id} 
                resume={resume} 
                isDarkMode={isDarkMode}
-               onViewDetails={handleViewDetails}
                onPreviewResume={handlePreviewResume}
              />
            ))
         )}
       </div>
 
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-10 mb-6">
+          <button
+            onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+            disabled={pagination.page <= 1}
+            className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-slate-800 rounded-2xl text-xs font-bold border border-[#F4F3EF] dark:border-slate-700 text-[#6B6B7E] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white hover:border-[#1B4DA0] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <ChevronLeft size={16} /> Previous
+          </button>
+          <span className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest">
+            Page {pagination.page} of {pagination.totalPages} &nbsp;•&nbsp; {pagination.total} profiles
+          </span>
+          <button
+            onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.totalPages, prev.page + 1) }))}
+            disabled={pagination.page >= pagination.totalPages}
+            className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-slate-800 rounded-2xl text-xs font-bold border border-[#F4F3EF] dark:border-slate-700 text-[#6B6B7E] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white hover:border-[#1B4DA0] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            Next <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Bottom Info */}
-      <div className="mt-12 py-10 border-t border-[#F4F3EF] dark:border-slate-700 text-center">
+      <div className="mt-6 py-10 border-t border-[#F4F3EF] dark:border-slate-700 text-center">
          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[4px]">Verified Talent Ecosystem • Managed by Human Intelligence</p>
       </div>
 
@@ -668,10 +689,20 @@ const ResumeBankTab = () => {
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden flex flex-col">
               <div className="p-6 border-b flex items-center justify-between">
                 <h3 className="font-bold text-lg">{previewFileName}</h3>
-                <button onClick={() => setShowPreviewModal(false)} className="w-10 h-10 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><X size={20} /></button>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={previewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold hover:bg-[#153e82] transition-all shadow-sm"
+                  >
+                    <Eye size={14} /> Open in New Tab
+                  </a>
+                  <button onClick={() => setShowPreviewModal(false)} className="w-10 h-10 rounded-xl hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"><X size={20} /></button>
+                </div>
               </div>
               <div className="flex-1 bg-slate-100 p-4">
-                <iframe src={previewUrl} className="w-full h-full rounded-2xl" title="Resume Preview" />
+                <iframe src={previewUrl} className="w-full h-full rounded-2xl border-0" title="Resume Preview" allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" />
               </div>
             </motion.div>
           </div>
@@ -680,21 +711,82 @@ const ResumeBankTab = () => {
 
       <AnimatePresence>
         {showUploadModal && (
-          <div className="fixed inset-0 z-[150] bg-black/50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-8">
+          <div className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-6 relative">
+              <button onClick={() => setShowUploadModal(false)} className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all">
+                <X size={18} />
+              </button>
               <div>
-                <h3 className="text-2xl font-bold font-syne">Upload Talent</h3>
-                <p className="text-sm text-[#9B9BAD] mt-2 font-bold uppercase tracking-widest">Target Role Designation</p>
+                <h3 className="text-2xl font-bold font-syne text-[#1A1A2E] dark:text-white">Add Candidate</h3>
+                <p className="text-xs text-[#9B9BAD] mt-1 font-bold uppercase tracking-widest">Register new talent profile</p>
               </div>
-              <select value={selectedUploadRoleType} onChange={(e) => setSelectedUploadRoleType(e.target.value)} className="w-full h-14 px-6 rounded-2xl border text-sm focus:outline-none dark:bg-slate-800">
-                <option value="">Select Target Role</option>
-                {roleTypes.map(role => (<option key={role.name} value={role.name}>{role.name}</option>))}
-                <option value="__custom__">+ Custom Role</option>
-              </select>
-              {selectedUploadRoleType === '__custom__' && (<input type="text" value={customUploadRoleType} onChange={(e) => setCustomUploadRoleType(e.target.value)} placeholder="Enter custom role name" className="w-full h-14 px-6 rounded-2xl border text-sm" />)}
-              <div className="flex gap-4">
-                <button onClick={() => setShowUploadModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-xs uppercase tracking-widest">Cancel</button>
-                <button onClick={handleConfirmUploadResumes} disabled={uploading} className="flex-1 h-14 bg-[#1B4DA0] text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20">{uploading ? 'Processing...' : 'Upload Now'}</button>
+
+              {/* Candidate Name */}
+              <div>
+                <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Candidate Name *</label>
+                <input
+                  type="text"
+                  value={uploadCandidateName}
+                  onChange={(e) => setUploadCandidateName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white transition-colors"
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div>
+                <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Mobile Number</label>
+                <input
+                  type="tel"
+                  value={uploadPhone}
+                  onChange={(e) => setUploadPhone(e.target.value)}
+                  placeholder="+91 00000 00000"
+                  className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white transition-colors"
+                />
+              </div>
+
+              {/* Role Type */}
+              <div>
+                <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Role Type</label>
+                <select value={selectedUploadRoleType} onChange={(e) => setSelectedUploadRoleType(e.target.value)} className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white cursor-pointer transition-colors">
+                  <option value="">Select Role (Optional)</option>
+                  {roleTypes.map(role => (<option key={role.name} value={role.name}>{role.name}</option>))}
+                  <option value="__custom__">+ Custom Role</option>
+                </select>
+                {selectedUploadRoleType === '__custom__' && (
+                  <input type="text" value={customUploadRoleType} onChange={(e) => setCustomUploadRoleType(e.target.value)} placeholder="Enter custom role name" className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm mt-3 focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white" />
+                )}
+              </div>
+
+              {/* Resume Upload */}
+              <div>
+                <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Upload Resume *</label>
+                <label className="cursor-pointer block">
+                  <div className={`w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${
+                    pendingUploadFiles.length
+                      ? 'border-[#1B4DA0] bg-blue-50/50 dark:bg-blue-900/20'
+                      : 'border-[#F4F3EF] dark:border-slate-700 hover:border-[#1B4DA0]'
+                  }`}>
+                    {pendingUploadFiles.length ? (
+                      <>
+                        <FileText size={20} className="text-[#1B4DA0]" />
+                        <span className="text-xs font-bold text-[#1B4DA0]">{pendingUploadFiles[0].name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={20} className="text-[#9B9BAD]" />
+                        <span className="text-xs font-bold text-[#9B9BAD]">Click to upload PDF, DOC, DOCX</span>
+                      </>
+                    )}
+                  </div>
+                  <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length) setPendingUploadFiles(files); e.target.value = ''; }} className="hidden" />
+                </label>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-4 pt-2">
+                <button onClick={() => setShowUploadModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-xs uppercase tracking-widest text-[#6B6B7E] hover:bg-[#F4F3EF] dark:hover:bg-slate-800 transition-all">Cancel</button>
+                <button onClick={handleConfirmUploadResumes} disabled={uploading} className="flex-1 h-14 bg-[#1B4DA0] text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all disabled:opacity-50">{uploading ? 'Saving...' : 'Add Candidate'}</button>
               </div>
             </motion.div>
           </div>

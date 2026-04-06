@@ -25,6 +25,13 @@ export default function InterviewsPage() {
   const [customEndDate, setCustomEndDate] = useState("");
   const [selectedClientFilter, setSelectedClientFilter] = useState("All Clients");
   
+  // Live clock for JOIN button (ticks every 30s)
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const tick = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(tick);
+  }, []);
+
   // New Appointment / Scheduler state
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -311,6 +318,21 @@ export default function InterviewsPage() {
     return labels;
   }, [interviewDates]);
 
+  // Returns true if interview is joinable (within 10 min before start or in-progress)
+  const isJoinable = (interview) => {
+    if (!interview.meetingLink) return false;
+    if (interview.status === 'Completed' || interview.status === 'Cancelled') return false;
+    if (interview.status === 'In-Progress') return true;
+    if (!interview.date || !interview.time) return false;
+    try {
+      const [h, m] = interview.time.split(':').map(Number);
+      const interviewStart = new Date(interview.date);
+      interviewStart.setHours(h, m, 0, 0);
+      const diffMin = (interviewStart - now) / 60000;
+      return diffMin <= 10 && diffMin >= -(interview.duration || 60);
+    } catch { return false; }
+  };
+
   const formatTime = (time) => {
     if (!time) return "N/A";
     // Handle "10:00 AM" format if backend sends it like that
@@ -478,6 +500,7 @@ export default function InterviewsPage() {
                   const candidateColor = getAvatarColor(interview.candidateName, interview.candidateAvatar);
                   const isFeedbackPending = interview.feedbackStatus === "Pending" && interview.status === "Completed";
                   const isLive = interview.status === "In-Progress";
+                  const joinable = isJoinable(interview);
 
                   return (
                     <div
@@ -531,13 +554,20 @@ export default function InterviewsPage() {
                       </div>
 
                       {/* Status & Actions Column */}
-                      <div className="flex items-center justify-end gap-6 flex-1">
-                         <div className="flex flex-col items-end">
-                            <p className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Status</p>
-                            <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${STATUS_COLORS[interview.status]?.replace('bg-white', 'bg-slate-50') || "bg-slate-50 text-slate-500 border-slate-100"}`}>
-                               {interview.status}
-                            </span>
-                         </div>
+                      <div className="flex items-center justify-end gap-3 lg:gap-4 flex-1">
+                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${STATUS_COLORS[interview.status]?.replace('bg-white', 'bg-slate-50') || "bg-slate-50 text-slate-500 border-slate-100"}`}>
+                            {isLive ? 'In-Progress' : interview.status}
+                         </span>
+
+                         {joinable && (
+                           <button
+                             onClick={(e) => { e.stopPropagation(); window.open(interview.meetingLink, '_blank', 'noopener,noreferrer'); }}
+                             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg hover:scale-105 active:scale-95 transition-all animate-pulse hover:animate-none"
+                             style={{ background: 'linear-gradient(135deg, #00897B, #26A69A)' }}
+                           >
+                             <Video size={12} /> Join
+                           </button>
+                         )}
 
                          <div className="text-[#9B9BAD] group-hover:text-[#1A1A2E] transition-all flex items-center justify-center">
                             <ChevronRight size={18} />
@@ -772,336 +802,253 @@ export default function InterviewsPage() {
 
       {/* New Schedule Interview Modal */}
       {isScheduleModalOpen && (
-        <div className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
+          onClick={() => setIsScheduleModalOpen(false)}>
+          <style>{`
+            .dialog-scrollbar::-webkit-scrollbar { width: 6px; }
+            .dialog-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .dialog-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+            .dialog-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+          `}</style>
           <div 
-            className="bg-white w-full max-w-6xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20 my-8"
+            className="bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-[#FAFAF8]">
-               <div className="flex items-center gap-6">
-                  <button 
-                     onClick={() => setIsScheduleModalOpen(false)}
-                     className="flex items-center gap-2 text-[#6B6B7E] text-xs font-bold hover:text-[#1B4DA0] transition-all"
-                  >
-                     <ChevronRight size={14} className="rotate-180" /> Back
-                  </button>
-                  <div className="w-px h-4 bg-[#F4F3EF]" />
-                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Schedule New Interview</h3>
-               </div>
-               <div className="hidden md:flex items-center gap-2 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">
-                  <Clock size={12} /> Appointment Slot
-               </div>
+            {/* Header */}
+            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+              <div>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Schedule New Interview</h3>
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Appointment Slot</p>
+              </div>
+              <button onClick={() => setIsScheduleModalOpen(false)}
+                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                <X size={20} />
+              </button>
             </div>
 
-            <form onSubmit={handleScheduleSubmit} className="p-10 custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                
-                {/* Column 1: Candidate Details */}
-                <div className="space-y-6">
-                  <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                    <User size={14} className="text-blue-400" /> CANDIDATE DETAILS
-                  </h4>
+            <form onSubmit={handleScheduleSubmit} className="p-10 max-h-[75vh] overflow-y-auto dialog-scrollbar space-y-7">
 
-                  <div className="space-y-4">
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Candidate Name *</label>
-                        <div className="relative">
-                           <input 
-                              className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3.5 text-sm font-semibold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all"
-                              placeholder="Enter candidate name"
-                              value={interviewForm.candidateName}
-                              onChange={(e) => {
-                                 const val = e.target.value;
-                                 setInterviewForm({ ...interviewForm, candidateName: val });
-                                 setShowCandidateSuggestions(true);
-                              }}
-                              onFocus={() => setShowCandidateSuggestions(true)}
-                              required
-                           />
-                           
-                           <AnimatePresence>
-                              {showCandidateSuggestions && (
-                                 <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-[120] w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto"
-                                 >
-                                    {(() => {
-                                       const filtered = candidates.filter(c => {
-                                          const search = (interviewForm.candidateName || "").toLowerCase().trim();
-                                          const name = (c.name || "").toLowerCase().trim();
-                                          return name.includes(search);
-                                       });
-                                       
-                                       if (filtered.length === 0) {
-                                          return (
-                                             <div className="px-4 py-6 text-center text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-                                                No candidates found
-                                             </div>
-                                          );
-                                       }
-                                       
-                                       return filtered.map((c) => (
-                                          <button
-                                             key={c.id}
-                                             type="button"
-                                             onClick={() => {
-                                                setInterviewForm({
-                                                   ...interviewForm,
-                                                   candidateId: c.id,
-                                                   candidateName: c.name,
-                                                   candidateEmail: c.email,
-                                                   positionTitle: c.positionTitle,
-                                                   clientName: c.clientName
-                                                });
-                                                setShowCandidateSuggestions(false);
-                                             }}
-                                             className="w-full text-left px-4 py-3 hover:bg-[#F8FAFF] transition-colors border-b border-[#F4F3EF] last:border-0"
-                                          >
-                                             <p className="text-sm font-bold text-[#1A1A2E]">{c.name}</p>
-                                             <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{c.email} • {c.positionTitle}</p>
-                                          </button>
-                                       ));
-                                    })()}
-                                 </motion.div>
-                              )}
-                           </AnimatePresence>
-                        </div>
-                     </div>
-
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Candidate Email</label>
-                        <input 
-                           type="email"
-                           className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3.5 text-sm font-semibold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all"
-                           placeholder="Enter candidate email"
-                           value={interviewForm.candidateEmail}
-                           onChange={(e) => setInterviewForm({...interviewForm, candidateEmail: e.target.value})}
-                        />
-                     </div>
-                  </div>
-                </div>
-
-                {/* Column 2: Position Details */}
-                <div className="space-y-6">
-                  <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                    <Video size={14} className="text-blue-400" /> POSITION DETAILS
-                  </h4>
-
-                  <div className="space-y-4">
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Position</label>
-                        <input 
-                           className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3.5 text-sm font-semibold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all"
-                           placeholder="e.g., Senior Software Engineer"
-                           value={interviewForm.positionTitle}
-                           onChange={(e) => setInterviewForm({...interviewForm, positionTitle: e.target.value})}
-                        />
-                     </div>
-
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Client</label>
-                        <input 
-                           className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3.5 text-sm font-semibold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all"
-                           placeholder="e.g., TechCorp India"
-                           value={interviewForm.clientName}
-                           onChange={(e) => setInterviewForm({...interviewForm, clientName: e.target.value})}
-                        />
-                     </div>
-
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Round</label>
-                        <div className="relative">
-                           <select 
-                              className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3.5 text-sm font-semibold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none"
-                              value={interviewForm.round}
-                              onChange={(e) => setInterviewForm({...interviewForm, round: e.target.value})}
-                           >
-                              <option value="Screening">Select Round</option>
-                              <option value="Phone Screening">Phone Screening</option>
-                              <option value="Technical Round">Technical Round</option>
-                              <option value="Client Interview">Client Interview</option>
-                              <option value="HR Round">HR Round</option>
-                              <option value="Final Round">Final Round</option>
-                           </select>
-                           <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none" />
-                        </div>
-                     </div>
-                  </div>
-                </div>
-
-                {/* Column 3: Interview Details */}
-                <div className="space-y-6">
-                  <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                    <Clock size={14} className="text-blue-400" /> INTERVIEW DETAILS
-                  </h4>
-
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Date *</label>
-                        <input 
-                           type="date"
-                           className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 text-sm font-semibold text-[#1A1A2E] outline-none focus:border-[#1B4DA0]"
-                           value={interviewForm.date}
-                           onChange={(e) => setInterviewForm({...interviewForm, date: e.target.value})}
-                           required
-                        />
-                     </div>
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Time *</label>
-                        <input 
-                           type="time"
-                           className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 text-sm font-semibold text-[#1A1A2E] outline-none focus:border-[#1B4DA0]"
-                           value={interviewForm.time}
-                           onChange={(e) => setInterviewForm({...interviewForm, time: e.target.value})}
-                           required
-                        />
-                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Duration</label>
-                        <div className="relative">
-                           <select 
-                              className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 text-sm font-semibold text-[#1A1A2E] outline-none appearance-none"
-                              value={interviewForm.duration}
-                              onChange={(e) => setInterviewForm({...interviewForm, duration: e.target.value})}
-                           >
-                              <option value="30">30 mins</option>
-                              <option value="45">45 mins</option>
-                              <option value="60">60 mins</option>
-                              <option value="90">90 mins</option>
-                           </select>
-                           <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none" />
-                        </div>
-                     </div>
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Interview Type</label>
-                        <div className="relative">
-                           <select 
-                              className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 text-sm font-semibold text-[#1A1A2E] outline-none appearance-none"
-                              value={interviewForm.meetingType}
-                              onChange={(e) => setInterviewForm({...interviewForm, meetingType: e.target.value})}
-                           >
-                              <option value="Video">Video Call</option>
-                              <option value="In-Person">In-Person</option>
-                              <option value="Phone">Phone Call</option>
-                           </select>
-                           <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none" />
-                        </div>
-                     </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                     <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Google Meet Link</label>
-                     <div className="flex gap-2">
-                        <input 
-                           className="flex-1 bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 text-sm font-semibold text-[#1A1A2E] outline-none"
-                           placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                           value={interviewForm.meetingLink}
-                           onChange={(e) => setInterviewForm({...interviewForm, meetingLink: e.target.value})}
-                        />
-                        <button 
-                           type="button"
-                           onClick={() => setInterviewForm({...interviewForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`})}
-                           className="bg-[#1B4DA0] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#153e82] transition-all flex items-center gap-2"
-                        >
-                           Generate
-                        </button>
-                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Interviewer Name *</label>
-                        <div className="relative">
-                           <input 
-                              className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 text-sm font-semibold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all"
-                              placeholder="Assign member"
-                              value={interviewForm.interviewerName}
-                              onChange={(e) => {
-                                 const val = e.target.value;
-                                 setInterviewForm({ ...interviewForm, interviewerName: val });
-                                 setShowInterviewerSuggestions(true);
-                              }}
-                              onFocus={() => setShowInterviewerSuggestions(true)}
-                              required
-                           />
-                           
-                           <AnimatePresence>
-                              {showInterviewerSuggestions && (
-                                 <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-[120] w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto"
-                                 >
-                                    {(() => {
-                                       const filtered = availableInterviewers.filter(s => {
-                                          const search = (interviewForm.interviewerName || "").toLowerCase().trim();
-                                          const name = (s.name || "").toLowerCase().trim();
-                                          return name.includes(search);
-                                       });
-                                       
-                                       if (filtered.length === 0) {
-                                          return (
-                                             <div className="px-4 py-6 text-center text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-                                                No members found
-                                             </div>
-                                          );
-                                       }
-                                       
-                                       return filtered.map((s) => (
-                                          <button
-                                             key={s.id || s.name}
-                                             type="button"
-                                             onClick={() => {
-                                                setInterviewForm({
-                                                   ...interviewForm,
-                                                   interviewerId: s.id,
-                                                   interviewerName: s.name,
-                                                   interviewerRole: s.role
-                                                });
-                                                setShowInterviewerSuggestions(false);
-                                             }}
-                                             className="w-full text-left px-4 py-3 hover:bg-[#F8FAFF] transition-colors border-b border-[#F4F3EF] last:border-0"
-                                          >
-                                             <p className="text-sm font-bold text-[#1A1A2E]">{s.name}</p>
-                                             <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{s.role} • {s.department}</p>
-                                          </button>
-                                       ));
-                                    })()}
-                                 </motion.div>
-                              )}
-                           </AnimatePresence>
-                        </div>
-                     </div>
-                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest pl-1">Role</label>
-                        <input 
-                           className="w-full bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 text-sm font-semibold text-[#1A1A2E] outline-none"
-                           placeholder="e.g., Tech Lead"
-                           value={interviewForm.interviewerRole}
-                           onChange={(e) => setInterviewForm({...interviewForm, interviewerRole: e.target.value})}
-                        />
-                     </div>
-                  </div>
-               </div>
+              {/* Section: Candidate Details */}
+              <div>
+                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
+                  <User size={14} /> Candidate Details
+                </h4>
               </div>
 
-              <div className="mt-12 flex justify-end gap-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsScheduleModalOpen(false)}
-                  className="px-8 py-3 rounded-xl border border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
-                >
+              <div className="space-y-1.5 relative">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name *</label>
+                <input 
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  placeholder="Enter candidate name"
+                  value={interviewForm.candidateName}
+                  onChange={(e) => { setInterviewForm({ ...interviewForm, candidateName: e.target.value }); setShowCandidateSuggestions(true); }}
+                  onFocus={() => setShowCandidateSuggestions(true)}
+                  required
+                />
+                <AnimatePresence>
+                  {showCandidateSuggestions && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                      className="absolute z-[130] w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                      {(() => {
+                        const filtered = candidates.filter(c => (c.name || "").toLowerCase().includes((interviewForm.candidateName || "").toLowerCase().trim()));
+                        if (filtered.length === 0) return <div className="px-4 py-6 text-center text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest">No candidates found</div>;
+                        return filtered.map((c) => (
+                          <button key={c.id} type="button"
+                            onClick={() => { setInterviewForm({ ...interviewForm, candidateId: c.id, candidateName: c.name, candidateEmail: c.email, positionTitle: c.positionTitle, clientName: c.clientName }); setShowCandidateSuggestions(false); }}
+                            className="w-full text-left px-4 py-3 hover:bg-[#F8FAFF] transition-colors border-b border-[#F4F3EF] last:border-0">
+                            <p className="text-sm font-bold text-[#1A1A2E]">{c.name}</p>
+                            <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{c.email} • {c.positionTitle}</p>
+                          </button>
+                        ));
+                      })()}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Email</label>
+                <input type="email"
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  placeholder="Enter candidate email"
+                  value={interviewForm.candidateEmail}
+                  onChange={(e) => setInterviewForm({...interviewForm, candidateEmail: e.target.value})}
+                />
+              </div>
+
+              {/* Section: Position Details */}
+              <div className="mt-4">
+                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
+                  <Video size={14} /> Position Details
+                </h4>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
+                <input 
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  placeholder="e.g., Senior Software Engineer"
+                  value={interviewForm.positionTitle}
+                  onChange={(e) => setInterviewForm({...interviewForm, positionTitle: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
+                <input 
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  placeholder="e.g., TechCorp India"
+                  value={interviewForm.clientName}
+                  onChange={(e) => setInterviewForm({...interviewForm, clientName: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
+                <div className="relative">
+                  <select 
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                    value={interviewForm.round}
+                    onChange={(e) => setInterviewForm({...interviewForm, round: e.target.value})}
+                  >
+                    <option value="Screening">Select Round</option>
+                    <option value="Phone Screening">Phone Screening</option>
+                    <option value="Technical Round">Technical Round</option>
+                    <option value="Client Interview">Client Interview</option>
+                    <option value="HR Round">HR Round</option>
+                    <option value="Final Round">Final Round</option>
+                  </select>
+                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                </div>
+              </div>
+
+              {/* Section: Interview Details */}
+              <div className="mt-4">
+                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
+                  <Clock size={14} /> Interview Details
+                </h4>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Date *</label>
+                <input type="date"
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                  value={interviewForm.date}
+                  onChange={(e) => setInterviewForm({...interviewForm, date: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Time *</label>
+                <input type="time"
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                  value={interviewForm.time}
+                  onChange={(e) => setInterviewForm({...interviewForm, time: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
+                <div className="relative">
+                  <select 
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                    value={interviewForm.duration}
+                    onChange={(e) => setInterviewForm({...interviewForm, duration: e.target.value})}
+                  >
+                    <option value="30">30 mins</option>
+                    <option value="45">45 mins</option>
+                    <option value="60">60 mins</option>
+                    <option value="90">90 mins</option>
+                  </select>
+                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
+                <div className="relative">
+                  <select 
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                    value={interviewForm.meetingType}
+                    onChange={(e) => setInterviewForm({...interviewForm, meetingType: e.target.value})}
+                  >
+                    <option value="Video">Video Call</option>
+                    <option value="In-Person">In-Person</option>
+                    <option value="Phone">Phone Call</option>
+                  </select>
+                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Google Meet Link</label>
+                <div className="flex gap-2">
+                  <input 
+                    className="flex-1 bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    value={interviewForm.meetingLink}
+                    onChange={(e) => setInterviewForm({...interviewForm, meetingLink: e.target.value})}
+                  />
+                  <button type="button"
+                    onClick={() => setInterviewForm({...interviewForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`})}
+                    className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
+                    style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
+                    Generate
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 relative">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name *</label>
+                <input 
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  placeholder="Assign member"
+                  value={interviewForm.interviewerName}
+                  onChange={(e) => { setInterviewForm({ ...interviewForm, interviewerName: e.target.value }); setShowInterviewerSuggestions(true); }}
+                  onFocus={() => setShowInterviewerSuggestions(true)}
+                  required
+                />
+                <AnimatePresence>
+                  {showInterviewerSuggestions && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                      className="absolute z-[130] w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                      {(() => {
+                        const filtered = availableInterviewers.filter(s => (s.name || "").toLowerCase().includes((interviewForm.interviewerName || "").toLowerCase().trim()));
+                        if (filtered.length === 0) return <div className="px-4 py-6 text-center text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest">No members found</div>;
+                        return filtered.map((s) => (
+                          <button key={s.id || s.name} type="button"
+                            onClick={() => { setInterviewForm({ ...interviewForm, interviewerId: s.id, interviewerName: s.name, interviewerRole: s.role }); setShowInterviewerSuggestions(false); }}
+                            className="w-full text-left px-4 py-3 hover:bg-[#F8FAFF] transition-colors border-b border-[#F4F3EF] last:border-0">
+                            <p className="text-sm font-bold text-[#1A1A2E]">{s.name}</p>
+                            <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{s.role} • {s.department}</p>
+                          </button>
+                        ));
+                      })()}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
+                <input 
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                  placeholder="e.g., Tech Lead"
+                  value={interviewForm.interviewerRole}
+                  onChange={(e) => setInterviewForm({...interviewForm, interviewerRole: e.target.value})}
+                />
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="pt-4 flex gap-4">
+                <button type="button" onClick={() => setIsScheduleModalOpen(false)}
+                  className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  className="px-10 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2"
-                >
+                <button type="submit"
+                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
                   Schedule Interview
                 </button>
               </div>
