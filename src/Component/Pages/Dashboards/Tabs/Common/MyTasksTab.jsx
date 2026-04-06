@@ -88,8 +88,7 @@ const StatusFilterDropdown = ({ filterStatus, setFilterStatus }) => {
           color: '#374151', width: '100%', justifyContent: 'space-between',
         }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FiFilter style={{ width: '16px', height: '16px', color: '#6b7280' }} />
+        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: selected.dot }}></span>
           {selected.label}
         </span>
@@ -156,6 +155,65 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
   const [toast, setToast] = useState(null);
   const [sendingComment, setSendingComment] = useState(false);
 
+  const MOCK_TASKS = [
+    {
+      id: 'task-1',
+      title: 'Screen 15 candidates for Frontend role',
+      description: 'Review resumes for the React Developer position and shortlist the top 5 candidates for technical rounds.',
+      status: 'In Progress',
+      priority: 'High',
+      dueDate: new Date(Date.now() + 86400000 * 2).toISOString(),
+      assignedByName: 'Sachin Singh',
+      comments: [
+        { text: 'Already reviewed 10 profiles, 3 look promising.', byName: 'Priyanshi', byType: 'KAM', createdAt: new Date(Date.now() - 3600000).toISOString() },
+        { text: 'Great, please finish the rest by EOD.', byName: 'Sachin', byType: 'TeamLeader', createdAt: new Date(Date.now() - 1800000).toISOString() }
+      ]
+    },
+    {
+      id: 'task-2',
+      title: "Follow up on Aman Sharma's Offer",
+      description: "The candidate hasn't signed the offer letter yet. Check if they have any concerns or need more time.",
+      status: 'Overdue',
+      priority: 'Urgent',
+      dueDate: new Date(Date.now() - 86400000).toISOString(),
+      assignedByName: 'Sachin Singh',
+      comments: []
+    },
+    {
+      id: 'task-3',
+      title: 'Update Interview Schedule',
+      description: 'Coordinate with the technical team to find slots for the 3 candidates scheduled for final rounds.',
+      status: 'Pending',
+      priority: 'Medium',
+      dueDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+      assignedByName: 'Sachin Singh',
+      comments: []
+    },
+    {
+      id: 'task-4',
+      title: 'Review Technical Feedback',
+      description: "Consolidate feedback from yesterday's technical rounds and update the pipeline status.",
+      status: 'Completed',
+      priority: 'Low',
+      dueDate: new Date(Date.now() - 86400000 * 2).toISOString(),
+      completedAt: new Date(Date.now() - 3600000).toISOString(),
+      assignedByName: 'Sachin Singh',
+      comments: [
+        { text: 'All feedback updated in the portal.', byName: 'Priyanshi', byType: 'KAM', createdAt: new Date(Date.now() - 3600000).toISOString() }
+      ]
+    },
+    {
+      id: 'task-5',
+      title: 'Draft Job Description: Sr. Backend Dev',
+      description: 'Create a detailed JD for the upcoming Senior Node.js Developer requirement for the FinTech project.',
+      status: 'Pending',
+      priority: 'Medium',
+      dueDate: new Date(Date.now() + 86400000 * 5).toISOString(),
+      assignedByName: 'Sachin Singh',
+      comments: []
+    }
+  ];
+
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -163,11 +221,12 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const res = await getMyDepartmentTasks();
-      setTasks(res.tasks || []);
+      // Simulating API delay for UI testing
+      await new Promise(resolve => setTimeout(resolve, 600));
+      setTasks(MOCK_TASKS);
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      setTasks([]);
+      setTasks(MOCK_TASKS);
     } finally {
       setLoading(false);
     }
@@ -284,28 +343,36 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
         )}
       </AnimatePresence>
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div style={{ padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}>
-          <FiCheckSquare style={{ width: '24px', height: '24px', color: '#fff' }} />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">My Tasks</h2>
-          <p className="text-sm text-gray-500">Your assigned tasks and todo items</p>
-        </div>
+      <div className="flex flex-col items-start text-left mb-6">
+        <h1 className="text-[30px] font-bold text-[#0f172a] mb-1 tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Tasks</h1>
+        <p className="text-[#64748b] font-medium text-[15px]">Your assigned tasks and todo items</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: 'Total', value: stats.total, color: '#6366f1' },
-          { label: 'Pending', value: stats.pending, color: '#f59e0b' },
-          { label: 'In Progress', value: stats.inProgress, color: '#3b82f6' },
-          { label: 'Completed', value: stats.completed, color: '#10b981' },
-          { label: 'Overdue', value: stats.overdue, color: '#ef4444' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-            <p className="text-xs font-medium text-gray-500 uppercase">{stat.label}</p>
-            <p className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+          { label: 'Total', value: stats.total, color: '#0f172a', icon: FiCheckSquare },
+          { label: 'Pending', value: stats.pending, color: '#0f172a', icon: FiClock },
+          { label: 'In Progress', value: stats.inProgress, color: '#0f172a', icon: FiLoader },
+          { label: 'Completed', value: stats.completed, color: '#0f172a', icon: FiCheckCircle },
+          { label: 'Overdue', value: stats.overdue, color: '#0f172a', icon: FiAlertCircle },
+        ].map((stat, idx) => (
+          <div
+            key={stat.label}
+            className="bg-white p-6 rounded-2xl border border-[#E8E7E2] shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300"
+          >
+            {/* Decorative Corner Shape */}
+            <div className="absolute -top-4 -right-4 w-12 h-12 bg-gray-50 rounded-full transition-transform group-hover:scale-110" />
+            
+            <div className="relative z-10 flex flex-col items-start text-left h-full">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#0f172a] group-hover:text-[#0D47A1] transition-colors mb-4">
+                <stat.icon className="w-5 h-5" strokeWidth="2.5" />
+              </div>
+              <div className="mt-auto">
+                <p className="text-[28px] font-bold text-[#0f172a] leading-none mb-1.5">{stat.value}</p>
+                <p className="text-[13px] font-medium text-[#64748b] tracking-wide">{stat.label}</p>
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -319,7 +386,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search tasks..."
-            className="w-full rounded-xl border-2 border-gray-200 py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300"
+            className="w-full rounded-xl border border-gray-200 py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-[#0D47A1] focus:ring-4 focus:ring-[#0D47A1]/5 transition-all"
           />
         </div>
         <StatusFilterDropdown filterStatus={filterStatus} setFilterStatus={setFilterStatus} />

@@ -582,12 +582,25 @@ const ResumeBankTab = () => {
             ))}
           </select>
           <button 
-            onClick={handleResetFilters}
-            className="p-3 bg-[#1A1A2E] dark:bg-blue-600 rounded-xl text-white hover:bg-[#2A2A3E] dark:hover:bg-blue-700 transition-colors shadow-lg shadow-black/10 active:scale-95"
-            title="Reset Filters"
+            onClick={async () => {
+              setLoading(true);
+              await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes(), fetchClients(), fetchPositions()]);
+              setLoading(false);
+              toast.success("Data refreshed!");
+            }}
+            className="p-3 bg-[#F4F3EF] dark:bg-slate-900 rounded-xl text-[#6B6B7E] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm active:scale-95"
+            title="Refresh Data"
           >
-            <Filter size={18} />
+            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
+          {(filters.search || filters.roleType || filters.status || filters.clientId) && (
+            <button 
+              onClick={handleResetFilters}
+              className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
+            >
+              Reset
+            </button>
+          )}
         </div>
       </div>
 

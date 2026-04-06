@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -265,6 +265,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'offerDate', direction: 'desc' });
   const [filterClient, setFilterClient] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     candidateId: '',
@@ -510,13 +513,40 @@ const OfferManagementTab = ({ isDarkMode }) => {
     { label: "Total Offers", value: offers.length, sub: "Total Generations", icon: Briefcase, color: "text-purple-600", bg: "bg-purple-50" },
   ];
 
+  const activeClientNames = useMemo(() => {
+    const names = new Set(offers.map(o => o.client).filter(Boolean));
+    return Array.from(names).sort();
+  }, [offers]);
+
   const filteredOffers = offers.filter(o => {
     const matchesSearch = (o.candidateName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (o.position || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (o.client || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || o.status === filterStatus;
     const matchesClient = filterClient === 'all' || o.client === filterClient;
-    return matchesSearch && matchesStatus && matchesClient;
+    
+    // Date filter on offerDate
+    let matchesDate = true;
+    if (dateFilter !== "all" && o.offerDate) {
+      const offerTime = new Date(o.offerDate);
+      const now = new Date();
+      if (dateFilter === "today") {
+        matchesDate = o.offerDate === now.toISOString().split('T')[0];
+      } else if (dateFilter === "week") {
+        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+        matchesDate = offerTime >= weekStart && offerTime <= weekEnd;
+      } else if (dateFilter === "month") {
+        matchesDate = offerTime.getMonth() === now.getMonth() && offerTime.getFullYear() === now.getFullYear();
+      } else if (dateFilter === "year") {
+        matchesDate = offerTime.getFullYear() === now.getFullYear();
+      } else if (dateFilter === "custom") {
+        if (customStartDate) matchesDate = offerTime >= new Date(customStartDate);
+        if (customEndDate && matchesDate) matchesDate = offerTime <= new Date(customEndDate + 'T23:59:59');
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesClient && matchesDate;
   }).sort((a, b) => {
     const { key, direction } = sortConfig;
     let valA = a[key], valB = b[key];
@@ -586,96 +616,80 @@ const OfferManagementTab = ({ isDarkMode }) => {
         </div>
 
 
-        {/* Control Bar */}
-        <div className="flex flex-col lg:flex-row items-center justify-end gap-3 mb-8">
-          <div className="relative order-2 lg:order-1">
-            <motion.button 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                setShowFilterDropdown(!showFilterDropdown);
-                setClientSearchTerm('');
-              }}
-              className={`h-11 px-5 border rounded-xl flex items-center justify-center gap-2.5 transition-all shadow-sm font-bold text-[10px] tracking-widest uppercase ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-[#E8E7E2] text-[#6B6B7E]'} ${showFilterDropdown ? (isDarkMode ? 'bg-blue-600 text-white border-blue-600' : 'bg-[#1A1A2E] text-white border-[#1A1A2E]') : (isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-[#F4F3EF]')}`}
-            >
-              <Filter size={14} />
-              Filters
-            </motion.button>
-            
-            <AnimatePresence>
-              {showFilterDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10, x: -100 }}
-                  animate={{ opacity: 1, scale: 1, y: 0, x: -100 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10, x: -100 }}
-                  className={`absolute z-[80] top-12 right-0 w-72 rounded-2xl shadow-2xl border p-2 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-[#F4F3EF]'}`}
-                >
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className={`text-[9px] font-bold uppercase tracking-widest opacity-60 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Filter By Client</p>
-                      {filterClient !== 'all' && (
-                        <button onClick={() => { setFilterClient('all'); setShowFilterDropdown(false); }} className="text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-tighter">Clear</button>
-                      )}
-                    </div>
-                    <div className="relative group mb-2">
-                      <Search size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${isDarkMode ? 'text-slate-600 group-focus-within:text-blue-500' : 'text-slate-300 group-focus-within:text-blue-600'}`} />
-                      <input
-                        autoFocus
-                        value={clientSearchTerm}
-                        onChange={(e) => setClientSearchTerm(e.target.value)}
-                        placeholder="Search clients..."
-                        className={`w-full h-9 pl-9 pr-3 rounded-xl border text-[11px] font-medium transition-all focus:outline-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-slate-100 text-slate-800 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5'}`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="max-h-60 overflow-y-auto space-y-0.5 pr-1 custom-scrollbar">
-                    <button
-                      onClick={() => {
-                        setFilterClient('all');
-                        setShowFilterDropdown(false);
-                        setClientSearchTerm('');
-                      }}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${filterClient === 'all'
-                        ? (isDarkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-50 text-[#1B4DA0]')
-                        : (isDarkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-[#4B4BAE] hover:bg-[#F4F3EF]')}`}
-                    >
-                      All Clients
-                      {filterClient === 'all' && <FiCheckCircle className="w-3.5 h-3.5" />}
-                    </button>
-                    {[...new Set(offers.map(o => o.client).filter(Boolean))]
-                      .filter(c => c.toLowerCase().includes(clientSearchTerm.toLowerCase()))
-                      .sort()
-                      .map((client) => (
-                      <button
-                        key={client}
-                        onClick={() => {
-                          setFilterClient(client);
-                          setShowFilterDropdown(false);
-                          setClientSearchTerm('');
-                        }}
-                        className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${filterClient === client
-                          ? (isDarkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-50 text-[#1B4DA0]')
-                          : (isDarkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-[#4B4BAE] hover:bg-[#F4F3EF]')}`}
-                      >
-                        <span className="truncate">{client}</span>
-                        {filterClient === client && <FiCheckCircle className="w-3.5 h-3.5" />}
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="relative group w-full lg:w-96 order-1 lg:order-2">
+        {/* Refined Control Bar */}
+        <div className="flex flex-col lg:flex-row items-center gap-3 mb-8 flex-wrap">
+          <div className={`relative group flex-1 min-w-[280px]`}>
             <Search size={16} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-blue-400' : 'text-[#9B9BAD] group-focus-within:text-[#1B4DA0]'}`} />
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by client or candidate..."
+              placeholder="Search candidate, role, or client..."
               className={`w-full h-11 pl-12 pr-5 border rounded-xl text-xs font-medium focus:outline-none transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-[#E8E7E2] focus:border-[#1B4DA0] focus:ring-4 focus:ring-[#1B4DA0]/5'}`}
             />
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Client Filter */}
+            <select
+              value={filterClient}
+              onChange={(e) => setFilterClient(e.target.value)}
+              className={`h-11 px-4 rounded-xl text-xs font-bold uppercase tracking-wider outline-none border cursor-pointer transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-[#F4F3EF] border-transparent text-[#1A1A2E]'}`}
+            >
+              <option value="all">All Clients</option>
+              <option value="Google">Google</option>
+              <option value="Microsoft">Microsoft</option>
+              <option value="Amazon">Amazon</option>
+              {activeClientNames.filter(name => !["Google", "Microsoft", "Amazon"].includes(name)).map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+
+            {/* Date Filter */}
+            <select
+              value={dateFilter}
+              onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
+              className={`h-11 px-4 rounded-xl text-xs font-bold uppercase tracking-wider outline-none border cursor-pointer transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-[#F4F3EF] border-transparent text-[#1A1A2E]'}`}
+            >
+              <option value="all">All Dates</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+
+            {dateFilter === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input 
+                  type="date" 
+                  value={customStartDate} 
+                  onChange={e => setCustomStartDate(e.target.value)}
+                  className={`h-11 px-3 rounded-xl text-xs font-bold outline-none border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-[#F4F3EF] border-transparent text-[#1A1A2E]'}`} 
+                />
+                <span className="text-[10px] text-[#9B9BAD] font-bold uppercase">to</span>
+                <input 
+                  type="date" 
+                  value={customEndDate} 
+                  onChange={e => setCustomEndDate(e.target.value)}
+                  className={`h-11 px-3 rounded-xl text-xs font-bold outline-none border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-[#F4F3EF] border-transparent text-[#1A1A2E]'}`} 
+                />
+              </div>
+            )}
+
+            {(searchTerm || filterClient !== 'all' || dateFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterClient('all');
+                  setDateFilter('all');
+                  setCustomStartDate('');
+                  setCustomEndDate('');
+                }}
+                className="text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest px-2"
+              >
+                Reset
+              </button>
+            )}
           </div>
         </div>
 

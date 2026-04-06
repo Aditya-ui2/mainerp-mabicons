@@ -961,6 +961,7 @@ const KAMMemberDashboard = () => {
       userInfo={userInfo}
       notifications={notifications}
       onNotificationClick={handleNotificationClick}
+      showGlobalHeader={false}
     >
       {renderContent()}
     </AdminLayout>

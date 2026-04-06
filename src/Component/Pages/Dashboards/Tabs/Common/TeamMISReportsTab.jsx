@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Phone, Eye, Share2, Calendar, Clock, MessageSquare, CheckCircle2, 
@@ -250,6 +250,7 @@ const TeamMISReportsTab = () => {
   const [reports, setReports]         = useState([]);
   const [loading, setLoading]         = useState(true);
   const [selectedDate, setSelectedDate] = useState(getLocalISODate());
+  const [selectedKAM, setSelectedKAM] = useState('all');
   const [commentTarget, setCommentTarget] = useState(null);
   const [toast, setToast]             = useState(null);
   const dateInputRef = useRef(null);
@@ -277,8 +278,13 @@ const TeamMISReportsTab = () => {
 
   useEffect(() => { fetchReports(); }, [fetchReports]);
 
+  const filteredReports = useMemo(() => {
+    if (selectedKAM === 'all') return reports;
+    return reports.filter(r => (r.memberName || '').toLowerCase() === selectedKAM.toLowerCase());
+  }, [reports, selectedKAM]);
+
   // Totals row calculation
-  const totals = reports.reduce((acc, r) => ({
+  const totals = filteredReports.reduce((acc, r) => ({
     callsCount:          acc.callsCount          + (r.callsCount          || 0),
     profilesVisited:     acc.profilesVisited     + (r.profilesVisited     || 0),
     profilesShared:      acc.profilesShared      + (r.profilesShared      || 0),
@@ -308,7 +314,7 @@ const TeamMISReportsTab = () => {
     ];
     const escapeCSV = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
-    const rows = reports.map((report) => [
+    const rows = filteredReports.map((report) => [
       selectedDate, report.memberName || '', report.callsCount || 0,
       report.profilesVisited || 0, report.profilesShared || 0,
       report.candidatesContacted || 0, report.interviewsArranged || 0,
@@ -355,23 +361,8 @@ const TeamMISReportsTab = () => {
             <h1 className="text-[36px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Team MIS Reports</h1>
             <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide">Daily performance metric summary & team intelligence</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <button
-              onClick={downloadMISCSV}
-              disabled={loading || reports.length === 0}
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-[#F4F3EF] text-[#9B9BAD] text-[11px] font-bold uppercase tracking-widest hover:bg-[#F8FAFF] hover:text-[#1A1A2E] hover:border-[#EEF2FB] transition-all shadow-sm active:scale-95 disabled:opacity-50"
-            >
-              <Download size={14} /> Download CSV
-            </button>
-            <button 
-              onClick={fetchReports} 
-              className="p-3 rounded-full bg-white border border-[#F4F3EF] hover:bg-[#F8FAFF] text-[#9B9BAD] hover:text-[#1B4DA0] transition-colors shadow-sm active:scale-95 text-center flex items-center justify-center h-[42px] w-[42px]"
-              title="Refresh Radar"
-            >
-              <RefreshCw size={16} className={loading ? 'animate-spin text-[#1B4DA0]' : ''} />
-            </button>
-            
             <button
               type="button"
               onClick={openDatePicker}
@@ -391,24 +382,70 @@ const TeamMISReportsTab = () => {
         </div>
 
         {/* Temporal Navigation Banner */}
-        <div className="flex items-center gap-4 mb-12 px-6 py-4 bg-white border border-[#F4F3EF] rounded-[24px] shadow-sm max-w-fit cursor-pointer hover:shadow-md hover:border-[#1B4DA0]/20 transition-all group" onClick={openDatePicker}>
-          <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] group-hover:scale-110 transition-transform">
-            <Calendar size={18} strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-[17px] font-bold text-[#1A1A2E] leading-none">{formattedDate}</p>
-          </div>
-          {!loading && (
-            <div className="ml-6 pl-6 border-l border-[#F4F3EF]">
-              <span className="inline-flex px-3 py-1.5 bg-[#ECFDF5] text-[#10B981] rounded-lg text-[9px] font-bold tracking-[0.15em] uppercase">
-                {reports.length} ACTIVE LOGS
-              </span>
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-12">
+          <div 
+            className="flex items-center gap-4 px-6 py-3 bg-white border border-[#F4F3EF] rounded-[24px] shadow-sm cursor-pointer hover:shadow-md hover:border-[#1B4DA0]/20 transition-all group" 
+            onClick={openDatePicker}
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] group-hover:scale-110 transition-transform">
+              <Calendar size={18} strokeWidth={2} />
             </div>
-          )}
+            <div>
+              <p className="text-[17px] font-bold text-[#1A1A2E] leading-none whitespace-nowrap">{formattedDate}</p>
+            </div>
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="absolute opacity-0 pointer-events-none"
+            />
+            {!loading && (
+              <div className="ml-4 pl-4 border-l border-[#F4F3EF]">
+                <span className="inline-flex px-3 py-1.5 bg-[#ECFDF5] text-[#10B981] rounded-lg text-[9px] font-bold tracking-[0.15em] uppercase whitespace-nowrap">
+                  {filteredReports.length} ACTIVE LOGS
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Action Row - Integrated to the right as requested */}
+          <div className="flex items-center gap-3 bg-white border border-[#F4F3EF] p-2 rounded-[24px] shadow-sm">
+            <button
+              onClick={downloadMISCSV}
+              disabled={loading || reports.length === 0}
+              className="flex items-center gap-2 px-6 h-11 rounded-xl bg-[#FAFAFA] text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest hover:bg-[#F8FAFF] hover:text-[#1A1A2E] transition-all disabled:opacity-50"
+            >
+              <Download size={14} /> Download CSV
+            </button>
+
+            <div className="w-px h-6 bg-[#F4F3EF]" />
+
+            <select
+              value={selectedKAM}
+              onChange={(e) => setSelectedKAM(e.target.value)}
+              className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-[#1A1A2E] outline-none cursor-pointer px-2 h-11"
+            >
+              <option value="all">Filter by KAM (All)</option>
+              <option value="Priyanshi">Priyanshi</option>
+              <option value="Jyoti">Jyoti</option>
+              <option value="Manju">Manju</option>
+            </select>
+
+            <div className="w-px h-6 bg-[#F4F3EF]" />
+
+            <button 
+              onClick={fetchReports} 
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-[#9B9BAD] hover:bg-[#F8FAFF] hover:text-[#1B4DA0] transition-all"
+              title="Refresh Radar"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin text-[#1B4DA0]' : ''} />
+            </button>
+          </div>
         </div>
 
         {/* Overarching Totals Gallery */}
-        {!loading && reports.length > 0 && (
+        {!loading && filteredReports.length > 0 && (
           <div className="mb-12 bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm p-8 lg:p-10 relative overflow-hidden group/metrics">
             <div className="flex items-center justify-between mb-10 relative z-10">
               <div className="flex items-center gap-4">
@@ -448,17 +485,17 @@ const TeamMISReportsTab = () => {
                 </div>
               ))}
             </div>
-          ) : reports.length === 0 ? (
+          ) : filteredReports.length === 0 ? (
             <div className="text-center py-40 bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden">
                <div className="w-24 h-24 bg-[#FAFAFA] dark:bg-slate-800 rounded-[32px] mx-auto flex items-center justify-center text-[#9B9BAD] mb-8 rotate-12">
                  <Activity size={40} strokeWidth={1.5} />
                </div>
                <p className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white capitalize mb-2">Radar Silence Mode</p>
-               <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">Awaiting operational intel for this specific temporal dimension.</p>
+               <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">{selectedKAM !== 'all' ? `No report logs found for ${selectedKAM}` : 'Awaiting operational intel for this specific temporal dimension.'}</p>
             </div>
           ) : (
             <div>
-               {reports.map((report, idx) => (
+               {filteredReports.map((report, idx) => (
                  <motion.div key={report.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
                    <ReportRow report={report} onComment={setCommentTarget} />
                  </motion.div>

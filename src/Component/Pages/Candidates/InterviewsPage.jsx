@@ -23,6 +23,7 @@ export default function InterviewsPage() {
   const [dateFilter, setDateFilter] = useState("all");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+  const [selectedClientFilter, setSelectedClientFilter] = useState("All Clients");
   
   // New Appointment / Scheduler state
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -135,6 +136,7 @@ export default function InterviewsPage() {
           type: i.meetingType || "Video",
           meetingLink: i.meetingLink,
           notes: i.notes,
+          clientName: i.clientName || i.client?.companyName || i.client?.name || "Internal Team",
           status: i.status || "Scheduled",
           feedbackStatus: i.feedback ? "Submitted" : "Pending",
           raw: i
@@ -228,6 +230,11 @@ export default function InterviewsPage() {
     }
   };
 
+  const activeClientNames = useMemo(() => {
+    const names = new Set(interviews.map(i => i.clientName).filter(Boolean));
+    return Array.from(names).sort();
+  }, [interviews]);
+
   const filteredInterviews = useMemo(() => {
     return interviews.filter(i => {
       // Status/type filter
@@ -273,9 +280,15 @@ export default function InterviewsPage() {
         }
       }
 
-      return matchesFilter && matchesDate;
+      // Client filter
+      let matchesClient = true;
+      if (selectedClientFilter !== "All Clients") {
+        matchesClient = i.clientName === selectedClientFilter;
+      }
+
+      return matchesFilter && matchesDate && matchesClient;
     });
-  }, [interviews, filter, dateFilter, customStartDate, customEndDate]);
+  }, [interviews, filter, dateFilter, customStartDate, customEndDate, selectedClientFilter]);
 
   // Dynamically generate unique interview dates for the timeline
   const interviewDates = useMemo(() => {
@@ -343,9 +356,9 @@ export default function InterviewsPage() {
       {/* Compact Quick Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white p-4 rounded-2xl border border-[#F4F3EF] shadow-sm flex items-center gap-4 group">
-            <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
-              <stat.icon size={18} />
+          <div key={idx} className="bg-white p-4 rounded-2xl border border-[#F4F3EF] shadow-sm flex items-center gap-4 group hover:shadow-md transition-all duration-300">
+            <div className="w-10 h-10 rounded-xl bg-white border border-[#F4F3EF] text-black group-hover:text-[#0D47A1] flex items-center justify-center shrink-0 transition-colors duration-300">
+              <stat.icon size={18} strokeWidth={2.5} />
             </div>
             <div>
               <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{stat.label}</p>
@@ -395,9 +408,31 @@ export default function InterviewsPage() {
               className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
           </div>
         )}
-        {(dateFilter !== 'all' || filter !== 'All') && (
+
+        {/* Client Filter Dropdown */}
+        <select
+          value={selectedClientFilter}
+          onChange={(e) => setSelectedClientFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+        >
+          <option value="All Clients">All Clients</option>
+          <option value="Google">Google</option>
+          <option value="Microsoft">Microsoft</option>
+          <option value="Amazon">Amazon</option>
+          {activeClientNames.filter(name => !["Google", "Microsoft", "Amazon"].includes(name)).map(name => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+        </select>
+
+        {(dateFilter !== 'all' || filter !== 'All' || selectedClientFilter !== "All Clients") && (
           <button
-            onClick={() => { setDateFilter('all'); setFilter('All'); setCustomStartDate(''); setCustomEndDate(''); }}
+            onClick={() => { 
+                setDateFilter('all'); 
+                setFilter('All'); 
+                setSelectedClientFilter('All Clients'); 
+                setCustomStartDate(''); 
+                setCustomEndDate(''); 
+            }}
             className="text-xs font-semibold text-[#1B4DA0] hover:underline"
           >
             Reset Filters

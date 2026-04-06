@@ -506,7 +506,7 @@ export default function CandidatesPage() {
         </div>
       </div>
 
-      {/* Search/Filter Bar */}
+      {/* Search Bar */}
       <div className="flex items-center gap-3 mb-6 bg-white p-3 rounded-2xl border border-[#F4F3EF] shadow-sm flex-wrap">
         <div className="flex items-center gap-2 bg-[#F4F3EF] px-3 py-1.5 rounded-xl flex-1 border border-transparent focus-within:border-[#1B4DA0]/20 transition-all min-w-[200px]">
           <Search size={14} className="text-[#9B9BAD]" />
@@ -518,28 +518,9 @@ export default function CandidatesPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
-        {/* Client Searchable Dropdown */}
-        <div className="flex items-center gap-2 bg-[#F4F3EF] px-3 py-1.5 rounded-xl border border-transparent focus-within:border-[#1B4DA0]/20 transition-all w-[260px]">
-           <Briefcase size={14} className="text-[#9B9BAD] flex-shrink-0" />
-           <input
-             type="text"
-             list="clientHints"
-             placeholder="Search & Select Client..."
-             value={selectedClientFilter === "All Clients" ? "" : selectedClientFilter}
-             onChange={(e) => setSelectedClientFilter(e.target.value || "All Clients")}
-             className="bg-transparent border-0 outline-none text-xs font-bold text-[#1A1A2E] w-full placeholder-[#9B9BAD]"
-           />
-           <datalist id="clientHints">
-              <option value="All Clients" />
-              {activeClientNames.map(name => (
-                <option key={name} value={name} />
-              ))}
-           </datalist>
-        </div>
       </div>
 
-      {/* Date & Role Filters */}
+      {/* Date, Role & Client Filters */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <select
           value={dateFilter}
@@ -576,9 +557,25 @@ export default function CandidatesPage() {
             <option key={p.id} value={p.title}>{p.title}</option>
           ))}
         </select>
-        {(dateFilter !== 'all' || targetRoleFilter) && (
+
+        {/* Client Filter Dropdown */}
+        <select
+          value={selectedClientFilter}
+          onChange={(e) => setSelectedClientFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+        >
+          <option value="All Clients">All Clients</option>
+          <option value="Google">Google</option>
+          <option value="Microsoft">Microsoft</option>
+          <option value="Amazon">Amazon</option>
+          {activeClientNames.filter(name => !["Google", "Microsoft", "Amazon"].includes(name)).map(name => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+        </select>
+
+        {(dateFilter !== 'all' || targetRoleFilter || selectedClientFilter !== "All Clients") && (
           <button
-            onClick={() => { setDateFilter('all'); setTargetRoleFilter(''); setCustomStartDate(''); setCustomEndDate(''); }}
+            onClick={() => { setDateFilter('all'); setTargetRoleFilter(''); setSelectedClientFilter('All Clients'); setCustomStartDate(''); setCustomEndDate(''); }}
             className="text-xs font-semibold text-[#1B4DA0] hover:underline"
           >
             Reset Filters

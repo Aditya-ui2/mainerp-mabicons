@@ -84,8 +84,8 @@ const StatCard = ({ label, value, icon: Icon }) => (
   <motion.div
     whileHover="hover"
     initial="initial"
-    className="bg-white rounded-2xl p-6 border border-gray-100 flex flex-col items-start gap-5 shadow-sm text-left relative overflow-hidden group cursor-pointer"
-    style={{ minHeight: '180px' }}
+    className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col items-start gap-3 shadow-sm text-left relative overflow-hidden group cursor-pointer"
+    style={{ minHeight: '110px' }}
   >
     <motion.div
       variants={{
@@ -94,19 +94,19 @@ const StatCard = ({ label, value, icon: Icon }) => (
       }}
       className="w-full h-full absolute inset-0 bg-white -z-10"
     />
-    <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shadow-sm border border-gray-100 transition-all duration-300">
+    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-gray-100 transition-all duration-300">
       <motion.div
         variants={{
           initial: { color: '#1A1A2E' },
           hover: { color: '#0D47A1' }
         }}
       >
-        <Icon size={22} />
+        <Icon size={20} />
       </motion.div>
     </div>
-    <div className="space-y-2 mt-auto">
-      <p className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{value}</p>
-      <p className="text-sm font-medium text-[#1A1A2E] opacity-70 group-hover:opacity-100 transition-opacity">{label}</p>
+    <div className="space-y-1">
+      <p className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{value}</p>
+      <p className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A2E] opacity-60 group-hover:opacity-100 transition-opacity">{label}</p>
     </div>
   </motion.div>
 );
@@ -120,19 +120,19 @@ const WorkloadCard = ({ teamData, tasks }) => {
   const maxTasks = Math.max(...memberWorkload.map(m => m.tasks), 1);
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm col-span-2">
-      <div className="flex items-center justify-between mb-6">
-        <h4 className="text-base font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Team Workload</h4>
-        <FiActivity className="text-blue-500" size={18} />
+    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm col-span-2 flex flex-col justify-between">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-[12px] font-bold text-[#1A1A2E] uppercase tracking-wider" style={{ fontFamily: "'Syne', sans-serif" }}>Team Workload</h4>
+        <FiActivity className="text-blue-500" size={16} />
       </div>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {memberWorkload.map((m, i) => (
-          <div key={i} className="space-y-1.5">
-            <div className="flex justify-between items-center text-[11px] font-bold">
-              <span className="text-[#4B4B5E]">{m.name}</span>
+          <div key={i} className="space-y-1">
+            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-tighter">
+              <span className="text-[#4B4B5E] truncate max-w-[80px]">{m.name}</span>
               <span className="text-[#1A1A2E]">{m.tasks} Tasks</span>
             </div>
-            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-1 w-full bg-gray-50 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(m.tasks / maxTasks) * 100}%` }}
@@ -307,7 +307,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
   }
 
   return (
-    <div className="space-y-8 pb-32">
+    <div className="space-y-8 pb-10">
       {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
@@ -358,7 +358,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
       </div>
 
       {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <StatCard label="Pending Tasks" value={stats.pending} icon={FiClock} />
         <StatCard label="High Priority" value={stats.highPriority} icon={FiAlertCircle} />
         <StatCard label="Today's Deadlines" value={stats.todayDeadlines} icon={FiCalendar} />

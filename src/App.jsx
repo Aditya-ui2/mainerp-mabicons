@@ -103,7 +103,7 @@ function App() {
       
       {/* KAM Member Dashboard - Priyanshi, Manju, Jyoti */}
       <Route path='/kam-member-dashboard' element={
-        <ProtectedRoute allowedRoles={['HR Recruitment', 'admin', 'teamleader', 'superadmin']}>
+        <ProtectedRoute allowedRoles={['HR Recruitment', 'kamRecruitment', 'admin', 'teamleader', 'superadmin']}>
           <KAMMemberDashboard />
         </ProtectedRoute>
       } />
