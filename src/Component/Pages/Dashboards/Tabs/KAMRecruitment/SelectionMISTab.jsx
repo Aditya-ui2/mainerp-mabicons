@@ -146,7 +146,7 @@ export default function SelectionMISTab() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleRefresh} disabled={sheetLoading}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-xs font-bold hover:bg-[#F8FAFF] transition-all shadow-sm disabled:opacity-50">
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-full text-xs font-bold hover:bg-[#F8FAFF] transition-all shadow-sm disabled:opacity-50">
             <RefreshCw size={14} className={sheetLoading ? 'animate-spin' : ''} /> Sync
           </button>
         </div>
@@ -155,7 +155,7 @@ export default function SelectionMISTab() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white p-4 rounded-2xl border border-[#F4F3EF] shadow-sm flex items-center gap-4 group hover:shadow-md transition-all duration-300">
+          <div key={idx} className="bg-white p-4 rounded-2xl border border-[#E8E7E2] shadow-sm flex items-center gap-4 group hover:shadow-md transition-all duration-300">
             <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center shrink-0 transition-colors duration-300`}>
               <stat.icon size={18} strokeWidth={2.5} />
             </div>
@@ -179,11 +179,13 @@ export default function SelectionMISTab() {
             </button>
           ))}
         </div>
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9B9BAD]" />
-          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search candidate, client..."
-            className="bg-[#F4F3EF] border-0 rounded-xl pl-9 pr-4 py-2.5 text-xs font-bold text-[#1A1A2E] outline-none w-64 placeholder:text-[#9B9BAD]/50 focus:bg-[#EEF2FB] transition-all" />
+        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
+          <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+            <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
+            <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Search candidate, client..."
+              className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
+          </div>
         </div>
       </div>
 

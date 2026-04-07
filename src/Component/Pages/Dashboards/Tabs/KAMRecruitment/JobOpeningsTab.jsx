@@ -202,13 +202,13 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
     return (
       <div className="w-full flex items-center justify-center p-8 py-20 min-h-[50vh]">
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', damping: 15 }}
-          className={`rounded-3xl p-10 text-center max-w-md w-full shadow-2xl ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
+          className={`rounded-3xl p-10 text-center max-w-md w-full shadow-2xl bg-white`}>
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', damping: 10 }}
-            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)' }}>
+            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-[#1B4DA0]">
             <CheckCircle className="w-10 h-10 text-white" />
           </motion.div>
-          <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Task Assigned!</h3>
-          <p className={`text-sm mt-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          <h3 className="text-xl font-bold text-[#1A1A2E]">Task Assigned!</h3>
+          <p className="text-sm mt-2 text-[#9B9BAD]">
             Assignment Successful
           </p>
         </motion.div>
@@ -223,30 +223,30 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
   return (
     <div className="w-full pb-8">
       {/* ── Top Bar ── */}
-      <div className={`sticky top-0 z-20 flex items-center justify-between p-4 sm:p-6 mb-6 rounded-xl ${isDarkMode ? 'bg-slate-800/95 backdrop-blur-sm border-b border-slate-700' : 'bg-white/95 backdrop-blur-sm border-b border-slate-200'}`}>
-        <motion.button whileHover={{ x: -4 }} whileTap={{ scale: 0.98 }} onClick={onClose}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all ${isDarkMode ? 'text-[#3FA9F5] hover:bg-slate-700' : 'text-[#1E88E5] hover:bg-[#1E88E5]/10'}`}>
-          <ArrowLeft className="w-5 h-5" /> Back to Jobs
-        </motion.button>
-        <h2 className={`text-xl sm:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Assign Task for {job?.title}</h2>
-        <div className="w-24"></div>
+      <div className="sticky top-0 z-20 px-10 py-8 border-b border-[#F4F3EF] bg-gradient-to-r from-white to-[#F8FAFF] flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">Assign Task for {job?.title}</h2>
+          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Task Assignment</p>
+        </div>
+        <button onClick={onClose} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      <div className={`mx-auto max-w-4xl overflow-hidden rounded-3xl shadow-xl flex flex-col ${isDarkMode ? 'bg-slate-900 border border-slate-700/50' : 'bg-white border border-slate-200'}`}>
+      <div className="mx-auto max-w-4xl overflow-hidden flex flex-col">
         {/* ── Compact Header ── */}
-        <div className="relative overflow-hidden px-4 sm:px-6 pt-6 pb-4">
-          <div className="absolute inset-0 opacity-10" style={{ background: 'linear-gradient(135deg, #3FA9F5 0%, #1E88E5 50%, #0D47A1 100%)' }} />
-          <div className="relative flex items-start justify-between">
+        <div className="px-6 sm:px-8 pt-6 pb-4">
+          <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}>
-                <Clipboard className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
+                <Clipboard className="w-5 h-5" />
               </div>
               <div>
-                <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>New Task Assignment</h3>
+                <h3 className="text-lg font-bold text-[#1A1A2E]">New Task Assignment</h3>
                 <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDarkMode ? 'bg-[#1E88E5]/40 text-[#3FA9F5]' : 'bg-[#1E88E5]/10 text-[#1E88E5]'}`}>{job?.title}</span>
-                  <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>•</span>
-                  <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{job?.client}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-[#1B4DA0]/10 text-[#1B4DA0]">{job?.title}</span>
+                  <span className="text-xs text-[#9B9BAD]">•</span>
+                  <span className="text-xs text-[#9B9BAD]">{job?.client}</span>
                 </div>
               </div>
             </div>
@@ -274,19 +274,19 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
           {/* Quick Task Type Chips */}
           <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Quick Select Task Type</label>
+            <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2.5 block">Quick Select Task Type</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {taskTypes.map(t => (
                 <motion.button key={t.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                   onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center ${taskType === t.label
-                    ? 'border-[#1E88E5] shadow-lg ' + (isDarkMode ? 'bg-[#1E88E5]/30' : 'bg-[#1E88E5]/10')
-                    : isDarkMode ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all text-center ${taskType === t.label
+                    ? 'border-[#1B4DA0] shadow-lg bg-[#1B4DA0]/10'
+                    : 'border-[#F4F3EF] bg-[#FAFAF8] hover:border-[#E8E7E2]'
                     }`}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md mb-1" style={{ background: 'linear-gradient(135deg, #5fa8f0, #76A8DB)' }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#1B4DA0] text-white shadow-md mb-1">
                     <t.icon className="w-5 h-5" />
                   </div>
-                  <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? (isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]') : isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t.label}</span>
+                  <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? 'text-[#1B4DA0]' : 'text-[#6B6B7E]'}`}>{t.label}</span>
                 </motion.button>
               ))}
             </div>
@@ -294,31 +294,31 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
           {/* Task Title */}
           <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Task Title *</label>
+            <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Task Title *</label>
             <input type="text" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="e.g. Screen 10 candidates for shortlist"
-              className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+              className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
             />
           </div>
 
           {/* Assign To — Team Member Cards */}
           <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assign To *</label>
+            <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2.5 block">Assign To *</label>
             <div className="space-y-2">
               {teamMembers.map(m => (
                 <motion.button key={m.id} whileHover={{ x: 2 }} whileTap={{ scale: 0.99 }}
                   onClick={() => setAssignee(m.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${assignee === m.id
-                    ? 'border-[#1E88E5] shadow-md ' + (isDarkMode ? 'bg-[#1E88E5]/20' : 'bg-[#1E88E5]/10')
-                    : isDarkMode ? 'border-slate-700 hover:border-slate-600 bg-slate-800/30' : 'border-slate-200 hover:border-slate-300 bg-white'
+                  className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left ${assignee === m.id
+                    ? 'border-[#1B4DA0] shadow-md bg-[#1B4DA0]/10'
+                    : 'border-[#F4F3EF] hover:border-[#E8E7E2] bg-white'
                     }`}>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: m.color }}>
                     {m.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{m.name}</p>
-                    <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{m.role}</p>
+                    <p className="text-sm font-semibold text-[#1A1A2E]">{m.name}</p>
+                    <p className="text-[10px] text-[#9B9BAD]">{m.role}</p>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${assignee === m.id ? 'border-[#1E88E5] bg-[#1E88E5]' : isDarkMode ? 'border-slate-600' : 'border-slate-300'
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${assignee === m.id ? 'border-[#1B4DA0] bg-[#1B4DA0]' : 'border-[#E8E7E2]'
                     }`}>
                     {assignee === m.id && <Check className="w-3 h-3 text-white" />}
                   </div>
@@ -329,12 +329,12 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
           {/* Priority — Pill Selection */}
           <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Priority</label>
+            <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2.5 block">Priority</label>
             <div className="flex gap-2">
               {priorities.map(p => (
                 <motion.button key={p.value} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                   onClick={() => setTaskPriority(p.value)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${taskPriority === p.value ? p.bg + ' border-current shadow-sm' : isDarkMode ? 'border-slate-700 text-slate-400 bg-slate-800/30' : 'border-slate-200 text-slate-500 bg-white'}`}>
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border-2 text-sm font-semibold transition-all ${taskPriority === p.value ? p.bg + ' border-current shadow-sm' : 'border-[#F4F3EF] text-[#6B6B7E] bg-white'}`}>
                   <span className="text-xs">{p.icon}</span> {p.value}
                 </motion.button>
               ))}
@@ -343,7 +343,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 
           {/* Deadline */}
           <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Deadline</label>
+            <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Deadline</label>
             <div onClick={() => openNativeDatePicker(taskDeadlineInputRef)} className="cursor-pointer">
               <input
                 ref={taskDeadlineInputRef}
@@ -351,30 +351,29 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
                 value={taskDeadline}
                 onChange={e => setTaskDeadline(e.target.value)}
                 onClick={() => openNativeDatePicker(taskDeadlineInputRef)}
-                className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+                className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 cursor-pointer"
               />
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Notes (optional)</label>
+            <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Notes (optional)</label>
             <textarea value={taskDescription} onChange={e => setTaskDescription(e.target.value)} rows={3} placeholder="Add any specific instructions..."
-              className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all resize-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
+              className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 resize-none placeholder:text-[#9B9BAD]/50"
             />
           </div>
         </div>
 
         {/* ── Footer ── */}
-        <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t ${isDarkMode ? 'bg-slate-900/80 border-slate-700/50' : 'bg-slate-50/80 border-slate-200'}`}>
+        <div className="flex gap-4 px-6 sm:px-8 py-6 border-t border-[#F4F3EF]">
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onClose}
-            className={`w-full sm:w-auto px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}
+            className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
           >Cancel</motion.button>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
             disabled={(!taskTitle && !taskType) || !assignee}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all ${(!taskTitle && !taskType) || !assignee ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
-            style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: (!taskTitle && !taskType) || !assignee ? 'none' : '0 8px 20px rgba(31,136,229,0.35)' }}
+            className={`flex-[2] flex items-center justify-center gap-2 py-5 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all ${(!taskTitle && !taskType) || !assignee ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
           >
             <Send className="w-4 h-4" /> Assign Task
           </motion.button>
@@ -385,115 +384,103 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 };
 
 /* ── Job Detail View ── */
+const RADAR_COLORS = { stroke: '#a5b4fc', fill: '#a5b4fc' };
+const DONUT_COLORS = ['#3B82F6', '#6366F1', '#22D3EE'];
+
 const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
+  const skillsArr = (Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean);
+  const reqsArr = (Array.isArray(job.requirements) ? job.requirements : (job.requirements || '').split('\n')).filter(Boolean);
+
+  const radarData = [
+    { axis: 'Market Rarity', value: Math.min(100, 40 + (skillsArr.length || 1) * 8) },
+    { axis: 'Skill Depth', value: Math.min(100, 30 + (reqsArr.length || 1) * 10) },
+    { axis: 'Budget Score', value: job.salary ? 75 : 50 },
+    { axis: 'Urgency', value: job.priority === 'Urgent' ? 95 : job.priority === 'High' ? 78 : 55 },
+  ];
+
+  const sourceData = [
+    { name: 'LinkedIn', value: 65 },
+    { name: 'Referrals', value: 25 },
+    { name: 'Direct', value: 10 },
+  ];
+
   return (
     <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right duration-500">
-      {/* Drawer Header */}
+      {/* Header */}
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
         <div>
-          <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-            {job.title}
-          </h2>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.client}</span>
+          <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{job.title}</h2>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{job.department || job.client || 'Engineering'}</span>
             <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-            <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{job.type}</span>
+            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.type || 'Full-time'}</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90"
-          >
+        <div className="flex items-center gap-2">
+          <button onClick={() => onEdit(job)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all active:scale-90">
+            <Pencil size={16} />
+          </button>
+          <button onClick={onBack} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90">
             <X size={20} />
           </button>
         </div>
       </div>
 
-      <div className="p-10 space-y-12 pb-32 overflow-y-auto">
-        {/* Meta Info Grid - Clean & Minimal */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {[
-            { label: 'Experience', val: job.experience || 'Flexible', icon: Award },
-            { label: 'Location', val: job.location || 'Remote', icon: MapPin },
-            { label: 'Priority', val: job.priority || 'Medium', icon: ShieldCheck },
-            { label: 'Deadline', val: job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Active', icon: Clock },
-            { label: 'Applicants', val: job.candidateCount || 0, icon: Users },
-            { label: 'Target Openings', val: job.openings || 1, icon: Target }
-          ].map((stat, i) => (
-            <div key={i} className="bg-[#FAFAF8] p-4 rounded-2xl border border-[#F4F3EF] group hover:bg-white hover:shadow-md transition-all duration-200">
-              <div className="w-7 h-7 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#6B6B7E] mb-2">
-                <stat.icon size={13} />
-              </div>
-              <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{stat.label}</p>
-              <p className="text-xs font-bold text-[#1A1A2E] mt-1 truncate">{stat.val}</p>
-            </div>
-          ))}
+      <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
+        {/* Market Analysis Radar */}
+        <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+          <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-2 text-center">Market Analysis Radar</h3>
+          <div className="w-full h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
+                <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
+                <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} />
+                <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
+                <Radar dataKey="value" stroke={RADAR_COLORS.stroke} fill={RADAR_COLORS.fill} fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        {/* Deep Info Sections */}
-        <div className="space-y-12">
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
-              <FileText size={14} className="text-[#1B4DA0]" /> Overview
-            </h3>
-            <p className="text-sm text-[#4B4B5E] leading-relaxed whitespace-pre-wrap">
-              {job.description || "Leading market position requires top-tier expertise in modern technology stacks."}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Key Requirements</h3>
-              <ul className="space-y-3">
-                {(Array.isArray(job.requirements) ? job.requirements : (job.requirements || "").split("\n")).filter(Boolean).map((req, i) => (
-                  <li key={i} className="flex items-start gap-3 group">
-                    <div className="w-5 h-5 rounded-lg bg-[#F4F3EF] border border-[#E8E7E2] flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-[#1A1A2E] transition-all">
-                      <Check size={10} className="text-[#6B6B7E] group-hover:text-white" />
-                    </div>
-                    <span className="text-sm text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">{req}</span>
-                  </li>
-                )) || <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">General Qualifications Apply</li>}
-                {(!job.requirements || job.requirements.length === 0) && <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">General Qualifications Apply</li>}
-              </ul>
+        {/* Source Acquisition */}
+        <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+          <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Source Acquisition</h3>
+          <div className="flex items-center gap-6">
+            <div className="w-[120px] h-[120px] flex-shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={sourceData} innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                    {sourceData.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i]} />)}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Major Responsibilities</h3>
-              <ul className="space-y-3">
-                {(Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || "").split("\n")).filter(Boolean).map((res, i) => (
-                  <li key={i} className="flex items-start gap-3 group">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#9B9BAD] mt-2 flex-shrink-0 group-hover:scale-150 transition-transform" />
-                    <span className="text-sm text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">{res}</span>
-                  </li>
-                )) || <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">Standard Technical Duties</li>}
-                {(!job.responsibilities || job.responsibilities.length === 0) && <li className="text-[11px] text-[#9B9BAD] italic opacity-60 uppercase tracking-widest">Standard Technical Duties</li>}
-              </ul>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4">Essential Tech Stack</h3>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {(Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean).map((skill, i) => (
-                <span key={i} className="px-5 py-2.5 rounded-xl bg-[#F4F3EF] text-[#1A1A2E] text-[10px] font-bold uppercase tracking-widest border border-transparent hover:border-[#1B4DA0] hover:bg-white transition-all cursor-default">
-                  {typeof skill === 'string' ? skill.trim() : skill}
-                </span>
+            <div className="space-y-3 flex-1">
+              {sourceData.map((s, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: DONUT_COLORS[i] }} />
+                    <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">{s.name}</span>
+                  </div>
+                  <span className="text-sm font-black text-[#1A1A2E]">{s.value}%</span>
+                </div>
               ))}
-              {(!job.skills || job.skills.length === 0 || job.skills === "") && <span className="text-[11px] text-[#9B9BAD] italic uppercase tracking-widest opacity-60">Global Tech Standard</span>}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Sticky Bottom Actions */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-[#F4F3EF] p-8 flex flex-col gap-3 z-30 shadow-[0_-15px_40px_rgba(0,0,0,0.04)]">
-        <button
-          onClick={() => onEdit(job)}
-          className="w-full h-15 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-[#1B4DA0] transition-all shadow-xl shadow-gray-200 active:scale-[0.98] py-4"
-        >
-          <Pencil size={18} /> Edit Position Details
+        {/* Action Buttons */}
+        <button className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:bg-[#1B4DA0] transition-all active:scale-[0.98] shadow-lg shadow-gray-200">
+          <Share2 size={18} /> Social Asset Generator
         </button>
+        <div className="grid grid-cols-2 gap-3">
+          <button className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]">
+            <Download size={16} /> Brief PDF
+          </button>
+          <button onClick={() => onAssignTask(job)} className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]">
+            <Compass size={16} /> Find Talent
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1210,7 +1197,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       <AnimatePresence>
         {showFullPageForm && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
-            <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-500">
+            <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500">
               {/* Header */}
               <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
                 <div>
@@ -1235,9 +1222,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
                     {/* Section: Basic Information */}
                     <div className="md:col-span-2 mt-4">
-                      <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                        <Briefcase size={14} /> Basic Information
-                      </h4>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl"><Briefcase size={18} /></div>
+                        <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Basic Information</h4>
+                      </div>
                     </div>
 
                     <div className="space-y-1.5 md:col-span-2">
@@ -1254,7 +1242,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       </label>
                       <div className="relative group">
                         <select value={newJobForm.roleType} onChange={e => setNewJobForm(f => ({ ...f, roleType: e.target.value }))}
-                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
                         >
                           <option value="">Select Role Category</option>
                           {roleTypes.map(r => (
@@ -1278,7 +1266,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           const selected = activeClients.find(c => c.id === e.target.value);
                           setNewJobForm(f => ({ ...f, clientId: e.target.value, client: selected?.companyName || selected?.name || selected?.displayName || '' }));
                         }}
-                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
                         >
                           <option value="">Select Company</option>
                           {(clients && clients.length > 0 ? clients : [
@@ -1305,16 +1293,17 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
                     {/* Section: Job Details */}
                     <div className="md:col-span-2 mt-8">
-                      <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                        <FileText size={14} /> Job Details
-                      </h4>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl"><FileText size={18} /></div>
+                        <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Job Details</h4>
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Type</label>
                       <div className="relative group">
                         <select value={newJobForm.type} onChange={e => setNewJobForm(f => ({ ...f, type: e.target.value }))}
-                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
                         >
                           <option value="Full-time">Full-time</option>
                           <option value="Part-time">Part-time</option>
@@ -1328,7 +1317,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Priority</label>
                       <div className="relative group">
                         <select value={newJobForm.priority} onChange={e => setNewJobForm(f => ({ ...f, priority: e.target.value }))}
-                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
                         >
                           <option value="Low">Low</option>
                           <option value="Medium">Medium</option>
@@ -1381,9 +1370,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
                     {/* Section: Skills & Requirements */}
                     <div className="md:col-span-2 mt-8">
-                      <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                        <Target size={14} /> Skills & Requirements
-                      </h4>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl"><Target size={18} /></div>
+                        <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Skills & Requirements</h4>
+                      </div>
                     </div>
 
                     <div className="space-y-1.5 md:col-span-2">
@@ -1420,9 +1410,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
                     {/* Section: Job Platforms */}
                     <div className="md:col-span-2 mt-8">
-                      <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                        <Globe size={14} /> Post to Job Platforms
-                      </h4>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#8B5CF6] rounded-xl flex items-center justify-center text-white shadow-xl"><Globe size={18} /></div>
+                        <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Post to Job Platforms</h4>
+                      </div>
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
@@ -1469,7 +1460,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       Cancel
                     </button>
                     <button type="button" onClick={editingJob ? handleUpdatePosition : handleCreatePosition}
-                      className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+                      className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2"
                     >
                       {editingJob ? <><Check size={18} /> Update Position</> : <><Plus size={18} /> Create Position</>}
                     </button>
@@ -1559,81 +1550,25 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <div className="flex gap-3">
                 <button
                   onClick={() => { setShowFullPageForm(true); setEditingJob(null); resetModal(); }}
-                  className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg active:scale-95"
+                  className="flex items-center gap-2 px-8 py-3.5 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                 >
                   <Plus size={18} /> Post New Job
                 </button>
               </div>
             </div>
 
-            {/* Filters Bar */}
-            <div className="bg-white rounded-2xl p-4 mb-5 flex flex-wrap items-center gap-3 border border-[#F4F3EF] shadow-sm">
-              {/* Search */}
-              <div className="flex items-center gap-2 bg-[#F4F3EF] rounded-xl px-3 py-2 flex-1 min-w-[200px]">
-                <Search size={15} className="text-[#9B9BAD]" />
-                <input
-                  type="text"
-                  placeholder="Search by title, client or location..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full"
-                />
+            {/* Search Bar */}
+            <div className="bg-white rounded-[24px] p-2 mb-5 border border-[#F4F3EF] shadow-sm">
+              <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+                <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
+                <input type="text" placeholder="Search by title, client or location..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
                 {searchTerm && (
                   <button onClick={() => setSearchTerm("")}>
-                    <X size={13} className="text-[#9B9BAD]" />
+                    <X size={14} className="text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
                   </button>
                 )}
               </div>
-
-              {/* Status Filter */}
-              <select
-                value={filterPosition}
-                onChange={(e) => setFilterPosition(e.target.value)}
-                className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
-              >
-                <option value="all">All Status</option>
-                <option value="Open">Open</option>
-                <option value="On Hold">On Hold</option>
-              </select>
-
-              {/* Client Filter Dropdown */}
-              <select
-                value={filterClient}
-                onChange={(e) => setFilterClient(e.target.value)}
-                className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
-              >
-                <option value="all">All Clients</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.name}>{c.displayName}</option>
-                ))}
-              </select>
-
-              {/* Deadline Date Filter */}
-              <select
-                value={filterDate}
-                onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-                className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
-              >
-                <option value="all">All Dates</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="prev-week">Previous Week</option>
-                <option value="month">This Month</option>
-                <option value="prev-month">Previous Month</option>
-                <option value="quarter">This Quarter</option>
-                <option value="prev-quarter">Previous Quarter</option>
-                <option value="year">This Year</option>
-                <option value="custom">Custom Range</option>
-              </select>
-              {filterDate === 'custom' && (
-                <div className="flex items-center gap-2">
-                  <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
-                    className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
-                  <span className="text-[10px] text-[#9B9BAD] font-bold">to</span>
-                  <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
-                    className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
-                </div>
-              )}
             </div>
 
             {/* Table Interface */}
@@ -1735,33 +1670,32 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {confirmDelete && (
-            <motion.div key="delete-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            <motion.div key="delete-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
               onClick={() => setConfirmDelete(null)}>
               <motion.div initial={{ scale: 0.8, y: 30, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.8, y: 30, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                onClick={(e) => e.stopPropagation()} className={`w-full max-w-md rounded-3xl p-8 ${isDarkMode ? 'bg-slate-900 border border-slate-700/50' : 'bg-white border border-slate-100'} shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden relative`}>
+                onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl p-8 bg-white border border-[#F4F3EF] shadow-2xl overflow-hidden relative">
 
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: "spring" }} className={`absolute -top-12 -right-12 w-40 h-40 rounded-full ${isDarkMode ? 'bg-red-900/20' : 'bg-red-50'} blur-3xl pointer-events-none`} />
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: "spring" }} className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-red-50 blur-3xl pointer-events-none" />
 
                 <div className="text-center relative z-10">
                   <motion.div
                     initial={{ scale: 0, rotate: -20 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", damping: 10, stiffness: 200, delay: 0.1 }}
-                    className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 border-4 ${isDarkMode ? 'bg-red-900/30 border-slate-900' : 'bg-red-50 border-white'} shadow-xl rotate-3`}
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 border-4 bg-red-50 border-white shadow-xl rotate-3"
                   >
                     <motion.div animate={{ rotate: [0, -15, 15, -15, 0], scale: [1, 1.1, 1] }} transition={{ duration: 0.6, delay: 0.5, type: "spring" }}>
                       <Trash2 className="w-10 h-10 text-red-500" />
                     </motion.div>
                   </motion.div>
 
-                  <h3 className={`text-2xl font-extrabold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Delete Position?</h3>
-                  <p className={`text-sm mb-8 leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Are you sure you want to delete this position? This action <span className="font-bold text-red-500">cannot be undone</span>.</p>
+                  <h3 className="text-2xl font-extrabold mb-2 text-[#1A1A2E]">Delete Position?</h3>
+                  <p className="text-sm mb-8 leading-relaxed text-[#9B9BAD]">Are you sure you want to delete this position? This action <span className="font-bold text-red-500">cannot be undone</span>.</p>
                   <div className="flex gap-4">
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfirmDelete(null)}
-                      className={`flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Cancel</motion.button>
+                      className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">Cancel</motion.button>
                     <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }} onClick={() => handleDeleteJob(confirmDelete)}
-                      className="flex-1 px-4 py-3 rounded-xl text-sm font-bold text-white shadow-lg shadow-red-500/30 transition-shadow hover:shadow-red-500/50"
-                      style={{ background: 'linear-gradient(135deg, #ef4444, #be123c)' }}>Yes, Delete</motion.button>
+                      className="flex-[2] py-5 rounded-full text-[11px] font-bold uppercase tracking-widest text-white bg-red-500 shadow-lg shadow-red-500/30 hover:bg-red-600 transition-all">Yes, Delete</motion.button>
                   </div>
                 </div>
               </motion.div>

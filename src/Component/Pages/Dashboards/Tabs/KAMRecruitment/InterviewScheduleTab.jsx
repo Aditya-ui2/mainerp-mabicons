@@ -28,6 +28,7 @@ import {
   FiSend,
   FiArrowLeft,
 } from 'react-icons/fi';
+import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import InterviewFeedbackModal from './InterviewFeedbackModal';
 import { getLocalISODate, toLocalISODate } from '../../../Utilities/dateUtils';
 import { 
@@ -114,6 +115,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('list');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterDate, setFilterDate] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
@@ -137,6 +139,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
   // NEW STATE FOR FULL PAGE FORM
   const [showFullPageForm, setShowFullPageForm] = useState(false);
   const [editingInterview, setEditingInterview] = useState(null);
+  const [detailInterview, setDetailInterview] = useState(null);
   
   const [newInterview, setNewInterview] = useState({
     candidateId: '',
@@ -332,7 +335,18 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
       }
     }
 
-    return matchesStatus && matchesDate;
+    // Search term filter
+    let matchesSearch = true;
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      matchesSearch = (i.candidateName || '').toLowerCase().includes(term) ||
+        (i.position || '').toLowerCase().includes(term) ||
+        (i.interviewer || '').toLowerCase().includes(term) ||
+        (i.client || '').toLowerCase().includes(term) ||
+        (i.type || '').toLowerCase().includes(term);
+    }
+
+    return matchesStatus && matchesDate && matchesSearch;
   });
 
   // Group by date
@@ -643,10 +657,11 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
               <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-7">
 
                   {/* Section: Candidate Details */}
-                  <div className="mt-2">
-                    <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                      <FiUser size={14} /> Candidate Details
-                    </h4>
+                  <div className="mt-2 flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
+                      <FiUser size={18} />
+                    </div>
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Details</h3>
                   </div>
 
                   <div className="space-y-1.5 relative">
@@ -690,10 +705,11 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                   </div>
 
                   {/* Section: Position Details */}
-                  <div className="mt-4">
-                    <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                      <FiBriefcase size={14} /> Position Details
-                    </h4>
+                  <div className="mt-4 flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl">
+                      <FiBriefcase size={18} />
+                    </div>
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Position Details</h3>
                   </div>
 
                   <div className="space-y-1.5 relative">
@@ -746,7 +762,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                     <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
                     <div className="relative group">
                       <select value={newInterview.round} onChange={(e) => setNewInterview(prev => ({ ...prev, round: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
                         <option value="">Select Round</option>
                         <option value="Phone Screening">Phone Screening</option>
                         <option value="Technical Round">Technical Round</option>
@@ -759,10 +775,11 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                   </div>
 
                   {/* Section: Interview Details */}
-                  <div className="mt-4">
-                    <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-6">
-                      <FiCalendar size={14} /> Interview Details
-                    </h4>
+                  <div className="mt-4 flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl">
+                      <FiCalendar size={18} />
+                    </div>
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Interview Details</h3>
                   </div>
 
                   <div className="space-y-1.5">
@@ -789,7 +806,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                     <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
                     <div className="relative group">
                       <select value={newInterview.duration} onChange={(e) => setNewInterview(prev => ({ ...prev, duration: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
                         <option value="30 mins">30 mins</option>
                         <option value="45 mins">45 mins</option>
                         <option value="60 mins">60 mins</option>
@@ -804,7 +821,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                     <div className="relative group">
                       <select value={newInterview.type}
                         onChange={(e) => setNewInterview(prev => ({ ...prev, type: e.target.value, meetLink: e.target.value === 'Video' ? prev.meetLink : '' }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
                         <option value="Video">Video Call</option>
                         <option value="Phone">Phone</option>
                         <option value="In-Person">In-Person</option>
@@ -947,8 +964,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => { setShowFullPageForm(true); resetForm(); }}
-                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-shadow"
-                  style={{ background: 'linear-gradient(90deg, #3FA9F5, #1E88E5)', boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.3)' }}
+                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
                 >
                   <FiPlus className="w-4 h-4" />
                   Schedule Interview
@@ -957,7 +973,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
             </motion.div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {statCards.map((card, i) => {
                 const Icon = card.icon;
                 return (
@@ -967,92 +983,39 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
                     whileHover={{ scale: 1.02, y: -2 }}
-                    className={`relative overflow-hidden rounded-2xl p-5 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-slate-200/50 shadow-lg'}`}
+                    className="bg-white p-6 rounded-2xl border border-[#E8E7E2] shadow-sm relative overflow-hidden group cursor-pointer"
                   >
-                    <div className="absolute -right-4 -top-4 w-24 h-24 opacity-10">
-                      <div className="w-full h-full rounded-full" style={{ backgroundColor: card.color }}></div>
-                    </div>
-                    <div className="relative flex items-start justify-between">
-                      <div>
-                        <p className={`text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                          {card.label}
-                        </p>
-                        <p className="text-3xl font-extrabold mt-1" style={{ color: card.color }}>
-                          {card.value}
-                        </p>
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#F4F3EF] rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
+                    <div className="relative z-10 flex flex-col items-start text-left">
+                      <div className="p-2.5 rounded-xl bg-white group-hover:scale-110 transition-transform mb-3" style={{ color: card.color }}>
+                        <Icon size={18} />
                       </div>
-                      <div className="p-4 rounded-xl" style={{ backgroundColor: card.color, boxShadow: `0 10px 15px -3px rgba(${card.shadowColor}, 0.3)` }}>
-                        <Icon className="w-6 h-6" style={{ color: 'white' }} />
-                      </div>
+                      <p className="text-2xl font-bold text-[#1A1A2E] leading-none mb-1">
+                        {card.value}
+                      </p>
+                      <p className="text-xs font-medium text-[#6B6B7E]">
+                        {card.label}
+                      </p>
                     </div>
                   </motion.div>
                 );
               })}
             </div>
 
-            {/* Filter */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col gap-3"
-            >
-              <div className="flex gap-2 overflow-x-auto pb-2">
-              {['all', 'Scheduled', 'In Progress', 'Completed', 'Cancelled', 'Rescheduled'].map((status) => (
-                <motion.button
-                  key={status}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                    filterStatus === status
-                      ? 'text-white shadow-lg'
-                      : isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                  style={filterStatus === status ? { background: 'linear-gradient(90deg, #3FA9F5, #1E88E5)', boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.3)' } : {}}
-                >
-                  {status === 'all' ? 'All Status' : status}
-                </motion.button>
-              ))}
-              </div>
-
-              {/* Date Filter */}
-              <div className="flex flex-wrap items-center gap-3">
-                <select
-                  value={filterDate}
-                  onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-                  className={`rounded-xl px-4 py-2.5 text-sm font-medium border cursor-pointer outline-none ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'}`}
-                >
-                  <option value="all">All Dates</option>
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="prev-week">Previous Week</option>
-                  <option value="month">This Month</option>
-                  <option value="prev-month">Previous Month</option>
-                  <option value="quarter">This Quarter</option>
-                  <option value="prev-quarter">Previous Quarter</option>
-                  <option value="year">This Year</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-                {filterDate === 'custom' && (
-                  <div className="flex items-center gap-2">
-                    <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
-                      className={`rounded-xl px-3 py-2.5 text-sm font-medium border cursor-pointer outline-none ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
-                    <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>to</span>
-                    <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
-                      className={`rounded-xl px-3 py-2.5 text-sm font-medium border cursor-pointer outline-none ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
-                  </div>
-                )}
-                {(filterDate !== 'all' || filterStatus !== 'all') && (
-                  <button
-                    onClick={() => { setFilterDate('all'); setFilterStatus('all'); setCustomStartDate(''); setCustomEndDate(''); }}
-                    className="text-xs font-semibold text-[#1E88E5] hover:underline"
-                  >
-                    Reset Filters
+            {/* Search Bar */}
+            <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
+              <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+                <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
+                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by candidate, position, interviewer..."
+                  className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm('')}>
+                    <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
                   </button>
                 )}
               </div>
-            </motion.div>
+            </div>
 
             {/* Interview List */}
             {viewMode === 'list' && (
@@ -1087,7 +1050,8 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                               exit={{ opacity: 0, x: 20 }}
                               transition={{ delay: idx * 0.05 }}
                               whileHover={{ scale: 1.01 }}
-                              className={`rounded-2xl border-2 p-4 transition-shadow ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200'}`}
+                              onClick={() => setDetailInterview(interview)}
+                              className={`rounded-2xl border-2 p-4 transition-shadow cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200'}`}
                             >
                               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                                 {/* Left: Time & Candidate */}
@@ -1258,6 +1222,129 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
               </motion.div>
             )}
           </div>
+
+      {/* ── Interview Detail Drawer ── */}
+      <AnimatePresence>
+        {detailInterview && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setDetailInterview(null)}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ x: '100%', opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0.5 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed inset-y-0 right-0 w-full sm:w-[480px] md:w-[540px] bg-white shadow-2xl z-[110] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+            >
+              <div className="flex flex-col h-full bg-white">
+                {/* Header */}
+                <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{detailInterview.candidateName}</h2>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{detailInterview.position}</span>
+                      <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{detailInterview.round}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={(e) => { e.stopPropagation(); handleEditInterview(detailInterview); setDetailInterview(null); }} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all active:scale-90">
+                      <FiEdit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setDetailInterview(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90">
+                      <FiX className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
+                  {/* Interview Readiness Radar */}
+                  <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+                    <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-2 text-center">Interview Readiness</h3>
+                    <div className="w-full h-[220px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart data={[
+                          { axis: 'Preparation', value: detailInterview.status === 'Completed' ? 90 : 65 },
+                          { axis: 'Technical', value: detailInterview.feedback?.technicalScore || 70 },
+                          { axis: 'Communication', value: detailInterview.feedback?.communicationScore || 60 },
+                          { axis: 'Experience', value: 75 },
+                        ]} cx="50%" cy="50%" outerRadius="70%">
+                          <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
+                          <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} />
+                          <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
+                          <Radar dataKey="value" stroke="#a5b4fc" fill="#a5b4fc" fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Round Progress */}
+                  <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+                    <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Round Progress</h3>
+                    <div className="flex items-center gap-6">
+                      <div className="w-[120px] h-[120px] flex-shrink-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={[
+                              { name: 'Done', value: detailInterview.status === 'Completed' ? 100 : detailInterview.status === 'In Progress' ? 60 : 30 },
+                              { name: 'Remaining', value: detailInterview.status === 'Completed' ? 0 : detailInterview.status === 'In Progress' ? 40 : 70 },
+                            ]} innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                              <Cell fill="#3B82F6" />
+                              <Cell fill="#e2e8f0" />
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="space-y-3 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Status</span>
+                          <StatusBadge status={detailInterview.status} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Type</span>
+                          <TypeBadge type={detailInterview.type} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Duration</span>
+                          <span className="text-sm font-black text-[#1A1A2E]">{detailInterview.duration}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  {detailInterview.meetLink && (detailInterview.status === 'Scheduled' || detailInterview.status === 'In Progress') && (
+                    <button
+                      onClick={() => { window.open(detailInterview.meetLink, '_blank'); }}
+                      className="w-full py-4 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
+                      style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 8px 20px rgba(63, 169, 245, 0.35)' }}
+                    >
+                      <FiVideo className="w-5 h-5" /> Join Meeting
+                    </button>
+                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => { handleOpenFeedback(detailInterview); setDetailInterview(null); }}
+                      className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]"
+                    >
+                      <FiClipboard className="w-4 h-4" /> Feedback
+                    </button>
+                    <button
+                      onClick={() => { handleEditInterview(detailInterview); setDetailInterview(null); }}
+                      className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]"
+                    >
+                      <FiCalendar className="w-4 h-4" /> Reschedule
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── Confirmation Modals ── */}
       <AnimatePresence>

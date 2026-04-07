@@ -128,21 +128,13 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
               </div>
 
               {/* Search */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
-              >
-                <div className="relative group">
-                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Search notes..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-[#FAFAFA] dark:bg-slate-800 rounded-2xl border border-transparent focus:border-[#1B4DA0]/20 px-14 py-4 focus:ring-4 focus:ring-[#1B4DA0]/5 font-bold text-sm text-[#1A1A2E] dark:text-white transition-all outline-none placeholder-[#9B9BAD]"
-                  />
+              <div className="bg-white dark:bg-slate-900 rounded-[24px] p-2 border border-[#F4F3EF] dark:border-slate-800 shadow-sm">
+                <div className="flex items-center gap-3 bg-[#F4F3EF] dark:bg-slate-800 rounded-2xl px-5 py-3">
+                  <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
+                  <input type="text" placeholder="Search notes..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
                 </div>
-              </motion.div>
+              </div>
 
               {/* Main Timeline Container */}
               <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
@@ -234,20 +226,6 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
                                         {note.content}
                                       </p>
                                     </div>
-
-                                    {/* Footer */}
-                                    <div className="flex items-center gap-2 pt-2 border-t border-[#F4F3EF] dark:border-slate-800 mt-4">
-                                      <div className="w-6 h-6 rounded-lg bg-[#F8FAFC] dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-[#1B4DA0] dark:text-blue-400 border border-[#F1F5F9] dark:border-slate-700 mt-2">
-                                        {(note.createdByName || 'T').charAt(0)}
-                                      </div>
-                                      <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mt-2">
-                                        By <span className="text-[#1A1A2E] dark:text-white ml-0.5 font-bold">{note.createdByName || 'Team'}</span>
-                                      </span>
-                                      <span className="text-[#D1D5DB] mt-2">•</span>
-                                      <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mt-2">
-                                        {noteDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                      </span>
-                                    </div>
                                   </div>
 
                                   {/* Actions */}
@@ -285,7 +263,7 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
             {(view === 'add' || view === 'edit') && (
               <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
                 onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}>
-                <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-500"
+                <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500"
                   onClick={(e) => e.stopPropagation()}>
                   {/* Header */}
                   <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
@@ -337,7 +315,7 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
                         Cancel
                       </button>
                       <button type="submit" disabled={saving}
-                        className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                        className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                         {saving && <Loader2 size={14} className="animate-spin" />}
                         {view === 'edit' ? 'Save Changes' : 'Create Note'}
                       </button>

@@ -39,6 +39,7 @@ import {
   FiCalendar
 } from "react-icons/fi";
 import { toast } from "sonner";
+import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import { getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer } from '../../../service/api';
 import {
   OFFER_STATUS_COLORS,
@@ -125,6 +126,26 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
 
         {/* Content */}
         <div className="flex-1 p-8 space-y-8">
+          {/* Offer Analysis Radar */}
+          <div className={`rounded-3xl border p-6 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <h3 className={`text-[10px] font-black uppercase tracking-[3px] mb-2 text-center ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>Offer Analysis</h3>
+            <div className="w-full h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={[
+                  { axis: 'Competitiveness', value: offer.hikePercent ? Math.min(100, offer.hikePercent * 3) : 60 },
+                  { axis: 'Market Fit', value: 72 },
+                  { axis: 'Retention Risk', value: offer.status === 'Accepted' ? 85 : offer.status === 'Declined' ? 30 : 55 },
+                  { axis: 'Budget Align', value: 68 },
+                ]} cx="50%" cy="50%" outerRadius="70%">
+                  <PolarGrid stroke={isDarkMode ? '#334155' : '#e2e8f0'} strokeWidth={0.8} />
+                  <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: isDarkMode ? '#94a3b8' : '#64748b' }} />
+                  <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
+                  <Radar dataKey="value" stroke="#a5b4fc" fill="#a5b4fc" fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
           {/* Status Overview Card */}
           <div className={`p-6 rounded-[32px] relative overflow-hidden group ${isDarkMode ? 'bg-blue-600/20 border border-blue-500/30' : 'bg-[#1A1A2E] text-white shadow-xl'}`}>
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-blue-500/20 transition-all" />
@@ -616,78 +637,16 @@ const OfferManagementTab = ({ isDarkMode }) => {
         </div>
 
 
-        {/* Refined Control Bar */}
-        <div className="flex flex-col lg:flex-row items-center gap-3 mb-8 flex-wrap">
-          <div className={`relative group flex-1 min-w-[280px]`}>
-            <Search size={16} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-blue-400' : 'text-[#9B9BAD] group-focus-within:text-[#1B4DA0]'}`} />
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+        {/* Search Bar */}
+        <div className="bg-white rounded-[24px] p-2 mb-8 border border-[#F4F3EF] shadow-sm">
+          <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+            <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
+            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search candidate, role, or client..."
-              className={`w-full h-11 pl-12 pr-5 border rounded-xl text-xs font-medium focus:outline-none transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-[#E8E7E2] focus:border-[#1B4DA0] focus:ring-4 focus:ring-[#1B4DA0]/5'}`}
-            />
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Client Filter */}
-            <select
-              value={filterClient}
-              onChange={(e) => setFilterClient(e.target.value)}
-              className={`h-11 px-4 rounded-xl text-xs font-bold uppercase tracking-wider outline-none border cursor-pointer transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-[#F4F3EF] border-transparent text-[#1A1A2E]'}`}
-            >
-              <option value="all">All Clients</option>
-              <option value="Google">Google</option>
-              <option value="Microsoft">Microsoft</option>
-              <option value="Amazon">Amazon</option>
-              {activeClientNames.filter(name => !["Google", "Microsoft", "Amazon"].includes(name)).map(name => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
-
-            {/* Date Filter */}
-            <select
-              value={dateFilter}
-              onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-              className={`h-11 px-4 rounded-xl text-xs font-bold uppercase tracking-wider outline-none border cursor-pointer transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-[#F4F3EF] border-transparent text-[#1A1A2E]'}`}
-            >
-              <option value="all">All Dates</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-              <option value="custom">Custom Range</option>
-            </select>
-
-            {dateFilter === 'custom' && (
-              <div className="flex items-center gap-2">
-                <input 
-                  type="date" 
-                  value={customStartDate} 
-                  onChange={e => setCustomStartDate(e.target.value)}
-                  className={`h-11 px-3 rounded-xl text-xs font-bold outline-none border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-[#F4F3EF] border-transparent text-[#1A1A2E]'}`} 
-                />
-                <span className="text-[10px] text-[#9B9BAD] font-bold uppercase">to</span>
-                <input 
-                  type="date" 
-                  value={customEndDate} 
-                  onChange={e => setCustomEndDate(e.target.value)}
-                  className={`h-11 px-3 rounded-xl text-xs font-bold outline-none border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-[#F4F3EF] border-transparent text-[#1A1A2E]'}`} 
-                />
-              </div>
-            )}
-
-            {(searchTerm || filterClient !== 'all' || dateFilter !== 'all') && (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setFilterClient('all');
-                  setDateFilter('all');
-                  setCustomStartDate('');
-                  setCustomEndDate('');
-                }}
-                className="text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest px-2"
-              >
-                Reset
+              className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')}>
+                <X size={14} className="text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
               </button>
             )}
           </div>
@@ -782,49 +741,51 @@ const OfferManagementTab = ({ isDarkMode }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleBackToOffers}
-              className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
             />
 
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] shadow-2xl border-2 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Simplified Header Style */}
-              <div className="relative p-8 text-center bg-transparent">
+              {/* Header */}
+              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    {editingOffer ? 'Edit Recruitment Offer' : 'Register New Offer'}
+                  </h2>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                    Sourcing & Pipeline Integration
+                  </p>
+                </div>
                 <button
                   onClick={handleBackToOffers}
-                  className={`absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center transition-all ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'}`}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"
                 >
                   <X className="w-5 h-5" />
                 </button>
-                <h2 className={`text-2xl font-bold mb-1 font-syne ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                  {editingOffer ? 'Edit Recruitment Offer' : 'Register New Offer'}
-                </h2>
-                <p className={`text-[10px] font-bold uppercase tracking-[2px] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Sourcing & Pipeline Integration
-                </p>
               </div>
 
               <div className="p-8 space-y-8">
                 {/* Candidate & Role Details */}
                 <div className="space-y-6">
-                  <h4 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 ${isDarkMode ? 'text-blue-400' : 'text-[#1E88E5]'}`}>
-                    <div className="p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                      <FiUsers className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
+                      <FiUsers className="w-5 h-5" />
                     </div>
-                    Candidate & Role Details
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate & Role Details</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="relative">
-                      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Full Name *</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Full Name *</label>
                       <input
                         type="text"
                         value={formData.candidateName}
                         onChange={(e) => setFormData(prev => ({ ...prev, candidateId: '', candidateName: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all focus:border-blue-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-slate-50 border-slate-100 text-[#1A1A2E] focus:bg-white'}`}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                         onFocus={() => {
                           if (candidateSuggestions.length > 0) setShowCandidateSuggestions(true);
                         }}
@@ -836,17 +797,17 @@ const OfferManagementTab = ({ isDarkMode }) => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
-                            className={`absolute z-50 w-full mt-2 rounded-xl shadow-xl border-2 overflow-hidden max-h-64 overflow-y-auto ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}
+                            className="absolute z-50 w-full mt-2 rounded-2xl shadow-xl bg-white border border-[#F4F3EF] overflow-hidden max-h-64 overflow-y-auto"
                           >
                             {candidateSuggestions.map((candidate) => (
                               <button
                                 key={candidate.id}
                                 type="button"
                                 onClick={() => handleSelectCandidateSuggestion(candidate)}
-                                className={`w-full text-left px-5 py-3.5 transition-all hover:pl-7 border-b last:border-b-0 ${isDarkMode ? 'hover:bg-blue-600/20 border-slate-700/50' : 'hover:bg-blue-50 border-slate-50'}`}
+                                className="w-full text-left px-5 py-3.5 transition-all hover:bg-[#F4F3EF] border-b border-[#F4F3EF] last:border-b-0"
                               >
-                                <div className="font-bold text-sm">{candidate.name}</div>
-                                <div className="text-[10px] opacity-60 font-medium">Pipeline: {candidate.position || 'General'}</div>
+                                <div className="font-bold text-sm text-[#1A1A2E]">{candidate.name}</div>
+                                <div className="text-[10px] text-[#9B9BAD] font-medium">Pipeline: {candidate.position || 'General'}</div>
                               </button>
                             ))}
                           </motion.div>
@@ -854,32 +815,32 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       </AnimatePresence>
                     </div>
                     <div>
-                      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Email Address</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Email Address</label>
                       <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-bold ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-slate-50 border-slate-100 text-[#1A1A2E]'}`}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                         placeholder="email@example.com"
                       />
                     </div>
                     <div>
-                      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Proposed Position</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Proposed Position</label>
                       <input
                         type="text"
                         value={formData.position}
                         onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-bold ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-slate-50 border-slate-100 text-[#1A1A2E]'}`}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                         placeholder="Target Position"
                       />
                     </div>
                     <div>
-                      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Hiring Client</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Hiring Client</label>
                       <input
                         type="text"
                         value={formData.client}
                         onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-bold ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-slate-50 border-slate-100 text-[#1A1A2E]'}`}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                         placeholder="Client Name"
                       />
                     </div>
@@ -887,76 +848,72 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 </div>
 
                 {/* Divider */}
-                <div className={`border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`} />
+                <div className="border-t border-[#F4F3EF]" />
 
                 {/* Compensation & Timeline */}
                 <div className="space-y-6">
-                  <h4 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                    <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                      <FiDollarSign className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#10B981] rounded-xl flex items-center justify-center text-white shadow-xl">
+                      <FiDollarSign className="w-5 h-5" />
                     </div>
-                    Compensation & Timeline
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Compensation & Timeline</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Current CTC (LPA)</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Current CTC (LPA)</label>
                       <input
                         type="text"
                         value={formData.currentCTC}
                         onChange={(e) => setFormData(prev => ({ ...prev, currentCTC: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-bold ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-slate-50 border-slate-100 text-[#1A1A2E]'}`}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                         placeholder="e.g. 8.5"
                       />
                     </div>
                     <div>
-                      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Offered CTC (LPA)</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Offered CTC (LPA)</label>
                       <input
                         type="text"
                         value={formData.offeredCTC}
                         onChange={(e) => setFormData(prev => ({ ...prev, offeredCTC: e.target.value }))}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-extrabold ${isDarkMode ? 'bg-slate-700 border-slate-600 text-emerald-400' : 'bg-slate-50 border-slate-100 text-[#1B4DA0]'}`}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-extrabold text-[#1B4DA0] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                         placeholder="e.g. 12.0"
                       />
                     </div>
                     <div>
-                      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Offer Date</label>
-                      <div className="relative">
-                        <input
-                          type="date"
-                          value={formData.offerDate}
-                          onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
-                          className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-bold ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-slate-50 border-slate-100 text-[#1A1A2E]'}`}
-                        />
-                      </div>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Offer Date</label>
+                      <input
+                        type="date"
+                        value={formData.offerDate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                      />
                     </div>
                     <div>
-                      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Joining Date</label>
-                      <div className="relative">
-                        <input
-                          type="date"
-                          value={formData.joiningDate}
-                          onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
-                          className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-bold ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-slate-50 border-slate-100 text-[#1A1A2E]'}`}
-                        />
-                      </div>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Joining Date</label>
+                      <input
+                        type="date"
+                        value={formData.joiningDate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* Offer Letter Upload */}
                 <div className="space-y-6">
-                  <h4 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
-                    <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                      <FiFileText className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#8B5CF6] rounded-xl flex items-center justify-center text-white shadow-xl">
+                      <FiFileText className="w-5 h-5" />
                     </div>
-                    Offer Documentation
-                  </h4>
-                  <label className={`group relative flex flex-col items-center justify-center w-full min-h-[100px] rounded-2xl border-2 border-dashed transition-all cursor-pointer ${isDarkMode ? 'bg-slate-700/30 border-slate-600 hover:border-purple-500/50' : 'bg-slate-50 border-slate-100 hover:border-purple-400'}`}>
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Offer Documentation</h3>
+                  </div>
+                  <label className="group relative flex flex-col items-center justify-center w-full min-h-[100px] rounded-2xl border-2 border-dashed bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
                     <div className="flex flex-col items-center text-center p-5">
-                      <div className={`p-2 rounded-lg mb-2 ${isDarkMode ? 'bg-slate-800' : 'bg-white shadow-sm'}`}>
-                        <Paperclip className="w-4 h-4 text-purple-500" />
+                      <div className="p-2 rounded-xl bg-white shadow-sm mb-2">
+                        <Paperclip className="w-4 h-4 text-[#8B5CF6]" />
                       </div>
-                      <p className={`text-[11px] font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      <p className="text-[11px] font-bold text-[#6B6B7E]">
                         {formData.offerLetterName || 'Drop offer letter here or click to upload'}
                       </p>
                     </div>
@@ -977,10 +934,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 </div>
 
                 {/* Footer Actions */}
-                <div className={`flex items-center justify-between pt-8 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                <div className="pt-6 flex gap-4 border-t border-[#F4F3EF]">
                   <button
                     onClick={handleBackToOffers}
-                    className={`px-8 py-3.5 text-sm font-bold rounded-xl transition-all ${isDarkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-100'}`}
+                    className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
                   >
                     Cancel
                   </button>
@@ -988,8 +945,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSaveOffer}
-                    className="flex items-center gap-2 px-10 py-3.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all"
-                    style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: '0 8px 25px -5px rgba(31,136,229,0.4)' }}
+                    className="flex-[2] flex items-center justify-center gap-2 py-5 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
                   >
                     {editingOffer ? <FiCheckCircle className="w-4 h-4" /> : <FiPlus className="w-4 h-4" />}
                     {editingOffer ? 'Save Modifications' : 'Generate Offer'}

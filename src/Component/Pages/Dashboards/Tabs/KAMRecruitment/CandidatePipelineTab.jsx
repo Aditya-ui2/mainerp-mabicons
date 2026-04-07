@@ -52,6 +52,7 @@ import {
   FiFilter as FiFilterIcon,
 } from 'react-icons/fi';
 import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions, uploadResumes } from '../../../service/api';
+import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 
 /* ── Stage Badge ── */
 const StageBadge = ({ stage }) => {
@@ -775,10 +776,11 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
   // ── Open detail view (inline, replaces list) ──
   const openDetail = (candidate) => {
-    setSelectedCandidateDetail(candidate);
-    setShowDetailSidebar(true);
+    setDrawerCandidate(candidate);
     setStageMenuId(null);
   };
+
+  const [drawerCandidate, setDrawerCandidate] = useState(null);
 
   // ── Hold candidate (toggle) ──
   const holdCandidate = (candidateId) => {
@@ -1536,32 +1538,41 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         <AnimatePresence>
           {showRejectModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); }} />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); }} />
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className={`relative z-10 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'}`}>
-                <div className="py-5 px-6 text-center" style={{ background: 'linear-gradient(135deg, #ef4444, #e11d48)' }}>
-                  <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                    <FiXCircle className="w-7 h-7 text-white" />
+                className="relative z-10 rounded-3xl bg-white shadow-2xl w-full max-w-sm overflow-hidden">
+                <div className="px-8 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                  <div>
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Reject Candidate</h3>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Select reason</p>
                   </div>
-                  <h3 className="text-lg font-bold text-white">Reject Candidate</h3>
-                  <p className="text-xs text-white/70 mt-1">Select a reason for rejection</p>
+                  <button onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
+                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                    <FiX className="w-5 h-5" />
+                  </button>
                 </div>
-                <div className="p-5 space-y-3">
-                  <select value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                    className={`w-full rounded-xl border-2 px-4 py-3 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                    <option value="">Select reason...</option>
-                    {rejectionReasons.map(r => (<option key={r} value={r}>{r}</option>))}
-                  </select>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Reason *</label>
+                    <select value={rejectReason} onChange={e => setRejectReason(e.target.value)}
+                      className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
+                      <option value="">Select reason...</option>
+                      {rejectionReasons.map(r => (<option key={r} value={r}>{r}</option>))}
+                    </select>
+                  </div>
                   {rejectReason === 'Other' && (
-                    <input type="text" value={rejectCustomReason} onChange={e => setRejectCustomReason(e.target.value)} placeholder="Enter custom reason..."
-                      className={`w-full rounded-xl border-2 px-4 py-3 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200'}`} />
+                    <div>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Custom Reason</label>
+                      <input type="text" value={rejectCustomReason} onChange={e => setRejectCustomReason(e.target.value)} placeholder="Enter custom reason..."
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" />
+                    </div>
                   )}
                 </div>
-                <div className={`flex gap-3 p-5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                <div className="flex gap-4 p-6 border-t border-[#F4F3EF]">
                   <button onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
-                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Cancel</button>
+                    className="flex-1 py-4 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">Cancel</button>
                   <button onClick={handleReject} disabled={!rejectReason || (rejectReason === 'Other' && !rejectCustomReason)}
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 transition-colors">Reject</button>
+                    className="flex-1 py-4 rounded-full text-sm font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 transition-colors uppercase tracking-widest text-[11px]">Reject</button>
                 </div>
               </motion.div>
             </div>
@@ -1572,61 +1583,63 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         <AnimatePresence>
           {showApproveModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }} />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }} />
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className={`relative z-10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'}`}>
-                <div className="py-5 px-6 text-center" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                  <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                    <FiThumbsUp className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Approve Candidate</h3>
-                  <p className="text-xs text-white/70 mt-1">
-                    {(() => { const c = candidates.find(c => c.id === approveCandidateId); return c ? `Schedule interview for ${c.name}` : 'Schedule interview details'; })()}
-                  </p>
-                </div>
-                <div className="p-5 space-y-3">
+                className="relative z-10 rounded-3xl bg-white shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="px-8 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
                   <div>
-                    <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Interview Round</label>
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Approve Candidate</h3>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                      {(() => { const c = candidates.find(c => c.id === approveCandidateId); return c ? `Schedule for ${c.name}` : 'Schedule interview'; })()}
+                    </p>
+                  </div>
+                  <button onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
+                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Interview Round</label>
                     <select value={approveInterviewRound} onChange={e => setApproveInterviewRound(e.target.value)}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                      className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
                       <option value="Phone Screening">Phone Screening</option>
                       <option value="HR Round">HR Round</option>
                       <option value="Final Round">Final Round</option>
                     </select>
                   </div>
                   <div>
-                    <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Interview Type</label>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Interview Type</label>
                     <select value={approveInterviewType} onChange={e => setApproveInterviewType(e.target.value)}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                      className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
                       <option value="Video">Video Call</option>
                       <option value="Phone">Phone Call</option>
                       <option value="In-person">In-Person</option>
                     </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Date</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Date</label>
                       <input type="date" value={approveInterviewDate} onChange={e => setApproveInterviewDate(e.target.value)}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
                     </div>
                     <div>
-                      <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Time</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Time</label>
                       <input type="time" value={approveInterviewTime} onChange={e => setApproveInterviewTime(e.target.value)}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
                     </div>
                   </div>
                   <div>
-                    <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Interviewer Name</label>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Interviewer Name</label>
                     <input type="text" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} placeholder="Enter interviewer name..."
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200'}`} />
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" />
                   </div>
                 </div>
-                <div className={`flex gap-3 p-5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                <div className="flex gap-4 p-6 border-t border-[#F4F3EF]">
                   <button onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
-                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Cancel</button>
+                    className="flex-1 py-4 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">Cancel</button>
                   <button onClick={handleApproveCandidate}
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors hover:opacity-90"
-                    style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                    className="flex-[2] py-4 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors">
                     <span className="flex items-center justify-center gap-2"><FiCheckCircle className="w-4 h-4" /> Approve & Schedule</span>
                   </button>
                 </div>
@@ -1654,34 +1667,33 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           </div>
 
           {/* Header Card */}
-          <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
-            <div className="p-6" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5, #0D47A1)' }}>
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
-                  <FiDatabase className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Resume Bank — Auto Match</h2>
-                  <p className="text-sm text-white/70 mt-0.5">Search resumes by role and add candidates directly to pipeline</p>
-                </div>
+          <div className="rounded-3xl bg-white shadow-2xl overflow-hidden">
+            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+              <div>
+                <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Resume Bank — Auto Match</h2>
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Search & Add to Pipeline</p>
               </div>
+              <button onClick={() => { setShowResumeBankModal(false); setResumeBankResumes([]); setResumeBankRole(''); }}
+                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                <FiX className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Search Section */}
-            <div className={`p-6 border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-              <h4 className={`text-base font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}>
-                  <FiSearch className="w-3.5 h-3.5 text-white" />
+            <div className="p-8 border-b border-[#F4F3EF]">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
+                  <FiSearch className="w-5 h-5" />
                 </div>
-                Search by Position / Role
-              </h4>
+                <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Search by Position / Role</h3>
+              </div>
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
-                  <label className={`text-sm font-medium mb-1.5 block ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Select Position</label>
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Select Position</label>
                   <select
                     value={resumeBankRole}
                     onChange={(e) => setResumeBankRole(e.target.value)}
-                    className={`w-full rounded-xl border-2 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
+                    className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
                   >
                     <option value="">Select a role to search</option>
                     {jobOpenings.length > 0 ? (
@@ -1705,8 +1717,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     whileTap={{ scale: 0.98 }}
                     onClick={() => resumeBankRole && fetchResumeBankMatches(resumeBankRole)}
                     disabled={!resumeBankRole || resumeBankLoading}
-                    className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white rounded-xl disabled:opacity-50 shadow-lg"
-                    style={{ background: 'linear-gradient(90deg, #3FA9F5, #0D47A1)', boxShadow: '0 10px 25px -5px rgba(31,136,229,0.4)' }}
+                    className="flex items-center gap-2 px-8 py-4 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] disabled:opacity-50 transition-colors"
                   >
                     {resumeBankLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : <FiSearch className="w-4 h-4" />}
                     {resumeBankLoading ? 'Searching...' : 'Search Resumes'}
@@ -1813,62 +1824,61 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           </div>
 
           {/* Form Header Card */}
-          <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
-            <div className="p-6" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5, #0D47A1)' }}>
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
-                  <FiUsers className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Add New Candidate</h2>
-                  <p className="text-sm text-white/70 mt-0.5">Fill in the candidate details below</p>
-                </div>
+          <div className="rounded-3xl bg-white shadow-2xl overflow-hidden">
+            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+              <div>
+                <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Add New Candidate</h2>
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Pipeline Registration</p>
               </div>
+              <button onClick={() => { setShowAddModal(false); setSelectedResumeProfileId(''); setSelectedResumeProfile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' }); setResumeFile(null); }}
+                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                <FiX className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-8">
               {/* Personal Details */}
               <div>
-                <h4 className={`text-base font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                  <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}>
-                    <FiUsers className="w-3.5 h-3.5 text-white" />
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
+                    <FiUsers className="w-5 h-5" />
                   </div>
-                  Personal Details
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Details</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Full Name *</label>
-                    <input type="text" value={newCandidate.name} onChange={(e) => setNewCandidate(prev => ({ ...prev, name: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="Enter full name" />
-                  </div>
-                  <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Email *</label>
-                    <input type="email" value={newCandidate.email} onChange={(e) => setNewCandidate(prev => ({ ...prev, email: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="Enter email" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Full Name *</label>
+                    <input type="text" value={newCandidate.name} onChange={(e) => setNewCandidate(prev => ({ ...prev, name: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="Enter full name" />
                   </div>
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Phone</label>
-                    <input type="text" value={newCandidate.phone} onChange={(e) => setNewCandidate(prev => ({ ...prev, phone: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="+91 XXXXX XXXXX" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Email *</label>
+                    <input type="email" value={newCandidate.email} onChange={(e) => setNewCandidate(prev => ({ ...prev, email: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="Enter email" />
                   </div>
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Location</label>
-                    <input type="text" value={newCandidate.location} onChange={(e) => setNewCandidate(prev => ({ ...prev, location: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="City" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Phone</label>
+                    <input type="text" value={newCandidate.phone} onChange={(e) => setNewCandidate(prev => ({ ...prev, phone: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="+91 XXXXX XXXXX" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Location</label>
+                    <input type="text" value={newCandidate.location} onChange={(e) => setNewCandidate(prev => ({ ...prev, location: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="City" />
                   </div>
                 </div>
               </div>
 
               {/* Divider */}
-              <div className={`border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`} />
+              <div className="border-t border-[#F4F3EF]" />
 
               {/* Job Details */}
               <div>
-                <h4 className={`text-base font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                  <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg, #3b82f6, #1E88E5)' }}>
-                    <FiBriefcase className="w-3.5 h-3.5 text-white" />
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl">
+                    <FiBriefcase className="w-5 h-5" />
                   </div>
-                  Job Details
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Job Details</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Position/Job Opening</label>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Position/Job Opening</label>
                     <select value={newCandidate.positionId} onChange={(e) => {
                       const posId = e.target.value;
                       const matchedJob = jobOpenings.find(j => j.id === posId);
@@ -1880,7 +1890,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                         clientId: matchedJob?.clientId || prev.clientId,
                         roleType: matchedJob?.roleType || prev.roleType
                       }));
-                    }} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                    }} className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
                       <option value="">Select Opening (Optional)</option>
                       {jobOpenings.map(job => (
                         <option key={job.id} value={job.id}>{job.title} — {job.client}</option>
@@ -1888,8 +1898,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     </select>
                   </div>
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Role Type (Core Matching) *</label>
-                    <select value={newCandidate.roleType} onChange={(e) => setNewCandidate(prev => ({ ...prev, roleType: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Role Type (Core Matching) *</label>
+                    <select value={newCandidate.roleType} onChange={(e) => setNewCandidate(prev => ({ ...prev, roleType: e.target.value }))} className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
                       <option value="">Select Role Category</option>
                       {roleTypes.map(r => (
                         <option key={r.role} value={r.role}>{r.role}</option>
@@ -1897,20 +1907,20 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     </select>
                   </div>
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Display Job Title *</label>
-                    <input type="text" value={newCandidate.jobTitle} onChange={(e) => setNewCandidate(prev => ({ ...prev, jobTitle: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="e.g., Senior Software Engineer" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Display Job Title *</label>
+                    <input type="text" value={newCandidate.jobTitle} onChange={(e) => setNewCandidate(prev => ({ ...prev, jobTitle: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="e.g., Senior Software Engineer" />
                   </div>
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client</label>
-                    <input type="text" value={newCandidate.client} onChange={(e) => setNewCandidate(prev => ({ ...prev, client: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="Company name" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Client</label>
+                    <input type="text" value={newCandidate.client} onChange={(e) => setNewCandidate(prev => ({ ...prev, client: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="Company name" />
                   </div>
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Experience</label>
-                    <input type="text" value={newCandidate.experience} onChange={(e) => setNewCandidate(prev => ({ ...prev, experience: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="e.g., 5 years" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Experience</label>
+                    <input type="text" value={newCandidate.experience} onChange={(e) => setNewCandidate(prev => ({ ...prev, experience: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="e.g., 5 years" />
                   </div>
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Notice Period</label>
-                    <select value={newCandidate.noticePeriod} onChange={(e) => setNewCandidate(prev => ({ ...prev, noticePeriod: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Notice Period</label>
+                    <select value={newCandidate.noticePeriod} onChange={(e) => setNewCandidate(prev => ({ ...prev, noticePeriod: e.target.value }))} className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
                       <option value="Immediate">Immediate</option>
                       <option value="15 days">15 days</option>
                       <option value="30 days">30 days</option>
@@ -1923,47 +1933,47 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               </div>
 
               {/* Divider */}
-              <div className={`border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`} />
+              <div className="border-t border-[#F4F3EF]" />
 
               {/* Compensation */}
               <div>
-                <h4 className={`text-base font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                  <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                    <FiCheckCircle className="w-3.5 h-3.5 text-white" />
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-[#10B981] rounded-xl flex items-center justify-center text-white shadow-xl">
+                    <FiCheckCircle className="w-5 h-5" />
                   </div>
-                  Compensation
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Compensation</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Current CTC</label>
-                    <input type="text" value={newCandidate.currentCTC} onChange={(e) => setNewCandidate(prev => ({ ...prev, currentCTC: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="e.g., 15 LPA" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Current CTC</label>
+                    <input type="text" value={newCandidate.currentCTC} onChange={(e) => setNewCandidate(prev => ({ ...prev, currentCTC: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="e.g., 15 LPA" />
                   </div>
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Expected CTC</label>
-                    <input type="text" value={newCandidate.expectedCTC} onChange={(e) => setNewCandidate(prev => ({ ...prev, expectedCTC: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="e.g., 22 LPA" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Expected CTC</label>
+                    <input type="text" value={newCandidate.expectedCTC} onChange={(e) => setNewCandidate(prev => ({ ...prev, expectedCTC: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="e.g., 22 LPA" />
                   </div>
                 </div>
               </div>
 
               {/* Divider */}
-              <div className={`border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`} />
+              <div className="border-t border-[#F4F3EF]" />
 
               {/* Skills & Resume */}
               <div>
-                <h4 className={`text-base font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                  <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg, #f59e0b, #ea580c)' }}>
-                    <FiStar className="w-3.5 h-3.5 text-white" />
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl">
+                    <FiStar className="w-5 h-5" />
                   </div>
-                  Skills & Resume
-                </h4>
-                <div className="grid grid-cols-1 gap-5">
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Skills & Resume</h3>
+                </div>
+                <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Skills (comma separated)</label>
-                    <input type="text" value={newCandidate.skills} onChange={(e) => setNewCandidate(prev => ({ ...prev, skills: e.target.value }))} className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} placeholder="React, Node.js, MongoDB" />
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Skills (comma separated)</label>
+                    <input type="text" value={newCandidate.skills} onChange={(e) => setNewCandidate(prev => ({ ...prev, skills: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="React, Node.js, MongoDB" />
                   </div>
                   {/* Resume Upload */}
                   <div>
-                    <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Upload Resume/CV</label>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Upload Resume/CV</label>
                     <input type="file" ref={fileInputRef} className="hidden" 
                       onChange={(e) => setResumeFile(e.target.files[0])}
                       accept=".pdf,.doc,.docx"
@@ -1978,17 +1988,17 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                           setResumeFile(e.dataTransfer.files[0]);
                         }
                       }}
-                      className={`mt-1.5 border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
+                      className={`rounded-2xl border-2 border-dashed p-6 text-center transition-colors cursor-pointer ${
                         resumeFile 
-                          ? (isDarkMode ? 'bg-emerald-900/20 border-emerald-500/50' : 'bg-emerald-50 border-emerald-200')
-                          : (isDarkMode ? 'border-slate-600 hover:border-[#1E88E5]' : 'border-slate-300 hover:border-[#1E88E5]')
+                          ? 'bg-emerald-50 border-emerald-200'
+                          : 'bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30'
                       }`}
                     >
-                      <FiUpload className={`w-8 h-8 mx-auto mb-2 ${resumeFile ? 'text-emerald-500' : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`} />
-                      <p className={`text-sm font-medium ${resumeFile ? 'text-emerald-600' : (isDarkMode ? 'text-slate-300' : 'text-slate-600')}`}>
+                      <FiUpload className={`w-8 h-8 mx-auto mb-2 ${resumeFile ? 'text-emerald-500' : 'text-[#9B9BAD]'}`} />
+                      <p className={`text-sm font-bold ${resumeFile ? 'text-emerald-600' : 'text-[#6B6B7E]'}`}>
                         {resumeFile ? `Selected: ${resumeFile.name}` : 'Drag & drop or click to browse'}
                       </p>
-                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <p className={`text-xs mt-1 ${resumeFile ? 'text-emerald-500' : 'text-[#9B9BAD]'}`}>
                         {resumeFile ? `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB` : 'PDF, DOC, DOCX (Max 10MB)'}
                       </p>
                     </div>
@@ -1999,12 +2009,12 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               {/* Resume Bank Suggestions */}
               {newCandidate.roleType && (
                 <div>
-                  <h4 className={`text-base font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                    <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}>
-                      <FiDatabase className="w-3.5 h-3.5 text-white" />
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-[#8B5CF6] rounded-xl flex items-center justify-center text-white shadow-xl">
+                      <FiDatabase className="w-5 h-5" />
                     </div>
-                    Suggested from Resume Bank ({resumeBankResumes.length})
-                  </h4>
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Suggested from Resume Bank ({resumeBankResumes.length})</h3>
+                  </div>
                   {resumeBankLoading ? (
                     <div className="flex items-center gap-3 py-4 overflow-x-auto no-scrollbar">
                       {[1, 2, 3].map(i => (
@@ -2080,15 +2090,14 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
             </div>
 
             {/* Form Footer */}
-            <div className={`flex items-center justify-between p-6 border-t ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+            <div className="pt-6 px-8 pb-8 flex gap-4 border-t border-[#F4F3EF]">
               <button onClick={() => { setShowAddModal(false); setSelectedResumeProfileId(''); setSelectedResumeProfile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' }); setResumeFile(null); }}
-                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}
+                className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
               >
                 Cancel
               </button>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleAddCandidate}
-                className="flex items-center gap-2 px-8 py-3 text-sm font-semibold text-white rounded-xl shadow-lg"
-                style={{ background: 'linear-gradient(90deg, #3FA9F5, #0D47A1)', boxShadow: '0 10px 25px -5px rgba(31,136,229,0.4)' }}
+                className="flex-[2] flex items-center justify-center gap-2 py-5 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
               >
                 <FiPlus className="w-4 h-4" />
                 Add Candidate
@@ -2750,168 +2759,47 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           })}
         </div> */}
 
-        {/* Search, Filter, Sort & Bulk */}
-        <div className={`space-y-3 rounded-2xl border p-4 ${isDarkMode ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Candidate Filters</p>
-            <div className="flex items-center gap-3">
-              <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                {activePipelineFiltersCount} Filters Active
-              </span>
-              <button
-                onClick={() => {
-                  setFilterClient('all');
-                  setFilterSource('all');
-                  setFilterStage('all');
-                  setFilterPipelineStatus('all');
-                  setFilterJob('all');
-                  setFilterDate('all');
-                  setCustomStartDate('');
-                  setCustomEndDate('');
-                  setSortBy('date');
-                  setSortOrder('desc');
-                  setSearchTerm('');
-                }}
-                className={`text-xs font-semibold ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'} hover:underline`}
-              >
-                Reset Filters
+        {/* Search Bar */}
+        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
+          <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+            <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
+            <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, email, skills..."
+              className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')}>
+                <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
               </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 items-end">
-            <div className="relative w-full">
-              <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Search Candidates</label>
-              <FiSearch className={`absolute left-4 top-[38px] w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by name, email, skills..."
-                className={`w-full rounded-xl border py-3 pl-12 pr-4 text-sm transition-all focus:ring-1 focus:ring-[#1E88E5]/50 ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-              <div className="relative min-w-[140px]">
-                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Position</label>
-                <select value={filterJob} onChange={(e) => setFilterJob(e.target.value)}
-                  className={`appearance-none w-full rounded-xl border px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-                  <option value="all">All Positions</option>
-                  {uniqueJobs.map(job => (<option key={job} value={job}>{job}</option>))}
-                </select>
-                <FiChevronDown className={`absolute right-3 top-[38px] w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-              </div>
-
-              <div className="relative min-w-[140px]">
-                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Date</label>
-                <select value={filterDate} onChange={(e) => { setFilterDate(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-                  className={`appearance-none w-full rounded-xl border px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-                  <option value="all">All Dates</option>
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="prev-week">Previous Week</option>
-                  <option value="month">This Month</option>
-                  <option value="prev-month">Previous Month</option>
-                  <option value="quarter">This Quarter</option>
-                  <option value="prev-quarter">Previous Quarter</option>
-                  <option value="year">This Year</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-                <FiChevronDown className={`absolute right-3 top-[38px] w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-              </div>
-
-              {filterDate === 'custom' && (
-                <>
-                  <div className="relative min-w-[130px]">
-                    <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>From</label>
-                    <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
-                      className={`w-full rounded-xl border px-3 py-3 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`} />
-                  </div>
-                  <div className="relative min-w-[130px]">
-                    <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>To</label>
-                    <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
-                      className={`w-full rounded-xl border px-3 py-3 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`} />
-                  </div>
-                </>
-              )}
-
-              <div className="relative min-w-[140px]">
-                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Sort By</label>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-                  className={`appearance-none w-full rounded-xl border px-3 py-3 pr-9 text-sm font-medium cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700 text-white' : 'bg-white border-slate-200'}`}>
-                  <option value="date">Date Added</option>
-                  <option value="name">Name</option>
-                  <option value="rating">Rating</option>
-                  <option value="experience">Experience</option>
-                </select>
-                <FiChevronDown className={`absolute right-3 top-[38px] w-4 h-4 pointer-events-none ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-              </div>
-
-              <button onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
-                className={`h-[46px] mt-[22px] px-3 rounded-xl border-2 transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                <span className="text-xs font-bold">{sortOrder === 'asc' ? 'A-Z / Low-High' : 'Z-A / High-Low'}</span>
-              </button>
-
-              <button onClick={() => setShowAdvancedFilters(f => !f)}
-                className={`h-[46px] mt-[22px] flex items-center justify-center gap-1.5 px-3 rounded-xl border text-sm font-medium ${showAdvancedFilters ? 'border-[#1E88E5] text-[#1E88E5]' : isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-600'} transition-all`}>
-                <FiSliders className="w-4 h-4" />
-                More
-              </button>
-            </div>
-          </div>
-
-          {/* Advanced Filters */}
-          <AnimatePresence>
-            {showAdvancedFilters && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                className={`flex flex-wrap gap-3 p-4 rounded-xl border-2 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-                  <div className="relative min-w-[160px]">
-                    <label className={`block text-[11px] font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Client</label>
-                  <select value={filterClient} onChange={e => setFilterClient(e.target.value)}
-                    className={`appearance-none rounded-lg border px-3 py-2 pr-8 text-xs font-medium ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                    <option value="all">All Clients</option>
-                    {uniqueClients.map(c => (<option key={c} value={c}>{c}</option>))}
-                  </select>
-                </div>
-                  <div className="relative min-w-[160px]">
-                    <label className={`block text-[11px] font-semibold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Source</label>
-                  <select value={filterSource} onChange={e => setFilterSource(e.target.value)}
-                    className={`appearance-none rounded-lg border px-3 py-2 pr-8 text-xs font-medium ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                    <option value="all">All Sources</option>
-                    <option value="Resume Bank">Resume Bank</option>
-                    <option value="Manual">Manual</option>
-                    <option value="Referral">Referral</option>
-                  </select>
-                </div>
-                <button onClick={() => { setFilterClient('all'); setFilterSource('all'); setFilterStage('all'); setFilterPipelineStatus('all'); setFilterJob('all'); setFilterDate('all'); setCustomStartDate(''); setCustomEndDate(''); setSortBy('date'); setSortOrder('desc'); setSearchTerm(''); }}
-                  className="text-xs text-[#1E88E5] font-semibold hover:underline">Clear all filters</button>
-              </motion.div>
             )}
-          </AnimatePresence>
-
-          {/* Bulk Actions Bar */}
-          <AnimatePresence>
-            {selectedIds.size > 0 && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                className={`flex items-center justify-between p-3 rounded-xl border-2 ${isDarkMode ? 'bg-[#1E88E5]/20 border-[#1E88E5]/50' : 'bg-[#1E88E5]/10 border-[#1E88E5]/30'}`}>
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm font-semibold ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'}`}>{selectedIds.size} selected</span>
-                  <button onClick={() => setSelectedIds(new Set())} className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} hover:underline`}>Clear</button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <select onChange={(e) => { if (e.target.value) bulkMoveStage(e.target.value); e.target.value = ''; }}
-                      className={`appearance-none rounded-lg border px-3 py-1.5 pr-8 text-xs font-medium ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                      <option value="">Move to stage...</option>
-                      {stageOrder.map(s => (<option key={s} value={s}>{s}</option>))}
-                    </select>
-                    <FiChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  </div>
-                  <button onClick={bulkReject}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-red-500 hover:bg-red-600 transition-colors">
-                    <FiXCircle className="w-3 h-3" /> Reject All
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </div>
         </div>
+
+        {/* Bulk Actions Bar */}
+        <AnimatePresence>
+          {selectedIds.size > 0 && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className={`flex items-center justify-between p-3 rounded-xl border-2 ${isDarkMode ? 'bg-[#1E88E5]/20 border-[#1E88E5]/50' : 'bg-[#1E88E5]/10 border-[#1E88E5]/30'}`}>
+              <div className="flex items-center gap-3">
+                <span className={`text-sm font-semibold ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'}`}>{selectedIds.size} selected</span>
+                <button onClick={() => setSelectedIds(new Set())} className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} hover:underline`}>Clear</button>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <select onChange={(e) => { if (e.target.value) bulkMoveStage(e.target.value); e.target.value = ''; }}
+                    className={`appearance-none rounded-lg border px-3 py-1.5 pr-8 text-xs font-medium ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
+                    <option value="">Move to stage...</option>
+                    {stageOrder.map(s => (<option key={s} value={s}>{s}</option>))}
+                  </select>
+                  <FiChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                </div>
+                <button onClick={bulkReject}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-red-500 hover:bg-red-600 transition-colors">
+                  <FiXCircle className="w-3 h-3" /> Reject All
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ═══════════ MAIN VIEW ═══════════ */}
         {isKanbanView ? (
@@ -3261,6 +3149,122 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
             </div>
           )}
         </AnimatePresence>
+
+      {/* ── Candidate Detail Drawer ── */}
+      <AnimatePresence>
+        {drawerCandidate && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setDrawerCandidate(null)}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ x: '100%', opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0.5 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed inset-y-0 right-0 w-full sm:w-[480px] md:w-[540px] bg-white shadow-2xl z-[110] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+            >
+              <div className="flex flex-col h-full bg-white">
+                {/* Header */}
+                <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{drawerCandidate.name}</h2>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{drawerCandidate.jobTitle || 'Position'}</span>
+                      <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{drawerCandidate.client || 'Client'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StageBadge stage={drawerCandidate.stage} />
+                    <button onClick={() => setDrawerCandidate(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90">
+                      <FiX className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
+                  {/* Candidate Fit Radar */}
+                  <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+                    <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-2 text-center">Candidate Assessment</h3>
+                    <div className="w-full h-[220px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart data={[
+                          { axis: 'Technical', value: Math.min(100, 50 + (drawerCandidate.skills?.length || 0) * 8) },
+                          { axis: 'Experience', value: drawerCandidate.experience ? Math.min(100, parseInt(drawerCandidate.experience) * 12 || 60) : 50 },
+                          { axis: 'Communication', value: (drawerCandidate.rating || 3) * 18 },
+                          { axis: 'Cultural Fit', value: 65 },
+                        ]} cx="50%" cy="50%" outerRadius="70%">
+                          <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
+                          <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} />
+                          <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
+                          <Radar dataKey="value" stroke="#a5b4fc" fill="#a5b4fc" fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Pipeline Stage Progress */}
+                  <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+                    <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Pipeline Stage</h3>
+                    <div className="flex items-center gap-6">
+                      <div className="w-[120px] h-[120px] flex-shrink-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={[
+                              { name: 'Progress', value: Math.max(1, stageOrder.indexOf(drawerCandidate.stage) + 1) },
+                              { name: 'Remaining', value: Math.max(0, stageOrder.length - stageOrder.indexOf(drawerCandidate.stage) - 1) },
+                            ]} innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                              <Cell fill="#3B82F6" />
+                              <Cell fill="#e2e8f0" />
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="space-y-3 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Rating</span>
+                          <RatingStars rating={drawerCandidate.rating || 0} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Experience</span>
+                          <span className="text-sm font-black text-[#1A1A2E]">{drawerCandidate.experience || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Notice</span>
+                          <span className="text-sm font-black text-[#1A1A2E]">{drawerCandidate.noticePeriod || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <button
+                    onClick={() => { setDrawerCandidate(null); setSelectedCandidateDetail(drawerCandidate); setShowDetailSidebar(true); }}
+                    className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:bg-[#1B4DA0] transition-all active:scale-[0.98] shadow-lg shadow-gray-200"
+                  >
+                    <FiEye className="w-5 h-5" /> View Full Profile
+                  </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    {drawerCandidate.phone && (
+                      <a href={`https://wa.me/${drawerCandidate.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                        className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]">
+                        <FiPhone className="w-4 h-4" /> WhatsApp
+                      </a>
+                    )}
+                    <a href={`mailto:${drawerCandidate.email}`}
+                      className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]">
+                      <FiMail className="w-4 h-4" /> Email
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       </motion.div>
     </div>

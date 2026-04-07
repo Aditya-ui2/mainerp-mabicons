@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy, useRef } from 'react';
+﻿import { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FiBriefcase,
@@ -190,7 +190,6 @@ const sidebarConfig = [
   {
     items: [
       { id: 'team-overview', title: 'Team Overview', icon: FiUsers },
-      { id: 'kam-performance', title: 'KAM Performance', icon: FiStar },
       { id: 'task-assignment', title: 'Task Assignment', icon: FiCheckSquare },
       { id: 'job-openings', title: 'Job Openings', icon: FiBriefcase },
       { id: 'candidates', title: 'Candidate Pipeline', icon: FiUserPlus },
@@ -315,7 +314,7 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
 };
 
 // Team Overview Tab Content
-const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, globalStats, onViewCallsBreakdown }) => {
+const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, globalStats, onViewCallsBreakdown }) => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedKAMs, setSelectedKAMs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -380,134 +379,17 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
         </div>
       </div>
 
-      {/* Main Layout Grid (Stats + Pie Chart) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Left Side: Stats Grid */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-          {[
-            { label: 'Total Team', value: teamData.length, icon: FiUsers, color: 'text-blue-600', bg: 'bg-blue-50' },
-            { label: 'Active Jobs', value: displayStats.activePositions, icon: FiBriefcase, color: 'text-amber-500', bg: 'bg-amber-50' },
-            { label: 'Candidates', value: displayStats.candidatesPipeline, icon: FiUsers, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-            { label: 'Interviews', value: displayStats.interviewsScheduled, icon: FiCalendar, color: 'text-violet-500', bg: 'bg-violet-50' },
-            { label: 'This Week', value: displayStats.thisWeekHires, icon: FiTrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-            { label: 'Profiles Shared', value: displayStats.profilesShared, icon: FiShare2, color: 'text-cyan-500', bg: 'bg-cyan-50' },
-            { label: 'Phone Calls', value: displayStats.callsDone, icon: FiPhone, color: 'text-blue-600', bg: 'bg-blue-50', onClick: onViewCallsBreakdown },
-            { label: 'Offers Extended', value: displayStats.offersExtended, icon: FiAward, color: 'text-pink-600', bg: 'bg-pink-50' },
-          ].map((stat, idx) => (
-            <div
-              key={idx}
-              onClick={stat.onClick}
-              className={`group bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 flex flex-col justify-between transition-all min-h-[140px] hover:shadow-md hover:-translate-y-0.5 ${stat.onClick ? 'cursor-pointer' : ''} ${idx === 7 ? 'xl:col-span-2' : ''}`}
-            >
-              <div className="flex justify-between items-start w-full mb-3">
-                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] group-hover:text-[#0D47A1] transition-colors">
-                  <stat.icon className="w-[18px] h-[18px]" strokeWidth="2.5" />
-                </div>
-                <div className="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 tracking-wide flex items-center justify-center h-5 mt-1">
-                  +12%
-                </div>
-              </div>
-              <div className="text-left flex flex-col items-start w-full mt-auto">
-                <p className="text-[28px] font-bold text-[#0f172a] leading-none mb-1.5">{stat.value}</p>
-                <p className="text-[13px] font-medium text-[#64748b]">{stat.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Right Side: Team Composition */}
-        <div className="lg:col-span-1 bg-white rounded-[20px] shadow-sm border border-gray-100 p-6 flex flex-col min-h-[320px]">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-[#0f172a] text-[15px]">Team Composition</h3>
-            <FiActivity className="w-4 h-4 text-[#2563eb]" />
-          </div>
-
-          <div className="flex-1 relative flex flex-col items-center justify-center">
-            <ResponsiveContainer width={180} height={180}>
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Sales', value: 35, color: '#2563eb' },
-                    { name: 'HR', value: 25, color: '#8b5cf6' },
-                    { name: 'Ops', value: 20, color: '#f59e0b' },
-                    { name: 'Eng', value: 20, color: '#10b981' },
-                  ]}
-                  innerRadius={55}
-                  outerRadius={75}
-                  paddingAngle={3}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {[
-                    { name: 'Sales', value: 35, color: '#2563eb' },
-                    { name: 'HR', value: 25, color: '#8b5cf6' },
-                    { name: 'Ops', value: 20, color: '#f59e0b' },
-                    { name: 'Eng', value: 20, color: '#10b981' },
-                  ].map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            {/* Center Label for Pie Chart */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -mt-1">
-              <span className="text-[26px] font-bold text-[#0f172a] leading-none">{teamData.length}</span>
-              <span className="text-[9px] font-bold text-[#64748b] uppercase tracking-widest mt-1">TOTAL</span>
-            </div>
-          </div>
-
-          {/* Legends */}
-          <div className="flex justify-center flex-wrap gap-x-5 gap-y-3 mt-4 pt-4 w-full">
-            {[
-              { name: 'Sales', value: '35%', color: 'bg-[#2563eb]' },
-              { name: 'HR', value: '25%', color: 'bg-[#8b5cf6]' },
-              { name: 'Eng', value: '20%', color: 'bg-[#10b981]' },
-              { name: 'Ops', value: '20%', color: 'bg-[#f59e0b]' },
-            ].map((legend, idx) => (
-              <div key={idx} className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${legend.color}`} />
-                  <span className="text-[13px] font-medium text-[#64748b]">{legend.name}</span>
-                </div>
-                <span className="text-[13px] font-semibold text-[#94a3b8]">{legend.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex gap-8 border-b border-gray-100 mt-6 mb-8 px-1">
-        {['All', 'Recruiters', 'KAMs', 'Admins', 'Engineering'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveFilter(tab)}
-            className={`pb-2.5 text-[14.5px] font-semibold transition-colors border-b-[2px] ${activeFilter === tab ? 'text-[#1B4DA0] border-[#1B4DA0]' : 'text-[#8292a6] border-transparent hover:text-[#1B4DA0]'}`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
       {/* Team Directory Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100/60 overflow-hidden relative">
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-6 py-5 border-b border-gray-100 space-y-4">
           <h2 className="text-[17px] font-bold text-[#0f172a]">Team Directory</h2>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-gray-50/80 border border-gray-100 rounded-xl text-[13px] font-medium text-[#0f172a] placeholder-[#94a3b8] w-64 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all"
-              />
+          <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
+            <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+              <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
+              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, role, email..."
+                className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
             </div>
-            <button className="p-2.5 bg-gray-50 border border-gray-100 hover:bg-gray-100 rounded-xl text-gray-500 transition-colors">
-              <FiFilter className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
@@ -554,9 +436,13 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-[42px] h-[42px] rounded-[14px] bg-[#F0F7FF] flex items-center justify-center text-[13px] font-bold text-[#1B4DA0] border border-[#E0E7FF] flex-shrink-0">
-                          {kam.avatar}
-                        </div>
+                        {kam.profilePhoto ? (
+                          <img src={kam.profilePhoto} alt={kam.name} className="w-[42px] h-[42px] rounded-[14px] object-cover border border-[#E0E7FF] flex-shrink-0" />
+                        ) : (
+                          <div className="w-[42px] h-[42px] rounded-[14px] bg-[#F0F7FF] flex items-center justify-center text-[13px] font-bold text-[#1B4DA0] border border-[#E0E7FF] flex-shrink-0">
+                            {kam.avatar}
+                          </div>
+                        )}
                         <span className="text-[14px] font-bold text-[#0f172a]">{kam.name}</span>
                       </div>
                     </td>
@@ -573,8 +459,11 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
                       </div>
                     </td>
                     <td className="py-4 pr-6 text-right">
-                      <button className="p-1 text-[#cbd5e1] hover:bg-gray-100 hover:text-[#0f172a] rounded-lg opacity-0 group-hover:opacity-100 transition-all">
-                        <FiMoreVertical className="w-[18px] h-[18px] stroke-[2.5]" />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onEditKAM && onEditKAM(kam); }}
+                        className="px-3 py-1.5 text-[11px] font-bold text-[#1B4DA0] bg-[#F0F7FF] hover:bg-[#E0EDFF] border border-[#E0E7FF] rounded-lg opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1.5"
+                      >
+                        <FiEdit2 className="w-3 h-3" /> Edit
                       </button>
                     </td>
                   </tr>
@@ -1669,7 +1558,7 @@ const RecruitmentHeadDashboard = () => {
       ],
       rows: activePositionsBreakdown,
       valueLabel: 'Open Positions',
-      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates · ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
+      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates Â· ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
     },
     totalCandidates: {
       title: 'Candidate Pipeline Breakdown',
@@ -1681,7 +1570,7 @@ const RecruitmentHeadDashboard = () => {
       ],
       rows: candidatesBreakdown,
       valueLabel: 'Candidates',
-      renderMeta: (kam) => `${kam.effectiveStats.profilesShared || 0} shared · ${kam.effectiveStats.callsDone || 0} calls`,
+      renderMeta: (kam) => `${kam.effectiveStats.profilesShared || 0} shared Â· ${kam.effectiveStats.callsDone || 0} calls`,
     },
     sharedProfiles: {
       title: 'Profiles Shared Breakdown',
@@ -1693,7 +1582,7 @@ const RecruitmentHeadDashboard = () => {
       ],
       rows: profilesSharedBreakdown,
       valueLabel: 'Profiles Shared',
-      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates · ${kam.effectiveStats.activePositions || 0} jobs`,
+      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates Â· ${kam.effectiveStats.activePositions || 0} jobs`,
     },
     candidatesSummary: {
       title: 'Candidates Summary',
@@ -1705,7 +1594,7 @@ const RecruitmentHeadDashboard = () => {
       ],
       rows: hiresBreakdown,
       valueLabel: 'Hires',
-      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates · ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
+      renderMeta: (kam) => `${kam.effectiveStats.candidatesPipeline || 0} candidates Â· ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
     },
     offersManagement: {
       title: 'Offers Management Summary',
@@ -1717,7 +1606,7 @@ const RecruitmentHeadDashboard = () => {
       ],
       rows: offersBreakdown,
       valueLabel: 'Pending Offers',
-      renderMeta: (kam) => `${kam.effectiveStats.thisWeekHires || 0} hires · ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
+      renderMeta: (kam) => `${kam.effectiveStats.thisWeekHires || 0} hires Â· ${kam.effectiveStats.interviewsScheduled || 0} interviews`,
     },
   };
   const activeStatsInsight = statsInsightType ? statsInsightConfig[statsInsightType] : null;
@@ -1739,7 +1628,14 @@ const RecruitmentHeadDashboard = () => {
       phone: '',
       role: 'KAM - Recruitment',
       department: 'HR Recruitment',
-      password: 'Mabicons@123' // Default password for new members
+      designation: '',
+      reportingTo: '',
+      joiningDate: new Date().toISOString().split('T')[0],
+      employeeId: '',
+      location: '',
+      password: 'Mabicons@123',
+      profilePhoto: null,
+      profilePhotoPreview: null
     });
     setShowKAMFormModal(true);
   };
@@ -1753,6 +1649,14 @@ const RecruitmentHeadDashboard = () => {
       email: kam.email,
       phone: kam.phone,
       role: kam.role || 'KAM - Recruitment',
+      department: kam.department || 'HR Recruitment',
+      designation: kam.designation || '',
+      reportingTo: kam.reportingTo || '',
+      joiningDate: kam.joiningDate || new Date().toISOString().split('T')[0],
+      employeeId: kam.employeeId || '',
+      location: kam.location || '',
+      profilePhoto: null,
+      profilePhotoPreview: kam.profilePhoto || null
     });
     setShowKAMModal(false);
     setShowKAMFormModal(true);
@@ -1841,6 +1745,7 @@ const RecruitmentHeadDashboard = () => {
                   onMessage={handleMessage}
                   onRefresh={fetchKAMTeam}
                   onAddKAM={handleAddKAM}
+                  onEditKAM={handleEditKAM}
                   globalStats={stats}
                   onViewCallsBreakdown={handleViewCallsBreakdown}
                 />
@@ -2298,7 +2203,7 @@ const RecruitmentHeadDashboard = () => {
                         onClick={() => setActiveTab('Team Overview')}
                         className="text-[11px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
                       >
-                        DETAILS →
+                        DETAILS â†’
                       </button>
                     </div>
 
@@ -2381,7 +2286,7 @@ const RecruitmentHeadDashboard = () => {
                         onClick={() => setActiveTab('Notes')}
                         className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
                       >
-                        Manage →
+                        Manage â†’
                       </button>
                     </div>
                     <div className="divide-y divide-slate-50 max-h-[350px] overflow-y-auto flex-1 bg-white">
@@ -2578,36 +2483,32 @@ const RecruitmentHeadDashboard = () => {
               className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative overflow-hidden px-6 py-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
-                <div className="absolute inset-0 opacity-25">
-                  <div className="absolute -top-10 -right-8 w-40 h-40 rounded-full bg-white/25 blur-3xl" />
-                  <div className="absolute -bottom-12 left-8 w-32 h-32 rounded-full bg-cyan-300/30 blur-2xl" />
-                </div>
-                <div className="relative flex items-start justify-between gap-4">
+              <div className="px-10 py-8 border-b border-[#F4F3EF] bg-gradient-to-r from-white to-[#F8FAFF]">
+                <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">Call Summary</p>
-                    <h2 className="text-2xl font-bold text-white mt-2">Phone Calls By KAM</h2>
-                    <p className="text-sm text-blue-100 mt-1">Total and member-wise phone screening calls for the recruitment team.</p>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Call Summary</p>
+                    <h2 className="text-2xl font-bold text-[#1A1A2E] mt-2 font-syne">Phone Calls By KAM</h2>
+                    <p className="text-sm text-[#6B6B7E] mt-1">Total and member-wise phone screening calls for the recruitment team.</p>
                   </div>
                   <button
                     onClick={() => setShowCallsBreakdownModal(false)}
-                    className="p-2 bg-white/15 hover:bg-white/25 rounded-xl text-white transition-colors"
+                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
                   >
                     <FiX className="w-5 h-5" />
                   </button>
                 </div>
-                <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
-                  <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-blue-100">Dashboard Total</p>
-                    <p className="text-3xl font-bold text-white mt-1">{stats.phoneScreeningCalls || 0}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+                  <div className="rounded-2xl bg-[#F4F3EF] px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#9B9BAD]">Dashboard Total</p>
+                    <p className="text-2xl font-bold text-[#1A1A2E] mt-1">{stats.phoneScreeningCalls || 0}</p>
                   </div>
-                  <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-blue-100">KAM Tracked Calls</p>
-                    <p className="text-3xl font-bold text-white mt-1">{teamCallsTotal}</p>
+                  <div className="rounded-2xl bg-[#F4F3EF] px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#9B9BAD]">KAM Tracked Calls</p>
+                    <p className="text-2xl font-bold text-[#1A1A2E] mt-1">{teamCallsTotal}</p>
                   </div>
-                  <div className="rounded-2xl bg-white/15 backdrop-blur-sm px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-blue-100">Active KAMs</p>
-                    <p className="text-3xl font-bold text-white mt-1">{kamCallsBreakdown.length}</p>
+                  <div className="rounded-2xl bg-[#F4F3EF] px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#9B9BAD]">Active KAMs</p>
+                    <p className="text-2xl font-bold text-[#1A1A2E] mt-1">{kamCallsBreakdown.length}</p>
                   </div>
                 </div>
               </div>
@@ -2647,7 +2548,7 @@ const RecruitmentHeadDashboard = () => {
                                 <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">#{index + 1}</span>
                               </div>
                               <p className="text-sm text-slate-500 truncate">{kam.role}</p>
-                              <p className="text-xs text-slate-400 mt-1">{kam.activePositions} jobs · {kam.candidatesPipeline} candidates</p>
+                              <p className="text-xs text-slate-400 mt-1">{kam.activePositions} jobs Â· {kam.candidatesPipeline} candidates</p>
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
@@ -2671,37 +2572,33 @@ const RecruitmentHeadDashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"
             onClick={() => setShowStatsInsightModal(false)}
           >
             <motion.div
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="bg-white rounded-[28px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-gray-200"
+              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-[#F4F3EF]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative overflow-hidden px-7 py-6 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900">
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute -top-12 -right-10 w-48 h-48 rounded-full bg-cyan-400/20 blur-3xl" />
-                  <div className="absolute -bottom-12 left-8 w-40 h-40 rounded-full bg-indigo-400/20 blur-3xl" />
-                </div>
-                <div className="relative flex items-start justify-between gap-4">
+              <div className="px-10 py-8 border-b border-[#F4F3EF] bg-gradient-to-r from-white to-[#F8FAFF]">
+                <div className="flex items-start justify-between gap-4">
                   <div className="max-w-2xl">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-200/90">Dashboard Insight</p>
-                    <h2 className="text-2xl md:text-3xl font-bold text-white mt-2 leading-tight">{activeStatsInsight.title}</h2>
-                    <p className="text-sm md:text-base text-slate-200 mt-2 leading-6">{activeStatsInsight.subtitle}</p>
+                    <p className="text-[10px] font-black uppercase tracking-[3px] text-[#9B9BAD]">Dashboard Insight</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-[#1A1A2E] mt-2 leading-tight font-syne">{activeStatsInsight.title}</h2>
+                    <p className="text-sm md:text-base text-[#6B6B7E] mt-2 leading-6">{activeStatsInsight.subtitle}</p>
                   </div>
                   <button
                     onClick={() => setShowStatsInsightModal(false)}
-                    className="p-2.5 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-colors border border-white/10"
+                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
                   >
                     <FiX className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-6 md:p-7 bg-gradient-to-b from-slate-100 to-white max-h-[66vh] overflow-y-auto">
+              <div className="p-6 md:p-7 bg-white max-h-[66vh] overflow-y-auto">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                   {activeStatsInsight.summaries.map((summary, summaryIndex) => (
                     <div
@@ -2775,29 +2672,28 @@ const RecruitmentHeadDashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white w-full max-w-lg rounded-[24px] shadow-2xl overflow-hidden relative"
-              style={{ boxShadow: "0 24px 64px -12px rgba(0,0,0,0.12)" }}
+              className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/50 to-white">
+              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
                 <div>
                   <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
                     {kamFormMode === 'add' ? 'Invite Team Member' : 'Edit Member Details'}
                   </h2>
-                  <p className="text-sm text-[#6B6B7E] mt-1">
-                    {kamFormMode === 'add' ? 'Send an invitation to join the recruitment team' : 'Update the details for this team member'}
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                    {kamFormMode === 'add' ? 'Send an invitation to join the team' : 'Update member details'}
                   </p>
                 </div>
                 <button
                   onClick={() => setShowKAMFormModal(false)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-[#F4F3EF] transition-all"
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
                   disabled={formSubmitting}
                 >
                   <FiX className="w-5 h-5" />
@@ -2805,90 +2701,196 @@ const RecruitmentHeadDashboard = () => {
               </div>
 
               {/* Modal Body */}
-              <form onSubmit={handleSubmitKAMForm} className="p-8 space-y-6">
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest pl-1">Name</label>
-                    <div className="relative flex items-center">
-                      <FiUsers className="absolute left-4 text-[#C5C5D2]" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. John Doe"
-                        className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border border-transparent rounded-xl text-sm outline-none focus:border-[#1B4DA0] focus:ring-2 focus:ring-[#1B4DA0]/20 transition-all font-medium"
-                        value={kamFormData.name}
-                        onChange={(e) => setKamFormData({ ...kamFormData, name: e.target.value })}
-                        disabled={formSubmitting}
-                      />
-                    </div>
+              <form onSubmit={handleSubmitKAMForm} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                {/* Profile Photo Upload */}
+                <div className="flex items-center gap-6">
+                  <div className="relative group">
+                    {kamFormData.profilePhotoPreview ? (
+                      <img src={kamFormData.profilePhotoPreview} alt="Profile" className="w-20 h-20 rounded-2xl object-cover border-2 border-[#E0E7FF]" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-2xl bg-[#F0F7FF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center text-[24px] font-bold text-[#1B4DA0]">
+                        {kamFormData.name ? kamFormData.name.charAt(0).toUpperCase() : <FiUsers className="w-6 h-6 text-[#C5C5D2]" />}
+                      </div>
+                    )}
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <FiEdit2 className="w-5 h-5 text-white" />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => setKamFormData({ ...kamFormData, profilePhoto: file, profilePhotoPreview: ev.target.result });
+                          reader.readAsDataURL(file);
+                        }
+                      }} disabled={formSubmitting} />
+                    </label>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest pl-1">Email Address</label>
-                    <div className="relative flex items-center">
-                      <FiMail className="absolute left-4 text-[#C5C5D2]" />
-                      <input
-                        type="email"
-                        required
-                        placeholder="john@mabicons.com"
-                        className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border border-transparent rounded-xl text-sm outline-none focus:border-[#1B4DA0] focus:ring-2 focus:ring-[#1B4DA0]/20 transition-all font-medium"
-                        value={kamFormData.email}
-                        onChange={(e) => setKamFormData({ ...kamFormData, email: e.target.value })}
-                        disabled={formSubmitting}
-                      />
-                    </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#1A1A2E]">Profile Photo</p>
+                    <p className="text-[11px] text-[#9B9BAD] mt-0.5">Upload a photo (JPG, PNG). Max 2MB.</p>
                   </div>
+                </div>
 
+                {/* Personal Information */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl"><FiUsers className="w-4 h-4" /></div>
+                    <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Personal Information</h4>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest pl-1">Phone Number</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Full Name *</label>
                       <div className="relative flex items-center">
-                        <FiPhone className="absolute left-4 text-[#C5C5D2]" />
-                        <input
-                          type="tel"
-                          required
-                          placeholder="+91 9876543210"
-                          className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border border-transparent rounded-xl text-sm outline-none focus:border-[#1B4DA0] focus:ring-2 focus:ring-[#1B4DA0]/20 transition-all font-medium"
-                          value={kamFormData.phone}
-                          onChange={(e) => setKamFormData({ ...kamFormData, phone: e.target.value })}
-                          disabled={formSubmitting}
-                        />
+                        <FiUsers className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="text" required placeholder="e.g. John Doe"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                          value={kamFormData.name} onChange={(e) => setKamFormData({ ...kamFormData, name: e.target.value })} disabled={formSubmitting} />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest pl-1">Role</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Employee ID</label>
+                      <div className="relative flex items-center">
+                        <FiFileText className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="text" placeholder="e.g. MAB-0042"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                          value={kamFormData.employeeId || ''} onChange={(e) => setKamFormData({ ...kamFormData, employeeId: e.target.value })} disabled={formSubmitting} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Details */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl"><FiMail className="w-4 h-4" /></div>
+                    <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Contact Details</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address *</label>
+                      <div className="relative flex items-center">
+                        <FiMail className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="email" required placeholder="john@mabicons.com"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                          value={kamFormData.email} onChange={(e) => setKamFormData({ ...kamFormData, email: e.target.value })} disabled={formSubmitting} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number *</label>
+                      <div className="relative flex items-center">
+                        <FiPhone className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="tel" required placeholder="+91 9876543210"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                          value={kamFormData.phone} onChange={(e) => setKamFormData({ ...kamFormData, phone: e.target.value })} disabled={formSubmitting} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Role & Department */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-[#10B981] rounded-xl flex items-center justify-center text-white shadow-xl"><FiBriefcase className="w-4 h-4" /></div>
+                    <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Role & Department</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Role *</label>
                       <div className="relative flex items-center">
                         <FiBriefcase className="absolute left-4 text-[#C5C5D2]" />
                         <select
-                          className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border border-transparent rounded-xl text-sm outline-none focus:border-[#1B4DA0] focus:ring-2 focus:ring-[#1B4DA0]/20 transition-all font-medium appearance-none"
-                          value={kamFormData.role}
-                          onChange={(e) => setKamFormData({ ...kamFormData, role: e.target.value })}
-                          disabled={formSubmitting}
-                        >
+                          className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
+                          value={kamFormData.role} onChange={(e) => setKamFormData({ ...kamFormData, role: e.target.value })} disabled={formSubmitting}>
                           <option value="KAM - Recruitment">KAM - Recruitment</option>
                           <option value="HR Executive">HR Executive</option>
                           <option value="Senior KAM">Senior KAM</option>
                           <option value="KAM Lead">KAM Lead</option>
+                          <option value="Recruiter">Recruiter</option>
+                          <option value="Team Lead">Team Lead</option>
+                          <option value="Admin">Admin</option>
                         </select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Department</label>
+                      <div className="relative flex items-center">
+                        <FiLayers className="absolute left-4 text-[#C5C5D2]" />
+                        <select
+                          className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
+                          value={kamFormData.department || 'HR Recruitment'} onChange={(e) => setKamFormData({ ...kamFormData, department: e.target.value })} disabled={formSubmitting}>
+                          <option value="HR Recruitment">HR Recruitment</option>
+                          <option value="HR Operations">HR Operations</option>
+                          <option value="IT">IT</option>
+                          <option value="Sales">Sales</option>
+                          <option value="Marketing">Marketing</option>
+                          <option value="BD">Business Development</option>
+                          <option value="Finance">Finance</option>
+                          <option value="Management">Management</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Designation</label>
+                      <div className="relative flex items-center">
+                        <FiAward className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="text" placeholder="e.g. Senior Executive"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                          value={kamFormData.designation || ''} onChange={(e) => setKamFormData({ ...kamFormData, designation: e.target.value })} disabled={formSubmitting} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Reporting To</label>
+                      <div className="relative flex items-center">
+                        <FiUsers className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="text" placeholder="e.g. Sachin Rawat"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                          value={kamFormData.reportingTo || ''} onChange={(e) => setKamFormData({ ...kamFormData, reportingTo: e.target.value })} disabled={formSubmitting} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Details */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl"><FiCalendar className="w-4 h-4" /></div>
+                    <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Additional Details</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>
+                      <div className="relative flex items-center">
+                        <FiCalendar className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="date"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                          value={kamFormData.joiningDate || ''} onChange={(e) => setKamFormData({ ...kamFormData, joiningDate: e.target.value })} disabled={formSubmitting} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Location</label>
+                      <div className="relative flex items-center">
+                        <FiExternalLink className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="text" placeholder="e.g. Jaipur"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                          value={kamFormData.location || ''} onChange={(e) => setKamFormData({ ...kamFormData, location: e.target.value })} disabled={formSubmitting} />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="pt-4 flex items-center gap-3">
+                <div className="pt-4 flex gap-4">
                   <button
                     type="button"
                     onClick={() => setShowKAMFormModal(false)}
                     disabled={formSubmitting}
-                    className="flex-1 py-3.5 px-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-sm font-bold hover:bg-[#E8E7E2] transition-all active:scale-[0.98] disabled:opacity-50"
+                    className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={formSubmitting}
-                    className="flex-1 py-3.5 px-4 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
+                    className="flex-[2] py-5 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                   >
                     {formSubmitting ? (
                       <>
