@@ -47,9 +47,7 @@ import {
   FiUserX,
   FiAward,
   FiActivity,
-  FiDollarSign,
   FiZap,
-  FiFilter as FiFilterIcon,
 } from 'react-icons/fi';
 import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions, uploadResumes } from '../../../service/api';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
@@ -81,13 +79,11 @@ const StageBadge = ({ stage }) => {
 
 /* ── Stage Icon Config for Filters ── */
 const stageConfig = {
-  Screening: { color: '#64748b', icon: FiFileText },
-  'Phone Interview': { color: '#3b82f6', icon: FiPhone },
-  'Technical Round': { color: '#1E88E5', icon: FiCheckCircle },
-  'HR Round': { color: '#f59e0b', icon: FiUsers },
-  'Client Interview': { color: '#10b981', icon: FiBriefcase },
-  'Offer Sent': { color: '#ec4899', icon: FiMail },
-  Joined: { color: '#22c55e', icon: FiCheckCircle },
+  Applied: { color: '#64748b', icon: FiFileText, bgColor: 'bg-[#F8FAFF]', borderColor: 'border-blue-100', dotColor: 'bg-blue-400' },
+  Screening: { color: '#3b82f6', icon: FiPhone, bgColor: 'bg-blue-50/50', borderColor: 'border-blue-200/50', dotColor: 'bg-blue-500' },
+  Interview: { color: '#f59e0b', icon: FiUsers, bgColor: 'bg-amber-50/50', borderColor: 'border-amber-200/50', dotColor: 'bg-amber-500' },
+  Offer: { color: '#ec4899', icon: FiMail, bgColor: 'bg-purple-50/50', borderColor: 'border-purple-200/50', dotColor: 'bg-purple-500' },
+  Hired: { color: '#22c55e', icon: FiCheckCircle, bgColor: 'bg-emerald-50/50', borderColor: 'border-emerald-200/50', dotColor: 'bg-emerald-500' },
 };
 
 /* ── Rating Stars ── */
@@ -103,7 +99,6 @@ const RatingStars = ({ rating, maxRating = 5 }) => (
   </div>
 );
 
-/* ══════════════════════════════════════════════════════ */
 const CACHE_KEY_CANDIDATES = 'cache_kamCandidates';
 
 const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickActionHandled }) => {
@@ -113,9 +108,85 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     return 'Unknown';
   };
 
-  // Start with cached data or empty array - will fetch real data from API
   const [candidates, setCandidates] = useState(() => {
-    try { const c = localStorage.getItem(CACHE_KEY_CANDIDATES); return c ? JSON.parse(c) : []; } catch { return []; }
+    try {
+      const c = localStorage.getItem(CACHE_KEY_CANDIDATES);
+      if (c) {
+        const parsed = JSON.parse(c);
+        if (parsed.length > 0) return parsed;
+      }
+      // High-fidelity mock data for UI testing if empty
+      return [
+        {
+          id: 'mock-101',
+          name: 'Alex Rivera',
+          email: 'alex.rivera@example.com',
+          phone: '+91 98765 43210',
+          location: 'Bangalore, India',
+          role: 'Senior Software Engineer',
+          jobTitle: 'Senior Software Engineer',
+          client: 'TechSolutions Inc.',
+          experience: '6.5 Years',
+          currentCTC: '18 LPA',
+          expectedCTC: '24 LPA',
+          noticePeriod: '30 Days',
+          skills: ['React', 'Node.js', 'Redux', 'TypeScript', 'AWS'],
+          stage: 'Applied',
+          source: 'LinkedIn',
+          rating: 4.5,
+          appliedDate: new Date().toISOString().split('T')[0],
+          lastActivity: new Date().toISOString().split('T')[0],
+          shortDescription: 'Experienced full-stack developer with a strong background in scalable cloud architectures.',
+          profileImage: 'https://i.pravatar.cc/150?u=mock-101'
+        },
+        {
+          id: 'mock-102',
+          name: 'Jordan Smith',
+          email: 'jordan.smith@example.com',
+          phone: '+91 88888 77777',
+          location: 'Mumbai, India',
+          role: 'Frontend Developer',
+          jobTitle: 'Frontend Developer',
+          client: 'Microsoft',
+          experience: '4 Years',
+          currentCTC: '12 LPA',
+          expectedCTC: '16 LPA',
+          noticePeriod: 'Immediate',
+          skills: ['React', 'Tailwind CSS', 'Framer Motion', 'Next.js'],
+          stage: 'Screening',
+          source: 'Naukri',
+          rating: 4.2,
+          appliedDate: new Date().toISOString().split('T')[0],
+          lastActivity: new Date().toISOString().split('T')[0],
+          shortDescription: 'Passionate about building beautiful, interactive user interfaces with modern React ecosystems.',
+          profileImage: 'https://i.pravatar.cc/150?u=mock-102'
+        },
+        {
+          id: 'mock-103',
+          name: 'Sarah Johnson',
+          email: 'sarah.j@example.com',
+          phone: '+91 99999 55555',
+          location: 'Pune, India',
+          role: 'Lead UI/UX Designer',
+          jobTitle: 'Lead UI/UX Designer',
+          client: 'Google',
+          experience: '8 Years',
+          currentCTC: '25 LPA',
+          expectedCTC: '32 LPA',
+          noticePeriod: '60 Days',
+          skills: ['Figma', 'Adobe XD', 'Prototyping', 'User Research'],
+          stage: 'Technical Round',
+          source: 'Referral',
+          rating: 4.8,
+          appliedDate: new Date().toISOString().split('T')[0],
+          lastActivity: new Date().toISOString().split('T')[0],
+          shortDescription: 'Senior design leader focused on human-centric product design and cross-functional team leadership.',
+          profileImage: 'https://i.pravatar.cc/150?u=mock-103'
+        }
+      ];
+    } catch {
+      return [];
+    }
   });
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -131,45 +202,30 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
   const [selectedResumeProfileId, setSelectedResumeProfileId] = useState('');
   const [selectedResumeProfile, setSelectedResumeProfile] = useState(null);
   const [newCandidate, setNewCandidate] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    location: '',
-    jobTitle: '',
-    client: '',
-    experience: '',
-    currentCTC: '',
-    expectedCTC: '',
-    noticePeriod: '30 days',
-    skills: '',
-    positionId: '',
-    clientId: '',
-    roleType: '',
-    source: '',
-    resumeId: '',
+    name: '', email: '', phone: '', location: '', jobTitle: '', client: '',
+    experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days',
+    skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: ''
   });
   const [resumeFile, setResumeFile] = useState(null);
   const fileInputRef = useRef(null);
   const bulkUploadInputRef = useRef(null);
 
-  // Role Types for the Resume Bank
   const [roleTypes, setRoleTypes] = useState([]);
   const [roleTypesLoading, setRoleTypesLoading] = useState(false);
-
-  // Job Openings from localStorage (synced from JobOpeningsTab)
-  const [jobOpenings, setJobOpenings] = useState([]);
-  // Resume Bank matches
+  const [jobOpenings, setJobOpenings] = useState([
+    { id: 'pos-101', title: 'Senior Software Engineer', clientName: 'TechSolutions Inc.' },
+    { id: 'pos-102', title: 'Frontend Developer', clientName: 'Microsoft' },
+    { id: 'pos-103', title: 'UI/UX Designer', clientName: 'Google' }
+  ]);
   const [showResumeBankModal, setShowResumeBankModal] = useState(false);
   const [resumeBankResumes, setResumeBankResumes] = useState([]);
   const [resumeBankLoading, setResumeBankLoading] = useState(false);
   const [resumeBankRole, setResumeBankRole] = useState('');
 
-  // ── View & UI State ──
   const [isKanbanView, setIsKanbanView] = useState(true);
   const [selectedCandidateDetail, setSelectedCandidateDetail] = useState(null);
   const [showDetailSidebar, setShowDetailSidebar] = useState(false);
 
-  // ── Kanban Logic ──
   const onDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
@@ -179,54 +235,34 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     const newStage = destination.droppableId;
     const now = new Date().toISOString().split('T')[0];
 
-    // Local update
-    setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, stage: newStage, lastActivity: now, stageChangedAt: now } : c));
+    setCandidates(prev => prev.map(c => String(c.id) === String(candidateId) ? { ...c, stage: newStage, lastActivity: now, stageChangedAt: now } : c));
 
-    // Backend update
     try {
       await updateCandidateStatus(candidateId, { stage: newStage });
     } catch (error) {
       console.error('Failed to update candidate stage after drag:', error);
-      // Optional: rollback on failure, but for snappy UI we keep it local for now
     }
   };
 
-  // ── Bulk Actions ──
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [showBulkActions, setShowBulkActions] = useState(false);
-
-  // ── Notes ──
   const [candidateNotes, setCandidateNotes] = useState({});
   const [newNote, setNewNote] = useState('');
-
-  // ── Reject Modal ──
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectCandidateId, setRejectCandidateId] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectCustomReason, setRejectCustomReason] = useState('');
 
-  // ── Advanced Filters ──
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [filterClient, setFilterClient] = useState('all');
   const [filterSource, setFilterSource] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
-
-  // ── Analytics ──
   const [showAnalytics, setShowAnalytics] = useState(false);
-
-  // ── Stage Actions Menu ──
   const [stageMenuId, setStageMenuId] = useState(null);
-
-  // ── Pipeline Status Filter ──
-  const [filterPipelineStatus, setFilterPipelineStatus] = useState('all'); // 'all' | 'pending' | 'hold' | 'approved' | 'rejected'
-
-  // ── Date Filter ──
+  const [filterPipelineStatus, setFilterPipelineStatus] = useState('all');
   const [filterDate, setFilterDate] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
-  // ── Approve Modal ──
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [approveCandidateId, setApproveCandidateId] = useState(null);
   const [approveInterviewRound, setApproveInterviewRound] = useState('Phone Screening');
@@ -240,176 +276,108 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
   const generateMeetLink = () => {
     const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-    const makeChunk = (size) =>
-      Array.from({ length: size }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+    const makeChunk = (size) => Array.from({ length: size }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
     return `https://meet.google.com/${makeChunk(3)}-${makeChunk(4)}-${makeChunk(3)}`;
   };
 
   useEffect(() => {
-    if (quickAction === 'add-candidate') {
-      setShowAddModal(true);
-      onQuickActionHandled?.();
-    }
+    if (quickAction === 'add-candidate') { setShowAddModal(true); onQuickActionHandled?.(); }
   }, [quickAction, onQuickActionHandled]);
 
-  // Read job openings from localStorage
   useEffect(() => {
-    // Fetch real positions from API
     const fetchPositions = async () => {
       try {
         const response = await getAllRecruitmentPositions();
         if (response.success && Array.isArray(response.data)) {
           const positions = response.data.map(p => ({
-            id: p.id,
-            title: p.title,
-            client: p.clientName || 'Unknown Client',
-            clientId: p.clientId,
-            openings: p.openings || 1,
-            filled: p.filled || 0,
-            roleType: p.roleType
+            id: p.id, title: p.title, client: p.clientName || 'Unknown Client',
+            clientId: p.clientId, openings: p.openings || 1, filled: p.filled || 0, roleType: p.roleType
           }));
           setJobOpenings(positions);
           localStorage.setItem('kamJobOpenings', JSON.stringify(positions));
         }
       } catch (err) {
         console.error('Failed to fetch recruitment positions:', err);
-        // Fallback to localStorage if API fails
         const storedJobs = localStorage.getItem('kamJobOpenings');
-        if (storedJobs) {
-          setJobOpenings(JSON.parse(storedJobs));
-        }
+        if (storedJobs) setJobOpenings(JSON.parse(storedJobs));
       }
     };
-
     fetchPositions();
 
-    // Check for resumes selected from JobOpeningsTab
     const selectedData = localStorage.getItem('kamSelectedResumes');
     if (selectedData) {
       try {
         const resumes = JSON.parse(selectedData);
-        const newCandidates = resumes.map(resume => ({
+        const newCandidatesArr = resumes.map(resume => ({
           id: Date.now() + Math.random(),
           name: resume.candidateName || resume.fileName?.replace(/\.[^.]+$/, '') || 'Unknown',
-          email: resume.email || '',
-          phone: resume.phone || '',
-          location: resume.location || '',
-          jobTitle: resume.jobTitle || '',
-          client: resume.client || '',
-          stage: 'Screening',
-          rating: 0,
-          experience: resume.experience || '',
-          currentCTC: resume.currentCTC || '',
-          expectedCTC: resume.expectedCTC || '',
-          noticePeriod: '30 days',
-          skills: resume.skills || [],
-          appliedDate: new Date().toISOString().split('T')[0],
-          lastActivity: new Date().toISOString().split('T')[0],
-          photo: null,
-          source: 'Resume Bank',
-          resumeId: resume.id,
-          pipelineStatus: 'pending',
+          email: resume.email || '', phone: resume.phone || '', location: resume.location || '',
+          jobTitle: resume.jobTitle || '', client: resume.client || '', stage: 'Screening',
+          rating: 0, experience: resume.experience || '', currentCTC: resume.currentCTC || '',
+          expectedCTC: resume.expectedCTC || '', noticePeriod: '30 days', skills: resume.skills || [],
+          appliedDate: new Date().toISOString().split('T')[0], lastActivity: new Date().toISOString().split('T')[0],
+          photo: null, source: 'Resume Bank', resumeId: resume.id, pipelineStatus: 'pending',
         }));
-        setCandidates(prev => [...newCandidates, ...prev]);
+        setCandidates(prev => [...newCandidatesArr, ...prev]);
         localStorage.removeItem('kamSelectedResumes');
       } catch (e) {
         console.error('Failed to process selected resumes');
       }
     }
 
-    // Listen for storage changes (when JobOpeningsTab updates)
     const handleStorage = (e) => {
       if (e.key === 'kamJobOpenings' && e.newValue) {
-        try {
-          setJobOpenings(JSON.parse(e.newValue));
-        } catch (err) {
-          console.error('Failed to parse job openings update');
-        }
+        try { setJobOpenings(JSON.parse(e.newValue)); } catch (err) { console.error('Failed to parse job openings update'); }
       }
-      // Listen for resumes selected from JobOpeningsTab
       if (e.key === 'kamSelectedResumes' && e.newValue) {
         try {
           const resumes = JSON.parse(e.newValue);
-          const newCandidates = resumes.map(resume => ({
+          const newCandidatesArr = resumes.map(resume => ({
             id: Date.now() + Math.random(),
             name: resume.candidateName || resume.fileName?.replace(/\.[^.]+$/, '') || 'Unknown',
-            email: resume.email || '',
-            phone: resume.phone || '',
-            location: resume.location || '',
-            jobTitle: resume.jobTitle || '',
-            client: resume.client || '',
-            stage: 'Screening',
-            rating: 0,
-            experience: resume.experience || '',
-            currentCTC: resume.currentCTC || '',
-            expectedCTC: resume.expectedCTC || '',
-            noticePeriod: '30 days',
-            skills: resume.skills || [],
-            appliedDate: new Date().toISOString().split('T')[0],
-            lastActivity: new Date().toISOString().split('T')[0],
-            photo: null,
-            source: 'Resume Bank',
-            resumeId: resume.id,
-            pipelineStatus: 'pending',
+            email: resume.email || '', phone: resume.phone || '', location: resume.location || '',
+            jobTitle: resume.jobTitle || '', client: resume.client || '', stage: 'Screening',
+            rating: 0, experience: resume.experience || '', currentCTC: resume.currentCTC || '',
+            expectedCTC: resume.expectedCTC || '', noticePeriod: '30 days', skills: resume.skills || [],
+            appliedDate: new Date().toISOString().split('T')[0], lastActivity: new Date().toISOString().split('T')[0],
+            photo: null, source: 'Resume Bank', resumeId: resume.id, pipelineStatus: 'pending',
           }));
-          setCandidates(prev => [...newCandidates, ...prev]);
+          setCandidates(prev => [...newCandidatesArr, ...prev]);
           localStorage.removeItem('kamSelectedResumes');
-        } catch (err) {
-          console.error('Failed to process selected resumes update');
-        }
+        } catch (err) { console.error('Failed to process selected resumes update'); }
       }
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  // Fetch Role Types
   useEffect(() => {
     const fetchRoles = async () => {
       setRoleTypesLoading(true);
       try {
         const response = await getResumeRoleTypes();
         const rolesData = response.data || response.roles || [];
-        const mapped = rolesData.map(r => ({ role: r.role || r.name || r.roleType || '', count: r.count || 0 }));
-        setRoleTypes(mapped);
-      } catch (err) {
-        console.error('Failed to fetch role types:', err);
-      } finally {
-        setRoleTypesLoading(false);
-      }
+        setRoleTypes(rolesData.map(r => ({ role: r.role || r.name || r.roleType || '', count: r.count || 0 })));
+      } catch (err) { console.error('Failed to fetch role types:', err); }
+      finally { setRoleTypesLoading(false); }
     };
     fetchRoles();
   }, []);
 
-  // Auto-fetch Resume Bank suggestions when roleType changes in modal
   useEffect(() => {
     if (showAddModal && newCandidate.roleType) {
-      const searchTerm = newCandidate.roleType.split(' (')[0];
-      fetchResumeBankMatches(searchTerm);
+      const searchTermVal = newCandidate.roleType.split(' (')[0];
+      fetchResumeBankMatches(searchTermVal);
     }
   }, [showAddModal, newCandidate.roleType]);
 
-  // Fetch matching resumes from Resume Bank
   const fetchResumeBankMatches = async (roleKeyword) => {
     setResumeBankLoading(true);
     setResumeBankRole(roleKeyword);
     try {
-      const selectedJob = jobOpenings.find(
-        (job) => job.title === roleKeyword || job.id === roleKeyword || `${job.title} — ${job.client}` === roleKeyword
-      );
-
-      const cleanedKeyword = String(roleKeyword || '')
-        .replace(/[._-]+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      const fallbackTerms = [
-        selectedJob?.roleType,
-        selectedJob?.title,
-        roleKeyword,
-        cleanedKeyword,
-        cleanedKeyword.split(' ')[0],
-      ].filter((term, index, list) => term && list.indexOf(term) === index);
+      const selectedJob = jobOpenings.find(j => j.title === roleKeyword || j.id === roleKeyword || `${j.title} — ${j.client}` === roleKeyword);
+      const cleanedKeyword = String(roleKeyword || '').replace(/[._-]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const fallbackTerms = [selectedJob?.roleType, selectedJob?.title, roleKeyword, cleanedKeyword, cleanedKeyword.split(' ')[0]].filter((term, index, list) => term && list.indexOf(term) === index);
 
       let matchedResumes = [];
       for (const term of fallbackTerms) {
@@ -417,68 +385,38 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         matchedResumes = response.data || [];
         if (matchedResumes.length > 0) break;
       }
-
       setResumeBankResumes(matchedResumes);
-    } catch (error) {
-      console.error('Failed to fetch resume bank matches:', error);
-      setResumeBankResumes([]);
-    } finally {
-      setResumeBankLoading(false);
-    }
+    } catch (error) { console.error('Failed to fetch resume bank matches:', error); setResumeBankResumes([]); }
+    finally { setResumeBankLoading(false); }
   };
 
-  // Convert resume bank resume to candidate
   const addFromResumeBank = async (resume) => {
     const candidateLocal = {
       id: Date.now() + Math.random(),
       name: resume.candidateName || resume.fileName?.replace(/\.[^.]+$/, '') || 'Unknown',
-      email: resume.email || '',
-      phone: resume.phone || '',
-      location: resume.location || '',
-      jobTitle: resumeBankRole || '',
-      client: '',
-      stage: 'Screening',
-      rating: 0,
-      experience: resume.experience || '',
-      currentCTC: resume.currentCTC || '',
-      expectedCTC: resume.expectedCTC || '',
-      noticePeriod: '30 days',
-      skills: resume.skills || [],
-      appliedDate: new Date().toISOString().split('T')[0],
-      lastActivity: new Date().toISOString().split('T')[0],
-      photo: null,
-      source: 'Resume Bank',
-      resumeId: resume.id,
-      pipelineStatus: 'pending',
+      email: resume.email || '', phone: resume.phone || '', location: resume.location || '',
+      jobTitle: resumeBankRole || '', client: '', stage: 'Screening', rating: 0,
+      experience: resume.experience || '', currentCTC: resume.currentCTC || '',
+      expectedCTC: resume.expectedCTC || '', noticePeriod: '30 days',
+      skills: resume.skills || [], appliedDate: new Date().toISOString().split('T')[0],
+      lastActivity: new Date().toISOString().split('T')[0], photo: null,
+      source: 'Resume Bank', resumeId: resume.id, pipelineStatus: 'pending',
     };
-
     try {
       const apiData = {
-        name: candidateLocal.name,
-        email: candidateLocal.email,
-        phone: candidateLocal.phone,
-        location: candidateLocal.location,
-        skills: candidateLocal.skills,
-        experience: candidateLocal.experience,
-        currentSalary: candidateLocal.currentCTC,
-        expectedSalary: candidateLocal.expectedCTC,
-        stage: 'Screening',
-        pipelineStatus: 'pending',
-        source: 'Resume Bank',
+        name: candidateLocal.name, email: candidateLocal.email, phone: candidateLocal.phone,
+        location: candidateLocal.location, skills: candidateLocal.skills, experience: candidateLocal.experience,
+        currentSalary: candidateLocal.currentCTC, expectedSalary: candidateLocal.expectedCTC,
+        stage: 'Screening', pipelineStatus: 'pending', source: 'Resume Bank',
       };
       if (resume.positionId) apiData.positionId = resume.positionId;
       if (resume.clientId) apiData.clientId = resume.clientId;
-
       const res = await addCandidateAPI(apiData);
       if (res?.data?._id) candidateLocal.id = res.data._id;
-    } catch (err) {
-      console.error('Failed to add resume bank candidate:', err);
-    }
-
+    } catch (err) { console.error('Failed to add resume bank candidate:', err); }
     setCandidates(prev => [candidateLocal, ...prev]);
   };
 
-  // Fetch candidates from backend
   const fetchCandidates = useCallback(async () => {
     try {
       setRefreshing(true);
@@ -486,194 +424,71 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       if (filterStage !== 'all') filters.stage = filterStage;
       if (filterPipelineStatus !== 'all') filters.pipelineStatus = filterPipelineStatus;
       if (searchTerm) filters.search = searchTerm;
-
       const res = await getAllCandidates(filters);
       if (res?.success && res.data) {
         const mapped = res.data.map(c => ({
-          id: c.id || c._id,
-          name: c.name,
-          email: c.email,
-          phone: c.phone || '',
-          location: c.location || '',
-          jobTitle: c.position?.title || '',
-          client: c.client?.companyName || c.client?.name || '',
-          stage: c.stage || 'Screening',
-          rating: c.rating || 0,
-          experience: c.experience || '',
-          currentCTC: c.currentSalary || '',
-          expectedCTC: c.expectedSalary || '',
-          noticePeriod: c.noticePeriod || '30 days',
-          skills: c.skills || [],
-          appliedDate: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
+          id: c.id || c._id, name: c.name, email: c.email, phone: c.phone || '', location: c.location || '',
+          jobTitle: c.position?.title || '', client: c.client?.companyName || c.client?.name || '',
+          stage: c.stage || 'Screening', rating: c.rating || 0, experience: c.experience || '',
+          currentCTC: c.currentSalary || '', expectedCTC: c.expectedSalary || '', noticePeriod: c.noticePeriod || '30 days',
+          skills: c.skills || [], appliedDate: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
           lastActivity: c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : '',
-          photo: null,
-          pipelineStatus: c.pipelineStatus || 'pending',
-          rejectionReason: c.rejectionReason || '',
-          source: c.source || '',
-          positionId: c.position?.id || c.position?._id,
-          clientId: c.client?.id || c.client?._id,
+          photo: null, pipelineStatus: c.pipelineStatus || 'pending', rejectionReason: c.rejectionReason || '',
+          source: c.source || '', positionId: c.position?.id || c.position?._id, clientId: c.client?.id || c.client?._id,
+          shortDescription: c.shortDescription || '',
+          requirements: c.requirements || [],
+          responsibilities: c.responsibilities || []
         }));
         setCandidates(mapped);
         try { localStorage.setItem(CACHE_KEY_CANDIDATES, JSON.stringify(mapped)); } catch { }
       }
-    } catch (error) {
-      console.error('Failed to fetch candidates:', error);
-      // Keep whatever data is already showing
-    } finally {
-      setRefreshing(false);
-    }
+    } catch (error) { console.error('Failed to fetch candidates:', error); }
+    finally { setRefreshing(false); }
   }, [filterStage, filterPipelineStatus, searchTerm]);
 
-  useEffect(() => {
-    fetchCandidates();
-  }, [fetchCandidates]);
+  useEffect(() => { fetchCandidates(); }, [fetchCandidates]);
 
-  // Pipeline stages
-  const stages = ['Screening', 'Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Offer Sent', 'Joined'];
+  const stageOrder = ['Applied', 'Screening', 'Interview', 'Offer', 'Hired'];
+  const fullStageOrder = ['Screening', 'Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Offer Sent', 'Joined'];
 
-  // Stats
   const stats = {
     total: candidates.length,
     inPipeline: candidates.filter(c => !['Joined', 'Rejected'].includes(c.stage)).length,
     offersSent: candidates.filter(c => c.stage === 'Offer Sent').length,
     joined: candidates.filter(c => c.stage === 'Joined').length,
-    pending: candidates.filter(c => (c.pipelineStatus || 'pending') === 'pending').length,
-    onHold: candidates.filter(c => c.pipelineStatus === 'hold').length,
-    approved: candidates.filter(c => c.pipelineStatus === 'approved').length,
-    rejected: candidates.filter(c => c.pipelineStatus === 'rejected').length,
   };
 
   const statCards = [
-    { label: 'Total Candidates', value: stats.total, icon: FiUsers, color: '#3FA9F5' },
-    { label: 'In Pipeline', value: stats.inPipeline, icon: FiClock, color: '#3b82f6' },
-    { label: 'Offers Sent', value: stats.offersSent, icon: FiMail, color: '#f59e0b' },
-    { label: 'Joined', value: stats.joined, icon: FiCheckCircle, color: '#10b981' },
+    { label: 'Total Candidates', value: stats.total, icon: FiUsers },
+    { label: 'In Pipeline', value: stats.inPipeline, icon: FiClock },
+    { label: 'Offers Sent', value: stats.offersSent, icon: FiMail },
+    { label: 'Joined', value: stats.joined, icon: FiCheckCircle },
   ];
 
-  // Filter candidates (advanced)
   const filteredCandidates = candidates.filter(c => {
     const matchesSearch = (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.jobTitle || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.skills && c.skills.some(skill => (skill || '').toLowerCase().includes(searchTerm.toLowerCase())));
     const matchesStage = filterStage === 'all' || c.stage === filterStage;
-    const matchesJob = filterJob === 'all' || c.jobTitle === filterJob;
-    const matchesClient = filterClient === 'all' || c.client === filterClient;
-    const matchesSource = filterSource === 'all' || c.source === filterSource;
     const matchesPipelineStatus = filterPipelineStatus === 'all' || (c.pipelineStatus || 'pending') === filterPipelineStatus;
-
-    // Date filter
-    let matchesDate = true;
-    if (filterDate !== 'all' && c.appliedDate) {
-      const candidateDate = new Date(c.appliedDate);
-      const now = new Date();
-      if (filterDate === 'today') {
-        const todayStr = now.toISOString().split('T')[0];
-        matchesDate = c.appliedDate === todayStr;
-      } else if (filterDate === 'week') {
-        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
-        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
-        matchesDate = candidateDate >= weekStart && candidateDate <= weekEnd;
-      } else if (filterDate === 'prev-week') {
-        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() - 7); weekStart.setHours(0,0,0,0);
-        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
-        matchesDate = candidateDate >= weekStart && candidateDate <= weekEnd;
-      } else if (filterDate === 'month') {
-        matchesDate = candidateDate.getMonth() === now.getMonth() && candidateDate.getFullYear() === now.getFullYear();
-      } else if (filterDate === 'prev-month') {
-        const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-        const prevMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-        matchesDate = candidateDate.getMonth() === prevMonth && candidateDate.getFullYear() === prevMonthYear;
-      } else if (filterDate === 'quarter') {
-        const currentQuarter = Math.floor(now.getMonth() / 3);
-        const candidateQuarter = Math.floor(candidateDate.getMonth() / 3);
-        matchesDate = candidateQuarter === currentQuarter && candidateDate.getFullYear() === now.getFullYear();
-      } else if (filterDate === 'prev-quarter') {
-        const currentQuarter = Math.floor(now.getMonth() / 3);
-        const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
-        const prevQuarterYear = currentQuarter === 0 ? now.getFullYear() - 1 : now.getFullYear();
-        const candidateQuarter = Math.floor(candidateDate.getMonth() / 3);
-        matchesDate = candidateQuarter === prevQuarter && candidateDate.getFullYear() === prevQuarterYear;
-      } else if (filterDate === 'year') {
-        matchesDate = candidateDate.getFullYear() === now.getFullYear();
-      } else if (filterDate === 'custom') {
-        if (customStartDate) matchesDate = candidateDate >= new Date(customStartDate);
-        if (customEndDate && matchesDate) matchesDate = candidateDate <= new Date(customEndDate + 'T23:59:59');
-      }
-    }
-
-    return matchesSearch && matchesStage && matchesJob && matchesClient && matchesSource && matchesPipelineStatus && matchesDate;
+    return matchesSearch && matchesStage && matchesPipelineStatus;
   }).sort((a, b) => {
     let cmp = 0;
     if (sortBy === 'name') cmp = (a.name || '').localeCompare(b.name || '');
     else if (sortBy === 'rating') cmp = (b.rating || 0) - (a.rating || 0);
-    else if (sortBy === 'experience') cmp = (parseInt(a.experience) || 0) - (parseInt(b.experience) || 0);
     else cmp = new Date(b.appliedDate || 0) - new Date(a.appliedDate || 0);
     return sortOrder === 'asc' ? -cmp : cmp;
   });
 
-  const uniqueJobs = [...new Set(candidates.map(c => c.jobTitle))];
-  const uniqueClients = [...new Set(candidates.map(c => c.client).filter(Boolean))];
-  const activePipelineFiltersCount = [
-    searchTerm.trim() !== '',
-    filterStage !== 'all',
-    filterPipelineStatus !== 'all',
-    filterJob !== 'all',
-    filterClient !== 'all',
-    filterSource !== 'all',
-    filterDate !== 'all',
-    sortBy !== 'date',
-    sortOrder !== 'desc',
-  ].filter(Boolean).length;
-
   const getAvatarGradient = (name) => {
-    const colors = [
-      '#64748b', // Slate
-      '#3b82f6', // Blue
-      '#1e293b', // Dark Slate
-      '#334155', // Slate 700
-      '#475569'  // Slate 600
-    ];
+    const colors = ['#64748b', '#3b82f6', '#1e293b', '#334155', '#475569'];
     return colors[(name || '').charCodeAt(0) % colors.length];
   };
 
   const getInitials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const rejectionReasons = ['Not enough experience', 'Skills mismatch', 'CTC expectation too high', 'Failed technical round', 'Failed HR round', 'Client rejected', 'Candidate withdrew', 'No-show for interview', 'Better candidate selected', 'Position closed', 'Other'];
 
-  // ── Rejection reasons ──
-  const rejectionReasons = [
-    'Not enough experience',
-    'Skills mismatch',
-    'CTC expectation too high',
-    'Failed technical round',
-    'Failed HR round',
-    'Client rejected',
-    'Candidate withdrew',
-    'No-show for interview',
-    'Better candidate selected',
-    'Position closed',
-    'Other',
-  ];
-
-  // ── Stage order for movement ──
-  const stageOrder = ['Screening', 'Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Offer Sent', 'Joined'];
-
-  // ── Move candidate to next stage ──
-  const moveToNextStage = (candidateId) => {
-    setCandidates(prev => prev.map(c => {
-      if (c.id !== candidateId) return c;
-      const currentIdx = stageOrder.indexOf(c.stage);
-      if (currentIdx < stageOrder.length - 1) {
-        const newStage = stageOrder[currentIdx + 1];
-        const now = new Date().toISOString().split('T')[0];
-        updateCandidateStatus(candidateId, { stage: newStage }).catch(err => console.error('Failed to update stage:', err));
-        return { ...c, stage: newStage, lastActivity: now, stageChangedAt: now };
-      }
-      return c;
-    }));
-    setStageMenuId(null);
-  };
-
-  // ── Move candidate to specific stage ──
   const moveToStage = (candidateId, stage) => {
     const now = new Date().toISOString().split('T')[0];
     updateCandidateStatus(candidateId, { stage }).catch(err => console.error('Failed to update stage:', err));
@@ -681,2160 +496,348 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     setStageMenuId(null);
   };
 
-  // ── Reject candidate with reason ──
   const handleReject = () => {
     const reason = rejectReason === 'Other' ? rejectCustomReason : rejectReason;
     if (!reason) return;
     const now = new Date().toISOString().split('T')[0];
     updateCandidateStatus(rejectCandidateId, { stage: 'Rejected', pipelineStatus: 'rejected', rejectionReason: reason }).catch(err => console.error('Failed to reject:', err));
-    setCandidates(prev => prev.map(c =>
-      c.id === rejectCandidateId ? { ...c, stage: 'Rejected', pipelineStatus: 'rejected', rejectionReason: reason, lastActivity: now, stageChangedAt: now } : c
-    ));
-    setShowRejectModal(false);
-    setRejectCandidateId(null);
-    setRejectReason('');
-    setRejectCustomReason('');
+    setCandidates(prev => prev.map(c => c.id === rejectCandidateId ? { ...c, stage: 'Rejected', pipelineStatus: 'rejected', rejectionReason: reason, lastActivity: now, stageChangedAt: now } : c));
+    setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason('');
   };
 
-  // ── Open reject modal ──
-  const openRejectModal = (candidateId) => {
-    setRejectCandidateId(candidateId);
-    setShowRejectModal(true);
-    setStageMenuId(null);
-  };
-
-  // ── Bulk selection ──
-  const toggleSelectCandidate = (id) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filteredCandidates.length) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filteredCandidates.map(c => c.id)));
-  };
-  const bulkMoveStage = (stage) => {
-    const now = new Date().toISOString().split('T')[0];
-    selectedIds.forEach(id => updateCandidateStatus(id, { stage }).catch(err => console.error('Bulk stage update failed:', err)));
-    setCandidates(prev => prev.map(c => selectedIds.has(c.id) ? { ...c, stage, lastActivity: now, stageChangedAt: now } : c));
-    setSelectedIds(new Set());
-    setShowBulkActions(false);
-  };
+  const openRejectModal = (candidateId) => { setRejectCandidateId(candidateId); setShowRejectModal(true); setStageMenuId(null); };
+  const toggleSelectCandidate = (id) => { setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
   const bulkReject = () => {
     const now = new Date().toISOString().split('T')[0];
     selectedIds.forEach(id => updateCandidateStatus(id, { stage: 'Rejected', pipelineStatus: 'rejected', rejectionReason: 'Bulk rejected' }).catch(err => console.error('Bulk reject failed:', err)));
     setCandidates(prev => prev.map(c => selectedIds.has(c.id) ? { ...c, stage: 'Rejected', pipelineStatus: 'rejected', rejectionReason: 'Bulk rejected', lastActivity: now, stageChangedAt: now } : c));
     setSelectedIds(new Set());
-    setShowBulkActions(false);
   };
 
-  // ── Add note ──
   const addNote = (candidateId) => {
     if (!newNote.trim()) return;
-    setCandidateNotes(prev => ({
-      ...prev,
-      [candidateId]: [...(prev[candidateId] || []), { text: newNote, date: new Date().toISOString(), author: 'You' }]
-    }));
+    setCandidateNotes(prev => ({ ...prev, [candidateId]: [...(prev[candidateId] || []), { text: newNote, date: new Date().toISOString(), author: 'You' }] }));
     setNewNote('');
   };
-                                                                
-  // ── Stage duration calculator ──
+
   const getStageDuration = (candidate) => {
     const changedAt = candidate.stageChangedAt || candidate.appliedDate;
     if (!changedAt) return '';
     const days = Math.floor((new Date() - new Date(changedAt)) / (1000 * 60 * 60 * 24));
-    if (days === 0) return 'Today';
-    if (days === 1) return '1 day';
-    return `${days} days`;
+    return days === 0 ? 'Today' : (days === 1 ? '1 day' : `${days} days`);
   };
 
-  // ── Export to CSV ──
-  const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Phone', 'Location', 'Job Title', 'Client', 'Stage', 'Experience', 'Current CTC', 'Expected CTC', 'Notice Period', 'Applied Date', 'Rating', 'Skills', 'Status'];
-    const rows = filteredCandidates.map(c => [c.name, c.email, c.phone, c.location, c.jobTitle, c.client, c.stage, c.experience, c.currentCTC, c.expectedCTC, c.noticePeriod, c.appliedDate, c.rating, (c.skills || []).join(', '), c.pipelineStatus || 'pending']);
-    const csv = [headers.join(','), ...rows.map(r => r.map(val => `"${val || ''}"`).join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `candidate-pipeline-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // ── Stage Conversion Analytics ──
-  const getConversionStats = () => {
-    return stageOrder.map((stage, idx) => {
-      const count = candidates.filter(c => c.stage === stage).length;
-      const prevCount = idx === 0 ? candidates.length : candidates.filter(c => stageOrder.indexOf(c.stage) >= idx || c.stage === 'Rejected').length;
-      const rate = prevCount > 0 ? Math.round((count / prevCount) * 100) : 0;
-      return { stage, count, rate };
-    });
-  };
-
-  // ── Open detail view (inline, replaces list) ──
-  const openDetail = (candidate) => {
-    setDrawerCandidate(candidate);
-    setStageMenuId(null);
-  };
-
+  const openDetail = (candidate) => { setDrawerCandidate(candidate); setStageMenuId(null); };
   const [drawerCandidate, setDrawerCandidate] = useState(null);
-
-  // ── Hold candidate (toggle) ──
   const holdCandidate = (candidateId) => {
-    const now = new Date().toISOString().split('T')[0];
     const candidate = candidates.find(c => c.id === candidateId);
     const newStatus = (candidate?.pipelineStatus || 'pending') === 'hold' ? 'pending' : 'hold';
     updateCandidateStatus(candidateId, { pipelineStatus: newStatus }).catch(err => console.error('Failed to toggle hold:', err));
-    setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, pipelineStatus: newStatus, lastActivity: now } : c));
+    setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, pipelineStatus: newStatus, lastActivity: new Date().toISOString().split('T')[0] } : c));
     setStageMenuId(null);
   };
 
-  // ── Pipeline reject (different from stage reject) ──
-  const pipelineRejectCandidate = (candidateId) => {
-    openRejectModal(candidateId);
-  };
-
-  // ── Open Approve modal ──
   const openApproveModal = (candidateId) => {
     setApproveCandidateId(candidateId);
-    setApproveInterviewRound('Phone Screening');
-    setApproveInterviewType('Video');
-    setApproveInterviewDate('');
-    setApproveInterviewTime('');
-    setApproveInterviewDuration('60 mins');
-    setApproveInterviewer('');
-    setApproveInterviewerRole('');
-    setApproveMeetLink('');
-    setShowApproveModal(true);
-    setStageMenuId(null);
+    setApproveInterviewRound('Phone Screening'); setApproveInterviewType('Video'); setApproveInterviewDate(''); setApproveInterviewTime(''); setApproveInterviewDuration('60 mins'); setApproveInterviewer(''); setApproveInterviewerRole(''); setApproveMeetLink('');
+    setShowApproveModal(true); setStageMenuId(null);
   };
 
-  // ── Approve candidate → push to Interview Schedule ──
   const handleApproveCandidate = async () => {
     const candidate = candidates.find(c => c.id === approveCandidateId);
     if (!candidate) return;
-
     try {
       const now = new Date().toISOString().split('T')[0];
       const interviewDate = approveInterviewDate || new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0];
       const startTime = approveInterviewTime || '10:00 AM';
-
-      // Schedule in backend
       const apiResponse = await scheduleNewInterview({
-        candidateId: approveCandidateId,
-        positionId: candidate.positionId,
-        clientId: candidate.clientId,
-        candidateName: candidate.name,
-        candidateEmail: candidate.email,
-        positionTitle: candidate.jobTitle,
-        clientName: candidate.client,
-        interviewType: approveInterviewRound,
-        interviewDate: interviewDate,
-        startTime: startTime,
-        duration: parseInt(approveInterviewDuration, 10) || 60,
-        meetingType: approveInterviewType,
-        interviewerName: approveInterviewer || 'Hiring Team',
-        interviewerRole: approveInterviewerRole || 'Interviewer',
+        candidateId: approveCandidateId, positionId: candidate.positionId, clientId: candidate.clientId,
+        candidateName: candidate.name, candidateEmail: candidate.email, positionTitle: candidate.jobTitle,
+        clientName: candidate.client, interviewType: approveInterviewRound, interviewDate: interviewDate,
+        startTime: startTime, duration: parseInt(approveInterviewDuration, 10) || 60, meetingType: approveInterviewType,
+        interviewerName: approveInterviewer || 'Hiring Team', interviewerRole: approveInterviewerRole || 'Interviewer',
         notes: 'Approved from Candidate Pipeline'
       });
-
-      // Update pipeline status to approved in backend
       await updateCandidateStatus(approveCandidateId, { pipelineStatus: 'approved' });
-
-      // Update local state
       setCandidates(prev => prev.map(c => c.id === approveCandidateId ? { ...c, pipelineStatus: 'approved', lastActivity: now } : c));
-
-      // Create interview entry for local immediate feedback (localStorage still used as signal for InterviewScheduleTab)
       const interviewEntry = {
-        id: apiResponse.data?.id || Date.now(),
-        candidateName: candidate.name,
-        candidateEmail: candidate.email,
-        position: candidate.jobTitle,
-        client: candidate.client,
-        round: approveInterviewRound,
-        type: approveInterviewType,
-        date: interviewDate,
-        time: startTime,
-        duration: approveInterviewDuration,
-        interviewer: approveInterviewer || 'Hiring Team',
-        interviewerRole: approveInterviewerRole || 'Interviewer',
-        status: 'Scheduled',
+        id: apiResponse.data?.id || Date.now(), candidateName: candidate.name, candidateEmail: candidate.email,
+        position: candidate.jobTitle, client: candidate.client, round: approveInterviewRound, type: approveInterviewType,
+        date: interviewDate, time: startTime, duration: approveInterviewDuration, interviewer: approveInterviewer || 'Hiring Team',
+        interviewerRole: approveInterviewerRole || 'Interviewer', status: 'Scheduled',
         meetLink: apiResponse.data?.meetingLink || (approveInterviewType === 'Video' ? approveMeetLink || generateMeetLink() : null),
-        photo: candidate.photo || null,
-        phone: candidate.phone || '',
-        location: candidate.location || '',
-        skills: candidate.skills || [],
-        experience: candidate.experience || '',
-        source: 'Pipeline Approval',
       };
-
       const existing = JSON.parse(localStorage.getItem('kamApprovedInterviews') || '[]');
       existing.push(interviewEntry);
       localStorage.setItem('kamApprovedInterviews', JSON.stringify(existing));
       window.dispatchEvent(new StorageEvent('storage', { key: 'kamApprovedInterviews', newValue: JSON.stringify(existing) }));
-
-      setShowApproveModal(false);
-      setApproveCandidateId(null);
-    } catch (error) {
-      console.error('Failed to complete approval process:', error);
-      // Fallback UI or error message could go here
-    }
+      setShowApproveModal(false); setApproveCandidateId(null);
+    } catch (error) { console.error('Failed to complete approval process:', error); }
   };
 
-  // ── Bulk approve ──
-  const bulkApprove = async () => {
-    const now = new Date().toISOString().split('T')[0];
-    const approvedCandidates = candidates.filter(c => selectedIds.has(c.id));
-    
-    try {
-      // Update all selected candidates status and create interview records in backend
-      await Promise.all(approvedCandidates.map(async (c) => {
-        // Schedule interview record in backend
-        const apiResponse = await scheduleNewInterview({
-          candidateId: c.id,
-          positionId: c.positionId,
-          clientId: c.clientId,
-          candidateName: c.name,
-          candidateEmail: c.email,
-          positionTitle: c.jobTitle,
-          clientName: c.client,
-          interviewType: 'Phone Screening',
-          interviewDate: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
-          startTime: '10:00 AM',
-          duration: 60,
-          meetingType: 'Video',
-          interviewerName: 'Hiring Team',
-          interviewerRole: 'Interviewer',
-          notes: 'Bulk Approved from Candidate Pipeline'
-        });
-
-        // Update pipeline status to approved in backend
-        await updateCandidateStatus(c.id, { pipelineStatus: 'approved' });
-        
-        return {
-          ...c,
-          id: apiResponse.data?.id || c.id,
-          meetLink: apiResponse.data?.meetingLink
-        };
-      }));
-
-      // Update local state
-      setCandidates(prev => prev.map(c => selectedIds.has(c.id) ? { ...c, pipelineStatus: 'approved', lastActivity: now } : c));
-
-      // Push all to Interview Schedule localStorage for signal
-      const entries = approvedCandidates.map(c => ({
-        id: Date.now() + Math.random(),
-        candidateName: c.name,
-        candidateEmail: c.email,
-        position: c.jobTitle,
-        client: c.client,
-        round: 'Phone Screening',
-        type: 'Video',
-        date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
-        time: '10:00 AM',
-        duration: '60 mins',
-        interviewer: 'Hiring Team',
-        interviewerRole: '',
-        status: 'Scheduled',
-        meetLink: `https://meet.google.com/abc-defg-hij`,
-        photo: c.photo || null,
-        phone: c.phone || '',
-        location: c.location || '',
-        skills: c.skills || [],
-        experience: c.experience || '',
-        source: 'Pipeline Approval',
-      }));
-
-      const existing = JSON.parse(localStorage.getItem('kamApprovedInterviews') || '[]');
-      localStorage.setItem('kamApprovedInterviews', JSON.stringify([...existing, ...entries]));
-      window.dispatchEvent(new StorageEvent('storage', { key: 'kamApprovedInterviews', newValue: JSON.stringify([...existing, ...entries]) }));
-
-      setSelectedIds(new Set());
-    } catch (error) {
-      console.error('Bulk approve process failed:', error);
-    }
-  };
-
-  // ── Bulk hold ──
-  const bulkHold = () => {
-    const now = new Date().toISOString().split('T')[0];
-    selectedIds.forEach(id => updateCandidateStatus(id, { pipelineStatus: 'hold' }).catch(err => console.error('Bulk hold failed:', err)));
-    setCandidates(prev => prev.map(c => selectedIds.has(c.id) ? { ...c, pipelineStatus: 'hold', lastActivity: now } : c));
-    setSelectedIds(new Set());
-  };
-
-  // Handle Add Candidate
   const handleAddCandidate = async () => {
-    const generatedResumeBankEmail = newCandidate.resumeId && !newCandidate.email
-      ? `${(newCandidate.name || 'candidate').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '') || 'candidate'}.${Date.now()}@resume-bank.local`
-      : newCandidate.email;
-
-    if (!newCandidate.name || !generatedResumeBankEmail || !newCandidate.jobTitle) {
-      alert('Please fill required fields (Name, Email, Job Title)');
-      return;
-    }
-    const skillsArr = newCandidate.skills.split(',').map(s => s.trim()).filter(Boolean);
-    const candidateLocal = {
-      id: Date.now(),
-      ...newCandidate,
-      email: generatedResumeBankEmail,
-      stage: 'Screening',
-      rating: 0,
-      skills: skillsArr,
-      appliedDate: new Date().toISOString().split('T')[0],
-      lastActivity: new Date().toISOString().split('T')[0],
-      photo: null,
-      pipelineStatus: 'pending',
-    };
-
+    if (!newCandidate.name || !newCandidate.email || !newCandidate.jobTitle) { alert('Please fill required fields (Name, Email, Job Title)'); return; }
+    const skillsArr = (newCandidate.skills || '').split(',').map(s => s.trim()).filter(Boolean);
+    // FOR UI FIX/TESTING: Add locally immediately
     try {
+      const skillsArr = (newCandidate.skills || '').split(',').map(s => s.trim()).filter(Boolean);
+      const mapped = {
+        id: Date.now().toString(),
+        name: newCandidate.name,
+        email: newCandidate.email,
+        phone: newCandidate.phone || '',
+        location: newCandidate.location || '',
+        jobTitle: jobOpenings.find(p => p.id === newCandidate.positionId)?.title || newCandidate.jobTitle || 'Candidate',
+        client: jobOpenings.find(p => p.id === newCandidate.positionId)?.clientName || newCandidate.client || '',
+        stage: 'Screening',
+        rating: 0,
+        experience: newCandidate.experience || '',
+        currentCTC: newCandidate.currentCTC || '',
+        expectedCTC: newCandidate.expectedCTC || '',
+        noticePeriod: newCandidate.noticePeriod || '30 days',
+        skills: skillsArr,
+        appliedDate: new Date().toISOString().split('T')[0],
+        lastActivity: new Date().toISOString().split('T')[0],
+        photo: null,
+        pipelineStatus: 'pending',
+      };
+      setCandidates(prev => [mapped, ...prev]);
+
       const formData = new FormData();
-      formData.append('name', newCandidate.name);
-      formData.append('email', generatedResumeBankEmail);
-      formData.append('phone', newCandidate.phone);
-      formData.append('location', newCandidate.location);
-      formData.append('skills', skillsArr.join(', '));
-      formData.append('experience', newCandidate.experience);
-      formData.append('currentSalary', newCandidate.currentCTC);
-      formData.append('expectedSalary', newCandidate.expectedCTC);
-      formData.append('noticePeriod', newCandidate.noticePeriod);
-      formData.append('stage', 'Screening');
+      formData.append('name', newCandidate.name); formData.append('email', newCandidate.email);
+      formData.append('phone', newCandidate.phone); formData.append('location', newCandidate.location);
+      formData.append('skills', skillsArr.join(', ')); formData.append('experience', newCandidate.experience);
+      formData.append('currentSalary', newCandidate.currentCTC); formData.append('expectedSalary', newCandidate.expectedCTC);
+      formData.append('noticePeriod', newCandidate.noticePeriod); formData.append('stage', 'Screening');
       formData.append('pipelineStatus', 'pending');
-      if (newCandidate.source) formData.append('source', newCandidate.source);
-      if (selectedResumeProfile?.webUrl) formData.append('cvUrl', selectedResumeProfile.webUrl);
-      if (selectedResumeProfile?.fileName) formData.append('cvFileName', selectedResumeProfile.fileName);
-      
       if (newCandidate.positionId) formData.append('positionId', newCandidate.positionId);
       if (newCandidate.clientId) formData.append('clientId', newCandidate.clientId);
-      if (newCandidate.roleType) formData.append('roleType', newCandidate.roleType.split(' (')[0]);
       if (resumeFile) formData.append('resume', resumeFile);
 
       const res = await addCandidateAPI(formData);
-      
       if (res?.success && res.data) {
-        const c = res.data;
-        const mappedCandidate = {
-          id: c.id || c._id,
-          name: c.name,
-          email: c.email,
-          phone: c.phone || '',
-          location: c.location || '',
-          jobTitle: c.position?.title || newCandidate.jobTitle || '',
-          client: c.client?.companyName || c.client?.name || newCandidate.client || '',
-          stage: c.stage || 'Screening',
-          rating: c.rating || 0,
-          experience: c.experience || '',
-          currentCTC: c.currentSalary || '',
-          expectedCTC: c.expectedSalary || '',
-          noticePeriod: c.noticePeriod || '30 days',
-          skills: c.skills || [],
-          appliedDate: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          lastActivity: c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          photo: null,
-          pipelineStatus: c.pipelineStatus || 'pending',
-          rejectionReason: c.rejectionReason || '',
-          source: c.source || '',
-          positionId: c.position?.id || c.position?._id,
-          clientId: c.client?.id || c.client?._id,
-          cvUrl: c.cvUrl || null,
-          cvFileName: c.cvFileName || null,
-        };
-        setCandidates(prev => [mappedCandidate, ...prev]);
-      } else {
-        // Fallback to local if response is weird but success
-        setCandidates(prev => [candidateLocal, ...prev]);
+        // Optional: Update with real ID from server
+        setCandidates(prev => prev.map(c => c.id === mapped.id ? { ...c, id: res.data.id || res.data._id } : c));
       }
     } catch (err) {
-      console.error('Failed to add candidate to backend:', err);
-      // Still show local to user so they don't lose progress, but maybe show warning
-      setCandidates(prev => [candidateLocal, ...prev]);
+      console.warn('API Offline - Running in Local Mode');
     }
-
-    setShowAddModal(false);
-    setResumeFile(null);
-    setNewCandidate({
-      name: '',
-      email: '',
-      phone: '',
-      location: '',
-      jobTitle: '',
-      client: '',
-      experience: '',
-      currentCTC: '',
-      expectedCTC: '',
-      noticePeriod: '30 days',
-      skills: '',
-      positionId: '',
-      clientId: '',
-      roleType: '',
-    });
+    setShowAddModal(false); setResumeFile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' });
   };
 
-  const resetBulkUploadModal = () => {
-    setBulkUploadFiles([]);
-    setBulkUploadPositionId('');
-    setBulkUploading(false);
-  };
-
-  const handleBulkFilesSelected = (fileList) => {
-    const files = Array.from(fileList || []).filter(Boolean);
-    setBulkUploadFiles(files);
-  };
-
+  const resetBulkUploadModal = () => { setBulkUploadFiles([]); setBulkUploadPositionId(''); setBulkUploading(false); };
+  const handleBulkFilesSelected = (fileList) => setBulkUploadFiles(Array.from(fileList || []).filter(Boolean));
   const handleBulkResumeUpload = async () => {
-    if (bulkUploadFiles.length === 0) {
-      alert('Please select at least one resume.');
-      return;
-    }
-
+    if (bulkUploadFiles.length === 0) { alert('Please select resumes.'); return; }
     setBulkUploading(true);
     try {
       const selectedJob = jobOpenings.find(job => job.id === bulkUploadPositionId);
       const formData = new FormData();
-
-      bulkUploadFiles.forEach(file => {
-        formData.append('resume', file);
-      });
-
+      bulkUploadFiles.forEach(file => formData.append('resume', file));
       if (bulkUploadPositionId) formData.append('positionId', bulkUploadPositionId);
       if (selectedJob?.clientId) formData.append('clientId', selectedJob.clientId);
-
       const res = await uploadResumes(formData);
-
       if (res?.success && Array.isArray(res.data)) {
-        const uploadedCandidates = res.data.map(candidate => ({
-          id: candidate.id || candidate._id,
-          name: candidate.name,
-          email: candidate.email || '',
-          phone: candidate.phone || '',
-          location: candidate.location || '',
-          jobTitle: selectedJob?.title || '',
-          client: selectedJob?.client || '',
-          stage: candidate.stage || 'Screening',
-          rating: candidate.rating || 0,
-          experience: candidate.experience || '',
-          currentCTC: candidate.currentSalary || '',
-          expectedCTC: candidate.expectedSalary || '',
-          noticePeriod: candidate.noticePeriod || '',
-          skills: candidate.skills || [],
-          appliedDate: candidate.createdAt ? new Date(candidate.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          lastActivity: candidate.updatedAt ? new Date(candidate.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          photo: null,
-          pipelineStatus: candidate.pipelineStatus || 'pending',
-          cvUrl: candidate.cvUrl || null,
-          cvFileName: candidate.cvFileName || null,
+        const uploaded = res.data.map(c => ({
+          id: c.id || c._id, name: c.name, email: c.email || '', phone: c.phone || '', location: c.location || '',
+          jobTitle: selectedJob?.title || '', client: selectedJob?.client || '', stage: c.stage || 'Screening',
+          rating: c.rating || 0, experience: c.experience || '', currentCTC: c.currentSalary || '',
+          expectedCTC: c.expectedSalary || '', noticePeriod: c.noticePeriod || '', skills: c.skills || [],
+          appliedDate: new Date().toISOString().split('T')[0], lastActivity: new Date().toISOString().split('T')[0],
+          photo: null, pipelineStatus: c.pipelineStatus || 'pending',
         }));
-
-        setCandidates(prev => [...uploadedCandidates, ...prev]);
-        setShowUploadModal(false);
-        resetBulkUploadModal();
-      } else {
-        alert(res?.message || 'Upload failed');
-      }
-    } catch (error) {
-      console.error('Bulk resume upload failed:', error);
-      alert(error?.message || 'Failed to upload resumes');
-    } finally {
-      setBulkUploading(false);
-    }
+        setCandidates(prev => [...uploaded, ...prev]); setShowUploadModal(false); resetBulkUploadModal();
+      } else alert(res?.message || 'Upload failed');
+    } catch (error) { console.error('Bulk upload failed:', error); }
+    finally { setBulkUploading(false); }
   };
 
-  // Skeleton loader
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="space-y-2">
-            <div className={`h-8 w-64 rounded-lg animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
-            <div className={`h-4 w-40 rounded-lg animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className={`h-28 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
-          ))}
-        </div>
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className={`h-32 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div>Loading...</div>;
 
-  // ══════════════════════════════════════════════════════
-  // ── CANDIDATE DETAIL FULL PAGE VIEW (inline) ──
-  // ══════════════════════════════════════════════════════
   if (showDetailSidebar && selectedCandidateDetail) {
     return (
-      <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
-
-          {/* Back Button */}
-          <motion.button
-            whileHover={{ x: -4 }}
-            onClick={() => { setShowDetailSidebar(false); setSelectedCandidateDetail(null); }}
-            className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-[#1E88E5] hover:text-[#3FA9F5]' : 'text-[#1E88E5] hover:text-[#0D47A1]'}`}
-          >
-            <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
-          </motion.button>
-
-          {/* Premium Hero Header */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={`rounded-3xl border-2 overflow-hidden relative ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 shadow-2xl' : 'bg-white border-slate-100 shadow-xl'}`}>
-            <div className="relative overflow-hidden p-8 sm:p-10" style={{ background: 'linear-gradient(135deg, #1E3A8A, #3B82F6, #60A5FA)' }}>
-              {/* Abstract decorative elements */}
-              <div className="absolute inset-0 opacity-20 pointer-events-none">
-                <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white blur-3xl" />
-                <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-blue-900 blur-2xl" />
-              </div>
-
-              <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-8">
-                {/* Standardized Initials Avatar */}
-                <motion.div
-                  whileHover={{ scale: 1.05, rotate: 2 }}
-                  className="w-28 h-28 rounded-[2.5rem] flex items-center justify-center text-white text-3xl font-black shadow-2xl flex-shrink-0 ring-4 ring-white/30 border-2 border-white/20"
-                  style={{ background: getAvatarGradient(selectedCandidateDetail.name) }}>
-                  {getInitials(selectedCandidateDetail.name)}
-                </motion.div>
-
-                <div className="flex-1 min-w-0 text-center sm:text-left">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-3">
-                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md">{selectedCandidateDetail.name}</h2>
-                    <div className="flex justify-center sm:start items-center gap-2">
-                      <span className={"text-[11px] font-black px-4 py-1.5 rounded-full backdrop-blur-md shadow-sm border border-white/20 " + 
-                        ((selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-500/30 text-emerald-100' :
-                        (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-amber-500/30 text-amber-100' :
-                          (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? 'bg-rose-500/30 text-rose-100' :
-                            'bg-white/20 text-white/90')
-                        }>
-                        {(selectedCandidateDetail.pipelineStatus || 'pending') === 'approved' ? '✓ APPROVED' :
-                          (selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? '⏸ ON HOLD' :
-                            (selectedCandidateDetail.pipelineStatus || 'pending') === 'rejected' ? '✗ REJECTED' : '● PENDING'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-lg text-white/90 font-medium mb-4 flex items-center justify-center sm:justify-start gap-2">
-                    <FiBriefcase className="w-5 h-5 opacity-70" />
-                    {selectedCandidateDetail.jobTitle} <span className="opacity-50">•</span> {selectedCandidateDetail.client}
-                  </p>
-
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
-                    <StageBadge stage={selectedCandidateDetail.stage} />
-                    <div className="bg-black/10 backdrop-blur-md rounded-full px-4 py-1.5 flex items-center gap-1 border border-white/10">
-                      <RatingStars rating={selectedCandidateDetail.rating || 0} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quick Action Contact FABs */}
-                <div className="flex sm:flex-col gap-3 flex-shrink-0">
-                  {selectedCandidateDetail.phone && (
-                    <motion.a
-                      whileHover={{ scale: 1.1, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      href={`https://wa.me/${selectedCandidateDetail.phone.replace(/[^0-9]/g, '')}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                      <FiPhone className="w-5 h-5" />
-                    </motion.a>
-                  )}
-                  <motion.a
-                    whileHover={{ scale: 1.1, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    href={`mailto:${selectedCandidateDetail.email}`}
-                    className="w-12 h-12 rounded-2xl bg-white text-blue-600 flex items-center justify-center shadow-lg shadow-black/10">
-                    <FiMail className="w-5 h-5" />
-                  </motion.a>
-                </div>
+      <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }} className="-mt-12">
+        <motion.button onClick={() => { setShowDetailSidebar(false); setSelectedCandidateDetail(null); }} className="flex items-center gap-2 mb-6 text-sm font-bold text-blue-600">
+          <FiArrowLeft /> Back to Pipeline
+        </motion.button>
+        <div className="bg-white rounded-[32px] p-10 shadow-xl border border-[#F4F3EF]">
+          <div className="flex items-center gap-8 mb-10">
+            <div className="w-24 h-24 rounded-[32px] text-white flex items-center justify-center text-3xl font-black shadow-lg" style={{ background: getAvatarGradient(selectedCandidateDetail.name) }}>
+              {getInitials(selectedCandidateDetail.name)}
+            </div>
+            <div>
+              <h2 className="text-4xl font-black text-[#1A1A2E] font-syne uppercase">{selectedCandidateDetail.name}</h2>
+              <p className="text-lg font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">{selectedCandidateDetail.jobTitle} • {selectedCandidateDetail.client}</p>
+              <div className="flex gap-4 mt-4">
+                <StageBadge stage={selectedCandidateDetail.stage} />
+                <RatingStars rating={selectedCandidateDetail.rating || 0} />
               </div>
             </div>
-          </motion.div>
-
-            {/* Decision Bar */}
-            {(selectedCandidateDetail.pipelineStatus || 'pending') !== 'approved' && (selectedCandidateDetail.pipelineStatus || 'pending') !== 'rejected' && (
-              <div className={`px-8 py-4 flex items-center justify-between border-b ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50/50 border-slate-100'}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-white text-slate-400 shadow-sm'}`}>
-                    <FiActivity size={18} />
-                  </div>
-                  <span className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Decision & Action</span>
-                </div>
-                <div className="flex gap-3">
-                  <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                    onClick={() => { holdCandidate(selectedCandidateDetail.id); setSelectedCandidateDetail(prev => ({ ...prev, pipelineStatus: (prev.pipelineStatus || 'pending') === 'hold' ? 'pending' : 'hold' })); }}
-                     className={`flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-bold rounded-2xl transition-all ${(selectedCandidateDetail.pipelineStatus || 'pending') === 'hold' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : isDarkMode ? 'bg-slate-700 text-amber-400 hover:bg-slate-600 border border-amber-500/20' : 'bg-white text-amber-600 hover:bg-amber-50 border border-amber-100 shadow-sm'}`}>
-                    <FiPause className="w-4 h-4" /> HOLD
-                  </motion.button>
-                  <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                    onClick={() => openApproveModal(selectedCandidateDetail.id)}
-                    className="flex items-center justify-center gap-2 px-8 py-2.5 text-xs font-bold rounded-2xl text-white shadow-xl shadow-emerald-500/30 transition-all hover:brightness-110"
-                    style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                    <FiThumbsUp className="w-4 h-4" /> APPROVE
-                  </motion.button>
-                  <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                    onClick={() => { pipelineRejectCandidate(selectedCandidateDetail.id); setSelectedCandidateDetail(prev => ({ ...prev, pipelineStatus: 'rejected' })); }}
-                    className={`flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-bold rounded-2xl transition-all ${isDarkMode ? 'bg-slate-700 text-rose-400 hover:bg-slate-600 border border-rose-500/20' : 'bg-white text-rose-600 hover:bg-rose-50 border border-rose-100 shadow-sm'}`}>
-                    <FiXCircle className="w-4 h-4" /> REJECT
-                  </motion.button>
-                </div>
-              </div>
-            )}
-
-            <div className="p-8">
-              {/* Premium Stage Progress */}
-              <div className="mb-10">
-                <div className="flex items-center justify-between mb-6">
-                  <h4 className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Hiring Pipeline Progress</h4>
-                  <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                    Current: {selectedCandidateDetail.stage}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {stageOrder.map((s, i) => {
-                    const currentIdx = stageOrder.indexOf(selectedCandidateDetail.stage);
-                    const isPast = i < currentIdx;
-                    const isCurrent = i === currentIdx;
-                    const config = stageConfig[s] || stageConfig.Screening;
-                    return (
-                      <div key={s} className="flex-1 group relative">
-                        <button
-                          onClick={() => { moveToStage(selectedCandidateDetail.id, s); setSelectedCandidateDetail(prev => ({ ...prev, stage: s })); }}
-                          className={`w-full h-3 rounded-full transition-all duration-300 cursor-pointer relative overflow-hidden ${isCurrent ? 'h-4 shadow-inner' : ''}`}
-                          style={{ backgroundColor: isPast || isCurrent ? config.color : isDarkMode ? '#1e293b' : '#f1f5f9' }}
-                          title={s}
-                        >
-                          {(isPast || isCurrent) && (
-                            <motion.div
-                              initial={{ x: '-100%' }}
-                              animate={{ x: '100%' }}
-                              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                              className="absolute inset-0 bg-white/20 skew-x-12"
-                            />
-                          )}
-                        </button>
-                        <div className={`absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-bold whitespace-nowrap transition-all duration-300 ${isCurrent ? 'opacity-100 translate-y-0 text-blue-500' : 'opacity-0 translate-y-2 ' + (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`}>
-                          {s}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-between mt-10">
-                  <div className="flex flex-col items-start gap-1">
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>Start</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                      <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Screening</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>Goal</span>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Joined</span>
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Premium Two Column Information Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left Column: Core Metrics */}
-                <div className="space-y-6">
-                  {/* Contact High-Fidelity Card */}
-                  <div className={`rounded-[2.5rem] p-8 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 shadow-xl' : 'bg-slate-50/50 border-slate-100 hover:bg-white hover:shadow-2xl'}`}>
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner">
-                        <FiUserCheck size={24} />
-                      </div>
-                      <h4 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Contact Profile</h4>
-                    </div>
-                    <div className="grid grid-cols-1 gap-6">
-                      <div className="flex items-center gap-5 group">
-                        <div className={`w-14 min-w-[3.5rem] h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 shadow-lg ${isDarkMode ? 'bg-blue-500/10 text-blue-400 shadow-blue-500/5' : 'bg-blue-50 text-blue-600 shadow-blue-200/50'}`}>
-                          <FiMail className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Primary Email</span>
-                          <a href={`mailto:${selectedCandidateDetail.email}`} className={`text-sm font-bold truncate hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{selectedCandidateDetail.email}</a>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-5 group">
-                        <div className={`w-14 min-w-[3.5rem] h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:-rotate-3 shadow-lg ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 shadow-emerald-500/5' : 'bg-emerald-50 text-emerald-600 shadow-emerald-200/50'}`}>
-                          <FiPhone className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Mobile Number</span>
-                          <div className="flex items-center gap-3">
-                            <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{selectedCandidateDetail.phone || 'Not Shared'}</span>
-                            {selectedCandidateDetail.phone && (
-                              <a href={`https://wa.me/${selectedCandidateDetail.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                                className="text-[10px] font-black px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full hover:bg-emerald-500/20 transition-colors flex items-center gap-1 border border-emerald-500/20">
-                                <FiCheck size={10} /> WHATSAPP
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-5 group">
-                        <div className={`w-14 min-w-[3.5rem] h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 shadow-lg ${isDarkMode ? 'bg-violet-500/10 text-violet-400 shadow-violet-500/5' : 'bg-violet-50 text-violet-600 shadow-violet-200/50'}`}>
-                          <FiMapPin className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Current Location</span>
-                          <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{selectedCandidateDetail.location || 'Remote / Unspecified'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Skills High-Fidelity Card */}
-                  <div className={`rounded-[2.5rem] p-8 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 shadow-xl' : 'bg-slate-50/50 border-slate-100 hover:bg-white hover:shadow-2xl'}`}>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 shadow-inner">
-                        <FiZap size={24} />
-                      </div>
-                      <h4 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Professional Skills</h4>
-                    </div>
-                    <div className="flex flex-wrap gap-2.5">
-                      {(selectedCandidateDetail.skills || []).map((s, i) => (
-                        <motion.span
-                          key={s}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: i * 0.05 }}
-                          whileHover={{ scale: 1.1, rotate: 1 }}
-                          className={`text-[11px] px-4 py-2 rounded-xl font-black border transition-all cursor-default ${isDarkMode ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20' : 'bg-white text-indigo-600 border-indigo-100 shadow-sm'}`}>
-                          {s}
-                        </motion.span>
-                      ))}
-                      {(selectedCandidateDetail.skills || []).length === 0 && <span className="text-xs italic text-slate-500">No skills listed</span>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column: Key Details & Activity */}
-                <div className="space-y-6">
-                  {/* Metrics Bento Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { label: 'Experience', value: selectedCandidateDetail.experience, icon: FiBriefcase, color: '#3FA9F5', bg: 'bg-blue-500/10' },
-                      { label: 'Current CTC', value: selectedCandidateDetail.currentCTC, icon: FiDollarSign, color: '#10b981', bg: 'bg-emerald-500/10' },
-                      { label: 'Expected CTC', value: selectedCandidateDetail.expectedCTC, icon: FiTrendingUp, color: '#f59e0b', bg: 'bg-amber-500/10' },
-                      { label: 'Notice Period', value: selectedCandidateDetail.noticePeriod, icon: FiClock, color: '#ec4899', bg: 'bg-rose-500/10' },
-                      { label: 'Application Date', value: selectedCandidateDetail.appliedDate, icon: FiCalendar, color: '#6366f1', bg: 'bg-indigo-500/10' },
-                      { label: 'Time In Stage', value: getStageDuration(selectedCandidateDetail) || 'Entry', icon: FiActivity, color: '#14b8a6', bg: 'bg-teal-500/10' },
-                    ].map((d, i) => (
-                      <motion.div
-                        key={d.label}
-                        initial={{ opacity: 0, rotateX: -20 }}
-                        animate={{ opacity: 1, rotateX: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        whileHover={{ y: -5, scale: 1.02 }}
-                        className={`rounded-[2rem] p-5 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 shadow-lg' : 'bg-white border-slate-100 shadow-xl'}`}>
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${d.bg}`} style={{ color: d.color }}>
-                            <d.icon size={18} />
-                          </div>
-                          <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{d.label}</span>
-                        </div>
-                        <p className={`text-xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{d.value || 'N/A'}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Notes & Community Comments */}
-                  <div className={`rounded-[2.5rem] p-8 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 shadow-xl' : 'bg-slate-50 shadow-xl border-white'}`}>
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 shadow-inner">
-                          <FiMessageSquare size={24} />
-                        </div>
-                        <h4 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Process Notes</h4>
-                      </div>
-                      <span className={`text-[10px] font-black px-3 py-1 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-white text-slate-400 border border-slate-100'}`}>
-                        {(candidateNotes[selectedCandidateDetail.id] || []).length} TOTAL
-                      </span>
-                    </div>
-
-                    <div className="space-y-4 mb-8 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                      {(candidateNotes[selectedCandidateDetail.id] || []).length === 0 && (
-                        <div className="text-center py-8 opacity-40">
-                          <FiMessageSquare className="mx-auto mb-2 opacity-20" size={32} />
-                          <p className="text-[11px] font-bold uppercase tracking-widest">No feedback yet</p>
-                        </div>
-                      )}
-                      {(candidateNotes[selectedCandidateDetail.id] || []).map((note, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className={`rounded-2xl p-4 border transition-all ${isDarkMode ? 'bg-slate-900 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
-                          <p className={`text-[13px] font-medium leading-relaxed mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{note.text}</p>
-                          <div className="flex items-center justify-between border-t border-dashed pt-3 mt-auto border-slate-200/50">
-                            <span className="text-[10px] font-black uppercase text-blue-500">{note.author}</span>
-                            <span className={`text-[10px] font-bold ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>{new Date(note.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <div className="relative group">
-                      <input
-                        type="text"
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        placeholder="Share your feedback..."
-                        onKeyDown={(e) => e.key === 'Enter' && addNote(selectedCandidateDetail.id)}
-                        className={`w-full rounded-2xl border-2 px-6 py-4 text-sm font-medium transition-all focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white placeholder:text-slate-600' : 'bg-white border-slate-100 placeholder:text-slate-400'}`}
-                      />
-                      <button
-                        onClick={() => addNote(selectedCandidateDetail.id)}
-                        disabled={!newNote.trim()}
-                        className="absolute right-3 top-3 h-10 px-6 rounded-xl text-xs font-black text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-30 shadow-lg shadow-blue-500/20"
-                        style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' }}>
-                        POST
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* High-Fidelity Timeline */}
-                  <div className={`rounded-[2.5rem] p-8 border transition-all duration-300 ${isDarkMode ? 'bg-slate-800/40 border-slate-700/50 shadow-xl' : 'bg-slate-50/50 border-slate-100 hover:bg-white hover:shadow-2xl'}`}>
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-500 shadow-inner">
-                        <FiActivity size={24} />
-                      </div>
-                      <h4 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Candidate Journey</h4>
-                    </div>
-                    <div className="relative pl-6 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-blue-500/50 before:via-teal-500/50 before:to-transparent">
-                      {[
-                        { label: `Application registered for ${selectedCandidateDetail.jobTitle}`, date: selectedCandidateDetail.appliedDate, icon: FiFileText, color: '#3b82f6' },
-                        { label: `Successfully moved to ${selectedCandidateDetail.stage}`, date: selectedCandidateDetail.lastActivity, icon: FiTarget, color: (stageConfig[selectedCandidateDetail.stage] || stageConfig.Screening).color },
-                      ].map((ev, i) => (
-                        <div key={i} className="relative group">
-                          <div className="absolute -left-[1.35rem] top-1 w-3 h-3 rounded-full border-2 border-white bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] group-hover:scale-125 transition-transform" />
-                          <div className="flex flex-col">
-                            <span className={`text-[11px] font-black uppercase tracking-widest mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{ev.label}</span>
-                            <span className={`text-[10px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{ev.date}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
-        {/* ═══ Reject Modal ═══ */}
-        <AnimatePresence>
-          {showRejectModal && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); }} />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className="relative z-10 rounded-3xl bg-white shadow-2xl w-full max-w-sm overflow-hidden">
-                <div className="px-8 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                  <div>
-                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Reject Candidate</h3>
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Select reason</p>
-                  </div>
-                  <button onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
-                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
-                    <FiX className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Reason *</label>
-                    <select value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                      className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
-                      <option value="">Select reason...</option>
-                      {rejectionReasons.map(r => (<option key={r} value={r}>{r}</option>))}
-                    </select>
-                  </div>
-                  {rejectReason === 'Other' && (
-                    <div>
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Custom Reason</label>
-                      <input type="text" value={rejectCustomReason} onChange={e => setRejectCustomReason(e.target.value)} placeholder="Enter custom reason..."
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-4 p-6 border-t border-[#F4F3EF]">
-                  <button onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
-                    className="flex-1 py-4 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">Cancel</button>
-                  <button onClick={handleReject} disabled={!rejectReason || (rejectReason === 'Other' && !rejectCustomReason)}
-                    className="flex-1 py-4 rounded-full text-sm font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 transition-colors uppercase tracking-widest text-[11px]">Reject</button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* ═══ Approve Modal ═══ */}
-        <AnimatePresence>
-          {showApproveModal && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }} />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className="relative z-10 rounded-3xl bg-white shadow-2xl w-full max-w-md overflow-hidden">
-                <div className="px-8 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                  <div>
-                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Approve Candidate</h3>
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
-                      {(() => { const c = candidates.find(c => c.id === approveCandidateId); return c ? `Schedule for ${c.name}` : 'Schedule interview'; })()}
-                    </p>
-                  </div>
-                  <button onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
-                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
-                    <FiX className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Interview Round</label>
-                    <select value={approveInterviewRound} onChange={e => setApproveInterviewRound(e.target.value)}
-                      className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
-                      <option value="Phone Screening">Phone Screening</option>
-                      <option value="HR Round">HR Round</option>
-                      <option value="Final Round">Final Round</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Interview Type</label>
-                    <select value={approveInterviewType} onChange={e => setApproveInterviewType(e.target.value)}
-                      className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
-                      <option value="Video">Video Call</option>
-                      <option value="Phone">Phone Call</option>
-                      <option value="In-person">In-Person</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Date</label>
-                      <input type="date" value={approveInterviewDate} onChange={e => setApproveInterviewDate(e.target.value)}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Time</label>
-                      <input type="time" value={approveInterviewTime} onChange={e => setApproveInterviewTime(e.target.value)}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Interviewer Name</label>
-                    <input type="text" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} placeholder="Enter interviewer name..."
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" />
-                  </div>
-                </div>
-                <div className="flex gap-4 p-6 border-t border-[#F4F3EF]">
-                  <button onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
-                    className="flex-1 py-4 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">Cancel</button>
-                  <button onClick={handleApproveCandidate}
-                    className="flex-[2] py-4 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors">
-                    <span className="flex items-center justify-center gap-2"><FiCheckCircle className="w-4 h-4" /> Approve & Schedule</span>
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Resume Bank Full View (inline, replaces pipeline)
-  if (showResumeBankModal) {
-    return (
-      <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
-          {/* Back */}
-          <div className="flex items-center justify-between">
-            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowResumeBankModal(false); setResumeBankResumes([]); setResumeBankRole(''); }}
-              className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-[#1E88E5] hover:text-[#3FA9F5]' : 'text-[#1E88E5] hover:text-[#0D47A1]'}`}
-            >
-              <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
-            </motion.button>
           </div>
-
-          {/* Header Card */}
-          <div className="rounded-3xl bg-white shadow-2xl overflow-hidden">
-            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="space-y-8 text-left">
               <div>
-                <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Resume Bank — Auto Match</h2>
-                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Search & Add to Pipeline</p>
-              </div>
-              <button onClick={() => { setShowResumeBankModal(false); setResumeBankResumes([]); setResumeBankRole(''); }}
-                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
-                <FiX className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Search Section */}
-            <div className="p-8 border-b border-[#F4F3EF]">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
-                  <FiSearch className="w-5 h-5" />
-                </div>
-                <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Search by Position / Role</h3>
-              </div>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Select Position</label>
-                  <select
-                    value={resumeBankRole}
-                    onChange={(e) => setResumeBankRole(e.target.value)}
-                    className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                  >
-                    <option value="">Select a role to search</option>
-                    {jobOpenings.length > 0 ? (
-                      jobOpenings.filter(j => j.filled < j.openings).map(job => (
-                        <option key={job.id} value={job.title}>{job.title} — {job.client} ({job.openings - job.filled} remaining)</option>
-                      ))
-                    ) : (
-                      <>
-                        <option value="Software Engineer">Software Engineer</option>
-                        <option value="Product Manager">Product Manager</option>
-                        <option value="Designer">Designer</option>
-                        <option value="Data Analyst">Data Analyst</option>
-                        <option value="DevOps">DevOps</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-                <div className="flex items-end">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => resumeBankRole && fetchResumeBankMatches(resumeBankRole)}
-                    disabled={!resumeBankRole || resumeBankLoading}
-                    className="flex items-center gap-2 px-8 py-4 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] disabled:opacity-50 transition-colors"
-                  >
-                    {resumeBankLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : <FiSearch className="w-4 h-4" />}
-                    {resumeBankLoading ? 'Searching...' : 'Search Resumes'}
-                  </motion.button>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#9B9BAD] mb-4">Contact Info</h3>
+                <div className="space-y-3">
+                  <p className="text-sm font-bold flex items-center gap-3"><FiMail className="text-blue-500" /> {selectedCandidateDetail.email}</p>
+                  <p className="text-sm font-bold flex items-center gap-3"><FiPhone className="text-emerald-500" /> {selectedCandidateDetail.phone || 'N/A'}</p>
+                  <p className="text-sm font-bold flex items-center gap-3"><FiMapPin className="text-rose-500" /> {selectedCandidateDetail.location || 'N/A'}</p>
                 </div>
               </div>
-            </div>
-
-            {/* Results Section */}
-            <div className="p-6">
-              {resumeBankLoading ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <FiRefreshCw className="w-10 h-10 animate-spin text-[#1E88E5] mb-4" />
-                  <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Searching Resume Bank for &quot;{resumeBankRole}&quot;...</p>
-                </div>
-              ) : resumeBankResumes.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                      Found {resumeBankResumes.length} matching resume{resumeBankResumes.length !== 1 ? 's' : ''}
-                    </p>
-                    <span className={`text-xs font-medium px-3 py-1 rounded-full ${isDarkMode ? 'bg-[#1E88E5]/40 text-[#3FA9F5]' : 'bg-[#1E88E5]/10 text-[#1E88E5]'}`}>
-                      for &quot;{resumeBankRole}&quot;
-                    </span>
-                  </div>
-                  <div className="grid gap-3">
-                    {resumeBankResumes.map((resume, idx) => (
-                      <motion.div
-                        key={resume.id || idx}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className={`flex items-center justify-between p-5 rounded-xl border-2 transition-all ${isDarkMode ? 'bg-slate-700/50 border-slate-600/50 hover:border-[#1E88E5]' : 'bg-slate-50 border-slate-200 hover:border-[#1E88E5] hover:shadow-md'}`}
-                      >
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                          <div className="p-2.5 rounded-xl" style={{ background: 'linear-gradient(135deg, #3b82f6, #1E88E5)' }}>
-                            <FiFileText className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                              {resume.candidateName || resume.fileName || 'Unknown Resume'}
-                            </p>
-                            <div className="flex items-center gap-4 mt-1 flex-wrap">
-                              {resume.roleType && <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiBriefcase className="w-3 h-3" />{resume.roleType}</span>}
-                              {resume.experience && <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiClock className="w-3 h-3" />{resume.experience}</span>}
-                              {resume.location && <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-3 h-3" />{resume.location}</span>}
-                              {resume.email && <span className={`text-xs flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMail className="w-3 h-3" />{resume.email}</span>}
-                            </div>
-                            {resume.skills && resume.skills.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 mt-2">
-                                {(Array.isArray(resume.skills) ? resume.skills : []).slice(0, 5).map((skill, i) => (
-                                  <span key={i} className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full ${isDarkMode ? 'bg-blue-900/40 text-blue-300 border border-blue-700/50' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>{skill}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => addFromResumeBank(resume)}
-                          className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white rounded-xl ml-4 flex-shrink-0 shadow-lg"
-                          style={{ background: 'linear-gradient(90deg, #10b981, #059669)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}
-                        >
-                          <FiPlus className="w-4 h-4" />
-                          Add to Pipeline
-                        </motion.button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              ) : resumeBankRole ? (
-                <div className={`text-center py-16 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <FiDatabase size={48} className="mx-auto mb-4 opacity-30" />
-                  <p className="font-semibold text-base">No matching resumes found</p>
-                  <p className="text-sm mt-1">Try selecting a different role or sync resumes from the Resume Bank tab</p>
-                </div>
-              ) : (
-                <div className={`text-center py-16 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <FiDatabase size={48} className="mx-auto mb-4 opacity-30" />
-                  <p className="font-semibold text-base">Select a role to find matching resumes</p>
-                  <p className="text-sm mt-1">Resumes will be fetched automatically from your Resume Bank</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Add Candidate Form View (inline, replaces pipeline)
-  if (showAddModal) {
-    return (
-      <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
-          {/* Back & Title */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowAddModal(false); setSelectedResumeProfileId(''); setSelectedResumeProfile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' }); }}
-              className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-[#1E88E5] hover:text-[#3FA9F5]' : 'text-[#1E88E5] hover:text-[#0D47A1]'}`}
-            >
-              <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
-            </motion.button>
-          </div>
-
-          {/* Form Header Card */}
-          <div className="rounded-3xl bg-white shadow-2xl overflow-hidden">
-            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
               <div>
-                <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Add New Candidate</h2>
-                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Pipeline Registration</p>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#9B9BAD] mb-4">Short Description</h3>
+                <p className="text-sm font-medium text-[#4B4B5E] leading-relaxed">{selectedCandidateDetail.shortDescription || 'No description provided.'}</p>
               </div>
-              <button onClick={() => { setShowAddModal(false); setSelectedResumeProfileId(''); setSelectedResumeProfile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' }); setResumeFile(null); }}
-                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
-                <FiX className="w-5 h-5" />
-              </button>
+              <div>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#9B9BAD] mb-4">Requirements</h3>
+                <div className="space-y-2">
+                  {(selectedCandidateDetail.requirements || []).length > 0 ? (selectedCandidateDetail.requirements.map((r, i) => <p key={i} className="text-sm font-bold flex items-center gap-3"><FiCheck className="text-emerald-500" /> {r}</p>)) : <p className="text-xs text-slate-400">None listed</p>}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#9B9BAD] mb-4">Responsibilities</h3>
+                <div className="space-y-2">
+                  {(selectedCandidateDetail.responsibilities || []).length > 0 ? (selectedCandidateDetail.responsibilities.map((r, i) => <p key={i} className="text-sm font-bold flex items-center gap-3"><FiArrowRight className="text-blue-500" /> {r}</p>)) : <p className="text-xs text-slate-400">None listed</p>}
+                </div>
+              </div>
             </div>
-
-            <div className="p-8 space-y-8">
-              {/* Personal Details */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
-                    <FiUsers className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Details</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Full Name *</label>
-                    <input type="text" value={newCandidate.name} onChange={(e) => setNewCandidate(prev => ({ ...prev, name: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="Enter full name" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Email *</label>
-                    <input type="email" value={newCandidate.email} onChange={(e) => setNewCandidate(prev => ({ ...prev, email: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="Enter email" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Phone</label>
-                    <input type="text" value={newCandidate.phone} onChange={(e) => setNewCandidate(prev => ({ ...prev, phone: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="+91 XXXXX XXXXX" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Location</label>
-                    <input type="text" value={newCandidate.location} onChange={(e) => setNewCandidate(prev => ({ ...prev, location: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="City" />
-                  </div>
-                </div>
+            <div className="bg-[#F8FAFF] rounded-[32px] p-8 border border-blue-50">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1B4DA0] mb-6">Financials & Timeline</h3>
+              <div className="grid grid-cols-2 gap-6">
+                <div><p className="text-[10px] uppercase font-black text-[#9B9BAD] mb-1">Expected CTC</p><p className="text-2xl font-black text-[#1A1A2E]">{selectedCandidateDetail.expectedCTC}</p></div>
+                <div><p className="text-[10px] uppercase font-black text-[#9B9BAD] mb-1">Notice Period</p><p className="text-2xl font-black text-[#1A1A2E]">{selectedCandidateDetail.noticePeriod}</p></div>
+                <div><p className="text-[10px] uppercase font-black text-[#9B9BAD] mb-1">Experience</p><p className="text-2xl font-black text-[#1A1A2E]">{selectedCandidateDetail.experience}</p></div>
+                <div><p className="text-[10px] uppercase font-black text-[#9B9BAD] mb-1">Applied On</p><p className="text-lg font-black text-[#1A1A2E]">{selectedCandidateDetail.appliedDate}</p></div>
               </div>
-
-              {/* Divider */}
-              <div className="border-t border-[#F4F3EF]" />
-
-              {/* Job Details */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl">
-                    <FiBriefcase className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Job Details</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Position/Job Opening</label>
-                    <select value={newCandidate.positionId} onChange={(e) => {
-                      const posId = e.target.value;
-                      const matchedJob = jobOpenings.find(j => j.id === posId);
-                      setNewCandidate(prev => ({ 
-                        ...prev, 
-                        positionId: posId,
-                        jobTitle: matchedJob?.title || prev.jobTitle,
-                        client: matchedJob?.client || prev.client,
-                        clientId: matchedJob?.clientId || prev.clientId,
-                        roleType: matchedJob?.roleType || prev.roleType
-                      }));
-                    }} className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
-                      <option value="">Select Opening (Optional)</option>
-                      {jobOpenings.map(job => (
-                        <option key={job.id} value={job.id}>{job.title} — {job.client}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Role Type (Core Matching) *</label>
-                    <select value={newCandidate.roleType} onChange={(e) => setNewCandidate(prev => ({ ...prev, roleType: e.target.value }))} className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
-                      <option value="">Select Role Category</option>
-                      {roleTypes.map(r => (
-                        <option key={r.role} value={r.role}>{r.role}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Display Job Title *</label>
-                    <input type="text" value={newCandidate.jobTitle} onChange={(e) => setNewCandidate(prev => ({ ...prev, jobTitle: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="e.g., Senior Software Engineer" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Client</label>
-                    <input type="text" value={newCandidate.client} onChange={(e) => setNewCandidate(prev => ({ ...prev, client: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="Company name" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Experience</label>
-                    <input type="text" value={newCandidate.experience} onChange={(e) => setNewCandidate(prev => ({ ...prev, experience: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="e.g., 5 years" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Notice Period</label>
-                    <select value={newCandidate.noticePeriod} onChange={(e) => setNewCandidate(prev => ({ ...prev, noticePeriod: e.target.value }))} className="appearance-none w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 pr-12 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10">
-                      <option value="Immediate">Immediate</option>
-                      <option value="15 days">15 days</option>
-                      <option value="30 days">30 days</option>
-                      <option value="45 days">45 days</option>
-                      <option value="60 days">60 days</option>
-                      <option value="90 days">90 days</option>
-                    </select>
-                  </div>
-                </div>
+              <div className="mt-10 flex gap-4">
+                <button onClick={() => holdCandidate(selectedCandidateDetail.id)} className="flex-1 py-4 bg-amber-500 text-white font-bold rounded-2xl shadow-lg">Edit</button>
+                <button onClick={() => { setShowDetailSidebar(false); setSelectedCandidateDetail(null); }} className="flex-1 py-4 bg-rose-500 text-white font-bold rounded-2xl shadow-lg">Cancel</button>
               </div>
-
-              {/* Divider */}
-              <div className="border-t border-[#F4F3EF]" />
-
-              {/* Compensation */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-[#10B981] rounded-xl flex items-center justify-center text-white shadow-xl">
-                    <FiCheckCircle className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Compensation</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Current CTC</label>
-                    <input type="text" value={newCandidate.currentCTC} onChange={(e) => setNewCandidate(prev => ({ ...prev, currentCTC: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="e.g., 15 LPA" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Expected CTC</label>
-                    <input type="text" value={newCandidate.expectedCTC} onChange={(e) => setNewCandidate(prev => ({ ...prev, expectedCTC: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="e.g., 22 LPA" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-[#F4F3EF]" />
-
-              {/* Skills & Resume */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl">
-                    <FiStar className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Skills & Resume</h3>
-                </div>
-                <div className="grid grid-cols-1 gap-6">
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Skills (comma separated)</label>
-                    <input type="text" value={newCandidate.skills} onChange={(e) => setNewCandidate(prev => ({ ...prev, skills: e.target.value }))} className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50" placeholder="React, Node.js, MongoDB" />
-                  </div>
-                  {/* Resume Upload */}
-                  <div>
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 block">Upload Resume/CV</label>
-                    <input type="file" ref={fileInputRef} className="hidden" 
-                      onChange={(e) => setResumeFile(e.target.files[0])}
-                      accept=".pdf,.doc,.docx"
-                    />
-                    <div 
-                      onClick={() => fileInputRef.current.click()}
-                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                          setResumeFile(e.dataTransfer.files[0]);
-                        }
-                      }}
-                      className={`rounded-2xl border-2 border-dashed p-6 text-center transition-colors cursor-pointer ${
-                        resumeFile 
-                          ? 'bg-emerald-50 border-emerald-200'
-                          : 'bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30'
-                      }`}
-                    >
-                      <FiUpload className={`w-8 h-8 mx-auto mb-2 ${resumeFile ? 'text-emerald-500' : 'text-[#9B9BAD]'}`} />
-                      <p className={`text-sm font-bold ${resumeFile ? 'text-emerald-600' : 'text-[#6B6B7E]'}`}>
-                        {resumeFile ? `Selected: ${resumeFile.name}` : 'Drag & drop or click to browse'}
-                      </p>
-                      <p className={`text-xs mt-1 ${resumeFile ? 'text-emerald-500' : 'text-[#9B9BAD]'}`}>
-                        {resumeFile ? `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB` : 'PDF, DOC, DOCX (Max 10MB)'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Resume Bank Suggestions */}
-              {newCandidate.roleType && (
-                <div>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-[#8B5CF6] rounded-xl flex items-center justify-center text-white shadow-xl">
-                      <FiDatabase className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Suggested from Resume Bank ({resumeBankResumes.length})</h3>
-                  </div>
-                  {resumeBankLoading ? (
-                    <div className="flex items-center gap-3 py-4 overflow-x-auto no-scrollbar">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className={`w-64 h-32 rounded-xl animate-pulse flex-shrink-0 ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-100'}`} />
-                      ))}
-                    </div>
-                  ) : resumeBankResumes.length > 0 ? (
-                    <div className="flex items-center gap-4 py-2 overflow-x-auto no-scrollbar pb-4">
-                      {resumeBankResumes.map(resume => (
-                        <motion.div 
-                          key={resume.id} 
-                          whileHover={{ y: -4 }}
-                          className={`w-72 p-4 rounded-xl border flex-shrink-0 relative group transition-all ${
-                            selectedResumeProfileId === resume.id
-                              ? (isDarkMode ? 'bg-purple-900/20 border-purple-500/60 shadow-lg shadow-purple-900/20' : 'bg-purple-50 border-purple-400 shadow-md')
-                              : (isDarkMode ? 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/50' : 'bg-white border-slate-200 hover:border-purple-400 shadow-sm hover:shadow-md')
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}>
-                              {getInitials(resume.candidateName || resume.fileName || 'U')}
-                            </div>
-                            <div className="min-w-0">
-                              <h5 className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{getResumeDisplayName(resume)}</h5>
-                              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{resume.email || 'No email'}</p>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1 mb-4">
-                            {(resume.skills || []).slice(0, 3).map((s, idx) => (
-                              <span key={idx} className={`text-[9px] px-1.5 py-0.5 rounded-full ${isDarkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-50 text-purple-600'}`}>{s}</span>
-                            ))}
-                          </div>
-                          <button 
-                            onClick={() => {
-                              if (selectedResumeProfileId === resume.id) {
-                                setSelectedResumeProfileId('');
-                                setSelectedResumeProfile(null);
-                                setNewCandidate(prev => ({
-                                  ...prev,
-                                  source: '',
-                                  resumeId: '',
-                                }));
-                                return;
-                              }
-
-                              setSelectedResumeProfileId(resume.id || '');
-                              setSelectedResumeProfile(resume);
-                              setNewCandidate(prev => ({
-                                ...prev,
-                                source: 'Resume Bank',
-                                resumeId: resume.id || prev.resumeId,
-                              }));
-                            }}
-                            className={`w-full py-2 rounded-lg text-[11px] font-bold transition-all ${
-                              selectedResumeProfileId === resume.id
-                                ? (isDarkMode ? 'bg-purple-500 text-white ring-1 ring-purple-400' : 'bg-purple-500 text-white ring-1 ring-purple-300')
-                                : (isDarkMode ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 ring-1 ring-purple-500/30' : 'bg-purple-50 text-purple-600 hover:bg-purple-100 ring-1 ring-purple-200')
-                            }`}
-                          >
-                            {selectedResumeProfileId === resume.id ? 'Resume Selected' : 'Select Resume'}
-                          </button>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className={`p-8 rounded-xl border-2 border-dashed text-center ${isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-slate-50'}`}>
-                      <FiDatabase className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
-                      <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No matching candidates in Resume Bank for "{newCandidate.roleType}"</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Form Footer */}
-            <div className="pt-6 px-8 pb-8 flex gap-4 border-t border-[#F4F3EF]">
-              <button onClick={() => { setShowAddModal(false); setSelectedResumeProfileId(''); setSelectedResumeProfile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' }); setResumeFile(null); }}
-                className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
-              >
-                Cancel
-              </button>
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleAddCandidate}
-                className="flex-[2] flex items-center justify-center gap-2 py-5 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
-              >
-                <FiPlus className="w-4 h-4" />
-                Add Candidate
-              </motion.button>
             </div>
           </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ═══ Reject Page (inline, replaces pipeline) ═══
-  if (showRejectModal) {
-    return (
-      <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
-              className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'}`}
-            >
-              <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
-            </motion.button>
-          </div>
-          <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
-            <div className="p-6" style={{ background: 'linear-gradient(135deg, #ef4444, #e11d48)' }}>
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
-                  <FiXCircle className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Reject Candidate</h2>
-                  <p className="text-sm text-white/70 mt-0.5">Select a reason for rejection</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-6 space-y-6 max-w-2xl">
-              <div>
-                <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Reason for Rejection *</label>
-                <select value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                  className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-red-500/50 focus:border-red-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                  <option value="">Select reason...</option>
-                  {rejectionReasons.map(r => (<option key={r} value={r}>{r}</option>))}
-                </select>
-              </div>
-              {rejectReason === 'Other' && (
-                <div>
-                  <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Custom Reason *</label>
-                  <input type="text" value={rejectCustomReason} onChange={e => setRejectCustomReason(e.target.value)} placeholder="Enter custom reason..."
-                    className={`w-full mt-1.5 px-4 py-3 rounded-xl border-2 transition-all focus:ring-2 focus:ring-red-500/50 focus:border-red-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200'}`} />
-                </div>
-              )}
-            </div>
-            <div className={`flex items-center justify-between p-6 border-t ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-              <button onClick={() => { setShowRejectModal(false); setRejectCandidateId(null); setRejectReason(''); setRejectCustomReason(''); }}
-                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}>
-                Cancel
-              </button>
-              <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }} disabled={!rejectReason || (rejectReason === 'Other' && !rejectCustomReason)} onClick={handleReject}
-                className="px-8 py-3 text-sm font-bold text-white rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
-                style={{ background: 'linear-gradient(135deg, #ef4444, #e11d48)', boxShadow: '0 8px 15px -3px rgba(239, 68, 68, 0.3)' }}
-              >
-                Reject Candidate
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ═══ Approve Page (inline, replaces pipeline) ═══
-  if (showApproveModal) {
-    const c = candidates.find(c => c.id === approveCandidateId);
-    return (
-      <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <motion.button whileHover={{ x: -4 }} onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
-              className={`flex items-center gap-2 text-sm font-semibold ${isDarkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700'}`}
-            >
-              <FiArrowLeft className="w-5 h-5" /> Back to Candidate Pipeline
-            </motion.button>
-          </div>
-          <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
-            <div className="p-6" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
-                  <FiThumbsUp className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Approve & Schedule Interview</h2>
-                  <p className="text-sm text-white/70 mt-0.5">{c ? `For ${c.name}` : 'Enter interview details'}</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-emerald-900/40' : 'bg-emerald-100'}`}>
-                      <FiUsers className={`w-3 h-3 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
-                    </div>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Candidate Details
-                    </span>
-                  </div>
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Candidate Name</label>
-                    <input
-                      type="text"
-                      value={c?.name || ''}
-                      readOnly
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Candidate Email</label>
-                    <input
-                      type="text"
-                      value={c?.email || ''}
-                      readOnly
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
-                      <FiBriefcase className={`w-3 h-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                    </div>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Position Details
-                    </span>
-                  </div>
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Position</label>
-                    <input
-                      type="text"
-                      value={c?.jobTitle || ''}
-                      readOnly
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client</label>
-                    <input
-                      type="text"
-                      value={c?.client || ''}
-                      readOnly
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Round</label>
-                    <select value={approveInterviewRound} onChange={e => setApproveInterviewRound(e.target.value)}
-                      className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                      <option value="Phone Screening">Phone Screening</option>
-                      <option value="Technical Round">Technical Round</option>
-                      <option value="HR Round">HR Round</option>
-                      <option value="Client Interview">Client Interview</option>
-                      <option value="Final Round">Final Round</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-emerald-900/40' : 'bg-emerald-100'}`}>
-                      <FiCalendar className={`w-3 h-3 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
-                    </div>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Interview Details
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Date</label>
-                      <input type="date" value={approveInterviewDate} onChange={e => setApproveInterviewDate(e.target.value)}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Time</label>
-                      <input type="time" value={approveInterviewTime} onChange={e => setApproveInterviewTime(e.target.value)}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Duration</label>
-                      <select value={approveInterviewDuration} onChange={e => setApproveInterviewDuration(e.target.value)}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                        <option value="30 mins">30 mins</option>
-                        <option value="45 mins">45 mins</option>
-                        <option value="60 mins">60 mins</option>
-                        <option value="90 mins">90 mins</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interview Type</label>
-                      <select value={approveInterviewType} onChange={e => {
-                        setApproveInterviewType(e.target.value);
-                        if (e.target.value !== 'Video') setApproveMeetLink('');
-                      }}
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                        <option value="Video">Video Call</option>
-                        <option value="Phone">Phone Call</option>
-                        <option value="In-person">In-Person</option>
-                      </select>
-                    </div>
-                  </div>
-                  {approveInterviewType === 'Video' && (
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Google Meet Link</label>
-                      <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <input
-                            type="text"
-                            value={approveMeetLink}
-                            onChange={e => setApproveMeetLink(e.target.value)}
-                            placeholder="Click generate or paste your meet link"
-                            className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`}
-                          />
-                          {approveMeetLink && (
-                            <button
-                              type="button"
-                              onClick={() => navigator.clipboard?.writeText(approveMeetLink)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600"
-                            >
-                              <FiCopy className="w-4 h-4 text-slate-400" />
-                            </button>
-                          )}
-                        </div>
-                        <motion.button
-                          type="button"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => setApproveMeetLink(generateMeetLink())}
-                          className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-xl shadow-lg"
-                          style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 8px 20px rgba(16, 185, 129, 0.35)' }}
-                        >
-                          <FiRefreshCw className="w-4 h-4" />
-                          Generate
-                        </motion.button>
-                      </div>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Interviewer Name</label>
-                      <input type="text" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} placeholder="Interviewer name"
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Role</label>
-                      <input type="text" value={approveInterviewerRole} onChange={e => setApproveInterviewerRole(e.target.value)} placeholder="e.g., Tech Lead"
-                        className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500' : 'bg-white border-slate-200 placeholder:text-slate-400'}`} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className={`flex items-center justify-between p-6 border-t ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-              <button onClick={() => { setShowApproveModal(false); setApproveCandidateId(null); }}
-                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}>
-                Cancel
-              </button>
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleApproveCandidate}
-                className="flex items-center gap-2 px-10 py-3 text-sm font-bold text-white rounded-xl shadow-lg transition-all"
-                style={{ background: 'linear-gradient(35deg, #10b981, #059669)', boxShadow: '0 8px 20px rgba(16,185,129,0.35)' }}
-              >
-                <FiCheckCircle className="w-5 h-5" /> Approve & Schedule Interview
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-        >
-          <div className="flex flex-col">
-            <h2 className={`text-2xl font-bold leading-tight text-left ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-              Candidate Pipeline
-            </h2>
-            <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              Track and manage candidates through hiring stages
-            </p>
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-8"
+        style={{ fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif' }}
+      >
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 flex-wrap gap-4">
+          <div className="flex flex-col items-start text-left">
+            <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne tracking-tight">Candidate Pipeline</h1>
+            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-2">{stats.total} Total Candidates In Pipeline</p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className={`flex items-center p-1 rounded-xl border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-              <button
-                onClick={() => setIsKanbanView(true)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isKanbanView ? 'bg-white text-[#1E88E5] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                <FiGrid className="w-3.5 h-3.5" /> Kanban
-              </button>
-              <button
-                onClick={() => setIsKanbanView(false)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!isKanbanView ? 'bg-white text-[#1E88E5] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                <FiList className="w-3.5 h-3.5" /> List
-              </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="bg-white rounded-2xl p-1 border border-[#F4F3EF] shadow-sm flex items-center">
+              <button onClick={() => setIsKanbanView(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}><FiGrid /> Kanban</button>
+              <button onClick={() => setIsKanbanView(false)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${!isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}><FiList /> List</button>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.06, y: -2 }}
-              whileTap={{ scale: 0.94 }}
-              onClick={() => setShowAnalytics(!showAnalytics)}
-              className={`relative flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl overflow-hidden
-                transition-all duration-200
-                ${showAnalytics
-                  ? 'bg-[#1E88E5] text-white shadow-lg'
-                  : isDarkMode
-                    ? 'bg-slate-700 text-slate-300 hover:text-white border border-slate-600 hover:border-[#1E88E5]'
-                    : 'bg-white text-slate-600 hover:text-[#1E88E5] border border-slate-200 hover:border-[#1E88E5] shadow-sm hover:shadow-md'
-                }`}
-            >
-              {/* Animated glow ring on active */}
-              {showAnalytics && (
-                <motion.span
-                  className="absolute inset-0 rounded-xl"
-                  animate={{ opacity: [0.4, 0.8, 0.4] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ background: 'linear-gradient(135deg, #3FA9F555, #1E88E555)' }}
-                />
-              )}
-
-              {/* Icon with spin on toggle */}
-              <motion.span
-                animate={{ rotate: showAnalytics ? 180 : 0, scale: showAnalytics ? 1.2 : 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="relative z-10"
-              >
-                <FiBarChart2 className="w-3.5 h-3.5" />
-              </motion.span>
-
-              <span className="relative z-10 tracking-wide">Analytics</span>
-            </motion.button>
-
-            {/* From Resume Bank */}
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                if (typeof setActiveTab === 'function') {
-                  setActiveTab('Resume Bank');
-                  return;
-                }
-                setShowResumeBankModal(true);
-                setResumeBankResumes([]);
-                setResumeBankRole('');
-              }}
-              className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-xl text-white"
-              style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: '0 4px 12px rgba(31,136,229,0.3)' }}>
-              <FiDatabase className="w-3.5 h-3.5" /> Resume Bank
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.06, y: -2 }}
-              whileTap={{ scale: 0.94 }}
-              onClick={exportToCSV}
-              className={`relative flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl overflow-hidden
-                transition-all duration-200
-                ${isDarkMode
-                  ? 'bg-slate-700 text-slate-300 hover:text-white border border-slate-600 hover:border-emerald-500'
-                  : 'bg-white text-slate-600 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 shadow-sm hover:shadow-md'
-                }`}
-            >
-              <motion.span
-                whileHover={{ rotate: -20, scale: 1.2 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="relative z-10"
-              >
-                <FiDownload className="w-3.5 h-3.5" />
-              </motion.span>
-
-              <span className="relative z-10 tracking-wide">Export CSV</span>
-            </motion.button>
-            {/* Add Candidate */}
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white rounded-xl bg-slate-900 border border-slate-800 shadow-lg hover:bg-black transition-all">
-              <FiPlus className="w-3.5 h-3.5" /> Add Candidate
-            </motion.button>
+            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg active:scale-95 text-center">
+              <FiPlus size={18} />
+              Add Candidate
+            </button>
           </div>
         </motion.div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {statCards.map((stat, i) => {
-            const Icon = stat.icon;
-            const statColors = {
-              'Total Candidates': '#1E88E5',
-              'In Pipeline': '#3b82f6',
-              'Offers Sent': '#f59e0b',
-              'Joined': '#10b981',
-            };
-            const color = statColors[stat.label] || '#1E88E5';
-            return (
-              <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * (i + 1) }} whileHover={{ scale: 1.02, y: -2 }}
-                className={`relative overflow-hidden rounded-2xl p-5 cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border border-slate-700/50' : 'bg-white border border-slate-200/50 shadow-lg'}`}>
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="relative overflow-hidden"
-                >
-                  {/* Background blob */}
-                  <motion.div
-                    className="absolute -right-4 -top-4 w-24 h-24 opacity-10 rounded-full"
-                    animate={{ scale: [1, 1.15, 1] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{ backgroundColor: color }}
-                  />
-
-                  <div className="relative flex items-start justify-between">
-                    <div>
-                      <p className={`text-xs font-extrabold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {stat.label}
-                      </p>
-                      <motion.p
-                        className="text-3xl font-extrabold mt-1"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
-                        style={{ color: color }}
-                      >
-                        {stat.value}
-                      </motion.p>
-                    </div>
-
-                    {/* Icon box */}
-                    <motion.div
-                      whileHover={{ rotate: 10, scale: 1.15 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                      className="p-3 rounded-xl"
-                      style={{
-                        backgroundColor: color,
-                        boxShadow: `0 8px 20px -4px ${color}60`
-                      }}
-                    >
-                      <Icon className="w-5 h-5 text-white" />
-                    </motion.div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: 'Total Candidates', value: stats.total, icon: FiUsers, color: 'from-blue-500 to-blue-600', lightColor: 'bg-blue-50' },
+            { label: 'In Pipeline', value: stats.inPipeline, icon: FiClock, color: 'from-amber-500 to-amber-600', lightColor: 'bg-amber-50' },
+            { label: 'Offers Sent', value: stats.offersSent, icon: FiMail, color: 'from-purple-500 to-purple-600', lightColor: 'bg-purple-50' },
+            { label: 'Joined', value: stats.joined, icon: FiCheckCircle, color: 'from-emerald-500 to-emerald-600', lightColor: 'bg-emerald-50' },
+          ].map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-white rounded-[32px] p-6 border border-[#F4F3EF] shadow-sm relative overflow-hidden group transition-all"
+            >
+              <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br opacity-[0.03] rounded-bl-[100%] group-hover:opacity-[0.06] transition-opacity ${stat.color}`} />
+              <div className="flex items-start justify-between relative z-10">
+                <div>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">{stat.label}</p>
+                  <h3 className="text-3xl font-black text-[#1A1A2E] font-syne">{stat.value}</h3>
+                  <div className="mt-4 flex items-center gap-1.5">
+                    <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">+12%</span>
+                    <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider">vs last week</span>
                   </div>
-                </motion.div>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* ═══ Stage Conversion Analytics ═══ */}
-        <AnimatePresence>
-          {showAnalytics && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-              className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50 shadow-lg'}`}>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className={`text-sm font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                    <div className="p-1.5 rounded-lg bg-[#1E88E5]"><FiBarChart2 className="w-3.5 h-3.5 text-white" /></div>
-                    Stage Conversion Funnel
-                  </h3>
-                  <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Rejected: {candidates.filter(c => c.stage === 'Rejected').length}</span>
                 </div>
-                <div className="flex items-end gap-2 overflow-x-auto pb-2">
-                  {getConversionStats().map((s, i) => {
-                    const maxCount = Math.max(...getConversionStats().map(x => x.count), 1);
-                    const barHeight = Math.max((s.count / maxCount) * 120, 8);
-                    const config = stageConfig[s.stage] || stageConfig.Screening;
-                    return (
-                      <div key={s.stage} className="flex flex-col items-center min-w-[80px] flex-1">
-                        <span className={`text-lg font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{s.count}</span>
-                        <motion.div initial={{ height: 0 }} animate={{ height: barHeight }} transition={{ delay: i * 0.08, duration: 0.5 }}
-                          className="w-full rounded-t-lg" style={{ background: config.color, minHeight: 8 }} />
-                        <div className={`text-[10px] font-medium text-center mt-2 leading-tight ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{s.stage}</div>
-                        {i < stageOrder.length - 1 && (
-                          <div className={`text-[9px] mt-1 px-1.5 py-0.5 rounded-full font-bold ${s.rate > 50 ? 'bg-green-100 text-green-700' : s.rate > 20 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                            {s.rate}%
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-lg transform group-hover:rotate-6 transition-transform`}>
+                  <stat.icon size={20} />
                 </div>
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Job Openings Positions */}
-        {jobOpenings.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className={`rounded-2xl border p-5 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-[#3FA9F5]"><FiTarget className="w-4 h-4 text-white" /></div>
-                <h3 className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Open Positions from Job Openings</h3>
-              </div>
-              <span className={`text-xs font-medium px-3 py-1 rounded-full ${isDarkMode ? 'bg-[#1E88E5]/40 text-[#3FA9F5]' : 'bg-[#1E88E5]/10 text-[#1E88E5]'}`}>
-                {jobOpenings.filter(j => j.filled < j.openings).length} Open
-              </span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {jobOpenings.map((job, idx) => {
-                const isFilled = job.filled >= job.openings;
-                const candidatesForJob = candidates.filter(c => c.jobTitle === job.title && c.client === job.client).length;
-                const percent = Math.min((job.filled / job.openings) * 100, 100);
-
-                // Status logic - Simplified to neutral slate/blue theme
-                const statusConfig = {
-                  color: isDarkMode ? '#94a3b8' : '#64748b',
-                  cardBg: isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200/60',
-                  label: 'Project Status',
-                  labelClass: isDarkMode ? 'text-slate-400' : 'text-slate-500'
-                };
-
-                return (
-                  <motion.div
-                    key={job.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: idx * 0.07 }}
-                    whileHover={{ y: -4, scale: 1.01 }}
-                    className={`relative rounded-2xl p-4 border transition-all duration-200 cursor-pointer overflow-hidden hover:shadow-lg
-                      ${statusConfig.cardBg}`}
-                    onClick={() => {
-                      if (!isFilled) {
-                        setNewCandidate(prev => ({ ...prev, jobTitle: job.title, client: job.client }));
-                        setShowAddModal(true);
-                      }
-                    }}
-                  >
-                    {/* Removed simplified background glow blobs */}
-
-                    {/* Top row */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className={`text-sm font-bold truncate leading-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                          {job.title}
-                        </p>
-                        <p className={`text-xs mt-0.5 truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                          {job.client}
-                        </p>
-                      </div>
-                      <motion.span
-                        whileHover={{ scale: 1.1 }}
-                        className={`text-xs font-extrabold px-2.5 py-1 rounded-full flex-shrink-0 text-white shadow-sm ${statusConfig.badgeBg}`}
-                      >
-                        {job.filled}/{job.openings}
-                      </motion.span>
-                    </div>
-
-                    {/* Progress bar */}
-                    {/* Simplified bottom row */}
-                    <div className="flex items-center justify-between mt-3">
-                      <span className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {candidatesForJob} in pipeline
-                      </span>
-                      <span className={`text-[11px] font-bold ${statusConfig.labelClass}`}>
-                        {job.filled}/{job.openings} Openings
-                      </span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Pipeline Status Filter Pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-wrap sm:flex-nowrap">
-          {[
-            { key: 'all', label: 'All', count: stats.total, color: '#1E88E5', bg: 'blue', icon: FiUsers },
-            { key: 'pending', label: 'Pending', count: stats.pending, color: '#f59e0b', bg: 'amber', icon: FiClock },
-            { key: 'hold', label: 'On Hold', count: stats.onHold, color: '#6366f1', bg: 'indigo', icon: FiAlertCircle },
-            { key: 'approved', label: 'Approved', count: stats.approved, color: '#10b981', bg: 'emerald', icon: FiCheckCircle },
-            { key: 'rejected', label: 'Rejected', count: stats.rejected, color: '#ef4444', bg: 'red', icon: FiXCircle },
-          ].map(({ key, label, count, color, icon: Icon }) => {
-            const isActive = filterPipelineStatus === key;
-            return (
-              <motion.button
-                key={key}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setFilterPipelineStatus(filterPipelineStatus === key ? 'all' : key)}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 overflow-hidden flex-shrink-0
-                  ${isActive
-                    ? 'text-white shadow-lg'
-                    : isDarkMode
-                      ? 'bg-slate-700/60 text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md'
-                  }`}
-                style={isActive ? { backgroundColor: color, boxShadow: `0 8px 20px -4px ${color}60` } : {}}
-              >
-                {/* Active pulse glow */}
-                {isActive && (
-                  <motion.span
-                    className="absolute inset-0 rounded-xl"
-                    animate={{ opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{ background: `radial-gradient(circle at center, ${color}44, transparent 70%)` }}
-                  />
-                )}
-
-                {/* Icon */}
-                <motion.span
-                  animate={{ rotate: isActive ? 360 : 0, scale: isActive ? 1.15 : 1 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="relative z-10"
-                >
-                  <Icon className="w-4 h-4" style={{ color: isActive ? 'white' : color }} />
-                </motion.span>
-
-                {/* Label */}
-                <span className="relative z-10 hidden sm:inline">{label}</span>
-                <span className="relative z-10 sm:hidden text-xs">{label}</span>
-
-                {/* Count badge */}
-                <motion.span
-                  animate={{ scale: isActive ? [1, 1.2, 1] : 1 }}
-                  transition={{ duration: 0.4 }}
-                  className={`relative z-10 px-2 py-0.5 rounded-full text-xs font-extrabold
-                    ${isActive
-                      ? 'bg-white/25 text-white'
-                      : isDarkMode ? 'bg-slate-600 text-slate-300' : 'bg-slate-100 text-slate-600'
-                    }`}
-                >
-                  {count}
-                </motion.span>
-              </motion.button>
-            );
-          })}
+          ))}
         </div>
 
-        {/* Stage Filter Pills */}
-        {/* <div className="flex gap-2 overflow-x-auto pb-2">
-          <button
-            onClick={() => setFilterStage('all')}
-            className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${filterStage === 'all' ? 'bg-slate-800 text-white' : isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}
-          >
-            All Stages
-          </button>
-          {stageOrder.map(stage => {
-            const config = stageConfig[stage] || stageConfig.Screening;
-            const count = candidates.filter(c => c.stage === stage).length;
-            return (
-              <button
-                key={stage}
-                onClick={() => setFilterStage(filterStage === stage ? 'all' : stage)}
-                className={`px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${filterStage === stage ? 'text-white' : isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}
-                style={filterStage === stage ? { backgroundColor: config.color } : {}}
-              >
-                <config.icon className="w-3 h-3" />
-                {stage} ({count})
-              </button>
-            );
-          })}
-        </div> */}
-
-        {/* Search Bar */}
-        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
-          <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
-            <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
-            <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, email, skills..."
-              className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm('')}>
-                <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
-              </button>
-            )}
+        <div className="flex flex-col lg:flex-row gap-4 items-center">
+          <div className="flex-1 w-full bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
+            <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+              <FiSearch className="text-[#9B9BAD]" size={18} />
+              <input
+                type="text"
+                placeholder="Search by title, client or location..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-transparent text-sm font-bold outline-none w-full placeholder:text-[#9B9BAD]/60"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 custom-scrollbar">
+            {[
+              { label: 'All Time', icon: FiCalendar, value: filterDate, setter: setFilterDate },
+              { label: 'All Roles', icon: FiBriefcase, value: filterJob, setter: setFilterJob },
+              { label: 'All Clients', icon: FiTarget, value: filterClient, setter: setFilterClient },
+            ].map((filter, i) => (
+              <div key={i} className="relative group flex-shrink-0">
+                <button className="flex items-center gap-2.5 px-5 py-3.5 bg-white border border-[#F4F3EF] rounded-2xl text-xs font-black text-[#1A1A2E] hover:border-blue-200 hover:bg-blue-50/30 transition-all uppercase tracking-widest shadow-sm">
+                  <filter.icon className="text-blue-500" size={14} />
+                  {filter.value === 'all' ? filter.label : filter.value}
+                  <FiChevronDown className="text-[#9B9BAD] group-hover:text-blue-500 transition-colors" />
+                </button>
+              </div>
+            ))}
+            <button className="p-3.5 bg-white border border-[#F4F3EF] rounded-2xl text-[#1A1A2E] hover:bg-[#F4F3EF] transition-all shadow-sm">
+              <FiSliders size={18} />
+            </button>
           </div>
         </div>
 
-        {/* Bulk Actions Bar */}
-        <AnimatePresence>
-          {selectedIds.size > 0 && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-              className={`flex items-center justify-between p-3 rounded-xl border-2 ${isDarkMode ? 'bg-[#1E88E5]/20 border-[#1E88E5]/50' : 'bg-[#1E88E5]/10 border-[#1E88E5]/30'}`}>
-              <div className="flex items-center gap-3">
-                <span className={`text-sm font-semibold ${isDarkMode ? 'text-[#3FA9F5]' : 'text-[#1E88E5]'}`}>{selectedIds.size} selected</span>
-                <button onClick={() => setSelectedIds(new Set())} className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} hover:underline`}>Clear</button>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <select onChange={(e) => { if (e.target.value) bulkMoveStage(e.target.value); e.target.value = ''; }}
-                    className={`appearance-none rounded-lg border px-3 py-1.5 pr-8 text-xs font-medium ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}>
-                    <option value="">Move to stage...</option>
-                    {stageOrder.map(s => (<option key={s} value={s}>{s}</option>))}
-                  </select>
-                  <FiChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                </div>
-                <button onClick={bulkReject}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-red-500 hover:bg-red-600 transition-colors">
-                  <FiXCircle className="w-3 h-3" /> Reject All
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ═══════════ MAIN VIEW ═══════════ */}
         {isKanbanView ? (
           <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex gap-4 overflow-x-auto pb-6 no-scrollbar items-start" style={{ minHeight: 'calc(100vh - 400px)' }}>
+            <div className="flex gap-6 overflow-x-auto pb-10 custom-scrollbar items-start" style={{ minHeight: '600px' }}>
               {stageOrder.map(stage => {
-                const stageCandidates = filteredCandidates.filter(c => c.stage === stage);
-                const config = stageConfig[stage] || stageConfig.Screening;
+                const stageCandidates = filteredCandidates.filter(c => {
+                  if (stage === 'Interview') return ['Phone Interview', 'Technical Round', 'HR Round', 'Client Interview'].includes(c.stage) || c.stage === 'Interview';
+                  if (stage === 'Applied') return c.stage === 'Screening' || c.stage === 'Applied' || !c.stage;
+                  if (stage === 'Offer') return c.stage === 'Offer Sent' || c.stage === 'Offer';
+                  if (stage === 'Hired') return c.stage === 'Joined' || c.stage === 'Hired';
+                  return c.stage === stage;
+                });
+                const config = stageConfig[stage] || stageConfig.Applied;
                 return (
                   <Droppable key={stage} droppableId={stage}>
                     {(provided, snapshot) => (
                       <div
                         {...provided.droppableProps}
                         ref={provided.innerRef}
-                        className={`flex-shrink-0 w-72 rounded-2xl transition-all duration-200 border ${snapshot.isDraggingOver ? 'bg-slate-50 border-[#1E88E5]/30' : isDarkMode ? 'bg-slate-800/40 border-slate-700/50' : 'bg-white border-slate-200'}`}
+                        className={`flex-shrink-0 w-[320px] rounded-[32px] transition-all duration-300 ${snapshot.isDraggingOver ? 'bg-blue-50/50 ring-2 ring-blue-100' : 'bg-[#F8FAFF]/40 border border-[#F4F3EF]'}`}
                       >
-                        {/* Column Header */}
-                        <div className="p-4 flex items-center justify-between border-b border-inherit">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: config.color }} />
-                            <h3 className={`text-sm font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{stage}</h3>
+                        <div className="px-7 py-6 flex items-center justify-between border-b border-[#F4F3EF]/50">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${config.dotColor}`} />
+                            <h3 className="text-[13px] font-black text-[#1A1A2E] tracking-tight uppercase font-syne">{stage}</h3>
                           </div>
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400 border border-slate-600' : 'bg-white text-slate-500 border border-slate-100 shadow-sm'}`}>
+                          <div className="min-w-[24px] h-[24px] flex items-center justify-center bg-white rounded-lg text-[10px] font-black text-[#1B4DA0] shadow-sm border border-[#F4F3EF]">
                             {stageCandidates.length}
-                          </span>
+                          </div>
                         </div>
-
-                        {/* Drop Zone */}
-                        <div className="p-3 space-y-3 min-h-[300px]">
-                          {stageCandidates.length === 0 && !snapshot.isDraggingOver && (
-                            <div className="flex flex-col items-center justify-center py-12 opacity-20 grayscale scale-90">
-                              <FiUsers size={32} className="text-slate-400 mb-2" />
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Empty</p>
-                            </div>
-                          )}
+                        <div className="px-4 py-6 space-y-4 min-h-[600px] custom-scrollbar max-h-[70vh] overflow-y-auto">
                           {stageCandidates.map((candidate, index) => (
                             <Draggable key={candidate.id.toString()} draggableId={candidate.id.toString()} index={index}>
                               {(provided, snapshot) => (
@@ -2842,53 +845,35 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  initial={{ opacity: 0, y: 5 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  whileHover={{ y: 0 }}
                                   onClick={() => openDetail(candidate)}
-                                  className={`group relative rounded-xl border p-4 transition-all duration-200 cursor-pointer overflow-hidden ${
-                                    snapshot.isDragging 
-                                      ? 'bg-white border-[#1E88E5] shadow-lg z-50' 
-                                      : isDarkMode 
-                                        ? 'bg-slate-900/60 border-slate-700/50 hover:border-slate-500' 
-                                        : 'bg-white border-slate-100 hover:border-blue-200'
-                                  }`}
+                                  className={`bg-white border rounded-[28px] p-5 shadow-sm hover:shadow-xl transition-all group relative ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-400' : 'border-[#F4F3EF]'}`}
                                 >
-                                  {/* Glass highlight on hover */}
-                                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity" />
-
-                                  <div className="flex flex-col gap-3 relative z-10">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-inner flex-shrink-0" style={{ background: getAvatarGradient(candidate.name) }}>
-                                          {getInitials(candidate.name)}
-                                        </div>
-                                        <div className="min-w-0">
-                                          <h4 className={`text-xs font-black truncate leading-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                                            {candidate.name}
-                                          </h4>
-                                          <p className={`text-[10px] font-medium mt-0.5 truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                                            {candidate.jobTitle}
-                                          </p>
-                                        </div>
+                                  <div className="flex items-center gap-4 mb-4">
+                                    <div className="relative">
+                                      <div className="w-12 h-12 rounded-[18px] text-white flex items-center justify-center text-sm font-black shadow-lg transform group-hover:scale-105 transition-transform" style={{ background: getAvatarGradient(candidate.name) }}>
+                                        {getInitials(candidate.name)}
                                       </div>
-                                      <FiChevronRight className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-40 transition-all transform group-hover:translate-x-0.5 ${isDarkMode ? 'text-white' : 'text-slate-600'}`} />
+                                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-md">
+                                        <div className={`w-2 h-2 rounded-full ${candidate.pipelineStatus === 'hold' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                                      </div>
                                     </div>
-
-                                    {/* Footer Info */}
-                                    <div className="flex items-center justify-between mt-1 pt-3 border-t border-dashed border-inherit">
-                                      <div className="flex gap-1.5 flex-wrap flex-1 min-w-0 pr-2">
-                                        {(candidate.skills || []).slice(0, 2).map(skill => (
-                                          <span key={skill} className={`text-[9px] font-black px-2 py-0.5 rounded-lg whitespace-nowrap ${isDarkMode ? 'bg-blue-900/30 text-blue-400 border border-blue-800/30' : 'bg-blue-50 text-blue-500'}`}>
-                                            {skill}
-                                          </span>
-                                        ))}
-                                      </div>
-                                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <span className={`text-[9px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                                          {getStageDuration(candidate)}
-                                        </span>
-                                      </div>
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="text-[14px] font-black text-[#1A1A2E] truncate font-syne uppercase tracking-tight group-hover:text-blue-600 transition-colors">{candidate.name}</h4>
+                                      <p className="text-[10px] font-bold text-[#9B9BAD] truncate uppercase tracking-widest mt-0.5">{candidate.jobTitle}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5 mb-5">
+                                    {(candidate.skills || []).slice(0, 3).map((s, idx) => (
+                                      <span key={idx} className="text-[8px] font-black text-[#1B4DA0] bg-blue-50/50 px-2 py-1 rounded-lg uppercase border border-blue-100/50">{s}</span>
+                                    ))}
+                                  </div>
+                                  <div className="flex items-center justify-between pt-4 border-t border-dashed border-[#F4F3EF]">
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">
+                                      <FiClock className="text-blue-400" /> {getStageDuration(candidate)}
+                                    </div>
+                                    <div className="flex items-center -space-x-2">
+                                      <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center"><FiUserCheck size={10} className="text-[#9B9BAD]" /></div>
+                                      <button className="w-6 h-6 rounded-full border-2 border-white bg-white shadow-sm flex items-center justify-center text-[#9B9BAD] hover:text-blue-500 transition-colors"><FiMoreVertical size={10} /></button>
                                     </div>
                                   </div>
                                 </motion.div>
@@ -2904,361 +889,111 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               })}
             </div>
           </DragDropContext>
-        ) : filteredCandidates.length === 0 ? (
-          <div className={`text-center py-16 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            <FiUsers size={40} className="mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No candidates found</p>
-            <p className="text-sm mt-1">Try adjusting your search or filters</p>
-          </div>
         ) : (
-          <div className="grid gap-4">
-            {/* Select All row */}
-            <div className={`flex items-center gap-3 px-5 py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              <label className="flex items-center gap-2 cursor-pointer" onClick={toggleSelectAll}>
-                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selectedIds.size === filteredCandidates.length && filteredCandidates.length > 0 ? 'bg-[#1E88E5] border-[#1E88E5]' : isDarkMode ? 'border-slate-600' : 'border-slate-300'}`}>
-                  {selectedIds.size === filteredCandidates.length && filteredCandidates.length > 0 && <FiCheck className="w-3 h-3 text-white" />}
+          <div className="grid gap-4 pb-10">
+            {filteredCandidates.map((candidate, idx) => (
+              <motion.div key={candidate.id} onClick={() => openDetail(candidate)} className="flex items-center gap-6 px-8 py-5 bg-white rounded-[24px] border border-[#F4F3EF] hover:shadow-xl transition-all cursor-pointer">
+                <div className="w-12 h-12 rounded-[18px] text-white flex items-center justify-center text-sm font-black shadow-lg" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
+                <div className="flex-1">
+                  <h4 className="text-[15px] font-black text-[#1A1A2E] uppercase font-syne tracking-tight">{candidate.name}</h4>
+                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{candidate.jobTitle} • {candidate.client}</p>
                 </div>
-                <span className="text-xs font-medium">Select all ({filteredCandidates.length})</span>
-              </label>
-            </div>
-
-            <AnimatePresence>
-              {filteredCandidates.map((candidate, idx) => (
-                <motion.div
-                  key={candidate.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: idx * 0.03 }}
-                  className={`rounded-2xl border-2 p-5 transition-shadow cursor-pointer ${selectedIds.has(candidate.id) ? isDarkMode ? 'border-[#1E88E5] bg-[#1E88E5]/5' : 'border-[#1E88E5] bg-[#1E88E5]/10' : isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200'}`}
-                  onClick={() => openDetail(candidate)}
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4 flex-1">
-                      {/* Checkbox */}
-                      <div className="flex flex-col items-center gap-2 pt-1">
-                        <div onClick={(e) => { e.stopPropagation(); toggleSelectCandidate(candidate.id); }}
-                          className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all ${selectedIds.has(candidate.id) ? 'bg-[#1E88E5] border-[#1E88E5]' : isDarkMode ? 'border-slate-600 hover:border-slate-500' : 'border-slate-300 hover:border-slate-400'}`}>
-                          {selectedIds.has(candidate.id) && <FiCheck className="w-3 h-3 text-white" />}
-                        </div>
-                      </div>
-                      {/* Avatar */}
-                      {candidate.photo ? (
-                        <div className="relative flex-shrink-0">
-                          <img src={candidate.photo} alt={candidate.name}
-                            className="h-14 w-14 rounded-xl object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
-                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                          <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg hidden" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
-                        </div>
-                      ) : (
-                        <div className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
-                      )}
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{candidate.name}</h3>
-                          {getStageDuration(candidate) && (
-                            <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-                              <FiClock className="w-2.5 h-2.5" /> {getStageDuration(candidate)}
-                            </span>
-                          )}
-                        </div>
-                        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{candidate.jobTitle} • {candidate.client}</p>
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
-                          <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMail className="w-3.5 h-3.5" /> {candidate.email}</span>
-                          <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiMapPin className="w-3.5 h-3.5" /> {candidate.location}</span>
-                          <span className={`flex items-center gap-1.5 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><FiBriefcase className="w-3.5 h-3.5" /> {candidate.experience}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mt-3">
-                          {(candidate.skills || []).slice(0, 5).map(skill => (
-                            <span key={skill} className={`text-[10px] font-medium px-2 py-1 rounded-full ${isDarkMode ? 'bg-blue-900/40 text-blue-300 border border-blue-700/50' : 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 border border-blue-100'}`}>{skill}</span>
-                          ))}
-                          {(candidate.skills || []).length > 5 && (
-                            <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>+{candidate.skills.length - 5} more</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Actions & Info */}
-                    <div className="flex flex-col items-end gap-2.5 min-w-[150px]">
-                      {/* Stage Badge & Status */}
-                      <div className="flex flex-col items-end gap-1.5 w-full">
-                        <StageBadge stage={candidate.stage} />
-
-                        {/* Pipeline Status Badge */}
-                        <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm text-center inline-block w-full ${(candidate.pipelineStatus || 'pending') === 'approved' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800' :
-                          (candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-400 dark:border-indigo-800' :
-                            (candidate.pipelineStatus || 'pending') === 'rejected' ? 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-800' :
-                              'bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800'
-                          }`}>
-                          {(candidate.pipelineStatus || 'pending') === 'approved' ? '✓ APPROVED' : (candidate.pipelineStatus || 'pending') === 'hold' ? '⏸ ON HOLD' : (candidate.pipelineStatus || 'pending') === 'rejected' ? '✗ REJECTED' : '● PENDING'}
-                        </span>
-                      </div>
-
-                      {/* Expected CTC */}
-                      <motion.div
-                        whileHover={{ scale: 1.02, y: -1 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-center mt-1 w-full bg-slate-50 dark:bg-slate-800/50 py-1.5 px-2 rounded-lg border border-slate-100 dark:border-slate-700/50 shadow-sm"
-                      >
-                        <p className={`text-[9px] uppercase tracking-widest font-extrabold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Expected CTC</p>
-                        <p className="text-base font-black bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">{candidate.expectedCTC}</p>
-                      </motion.div>
-
-                      {/* Rejection reason */}
-                      {candidate.stage === 'Rejected' && candidate.rejectionReason && (
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg w-full text-center mt-1 border ${isDarkMode ? 'bg-red-900/20 text-red-400 border-red-800/50' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                          Reason: {candidate.rejectionReason}
-                        </span>
-                      )}
-
-                      {/* Pipeline Action Buttons: Hold / Approve / Reject */}
-                      {(candidate.pipelineStatus || 'pending') !== 'approved' && (candidate.pipelineStatus || 'pending') !== 'rejected' && (
-                        <div className="grid grid-cols-3 gap-1.5 mt-1.5 w-full">
-                          <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                            onClick={(e) => { e.stopPropagation(); holdCandidate(candidate.id); }}
-                            className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-extrabold transition-all shadow-sm ${(candidate.pipelineStatus || 'pending') === 'hold' ? 'bg-indigo-500 text-white shadow-indigo-500/30 ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900' :
-                              isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-indigo-900/40 hover:text-indigo-400 border border-slate-600 hover:border-indigo-700/50' :
-                                'bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200'
-                              }`}
-                          >
-                            <FiPause className="w-4 h-4" /> Hold
-                          </motion.button>
-
-                          <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                            onClick={(e) => { e.stopPropagation(); openApproveModal(candidate.id); }}
-                            className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-extrabold transition-all shadow-sm ${isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-emerald-900/40 hover:text-emerald-400 border border-slate-600 hover:border-emerald-700/50' :
-                              'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 border border-slate-200 hover:border-emerald-200'
-                              }`}
-                          >
-                            <FiThumbsUp className="w-4 h-4" /> Approve
-                          </motion.button>
-
-                          <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                            onClick={(e) => { e.stopPropagation(); pipelineRejectCandidate(candidate.id); }}
-                            className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-extrabold transition-all shadow-sm ${isDarkMode ? 'bg-slate-700/50 text-slate-300 hover:bg-red-900/40 hover:text-red-400 border border-slate-600 hover:border-red-700/50' :
-                              'bg-slate-50 text-slate-600 hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200'
-                              }`}
-                          >
-                            <FiXCircle className="w-4 h-4" /> Reject
-                          </motion.button>
-                        </div>
-                      )}
-
-                      {/* Quick Contact WhatsApp */}
-                      {candidate.phone && (
-                        <div className="w-full mt-1.5">
-                          <motion.a
-                            whileHover={{ scale: 1.02, y: -1 }}
-                            whileTap={{ scale: 0.98 }}
-                            href={`https://wa.me/${candidate.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-xs font-extrabold bg-[#25D366]/10 text-[#075E54] dark:bg-[#25D366]/20 dark:text-[#25D366] hover:bg-[#25D366] hover:text-white dark:hover:bg-[#25D366] dark:hover:text-white transition-all border border-[#25D366]/30 shadow-sm"
-                          >
-                            <FiPhone className="w-3.5 h-3.5" /> WhatsApp
-                          </motion.a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                <StageBadge stage={candidate.stage} />
+                <button className="w-10 h-10 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]"><FiEye /></button>
+              </motion.div>
+            ))}
           </div>
         )}
+      </motion.div>
 
-        {/* ═══ Click-away handler for stage menu ═══ */}
-        {stageMenuId && <div className="fixed inset-0 z-40" onClick={() => setStageMenuId(null)} />}
-
-        {/* Action Modals have been refactored into top-level horizontal pages */}
-
-        {/* Upload CV Modal */}
-        <AnimatePresence>
-          {showUploadModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowUploadModal(false); resetBulkUploadModal(); }} />
-              <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`relative rounded-2xl shadow-2xl w-full max-w-md overflow-hidden ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'}`}>
-                <div className="flex items-center justify-between p-5" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5, #0D47A1)' }}>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)' }}><FiUpload className="w-5 h-5 text-white" /></div>
-                    <div><h3 className="text-lg font-bold text-white">Upload CVs/Resumes</h3><p className="text-xs text-white/70">Add resumes for candidates</p></div>
-                  </div>
-                  <button onClick={() => { setShowUploadModal(false); resetBulkUploadModal(); }} className="p-2 rounded-lg hover:bg-white/20 text-white/80 hover:text-white"><FiX className="w-5 h-5" /></button>
-                </div>
-                <div className="p-5 space-y-4">
-                  {jobOpenings.length > 0 && (
-                    <div>
-                      <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>For Position (optional)</label>
-                      <select
-                        value={bulkUploadPositionId}
-                        onChange={(e) => setBulkUploadPositionId(e.target.value)}
-                        className={`w-full rounded-xl border-2 px-4 py-2.5 text-sm ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
-                      >
-                        <option value="">General Upload</option>
-                        {jobOpenings.filter(j => j.filled < j.openings).map(job => (<option key={job.id} value={job.id}>{job.title} — {job.client}</option>))}
-                      </select>
-                    </div>
-                  )}
-                  <input
-                    ref={bulkUploadInputRef}
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={(e) => handleBulkFilesSelected(e.target.files)}
-                  />
-                  <div
-                    onClick={() => bulkUploadInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleBulkFilesSelected(e.dataTransfer.files);
-                    }}
-                    className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer ${isDarkMode ? 'border-slate-600 hover:border-[#1E88E5]' : 'border-slate-300 hover:border-[#1E88E5]'}`}
-                  >
-                    <FiUpload className={`w-12 h-12 mx-auto mb-3 ${bulkUploadFiles.length > 0 ? 'text-emerald-500' : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`} />
-                    <p className={`font-medium ${bulkUploadFiles.length > 0 ? 'text-emerald-600' : (isDarkMode ? 'text-slate-300' : 'text-slate-600')}`}>
-                      {bulkUploadFiles.length > 0 ? `${bulkUploadFiles.length} file(s) selected` : 'Drag & drop files here'}
-                    </p>
-                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>or click to browse</p>
-                    <p className={`text-xs mt-3 ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>PDF, DOC, DOCX (Max 10MB each)</p>
-                  </div>
-                  {bulkUploadFiles.length > 0 && (
-                    <div className={`rounded-xl px-3 py-2 text-xs space-y-1 ${isDarkMode ? 'bg-slate-700/70 text-slate-300' : 'bg-slate-50 text-slate-600 border border-slate-200'}`}>
-                      {bulkUploadFiles.slice(0, 4).map(file => (
-                        <div key={`${file.name}-${file.size}`} className="truncate">{file.name}</div>
-                      ))}
-                      {bulkUploadFiles.length > 4 && (
-                        <div>+{bulkUploadFiles.length - 4} more file(s)</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className={`flex justify-end gap-3 p-5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                  <button onClick={() => { setShowUploadModal(false); resetBulkUploadModal(); }} className={`px-4 py-2 rounded-xl text-sm font-medium ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>Cancel</button>
-                  <button
-                    onClick={handleBulkResumeUpload}
-                    disabled={bulkUploading || bulkUploadFiles.length === 0}
-                    className="px-5 py-2 text-sm font-semibold bg-gradient-to-r from-[#3FA9F5] to-[#0D47A1] text-white rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {bulkUploading ? 'Uploading...' : 'Upload'}
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-      {/* ── Candidate Detail Drawer ── */}
       <AnimatePresence>
         {drawerCandidate && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setDrawerCandidate(null)}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]"
-            />
-            <motion.div
-              initial={{ x: '100%', opacity: 0.5 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: '100%', opacity: 0.5 }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 right-0 w-full sm:w-[480px] md:w-[540px] bg-white shadow-2xl z-[110] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
-            >
-              <div className="flex flex-col h-full bg-white">
-                {/* Header */}
-                <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
-                  <div>
-                    <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{drawerCandidate.name}</h2>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{drawerCandidate.jobTitle || 'Position'}</span>
-                      <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{drawerCandidate.client || 'Client'}</span>
-                    </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setDrawerCandidate(null)} className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-xl z-[9999]" />
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 w-full md:w-[580px] bg-white shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] z-[10000] flex flex-col overflow-hidden rounded-l-[48px]">
+              <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-10">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-[24px] text-white flex items-center justify-center text-xl font-black shadow-xl" style={{ background: getAvatarGradient(drawerCandidate.name) }}>
+                    {getInitials(drawerCandidate.name)}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StageBadge stage={drawerCandidate.stage} />
-                    <button onClick={() => setDrawerCandidate(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90">
-                      <FiX className="w-5 h-5" />
-                    </button>
+                  <div>
+                    <h2 className="text-2xl font-black text-[#1A1A2E] font-syne uppercase tracking-tight">{drawerCandidate.name}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[2px]">{drawerCandidate.jobTitle}</span>
+                      <div className="w-1 h-1 rounded-full bg-[#9B9BAD]" />
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">{drawerCandidate.client}</span>
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <StageBadge stage={drawerCandidate.stage} />
+                  <button onClick={() => setDrawerCandidate(null)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm">
+                    <FiX size={20} />
+                  </button>
+                </div>
+              </div>
 
-                <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
-                  {/* Candidate Fit Radar */}
-                  <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
-                    <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-2 text-center">Candidate Assessment</h3>
-                    <div className="w-full h-[220px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart data={[
-                          { axis: 'Technical', value: Math.min(100, 50 + (drawerCandidate.skills?.length || 0) * 8) },
-                          { axis: 'Experience', value: drawerCandidate.experience ? Math.min(100, parseInt(drawerCandidate.experience) * 12 || 60) : 50 },
-                          { axis: 'Communication', value: (drawerCandidate.rating || 3) * 18 },
-                          { axis: 'Cultural Fit', value: 65 },
-                        ]} cx="50%" cy="50%" outerRadius="70%">
-                          <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
-                          <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} />
-                          <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
-                          <Radar dataKey="value" stroke="#a5b4fc" fill="#a5b4fc" fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
-                        </RadarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  {/* Pipeline Stage Progress */}
-                  <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
-                    <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Pipeline Stage</h3>
-                    <div className="flex items-center gap-6">
-                      <div className="w-[120px] h-[120px] flex-shrink-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie data={[
-                              { name: 'Progress', value: Math.max(1, stageOrder.indexOf(drawerCandidate.stage) + 1) },
-                              { name: 'Remaining', value: Math.max(0, stageOrder.length - stageOrder.indexOf(drawerCandidate.stage) - 1) },
-                            ]} innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                              <Cell fill="#3B82F6" />
-                              <Cell fill="#e2e8f0" />
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
+              <div className="flex-1 p-10 space-y-10 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: 'Experience', value: drawerCandidate.experience, icon: FiBriefcase, color: 'text-blue-500' },
+                    { label: 'Expectation', value: drawerCandidate.expectedCTC, icon: FiTarget, color: 'text-purple-500' },
+                    { label: 'Notice Period', value: drawerCandidate.noticePeriod, icon: FiClock, color: 'text-amber-500' },
+                    { label: 'Applied On', value: drawerCandidate.appliedDate, icon: FiCalendar, color: 'text-emerald-500' },
+                  ].map((item, i) => (
+                    <div key={i} className="bg-[#F8FAFF] border border-blue-50/50 p-5 rounded-[24px] flex items-center gap-4 group hover:bg-white hover:shadow-lg hover:border-blue-100 transition-all group cursor-default">
+                      <div className={`w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
+                        <item.icon size={16} />
                       </div>
-                      <div className="space-y-3 flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Rating</span>
-                          <RatingStars rating={drawerCandidate.rating || 0} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Experience</span>
-                          <span className="text-sm font-black text-[#1A1A2E]">{drawerCandidate.experience || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Notice</span>
-                          <span className="text-sm font-black text-[#1A1A2E]">{drawerCandidate.noticePeriod || 'N/A'}</span>
-                        </div>
+                      <div>
+                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">{item.label}</p>
+                        <p className="text-xs font-black text-[#1A1A2E] mt-0.5">{item.value || 'N/A'}</p>
                       </div>
                     </div>
-                  </div>
+                  ))}
+                </div>
 
-                  {/* Action Buttons */}
+                <section className="text-left">
+                  <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-5 flex items-center gap-2">
+                    <div className="w-6 h-0.5 bg-blue-500 rounded-full" /> Key Skills
+                  </h3>
+                  <div className="flex flex-wrap gap-2.5">
+                    {(drawerCandidate.skills || []).map(s => (
+                      <span key={s} className="text-[11px] font-black text-blue-600 bg-blue-50/50 px-4 py-2 rounded-xl border border-blue-100/30 uppercase tracking-tight">
+                        {s}
+                      </span>
+                    ))}
+                    {(drawerCandidate.skills || []).length === 0 && <p className="text-xs text-slate-400">No skills listed</p>}
+                  </div>
+                </section>
+
+                <section className="text-left">
+                  <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-5 flex items-center gap-2">
+                    <div className="w-6 h-0.5 bg-amber-500 rounded-full" /> About Candidate
+                  </h3>
+                  <div className="bg-[#FAFAF8] rounded-[32px] p-6 border border-[#F4F3EF]">
+                    <p className="text-sm font-medium text-[#4B4B5E] leading-relaxed italic">
+                      "{drawerCandidate.shortDescription || 'No description available for this candidate. Use full experience view for more details.'}"
+                    </p>
+                  </div>
+                </section>
+
+                <div className="grid grid-cols-2 gap-4 pt-10">
                   <button
                     onClick={() => { setDrawerCandidate(null); setSelectedCandidateDetail(drawerCandidate); setShowDetailSidebar(true); }}
-                    className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:bg-[#1B4DA0] transition-all active:scale-[0.98] shadow-lg shadow-gray-200"
+                    className="col-span-2 py-5 bg-[#1B4DA0] text-white rounded-3xl font-black uppercase tracking-[3px] shadow-xl hover:bg-[#0D47A1] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                   >
-                    <FiEye className="w-5 h-5" /> View Full Profile
+                    <FiUserCheck size={18} /> View Full Experience
                   </button>
-                  <div className="grid grid-cols-2 gap-3">
-                    {drawerCandidate.phone && (
-                      <a href={`https://wa.me/${drawerCandidate.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                        className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]">
-                        <FiPhone className="w-4 h-4" /> WhatsApp
-                      </a>
-                    )}
-                    <a href={`mailto:${drawerCandidate.email}`}
-                      className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]">
-                      <FiMail className="w-4 h-4" /> Email
-                    </a>
-                  </div>
+                  <button className="py-4 bg-white border border-[#F4F3EF] rounded-2xl font-black text-xs text-[#1A1A2E] uppercase tracking-widest hover:bg-[#F4F3EF] active:scale-[0.98] transition-all shadow-sm">
+                    Edit Profile
+                  </button>
+                  <button
+                    onClick={() => setDrawerCandidate(null)}
+                    className="py-4 bg-[#F4F3EF] rounded-2xl font-black text-xs text-[#9B9BAD] uppercase tracking-widest hover:bg-[#EBEBE4] active:scale-[0.98] transition-all"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -3266,8 +1001,135 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         )}
       </AnimatePresence>
 
-      </motion.div>
-    </div>
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[9999] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-[40px] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">Add New Candidate</h2>
+                  <p className="text-[10px] font-bold text-[#9B9BAD] mt-1">Pipeline Registration</p>
+                </div>
+                <button onClick={() => setShowAddModal(false)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-10 space-y-4 custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
+                    <input type="text" placeholder="Full Name *" value={newCandidate.name} onChange={e => setNewCandidate({ ...newCandidate, name: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                    <input type="email" placeholder="Email Address *" value={newCandidate.email} onChange={e => setNewCandidate({ ...newCandidate, email: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                    <input type="text" placeholder="Phone Number" value={newCandidate.phone} onChange={e => setNewCandidate({ ...newCandidate, phone: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                    <input type="text" placeholder="Location" value={newCandidate.location} onChange={e => setNewCandidate({ ...newCandidate, location: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                  </div>
+                  <div className="space-y-4">
+                    <input type="text" placeholder="Target Job Title *" value={newCandidate.jobTitle} onChange={e => setNewCandidate({ ...newCandidate, jobTitle: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                    <input type="text" placeholder="Client Name" value={newCandidate.client} onChange={e => setNewCandidate({ ...newCandidate, client: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <input type="text" placeholder="Exp (Years)" value={newCandidate.experience} onChange={e => setNewCandidate({ ...newCandidate, experience: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                      <select value={newCandidate.noticePeriod} onChange={e => setNewCandidate({ ...newCandidate, noticePeriod: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer">
+                        <option value="Immediate">Immediate</option>
+                        <option value="15 days">15 days</option>
+                        <option value="30 days">30 days</option>
+                        <option value="60 days">60 days</option>
+                        <option value="90 days">90 days</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4 pt-2">
+                  <input type="text" placeholder="Skills (comma separated)" value={newCandidate.skills} onChange={e => setNewCandidate({ ...newCandidate, skills: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                  <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-[#F4F3EF] rounded-[32px] p-10 text-center hover:bg-blue-50/30 transition-all cursor-pointer group">
+                    <input type="file" ref={fileInputRef} className="hidden" onChange={e => setResumeFile(e.target.files[0])} />
+                    <div className="w-16 h-16 bg-[#F4F3EF] rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-[#1B4DA0] group-hover:text-white transition-all">
+                      <FiUpload size={24} />
+                    </div>
+                    <p className="text-sm font-bold text-[#1A1A2E]">{resumeFile ? resumeFile.name : 'Click to upload resume (PDF, DOCX)'}</p>
+                    <p className="text-[10px] font-bold text-[#9B9BAD] mt-2">{resumeFile ? `${(resumeFile.size / (1024 * 1024)).toFixed(2)} MB` : 'Max 10MB'}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-10 py-8 border-t border-[#F4F3EF] bg-[#F8FAFF] flex gap-4">
+                <button onClick={() => setShowAddModal(false)} className="flex-1 py-4 bg-white border-2 border-[#E8E7E2] rounded-2xl text-sm font-bold text-[#6B6B7E] hover:bg-gray-50 transition-all">Cancel</button>
+                <button onClick={handleAddCandidate} className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-[#153e82] transition-all">Add Candidate</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showApproveModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[9999] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-[40px] w-full max-w-2xl overflow-hidden shadow-2xl">
+              <div className="px-10 py-8 border-b border-[#F4F3EF] bg-emerald-500 text-white flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold font-syne">Approve & Schedule</h2>
+                  <p className="text-[10px] font-bold text-white/70 mt-1">Interview Setup</p>
+                </div>
+                <button onClick={() => setShowApproveModal(false)} className="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-10 space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] block">Interview Date</label>
+                    <input type="date" value={approveInterviewDate} onChange={e => setApproveInterviewDate(e.target.value)} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none transition-all" />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] block">Time</label>
+                    <input type="time" value={approveInterviewTime} onChange={e => setApproveInterviewTime(e.target.value)} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none transition-all" />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-bold text-[#9B9BAD] block">Interviewer Name</label>
+                  <input type="text" placeholder="e.g. John Doe" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none transition-all" />
+                </div>
+              </div>
+              <div className="px-10 py-8 border-t border-[#F4F3EF] flex gap-4">
+                <button onClick={() => setShowApproveModal(false)} className="flex-1 py-4 bg-[#F4F3EF] rounded-2xl text-sm font-bold text-[#6B6B7E] hover:bg-gray-100 transition-all">Cancel</button>
+                <button onClick={handleApproveCandidate} className="flex-[2] py-4 bg-emerald-500 text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-emerald-600 transition-all">Confirm Approval</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showRejectModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[9999] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-[40px] w-full max-w-lg overflow-hidden shadow-2xl">
+              <div className="px-10 py-8 border-b border-[#F4F3EF] bg-rose-500 text-white flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold font-syne">Reject Candidate</h2>
+                  <p className="text-[10px] font-bold text-white/70 mt-1">Pipeline Dismissal</p>
+                </div>
+                <button onClick={() => setShowRejectModal(false)} className="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-10 space-y-6">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-bold text-[#9B9BAD] block">Reason for Rejection</label>
+                  <select value={rejectReason} onChange={e => setRejectReason(e.target.value)} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none transition-all appearance-none cursor-pointer">
+                    <option value="">Select a reason...</option>
+                    {rejectionReasons.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                {rejectReason === 'Other' && (
+                  <input type="text" placeholder="Enter custom reason..." value={rejectCustomReason} onChange={e => setRejectCustomReason(e.target.value)} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none transition-all" />
+                )}
+              </div>
+              <div className="px-10 py-8 border-t border-[#F4F3EF] flex gap-4">
+                <button onClick={() => setShowRejectModal(false)} className="flex-1 py-4 bg-[#F4F3EF] rounded-2xl text-sm font-bold text-[#6B6B7E] hover:bg-gray-100 transition-all">Cancel</button>
+                <button onClick={handleReject} className="flex-[2] py-4 bg-rose-500 text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-rose-600 transition-all">Confirm Rejection</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

@@ -32,7 +32,7 @@ export default function TopNav({ activePage, userName = "HR Admin", userInitials
 
   return (
     <header
-      className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-[#E8E7E2] dark:border-gray-800 flex items-center px-6 sticky top-0 z-40"
+      className="h-16 bg-white dark:bg-gray-900 border-b border-[#E8E7E2] dark:border-gray-800 flex items-center px-6 sticky top-0 z-40"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
       {/* Page Title */}

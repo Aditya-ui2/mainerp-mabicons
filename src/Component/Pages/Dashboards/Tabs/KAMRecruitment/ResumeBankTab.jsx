@@ -507,7 +507,7 @@ const ResumeBankTab = () => {
   };
 
   return (
-    <div className={`p-6 lg:p-10 max-w-full min-h-screen transition-colors duration-500 text-left ${isDarkMode ? 'bg-[#0F172A]' : 'bg-[#FAFAF8]'}`}>
+    <div className={`p-0 max-w-full min-h-screen transition-colors duration-500 text-left ${isDarkMode ? 'bg-[#0F172A]' : 'bg-[#FAFAF8]'}`}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif; }
@@ -712,13 +712,15 @@ const ResumeBankTab = () => {
       <AnimatePresence>
         {showUploadModal && (
           <div className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-6 relative">
-              <button onClick={() => setShowUploadModal(false)} className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all">
-                <X size={18} />
-              </button>
-              <div>
-                <h3 className="text-2xl font-bold font-syne text-[#1A1A2E] dark:text-white">Add Candidate</h3>
-                <p className="text-xs text-[#9B9BAD] mt-1 font-bold uppercase tracking-widest">Register new talent profile</p>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold font-syne text-[#1A1A2E] dark:text-white">Add Candidate</h3>
+                  <p className="text-xs text-[#9B9BAD] mt-1 font-bold uppercase tracking-widest">Register new talent profile</p>
+                </div>
+                <button onClick={() => setShowUploadModal(false)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all flex-shrink-0">
+                  <X size={18} />
+                </button>
               </div>
 
               {/* Candidate Name */}

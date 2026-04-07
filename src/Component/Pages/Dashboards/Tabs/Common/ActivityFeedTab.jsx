@@ -81,7 +81,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   }
 
   return (
-    <div className="p-8 lg:p-12 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
+    <div className="p-0 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif !important; }

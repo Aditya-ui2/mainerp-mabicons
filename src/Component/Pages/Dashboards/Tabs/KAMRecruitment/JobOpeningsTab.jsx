@@ -9,11 +9,11 @@ import { toast } from "sonner";
 import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers, createDepartmentTask, getAllCandidates, assignResumesToPosition, distributeJobToPlatforms } from '../../../service/api';
 
 const STATUS_STYLES = {
-  Open: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  Urgent: "bg-rose-50 text-rose-700 border border-rose-200",
-  Closed: "bg-slate-100 text-slate-500 border border-slate-200",
-  "On Hold": "bg-amber-50 text-amber-700 border border-amber-200",
-  "In Progress": "bg-blue-50 text-blue-700 border border-blue-200",
+  Open: "bg-emerald-50 text-emerald-600 border-emerald-100",
+  Urgent: "bg-rose-50 text-rose-600 border-rose-100",
+  Closed: "bg-slate-50 text-slate-400 border-slate-100",
+  "On Hold": "bg-amber-50 text-amber-600 border-amber-100",
+  "In Progress": "bg-blue-50 text-[#0D47A1] border-blue-100",
 };
 
 const DEPARTMENTS = ["Engineering", "Product", "Design", "Marketing", "Sales", "Operations", "HR"];
@@ -204,7 +204,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', damping: 15 }}
           className={`rounded-3xl p-10 text-center max-w-md w-full shadow-2xl bg-white`}>
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', damping: 10 }}
-            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-[#1B4DA0]">
+            className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-[#0D47A1]">
             <CheckCircle className="w-10 h-10 text-white" />
           </motion.div>
           <h3 className="text-xl font-bold text-[#1A1A2E]">Task Assigned!</h3>
@@ -238,13 +238,13 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
         <div className="px-6 sm:px-8 pt-6 pb-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
+              <div className="w-10 h-10 bg-[#0D47A1] rounded-xl flex items-center justify-center text-white shadow-xl">
                 <Clipboard className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-[#1A1A2E]">New Task Assignment</h3>
                 <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-[#1B4DA0]/10 text-[#1B4DA0]">{job?.title}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-[#0D47A1]/10 text-[#0D47A1]">{job?.title}</span>
                   <span className="text-xs text-[#9B9BAD]">•</span>
                   <span className="text-xs text-[#9B9BAD]">{job?.client}</span>
                 </div>
@@ -257,7 +257,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
         <div className="px-4 sm:px-6 pb-6 space-y-5">
           {/* Selected Candidate Badge (Bulk Info) */}
           <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-blue-500/20'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-[#0D47A1]/20'}`}>
               {selectedCandidate.id === 'MEGA_BULK' ? <Users /> : (selectedCandidate.name || 'C').substring(0, 1)}
             </div>
             <div className="flex-1">
@@ -280,13 +280,13 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
                 <motion.button key={t.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                   onClick={() => { setTaskType(t.label); if (!taskTitle) setTaskTitle(t.label); }}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all text-center ${taskType === t.label
-                    ? 'border-[#1B4DA0] shadow-lg bg-[#1B4DA0]/10'
+                    ? 'border-[#1B4DA0] shadow-lg bg-[#0D47A1]/10'
                     : 'border-[#F4F3EF] bg-[#FAFAF8] hover:border-[#E8E7E2]'
                     }`}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#1B4DA0] text-white shadow-md mb-1">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#0D47A1] text-white shadow-md mb-1">
                     <t.icon className="w-5 h-5" />
                   </div>
-                  <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? 'text-[#1B4DA0]' : 'text-[#6B6B7E]'}`}>{t.label}</span>
+                  <span className={`text-[10px] font-semibold leading-tight ${taskType === t.label ? 'text-[#0D47A1]' : 'text-[#6B6B7E]'}`}>{t.label}</span>
                 </motion.button>
               ))}
             </div>
@@ -308,7 +308,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
                 <motion.button key={m.id} whileHover={{ x: 2 }} whileTap={{ scale: 0.99 }}
                   onClick={() => setAssignee(m.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left ${assignee === m.id
-                    ? 'border-[#1B4DA0] shadow-md bg-[#1B4DA0]/10'
+                    ? 'border-[#1B4DA0] shadow-md bg-[#0D47A1]/10'
                     : 'border-[#F4F3EF] hover:border-[#E8E7E2] bg-white'
                     }`}>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: m.color }}>
@@ -318,7 +318,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
                     <p className="text-sm font-semibold text-[#1A1A2E]">{m.name}</p>
                     <p className="text-[10px] text-[#9B9BAD]">{m.role}</p>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${assignee === m.id ? 'border-[#1B4DA0] bg-[#1B4DA0]' : 'border-[#E8E7E2]'
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${assignee === m.id ? 'border-[#1B4DA0] bg-[#0D47A1]' : 'border-[#E8E7E2]'
                     }`}>
                     {assignee === m.id && <Check className="w-3 h-3 text-white" />}
                   </div>
@@ -373,7 +373,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
             disabled={(!taskTitle && !taskType) || !assignee}
-            className={`flex-[2] flex items-center justify-center gap-2 py-5 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all ${(!taskTitle && !taskType) || !assignee ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+            className={`flex-[2] flex items-center justify-center gap-2 py-5 bg-[#0D47A1] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-[#0D47A1]/20 hover:bg-[#0a3a82] transition-all ${(!taskTitle && !taskType) || !assignee ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
           >
             <Send className="w-4 h-4" /> Assign Task
           </motion.button>
@@ -390,19 +390,7 @@ const DONUT_COLORS = ['#3B82F6', '#6366F1', '#22D3EE'];
 const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
   const skillsArr = (Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean);
   const reqsArr = (Array.isArray(job.requirements) ? job.requirements : (job.requirements || '').split('\n')).filter(Boolean);
-
-  const radarData = [
-    { axis: 'Market Rarity', value: Math.min(100, 40 + (skillsArr.length || 1) * 8) },
-    { axis: 'Skill Depth', value: Math.min(100, 30 + (reqsArr.length || 1) * 10) },
-    { axis: 'Budget Score', value: job.salary ? 75 : 50 },
-    { axis: 'Urgency', value: job.priority === 'Urgent' ? 95 : job.priority === 'High' ? 78 : 55 },
-  ];
-
-  const sourceData = [
-    { name: 'LinkedIn', value: 65 },
-    { name: 'Referrals', value: 25 },
-    { name: 'Direct', value: 10 },
-  ];
+  const respArr = (Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || '').split('\n')).filter(Boolean);
 
   return (
     <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right duration-500">
@@ -411,77 +399,122 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
         <div>
           <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{job.title}</h2>
           <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{job.department || job.client || 'Engineering'}</span>
+            <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{job.department || job.client || 'Engineering'}</span>
             <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
             <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.type || 'Full-time'}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => onEdit(job)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all active:scale-90">
+          <button onClick={() => onEdit(job)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#0D47A1] transition-all active:scale-90">
             <Pencil size={16} />
           </button>
-          <button onClick={onBack} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90">
+          <button onClick={onBack} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm">
             <X size={20} />
           </button>
         </div>
       </div>
 
       <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
-        {/* Market Analysis Radar */}
-        <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
-          <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-2 text-center">Market Analysis Radar</h3>
-          <div className="w-full h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
-                <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} />
-                <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
-                <Radar dataKey="value" stroke={RADAR_COLORS.stroke} fill={RADAR_COLORS.fill} fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
-              </RadarChart>
-            </ResponsiveContainer>
+        {/* Job Snapshot Info Grid */}
+        <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
+          <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Location</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.location || 'Not Specified'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Salary Range</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.salary || 'Competitive'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.experience || 'Not Mentioned'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Openings</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.openings || 1} Position(s)</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Deadline</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.deadline ? new Date(job.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Deadline'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Priority</span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${job.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : job.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'}`}>
+                {job.priority || 'Medium'}
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-[#F4F3EF] text-left">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4 text-left">Required Skills</span>
+            <div className="flex flex-wrap gap-2 justify-start">
+              {skillsArr.length > 0 ? skillsArr.map((skill, i) => (
+                <span key={i} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">
+                  {skill.trim()}
+                </span>
+              )) : <span className="text-sm text-[#9B9BAD] italic text-left">No specific skills listed</span>}
+            </div>
+          </div>
+
+          {/* Short Description Section */}
+          <div className="pt-6 border-t border-[#F4F3EF] text-left">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Short Description</span>
+            <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium text-left">
+              {job.description || <span className="italic text-[#9B9BAD]">No description provided</span>}
+            </p>
+          </div>
+
+          {/* Requirements Section */}
+          <div className="pt-6 border-t border-[#F4F3EF] text-left">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3 text-left">Requirements</span>
+            {reqsArr.length > 0 ? (
+              <ul className="space-y-2.5 text-left">
+                {reqsArr.map((req, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0D47A1] mt-1.5 flex-shrink-0" />
+                    {req.trim()}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm italic text-[#9B9BAD] text-left">No specific requirements listed</p>
+            )}
+          </div>
+
+          {/* Responsibilities Section */}
+          <div className="pt-6 border-t border-[#F4F3EF] text-left">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3 text-left">Responsibilities</span>
+            {respArr.length > 0 ? (
+              <ul className="space-y-2.5 text-left">
+                {respArr.map((resp, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0D47A1] mt-1.5 flex-shrink-0" />
+                    {resp.trim()}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm italic text-[#9B9BAD] text-left">No specific responsibilities listed</p>
+            )}
           </div>
         </div>
 
-        {/* Source Acquisition */}
-        <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
-          <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Source Acquisition</h3>
-          <div className="flex items-center gap-6">
-            <div className="w-[120px] h-[120px] flex-shrink-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={sourceData} innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                    {sourceData.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i]} />)}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-3 flex-1">
-              {sourceData.map((s, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: DONUT_COLORS[i] }} />
-                    <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">{s.name}</span>
-                  </div>
-                  <span className="text-sm font-black text-[#1A1A2E]">{s.value}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <button className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:bg-[#1B4DA0] transition-all active:scale-[0.98] shadow-lg shadow-gray-200">
-          <Share2 size={18} /> Social Asset Generator
-        </button>
-        <div className="grid grid-cols-2 gap-3">
-          <button className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]">
-            <Download size={16} /> Brief PDF
+        {/* Footer Actions */}
+        <div className="flex gap-4 pt-6">
+          <button onClick={onBack}
+            className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-[24px] font-bold text-sm hover:bg-[#E8E7E2] transition-all active:scale-[0.98]"
+          >
+            Cancel
           </button>
-          <button onClick={() => onAssignTask(job)} className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]">
-            <Compass size={16} /> Find Talent
+          <button onClick={() => onEdit(job)}
+            className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-[24px] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#153a7a] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
+          >
+            <Pencil size={18} /> Edit Position
           </button>
         </div>
       </div>
+
     </div>
   );
 };
@@ -543,7 +576,6 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     requirements: '',
     responsibilities: '',
     roleType: '',
-    postPlatforms: ['google_jobs', 'mabicons_website'],
   });
   const positionDeadlineInputRef = useRef(null);
 
@@ -934,17 +966,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       };
       setJobs(prev => [newJob, ...prev]);
 
-      // Distribute to selected platforms
-      const platforms = newJobForm.postPlatforms || [];
-      if (platforms.length > 0 && created._id) {
-        try {
-          await distributeJobToPlatforms(created._id, platforms);
-          toast.success(`Job posted to ${platforms.length} platform(s)`);
-        } catch (distErr) {
-          console.error('Distribution error:', distErr);
-          toast.error('Job created but platform distribution failed');
-        }
-      }
+
     } catch (error) {
       console.error('Backend create failed:', error);
       alert(error?.message || error?.error || 'Position create failed. Please check required fields and try again.');
@@ -1217,19 +1239,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               </div>
 
               {modalStep === 1 ? (
-                <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-8">
+                <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-7">
 
                     {/* Section: Basic Information */}
-                    <div className="md:col-span-2 mt-4">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl"><Briefcase size={18} /></div>
-                        <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Basic Information</h4>
-                      </div>
-                    </div>
+
 
                     <div className="space-y-1.5 md:col-span-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Job Title *</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Job Title *</label>
                       <input type="text" value={newJobForm.title} onChange={e => setNewJobForm(f => ({ ...f, title: e.target.value }))}
                         placeholder="e.g. Senior Software Engineer"
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
@@ -1237,8 +1254,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
-                        <Briefcase size={12} className="text-[#1B4DA0]" /> Role Type *
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">
+                        Role Type *
                       </label>
                       <div className="relative group">
                         <select value={newJobForm.roleType} onChange={e => setNewJobForm(f => ({ ...f, roleType: e.target.value }))}
@@ -1249,13 +1266,13 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                             <option key={r.role} value={r.role}>{r.role} ({r.count})</option>
                           ))}
                         </select>
-                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50" />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
-                        <Users size={12} className="text-[#1B4DA0]" /> Client/Company *
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">
+                        Client/Company *
                       </label>
                       <div className="relative group">
                         <select value={newJobForm.clientId} onChange={e => {
@@ -1276,31 +1293,24 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                             <option key={c.id || Math.random()} value={c.id}>{c.displayName}</option>
                           ))}
                         </select>
-                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50" />
                       </div>
                     </div>
 
                     <div className="space-y-1.5 md:col-span-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Location</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Location</label>
                       <div className="relative group">
                         <input type="text" value={newJobForm.location} onChange={e => setNewJobForm(f => ({ ...f, location: e.target.value }))}
                           placeholder="e.g. Bangalore, Remote"
                           className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                         />
-                        <MapPin size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />
                       </div>
                     </div>
 
-                    {/* Section: Job Details */}
-                    <div className="md:col-span-2 mt-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl"><FileText size={18} /></div>
-                        <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Job Details</h4>
-                      </div>
-                    </div>
+
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Type</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Type</label>
                       <div className="relative group">
                         <select value={newJobForm.type} onChange={e => setNewJobForm(f => ({ ...f, type: e.target.value }))}
                           className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
@@ -1309,12 +1319,12 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           <option value="Part-time">Part-time</option>
                           <option value="Contract">Contract</option>
                         </select>
-                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50" />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Priority</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Priority</label>
                       <div className="relative group">
                         <select value={newJobForm.priority} onChange={e => setNewJobForm(f => ({ ...f, priority: e.target.value }))}
                           className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
@@ -1324,14 +1334,12 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           <option value="High">High</option>
                           <option value="Critical">Critical</option>
                         </select>
-                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50" />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
-                        <DollarSign size={12} className="text-[#1B4DA0]" /> Salary Range
-                      </label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Salary Range</label>
                       <input type="text" value={newJobForm.salary} onChange={e => setNewJobForm(f => ({ ...f, salary: e.target.value }))}
                         placeholder="e.g. 15-25 LPA"
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
@@ -1339,7 +1347,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Experience</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Experience</label>
                       <input type="text" value={newJobForm.experience} onChange={e => setNewJobForm(f => ({ ...f, experience: e.target.value }))}
                         placeholder="e.g. 3-5 Years"
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
@@ -1347,16 +1355,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">No. of Openings</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">No. of Openings</label>
                       <input type="number" value={newJobForm.openings} onChange={e => setNewJobForm(f => ({ ...f, openings: e.target.value }))} min="1"
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
-                        <Calendar size={12} className="text-[#1B4DA0]" /> Deadline
-                      </label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Deadline</label>
                       <div onClick={() => openNativeDatePicker(positionDeadlineInputRef)} className="cursor-pointer relative group">
                         <input
                           ref={positionDeadlineInputRef}
@@ -1368,16 +1374,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       </div>
                     </div>
 
-                    {/* Section: Skills & Requirements */}
-                    <div className="md:col-span-2 mt-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl"><Target size={18} /></div>
-                        <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Skills & Requirements</h4>
-                      </div>
-                    </div>
+
 
                     <div className="space-y-1.5 md:col-span-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Skills (comma separated)</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Skills (comma separated)</label>
                       <input type="text" value={newJobForm.skills} onChange={e => setNewJobForm(f => ({ ...f, skills: e.target.value }))}
                         placeholder="React, Node.js, MongoDB"
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
@@ -1385,7 +1385,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Requirements (one per line)</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Requirements (one per line)</label>
                       <textarea value={newJobForm.requirements} onChange={e => setNewJobForm(f => ({ ...f, requirements: e.target.value }))}
                         rows={4} placeholder="Detailed requirements..."
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] resize-none placeholder:text-[#9B9BAD]/50"
@@ -1393,7 +1393,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Responsibilities (one per line)</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Responsibilities (one per line)</label>
                       <textarea value={newJobForm.responsibilities} onChange={e => setNewJobForm(f => ({ ...f, responsibilities: e.target.value }))}
                         rows={4} placeholder="Key responsibilities..."
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] resize-none placeholder:text-[#9B9BAD]/50"
@@ -1401,55 +1401,16 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </div>
 
                     <div className="space-y-1.5 md:col-span-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Short Description</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Short Description</label>
                       <textarea value={newJobForm.description} onChange={e => setNewJobForm(f => ({ ...f, description: e.target.value }))}
                         rows={3} placeholder="Describe the role..."
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] resize-none placeholder:text-[#9B9BAD]/50"
                       />
                     </div>
 
-                    {/* Section: Job Platforms */}
-                    <div className="md:col-span-2 mt-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-[#8B5CF6] rounded-xl flex items-center justify-center text-white shadow-xl"><Globe size={18} /></div>
-                        <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Post to Job Platforms</h4>
-                      </div>
-                    </div>
 
-                    <div className="space-y-2 md:col-span-2">
-                      {[
-                        { key: 'google_jobs', label: 'Google Jobs', desc: 'Auto-index via structured data', icon: '🔍' },
-                        { key: 'mabicons_website', label: 'Mabicons Website', desc: 'mabicons.com/careers', icon: '🌐' },
-                        { key: 'linkedin', label: 'LinkedIn', desc: 'Post via LinkedIn Jobs API', icon: '💼' },
-                        { key: 'indeed', label: 'Indeed', desc: 'Free job posting via XML feed', icon: '📋' },
-                        { key: 'jooble', label: 'Jooble', desc: 'Free job aggregator', icon: '🔎' },
-                        { key: 'adzuna', label: 'Adzuna', desc: 'Free job board distribution', icon: '📢' },
-                      ].map(platform => {
-                        const isChecked = (newJobForm.postPlatforms || []).includes(platform.key);
-                        return (
-                          <label key={platform.key} className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all border ${isChecked ? 'bg-blue-50/50 border-[#1B4DA0]/20' : 'bg-[#FAFAF8] border-transparent hover:bg-[#F0F2FF]'}`}>
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => {
-                                setNewJobForm(f => ({
-                                  ...f,
-                                  postPlatforms: isChecked
-                                    ? f.postPlatforms.filter(p => p !== platform.key)
-                                    : [...(f.postPlatforms || []), platform.key]
-                                }));
-                              }}
-                              className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0]/30"
-                            />
-                            <span className="text-lg">{platform.icon}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-[#1A1A2E]">{platform.label}</p>
-                              <p className="text-[10px] text-[#9B9BAD]">{platform.desc}</p>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
+
+
                   </div>
 
                   {/* Footer Buttons */}
@@ -1460,7 +1421,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       Cancel
                     </button>
                     <button type="button" onClick={editingJob ? handleUpdatePosition : handleCreatePosition}
-                      className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2"
+                      className="flex-[2] bg-[#0D47A1] text-white py-5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-[#0D47A1]/20 hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2"
                     >
                       {editingJob ? <><Check size={18} /> Update Position</> : <><Plus size={18} /> Create Position</>}
                     </button>
@@ -1501,14 +1462,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                               }`}
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] font-bold text-sm group-hover:scale-110 transition-transform">
+                              <div className="w-10 h-10 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#0D47A1] font-bold text-sm group-hover:scale-110 transition-transform">
                                 {(resume.candidateName || resume.fileName || 'U').charAt(0).toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-[#1A1A2E] truncate">{resume.candidateName || 'Unknown'}</p>
                                 <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5 truncate">{resume.email}</p>
                               </div>
-                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#1B4DA0] border-[#1B4DA0]' : 'border-[#E8E7E2]'}`}>
+                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#0D47A1] border-[#1B4DA0]' : 'border-[#E8E7E2]'}`}>
                                 {isSelected && <Check size={14} className="text-white" />}
                               </div>
                             </div>
@@ -1526,7 +1487,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       Skip for Now
                     </button>
                     <button type="button" onClick={handleAddSelectedToPipeline} disabled={selectedResumes.size === 0}
-                      className={`flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2 ${selectedResumes.size === 0 ? 'opacity-50 grayscale' : ''}`}
+                      className={`flex-[2] bg-[#0D47A1] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2 ${selectedResumes.size === 0 ? 'opacity-50 grayscale' : ''}`}
                     >
                       <Check size={18} /> Add Selected Candidates
                     </button>
@@ -1541,16 +1502,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       <div className="space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+              <div className="text-left">
+                <h1 className="text-3xl font-black text-[#1A1A2E] font-syne tracking-tight">
                   Job Openings
                 </h1>
-                <p className="text-[#6B6B7E] text-sm mt-1">{filteredJobs.length} active positions in recruitment</p>
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-2">
+                  {filteredJobs.length} Active Positions in Recruitment
+                </p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => { setShowFullPageForm(true); setEditingJob(null); resetModal(); }}
-                  className="flex items-center gap-2 px-8 py-3.5 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                  className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
                 >
                   <Plus size={18} /> Post New Job
                 </button>
@@ -1574,8 +1537,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             {/* Table Interface */}
             <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
               <div className="grid grid-cols-[1fr_140px_120px_130px_100px_36px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-[#FAFAF8]">
-                {["Position", "Department", "Status", "Posted", "Applicants", ""].map((h, i) => (
-                  <span key={i} className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">
+                {["Position", "Client", "Status", "Posted", "Applicants", ""].map((h, i) => (
+                  <span key={i} className={`text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] text-left ${i === 1 ? 'pl-6' : ''}`}>
                     {h}
                   </span>
                 ))}
@@ -1590,29 +1553,35 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   <div
                     key={job.id}
                     onClick={() => setSelectedJob(job)}
-                    className="grid grid-cols-[1fr_140px_120px_130px_100px_36px] gap-4 items-center px-8 py-6 border-b border-[#F4F3EF] last:border-0 hover:bg-[#FAFAF8] cursor-pointer transition-all group"
+                    className="grid grid-cols-[1fr_140px_120px_130px_100px_36px] gap-4 items-center px-8 py-6 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative overflow-hidden"
                   >
                     <div>
-                      <p className="text-base font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors flex items-center gap-2 font-syne">
+                      <p className="text-base font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors flex items-center gap-2 font-syne">
                         {job.title}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <MapPin size={12} className="text-[#9B9BAD]" />
-                        <span className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">{job.location}</span>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <MapPin size={11} className="text-[#9B9BAD]" />
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.1em]">{job.location}</span>
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-[#6B6B7E] truncate">{job.client}</span>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest w-fit ${STATUS_STYLES[job.status] || "bg-slate-100 text-slate-500"}`}>
+                    <span className="text-sm font-bold text-[#6B6B7E] truncate pl-6">{job.client}</span>
+                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${STATUS_STYLES[job.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
                       {job.status}
                     </span>
                     <span className="text-sm font-bold text-[#9B9BAD]">
                       {new Date(job.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </span>
-                    <div className="flex items-center gap-2 text-[#1A1A2E]/80">
-                      <Users size={14} />
-                      <span className="text-sm font-bold">{job.candidateCount}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
+                        <Users size={14} />
+                      </div>
+                      <span className="text-sm font-black text-[#1A1A2E]">{job.candidateCount}</span>
                     </div>
-                    <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all" />
+                    <div className="flex justify-end">
+                      <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
+                        <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                      </div>
+                    </div>
                   </div>
                 ))
               )}

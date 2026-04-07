@@ -133,7 +133,7 @@ export default function SelectionMISTab() {
   }
 
   return (
-    <div className="p-5 lg:p-6 max-w-[1400px] mx-auto space-y-6">
+    <div className="p-0 max-w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>

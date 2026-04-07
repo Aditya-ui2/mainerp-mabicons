@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Phone, Eye, Share2, Calendar, Clock, MessageSquare, CheckCircle2, 
   RefreshCw, Smile, Meh, Frown, Star, X, Send, AlertCircle, BarChart2, 
-  Download, Activity, ShieldCheck, MoreVertical
+  Download, Activity, ShieldCheck, MoreVertical, ChevronDown
 } from 'lucide-react';
 import { getMISReports, addHeadComment } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
@@ -343,7 +343,7 @@ const TeamMISReportsTab = () => {
   };
 
   return (
-    <div className="p-8 lg:p-12 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
+    <div className="p-0 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif !important; }
@@ -363,20 +363,28 @@ const TeamMISReportsTab = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <select
-              value={selectedKAM}
-              onChange={(e) => setSelectedKAM(e.target.value)}
-              className="bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-full px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-[#1A1A2E] dark:text-white outline-none cursor-pointer shadow-sm hover:border-[#1B4DA0]/20 transition-all appearance-none pr-8"
-            >
-              <option value="all">All Members</option>
-              {[...new Set(reports.map(r => r.memberName))].filter(Boolean).map(name => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
+            <div className="relative group/filter">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-hover/filter:text-[#1B4DA0] transition-colors pointer-events-none">
+                <Users size={14} />
+              </div>
+              <select
+                value={selectedKAM}
+                onChange={(e) => setSelectedKAM(e.target.value)}
+                className="bg-[#FAFAFA] dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-xl pl-10 pr-10 py-3 text-[10px] font-bold uppercase tracking-widest text-[#1A1A2E] dark:text-white outline-none cursor-pointer shadow-sm hover:bg-[#F8FAFF] hover:border-[#1B4DA0]/20 transition-all appearance-none"
+              >
+                <option value="all">All Members</option>
+                {[...new Set(reports.map(r => r.memberName))].filter(Boolean).map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none">
+                <ChevronDown size={14} />
+              </div>
+            </div>
             <button
               onClick={downloadMISCSV}
               disabled={loading || reports.length === 0}
-              className="w-11 h-11 flex items-center justify-center rounded-full bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              className="w-11 h-11 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
               title="Download CSV"
             >
               <Download size={16} />
@@ -384,7 +392,7 @@ const TeamMISReportsTab = () => {
             <button
               onClick={fetchReports}
               disabled={loading}
-              className="w-11 h-11 flex items-center justify-center rounded-full bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              className="w-11 h-11 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
               title="Refresh"
             >
               <RefreshCw size={16} className={loading ? 'animate-spin text-[#1B4DA0]' : ''} />
@@ -392,7 +400,7 @@ const TeamMISReportsTab = () => {
             <button
               type="button"
               onClick={openDatePicker}
-              className="relative flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95 h-[42px]"
+              className="relative flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95 h-[42px]"
             >
               <Calendar size={14} />
               <span>{formattedDate}</span>

@@ -65,16 +65,23 @@ let _sessionExpiredShown = false;
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
+    const isMockToken = getStoredAuthToken()?.endsWith('.mock-signature');
+
     if (error.response?.status === 401 && !_sessionExpiredShown) {
       const isLoginRoute = window.location.pathname.includes('/login') || window.location.pathname === '/';
       if (!isLoginRoute) {
-        _sessionExpiredShown = true;
-        toast.error('Session expired. Please log in again.');
-        localStorage.removeItem('token');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('department');
-        setTimeout(() => { _sessionExpiredShown = false; window.location.href = '/'; }, 1500);
+        // Only auto-logout if NOT using a mock token
+        if (!isMockToken) {
+          _sessionExpiredShown = true;
+          toast.error('Session expired. Please log in again.');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userType');
+          localStorage.removeItem('userName');
+          localStorage.removeItem('department');
+          setTimeout(() => { _sessionExpiredShown = false; window.location.href = '/'; }, 1500);
+        } else {
+          console.warn('API returned 401 for mock token. Ignoring auto-logout redirect.');
+        }
       }
     }
     return Promise.reject(error);
@@ -180,7 +187,7 @@ export const clientSignup = async (clientData) => {
     if (response.data.token) {
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
     }
-    
+
     return response;
   } catch (error) {
     console.error('API Error:', error);
@@ -385,15 +392,15 @@ export const updateAdmin = async (adminId, updateData) => {
         'Authorization': `Bearer ${token}`
       }
     });
-    return response.data; 
+    return response.data;
   } catch (error) {
     throw error.response?.data || {
       message: 'Failed to update admin password. Please try again.'
     };
   }
 };
-export const updateTeamleader= async(teamLeaderId,updateData)=>{
-  
+export const updateTeamleader = async (teamLeaderId, updateData) => {
+
 }
 
 export const updateEmployee = async (employeeId, updateData) => {
@@ -407,7 +414,7 @@ export const updateEmployee = async (employeeId, updateData) => {
         'Authorization': `Bearer ${token}`
       }
     });
-    return response.data; 
+    return response.data;
   } catch (error) {
     throw error.response?.data || {
       message: 'Failed to update admin password. Please try again.'
@@ -464,7 +471,7 @@ export const getAdminHierarchy = async (id, role) => {
   try {
     const token = localStorage.getItem('token');
     const endpoint = role === 'TeamLeader' ? '/teamLeader/hierarchy' : '/admin/hierarchy';
-    
+
     const response = await axiosInstance.post(endpoint, {
       [role === 'TeamLeader' ? 'teamLeaderId' : 'adminId']: id
     }, {
@@ -523,11 +530,11 @@ export const deleteTeamLeader = async (teamLeaderId, newTeamLeaderId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/teamLeader/deleteTeamLeaderWithReassignment', {
-      data: { 
+      data: {
         teamLeaderId,
-        newTeamLeaderId 
+        newTeamLeaderId
       },
-      headers: {  
+      headers: {
         'Authorization': `Bearer ${token}`
       }
     });
@@ -561,7 +568,7 @@ export const uploadClientDocuments = async (formData) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${BASE_URL}/client/upload-documents`, 
+      `${BASE_URL}/client/upload-documents`,
       formData,
       {
         headers: {
@@ -952,14 +959,14 @@ export const getClientDetails = async (clientId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/client/getClientDetails', {
-      clientId:clientId
+      clientId: clientId
     }, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
-    
+
     console.log('Client details response:', response.data); // Debug log
     return response.data;
   } catch (error) {
@@ -983,7 +990,7 @@ export const resetClientPassword = async (clientId, newPassword) => {
         'Content-Type': 'application/json'
       }
     });
-    
+
     return response.data;
   } catch (error) {
     console.error('Failed to reset password:', error);
@@ -997,8 +1004,8 @@ export const resetClientPassword = async (clientId, newPassword) => {
 export const getClientDocuments = async (clientId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/client/getClientDocuments', 
-      { clientId:clientId },
+    const response = await axiosInstance.post('/client/getClientDocuments',
+      { clientId: clientId },
       {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1018,7 +1025,7 @@ export const getClientDocuments = async (clientId) => {
 // Add this new API endpoint for forgot password
 export const forgotPassword = async ({ email }) => {
   try {
-    const response = await axiosInstance.post('/admin/forgot-password', 
+    const response = await axiosInstance.post('/admin/forgot-password',
       { email },
       {
         headers: {
@@ -1026,7 +1033,7 @@ export const forgotPassword = async ({ email }) => {
         }
       }
     );
-    
+
     return response.data;
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -1049,7 +1056,7 @@ export const forgotPassword = async ({ email }) => {
 //         }
 //       }
 //     );
-    
+
 //     console.log('Reset password response:', response.data); // Debug log
 //     return response.data;
 //   } catch (error) {
@@ -1081,9 +1088,9 @@ export const requestPasswordReset = async (email, userType) => {
 export const resetPassword = async (password, token, userType) => {
   try {
     const response = await axiosInstance.post(`/auth/reset-password/`, {
-      password:password,
-      userType:token,
-      token:userType
+      password: password,
+      userType: token,
+      token: userType
     });
     return response.data;
   } catch (error) {
@@ -1098,8 +1105,8 @@ export const resetPassword = async (password, token, userType) => {
 export const getEmployeeTasks = async (employeeId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/employee/employeeTasks', 
-      { employeeId:employeeId },
+    const response = await axiosInstance.post('/employee/employeeTasks',
+      { employeeId: employeeId },
       {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -1159,7 +1166,7 @@ export const getRecurringTasksByTeamLeader = async (teamLeaderId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/task/getRecurringTasksForTL', {
-      teamLeaderId:teamLeaderId,
+      teamLeaderId: teamLeaderId,
     }, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1343,7 +1350,7 @@ export const editClient = async (clientData) => {
         'Content-Type': 'application/json'
       }
     });
-    
+
     return response.data;
   } catch (error) {
     console.error('Failed to edit client details:', error);
@@ -1358,9 +1365,9 @@ export const deleteTeamLeaderWithReassignment = async ({ teamLeaderId, newTeamLe
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/teamLeader/deleteTeamLeaderWithReassignment', {
-      data: { 
+      data: {
         teamLeaderId,
-        newTeamLeaderId 
+        newTeamLeaderId
       },
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1379,9 +1386,9 @@ export const deleteTeamLeaderAndPromoteEmployee = async ({ oldTeamLeaderId, empl
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/teamLeader/deleteTeamLeaderAndPromoteEmployee', {
-      data: { 
+      data: {
         oldTeamLeaderId,
-        employeeToPromoteId 
+        employeeToPromoteId
       },
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1495,7 +1502,7 @@ export const uploadResumes = async (formData) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${BASE_URL}/recruitment/upload-resumes`, 
+      `${BASE_URL}/recruitment/upload-resumes`,
       formData,
       {
         headers: {
@@ -2303,14 +2310,14 @@ export const syncResumesFromSharePoint = async (data = {}) => {
     return response.data;
   } catch (error) {
     console.error('Failed to sync resumes from S3:', error);
-    const errorMessage = error.response?.data?.message || 
-                         error.response?.data?.error || 
-                         error.message || 
-                         'Failed to sync resumes from S3 storage';
-    throw { 
+    const errorMessage = error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'Failed to sync resumes from S3 storage';
+    throw {
       message: errorMessage,
       status: error.response?.status,
-      details: error.response?.data 
+      details: error.response?.data
     };
   }
 };
@@ -2325,32 +2332,32 @@ export const syncResumesFromSharePointDrive = async (data = {}) => {
     return response.data;
   } catch (error) {
     console.error('Failed to sync from SharePoint:', error);
-    const errorMessage = error.response?.data?.message || 
-                         error.response?.data?.error || 
-                         error.message;
-    
+    const errorMessage = error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message;
+
     // Check for specific error types
     if (error.response?.status === 404) {
-      throw { 
+      throw {
         message: 'SharePoint sync endpoint not found. Please contact administrator.',
-        status: 404 
+        status: 404
       };
     } else if (error.response?.status === 401 || error.response?.status === 403) {
-      throw { 
+      throw {
         message: 'SharePoint authentication failed. Please check credentials.',
-        status: error.response.status 
+        status: error.response.status
       };
     } else if (error.code === 'ECONNABORTED') {
-      throw { 
+      throw {
         message: 'Sync timed out. The operation is taking too long.',
-        status: 'timeout' 
+        status: 'timeout'
       };
     }
-    
-    throw { 
+
+    throw {
       message: errorMessage || 'Failed to sync resumes from SharePoint',
       status: error.response?.status,
-      details: error.response?.data 
+      details: error.response?.data
     };
   }
 };
@@ -2358,7 +2365,7 @@ export const syncResumesFromSharePointDrive = async (data = {}) => {
 // Star/unstar resumes
 export const toggleStarResumes = async (resumeIds, isStarred) => {
   try {
-    const response = await axiosInstance.post('/api/resumebank/star', 
+    const response = await axiosInstance.post('/api/resumebank/star',
       { resumeIds, isStarred }
     );
     return response.data;
@@ -2371,7 +2378,7 @@ export const toggleStarResumes = async (resumeIds, isStarred) => {
 // Bulk update status
 export const bulkUpdateResumeStatus = async (resumeIds, status) => {
   try {
-    const response = await axiosInstance.post('/api/resumebank/bulk-status', 
+    const response = await axiosInstance.post('/api/resumebank/bulk-status',
       { resumeIds, status }
     );
     return response.data;
@@ -2384,7 +2391,7 @@ export const bulkUpdateResumeStatus = async (resumeIds, status) => {
 // Assign resumes to position
 export const assignResumesToPosition = async (resumeIds, positionId, assignedTo) => {
   try {
-    const response = await axiosInstance.post('/api/resumebank/assign', 
+    const response = await axiosInstance.post('/api/resumebank/assign',
       { resumeIds, positionId, assignedTo }
     );
     return response.data;
@@ -2840,6 +2847,17 @@ export const getMyRecruitmentPerformance = async (period = 'This Month') => {
   }
 };
 
+
+export const getRecruitmentClients = async () => {
+  try {
+    const response = await axiosInstance.get('/recruitment/clients');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch recruitment clients:', error);
+    throw error.response?.data || { message: 'Failed to fetch recruitment clients' };
+  }
+};
+
 // Get all recruitment positions
 export const getAllRecruitmentPositions = async (filters = {}) => {
   try {
@@ -2858,9 +2876,9 @@ export const createRecruitmentPosition = async (positionData) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/positions', positionData, {
-      headers: { 
+      headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json' 
+        'Content-Type': 'application/json'
       }
     });
     return response.data;
@@ -2892,9 +2910,9 @@ export const updateRecruitmentPosition = async (positionId, updateData) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/recruitment/positions/${positionId}`, updateData, {
-      headers: { 
+      headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json' 
+        'Content-Type': 'application/json'
       }
     });
     return response.data;
@@ -3046,7 +3064,7 @@ export const getDepartmentStats = async (department) => {
 export const getClientsForTeamLeader = async (payload) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/client/getClientsForTeamLeader', 
+    const response = await axiosInstance.post('/client/getClientsForTeamLeader',
       payload,  // Send the payload object
       {
         headers: {
@@ -3191,7 +3209,7 @@ export const getDepartmentActivityLogs = async (department, limit = 50, actionTy
     const token = localStorage.getItem('token');
     const params = { department, limit };
     if (actionType) params.actionType = actionType;
-    
+
     const response = await axiosInstance.get('/department/activities', {
       params,
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3222,7 +3240,7 @@ export const getDepartmentTasks = async (department, status = null, assignedTo =
     const params = { department };
     if (status) params.status = status;
     if (assignedTo) params.assignedTo = assignedTo;
-    
+
     const response = await axiosInstance.get('/department/tasks', {
       params,
       headers: { 'Authorization': `Bearer ${token}` }

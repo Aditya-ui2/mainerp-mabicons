@@ -80,71 +80,9 @@ const getRelativeDate = (date) => {
   return { label: d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }), color: 'text-[#9B9BAD]', bg: 'bg-[#9B9BAD]' };
 };
 
-const StatCard = ({ label, value, icon: Icon }) => (
-  <motion.div
-    whileHover="hover"
-    initial="initial"
-    className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col items-start gap-3 shadow-sm text-left relative overflow-hidden group cursor-pointer"
-    style={{ minHeight: '110px' }}
-  >
-    <motion.div
-      variants={{
-        initial: { y: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
-        hover: { y: -5, boxShadow: '0 12px 24px rgba(0,0,0,0.1)' }
-      }}
-      className="w-full h-full absolute inset-0 bg-white -z-10"
-    />
-    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-gray-100 transition-all duration-300">
-      <motion.div
-        variants={{
-          initial: { color: '#1A1A2E' },
-          hover: { color: '#0D47A1' }
-        }}
-      >
-        <Icon size={20} />
-      </motion.div>
-    </div>
-    <div className="space-y-1">
-      <p className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{value}</p>
-      <p className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A2E] opacity-60 group-hover:opacity-100 transition-opacity">{label}</p>
-    </div>
-  </motion.div>
-);
 
-const WorkloadCard = ({ teamData, tasks }) => {
-  const memberWorkload = teamData.map(m => ({
-    name: m.name,
-    tasks: tasks.filter(t => t.assignedToName === m.name && t.status !== 'Completed').length,
-  })).sort((a, b) => b.tasks - a.tasks).slice(0, 4);
 
-  const maxTasks = Math.max(...memberWorkload.map(m => m.tasks), 1);
 
-  return (
-    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm col-span-2 flex flex-col justify-between">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-[12px] font-bold text-[#1A1A2E] uppercase tracking-wider" style={{ fontFamily: "'Syne', sans-serif" }}>Team Workload</h4>
-        <FiActivity className="text-blue-500" size={16} />
-      </div>
-      <div className="space-y-3">
-        {memberWorkload.map((m, i) => (
-          <div key={i} className="space-y-1">
-            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-tighter">
-              <span className="text-[#4B4B5E] truncate max-w-[80px]">{m.name}</span>
-              <span className="text-[#1A1A2E]">{m.tasks} Tasks</span>
-            </div>
-            <div className="h-1 w-full bg-gray-50 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${(m.tasks / maxTasks) * 100}%` }}
-                className="h-full bg-[#1B4DA0] rounded-full"
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
   const [tasks, setTasks] = useState([
@@ -162,7 +100,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
   ]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('All');
+
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -261,15 +199,11 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.assignedToName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === 'All' || task.category === activeTab;
+    const matchesTab = true; // Tabs removed
     return matchesSearch && matchesTab;
   });
 
-  const stats = {
-    pending: tasks.filter(t => t.status === 'Pending').length,
-    highPriority: tasks.filter(t => t.priority === 'High' || t.priority === 'Urgent').length,
-    todayDeadlines: tasks.filter(t => t.dueDate && new Date(t.dueDate).toDateString() === new Date().toDateString()).length,
-  };
+
 
   const getTaskCardTone = (status) => {
     switch (status) {
@@ -341,75 +275,46 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
       </AnimatePresence>
 
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="text-left">
           <h2 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Assignment</h2>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Assign and track tasks for your team</p>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">Assign and track tasks for your team</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02, translateY: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' }); setShowModal(true); }}
-          className="flex items-center gap-2 px-7 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#1B4DA0]/20 transition-all border border-white/10"
+          className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#0D47A1]/20 transition-all border border-white/10"
         >
           <FiPlus size={20} />
           Assign Task
         </motion.button>
       </div>
 
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <StatCard label="Pending Tasks" value={stats.pending} icon={FiClock} />
-        <StatCard label="High Priority" value={stats.highPriority} icon={FiAlertCircle} />
-        <StatCard label="Today's Deadlines" value={stats.todayDeadlines} icon={FiCalendar} />
-        <WorkloadCard teamData={teamMembers} tasks={tasks} />
-      </div>
 
-      {/* Tabs & Search Header */}
-      <div className="flex flex-col gap-6 mt-8">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-          <div className="flex gap-8">
-            {['All', 'Recruitment', 'Client', 'Internal', 'Admin', 'Onboarding'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === tab ? 'text-[#1B4DA0]' : 'text-[#9B9BAD] hover:text-[#4B4B5E]'
-                  }`}
-              >
-                {tab}
-                {activeTab === tab && (
-                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1B4DA0]" />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white/50 p-2 rounded-2xl">
-          <div className="relative flex-1 group">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Find a task..."
-              className="w-full bg-white border border-gray-100 rounded-xl py-3 pl-12 pr-4 text-sm focus:ring-4 focus:ring-[#1B4DA0]/5 focus:border-[#1B4DA0] outline-none transition-all shadow-sm"
-            />
-          </div>
+
+
+      <div className="bg-white rounded-[24px] p-2 mt-8 mb-5 border border-[#F4F3EF] shadow-sm">
+        <div className="relative flex-1 group">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by title, client or location..."
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+          />
         </div>
       </div>
 
       {/* Task Directory Table */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-50 flex items-center gap-2">
-          <h3 className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Directory</h3>
-          <span className="px-2 py-0.5 bg-gray-100 text-[#9B9BAD] text-[10px] font-black rounded-md uppercase tracking-wider">{filteredTasks.length} Tasks</span>
-        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#FAFAF9]/50">
+              <tr className="bg-[#FAFAF8]">
                 <th className="p-5 w-14">
                   <input
                     type="checkbox"
@@ -585,31 +490,33 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-[32px] shadow-2xl w-full max-w-[480px] overflow-hidden"
+              className="relative bg-white rounded-[32px] shadow-2xl w-full max-w-[576px] overflow-hidden"
               style={{ maxHeight: '90vh' }}
             >
               {/* Header */}
-              <div className="p-8 pb-6 text-center relative">
+              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-[#F8FAFF] to-white">
+                <div className="text-left">
+                  <h3 className="text-2xl font-bold text-[#1A1A2E] leading-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    {editingTask ? 'Edit Task Details' : 'Assign New Task'}
+                  </h3>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-2.5">
+                    {editingTask ? 'Job Management & Updates' : 'Team Tasking & Operations'}
+                  </p>
+                </div>
                 <button
                   onClick={() => { setShowModal(false); setEditingTask(null); }}
-                  className="absolute right-6 top-6 p-2 rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
+                  className="w-10 h-10 rounded-2xl bg-[#F4F3EF]/50 flex items-center justify-center text-[#9B9BAD] hover:text-[#E11D48] hover:bg-[#FFF1F2] transition-all"
                 >
-                  <FiX size={20} />
+                  <FiX size={18} />
                 </button>
-                <h3 className="text-2xl font-bold text-[#1A1A2E] leading-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  {editingTask ? 'Edit Task Details' : 'Assign New Task'}
-                </h3>
-                <p className="text-[13px] font-medium text-gray-500 mt-2">
-                  {editingTask ? 'Update the following information to modify the task' : 'Fill in the details below to assign a new task to your team'}
-                </p>
               </div>
 
               {/* Form Content */}
               <div className="px-8 pb-8 overflow-y-auto">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Task Title */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-[0.05em] text-gray-400 ml-1">Task Title *</label>
+                  <div className="space-y-1.5 w-full">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Task Title *</label>
                     <div className="relative group">
                       <FiType className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
                       <input
@@ -625,8 +532,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
 
                   {/* Assign To & Priority */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase tracking-[0.05em] text-gray-400 ml-1">Assign To *</label>
+                    <div className="space-y-1.5 w-full">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Assign To *</label>
                       <div className="relative group">
                         <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors pointer-events-none" size={18} />
                         <select
@@ -645,8 +552,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase tracking-[0.05em] text-gray-400 ml-1">Priority</label>
+                    <div className="space-y-1.5 w-full">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Priority</label>
                       <div className="relative group">
                         <FiZap className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors pointer-events-none" size={18} />
                         <select
@@ -667,8 +574,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                   </div>
 
                   {/* Due Date */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-[0.05em] text-gray-400 ml-1">Due Date</label>
+                  <div className="space-y-1.5 w-full">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Due Date</label>
                     <div className="relative group">
                       <FiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
                       <input
@@ -681,8 +588,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                   </div>
 
                   {/* Description */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-[0.05em] text-gray-400 ml-1">Description</label>
+                  <div className="space-y-1.5 w-full">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Description</label>
                     <div className="relative group">
                       <FiAlignLeft className="absolute left-4 top-[18px] text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
                       <textarea

@@ -12,7 +12,7 @@ import logo from '../../../assets/images/mabicons logo blue.png';
 
 // Eagerly load the 3 main tabs for instant render (no lazy = no Suspense delay)
 import JobOpeningsTab from './Tabs/KAMRecruitment/JobOpeningsTab';
-import CandidatePipelineTab from '../Candidates/CandidatesPage';
+import CandidatePipelineTab from './Tabs/KAMRecruitment/CandidatePipelineTab';
 import InterviewScheduleTab from '../Candidates/InterviewsPage';
 
 // Lazy load other tabs (loaded on demand)
@@ -350,7 +350,7 @@ const KamRecruitmentDashboard = () => {
         </aside>
 
         {/* ═══════ MAIN CONTENT ═══════ */}
-        <main className="relative z-10 flex-1 flex flex-col min-w-0">
+        <main className="relative z-10 flex-1 overflow-auto bg-[#FDFDFD] dark:bg-gray-950 flex flex-col min-w-0">
           {/* ── Top Bar ── */}
           <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
             <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
@@ -405,7 +405,7 @@ const KamRecruitmentDashboard = () => {
           </header>
 
           {/* ── Tab Content ── */}
-          <section className="flex-1 overflow-y-auto p-4 md:p-6">
+          <section className="flex-1 p-4 lg:p-6 pb-20 overflow-y-auto">
             {renderTabContent()}
           </section>
         </main>
