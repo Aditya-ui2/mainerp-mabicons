@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, Suspense, lazy, useRef } from 'react';
+import { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FiBriefcase,
@@ -56,6 +56,7 @@ import {
   updateKAMMember,
   deleteKAMMember,
   getDeptNotes,
+  getRecruitmentClients,
 } from '../service/api';
 
 
@@ -314,7 +315,7 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
 };
 
 // Team Overview Tab Content
-const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, globalStats, onViewCallsBreakdown }) => {
+const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, onDeleteMultiple, globalStats, onViewCallsBreakdown }) => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedKAMs, setSelectedKAMs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -488,17 +489,11 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
                     {selectedKAMs.length} members selected
                   </span>
                   <div className="flex items-center gap-5 pl-4 text-[13px] font-semibold">
+
                     <button
-                      onClick={() => { alert(`Reassigning ${selectedKAMs.length} members to a new role...`); setSelectedKAMs([]); }}
-                      className="text-gray-300 hover:text-white flex items-center gap-2 transition-colors"
-                    >
-                      <FiRefreshCw className="w-4 h-4 stroke-[2.5]" /> Reassign
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`Are you sure you want to remove ${selectedKAMs.length} members?`)) {
-                          setSelectedKAMs([]);
-                        }
+                      onClick={async () => {
+                        const success = await onDeleteMultiple(selectedKAMs);
+                        if (success) setSelectedKAMs([]);
                       }}
                       className="text-rose-400 hover:text-rose-300 flex items-center gap-2 transition-colors"
                     >
@@ -524,17 +519,32 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
 };
 
 // KAM Performance Tab Content
-const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, months, years, getFilterLabel, showDateFilter, setShowDateFilter, onViewPerformance }) => {
+const KAMPerformanceContent = ({
+  teamData,
+  loading,
+  dateFilter,
+  setDateFilter,
+  months,
+  years,
+  getFilterLabel,
+  showDateFilter,
+  setShowDateFilter,
+  onViewPerformance,
+  clientFilter,
+  setClientFilter,
+  clients,
+  fetchDashboardData,
+  fetchKAMTeam
+}) => {
   const [activeMetric, setActiveMetric] = useState('callsDone');
-  const [selectedClient, setSelectedClient] = useState('All Clients');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const compactDateInputRef = useRef(null);
 
-  const clients = ['All Clients', 'Google', 'Amazon', 'Microsoft', 'Meta', 'Netflix'];
+  const clientNames = ['All Client', ...clients.map(c => c.companyName || c.name)];
 
-  const filteredData = selectedClient === 'All Clients'
+  const filteredData = clientFilter === 'All Client'
     ? teamData
-    : teamData.filter(kam => kam.client === selectedClient || (Array.isArray(kam.clients) && kam.clients.includes(selectedClient)));
+    : teamData.filter(kam => kam.client === clientFilter || (Array.isArray(kam.clients) && kam.clients.includes(clientFilter)));
 
   const openDatePicker = (ref) => {
     if (ref && ref.current) {
@@ -626,11 +636,16 @@ const KAMPerformanceContent = ({ teamData, loading, dateFilter, setDateFilter, m
 
             {showClientDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden py-1">
-                {clients.map((client) => (
+                {clientNames.map((client) => (
                   <button
                     key={client}
-                    onClick={() => { setSelectedClient(client); setShowClientDropdown(false); }}
-                    className={`w-full px-4 py-2 text-left text-sm transition-colors ${selectedClient === client ? 'bg-[#1B4DA0]/5 text-[#1B4DA0] font-bold' : 'text-gray-600 hover:bg-gray-50'}`}
+                    onClick={() => {
+                      setClientFilter(client);
+                      setShowClientDropdown(false);
+                      fetchDashboardData(dateFilter, 'All Team', client);
+                      fetchKAMTeam(dateFilter, client);
+                    }}
+                    className={`w-full px-4 py-2 text-left text-sm transition-colors ${clientFilter === client ? 'bg-[#1B4DA0]/5 text-[#1B4DA0] font-bold' : 'text-gray-600 hover:bg-gray-50'}`}
                   >
                     {client}
                   </button>
@@ -1029,9 +1044,9 @@ const Toast = ({ message, type, onClose }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: -50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      animate={{ opacity: 1, y: 12, scale: 1 }}
       exit={{ opacity: 0, y: -20, scale: 0.9 }}
-      className={`fixed top-6 right-6 z-[100] ${bgColor} text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-md`}
+      className={`fixed top-0 left-1/2 -translate-x-1/2 z-[200] ${bgColor} text-white px-8 py-4 rounded-b-2xl shadow-2xl flex items-center gap-3 min-w-[320px] max-w-md border-b border-x border-white/20`}
     >
       <Icon className="w-6 h-6 flex-shrink-0" />
       <p className="text-sm font-medium">{message}</p>
@@ -1058,12 +1073,7 @@ const RecruitmentHeadDashboard = () => {
   const [showKAMFormModal, setShowKAMFormModal] = useState(false);
   const [kamFormMode, setKamFormMode] = useState('add'); // 'add' or 'edit'
   const [kamFormData, setKamFormData] = useState({ name: '', email: '', phone: '', role: 'KAM - Recruitment' });
-  const [kamTeam, setKamTeam] = useState(transformKAMData([
-    { id: 'mock-1', name: 'Manju', role: 'Senior KAM', email: 'manju@mabicons.com', phone: '+91 98765 43210', client: 'Google', stats: { activePositions: 12, callsDone: 450, thisWeekHires: 5, candidatesPipeline: 34, interviewsScheduled: 18, offersExtended: 8, profilesShared: 25 } },
-    { id: 'mock-2', name: 'Priyanshi', role: 'KAM - Recruitment', email: 'priyanshi@mabicons.com', phone: '+91 87654 32109', client: 'Amazon', stats: { activePositions: 8, callsDone: 320, thisWeekHires: 3, candidatesPipeline: 28, interviewsScheduled: 12, offersExtended: 5, profilesShared: 15 } },
-    { id: 'mock-3', name: 'Jyoti', role: 'KAM - Recruitment', email: 'jyoti@mabicons.com', phone: '+91 76543 21098', client: 'Microsoft', stats: { activePositions: 15, callsDone: 580, thisWeekHires: 2, candidatesPipeline: 45, interviewsScheduled: 22, offersExtended: 6, profilesShared: 38 } },
-    { id: 'mock-4', name: 'Sachin', role: 'Support KAM', email: 'sachin@mabicons.com', phone: '+91 65432 10987', client: 'Meta', stats: { activePositions: 10, callsDone: 410, thisWeekHires: 4, candidatesPipeline: 31, interviewsScheduled: 15, offersExtended: 7, profilesShared: 22 } },
-  ]));
+  const [kamTeam, setKamTeam] = useState([]);
   const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'error' }
   const [performanceKam, setPerformanceKam] = useState(null);
   const [stats, setStats] = useState({
@@ -1073,6 +1083,15 @@ const RecruitmentHeadDashboard = () => {
     pendingOffers: 0,
     sharedProfiles: 0,
     phoneScreeningCalls: 0,
+    selected: 0,
+    totalHires: 0,
+    acceptedOffers: 0,
+    rejectedOffers: 0,
+    pendingTasks: 0,
+    totalNotes: 0,
+    candidates: { total: 0, shortlisted: 0, rejected: 0, selected: 0 },
+    interviews: { total: 0, scheduled: 0, pending: 0, rejected: 0 },
+    annualSummary: [],
   });
   const [statsBarData, setStatsBarData] = useState([]);
   const [recentNotes, setRecentNotes] = useState([]);
@@ -1116,9 +1135,9 @@ const RecruitmentHeadDashboard = () => {
   const offersBreakdown = getKamMetricBreakdown(kamTeam, 'offersExtended');
   const hiresBreakdown = getKamMetricBreakdown(kamTeam, 'thisWeekHires');
 
-  // Date Filter State - Default to Today
+  // Date Filter State - Default to All Time for total visibility
   const [dateFilter, setDateFilter] = useState({
-    filterType: 'date', // 'all', 'year', 'month', 'date' - Default to date (today)
+    filterType: 'all', // Default to all time
     year: new Date().getFullYear(),
     month: new Date().getMonth(),
     date: getLocalISODate(),
@@ -1144,6 +1163,7 @@ const RecruitmentHeadDashboard = () => {
   const teamDropdownRef = useRef(null);
 
   const [clientFilter, setClientFilter] = useState('All Client');
+  const [clients, setClients] = useState([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const clientDropdownRef = useRef(null);
 
@@ -1169,118 +1189,20 @@ const RecruitmentHeadDashboard = () => {
 
   // Helper for dynamic Summary Chart data
   const getSummaryChartData = () => {
-    const isThisWeek = chartDateFilter === 'This Week';
-    const multiplier = isThisWeek ? 0.25 : 1;
-
-    switch (activityFilter) {
-      case 'Hiring':
-        return [
-          { name: '30 Sep', manju: Math.round(12 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(5 * multiplier) },
-          { name: '10 Oct', manju: Math.round(18 * multiplier), priyanshi: Math.round(10 * multiplier), jyoti: Math.round(12 * multiplier) },
-          { name: '20 Oct', manju: Math.round(5 * multiplier), priyanshi: Math.round(22 * multiplier), jyoti: Math.round(14 * multiplier) },
-          { name: '30 Oct', manju: Math.round(22 * multiplier), priyanshi: Math.round(15 * multiplier), jyoti: Math.round(20 * multiplier) },
-          { name: '10 Nov', manju: Math.round(10 * multiplier), priyanshi: Math.round(18 * multiplier), jyoti: Math.round(16 * multiplier) },
-        ];
-      case 'Meeting':
-        return [
-          { name: '30 Sep', manju: Math.round(45 * multiplier), priyanshi: Math.round(32 * multiplier), jyoti: Math.round(58 * multiplier) },
-          { name: '10 Oct', manju: Math.round(32 * multiplier), priyanshi: Math.round(48 * multiplier), jyoti: Math.round(35 * multiplier) },
-          { name: '20 Oct', manju: Math.round(58 * multiplier), priyanshi: Math.round(41 * multiplier), jyoti: Math.round(44 * multiplier) },
-          { name: '30 Oct', manju: Math.round(41 * multiplier), priyanshi: Math.round(55 * multiplier), jyoti: Math.round(38 * multiplier) },
-          { name: '10 Nov', manju: Math.round(38 * multiplier), priyanshi: Math.round(45 * multiplier), jyoti: Math.round(50 * multiplier) },
-        ];
-      case 'Interview Count':
-        return [
-          { name: '30 Sep', manju: Math.round(35 * multiplier), priyanshi: Math.round(25 * multiplier), jyoti: Math.round(45 * multiplier) },
-          { name: '10 Oct', manju: Math.round(28 * multiplier), priyanshi: Math.round(38 * multiplier), jyoti: Math.round(30 * multiplier) },
-          { name: '20 Oct', manju: Math.round(45 * multiplier), priyanshi: Math.round(30 * multiplier), jyoti: Math.round(35 * multiplier) },
-          { name: '30 Oct', manju: Math.round(30 * multiplier), priyanshi: Math.round(40 * multiplier), jyoti: Math.round(32 * multiplier) },
-          { name: '10 Nov', manju: Math.round(32 * multiplier), priyanshi: Math.round(35 * multiplier), jyoti: Math.round(40 * multiplier) },
-        ];
-      case 'Offers':
-        return [
-          { name: '30 Sep', manju: Math.round(10 * multiplier), priyanshi: Math.round(5 * multiplier), jyoti: Math.round(8 * multiplier) },
-          { name: '10 Oct', manju: Math.round(15 * multiplier), priyanshi: Math.round(12 * multiplier), jyoti: Math.round(10 * multiplier) },
-          { name: '20 Oct', manju: Math.round(8 * multiplier), priyanshi: Math.round(18 * multiplier), jyoti: Math.round(12 * multiplier) },
-          { name: '30 Oct', manju: Math.round(20 * multiplier), priyanshi: Math.round(10 * multiplier), jyoti: Math.round(15 * multiplier) },
-          { name: '10 Nov', manju: Math.round(12 * multiplier), priyanshi: Math.round(15 * multiplier), jyoti: Math.round(10 * multiplier) },
-        ];
-      case 'Rejected':
-        return [
-          { name: '30 Sep', manju: Math.round(5 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(4 * multiplier) },
-          { name: '10 Oct', manju: Math.round(8 * multiplier), priyanshi: Math.round(5 * multiplier), jyoti: Math.round(10 * multiplier) },
-          { name: '20 Oct', manju: Math.round(4 * multiplier), priyanshi: Math.round(12 * multiplier), jyoti: Math.round(6 * multiplier) },
-          { name: '30 Oct', manju: Math.round(12 * multiplier), priyanshi: Math.round(6 * multiplier), jyoti: Math.round(8 * multiplier) },
-          { name: '10 Nov', manju: Math.round(6 * multiplier), priyanshi: Math.round(8 * multiplier), jyoti: Math.round(12 * multiplier) },
-        ];
-      default: // 'Calls'
-        return [
-          { name: '30 Sep', manju: Math.round(400 * multiplier), priyanshi: Math.round(240 * multiplier), jyoti: Math.round(100 * multiplier) },
-          { name: '10 Oct', manju: Math.round(300 * multiplier), priyanshi: Math.round(140 * multiplier), jyoti: Math.round(150 * multiplier) },
-          { name: '20 Oct', manju: Math.round(200 * multiplier), priyanshi: Math.round(480 * multiplier), jyoti: Math.round(180 * multiplier) },
-          { name: '30 Oct', manju: Math.round(500 * multiplier), priyanshi: Math.round(390 * multiplier), jyoti: Math.round(250 * multiplier) },
-          { name: '10 Nov', manju: Math.round(450 * multiplier), priyanshi: Math.round(430 * multiplier), jyoti: Math.round(220 * multiplier) },
-        ];
-    }
+    return stats.annualSummary || [];
   };
 
   // Helper for dynamic Pipeline Chart data
   const getPipelineChartData = () => {
-    // Base data based on Team Filter
-    let baseData = [];
-    switch (teamFilter) {
-      case 'Manju':
-        baseData = [
-          { name: 'PENDING', value: 100, color: '#8B5CF6' },
-          { name: 'APPROVED', value: 60, color: '#F59E0B' },
-          { name: 'REJECTED', value: 40, color: '#EE4266' },
-        ];
-        break;
-      case 'Jyoti':
-        baseData = [
-          { name: 'PENDING', value: 110, color: '#8B5CF6' },
-          { name: 'APPROVED', value: 50, color: '#F59E0B' },
-          { name: 'REJECTED', value: 30, color: '#EE4266' },
-        ];
-        break;
-      case 'Priyanshi':
-        baseData = [
-          { name: 'PENDING', value: 90, color: '#8B5CF6' },
-          { name: 'APPROVED', value: 70, color: '#F59E0B' },
-          { name: 'REJECTED', value: 20, color: '#EE4266' },
-        ];
-        break;
-      default:
-        // All Team
-        baseData = [
-          { name: 'PENDING', value: 100, color: '#8B5CF6' },
-          { name: 'APPROVED', value: 60, color: '#F59E0B' },
-          { name: 'REJECTED', value: 40, color: '#EE4266' },
-        ];
-    }
+    // Stage counts from stats state
+    const { total = 0, selected = 0, rejected = 0 } = stats.candidates || {};
+    const pending = Math.max(0, total - (selected + rejected));
 
-    // Apply Client Filter Modifiers (Mock Logic)
-    if (clientFilter !== 'All Client') {
-      const clientModifiers = {
-        'TCS': { pending: 1.2, approved: 0.8, rejected: 1.0 },
-        'Infosys': { pending: 0.9, approved: 1.2, rejected: 0.9 },
-        'Wipro': { pending: 1.0, approved: 1.0, rejected: 1.5 },
-        'HCL': { pending: 1.1, approved: 1.1, rejected: 0.8 }
-      };
-
-      const mod = clientModifiers[clientFilter] || { pending: 1.0, approved: 1.0, rejected: 1.0 };
-
-      return baseData.map(item => ({
-        ...item,
-        value: Math.round(item.value * (
-          item.name === 'PENDING' ? mod.pending :
-            item.name === 'APPROVED' ? mod.approved :
-              mod.rejected
-        ))
-      }));
-    }
-
-    return baseData;
+    return [
+      { name: 'PENDING', value: pending, color: '#8B5CF6' },
+      { name: 'APPROVED', value: selected, color: '#F59E0B' },
+      { name: 'REJECTED', value: rejected, color: '#EE4266' },
+    ];
   };
 
   const buildDateFilterParams = (filter = dateFilter) => {
@@ -1348,10 +1270,21 @@ const RecruitmentHeadDashboard = () => {
   };
 
   // Fetch KAM Team data from API
-  const fetchKAMTeam = async (filter = dateFilter) => {
+  const fetchKAMTeam = async (filter = dateFilter, client = clientFilter) => {
     try {
       setTeamLoading(true);
       const filterParams = buildDateFilterParams(filter);
+
+      // Inject client filter if selected
+      if (client && client !== 'All Client') {
+        // Find existing client ID from clients list
+        const clientObj = clients.find(c => (c.companyName || c.name) === client);
+        if (clientObj) {
+          filterParams.client = clientObj.id;
+        }
+      }
+
+      console.log('Fetching KAM team with filter:', filterParams);
       const response = await getAllKAMMembers(filterParams);
       if (response.success && response.data?.length > 0) {
         const transformedData = transformKAMData(response.data);
@@ -1360,9 +1293,20 @@ const RecruitmentHeadDashboard = () => {
       }
     } catch (error) {
       console.error('Failed to fetch KAM team:', error.message);
-      // Keep mock data on error so UI doesn't break
+      // Keep mock data if necessary, but we target live data
     } finally {
       setTeamLoading(false);
+    }
+  };
+
+  const fetchClientList = async () => {
+    try {
+      const res = await getRecruitmentClients();
+      if (res.success) {
+        setClients(res.data || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch clients:', e);
     }
   };
 
@@ -1393,15 +1337,18 @@ const RecruitmentHeadDashboard = () => {
         fetchNotifications(decoded.id || decoded.userId);
         fetchDashboardData();
         fetchKAMTeam();
+        fetchClientList();
         fetchRecentNotes();
       } catch (e) {
         console.log('Token decode error');
         setUserInfo({ name: localStorage.getItem('userName') || 'Sachin', role: 'Recruitment Head' });
         fetchKAMTeam();
+        fetchClientList();
         fetchRecentNotes();
       }
     } else {
       fetchKAMTeam();
+      fetchClientList();
       fetchRecentNotes();
     }
   }, []);
@@ -1417,16 +1364,35 @@ const RecruitmentHeadDashboard = () => {
   // Apply filter and refresh data
   const applyDateFilter = () => {
     setShowDateFilter(false);
-    fetchDashboardData(dateFilter);
-    fetchKAMTeam(dateFilter);
+    fetchDashboardData(dateFilter, teamFilter, clientFilter);
+    fetchKAMTeam(dateFilter, clientFilter);
   };
 
-  const fetchDashboardData = async (filter = dateFilter) => {
+  const fetchDashboardData = async (filter = dateFilter, team = teamFilter, client = clientFilter, activity = activityFilter) => {
     try {
       setLoading(true);
 
       // Build filter params for API
       const filterParams = buildDateFilterParams(filter);
+      if (team && team !== 'All Team') {
+        const member = kamTeam.find(k => k.name === team);
+        if (member) {
+          filterParams.teamMember = member.id;
+        }
+      }
+
+      // Inject client filter if selected
+      if (client && client !== 'All Client') {
+        const clientObj = clients.find(c => (c.companyName || c.name) === client);
+        if (clientObj) {
+          filterParams.client = clientObj.id;
+        }
+      }
+
+      // Inject activity type
+      if (activity) {
+        filterParams.activityType = activity;
+      }
 
       console.log('Fetching stats with filter:', filterParams);
       const statsRes = await getRecruitmentStats(filterParams);
@@ -1438,7 +1404,7 @@ const RecruitmentHeadDashboard = () => {
         setStats({
           activePositions: s.positions?.open ?? 0,
           totalCandidates: s.candidates?.total ?? 0,
-          scheduledInterviews: s.candidates?.shortlisted ?? 0,
+          scheduledInterviews: s.interviews?.scheduled ?? 0,
           pendingOffers: s.funnel?.offerSent ?? 0,
           sharedProfiles: s.candidates?.sharedCVs ?? 0,
           phoneScreeningCalls: s.funnel?.phoneInterview ?? 0,
@@ -1446,6 +1412,11 @@ const RecruitmentHeadDashboard = () => {
           totalHires: s.funnel?.joined ?? 0,
           acceptedOffers: s.funnel?.joined ?? 0,
           rejectedOffers: s.funnel?.rejected ?? 0,
+          pendingTasks: s.pendingTasks ?? 0,
+          totalNotes: s.totalNotes ?? 0,
+          candidates: s.candidates || { total: 0, shortlisted: 0, rejected: 0, selected: 0 },
+          interviews: s.interviews || { total: 0, scheduled: 0, pending: 0, rejected: 0 },
+          annualSummary: s.annualSummary || [],
         });
 
         const total = s.candidates?.total ?? 0;
@@ -1676,6 +1647,30 @@ const RecruitmentHeadDashboard = () => {
     }
   };
 
+  // Bulk delete KAM handler
+  const handleDeleteMultipleKAMs = async (ids) => {
+    if (!window.confirm(`Are you sure you want to remove ${ids.length} selected members from the team?`)) return false;
+
+    try {
+      setLoading(true);
+      // Sequentially delete to avoid overwhelming the server or causing race conditions in state updates
+      for (const id of ids) {
+        await deleteKAMMember(id);
+      }
+      setKamTeam(prev => prev.filter(k => !ids.includes(k.id)));
+      showToast(`Successfully removed ${ids.length} members from the team.`, 'success');
+      return true;
+    } catch (error) {
+      showToast(error.message || 'Failed to remove some members', 'error');
+      // Even if some failed, we should still refresh the list to see what remains
+      const response = await getAllKAMMembers(dateFilter);
+      if (response.success) setKamTeam(transformKAMData(response.data));
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Submit KAM form (add/edit)
   const handleSubmitKAMForm = async (e) => {
     e.preventDefault();
@@ -1738,6 +1733,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Team Overview':
               return (
                 <TeamOverviewContent
+                  onDeleteMultiple={handleDeleteMultipleKAMs}
                   teamData={kamTeam}
                   loading={teamLoading}
                   onViewKAM={handleViewKAM}
@@ -1751,7 +1747,23 @@ const RecruitmentHeadDashboard = () => {
                 />
               );
             case 'KAM Performance':
-              return <KAMPerformanceContent teamData={kamTeam} loading={teamLoading} dateFilter={dateFilter} setDateFilter={setDateFilter} months={months} years={years} getFilterLabel={getFilterLabel} showDateFilter={showDateFilter} setShowDateFilter={setShowDateFilter} onViewPerformance={setPerformanceKam} />;
+              return <KAMPerformanceContent
+                teamData={kamTeam}
+                loading={teamLoading}
+                dateFilter={dateFilter}
+                setDateFilter={setDateFilter}
+                months={months}
+                years={years}
+                getFilterLabel={getFilterLabel}
+                showDateFilter={showDateFilter}
+                setShowDateFilter={setShowDateFilter}
+                onViewPerformance={setPerformanceKam}
+                clientFilter={clientFilter}
+                setClientFilter={setClientFilter}
+                clients={clients}
+                fetchDashboardData={fetchDashboardData}
+                fetchKAMTeam={fetchKAMTeam}
+              />;
             case 'Task Assignment':
               return <TaskAssignmentTab department="HR Recruitment" />;
             case 'Job Openings':
@@ -1792,7 +1804,7 @@ const RecruitmentHeadDashboard = () => {
                         Today is {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
                       {/* Date Filter */}
                       <div className="relative">
                         <button
@@ -1983,11 +1995,8 @@ const RecruitmentHeadDashboard = () => {
                     <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col p-8 transition-all hover:shadow-xl hover:shadow-blue-500/5">
                       <div className="flex items-center justify-between mb-6 w-full">
                         <div className="flex flex-col text-left">
-                          <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">Staff applications card</h3>
-                          <div className="flex items-center gap-2">
-                            <div className="h-1 w-6 bg-blue-500 rounded-full" />
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">REAL-TIME TRACKING</span>
-                          </div>
+                          <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Staff Applications Pipeline</h3>
+                          <p className="text-[#6B6B7E] text-xs font-medium">Real-time tracking of candidate progression</p>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -2008,11 +2017,15 @@ const RecruitmentHeadDashboard = () => {
                                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                   className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
                                 >
-                                  {['All Team', 'Manju', 'Jyoti', 'Priyanshi'].map((team) => (
+                                  {['All Team', ...kamTeam.map(k => k.name)].map((team) => (
                                     <button
                                       key={team}
-                                      onClick={() => { setTeamFilter(team); setShowTeamDropdown(false); }}
-                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${teamFilter === team ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                                      onClick={() => {
+                                        setTeamFilter(team);
+                                        setShowTeamDropdown(false);
+                                        fetchDashboardData(dateFilter, team);
+                                      }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all font-jakarta ${teamFilter === team ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
                                     >
                                       {team}
                                     </button>
@@ -2039,10 +2052,15 @@ const RecruitmentHeadDashboard = () => {
                                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                   className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
                                 >
-                                  {['All Client', 'TCS', 'Infosys', 'Wipro', 'HCL'].map((client) => (
+                                  {['All Client', ...clients.map(c => c.companyName || c.name)].map((client) => (
                                     <button
                                       key={client}
-                                      onClick={() => { setClientFilter(client); setShowClientDropdown(false); }}
+                                      onClick={() => {
+                                        setClientFilter(client);
+                                        setShowClientDropdown(false);
+                                        fetchDashboardData(dateFilter, teamFilter, client);
+                                        fetchKAMTeam(dateFilter, client);
+                                      }}
                                       className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${clientFilter === client ? 'bg-rose-50 text-rose-600' : 'text-slate-600 hover:bg-slate-50'}`}
                                     >
                                       {client}
@@ -2077,10 +2095,10 @@ const RecruitmentHeadDashboard = () => {
                             </PieChart>
                           </ResponsiveContainer>
                           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-5xl font-black text-slate-900 tracking-tighter">
+                            <span className="text-4xl font-extrabold text-[#1A1A2E] tracking-tighter font-jakarta">
                               {getPipelineChartData().reduce((acc, curr) => acc + curr.value, 0)}
                             </span>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">TOTAL VOLUME</span>
+                            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em] mt-1 font-jakarta">IN PIPELINE</span>
                             {teamFilter !== 'All Team' && (
                               <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{teamFilter}</span>
                             )}
@@ -2091,9 +2109,9 @@ const RecruitmentHeadDashboard = () => {
                         <div className="w-full grid grid-cols-3 gap-2 mt-4">
                           {getPipelineChartData().map((entry) => (
                             <div key={entry.name} className="flex flex-col items-center group">
-                              <div className="w-6 h-1.5 rounded-full mb-3 transition-transform group-hover:scale-x-125" style={{ backgroundColor: entry.color }} />
-                              <span className="text-xl font-black text-slate-900 leading-none tracking-tight mb-1">{entry.value}</span>
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">{entry.name}</span>
+                              <div className="w-6 h-1.5 rounded-full mb-3 transition-transform group-hover:scale-x-125 shadow-sm" style={{ backgroundColor: entry.color }} />
+                              <span className="text-xl font-bold text-[#1A1A2E] leading-none tracking-tight mb-1 font-jakarta">{entry.value}</span>
+                              <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.1em] font-jakarta">{entry.name}</span>
                             </div>
                           ))}
                         </div>
@@ -2104,11 +2122,8 @@ const RecruitmentHeadDashboard = () => {
                     <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col p-8 transition-all hover:shadow-xl hover:shadow-indigo-500/5">
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 w-full gap-4">
                         <div className="flex flex-col text-left">
-                          <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">Annual recruitment summary</h3>
-                          <div className="flex items-center gap-2">
-                            <div className="h-1 w-6 bg-indigo-500 rounded-full" />
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">PERFORMANCE ANALYSIS</span>
-                          </div>
+                          <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Annual Recruitment Summary</h3>
+                          <p className="text-[#6B6B7E] text-xs font-medium">Yearly hiring performance and trend analysis</p>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
@@ -2131,7 +2146,11 @@ const RecruitmentHeadDashboard = () => {
                                   {['Calls', 'Hiring', 'Meeting', 'Interview Count', 'Offers', 'Rejected'].map((option) => (
                                     <button
                                       key={option}
-                                      onClick={() => { setActivityFilter(option); setShowActivityDropdown(false); }}
+                                      onClick={() => {
+                                        setActivityFilter(option);
+                                        setShowActivityDropdown(false);
+                                        fetchDashboardData(dateFilter, teamFilter, clientFilter, option);
+                                      }}
                                       className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${activityFilter === option ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'}`}
                                     >
                                       {option}
@@ -2161,8 +2180,18 @@ const RecruitmentHeadDashboard = () => {
                                   {['All Time', 'This Year', 'This Month', 'This Week'].map((item) => (
                                     <button
                                       key={item}
-                                      onClick={() => { setChartDateFilter(item); setShowChartDateDropdown(false); }}
-                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all ${chartDateFilter === item ? 'bg-amber-50 text-amber-600' : 'text-slate-700 hover:bg-slate-50'}`}
+                                      onClick={() => {
+                                        setChartDateFilter(item);
+                                        setShowChartDateDropdown(false);
+                                        // Synchronize with dashboard data fetch
+                                        let syntheticFilter = { filterType: 'all' };
+                                        const now = new Date();
+                                        if (item === 'This Year') syntheticFilter = { filterType: 'year', year: now.getFullYear() };
+                                        if (item === 'This Month') syntheticFilter = { filterType: 'month', year: now.getFullYear(), month: now.getMonth() };
+                                        if (item === 'This Week') syntheticFilter = { filterType: 'last7days' };
+                                        fetchDashboardData(syntheticFilter);
+                                      }}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all font-syne ${chartDateFilter === item ? 'bg-amber-50 text-amber-600' : 'text-slate-700 hover:bg-slate-50'}`}
                                     >
                                       {item}
                                     </button>
@@ -2176,14 +2205,46 @@ const RecruitmentHeadDashboard = () => {
 
                       <div className="w-full h-[300px] mt-2">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={getSummaryChartData()} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                          <BarChart data={getSummaryChartData()} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} />
-                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                            <Bar dataKey="manju" name="Manju" fill="#F59E0B" radius={[6, 6, 0, 0]} barSize={12} />
-                            <Bar dataKey="priyanshi" name="Priyanshi" fill="#EE4266" radius={[6, 6, 0, 0]} barSize={12} />
-                            <Bar dataKey="jyoti" name="Jyoti" fill="#1E40AF" radius={[6, 6, 0, 0]} barSize={12} />
+                            <XAxis
+                              dataKey="name"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600, fontFamily: 'Plus Jakarta Sans' }}
+                              dy={15}
+                            />
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600, fontFamily: 'Plus Jakarta Sans' }}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                borderRadius: '16px',
+                                border: 'none',
+                                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+                                padding: '12px 16px',
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontSize: '11px',
+                                fontWeight: 'bold'
+                              }}
+                              cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }}
+                            />
+                            {getSummaryChartData().length > 0 &&
+                              Object.keys(getSummaryChartData()[0])
+                                .filter(k => k !== 'name' && k !== 'sortKey')
+                                .map((key, i) => (
+                                  <Bar
+                                    key={key}
+                                    dataKey={key}
+                                    name={key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}
+                                    fill={['#6366F1', '#F59E0B', '#10B981', '#EC4899', '#8B5CF6', '#F43F5E', '#1A1A2E'][i % 7]}
+                                    radius={[2, 2, 0, 0]}
+                                    barSize={8}
+                                  />
+                                ))
+                            }
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -2194,17 +2255,11 @@ const RecruitmentHeadDashboard = () => {
                   <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-8 mb-8">
                     <div className="flex items-center justify-between mb-8">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100/50 text-blue-500">
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-500">
                           <FiUsers className="w-5 h-5" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 tracking-tight">Active Team</h3>
+                        <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">Active Team</h3>
                       </div>
-                      <button
-                        onClick={() => setActiveTab('Team Overview')}
-                        className="text-[11px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
-                      >
-                        DETAILS â†’
-                      </button>
                     </div>
 
                     <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 scroll-smooth">
@@ -2222,11 +2277,11 @@ const RecruitmentHeadDashboard = () => {
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-sm font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{kam.name}</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">0 OPEN POSITIONS</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{kam.stats?.activePositions} OPEN POSITIONS</span>
                               </div>
                             </div>
                             <div className="flex flex-col items-end">
-                              <span className="text-xl font-black text-slate-900 leading-none">0</span>
+                              <span className="text-xl font-black text-slate-900 leading-none">{kam.stats?.thisWeekHires}</span>
                               <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter mt-1">HIRES</span>
                             </div>
                           </div>
@@ -2251,10 +2306,10 @@ const RecruitmentHeadDashboard = () => {
 
                     <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 scroll-smooth">
                       {[
-                        { title: 'JOB OPENINGS', desc: '0 OPEN POSITIONS', icon: FiBriefcase, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Job Openings' },
-                        { title: 'CANDIDATE PIPELINE', desc: '1 TOTAL', icon: FiTarget, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Candidate Pipeline' },
-                        { title: 'TASKS', desc: 'TEAM LOAD', icon: FiCheckSquare, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Task Assignment' },
-                        { title: 'SHARED NOTES', desc: 'MANAGE ALL', icon: FiEdit3, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Notes' }
+                        { title: 'JOB OPENINGS', desc: `${stats.activePositions} OPEN POSITIONS`, icon: FiBriefcase, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Job Openings' },
+                        { title: 'CANDIDATE PIPELINE', desc: `${stats.totalCandidates} TOTAL`, icon: FiTarget, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Candidate Pipeline' },
+                        { title: 'TASKS', desc: `${stats.pendingTasks} PENDING`, icon: FiCheckSquare, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Task Assignment' },
+                        { title: 'SHARED NOTES', desc: `${stats.totalNotes} ACTIVE NOTES`, icon: FiEdit3, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Notes' }
                       ].map((action, idx) => (
                         <div
                           key={idx}
@@ -2277,17 +2332,11 @@ const RecruitmentHeadDashboard = () => {
                   <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
                     <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-slate-100" style={{ color: '#3FA9F5' }}>
+                        <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-slate-100 text-slate-500">
                           <FiEdit3 className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-lg text-slate-800 tracking-tight">Strategy Notes</h3>
+                        <h3 className="font-bold text-lg text-[#1A1A2E] tracking-tight font-syne">Strategy Notes</h3>
                       </div>
-                      <button
-                        onClick={() => setActiveTab('Notes')}
-                        className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors"
-                      >
-                        Manage â†’
-                      </button>
                     </div>
                     <div className="divide-y divide-slate-50 max-h-[350px] overflow-y-auto flex-1 bg-white">
                       {notesLoading ? (
@@ -2398,7 +2447,7 @@ const RecruitmentHeadDashboard = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
-                        <span className="text-sm text-[#1A1A2E] font-bold">HR Recruitment</span>
+                        <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.department || 'HR Recruitment'}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-[#6B6B7E] font-medium">Status</span>
@@ -2916,16 +2965,16 @@ const RecruitmentHeadDashboard = () => {
         {performanceKam && (
           <>
             <motion.div
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-[4px] z-[9999]"
               onClick={() => setPerformanceKam(null)}
             />
             <motion.div
-              initial={{ x: '100%' }} 
-              animate={{ x: 0 }} 
-              exit={{ x: '100%' }} 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed right-0 top-0 h-full w-full max-w-[420px] bg-[#FAFAF8] z-[10000] shadow-2xl flex flex-col"
               style={{ boxShadow: "-12px 0 40px rgba(0,0,0,0.15)" }}

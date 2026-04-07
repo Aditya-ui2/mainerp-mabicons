@@ -9,6 +9,8 @@
     font-family: 'Inter', sans-serif;
     color: #1e293b;
   }
+  .font-syne { font-family: 'Syne', sans-serif; }
+  .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
 }
 
 /* Custom scrollbar for KAM sidebar & content */
