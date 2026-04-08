@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Filter, X, MapPin, Users, Clock, ChevronRight, Pencil, Check, Plus, Download, Briefcase, Tag, Globe, AlignLeft, BarChart3, DollarSign, ShieldCheck, Share2, Compass, Waves, TrendingUp, MessageSquare, ExternalLink, Calendar, User, ArrowLeft, RefreshCw, Target, FileText, Clipboard, Award, Layers, Database, Mail, Phone, Star, AlertCircle, CheckCircle, Edit2, Send, Trash2, ChevronDown
+  Search, Filter, X, MapPin, Users, Clock, ChevronRight, Pencil, Check, Plus, Download, Briefcase, Tag, Globe, AlignLeft, BarChart3, DollarSign, ShieldCheck, Share2, Compass, Waves, TrendingUp, MessageSquare, ExternalLink, Calendar, User, ArrowLeft, RefreshCw, Target, FileText, Clipboard, Award, Layers, Database, Mail, Phone, Star, AlertCircle, CheckCircle, Edit2, Send, Trash2, ChevronDown, UserPlus
 } from "lucide-react";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { toast } from "sonner";
@@ -387,7 +387,8 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 const RADAR_COLORS = { stroke: '#a5b4fc', fill: '#a5b4fc' };
 const DONUT_COLORS = ['#3B82F6', '#6366F1', '#22D3EE'];
 
-const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
+const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob }) => {
+  const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const skillsArr = (Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean);
   const reqsArr = (Array.isArray(job.requirements) ? job.requirements : (job.requirements || '').split('\n')).filter(Boolean);
   const respArr = (Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || '').split('\n')).filter(Boolean);
@@ -507,11 +508,72 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit }) => {
           >
             Cancel
           </button>
-          <button onClick={() => onEdit(job)}
-            className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-[24px] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#153a7a] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
-          >
-            <Pencil size={18} /> Edit Position
-          </button>
+          <div className="relative flex-[2]">
+            <button
+              id="detail-assign-btn"
+              onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+              className="w-full py-4 bg-[#1B4DA0] text-white rounded-[24px] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#153a7a] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
+            >
+              <UserPlus size={18} />
+              {jobAssignments[job.id] ? `Assigned to ${jobAssignments[job.id]}` : 'Assign To'}
+            </button>
+            {showAssignDropdown && createPortal(
+              <>
+                <div className="fixed inset-0 z-[9998]" onClick={() => setShowAssignDropdown(false)} />
+                <div
+                  className="fixed z-[9999] w-52 bg-white rounded-xl shadow-2xl border border-[#E5E5EA] py-2"
+                  style={(() => {
+                    const btn = document.getElementById('detail-assign-btn');
+                    if (!btn) return { top: 0, left: 0 };
+                    const rect = btn.getBoundingClientRect();
+                    return { bottom: window.innerHeight - rect.top + 8, left: rect.left + rect.width / 2 - 104 };
+                  })()}
+                >
+                  <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
+                  <button
+                    onClick={() => { handleAssignJob(job.id, 'Me'); setShowAssignDropdown(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${
+                      jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                    }`}
+                  >
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
+                      jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                    }`}><User size={13} /></span>
+                    Assign to me
+                    {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                  </button>
+                  <div className="border-t border-[#F4F3EF] my-1" />
+                  {['Jyoti', 'Manju', 'Priyanshi'].map(name => (
+                    <button key={name}
+                      onClick={() => { handleAssignJob(job.id, name); setShowAssignDropdown(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${
+                        jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                      }`}
+                    >
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
+                        jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                      }`}>{name.charAt(0)}</span>
+                      {name}
+                      {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                    </button>
+                  ))}
+                  {jobAssignments[job.id] && (
+                    <>
+                      <div className="border-t border-[#F4F3EF] my-1" />
+                      <button
+                        onClick={() => { handleAssignJob(job.id, null); setShowAssignDropdown(false); }}
+                        className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                      >
+                        <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
+                        Remove Assignment
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>,
+              document.body
+            )}
+          </div>
         </div>
       </div>
 
@@ -549,6 +611,27 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [assignTaskJob, setAssignTaskJob] = useState(null);
   const [jobTasks, setJobTasks] = useState({});
+  const [assignDropdownJobId, setAssignDropdownJobId] = useState(null);
+  const [jobAssignments, setJobAssignments] = useState({});
+
+  // Handle assign/unassign with backend sync
+  const handleAssignJob = async (jobId, name) => {
+    const prev = { ...jobAssignments };
+    if (name) {
+      setJobAssignments(p => ({ ...p, [jobId]: name }));
+    } else {
+      setJobAssignments(p => { const n = { ...p }; delete n[jobId]; return n; });
+    }
+    try {
+      await updateRecruitmentPosition(jobId, {
+        assignedToName: name || null,
+        assignedToId: null,
+      });
+    } catch (err) {
+      console.error('Failed to update assignment:', err);
+      setJobAssignments(prev); // rollback on error
+    }
+  };
   const [filterClient, setFilterClient] = useState('all');
   const [filterPosition, setFilterPosition] = useState('all');
   const [filterDate, setFilterDate] = useState('all');
@@ -578,6 +661,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     roleType: '',
   });
   const positionDeadlineInputRef = useRef(null);
+  const [skillInput, setSkillInput] = useState('');
+  const [reqInput, setReqInput] = useState('');
+  const [respInput, setRespInput] = useState('');
 
   // ── Fetch clients from backend ──
   const fetchClients = async () => {
@@ -677,7 +763,16 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         clientId: p.clientId,
         postedByName: p.postedByName || p.postedBy?.name || '',
         postedByEmail: p.postedByEmail || p.postedBy?.email || '',
+        assignedToId: p.assignedToId || null,
+        assignedToName: p.assignedToName || null,
       }));
+
+      // Build assignment map from fetched data
+      const assignMap = {};
+      positions.forEach(p => {
+        if (p.assignedToName) assignMap[p.id] = p.assignedToName;
+      });
+      setJobAssignments(prev => ({ ...assignMap, ...prev }));
 
       // Update jobTasks mapping
       const taskMap = {};
@@ -1376,28 +1471,79 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
 
 
-                    <div className="space-y-1.5 md:col-span-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Skills (comma separated)</label>
-                      <input type="text" value={newJobForm.skills} onChange={e => setNewJobForm(f => ({ ...f, skills: e.target.value }))}
-                        placeholder="React, Node.js, MongoDB"
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                      />
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Requirements</label>
+                      <div className="w-full bg-[#F4F3EF] rounded-2xl px-4 py-3 min-h-[120px] transition-all focus-within:bg-[#EEF2FB] cursor-text"
+                        onClick={() => document.getElementById('req-tag-input')?.focus()}>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {newJobForm.requirements.split('\n').map(s => s.trim()).filter(Boolean).map((item, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-[#E5E5EA] rounded-full px-3 py-1.5 text-xs font-bold text-[#1A1A2E] shadow-sm">
+                              {item}
+                              <button type="button" onClick={(e) => { e.stopPropagation(); const updated = newJobForm.requirements.split('\n').map(s => s.trim()).filter(Boolean).filter((_, i) => i !== idx).join('\n'); setNewJobForm(f => ({ ...f, requirements: updated })); }}
+                                className="ml-0.5 text-[#9B9BAD] hover:text-red-500 transition-colors text-sm leading-none font-bold">&times;</button>
+                            </span>
+                          ))}
+                        </div>
+                        <input id="req-tag-input" type="text" value={reqInput}
+                          onChange={e => setReqInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && reqInput.trim()) {
+                              e.preventDefault();
+                              const val = reqInput.trim();
+                              const existing = newJobForm.requirements.split('\n').map(s => s.trim()).filter(Boolean);
+                              if (!existing.some(s => s.toLowerCase() === val.toLowerCase())) {
+                                setNewJobForm(f => ({ ...f, requirements: existing.length ? existing.join('\n') + '\n' + val : val }));
+                              }
+                              setReqInput('');
+                            } else if (e.key === 'Backspace' && !reqInput) {
+                              const existing = newJobForm.requirements.split('\n').map(s => s.trim()).filter(Boolean);
+                              if (existing.length) {
+                                setNewJobForm(f => ({ ...f, requirements: existing.slice(0, -1).join('\n') }));
+                              }
+                            }
+                          }}
+                          placeholder={newJobForm.requirements ? 'Add more...' : 'Type & press Enter'}
+                          className="w-full bg-transparent border-0 outline-none text-sm font-bold text-[#1A1A2E] placeholder:text-[#9B9BAD]/50 py-1"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Requirements (one per line)</label>
-                      <textarea value={newJobForm.requirements} onChange={e => setNewJobForm(f => ({ ...f, requirements: e.target.value }))}
-                        rows={4} placeholder="Detailed requirements..."
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] resize-none placeholder:text-[#9B9BAD]/50"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Responsibilities (one per line)</label>
-                      <textarea value={newJobForm.responsibilities} onChange={e => setNewJobForm(f => ({ ...f, responsibilities: e.target.value }))}
-                        rows={4} placeholder="Key responsibilities..."
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] resize-none placeholder:text-[#9B9BAD]/50"
-                      />
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Responsibilities</label>
+                      <div className="w-full bg-[#F4F3EF] rounded-2xl px-4 py-3 min-h-[120px] transition-all focus-within:bg-[#EEF2FB] cursor-text"
+                        onClick={() => document.getElementById('resp-tag-input')?.focus()}>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {newJobForm.responsibilities.split('\n').map(s => s.trim()).filter(Boolean).map((item, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-[#E5E5EA] rounded-full px-3 py-1.5 text-xs font-bold text-[#1A1A2E] shadow-sm">
+                              {item}
+                              <button type="button" onClick={(e) => { e.stopPropagation(); const updated = newJobForm.responsibilities.split('\n').map(s => s.trim()).filter(Boolean).filter((_, i) => i !== idx).join('\n'); setNewJobForm(f => ({ ...f, responsibilities: updated })); }}
+                                className="ml-0.5 text-[#9B9BAD] hover:text-red-500 transition-colors text-sm leading-none font-bold">&times;</button>
+                            </span>
+                          ))}
+                        </div>
+                        <input id="resp-tag-input" type="text" value={respInput}
+                          onChange={e => setRespInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && respInput.trim()) {
+                              e.preventDefault();
+                              const val = respInput.trim();
+                              const existing = newJobForm.responsibilities.split('\n').map(s => s.trim()).filter(Boolean);
+                              if (!existing.some(s => s.toLowerCase() === val.toLowerCase())) {
+                                setNewJobForm(f => ({ ...f, responsibilities: existing.length ? existing.join('\n') + '\n' + val : val }));
+                              }
+                              setRespInput('');
+                            } else if (e.key === 'Backspace' && !respInput) {
+                              const existing = newJobForm.responsibilities.split('\n').map(s => s.trim()).filter(Boolean);
+                              if (existing.length) {
+                                setNewJobForm(f => ({ ...f, responsibilities: existing.slice(0, -1).join('\n') }));
+                              }
+                            }
+                          }}
+                          placeholder={newJobForm.responsibilities ? 'Add more...' : 'Type & press Enter'}
+                          className="w-full bg-transparent border-0 outline-none text-sm font-bold text-[#1A1A2E] placeholder:text-[#9B9BAD]/50 py-1"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-1.5 md:col-span-2">
@@ -1536,8 +1682,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
             {/* Table Interface */}
             <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
-              <div className="grid grid-cols-[1fr_140px_120px_130px_100px_36px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-[#FAFAF8]">
-                {["Position", "Client", "Status", "Posted", "Applicants", ""].map((h, i) => (
+              <div className="grid grid-cols-[1fr_140px_120px_130px_100px_140px_36px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-[#FAFAF8]">
+                {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => (
                   <span key={i} className={`text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] text-left ${i === 1 ? 'pl-6' : ''}`}>
                     {h}
                   </span>
@@ -1553,7 +1699,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   <div
                     key={job.id}
                     onClick={() => setSelectedJob(job)}
-                    className="grid grid-cols-[1fr_140px_120px_130px_100px_36px] gap-4 items-center px-8 py-6 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative overflow-hidden"
+                    className="grid grid-cols-[1fr_140px_120px_130px_100px_140px_36px] gap-4 items-center px-8 py-6 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
                   >
                     <div>
                       <p className="text-base font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors flex items-center gap-2 font-syne">
@@ -1576,6 +1722,82 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                         <Users size={14} />
                       </div>
                       <span className="text-sm font-black text-[#1A1A2E]">{job.candidateCount}</span>
+                    </div>
+                    <div className="relative" onClick={e => e.stopPropagation()}>
+                      {jobAssignments[job.id] ? (
+                        <button
+                          id={`assign-btn-${job.id}`}
+                          onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all"
+                        >
+                          <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
+                          {jobAssignments[job.id]}
+                        </button>
+                      ) : (
+                        <button
+                          id={`assign-btn-${job.id}`}
+                          onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-[#0D47A1] text-white rounded-lg text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                        >
+                          <UserPlus size={13} /> Assign
+                        </button>
+                      )}
+                      {assignDropdownJobId === job.id && createPortal(
+                        <>
+                          <div className="fixed inset-0 z-[9998]" onClick={() => setAssignDropdownJobId(null)} />
+                          <div
+                            className="fixed z-[9999] w-52 bg-white rounded-xl shadow-2xl border border-[#E5E5EA] py-2"
+                            style={(() => {
+                              const btn = document.getElementById(`assign-btn-${job.id}`);
+                              if (!btn) return { top: 0, left: 0 };
+                              const rect = btn.getBoundingClientRect();
+                              return { top: rect.bottom + 8, left: rect.left };
+                            })()}
+                          >
+                            <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
+                            <button
+                              onClick={() => { handleAssignJob(job.id, 'Me'); setAssignDropdownJobId(null); }}
+                              className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${
+                                jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                              }`}
+                            >
+                              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
+                                jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                              }`}><User size={13} /></span>
+                              Assign to me
+                              {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                            </button>
+                            <div className="border-t border-[#F4F3EF] my-1" />
+                            {['Jyoti', 'Manju', 'Priyanshi'].map(name => (
+                              <button key={name}
+                                onClick={() => { handleAssignJob(job.id, name); setAssignDropdownJobId(null); }}
+                                className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${
+                                  jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                                }`}
+                              >
+                                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
+                                  jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                                }`}>{name.charAt(0)}</span>
+                                {name}
+                                {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                              </button>
+                            ))}
+                            {jobAssignments[job.id] && (
+                              <>
+                                <div className="border-t border-[#F4F3EF] my-1" />
+                                <button
+                                  onClick={() => { handleAssignJob(job.id, null); setAssignDropdownJobId(null); }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                                >
+                                  <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
+                                  Remove Assignment
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </>,
+                        document.body
+                      )}
                     </div>
                     <div className="flex justify-end">
                       <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
@@ -1627,6 +1849,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     onBack={() => setSelectedJob(null)}
                     onAssignTask={(job) => setAssignTaskJob(job)}
                     onEdit={(job) => handleEditJob(job)}
+                    jobAssignments={jobAssignments}
+                    setJobAssignments={setJobAssignments}
+                    handleAssignJob={handleAssignJob}
                   />
                 </div>
               )}

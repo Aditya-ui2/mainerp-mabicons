@@ -244,6 +244,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'offerDate', direction: 'desc' });
   const [filterClient, setFilterClient] = useState('all');
+  const [filterJob, setFilterJob] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -535,6 +536,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
       (o.client || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || o.status === filterStatus;
     const matchesClient = filterClient === 'all' || o.client === filterClient;
+    const matchesJob = filterJob === 'all' || o.position === filterJob;
     
     // Date filter on offerDate
     let matchesDate = true;
@@ -557,7 +559,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
       }
     }
 
-    return matchesSearch && matchesStatus && matchesClient && matchesDate;
+    return matchesSearch && matchesStatus && matchesClient && matchesJob && matchesDate;
   }).sort((a, b) => {
     const { key, direction } = sortConfig;
     let valA = a[key], valB = b[key];
@@ -631,14 +633,38 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
         {/* Search Bar Container - Matching Candidate/Job tabs */}
         <div className="bg-white border border-[#F4F3EF] rounded-[24px] p-2.5 mb-10 shadow-sm">
-          <div className="flex items-center gap-4 bg-[#F4F3EF] rounded-[20px] px-6 h-[44px]">
-            <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
-            <input 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search candidate, role, or client..."
-              className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold" 
-            />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 bg-[#F4F3EF] rounded-[20px] px-6 h-[44px] flex-1">
+              <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
+              <input 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search candidate, role, or client..."
+                className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold" 
+              />
+            </div>
+            <select
+              value={filterClient}
+              onChange={(e) => setFilterClient(e.target.value)}
+              className="bg-[#F4F3EF] rounded-[20px] px-5 h-[44px] text-xs font-bold text-[#1A1A2E] uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+            >
+              <option value="all">All Clients</option>
+              {[...new Set(offers.map(o => o.client).filter(Boolean))].sort().map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={filterJob}
+              onChange={(e) => setFilterJob(e.target.value)}
+              className="bg-[#F4F3EF] rounded-[20px] px-5 h-[44px] text-xs font-bold text-[#1A1A2E] uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+            >
+              <option value="all">All Jobs</option>
+              {[...new Set(offers.map(o => o.position).filter(Boolean))].sort().map(j => (
+                <option key={j} value={j}>{j}</option>
+              ))}
+            </select>
           </div>
         </div>
 

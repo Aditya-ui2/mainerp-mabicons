@@ -16,6 +16,7 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
   const [view, setView] = useState('list');
   const [editNote, setEditNote] = useState(null);
   const [newNote, setNewNote] = useState({ title: '', content: '' });
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const fetchNotes = useCallback(async () => {
     setLoading(true);
@@ -63,13 +64,14 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this note?')) return;
     try {
       await deleteNote(id);
       setNotes(prev => prev.filter(n => n.id !== id));
       toast.success('Note deleted');
     } catch (err) {
       toast.error(err.message || 'Failed to delete note');
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -88,7 +90,7 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
   });
 
   return (
-    <div className="p-8 lg:p-12 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
+    <div className="min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif !important; }
@@ -97,7 +99,7 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
 
       <div className="w-full font-jakarta">
         <>
-          <div className="space-y-10">
+          <div className="space-y-6">
               {/* Header */}
               <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                 <div>
@@ -120,7 +122,7 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
                   <motion.button
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={() => setView('add')}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors w-fit"
+                    className="flex items-center center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-medium shadow-sm hover:bg-[#0a3a85] transition-colors w-fit"
                   >
                     <Plus size={16} /> Add Note
                   </motion.button>
@@ -237,7 +239,7 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
                                       <Edit2 size={16} />
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); handleDelete(note.id); }}
+                                      onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(note.id); }}
                                       className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] hover:text-[#EF4444] hover:bg-[#FEF2F2] hover:border-[#FEE2E2] transition-all shadow-sm"
                                     >
                                       <Trash2 size={16} />
@@ -322,6 +324,46 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
                     </div>
                   </form>
                 </div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Delete Confirmation Modal */}
+          <AnimatePresence>
+            {deleteConfirmId && (
+              <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
+                onClick={() => setDeleteConfirmId(null)}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-10 text-center space-y-6">
+                    <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto">
+                      <Trash2 size={28} className="text-rose-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Delete Note</h3>
+                      <p className="text-sm text-[#9B9BAD] mt-2">Are you sure you want to delete this note? This action cannot be undone.</p>
+                    </div>
+                    <div className="flex gap-4 pt-2">
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="flex-1 py-4 rounded-2xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDelete(deleteConfirmId)}
+                        className="flex-1 py-4 rounded-2xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             )}
           </AnimatePresence>

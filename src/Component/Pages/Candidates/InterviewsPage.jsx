@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, Plus, AlertCircle, Calendar } from "lucide-react";
+import ReactDOM from "react-dom";
+import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, Plus, AlertCircle, Calendar, Search } from "lucide-react";
 import { toast } from "sonner";
 import { AVATAR_COLORS, getAvatarColor } from "./mockData";
 import { getAllInterviews, updateInterview, updateInterviewStatus, scheduleNewInterview, getAllCandidates, getDepartmentTeamMembers, getAllAdmins, getAllKAMMembers } from "../service/api";
@@ -24,6 +25,9 @@ export default function InterviewsPage() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [selectedClientFilter, setSelectedClientFilter] = useState("All Clients");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [kamFilter, setKamFilter] = useState('');
   
   // Live clock for JOIN button (ticks every 30s)
   const [now, setNow] = useState(new Date());
@@ -35,6 +39,11 @@ export default function InterviewsPage() {
   // New Appointment / Scheduler state
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackInterview, setFeedbackInterview] = useState(null);
+  const [feedbackForm, setFeedbackForm] = useState({ skills: '', communication: '', behaviour: '', knowledge: '', attitude: '' });
+  const [feedbackData, setFeedbackData] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('interviewFeedback') || '{}'); } catch (e) { return {}; }
+  });
   const [candidates, setCandidates] = useState([]);
   const [availableInterviewers, setAvailableInterviewers] = useState([]);
   const [showCandidateSuggestions, setShowCandidateSuggestions] = useState(false);
@@ -293,9 +302,22 @@ export default function InterviewsPage() {
         matchesClient = i.clientName === selectedClientFilter;
       }
 
-      return matchesFilter && matchesDate && matchesClient;
+      // Search filter
+      const matchesSearch = !searchTerm || 
+        i.candidateName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        i.interviewer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        i.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        i.clientName?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Status filter
+      const matchesStatus = !statusFilter || i.status === statusFilter;
+
+      // KAM filter
+      const matchesKam = !kamFilter || i.interviewer === kamFilter;
+
+      return matchesFilter && matchesDate && matchesClient && matchesSearch && matchesStatus && matchesKam;
     });
-  }, [interviews, filter, dateFilter, customStartDate, customEndDate, selectedClientFilter]);
+  }, [interviews, filter, dateFilter, customStartDate, customEndDate, selectedClientFilter, searchTerm, statusFilter, kamFilter]);
 
   // Dynamically generate unique interview dates for the timeline
   const interviewDates = useMemo(() => {
@@ -330,7 +352,7 @@ export default function InterviewsPage() {
       interviewStart.setHours(h, m, 0, 0);
       const diffMin = (interviewStart - now) / 60000;
       return diffMin <= 10 && diffMin >= -(interview.duration || 60);
-    } catch { return false; }
+    } catch (e) { return false; }
   };
 
   const formatTime = (time) => {
@@ -356,59 +378,41 @@ export default function InterviewsPage() {
   ], [interviews]);
 
   return (
-    <div className="p-5 lg:p-6 max-w-[1400px] mx-auto min-h-screen">
+    <div className="min-h-screen">
       {/* Refined Header */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+        <div className="text-left">
+          <h1 className="text-2xl font-bold text-[#1A1A2E] tracking-tight text-left" style={{ fontFamily: "'Syne', sans-serif" }}>
             Interview Schedule
           </h1>
-          <p className="text-[#9B9BAD] text-[11px] font-bold uppercase tracking-[2px] mt-1">High-fidelity recruitment coordination</p>
+          <p className="text-[#9B9BAD] text-[11px] font-bold uppercase tracking-[2px] mt-1 text-left">High-fidelity recruitment coordination</p>
         </div>
         <div className="flex gap-2">
           <button 
             onClick={() => setIsScheduleModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/10"
+            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg active:scale-95"
           >
             <Plus size={14} /> Schedule
           </button>
         </div>
       </div>
 
-      {/* Compact Quick Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white p-4 rounded-2xl border border-[#F4F3EF] shadow-sm flex items-center gap-4 group hover:shadow-md transition-all duration-300">
-            <div className="w-10 h-10 rounded-xl bg-white border border-[#F4F3EF] text-black group-hover:text-[#0D47A1] flex items-center justify-center shrink-0 transition-colors duration-300">
-              <stat.icon size={18} strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{stat.label}</p>
-              <p className="text-2xl font-bold text-[#1A1A2E] leading-tight mt-0.5">{stat.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Refined Filters Bar */}
-      <div className="flex items-center gap-3 mb-8 flex-wrap">
-        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#F4F3EF] w-fit shadow-xs">
-          {["All", "Today", "Video", "Pending"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                filter === f ? "bg-[#1A1A2E] text-white" : "text-[#9B9BAD] hover:text-[#1A1A2E]"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
+      {/* Search Bar + Filters */}
+      <div className="flex items-center gap-3 mb-8 bg-white p-2 rounded-2xl border border-[#F4F3EF] shadow-sm flex-wrap">
+        <div className="flex items-center gap-3 bg-[#F4F3EF] px-5 py-3 rounded-2xl flex-1 border border-transparent focus-within:border-[#1B4DA0]/20 transition-all min-w-[200px]">
+          <Search size={14} className="text-[#9B9BAD]" />
+          <input
+            type="text"
+            placeholder="Search by name, role, or skill..."
+            className="bg-transparent border-0 outline-none text-xs text-[#1A1A2E] w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         <select
           value={dateFilter}
           onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
         >
           <option value="all">All Dates</option>
           <option value="today">Today</option>
@@ -424,10 +428,10 @@ export default function InterviewsPage() {
         {dateFilter === 'custom' && (
           <div className="flex items-center gap-2">
             <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
-              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer" />
             <span className="text-[10px] text-[#9B9BAD] font-bold">to</span>
             <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
-              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer" />
           </div>
         )}
 
@@ -435,7 +439,7 @@ export default function InterviewsPage() {
         <select
           value={selectedClientFilter}
           onChange={(e) => setSelectedClientFilter(e.target.value)}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
         >
           <option value="All Clients">All Clients</option>
           <option value="Google">Google</option>
@@ -445,21 +449,27 @@ export default function InterviewsPage() {
             <option key={name} value={name}>{name}</option>
           ))}
         </select>
-
-        {(dateFilter !== 'all' || filter !== 'All' || selectedClientFilter !== "All Clients") && (
-          <button
-            onClick={() => { 
-                setDateFilter('all'); 
-                setFilter('All'); 
-                setSelectedClientFilter('All Clients'); 
-                setCustomStartDate(''); 
-                setCustomEndDate(''); 
-            }}
-            className="text-xs font-semibold text-[#1B4DA0] hover:underline"
-          >
-            Reset Filters
-          </button>
-        )}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
+        >
+          <option value="">All Status</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="In-Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <select
+          value={kamFilter}
+          onChange={(e) => setKamFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
+        >
+          <option value="">All KAM</option>
+          <option value="Jyoti Vermaa">Jyoti</option>
+          <option value="Priyanshi Sharma">Priyanshi Sharma</option>
+          <option value="manju">Manju</option>
+        </select>
       </div>
 
       {/* Refined Timeline by Date */}
@@ -541,10 +551,10 @@ export default function InterviewsPage() {
                       </div>
 
                       {/* Refined Interviewer Details */}
-                      <div className="hidden xl:flex items-center gap-3 flex-1 px-6 border-x border-[#F4F3EF]">
-                        <div className="space-y-1 w-full">
+                      <div className="hidden xl:flex items-center gap-3 flex-1 px-6 border-x border-[#F4F3EF] justify-center">
+                        <div className="space-y-1 text-center">
                            <p className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest">Host</p>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center gap-3">
                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${getAvatarColor(interview.interviewer, interview.interviewerAvatar)}`}>
                                   {interview.interviewerAvatar}
                                </div>
@@ -558,6 +568,20 @@ export default function InterviewsPage() {
                          <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${STATUS_COLORS[interview.status]?.replace('bg-white', 'bg-slate-50') || "bg-slate-50 text-slate-500 border-slate-100"}`}>
                             {isLive ? 'In-Progress' : interview.status}
                          </span>
+
+                         {(interview.status === 'Completed' || interview.status === 'Cancelled' || interview.status === 'Scheduled') && (
+                           <button
+                             onClick={(e) => { 
+                               e.stopPropagation(); 
+                               setFeedbackInterview(interview);
+                               setFeedbackForm(feedbackData[interview.id] || { skills: '', communication: '', behaviour: '', knowledge: '', attitude: '' });
+                               setShowFeedbackModal(true); 
+                             }}
+                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${feedbackData[interview.id] ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-[#F4F3EF] text-[#6B6B7E] border-[#E8E7E2] hover:bg-blue-50 hover:text-[#1B4DA0] hover:border-blue-100'}`}
+                           >
+                             <Pencil size={10} /> {feedbackData[interview.id] ? 'Reviewed' : 'Feedback'}
+                           </button>
+                         )}
 
                          {joinable && (
                            <button
@@ -583,32 +607,44 @@ export default function InterviewsPage() {
       </div>
 
       {/* Refined Detail Drawer */}
-      {selectedInterview && (
+      {selectedInterview && ReactDOM.createPortal(
         <>
           <div
-            className="fixed inset-0 bg-[#1A1A2E]/20 backdrop-blur-[1px] z-40 transition-opacity"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998] transition-opacity"
             onClick={() => { setSelectedInterview(null); setEditMode(false); }}
           />
           <div
-            className="fixed right-0 top-0 h-full w-[380px] bg-white z-50 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300"
+            className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden animate-in slide-in-from-right duration-300"
           >
             {/* Drawer Header */}
-            <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-5 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                Details
-              </h2>
+            <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-10">
+              <div>
+                <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  {selectedInterview.candidateName}
+                </h2>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedInterview.role}</span>
+                  <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                  <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{selectedInterview.type}</span>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
-                  {/* No toggle pencil in header as requested */}
+                <button
+                  onClick={() => { setEditInterview({ ...selectedInterview }); setEditMode(true); }}
+                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#0D47A1] transition-all active:scale-90"
+                >
+                  <Pencil size={16} />
+                </button>
                 <button
                   onClick={() => { setSelectedInterview(null); setEditMode(false); }}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center bg-rose-50 text-rose-500"
+                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm"
                 >
-                  <X size={14} />
+                  <X size={20} />
                 </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
               {editMode && editInterview ? (
                 <div className="space-y-4">
                   <div className="space-y-1">
@@ -712,92 +748,93 @@ export default function InterviewsPage() {
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-5">
-                    <div className={`w-16 h-16 rounded-[22px] flex items-center justify-center text-xl font-bold shadow-lg border-4 border-white ${getAvatarColor(selectedInterview.candidateName, selectedInterview.candidateAvatar)}`}>
-                      {selectedInterview.candidateAvatar}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedInterview.candidateName}</h3>
-                        <Check size={16} className="text-emerald-500" />
+                  {/* Interview Info Grid */}
+                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
+                    <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Schedule</span>
+                        <p className="text-sm font-bold text-[#1A1A2E]">{new Date(selectedInterview.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</p>
                       </div>
-                      <p className="text-xs font-bold text-[#9B9BAD] uppercase tracking-[2px]">{selectedInterview.role}</p>
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Time</span>
+                        <p className="text-sm font-bold text-[#1A1A2E]">{formatTime(selectedInterview.time)} · {selectedInterview.duration}m</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Interviewer</span>
+                        <p className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.interviewer}</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Platform</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${selectedInterview.type === 'Video' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                          {selectedInterview.type}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Status</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${STATUS_COLORS[selectedInterview.status] || 'bg-gray-50 text-gray-600 border-gray-100'}`}>
+                          {selectedInterview.status || 'Scheduled'}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Duration</span>
+                        <p className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.duration} Minutes</p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="p-4 bg-[#FAFAF8] rounded-[24px] border border-[#F4F3EF] space-y-4">
-                    <div className="flex items-center justify-between">
-                       <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">Schedule</span>
-                       <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[8px] font-black uppercase tracking-widest">{selectedInterview.type}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
-                          <Calendar size={14} />
-                       </div>
-                       <div>
-                          <p className="text-xs font-bold text-[#1A1A2E]">{new Date(selectedInterview.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</p>
-                          <p className="text-[10px] font-bold text-[#9B9BAD]">{formatTime(selectedInterview.time)} · {selectedInterview.duration}m</p>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
-                          <User size={14} />
-                       </div>
-                       <div>
-                          <p className="text-xs font-bold text-[#1A1A2E]">{selectedInterview.interviewer}</p>
-                          <p className="text-[10px] font-bold text-[#9B9BAD]">Interviewer</p>
-                       </div>
-                    </div>
-                  </div>
-
-                  {/* Google Meet / Meeting Link */}
-                  {selectedInterview.meetingLink && (
-                    <div className="space-y-2">
-                       <h4 className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Meeting Link</h4>
-                       <div className="p-4 bg-[#FAFAF8] rounded-2xl border border-[#F4F3EF] space-y-3">
-                          <div className="flex items-center gap-3">
-                             <div className="w-8 h-8 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
-                                <Video size={14} />
-                             </div>
-                             <a 
-                                href={selectedInterview.meetingLink} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-xs font-bold text-[#1B4DA0] hover:underline truncate flex-1"
-                             >
-                                {selectedInterview.meetingLink}
-                             </a>
+                    {/* Meeting Link */}
+                    {selectedInterview.meetingLink && (
+                      <div className="pt-6 border-t border-[#F4F3EF] text-left">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4 text-left">Meeting Link</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
+                            <Video size={14} />
                           </div>
-                          <button
-                             onClick={() => window.open(selectedInterview.meetingLink, '_blank', 'noopener,noreferrer')}
-                             className="w-full h-10 bg-[#1B4DA0] text-white rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all"
+                          <a 
+                            href={selectedInterview.meetingLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm font-bold text-[#1B4DA0] hover:underline truncate flex-1"
                           >
-                             <Video size={12} /> Join Meeting
-                          </button>
-                       </div>
-                    </div>
-                  )}
+                            {selectedInterview.meetingLink}
+                          </a>
+                        </div>
+                      </div>
+                    )}
 
-                  {selectedInterview.notes && (
-                    <div className="space-y-2">
-                       <h4 className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Briefing Notes</h4>
-                       <p className="text-xs font-medium text-[#4B4B5E] leading-relaxed bg-[#FAFAF8] p-4 rounded-2xl border border-[#F4F3EF] italic">"{selectedInterview.notes}"</p>
-                    </div>
-                  )}
+                    {/* Briefing Notes */}
+                    {selectedInterview.notes && (
+                      <div className="pt-6 border-t border-[#F4F3EF] text-left">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Briefing Notes</span>
+                        <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium text-left italic">
+                          "{selectedInterview.notes}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-                  <div className="pt-6 mt-4">
-                     <button 
-                        onClick={() => { setEditInterview({ ...selectedInterview }); setEditMode(true); }}
-                        className="w-full h-12 bg-[#1B4DA0] text-white rounded-2xl flex items-center justify-center gap-2 text-xs font-bold shadow-lg shadow-blue-500/10 hover:scale-[1.02] transition-all"
-                     >
-                        <Pencil size={14} /> Edit Interview Details
-                     </button>
+                  {/* Footer Actions */}
+                  <div className="flex gap-4 pt-6">
+                    <button 
+                      onClick={() => { setSelectedInterview(null); setEditMode(false); }}
+                      className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-[24px] font-bold text-sm hover:bg-[#E8E7E2] transition-all active:scale-[0.98]"
+                    >
+                      Cancel
+                    </button>
+                    {selectedInterview.meetingLink && (
+                      <button
+                        onClick={() => window.open(selectedInterview.meetingLink, '_blank', 'noopener,noreferrer')}
+                        className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-[24px] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#153a7a] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
+                      >
+                        <Video size={18} /> Join Meeting
+                      </button>
+                    )}
                   </div>
                 </>
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
 
       {/* New Schedule Interview Modal */}
@@ -826,14 +863,7 @@ export default function InterviewsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleScheduleSubmit} className="p-10 max-h-[75vh] overflow-y-auto dialog-scrollbar space-y-7">
-
-              {/* Section: Candidate Details */}
-              <div>
-                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
-                  <User size={14} /> Candidate Details
-                </h4>
-              </div>
+            <form onSubmit={handleScheduleSubmit} className="p-10 max-h-[75vh] overflow-y-auto dialog-scrollbar space-y-7 text-left">
 
               <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name *</label>
@@ -876,13 +906,6 @@ export default function InterviewsPage() {
                 />
               </div>
 
-              {/* Section: Position Details */}
-              <div className="mt-4">
-                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
-                  <Video size={14} /> Position Details
-                </h4>
-              </div>
-
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
                 <input 
@@ -920,13 +943,6 @@ export default function InterviewsPage() {
                   </select>
                   <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
                 </div>
-              </div>
-
-              {/* Section: Interview Details */}
-              <div className="mt-4">
-                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
-                  <Clock size={14} /> Interview Details
-                </h4>
               </div>
 
               <div className="space-y-1.5">
@@ -1068,6 +1084,102 @@ export default function InterviewsPage() {
     </div>
         </div>
       )}
+
+      {/* Candidate Feedback Modal */}
+      {showFeedbackModal && feedbackInterview && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
+          onClick={() => setShowFeedbackModal(false)}>
+          <div 
+            className="bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+              <div>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Feedback</h3>
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">{feedbackInterview.candidateName} · {feedbackInterview.role}</p>
+              </div>
+              <button onClick={() => setShowFeedbackModal(false)}
+                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-10 space-y-7 text-left">
+              {[
+                { key: 'skills', label: 'Skills' },
+                { key: 'communication', label: 'Communication' },
+                { key: 'behaviour', label: 'Behaviour' },
+                { key: 'knowledge', label: 'Knowledge' },
+                { key: 'attitude', label: 'Attitude' },
+              ].map(({ key, label }) => (
+                <div key={key} className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">{label}</label>
+                  <div className="relative">
+                    <input 
+                      type="number"
+                      min="0"
+                      max="10"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50 pr-16"
+                      placeholder="0"
+                      value={feedbackForm[key]}
+                      onChange={(e) => {
+                        const val = Math.min(10, Math.max(0, parseInt(e.target.value) || 0));
+                        setFeedbackForm({ ...feedbackForm, [key]: val || '' });
+                      }}
+                    />
+                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-[#9B9BAD]">/ 10</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Average Display */}
+              {(() => {
+                const vals = [feedbackForm.skills, feedbackForm.communication, feedbackForm.behaviour, feedbackForm.knowledge, feedbackForm.attitude].map(v => parseInt(v) || 0);
+                const avg = vals.reduce((a, b) => a + b, 0) / 5;
+                const allFilled = [feedbackForm.skills, feedbackForm.communication, feedbackForm.behaviour, feedbackForm.knowledge, feedbackForm.attitude].every(v => v !== '' && v !== undefined);
+                if (!allFilled) return null;
+                return (
+                  <div className={`p-4 rounded-2xl border flex items-center justify-between ${avg > 5 ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <span className="text-xs font-black text-[#9B9BAD] uppercase tracking-widest">Average Score</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-lg font-bold ${avg > 5 ? 'text-amber-600' : 'text-slate-600'}`}>{avg.toFixed(1)} / 10</span>
+                      {avg > 5 && <span className="text-amber-400 text-xl">★</span>}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Footer Buttons */}
+              <div className="pt-4 flex gap-4">
+                <button type="button" onClick={() => setShowFeedbackModal(false)}
+                  className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    const vals = [feedbackForm.skills, feedbackForm.communication, feedbackForm.behaviour, feedbackForm.knowledge, feedbackForm.attitude];
+                    if (vals.some(v => v === '' || v === undefined)) {
+                      toast.error('Please fill all feedback fields');
+                      return;
+                    }
+                    const entry = { ...feedbackForm, candidateName: feedbackInterview.candidateName };
+                    const updated = { ...feedbackData, [feedbackInterview.id]: entry };
+                    setFeedbackData(updated);
+                    try { localStorage.setItem('interviewFeedback', JSON.stringify(updated)); } catch (e) {}
+                    toast.success('Feedback submitted successfully');
+                    setShowFeedbackModal(false);
+                  }}
+                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                  Submit Feedback
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -58,6 +58,7 @@ export default function ClientJobsTab() {
     salary: '', priority: 'Medium', openings: 1, experience: '', skills: '',
     deadline: '', requirements: '', responsibilities: '', roleType: '',
   });
+  const [clientSkillInput, setClientSkillInput] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -380,11 +381,40 @@ export default function ClientJobsTab() {
                     </h3>
 
                     <div>
-                      <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Skills (comma separated)</label>
-                      <input type="text" value={newJob.skills} onChange={e => setNewJob(f => ({ ...f, skills: e.target.value }))}
-                        placeholder="e.g. React, Node.js, MongoDB"
-                        className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
-                      />
+                      <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Skills</label>
+                      <div className="w-full bg-[#FAFAF8] rounded-2xl px-4 py-3 flex flex-wrap items-center gap-2 min-h-[52px] transition-all focus-within:bg-[#F0F2FF] cursor-text"
+                        onClick={() => document.getElementById('client-skill-tag-input')?.focus()}>
+                        {newJob.skills.split(',').map(s => s.trim()).filter(Boolean).map((skill, idx) => (
+                          <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-[#E5E5EA] rounded-full px-3 py-1.5 text-xs font-bold text-[#1A1A2E] shadow-sm">
+                            {skill}
+                            <button type="button" onClick={(e) => { e.stopPropagation(); const updated = newJob.skills.split(',').map(s => s.trim()).filter(Boolean).filter((_, i) => i !== idx).join(', '); setNewJob(f => ({ ...f, skills: updated })); }}
+                              className="ml-0.5 text-[#9B9BAD] hover:text-red-500 transition-colors text-sm leading-none font-bold">&times;</button>
+                          </span>
+                        ))}
+                        <input id="client-skill-tag-input" type="text" value={clientSkillInput}
+                          onChange={e => setClientSkillInput(e.target.value)}
+                          onKeyDown={e => {
+                            if ((e.key === ' ' || e.key === 'Enter' || e.key === ',') && clientSkillInput.trim()) {
+                              e.preventDefault();
+                              const val = clientSkillInput.trim().replace(/,$/,'');
+                              if (val) {
+                                const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
+                                if (!existing.some(s => s.toLowerCase() === val.toLowerCase())) {
+                                  setNewJob(f => ({ ...f, skills: existing.length ? existing.join(', ') + ', ' + val : val }));
+                                }
+                              }
+                              setClientSkillInput('');
+                            } else if (e.key === 'Backspace' && !clientSkillInput) {
+                              const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
+                              if (existing.length) {
+                                setNewJob(f => ({ ...f, skills: existing.slice(0, -1).join(', ') }));
+                              }
+                            }
+                          }}
+                          placeholder={newJob.skills ? 'Add more...' : 'Type a skill & press space'}
+                          className="flex-1 min-w-[120px] bg-transparent border-0 outline-none text-sm font-bold text-[#1A1A2E] placeholder:text-[#9B9BAD]/50 py-1"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">

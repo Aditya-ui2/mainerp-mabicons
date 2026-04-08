@@ -100,6 +100,10 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
   ]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [clientFilter, setClientFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [kamFilter, setKamFilter] = useState('');
 
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -196,11 +200,17 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
     }
   };
 
+  const uniqueClients = [...new Set(tasks.map(t => t.category).filter(Boolean))];
+  const uniqueAssignees = [...new Set([...tasks.map(t => t.assignedToName).filter(Boolean), ...teamMembers.map(m => m.name)])];
+
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.assignedToName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = true; // Tabs removed
-    return matchesSearch && matchesTab;
+    const matchesClient = !clientFilter || task.category === clientFilter;
+    const matchesPriority = !priorityFilter || task.priority === priorityFilter;
+    const matchesStatus = !statusFilter || task.status === statusFilter;
+    const matchesKam = !kamFilter || task.assignedToName === kamFilter;
+    return matchesSearch && matchesClient && matchesPriority && matchesStatus && matchesKam;
   });
 
 
@@ -295,8 +305,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
 
 
 
-      <div className="bg-white rounded-[24px] p-2 mt-8 mb-5 border border-[#F4F3EF] shadow-sm">
-        <div className="relative flex-1 group">
+      <div className="bg-white rounded-[24px] p-2 mt-8 mb-5 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 group min-w-[200px]">
           <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
@@ -306,6 +316,44 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
             className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
+        <select
+          value={clientFilter}
+          onChange={(e) => setClientFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
+        >
+          <option value="">All Clients</option>
+          {uniqueClients.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
+        >
+          <option value="">All Priority</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Urgent">Urgent</option>
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
+        >
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Overdue">Overdue</option>
+        </select>
+        <select
+          value={kamFilter}
+          onChange={(e) => setKamFilter(e.target.value)}
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
+        >
+          <option value="">All KAM</option>
+          {uniqueAssignees.map(name => <option key={name} value={name}>{name}</option>)}
+        </select>
       </div>
 
       {/* Task Directory Table */}
@@ -328,7 +376,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                 </th>
                 <th className="p-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest">Task Details</th>
                 <th className="p-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Urgency</th>
-                <th className="p-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest">Assignee</th>
+                <th className="p-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Assignee</th>
                 <th className="p-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest">Status</th>
                 <th className="p-5 w-16"></th>
               </tr>
@@ -381,7 +429,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                       })()}
                     </td>
                     <td className="p-5">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[#F0F7FF] text-[#1B4DA0] flex items-center justify-center font-black text-xs border border-[#1B4DA0]/10 shadow-sm">
                           {task.assignedToName.split(' ').map(n => n[0]).join('')}
                         </div>

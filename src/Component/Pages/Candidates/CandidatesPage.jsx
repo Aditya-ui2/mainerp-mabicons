@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   X, Mail, Phone, Calendar, ChevronRight, Plus, Download, Search, Filter,
   User, Briefcase, Tag, AlignLeft, LayoutGrid, List, AlertCircle,
@@ -87,6 +88,10 @@ export default function CandidatesPage({ setActiveTab }) {
   const [scheduleForm, setScheduleForm] = useState({ candidateId: '', candidateName: '', candidateEmail: '', positionTitle: '', clientName: '', date: '', time: '', duration: '60', meetingType: 'Video', meetingLink: '', round: 'Technical Round', interviewerName: '', interviewerRole: '' });
   const [schedulingLoading, setSchedulingLoading] = useState(false);
   const [showCvPreview, setShowCvPreview] = useState(false);
+
+  // Offer Modal state
+  const [isOfferOpen, setIsOfferOpen] = useState(false);
+  const [offerForm, setOfferForm] = useState({ candidateId: '', candidateName: '', positionTitle: '', clientName: '', salary: '', joiningDate: '', offerDeadline: '', notes: '' });
 
   // New Candidate Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -265,6 +270,19 @@ export default function CandidatesPage({ setActiveTab }) {
           round: 'Technical Round', interviewerName: '', interviewerRole: ''
         });
         setIsScheduleOpen(true);
+      }
+
+      // Open Offer form when moved to Offer
+      if (stage === 'Offer') {
+        const updatedC = { ...candidate, stage, lastMovedDate: new Date().toISOString() };
+        setOfferForm({
+          candidateId: updatedC.id,
+          candidateName: updatedC.name,
+          positionTitle: updatedC.role || '',
+          clientName: updatedC.clientName || '',
+          salary: '', joiningDate: '', offerDeadline: '', notes: ''
+        });
+        setIsOfferOpen(true);
       }
     } catch (error) {
       toast.error("Failed to update candidate stage");
@@ -507,6 +525,30 @@ export default function CandidatesPage({ setActiveTab }) {
     return Array.from(new Set(candidates.map(c => c.clientName?.trim() || 'Internal Team'))).sort();
   }, [candidates]);
 
+  // Read interview feedback from localStorage to show golden star on high-rated candidates
+  const [starredCandidateNames, setStarredCandidateNames] = useState(new Set());
+  useEffect(() => {
+    const loadFeedback = () => {
+      try {
+        const fb = JSON.parse(localStorage.getItem('interviewFeedback') || '{}');
+        const names = new Set();
+        Object.values(fb).forEach(entry => {
+          const vals = [entry.skills, entry.communication, entry.behaviour, entry.knowledge, entry.attitude].map(v => parseInt(v) || 0);
+          const avg = vals.reduce((a, b) => a + b, 0) / 5;
+          if (avg > 5 && entry.candidateName) names.add(entry.candidateName.toLowerCase().trim());
+        });
+        setStarredCandidateNames(names);
+      } catch (e) { setStarredCandidateNames(new Set()); }
+    };
+    loadFeedback();
+    window.addEventListener('storage', loadFeedback);
+    window.addEventListener('focus', loadFeedback);
+    return () => {
+      window.removeEventListener('storage', loadFeedback);
+      window.removeEventListener('focus', loadFeedback);
+    };
+  }, []);
+
   const formatDate = (d) => {
     if (!d) return "N/A";
     return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -553,7 +595,7 @@ export default function CandidatesPage({ setActiveTab }) {
         </div>
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar + Filters */}
       <div className="flex items-center gap-3 mb-6 bg-white p-2 rounded-2xl border border-[#F4F3EF] shadow-sm flex-wrap">
         <div className="flex items-center gap-3 bg-[#F4F3EF] px-5 py-3 rounded-2xl flex-1 border border-transparent focus-within:border-[#1B4DA0]/20 transition-all min-w-[200px]">
           <Search size={14} className="text-[#9B9BAD]" />
@@ -565,14 +607,11 @@ export default function CandidatesPage({ setActiveTab }) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-      </div>
 
-      {/* Date, Role & Client Filters */}
-      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <select
           value={dateFilter}
           onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
         >
           <option value="all">All Time</option>
           <option value="today">Today</option>
@@ -588,16 +627,16 @@ export default function CandidatesPage({ setActiveTab }) {
         {dateFilter === 'custom' && (
           <div className="flex items-center gap-2">
             <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
-              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer" />
             <span className="text-[10px] text-[#9B9BAD] font-bold">to</span>
             <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
-              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer" />
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer" />
           </div>
         )}
         <select
           value={targetRoleFilter}
           onChange={(e) => setTargetRoleFilter(e.target.value)}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
         >
           <option value="">All Roles</option>
           {positions.map(p => (
@@ -609,7 +648,7 @@ export default function CandidatesPage({ setActiveTab }) {
         <select
           value={selectedClientFilter}
           onChange={(e) => setSelectedClientFilter(e.target.value)}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2 outline-none border-0 cursor-pointer"
+          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
         >
           <option value="All Clients">All Clients</option>
           <option value="Google">Google</option>
@@ -620,14 +659,6 @@ export default function CandidatesPage({ setActiveTab }) {
           ))}
         </select>
 
-        {(dateFilter !== 'all' || targetRoleFilter || selectedClientFilter !== "All Clients") && (
-          <button
-            onClick={() => { setDateFilter('all'); setTargetRoleFilter(''); setSelectedClientFilter('All Clients'); setCustomStartDate(''); setCustomEndDate(''); }}
-            className="text-xs font-semibold text-[#1B4DA0] hover:underline"
-          >
-            Reset Filters
-          </button>
-        )}
       </div>
 
       {/* Kanban / Table Content Area */}
@@ -674,11 +705,25 @@ export default function CandidatesPage({ setActiveTab }) {
                         onDragStart={(e) => handleDragStart(e, candidate.id)}
                         onDragEnd={handleDragEnd}
                         onClick={() => setSelectedCandidate(candidate)}
-                        className={`bg-white rounded-xl p-2.5 cursor-grab active:cursor-grabbing transition-all duration-200 select-none group border-2 border-[#E8E7E2] ${isDragging
+                        className={`bg-white rounded-xl p-2.5 cursor-grab active:cursor-grabbing transition-all duration-200 select-none group border-2 border-[#E8E7E2] relative ${isDragging
                           ? "opacity-40 scale-95"
                           : "hover:-translate-y-1 hover:shadow-lg hover:border-[#1B4DA0]/20"
                           } ${selectedIds.includes(candidate.id) ? 'ring-2 ring-[#1B4DA0] border-transparent' : 'shadow-sm'}`}
                       >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (candidate.cvUrl) {
+                              const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
+                              window.open(url, '_blank');
+                            } else {
+                              toast.error('No CV uploaded for this candidate');
+                            }
+                          }}
+                          className="absolute top-2 right-2 flex items-center gap-1 px-2.5 py-1 bg-[#0D47A1] text-white rounded-lg text-[9px] font-bold hover:bg-[#0a3a82] transition-all shadow-md z-10 active:scale-95"
+                        >
+                          <Eye size={11} /> View CV
+                        </button>
                         <div className="flex items-start gap-2">
                           <div
                             className={`w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-bold flex-shrink-0 relative ${avatarColor} ${isStuck
@@ -700,6 +745,9 @@ export default function CandidatesPage({ setActiveTab }) {
                                   {candidate.name}
                                 </p>
                                 <CheckSquare size={12} className="text-emerald-500 flex-shrink-0" />
+                                {starredCandidateNames.has(candidate.name?.toLowerCase().trim()) && (
+                                  <span className="text-amber-400 flex-shrink-0" title="High Feedback Score">★</span>
+                                )}
                               </div>
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleSelect(candidate.id); }}
@@ -815,6 +863,9 @@ export default function CandidatesPage({ setActiveTab }) {
                           <div className="flex items-center gap-2">
                             <span className="text-base font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors" style={{ fontFamily: "'Syne', sans-serif" }}>{candidate.name}</span>
                             <CheckSquare size={12} className="text-emerald-500" />
+                            {starredCandidateNames.has(candidate.name?.toLowerCase().trim()) && (
+                              <span className="text-amber-400" title="High Feedback Score">★</span>
+                            )}
                           </div>
                           <p className="text-[9px] text-[#9B9BAD] font-bold uppercase tracking-[2px] mt-0.5">{candidate.email.split('@')[0]}</p>
                         </div>
@@ -836,20 +887,30 @@ export default function CandidatesPage({ setActiveTab }) {
                       </div>
                     </td>
                     <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative group/select">
+                      <div className="relative inline-flex items-center group/select">
                         <select
                           value={candidate.stage}
                           onChange={(e) => handleStatusChange(candidate.id, e.target.value)}
-                          className="bg-[#F4F3EF] border-0 rounded-xl px-4 py-2.5 text-[10px] font-extrabold uppercase tracking-widest text-[#1B4DA0] outline-none hover:bg-blue-50 transition-all cursor-pointer appearance-none pr-9 border-b-2 border-transparent focus:border-[#1B4DA0]/20"
+                          className="bg-[#F4F3EF] border-0 rounded-xl pl-4 pr-6 py-2.5 text-[10px] font-extrabold uppercase tracking-widest text-[#1B4DA0] outline-none hover:bg-blue-50 transition-all cursor-pointer appearance-none border-b-2 border-transparent focus:border-[#1B4DA0]/20"
                         >
                           {PIPELINE_STAGES.map((s) => <option key={s} value={s}>Move to {s}</option>)}
                         </select>
-                        <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none" />
+                        <ChevronRight size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none" />
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-right">
-                      <button className="w-10 h-10 rounded-xl text-[#C5C5D2] hover:bg-white hover:shadow-md hover:text-[#1A1A2E] transition-all flex items-center justify-center">
-                        <AlignLeft size={16} />
+                    <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => {
+                          if (candidate.cvUrl) {
+                            const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
+                            window.open(url, '_blank');
+                          } else {
+                            toast.error('No CV uploaded for this candidate');
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#0D47A1] text-white rounded-xl text-[10px] font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95 ml-auto"
+                      >
+                        <Eye size={12} /> View CV
                       </button>
                     </td>
                   </tr>
@@ -929,14 +990,14 @@ export default function CandidatesPage({ setActiveTab }) {
       )}
 
       {/* Detail Drawer */}
-      {selectedCandidate && (
+      {selectedCandidate && createPortal(
         <>
           <div
-            className="fixed inset-0 bg-[#1A1A2E]/30 backdrop-blur-[2px] z-40 transition-all duration-300"
+            className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[99998] transition-all duration-300"
             onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
           />
           <div
-            className="fixed right-0 top-0 h-full w-full max-w-[400px] bg-white z-50 overflow-y-auto shadow-[-16px_0_64px_rgba(0,0,0,0.15)] flex flex-col transition-transform duration-300 transform translate-x-0"
+            className="fixed right-0 top-0 h-full w-full sm:w-[550px] md:w-[650px] bg-white z-[99999] overflow-y-auto shadow-[-16px_0_64px_rgba(0,0,0,0.15)] flex flex-col transition-transform duration-300 transform translate-x-0"
           >
             {/* Drawer Header */}
             <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-10">
@@ -949,7 +1010,7 @@ export default function CandidatesPage({ setActiveTab }) {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
-                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                  className="w-10 h-10 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-all"
                 >
                   <X size={20} />
                 </button>
@@ -1091,6 +1152,17 @@ export default function CandidatesPage({ setActiveTab }) {
                           {selectedCandidate.stage}
                         </span>
                       </div>
+                      {selectedCandidate.cvUrl && (
+                        <button
+                          onClick={() => {
+                            const url = selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`;
+                            window.open(url, '_blank');
+                          }}
+                          className="mt-2 flex items-center gap-1.5 px-4 py-2 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                        >
+                          <Eye size={13} /> View CV
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1216,13 +1288,21 @@ export default function CandidatesPage({ setActiveTab }) {
             {/* Modal Bottom Actions */}
             <div className="p-8 border-t border-[#F4F3EF] bg-white sticky bottom-0 z-20">
               {!editMode ? (
-                <button
-                  onClick={() => { setEditCandidate({ ...selectedCandidate }); setEditMode(true); }}
-                  className="w-full h-14 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153D80] transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
-                >
-                  <User size={18} />
-                  Update Profile
-                </button>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
+                    className="flex-1 h-14 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-sm font-bold hover:bg-[#E8E7E2] transition-all active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => { setEditCandidate({ ...selectedCandidate }); setEditMode(true); }}
+                    className="flex-[2] h-14 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153D80] transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                  >
+                    <User size={18} />
+                    Update Profile
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={handleSaveEdit}
@@ -1234,12 +1314,13 @@ export default function CandidatesPage({ setActiveTab }) {
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
 
       {/* Add Candidate Modal Placeholder */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl transition-all duration-300" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
+      {isCreateModalOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl transition-all duration-300">
           <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-500">
             {/* Header */}
             <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
@@ -1529,7 +1610,8 @@ export default function CandidatesPage({ setActiveTab }) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Schedule Interview Dialog */}
@@ -1714,6 +1796,104 @@ export default function CandidatesPage({ setActiveTab }) {
           </div>
         </div>
       )}
+
+      {/* Offer Details Modal */}
+      {isOfferOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
+          onClick={() => setIsOfferOpen(false)}>
+          <div className="bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+              <div>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Offer Details</h3>
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                  {offerForm.candidateName} · {offerForm.positionTitle}
+                </p>
+              </div>
+              <button onClick={() => setIsOfferOpen(false)}
+                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-10 max-h-[75vh] overflow-y-auto space-y-7 text-left">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name</label>
+                <input className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#9B9BAD] outline-none cursor-not-allowed" value={offerForm.candidateName} readOnly />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
+                <input className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#9B9BAD] outline-none cursor-not-allowed" value={offerForm.positionTitle} readOnly />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
+                <input className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#9B9BAD] outline-none cursor-not-allowed" value={offerForm.clientName} readOnly />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Salary (CTC) *</label>
+                <input 
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  placeholder="e.g., 12 LPA"
+                  value={offerForm.salary}
+                  onChange={(e) => setOfferForm({ ...offerForm, salary: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Joining Date *</label>
+                  <input type="date"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                    value={offerForm.joiningDate}
+                    onChange={(e) => setOfferForm({ ...offerForm, joiningDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Offer Deadline *</label>
+                  <input type="date"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                    value={offerForm.offerDeadline}
+                    onChange={(e) => setOfferForm({ ...offerForm, offerDeadline: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Notes</label>
+                <textarea 
+                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50 min-h-[100px] resize-none"
+                  placeholder="Additional notes..."
+                  value={offerForm.notes}
+                  onChange={(e) => setOfferForm({ ...offerForm, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="pt-4 flex gap-4">
+                <button type="button" onClick={() => setIsOfferOpen(false)}
+                  className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
+                  Cancel
+                </button>
+                <button type="button"
+                  onClick={() => {
+                    if (!offerForm.salary || !offerForm.joiningDate || !offerForm.offerDeadline) {
+                      toast.error('Please fill Salary, Joining Date and Offer Deadline');
+                      return;
+                    }
+                    toast.success('Offer details saved successfully');
+                    setIsOfferOpen(false);
+                  }}
+                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                  Send Offer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
