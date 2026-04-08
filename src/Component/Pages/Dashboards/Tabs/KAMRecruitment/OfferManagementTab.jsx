@@ -613,13 +613,13 @@ const OfferManagementTab = ({ isDarkMode }) => {
       `}</style>
       
       {/* Main Dashboard Content - Always Rendered */}
-      <div className="max-w-full mx-auto font-jakarta">
+      <div className="max-w-full mx-auto" style={{ fontFamily: "'Calibri', sans-serif" }}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 flex-wrap gap-4 px-0">
           <div className="flex flex-col items-start text-left">
-            <h1 className={`text-[32px] font-bold tracking-tight font-syne leading-none mb-2 ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>
+            <h1 className={`text-3xl font-bold tracking-tight font-syne leading-none mb-1 ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>
               Offer Management
             </h1>
-            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mt-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>
+            <p className={`text-sm font-medium mt-1 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>
               {offers.length} Total Compensation Packages In Lifecycle
             </p>
           </div>
@@ -632,21 +632,21 @@ const OfferManagementTab = ({ isDarkMode }) => {
         </div>
 
         {/* Search Bar Container - Matching Candidate/Job tabs */}
-        <div className="bg-white border border-[#F4F3EF] rounded-[24px] p-2.5 mb-10 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-[24px] p-2 mb-10 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-4 bg-[#F4F3EF] rounded-[20px] px-6 h-[44px] flex-1">
+            <div className="flex items-center gap-4 bg-[#F4F3EF] dark:bg-slate-800 rounded-2xl px-6 h-[48px] flex-1">
               <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
               <input 
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search candidate, role, or client..."
-                className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold" 
+                className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold" 
               />
             </div>
             <select
               value={filterClient}
               onChange={(e) => setFilterClient(e.target.value)}
-              className="bg-[#F4F3EF] rounded-[20px] px-5 h-[44px] text-xs font-bold text-[#1A1A2E] uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
+              className="bg-[#F4F3EF] dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
             >
               <option value="all">All Clients</option>
@@ -657,7 +657,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
             <select
               value={filterJob}
               onChange={(e) => setFilterJob(e.target.value)}
-              className="bg-[#F4F3EF] rounded-[20px] px-5 h-[44px] text-xs font-bold text-[#1A1A2E] uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
+              className="bg-[#F4F3EF] dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
             >
               <option value="all">All Jobs</option>
@@ -694,56 +694,62 @@ const OfferManagementTab = ({ isDarkMode }) => {
           )}
         </AnimatePresence>
 
-        {/* Offers Deck */}
-        <div className="grid grid-cols-1 gap-4">
+        {/* Offers Deck - Table Interface */}
+        <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-10">
+          <div className="flex items-center gap-8 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
+            <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-10 flex-shrink-0 text-center">Icon</span>
+            <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest lg:w-[320px] flex-shrink-0">Candidate</span>
+            <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 px-8 border-x border-[#F4F3EF] dark:border-slate-800">Client / Status</span>
+            <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[140px] text-right">Actions</span>
+          </div>
+
           {filteredOffers.length === 0 ? (
-            <div className={`rounded-[32px] border py-24 flex flex-col items-center gap-4 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-[#F4F3EF] text-[#9B9BAD]'}`}>
+            <div className={`py-24 flex flex-col items-center gap-4 text-[#9B9BAD]`}>
               <div className={`w-16 h-16 rounded-3xl flex items-center justify-center ${isDarkMode ? 'bg-slate-900' : 'bg-[#FAFAF8]'}`}>
                 <FileText size={32} />
               </div>
-              <p className="text-sm font-bold font-syne">No offers found matching your criteria</p>
+              <p className="text-sm font-bold">No offers found matching your criteria</p>
             </div>
           ) : (
-            filteredOffers.map((offer) => (
-              <div
-                key={offer.id}
-                onClick={() => handleViewOffer(offer)}
-                className={`group bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 cursor-pointer relative z-10 flex flex-col lg:flex-row lg:items-center gap-8 overflow-hidden`}
-              >
-                {/* Glow */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#1B4DA0]/0 rounded-[32px] blur-3xl group-hover:bg-[#1B4DA0]/5 transition-colors duration-700 pointer-events-none -z-10" />
-                
-                <div className="flex items-center gap-5 lg:w-[320px] flex-shrink-0">
-                  <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center text-lg font-bold flex-shrink-0 shadow-sm transition-transform duration-500 group-hover:scale-105 bg-[#F8FAFF] dark:bg-slate-800 text-[#1B4DA0] dark:text-blue-400 border border-[#EEF2FB] dark:border-slate-700`}>
-                    {getInitials(offer.candidateName)}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className={`text-[20px] font-bold truncate font-syne transition-colors ${isDarkMode ? 'text-white group-hover:text-blue-400' : 'text-[#1A1A2E] group-hover:text-[#1B4DA0]'}`}>{offer.candidateName}</p>
-                      <BadgeCheck size={16} className="text-[#10B981] flex-shrink-0" />
+            <div className="divide-y divide-[#F4F3EF] dark:divide-slate-800">
+              {filteredOffers.map((offer) => (
+                <div
+                  key={offer.id}
+                  onClick={() => handleViewOffer(offer)}
+                  className={`group bg-white dark:bg-slate-900 px-8 py-3 hover:bg-[#F8FAFF] dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer relative z-10 flex flex-col lg:flex-row lg:items-center gap-8 overflow-hidden`}
+                >
+                  <div className="flex items-center gap-5 lg:w-[320px] flex-shrink-0">
+                    <div className={`w-[42px] h-[42px] rounded-[14px] flex items-center justify-center text-[13px] font-bold flex-shrink-0 shadow-sm transition-transform duration-500 group-hover:scale-105 bg-[#F8FAFF] dark:bg-slate-800 text-[#1B4DA0] dark:text-blue-400 border border-[#EEF2FB] dark:border-slate-700`}>
+                      {getInitials(offer.candidateName)}
                     </div>
-                    <p className={`text-[10px] font-bold uppercase tracking-[0.2em] truncate ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>{offer.position}</p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className={`text-[14px] font-bold truncate transition-colors ${isDarkMode ? 'text-white group-hover:text-blue-400' : 'text-[#0f172a] group-hover:text-[#1B4DA0]'}`}>{offer.candidateName}</p>
+                        <BadgeCheck size={14} className="text-[#10B981] flex-shrink-0" />
+                      </div>
+                      <p className={`text-[10px] font-bold uppercase tracking-[0.2em] truncate ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>{offer.position}</p>
+                    </div>
                   </div>
-                </div>
 
-                <div className={`flex-1 grid grid-cols-2 gap-8 px-0 lg:px-8 lg:border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
-                  <div>
-                    <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-2 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Client</p>
-                    <p className={`text-[16px] font-bold ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.client || '—'}</p>
+                  <div className={`flex-1 grid grid-cols-2 gap-8 px-0 lg:px-8 lg:border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
+                    <div>
+                      <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-1 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Client</p>
+                      <p className={`text-[13px] font-medium ${isDarkMode ? 'text-white' : 'text-[#64748b]'}`}>{offer.client || '—'}</p>
+                    </div>
+                    <div>
+                      <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-1 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Hiring Stage</p>
+                      <StatusBadge status={offer.status} />
+                    </div>
                   </div>
-                  <div>
-                    <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-2 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Hiring Stage</p>
-                    <StatusBadge status={offer.status} />
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between lg:justify-end gap-6 flex-shrink-0">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] group-hover:text-[#1B4DA0] group-hover:bg-[#F8FAFF] shadow-sm`}>
-                    <ChevronRight size={16} />
+                  <div className="flex items-center justify-between lg:justify-end gap-6 flex-shrink-0 w-[140px]">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] group-hover:text-[#1B4DA0] group-hover:bg-[#F8FAFF] shadow-sm`}>
+                      <ChevronRight size={16} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>

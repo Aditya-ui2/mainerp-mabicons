@@ -133,14 +133,14 @@ export default function SelectionMISTab() {
   }
 
   return (
-    <div className="p-0 max-w-full space-y-6">
+    <div className="p-0 max-w-full space-y-6" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
             Selection MIS
           </h1>
-          <p className="text-[#9B9BAD] text-[11px] font-bold uppercase tracking-[2px] mt-1">
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">
             Live data from SharePoint • {EXCEL_FILE}
           </p>
         </div>
@@ -204,11 +204,11 @@ export default function SelectionMISTab() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-[#F4F3EF]">
-                  <th className="px-4 py-3 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest w-10">#</th>
+                <tr className="border-b border-[#F4F3EF] bg-transparent">
+                  <th className="px-4 py-3 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-10">#</th>
                   {visibleHeaders.map(h => (
                     <th key={h} onClick={() => handleSort(h)}
-                      className="px-4 py-3 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest cursor-pointer hover:text-[#1B4DA0] transition-colors select-none whitespace-nowrap">
+                      className="px-4 py-3 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest cursor-pointer hover:text-[#1B4DA0] transition-colors select-none whitespace-nowrap">
                       <span className="flex items-center gap-1">
                         {h}
                         {sortCol === h && <ArrowUpDown size={10} className="text-[#1B4DA0]" />}
@@ -224,7 +224,7 @@ export default function SelectionMISTab() {
 
                   return (
                     <tr key={idx} className="border-b border-[#F4F3EF] hover:bg-[#F8FAFF] transition-colors group">
-                      <td className="px-4 py-3.5 text-[10px] font-bold text-[#9B9BAD]">{idx + 1}</td>
+                      <td className="px-4 py-2.5 text-[10px] font-bold text-[#9B9BAD]">{idx + 1}</td>
                       {visibleHeaders.map(h => {
                         const val = row[h] ?? '';
                         const display = typeof val === 'number' && val > 40000 && h.toLowerCase().includes('date')
@@ -234,12 +234,12 @@ export default function SelectionMISTab() {
                         // Special styling for certain columns 
                         if (h === 'Candidate Name') {
                           return (
-                            <td key={h} className="px-4 py-3.5">
+                            <td key={h} className="px-4 py-2.5">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-xl bg-[#F8FAFF] text-[#1B4DA0] border border-[#EEF2FB] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                <div className="w-8 h-8 rounded-[10px] bg-[#F8FAFF] text-[#1B4DA0] border border-[#EEF2FB] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
                                   {String(display).charAt(0).toUpperCase()}
                                 </div>
-                                <span className="text-sm font-bold text-[#1A1A2E] truncate max-w-[150px]">{display}</span>
+                                <span className="text-[14px] font-bold text-[#0f172a] truncate max-w-[180px]">{display}</span>
                               </div>
                             </td>
                           );

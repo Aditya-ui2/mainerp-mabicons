@@ -454,20 +454,15 @@ const ScreeningTab = ({ isDarkMode }) => {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+              className="flex items-center justify-between mb-8 flex-wrap gap-4"
             >
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3FA9F5, #0D47A1)', boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.3)' }}>
-                  <FiFileText className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold" style={{ background: 'linear-gradient(90deg, #3FA9F5, #0D47A1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    Screening & Assessment
-                  </h2>
-                  <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Review CVs and assess candidate fit
-                  </p>
-                </div>
+              <div className="flex flex-col items-start text-left">
+                <h1 className="text-3xl font-bold text-[#1A1A2E] dark:text-white tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  Screening & Assessment
+                </h1>
+                <p className={`text-sm font-medium mt-1 text-left ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>
+                  Review CVs and assess candidate fit
+                </p>
               </div>
             </motion.div>
 
@@ -510,40 +505,27 @@ const ScreeningTab = ({ isDarkMode }) => {
               ))}
             </div>
 
-            {/* Search */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="relative"
-            >
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search candidates..."
-                className={`w-full rounded-xl border-2 py-3 pl-12 pr-10 text-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1E88E5]/50 focus:border-[#1E88E5] ${isDarkMode
-                  ? 'bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500 hover:border-slate-600'
-                  : 'bg-white border-slate-200 placeholder:text-slate-400 hover:border-slate-300'
-                  }`}
-              />
-
-              <AnimatePresence>
+            {/* Search Bar Container */}
+            <div className="bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-[24px] p-2 mb-8 shadow-sm">
+              <div className="flex items-center gap-3 bg-[#F4F3EF] dark:bg-slate-800 rounded-2xl px-5 py-3 h-[48px]">
+                <FiSearch size={18} className="text-[#9B9BAD]" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search candidates by name, position or email..."
+                  className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD] outline-none w-full font-bold"
+                />
                 {searchTerm && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0 }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                  <button
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
                     <FiX className={`w-4 h-4 ${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-700'}`} />
-                  </motion.button>
+                  </button>
                 )}
-              </AnimatePresence>
-            </motion.div>
+              </div>
+            </div>
 
             {/* Candidate Cards */}
             {filteredCandidates.length === 0 ? (

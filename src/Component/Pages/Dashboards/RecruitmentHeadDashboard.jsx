@@ -38,6 +38,7 @@ import {
   FiZap,
   FiStar,
   FiExternalLink,
+  FiArrowRight,
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
@@ -359,12 +360,12 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
     callsDone: globalStats?.phoneScreeningCalls ?? teamAggregatedStats.callsDone,
   };
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Detached Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex flex-col items-start text-left">
-          <h1 className="text-[30px] font-bold text-[#0f172a] mb-1 tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Team Overview</h1>
-          <p className="text-[#64748b] font-medium text-[15px]">Manage and track your recruitment team efficiency</p>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Team Overview</h1>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Manage and track your recruitment team efficiency</p>
         </div>
         <div className="flex items-center gap-3">
           {onAddKAM && (
@@ -628,7 +629,7 @@ const KAMPerformanceContent = ({
               className="px-4 py-2.5 bg-white border border-[#E8E7E2] text-[#1A1A2E] rounded-xl text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2 active:scale-95"
             >
               <FiBriefcase size={16} className="text-[#1B4DA0]" />
-              <span className="whitespace-nowrap">{selectedClient}</span>
+              <span className="whitespace-nowrap">{clientFilter}</span>
               <svg className={`w-4 h-4 ml-1 transition-transform ${showClientDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -1143,10 +1144,9 @@ const RecruitmentHeadDashboard = () => {
     date: getLocalISODate(),
   });
 
-  const [chartDateFilter, setChartDateFilter] = useState('All Time');
-  const [showChartDateDropdown, setShowChartDateDropdown] = useState(false);
+
   const chartDateInputRef = useRef(null);
-  const chartDropdownRef = useRef(null);
+
 
   // Activity filter state
   const [activityFilter, setActivityFilter] = useState('Calls');
@@ -1236,9 +1236,7 @@ const RecruitmentHeadDashboard = () => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Date dropdown logic
-      if (chartDropdownRef.current && !chartDropdownRef.current.contains(event.target)) {
-        setShowChartDateDropdown(false);
-      }
+
       // Activity dropdown logic
       if (activityDropdownRef.current && !activityDropdownRef.current.contains(event.target)) {
         setShowActivityDropdown(false);
@@ -2161,45 +2159,7 @@ const RecruitmentHeadDashboard = () => {
                             </AnimatePresence>
                           </div>
 
-                          <div className="relative" ref={chartDropdownRef}>
-                            <button
-                              onClick={() => setShowChartDateDropdown(!showChartDateDropdown)}
-                              className="flex items-center gap-2 px-4 py-2 bg-[#F1F1F1] hover:bg-white text-slate-700 rounded-xl transition-all border border-transparent shadow-sm text-[10px] font-bold group"
-                            >
-                              <span className="tracking-tight">{chartDateFilter}</span>
-                              <FiCalendar className="w-3 h-3 text-amber-500" />
-                            </button>
-                            <AnimatePresence>
-                              {showChartDateDropdown && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                  className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
-                                >
-                                  {['All Time', 'This Year', 'This Month', 'This Week'].map((item) => (
-                                    <button
-                                      key={item}
-                                      onClick={() => {
-                                        setChartDateFilter(item);
-                                        setShowChartDateDropdown(false);
-                                        // Synchronize with dashboard data fetch
-                                        let syntheticFilter = { filterType: 'all' };
-                                        const now = new Date();
-                                        if (item === 'This Year') syntheticFilter = { filterType: 'year', year: now.getFullYear() };
-                                        if (item === 'This Month') syntheticFilter = { filterType: 'month', year: now.getFullYear(), month: now.getMonth() };
-                                        if (item === 'This Week') syntheticFilter = { filterType: 'last7days' };
-                                        fetchDashboardData(syntheticFilter);
-                                      }}
-                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all font-syne ${chartDateFilter === item ? 'bg-amber-50 text-amber-600' : 'text-slate-700 hover:bg-slate-50'}`}
-                                    >
-                                      {item}
-                                    </button>
-                                  ))}
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
+
                         </div>
                       </div>
 
@@ -2329,40 +2289,61 @@ const RecruitmentHeadDashboard = () => {
                   </div>
 
                   {/* Live Notes */}
-                  <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
-                    <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
+                    <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-gradient-to-r from-slate-50/50 to-transparent">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-slate-100 text-slate-500">
+                        <div className="p-2.5 rounded-xl bg-white border border-slate-100 text-indigo-500 shadow-sm">
                           <FiEdit3 className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-lg text-[#1A1A2E] tracking-tight font-syne">Strategy Notes</h3>
+                        <div>
+                          <h3 className="font-bold text-lg text-[#1A1A2E] tracking-tight font-syne leading-none">Strategy Notes</h3>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Directives and guidelines</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="divide-y divide-slate-50 max-h-[350px] overflow-y-auto flex-1 bg-white">
+                    <div className="max-h-[450px] overflow-y-auto flex-1 bg-white p-4 space-y-4 no-scrollbar">
                       {notesLoading ? (
-                        <div className="p-8 text-center text-slate-400 animate-pulse font-medium text-sm">Synchronizing notes...</div>
+                        <div className="flex flex-col items-center justify-center py-12 gap-4">
+                          <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin" />
+                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Synchronizing records...</p>
+                        </div>
                       ) : recentNotes.length > 0 ? (
                         recentNotes.map((note) => (
-                          <div key={note.id} className="p-6 hover:bg-slate-50 transition-colors group">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{note.title}</p>
-                              <span className="text-[10px] font-bold text-slate-300 uppercase">{new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
-                            </div>
-                            <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{note.content}</p>
-                            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-50">
-                              <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500">
-                                {note.createdByName?.[0] || 'S'}
+                          <div key={note.id} className="p-5 rounded-2xl bg-[#FAFAF8] border border-[#F4F3EF] hover:bg-white hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 group relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 rounded-full scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="font-bold text-[15px] text-slate-800 tracking-tight group-hover:text-indigo-600 transition-colors font-syne">{note.title}</h4>
+                              <div className="flex items-center gap-2 px-2 py-1 bg-white rounded-lg border border-slate-100 shadow-sm">
+                                <FiClock className="w-3 h-3 text-slate-400" />
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                                  {new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                </span>
                               </div>
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{note.createdByName || 'System Office'}</span>
+                            </div>
+                            <p className="text-[13px] text-slate-600 leading-relaxed font-medium mb-4">{note.content}</p>
+                            <div className="flex items-center justify-between pt-4 border-t border-slate-200/60">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-lg bg-[#1B4DA0] flex items-center justify-center text-[10px] font-bold text-white shadow-md shadow-blue-500/20">
+                                  {note.createdByName?.[0] || 'S'}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-black text-slate-800 uppercase tracking-tight leading-none">{note.createdByName || 'System Office'}</span>
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">HOD - Recruitment</span>
+                                </div>
+                              </div>
+                              <button className="p-2 rounded-lg bg-white border border-slate-100 text-slate-400 hover:text-indigo-500 hover:border-indigo-100 transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0">
+                                <FiArrowRight className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="p-8 text-center">
-                          <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
-                            <FiEdit3 className="w-5 h-5 text-slate-200" />
+                        <div className="py-12 flex flex-col items-center text-center">
+                          <div className="w-16 h-16 rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-center mb-4 text-slate-200">
+                            <FiEdit3 size={24} />
                           </div>
-                          <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">No active strategy notes</p>
+                          <h4 className="text-sm font-bold text-slate-800 mb-1">No Strategy Notes Found</h4>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team directives will appear here</p>
                         </div>
                       )}
                     </div>

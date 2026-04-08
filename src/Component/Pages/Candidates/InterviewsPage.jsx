@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import ReactDOM from "react-dom";
-import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, Plus, AlertCircle, Calendar, Search } from "lucide-react";
+import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, Plus, AlertCircle, Calendar, Search, Star } from "lucide-react";
 import { toast } from "sonner";
 import { AVATAR_COLORS, getAvatarColor } from "./mockData";
 import { getAllInterviews, updateInterview, updateInterviewStatus, scheduleNewInterview, getAllCandidates, getDepartmentTeamMembers, getAllAdmins, getAllKAMMembers } from "../service/api";
@@ -40,7 +40,7 @@ export default function InterviewsPage() {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackInterview, setFeedbackInterview] = useState(null);
-  const [feedbackForm, setFeedbackForm] = useState({ skills: '', communication: '', behaviour: '', knowledge: '', attitude: '' });
+  const [feedbackForm, setFeedbackForm] = useState({ rating: 0, note: '' });
   const [feedbackData, setFeedbackData] = useState(() => {
     try { return JSON.parse(localStorage.getItem('interviewFeedback') || '{}'); } catch (e) { return {}; }
   });
@@ -378,14 +378,14 @@ export default function InterviewsPage() {
   ], [interviews]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Refined Header */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div className="text-left">
-          <h1 className="text-2xl font-bold text-[#1A1A2E] tracking-tight text-left" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
             Interview Schedule
           </h1>
-          <p className="text-[#9B9BAD] text-[11px] font-bold uppercase tracking-[2px] mt-1 text-left">High-fidelity recruitment coordination</p>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">High-fidelity recruitment coordination</p>
         </div>
         <div className="flex gap-2">
           <button 
@@ -495,10 +495,10 @@ export default function InterviewsPage() {
                    <p className="text-xl font-bold leading-none">{new Date(date).getDate()}</p>
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  <h2 className="text-[17px] font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
                     {dateLabels[date]?.split(" — ")[0] || date}
                   </h2>
-                  <p className="text-[9px] text-[#9B9BAD] font-black uppercase tracking-[2px]">
+                  <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">
                     {dateLabels[date]?.split(" — ")[1] || ""}
                   </p>
                 </div>
@@ -516,8 +516,8 @@ export default function InterviewsPage() {
                     <div
                       key={interview.id}
                       onClick={() => setSelectedInterview(interview)}
-                      className={`group relative bg-white rounded-2xl p-4 flex flex-col lg:flex-row lg:items-center gap-4 cursor-pointer border border-[#F4F3EF] hover:border-[#1B4DA0]/30 hover:shadow-xl transition-all duration-300 ${
-                         isLive ? "ring-2 ring-amber-400 ring-offset-2" : "shadow-sm"
+                      className={`group relative bg-white rounded-2xl px-6 py-3 flex flex-col lg:flex-row lg:items-center gap-4 cursor-pointer border border-[#F4F3EF] hover:border-[#1B4DA0]/30 hover:shadow-md transition-all duration-300 ${
+                         isLive ? "ring-2 ring-amber-400 ring-offset-2" : ""
                       }`}
                     >
                       {/* Refined Time Node */}
@@ -538,15 +538,15 @@ export default function InterviewsPage() {
 
                       {/* Profile Section */}
                       <div className="flex items-center gap-4 lg:w-[280px] xl:w-[320px] flex-shrink-0 min-w-0">
-                        <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center text-base font-bold flex-shrink-0 shadow-sm transition-transform duration-500 group-hover:scale-105 ${candidateColor}`}>
+                        <div className={`w-[42px] h-[42px] rounded-[14px] flex items-center justify-center text-[13px] font-bold flex-shrink-0 shadow-sm transition-transform duration-500 group-hover:scale-105 ${candidateColor}`}>
                           {interview.candidateAvatar}
                         </div>
                         <div className="min-w-0">
                            <div className="flex items-center gap-2 mb-0.5">
-                              <p className="text-base font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors">{interview.candidateName}</p>
-                              <Check size={12} className="text-emerald-500 flex-shrink-0" />
+                              <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#1B4DA0] transition-colors">{interview.candidateName}</p>
+                              <Check size={10} className="text-emerald-500 flex-shrink-0" />
                            </div>
-                           <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{interview.role}</p>
+                           <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">{interview.role}</p>
                         </div>
                       </div>
 
@@ -574,7 +574,12 @@ export default function InterviewsPage() {
                              onClick={(e) => { 
                                e.stopPropagation(); 
                                setFeedbackInterview(interview);
-                               setFeedbackForm(feedbackData[interview.id] || { skills: '', communication: '', behaviour: '', knowledge: '', attitude: '' });
+                               const existing = feedbackData[interview.id];
+                               if (existing && (existing.rating === undefined)) {
+                                 setFeedbackForm({ rating: 0, note: '' });
+                               } else {
+                                 setFeedbackForm(existing || { rating: 0, note: '' });
+                               }
                                setShowFeedbackModal(true); 
                              }}
                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${feedbackData[interview.id] ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-[#F4F3EF] text-[#6B6B7E] border-[#E8E7E2] hover:bg-blue-50 hover:text-[#1B4DA0] hover:border-blue-100'}`}
@@ -1106,49 +1111,46 @@ export default function InterviewsPage() {
             </div>
 
             <div className="p-10 space-y-7 text-left">
-              {[
-                { key: 'skills', label: 'Skills' },
-                { key: 'communication', label: 'Communication' },
-                { key: 'behaviour', label: 'Behaviour' },
-                { key: 'knowledge', label: 'Knowledge' },
-                { key: 'attitude', label: 'Attitude' },
-              ].map(({ key, label }) => (
-                <div key={key} className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">{label}</label>
-                  <div className="relative">
-                    <input 
-                      type="number"
-                      min="0"
-                      max="10"
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50 pr-16"
-                      placeholder="0"
-                      value={feedbackForm[key]}
-                      onChange={(e) => {
-                        const val = Math.min(10, Math.max(0, parseInt(e.target.value) || 0));
-                        setFeedbackForm({ ...feedbackForm, [key]: val || '' });
-                      }}
-                    />
-                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-[#9B9BAD]">/ 10</span>
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block mb-3">Overall Rating</label>
+                  <div className="flex items-center gap-3">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setFeedbackForm({ ...feedbackForm, rating: star })}
+                        className="transition-all duration-300 transform hover:scale-110 active:scale-95"
+                      >
+                        <Star 
+                          size={36} 
+                          className={`transition-colors duration-300 ${
+                            star <= feedbackForm.rating 
+                              ? "fill-amber-400 text-amber-400 drop-shadow-sm" 
+                              : "text-[#E8E7E2] hover:text-amber-200"
+                          }`} 
+                        />
+                      </button>
+                    ))}
+                    {feedbackForm.rating > 0 && (
+                      <span className="ml-4 text-lg font-bold text-[#1A1A2E] animate-in fade-in zoom-in duration-300">
+                        {feedbackForm.rating} / 5
+                      </span>
+                    )}
                   </div>
                 </div>
-              ))}
 
-              {/* Average Display */}
-              {(() => {
-                const vals = [feedbackForm.skills, feedbackForm.communication, feedbackForm.behaviour, feedbackForm.knowledge, feedbackForm.attitude].map(v => parseInt(v) || 0);
-                const avg = vals.reduce((a, b) => a + b, 0) / 5;
-                const allFilled = [feedbackForm.skills, feedbackForm.communication, feedbackForm.behaviour, feedbackForm.knowledge, feedbackForm.attitude].every(v => v !== '' && v !== undefined);
-                if (!allFilled) return null;
-                return (
-                  <div className={`p-4 rounded-2xl border flex items-center justify-between ${avg > 5 ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
-                    <span className="text-xs font-black text-[#9B9BAD] uppercase tracking-widest">Average Score</span>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-lg font-bold ${avg > 5 ? 'text-amber-600' : 'text-slate-600'}`}>{avg.toFixed(1)} / 10</span>
-                      {avg > 5 && <span className="text-amber-400 text-xl">★</span>}
-                    </div>
-                  </div>
-                );
-              })()}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block">Feedback Notes</label>
+                  <textarea
+                    rows={5}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-[24px] px-6 py-5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50 resize-none leading-relaxed"
+                    placeholder="Write a short summary of the candidate's performance..."
+                    value={feedbackForm.note}
+                    onChange={(e) => setFeedbackForm({ ...feedbackForm, note: e.target.value })}
+                  />
+                </div>
+              </div>
 
               {/* Footer Buttons */}
               <div className="pt-4 flex gap-4">
@@ -1159,9 +1161,8 @@ export default function InterviewsPage() {
                 <button 
                   type="button"
                   onClick={() => {
-                    const vals = [feedbackForm.skills, feedbackForm.communication, feedbackForm.behaviour, feedbackForm.knowledge, feedbackForm.attitude];
-                    if (vals.some(v => v === '' || v === undefined)) {
-                      toast.error('Please fill all feedback fields');
+                    if (!feedbackForm.rating) {
+                      toast.error('Please provide a star rating');
                       return;
                     }
                     const entry = { ...feedbackForm, candidateName: feedbackInterview.candidateName };

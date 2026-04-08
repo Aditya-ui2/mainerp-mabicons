@@ -58,42 +58,45 @@ const StatusBadge = ({ status }) => {
 const ResumeCard = ({ resume, isDarkMode, onPreviewResume }) => (
   <div 
     onClick={() => onPreviewResume(resume.id, resume.fileName)}
-    className="group bg-white dark:bg-slate-800 p-6 rounded-[32px] border border-transparent hover:border-[#F4F3EF] dark:hover:border-slate-700 shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden relative"
+    className="group bg-white dark:bg-slate-800 px-8 py-3 border-b border-[#F4F3EF] dark:border-slate-700 hover:bg-[#FAFAF8] dark:hover:bg-slate-700/50 transition-all duration-300 cursor-pointer overflow-hidden relative flex items-center gap-6"
   >
-    <div className="flex flex-wrap items-center justify-between gap-8 relative z-10">
-      <div className="flex items-center gap-6 flex-1 min-w-[300px]">
-        <div className="w-16 h-16 rounded-[22px] bg-[#EEF2FB] dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0] dark:text-blue-400 font-bold text-xl shadow-sm border border-[#EEF2FB] dark:border-slate-700 group-hover:scale-105 transition-transform duration-500">
-          {getInitials(resume.candidateName || resume.fileName)}
-        </div>
-        <div className="flex-1 flex flex-col items-start">
-          <div className="flex items-center gap-2 mb-0.5">
-            <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white group-hover:text-[#1B4DA0] dark:group-hover:text-blue-400 transition-colors">
-              {resume.candidateName || resume.fileName.split('.')[0]}
-            </h3>
-            <CheckCircle2 size={16} className="text-emerald-500" />
-          </div>
-          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">{resume.roleType || 'General Profile'}</p>
-          <div className="flex flex-wrap gap-2 mt-4">
-            {(resume.skills || ['React', 'TypeScript', 'Node.js']).map((skill, i) => (
-              <span key={i} className="px-3 py-1 bg-[#FAFAF8] dark:bg-slate-900 text-[#1A1A2E]/60 dark:text-slate-400 text-[10px] font-bold rounded-lg border border-[#F4F3EF] dark:border-slate-700 uppercase tracking-wider">{skill}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <button 
-          onClick={(e) => { e.stopPropagation(); onPreviewResume(resume.id, resume.fileName); }}
-          className="flex items-center gap-2 px-6 py-3 bg-[#F4F3EF] dark:bg-slate-700 text-[#6B6B7E] dark:text-slate-300 rounded-2xl text-xs font-bold hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
-        >
-          <FileText size={16} />
-          View CV
-        </button>
-      </div>
+    {/* Avatar / Initials */}
+    <div className="w-[42px] h-[42px] rounded-[14px] bg-[#EEF2FB] dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0] dark:text-blue-400 font-bold text-[13px] border border-[#EEF2FB] dark:border-slate-700 flex-shrink-0">
+      {getInitials(resume.candidateName || resume.fileName)}
     </div>
-    
-    {/* Design Element */}
-    <div className="absolute top-0 right-0 w-24 h-24 bg-[#1B4DA0]/5 rounded-bl-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700 opacity-0 group-hover:opacity-100" />
+
+    {/* Candidate Info */}
+    <div className="flex-1 min-w-[200px] flex items-center gap-3">
+      <h3 className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate">
+        {resume.candidateName || resume.fileName.split('.')[0]}
+      </h3>
+      <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
+    </div>
+
+    {/* Role Info */}
+    <div className="w-[200px] flex-shrink-0">
+      <p className="text-[13px] font-medium text-[#64748b] dark:text-slate-400 truncate">
+        {resume.roleType || 'General Profile'}
+      </p>
+    </div>
+
+    {/* Primary Skills */}
+    <div className="flex-1 flex flex-wrap gap-1.5 min-w-[150px]">
+      {(resume.skills || ['React', 'TypeScript', 'Node.js']).slice(0, 2).map((skill, i) => (
+        <span key={i} className="px-2 py-0.5 bg-[#FAFAF8] dark:bg-slate-900 text-[#1A1A2E]/60 dark:text-slate-400 text-[9px] font-black rounded-lg border border-[#F4F3EF] dark:border-slate-700 uppercase tracking-widest">{skill}</span>
+      ))}
+    </div>
+
+    {/* Actions */}
+    <div className="flex items-center gap-3 ml-auto">
+      <button 
+        onClick={(e) => { e.stopPropagation(); onPreviewResume(resume.id, resume.fileName); }}
+        className="flex items-center gap-2 px-3 py-1.5 bg-[#F4F3EF] dark:bg-slate-700 text-[#6B6B7E] dark:text-slate-300 rounded-lg text-[11px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+      >
+        <FileText size={14} />
+        View CV
+      </button>
+    </div>
   </div>
 );
 
@@ -507,26 +510,26 @@ const ResumeBankTab = () => {
   };
 
   return (
-    <div className={`p-0 max-w-full min-h-screen transition-colors duration-500 text-left ${isDarkMode ? 'bg-[#0F172A]' : 'bg-[#FAFAF8]'}`}>
+    <div className={`p-0 max-w-full min-h-screen transition-colors duration-500 text-left ${isDarkMode ? 'bg-[#0F172A]' : 'bg-[#FAFAF8]'}`} style={{ fontFamily: "'Calibri', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif; }
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: 'Calibri', sans-serif; }
       `}</style>
 
       {/* Header */}
       <div className="mb-10 flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-[#1A1A2E] dark:text-white font-syne text-left">
+          <h1 className="text-3xl font-bold text-[#1A1A2E] dark:text-white font-syne text-left">
             Resume Bank
           </h1>
-          <p className="text-[#9B9BAD] text-sm mt-2 font-medium tracking-wide text-left">Historical archive of {stats?.total || 0} vetted candidate profiles</p>
+          <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide text-left">Historical archive of {stats?.total || 0} vetted candidate profiles</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleOpenAddCandidate}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95"
           >
             <UserPlus size={18} /> Add Candidate
           </button>
@@ -559,11 +562,11 @@ const ResumeBankTab = () => {
 
       {/* Control Bar */}
       <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-2 w-full">
-        <div className="flex items-center gap-3 bg-[#F4F3EF] dark:bg-slate-900 rounded-2xl px-5 py-3 min-w-[300px] flex-[2]">
+        <div className="flex items-center gap-3 bg-[#F4F3EF] dark:bg-slate-900 rounded-2xl px-5 py-3 h-[48px] min-w-[300px] flex-[2]">
           <Search size={18} className="text-[#9B9BAD]" />
           <input 
             type="text" 
-            value={filters.search}
+            value={filters.search} 
             onChange={(e) => handleFilterChange('search', e.target.value)}
             placeholder="Search by name, expertise, or tech stack..." 
             className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD] outline-none w-full font-bold" 
@@ -573,7 +576,7 @@ const ResumeBankTab = () => {
           <select 
             value={filters.roleType}
             onChange={(e) => handleFilterChange('roleType', e.target.value)}
-            className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#6B6B7E] dark:text-slate-400 rounded-xl px-4 py-3 border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
+            className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl px-4 py-3 h-[48px] border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
           >
             <option value="">Roles (Global)</option>
             {roleTypes.map(role => (
@@ -587,7 +590,7 @@ const ResumeBankTab = () => {
               setLoading(false);
               toast.success("Data refreshed!");
             }}
-            className="p-3 bg-[#F4F3EF] dark:bg-slate-900 rounded-xl text-[#6B6B7E] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm active:scale-95"
+            className="w-[48px] h-[48px] flex items-center justify-center bg-[#F4F3EF] dark:bg-slate-900 rounded-xl text-[#9B9BAD] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm active:scale-95"
             title="Refresh Data"
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
@@ -603,8 +606,16 @@ const ResumeBankTab = () => {
         </div>
       </div>
 
-      {/* Profile Deck */}
-      <div className="grid grid-cols-1 gap-4 mb-20">
+      {/* Profile Deck - Table Interface */}
+      <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-20">
+        <div className="flex items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[42px] flex-shrink-0 text-center">Icon</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 min-w-[200px]">Candidate</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[200px] flex-shrink-0">Target Role</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1">Skills</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[140px] flex-shrink-0 text-right">Actions</span>
+        </div>
+
         {loading ? (
            <div className="flex flex-col items-center justify-center py-40 gap-4">
               <div className="w-16 h-16 rounded-full border-4 border-[#1B4DA0] border-t-transparent animate-spin" />
@@ -616,14 +627,16 @@ const ResumeBankTab = () => {
               <h3 className="text-xl font-bold mb-2 font-syne">No Profiles Found</h3>
            </div>
         ) : (
-           resumes.map(resume => (
-             <ResumeCard 
-               key={resume.id} 
-               resume={resume} 
-               isDarkMode={isDarkMode}
-               onPreviewResume={handlePreviewResume}
-             />
-           ))
+           <div className="divide-y divide-[#F4F3EF] dark:divide-slate-700">
+             {resumes.map(resume => (
+               <ResumeCard 
+                 key={resume.id} 
+                 resume={resume} 
+                 isDarkMode={isDarkMode}
+                 onPreviewResume={handlePreviewResume}
+               />
+             ))}
+           </div>
         )}
       </div>
 

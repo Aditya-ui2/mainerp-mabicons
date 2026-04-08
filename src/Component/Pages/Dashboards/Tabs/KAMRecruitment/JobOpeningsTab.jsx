@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,8 +11,7 @@ import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, c
 const STATUS_STYLES = {
   Open: "bg-emerald-50 text-emerald-600 border-emerald-100",
   Urgent: "bg-rose-50 text-rose-600 border-rose-100",
-  Closed: "bg-slate-50 text-slate-400 border-slate-100",
-  "On Hold": "bg-amber-50 text-amber-600 border-amber-100",
+  "Hold": "bg-amber-50 text-amber-600 border-amber-100",
   "In Progress": "bg-blue-50 text-[#0D47A1] border-blue-100",
 };
 
@@ -460,7 +459,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
 
           {/* Short Description Section */}
           <div className="pt-6 border-t border-[#F4F3EF] text-left">
-            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Short Description</span>
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Job Description</span>
             <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium text-left">
               {job.description || <span className="italic text-[#9B9BAD]">No description provided</span>}
             </p>
@@ -532,13 +531,11 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                   <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
                   <button
                     onClick={() => { handleAssignJob(job.id, 'Me'); setShowAssignDropdown(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${
-                      jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                    }`}
+                    className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                      }`}
                   >
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
-                      jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                    }`}><User size={13} /></span>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                      }`}><User size={13} /></span>
                     Assign to me
                     {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
                   </button>
@@ -546,13 +543,11 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                   {['Jyoti', 'Manju', 'Priyanshi'].map(name => (
                     <button key={name}
                       onClick={() => { handleAssignJob(job.id, name); setShowAssignDropdown(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${
-                        jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                      }`}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                        }`}
                     >
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
-                        jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                      }`}>{name.charAt(0)}</span>
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                        }`}>{name.charAt(0)}</span>
                       {name}
                       {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
                     </button>
@@ -613,6 +608,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [jobTasks, setJobTasks] = useState({});
   const [assignDropdownJobId, setAssignDropdownJobId] = useState(null);
   const [jobAssignments, setJobAssignments] = useState({});
+  const [selectedJobs, setSelectedJobs] = useState([]);
 
   // Handle assign/unassign with backend sync
   const handleAssignJob = async (jobId, name) => {
@@ -1193,6 +1189,27 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     setConfirmDelete(null);
   };
 
+  const handleBulkHold = async () => {
+    if (window.confirm(`Put ${selectedJobs.length} positions on hold?`)) {
+      const originalJobs = [...jobs];
+      try {
+        // Optimistic UI Update: update locally first for instant feedback
+        setJobs(prev => prev.map(j =>
+          selectedJobs.includes(j.id) ? { ...j, status: 'Hold' } : j
+        ));
+
+        await Promise.all(selectedJobs.map(id => updateRecruitmentPosition(id, { status: 'Hold' })));
+        setSelectedJobs([]);
+        toast.success(`${selectedJobs.length} positions put on hold`);
+        fetchPositions(); // Sync with server
+      } catch (err) {
+        console.error('Bulk hold failed:', err);
+        toast.error('Failed to update some positions');
+        setJobs(originalJobs); // Rollback on failure
+      }
+    }
+  };
+
   const stats = {
     total: jobs.length,
     open: jobs.filter(j => j.status === 'Open' || j.status === 'Urgent').length,
@@ -1202,76 +1219,25 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     totalFilled: jobs.reduce((sum, j) => sum + j.filled, 0),
   };
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = (job.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (job.client || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (job.location || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClient = filterClient === 'all' ||
-      (job.client || '').toLowerCase().trim() === filterClient.toLowerCase().trim();
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      const matchesSearch = (job.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (job.client || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (job.location || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesPosition = filterPosition === 'all' || job.status === filterPosition;
+      const matchesClient = filterClient === 'all' ||
+        (job.client || '').toLowerCase().trim() === filterClient.toLowerCase().trim();
 
-    let matchesDate = true;
-    if (filterDate !== 'all') {
-      const dateStr = job.postedDate || job.deadline || job.createdAt;
-      if (!dateStr) {
-        matchesDate = false;
-      } else {
-        const jobDate = new Date(dateStr);
-        const now = new Date();
-        if (filterDate === 'today') {
-          const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
-          const todayEnd = new Date(now); todayEnd.setHours(23, 59, 59, 999);
-          matchesDate = jobDate >= todayStart && jobDate <= todayEnd;
-        } else if (filterDate === 'week') {
-          const weekStart = new Date(now);
-          weekStart.setDate(now.getDate() - now.getDay());
-          weekStart.setHours(0, 0, 0, 0);
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekStart.getDate() + 6);
-          weekEnd.setHours(23, 59, 59, 999);
-          matchesDate = jobDate >= weekStart && jobDate <= weekEnd;
-        } else if (filterDate === 'prev-week') {
-          const weekStart = new Date(now);
-          weekStart.setDate(now.getDate() - now.getDay() - 7);
-          weekStart.setHours(0, 0, 0, 0);
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekStart.getDate() + 6);
-          weekEnd.setHours(23, 59, 59, 999);
-          matchesDate = jobDate >= weekStart && jobDate <= weekEnd;
-        } else if (filterDate === 'month') {
-          matchesDate = jobDate.getMonth() === now.getMonth() && jobDate.getFullYear() === now.getFullYear();
-        } else if (filterDate === 'prev-month') {
-          const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-          const prevMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-          matchesDate = jobDate.getMonth() === prevMonth && jobDate.getFullYear() === prevMonthYear;
-        } else if (filterDate === 'quarter') {
-          const currentQuarter = Math.floor(now.getMonth() / 3);
-          const jobQuarter = Math.floor(jobDate.getMonth() / 3);
-          matchesDate = jobQuarter === currentQuarter && jobDate.getFullYear() === now.getFullYear();
-        } else if (filterDate === 'prev-quarter') {
-          const currentQuarter = Math.floor(now.getMonth() / 3);
-          const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
-          const prevQuarterYear = currentQuarter === 0 ? now.getFullYear() - 1 : now.getFullYear();
-          const jobQuarter = Math.floor(jobDate.getMonth() / 3);
-          matchesDate = jobQuarter === prevQuarter && jobDate.getFullYear() === prevQuarterYear;
-        } else if (filterDate === 'year') {
-          matchesDate = jobDate.getFullYear() === now.getFullYear();
-        } else if (filterDate === 'custom') {
-          if (customStartDate) matchesDate = jobDate >= new Date(customStartDate);
-          if (customEndDate && matchesDate) matchesDate = jobDate <= new Date(customEndDate + 'T23:59:59');
-        }
-      }
-    }
-    return matchesSearch && matchesClient && matchesPosition && matchesDate;
-  });
+      const matchesStatus = filterPosition === 'all' || job.status === filterPosition;
+
+      return matchesSearch && matchesClient && matchesStatus;
+    });
+  }, [jobs, searchTerm, filterClient, filterPosition]);
 
   const activeJobFiltersCount = [
     searchTerm.trim() !== '',
     filterClient !== 'all',
     filterPosition !== 'all',
-    filterDate !== 'all',
-    filterDate === 'custom' && (customStartDate || customEndDate),
   ].filter(Boolean).length;
 
   const getAvatarGradient = (name) => {
@@ -1313,7 +1279,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     <>
       <AnimatePresence>
         {showFullPageForm && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
             <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500">
               {/* Header */}
               <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
@@ -1547,7 +1513,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </div>
 
                     <div className="space-y-1.5 md:col-span-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Short Description</label>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Job Description</label>
                       <textarea value={newJobForm.description} onChange={e => setNewJobForm(f => ({ ...f, description: e.target.value }))}
                         rows={3} placeholder="Describe the role..."
                         className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] resize-none placeholder:text-[#9B9BAD]/50"
@@ -1603,8 +1569,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                             transition={{ delay: idx * 0.05 }}
                             onClick={() => toggleResumeSelection(resume.id)}
                             className={`group p-5 rounded-[24px] border-2 cursor-pointer transition-all ${isSelected
-                                ? 'border-[#1B4DA0] bg-blue-50/50 shadow-xl shadow-blue-500/5'
-                                : 'border-[#F4F3EF] bg-white hover:border-[#1B4DA0]/30'
+                              ? 'border-[#1B4DA0] bg-blue-50/50 shadow-xl shadow-blue-500/5'
+                              : 'border-[#F4F3EF] bg-white hover:border-[#1B4DA0]/30'
                               }`}
                           >
                             <div className="flex items-center gap-4">
@@ -1645,170 +1611,253 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         )}
       </AnimatePresence>
 
-      <div className="space-y-8">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-              <div className="text-left">
-                <h1 className="text-3xl font-black text-[#1A1A2E] font-syne tracking-tight">
-                  Job Openings
-                </h1>
-                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-2">
-                  {filteredJobs.length} Active Positions in Recruitment
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setShowFullPageForm(true); setEditingJob(null); resetModal(); }}
-                  className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
-                >
-                  <Plus size={18} /> Post New Job
-                </button>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="bg-white rounded-[24px] p-2 mb-5 border border-[#F4F3EF] shadow-sm">
-              <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
-                <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
-                <input type="text" placeholder="Search by title, client or location..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
-                {searchTerm && (
-                  <button onClick={() => setSearchTerm("")}>
-                    <X size={14} className="text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Table Interface */}
-            <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
-              <div className="grid grid-cols-[1fr_140px_120px_130px_100px_140px_36px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-[#FAFAF8]">
-                {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => (
-                  <span key={i} className={`text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] text-left ${i === 1 ? 'pl-6' : ''}`}>
-                    {h}
-                  </span>
-                ))}
-              </div>
-
-              {filteredJobs.length === 0 ? (
-                <div className="py-24 text-center">
-                  <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No positions match your criteria</p>
-                </div>
-              ) : (
-                filteredJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    onClick={() => setSelectedJob(job)}
-                    className="grid grid-cols-[1fr_140px_120px_130px_100px_140px_36px] gap-4 items-center px-8 py-6 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
-                  >
-                    <div>
-                      <p className="text-base font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors flex items-center gap-2 font-syne">
-                        {job.title}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        <MapPin size={11} className="text-[#9B9BAD]" />
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.1em]">{job.location}</span>
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold text-[#6B6B7E] truncate pl-6">{job.client}</span>
-                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${STATUS_STYLES[job.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
-                      {job.status}
-                    </span>
-                    <span className="text-sm font-bold text-[#9B9BAD]">
-                      {new Date(job.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
-                        <Users size={14} />
-                      </div>
-                      <span className="text-sm font-black text-[#1A1A2E]">{job.candidateCount}</span>
-                    </div>
-                    <div className="relative" onClick={e => e.stopPropagation()}>
-                      {jobAssignments[job.id] ? (
-                        <button
-                          id={`assign-btn-${job.id}`}
-                          onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all"
-                        >
-                          <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
-                          {jobAssignments[job.id]}
-                        </button>
-                      ) : (
-                        <button
-                          id={`assign-btn-${job.id}`}
-                          onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-[#0D47A1] text-white rounded-lg text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
-                        >
-                          <UserPlus size={13} /> Assign
-                        </button>
-                      )}
-                      {assignDropdownJobId === job.id && createPortal(
-                        <>
-                          <div className="fixed inset-0 z-[9998]" onClick={() => setAssignDropdownJobId(null)} />
-                          <div
-                            className="fixed z-[9999] w-52 bg-white rounded-xl shadow-2xl border border-[#E5E5EA] py-2"
-                            style={(() => {
-                              const btn = document.getElementById(`assign-btn-${job.id}`);
-                              if (!btn) return { top: 0, left: 0 };
-                              const rect = btn.getBoundingClientRect();
-                              return { top: rect.bottom + 8, left: rect.left };
-                            })()}
-                          >
-                            <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
-                            <button
-                              onClick={() => { handleAssignJob(job.id, 'Me'); setAssignDropdownJobId(null); }}
-                              className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${
-                                jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                              }`}
-                            >
-                              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
-                                jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                              }`}><User size={13} /></span>
-                              Assign to me
-                              {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
-                            </button>
-                            <div className="border-t border-[#F4F3EF] my-1" />
-                            {['Jyoti', 'Manju', 'Priyanshi'].map(name => (
-                              <button key={name}
-                                onClick={() => { handleAssignJob(job.id, name); setAssignDropdownJobId(null); }}
-                                className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${
-                                  jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                                }`}
-                              >
-                                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
-                                  jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                                }`}>{name.charAt(0)}</span>
-                                {name}
-                                {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
-                              </button>
-                            ))}
-                            {jobAssignments[job.id] && (
-                              <>
-                                <div className="border-t border-[#F4F3EF] my-1" />
-                                <button
-                                  onClick={() => { handleAssignJob(job.id, null); setAssignDropdownJobId(null); }}
-                                  className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
-                                >
-                                  <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
-                                  Remove Assignment
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </>,
-                        document.body
-                      )}
-                    </div>
-                    <div className="flex justify-end">
-                      <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
-                        <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+      <div className="space-y-8" style={{ fontFamily: "'Calibri', sans-serif" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+          <div className="text-left">
+            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Job Openings
+            </h1>
+            <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">
+              <span className="text-[#0D47A1] font-bold">{filteredJobs.length}</span> Active Positions {filterClient !== 'all' ? `for ${filterClient}` : 'in Recruitment'}
+            </p>
           </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setShowFullPageForm(true); setEditingJob(null); resetModal(); }}
+              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
+            >
+              <Plus size={18} /> Post New Job
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Bar Redesigned based on Task Assignment style */}
+        <div className="flex flex-wrap items-center gap-3 mb-8">
+          {/* Search Bar */}
+          <div className="relative flex-1 min-w-[300px]">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search jobs, clients or location..."
+              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+            />
+          </div>
+
+          {/* Client Filter */}
+          <div className="relative">
+            <select
+              value={filterClient}
+              onChange={(e) => setFilterClient(e.target.value)}
+              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            >
+              <option value="all">All Clients</option>
+              {clients.map(c => <option key={c.id} value={c.displayName}>{c.displayName}</option>)}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          </div>
+
+          {/* Status Filter */}
+          <div className="relative">
+            <select
+              value={filterPosition}
+              onChange={(e) => setFilterPosition(e.target.value)}
+              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            >
+              <option value="all">All Status</option>
+              <option value="Open">Open</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Hold">Hold</option>
+            </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          </div>
+        </div>
+
+        {/* Table Interface */}
+        <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+          <div className="grid grid-cols-[40px_1fr_140px_120px_130px_100px_140px_36px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]"
+                checked={selectedJobs.length === filteredJobs.length && filteredJobs.length > 0}
+                onChange={(e) => {
+                  if (e.target.checked) setSelectedJobs(filteredJobs.map(j => j.id));
+                  else setSelectedJobs([]);
+                }}
+              />
+            </div>
+            {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => (
+              <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-center`}>
+                {h}
+              </div>
+            ))}
+          </div>
+
+          {filteredJobs.length === 0 ? (
+            <div className="py-24 text-center">
+              <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No positions match your criteria</p>
+            </div>
+          ) : (
+            filteredJobs.map((job) => (
+              <div
+                key={job.id}
+                onClick={() => setSelectedJob(job)}
+                className="grid grid-cols-[40px_1fr_140px_120px_130px_100px_140px_36px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+              >
+                <div className="flex items-center" onClick={e => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]"
+                    checked={selectedJobs.includes(job.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      if (selectedJobs.includes(job.id)) {
+                        setSelectedJobs(selectedJobs.filter(id => id !== job.id));
+                      } else {
+                        setSelectedJobs([...selectedJobs, job.id]);
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <p className="text-[14px] font-bold text-[#0f172a] group-hover:text-[#0D47A1] transition-colors flex items-center gap-2">
+                    {job.title}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <MapPin size={11} className="text-[#9B9BAD]" />
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{job.location}</span>
+                  </div>
+                </div>
+                <div className="text-[13px] font-medium text-[#64748b] truncate flex items-center">{job.client}</div>
+                <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${STATUS_STYLES[job.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
+                  {job.status}
+                </span>
+                <span className="text-sm font-bold text-[#9B9BAD]">
+                  {new Date(job.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
+                    <Users size={14} />
+                  </div>
+                  <span className="text-sm font-black text-[#1A1A2E]">{job.candidateCount}</span>
+                </div>
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  {jobAssignments[job.id] ? (
+                    <button
+                      id={`assign-btn-${job.id}`}
+                      onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all"
+                    >
+                      <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
+                      {jobAssignments[job.id]}
+                    </button>
+                  ) : (
+                    <button
+                      id={`assign-btn-${job.id}`}
+                      onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-[#0D47A1] text-white rounded-lg text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                    >
+                      <UserPlus size={13} /> Assign
+                    </button>
+                  )}
+                  {assignDropdownJobId === job.id && createPortal(
+                    <>
+                      <div className="fixed inset-0 z-[9998]" onClick={() => setAssignDropdownJobId(null)} />
+                      <div
+                        className="fixed z-[9999] w-52 bg-white rounded-xl shadow-2xl border border-[#E5E5EA] py-2"
+                        style={(() => {
+                          const btn = document.getElementById(`assign-btn-${job.id}`);
+                          if (!btn) return { top: 0, left: 0 };
+                          const rect = btn.getBoundingClientRect();
+                          return { top: rect.bottom + 8, left: rect.left };
+                        })()}
+                      >
+                        <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
+                        <button
+                          onClick={() => { handleAssignJob(job.id, 'Me'); setAssignDropdownJobId(null); }}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                            }`}
+                        >
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                            }`}><User size={13} /></span>
+                          Assign to me
+                          {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                        </button>
+                        <div className="border-t border-[#F4F3EF] my-1" />
+                        {['Jyoti', 'Manju', 'Priyanshi'].map(name => (
+                          <button key={name}
+                            onClick={() => { handleAssignJob(job.id, name); setAssignDropdownJobId(null); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                              }`}
+                          >
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                              }`}>{name.charAt(0)}</span>
+                            {name}
+                            {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                          </button>
+                        ))}
+                        {jobAssignments[job.id] && (
+                          <>
+                            <div className="border-t border-[#F4F3EF] my-1" />
+                            <button
+                              onClick={() => { handleAssignJob(job.id, null); setAssignDropdownJobId(null); }}
+                              className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                            >
+                              <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
+                              Remove Assignment
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>,
+                    document.body
+                  )}
+                </div>
+                <div className="flex justify-end">
+                  <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
+                    <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Selection Action Bar (Snackbar) */}
+      <AnimatePresence>
+        {selectedJobs.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[1000] px-8 py-4 bg-[#1A1A2E] rounded-2xl shadow-2xl flex items-center gap-8 border border-white/10"
+          >
+            <div className="flex items-center gap-3 pr-8 border-r border-white/10">
+              <span className="px-2 py-1 bg-[#1B4DA0] rounded-lg text-white text-xs font-black">{selectedJobs.length}</span>
+              <span className="text-sm font-bold text-white">positions selected</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <button
+                onClick={handleBulkHold}
+                className="flex items-center gap-2 text-sm font-bold text-[#1B4DA0] hover:text-[#0D47A1] transition-colors"
+              >
+                <RefreshCw size={18} />
+                Hold Selected
+              </button>
+            </div>
+            <button
+              onClick={() => setSelectedJobs([])}
+              className="ml-4 p-1 text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Right Side Drawer for Job Details & Tasks */}
       <AnimatePresence>

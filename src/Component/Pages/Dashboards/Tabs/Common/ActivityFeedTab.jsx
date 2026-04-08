@@ -87,11 +87,11 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
         .font-syne { font-family: 'Syne', sans-serif !important; }
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
       `}</style>
-      <div className="w-full font-jakarta">
+      <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
         {/* Structural Header (Match Screenshot exactly) */}
         <div className="mb-10 flex justify-between items-center text-left">
           <div>
-            <h1 className="text-[36px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Activity Feed</h1>
+            <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Activity Feed</h1>
             <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide">Historical log of all recruitment events and team operations</p>
           </div>
         </div>

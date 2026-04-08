@@ -2980,6 +2980,17 @@ export const updateCandidateStatus = async (candidateId, statusData) => {
   }
 };
 
+// Reject candidate (simple)
+export const rejectPipelineCandidate = async (candidateId, reason = "") => {
+  try {
+    const response = await axiosInstance.post('/recruitment/reject', { candidateId, reason });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to reject candidate:', error);
+    throw error.response?.data || { message: 'Failed to reject candidate' };
+  }
+};
+
 // Update candidate core profile
 export const updateCandidate = async (candidateId, candidateData) => {
   try {

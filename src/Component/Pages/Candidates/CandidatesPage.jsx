@@ -4,7 +4,7 @@ import {
   X, Mail, Phone, Calendar, ChevronRight, Plus, Download, Search, Filter,
   User, Briefcase, Tag, AlignLeft, LayoutGrid, List, AlertCircle,
   CheckSquare, Square, Trash2, Send, MapPin, DollarSign, Clock, Award,
-  FileText, Upload, Eye, Video
+  FileText, Upload, Eye, Video, Star
 } from "lucide-react";
 import { toast } from "sonner";
 import { PIPELINE_STAGES, AVATAR_COLORS, getAvatarColor } from "./mockData";
@@ -12,6 +12,7 @@ import {
   getAllCandidates,
   updateCandidateStatus,
   updateCandidate,
+  rejectPipelineCandidate,
   addCandidate,
   getAllRecruitmentPositions,
   getAllClients,
@@ -525,27 +526,44 @@ export default function CandidatesPage({ setActiveTab }) {
     return Array.from(new Set(candidates.map(c => c.clientName?.trim() || 'Internal Team'))).sort();
   }, [candidates]);
 
-  // Read interview feedback from localStorage to show golden star on high-rated candidates
-  const [starredCandidateNames, setStarredCandidateNames] = useState(new Set());
+  // Read interview feedback from localStorage to show ratings and notes
+  const [candidateFeedbacks, setCandidateFeedbacks] = useState({});
   useEffect(() => {
     const loadFeedback = () => {
       try {
-        const fb = JSON.parse(localStorage.getItem('interviewFeedback') || '{}');
-        const names = new Set();
-        Object.values(fb).forEach(entry => {
-          const vals = [entry.skills, entry.communication, entry.behaviour, entry.knowledge, entry.attitude].map(v => parseInt(v) || 0);
-          const avg = vals.reduce((a, b) => a + b, 0) / 5;
-          if (avg > 5 && entry.candidateName) names.add(entry.candidateName.toLowerCase().trim());
+        const fb = JSON.parse(localStorage.getItem("interviewFeedback") || "{}");
+        const feedbackMap = {};
+        Object.values(fb).forEach((entry) => {
+          if (entry.candidateName) {
+            let rating = entry.rating;
+            // Backward compatibility for old feedback format (0-10 categories)
+            if (rating === undefined) {
+              const vals = [
+                entry.skills,
+                entry.communication,
+                entry.behaviour,
+                entry.knowledge,
+                entry.attitude,
+              ].map((v) => parseInt(v) || 0);
+              rating = Math.round(vals.reduce((a, b) => a + b, 0) / 10); // scale 10 to 5
+            }
+            feedbackMap[entry.candidateName.toLowerCase().trim()] = {
+              rating,
+              note: entry.note || "",
+            };
+          }
         });
-        setStarredCandidateNames(names);
-      } catch (e) { setStarredCandidateNames(new Set()); }
+        setCandidateFeedbacks(feedbackMap);
+      } catch (e) {
+        setCandidateFeedbacks({});
+      }
     };
     loadFeedback();
-    window.addEventListener('storage', loadFeedback);
-    window.addEventListener('focus', loadFeedback);
+    window.addEventListener("storage", loadFeedback);
+    window.addEventListener("focus", loadFeedback);
     return () => {
-      window.removeEventListener('storage', loadFeedback);
-      window.removeEventListener('focus', loadFeedback);
+      window.removeEventListener("storage", loadFeedback);
+      window.removeEventListener("focus", loadFeedback);
     };
   }, []);
 
@@ -555,12 +573,12 @@ export default function CandidatesPage({ setActiveTab }) {
   }
 
   return (
-    <div className="space-y-8 relative font-inter">
+    <div className="space-y-8 relative" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div className="flex flex-col items-start text-left">
-          <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Pipeline</h1>
-          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-2">{candidates.length} Total Candidates In Pipeline</p>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Pipeline</h1>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">{candidates.length} Total Candidates In Pipeline</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex bg-[#F4F3EF] p-1 rounded-xl border border-[#E8E7E2]">
@@ -710,20 +728,6 @@ export default function CandidatesPage({ setActiveTab }) {
                           : "hover:-translate-y-1 hover:shadow-lg hover:border-[#1B4DA0]/20"
                           } ${selectedIds.includes(candidate.id) ? 'ring-2 ring-[#1B4DA0] border-transparent' : 'shadow-sm'}`}
                       >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (candidate.cvUrl) {
-                              const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
-                              window.open(url, '_blank');
-                            } else {
-                              toast.error('No CV uploaded for this candidate');
-                            }
-                          }}
-                          className="absolute top-2 right-2 flex items-center gap-1 px-2.5 py-1 bg-[#0D47A1] text-white rounded-lg text-[9px] font-bold hover:bg-[#0a3a82] transition-all shadow-md z-10 active:scale-95"
-                        >
-                          <Eye size={11} /> View CV
-                        </button>
                         <div className="flex items-start gap-2">
                           <div
                             className={`w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-bold flex-shrink-0 relative ${avatarColor} ${isStuck
@@ -743,12 +747,9 @@ export default function CandidatesPage({ setActiveTab }) {
                               <div className="flex items-center gap-1.5 min-w-0">
                                 <p className="text-sm font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors pb-0.5" style={{ fontFamily: "'Syne', sans-serif" }}>
                                   {candidate.name}
-                                </p>
-                                <CheckSquare size={12} className="text-emerald-500 flex-shrink-0" />
-                                {starredCandidateNames.has(candidate.name?.toLowerCase().trim()) && (
-                                  <span className="text-amber-400 flex-shrink-0" title="High Feedback Score">★</span>
-                                )}
-                              </div>
+                              </p>
+                              <CheckSquare size={12} className="text-emerald-500 flex-shrink-0" />
+                            </div>
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleSelect(candidate.id); }}
                                 className={`p-1 rounded-md transition-all ${selectedIds.includes(candidate.id) ? 'text-[#1B4DA0]' : 'text-[#C5C5D2] hover:bg-[#F4F3EF] opacity-0 group-hover:opacity-100'}`}
@@ -778,7 +779,7 @@ export default function CandidatesPage({ setActiveTab }) {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-1 mt-2.5">
+                        <div className="flex flex-wrap gap-1 mt-2.5 items-center">
                           {(candidate.skills || []).slice(0, 2).map((skill) => (
                             <span
                               key={skill}
@@ -787,15 +788,22 @@ export default function CandidatesPage({ setActiveTab }) {
                               {skill}
                             </span>
                           ))}
-                          {candidate.stage === "Interview" && (
+                          <div className="flex items-center gap-3 ml-auto">
                             <button
-                              onClick={(e) => { e.stopPropagation(); toast.success("Opening Calendar Scheduler..."); }}
-                              className="ml-auto text-[9px] font-bold text-[#6B6B7E] hover:text-[#1A1A2E] flex items-center gap-1 group/btn transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (candidate.cvUrl) {
+                                  const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
+                                  window.open(url, '_blank');
+                                } else {
+                                  toast.error('No CV uploaded for this candidate');
+                                }
+                              }}
+                              className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1B4DA0] text-white rounded-lg text-[9px] font-bold hover:bg-[#153e82] transition-all shadow-sm active:scale-95"
                             >
-                              <Award size={10} className="group-hover/btn:text-[#1B4DA0]" />
-                              Assess
+                              <Eye size={10} /> View CV
                             </button>
-                          )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -825,17 +833,17 @@ export default function CandidatesPage({ setActiveTab }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-[#FAFAF8] border-b border-[#F4F3EF]">
-                  <th className="px-6 py-5 w-10">
+                <tr className="border-b border-[#F4F3EF] dark:border-slate-800 text-left bg-transparent">
+                  <th className="py-4 pl-6 pr-4 w-12">
                     <button
                       onClick={() => selectedIds.length === candidates.length ? setSelectedIds([]) : setSelectedIds(candidates.map(c => c.id))}
                       className={`p-1 rounded-md transition-all ${selectedIds.length === candidates.length ? 'text-[#1B4DA0]' : 'text-[#C5C5D2]'}`}
                     >
-                      {selectedIds.length === candidates.length ? <CheckSquare size={18} /> : <Square size={18} />}
+                      {selectedIds.length === candidates.length ? <CheckSquare size={16} /> : <Square size={16} />}
                     </button>
                   </th>
                   {["Candidate Info", "Department / Role", "Applied Date", "Pipeline Stage", "Quick Actions", ""].map((h) => (
-                    <th key={h} className={`px-6 py-5 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] ${h === "" ? "text-right" : ""}`}>{h}</th>
+                    <th key={h} className={`py-4 px-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${h === "" ? "text-right" : ""}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -846,59 +854,56 @@ export default function CandidatesPage({ setActiveTab }) {
                     className={`hover:bg-[#FAFAF8] transition-colors group cursor-pointer ${selectedIds.includes(candidate.id) ? 'bg-blue-50/40' : ''}`}
                     onClick={() => setSelectedCandidate(candidate)}
                   >
-                    <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => toggleSelect(candidate.id)}
                         className={`p-1 rounded-md transition-all ${selectedIds.includes(candidate.id) ? 'text-[#1B4DA0]' : 'text-[#C5C5D2] hover:text-[#1A1A2E]'}`}
                       >
-                        {selectedIds.includes(candidate.id) ? <CheckSquare size={18} /> : <Square size={18} />}
+                        {selectedIds.includes(candidate.id) ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-3">
                       <div className="flex items-center gap-3.5">
-                        <div className={`w-12 h-12 rounded-[16px] flex items-center justify-center text-[11px] font-bold relative border border-white/30 shadow-sm ${getAvatarColor(candidate.name, candidate.avatar)}`}>
+                        <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center text-[11px] font-bold relative border border-white/30 shadow-sm ${getAvatarColor(candidate.name, candidate.avatar)}`}>
                           {candidate.avatar}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-base font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors" style={{ fontFamily: "'Syne', sans-serif" }}>{candidate.name}</span>
-                            <CheckSquare size={12} className="text-emerald-500" />
-                            {starredCandidateNames.has(candidate.name?.toLowerCase().trim()) && (
-                              <span className="text-amber-400" title="High Feedback Score">★</span>
-                            )}
+                            <span className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors">{candidate.name}</span>
+                            <CheckSquare size={10} className="text-emerald-500" />
                           </div>
                           <p className="text-[9px] text-[#9B9BAD] font-bold uppercase tracking-[2px] mt-0.5">{candidate.email.split('@')[0]}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <p className="text-sm font-bold text-[#1A1A2E]">{candidate.role}</p>
+                    <td className="px-6 py-3">
+                      <p className="text-[14px] font-bold text-[#0f172a] dark:text-white">{candidate.role}</p>
                       <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider mt-0.5">{candidate.raw?.position?.department || 'Recruitment'}</p>
                     </td>
-                    <td className="px-6 py-5 text-sm text-[#6B6B7E] font-bold">
+                    <td className="px-6 py-3 text-sm text-[#6B6B7E] font-bold">
                       {formatDate(candidate.appliedDate)}
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${STAGE_COLORS[candidate.stage]?.dot || 'bg-slate-400'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${STAGE_COLORS[candidate.stage]?.dot || 'bg-slate-400'}`} />
                         <span className={`text-[10px] font-bold uppercase tracking-widest ${STAGE_COLORS[candidate.stage]?.count?.split(' ')[1] || 'text-slate-600'}`}>
                           {candidate.stage}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="relative inline-flex items-center group/select">
                         <select
                           value={candidate.stage}
                           onChange={(e) => handleStatusChange(candidate.id, e.target.value)}
-                          className="bg-[#F4F3EF] border-0 rounded-xl pl-4 pr-6 py-2.5 text-[10px] font-extrabold uppercase tracking-widest text-[#1B4DA0] outline-none hover:bg-blue-50 transition-all cursor-pointer appearance-none border-b-2 border-transparent focus:border-[#1B4DA0]/20"
+                          className="bg-[#F4F3EF] border-0 rounded-xl pl-4 pr-6 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#1B4DA0] outline-none hover:bg-blue-50 transition-all cursor-pointer appearance-none border-b-2 border-transparent focus:border-[#1B4DA0]/20"
                         >
                           {PIPELINE_STAGES.map((s) => <option key={s} value={s}>Move to {s}</option>)}
                         </select>
-                        <ChevronRight size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none" />
+                        <ChevronRight size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none" />
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => {
                           if (candidate.cvUrl) {
@@ -950,33 +955,63 @@ export default function CandidatesPage({ setActiveTab }) {
               </div>
 
               <div className="flex items-center gap-4 ml-4">
-                <button
-                  onClick={() => { setSelectedIds([]); toast.error("Batch Rejected"); }}
-                  className="w-10 h-10 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition-all flex items-center justify-center border border-rose-500/10"
-                  title="Reject Selected"
-                >
-                  <Trash2 size={18} />
-                </button>
-                <button
-                  onClick={() => {
-                    const selected = candidates.filter(c => selectedIds.includes(c.id));
-                    const withCV = selected.filter(c => c.cvUrl);
-                    if (withCV.length === 0) {
-                      toast.error("No CVs available for selected candidates");
-                      return;
-                    }
-                    withCV.forEach(c => {
-                      const url = c.cvUrl.startsWith('http') ? c.cvUrl : `${BASE_URL}${c.cvUrl.startsWith('/') ? '' : '/'}${c.cvUrl}`;
-                      window.open(url, '_blank');
-                    });
-                    toast.success(`Opening ${withCV.length} CV(s)...`);
-                    setSelectedIds([]);
-                  }}
-                  className="px-4 h-10 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center justify-center border border-white/5 gap-2 text-[10px] font-bold"
-                >
-                  <FileText size={16} />
-                  VIEW CV
-                </button>
+                 <button
+                   onClick={async () => {
+                     const count = selectedIds.length;
+                     if (window.confirm(`Are you sure you want to reject and remove ${count} selected candidates?`)) {
+                       try {
+                         // Optimistic local state update
+                         const idsToRemove = [...selectedIds];
+                         setCandidates(prev => prev.filter(c => !idsToRemove.includes(c.id)));
+                         setSelectedIds([]);
+                         
+                         const promises = idsToRemove.map(id => 
+                           rejectPipelineCandidate(id, 'Batch Rejected')
+                         );
+                         await Promise.all(promises);
+                         toast.success(`${count} candidates rejected successfully`);
+                       } catch (error) {
+                         toast.error("Failed to reject some candidates");
+                         console.error(error);
+                         fetchCandidates(); // Revert on failure
+                       }
+                     }
+                   }}
+                   className="w-10 h-10 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition-all flex items-center justify-center border border-rose-500/10"
+                   title="Reject Selected"
+                 >
+                   <Trash2 size={18} />
+                 </button>
+                 <button
+                   onClick={() => {
+                     const selected = candidates.filter(c => selectedIds.includes(c.id));
+                     const withCV = selected.filter(c => c.cvUrl);
+                     
+                     if (withCV.length === 0) {
+                       toast.error("No CVs available for selected candidates");
+                       return;
+                     }
+
+                     if (withCV.length > 3 && !window.confirm(`You are about to open ${withCV.length} CVs. Your browser might block these popups. Continue?`)) {
+                       return;
+                     }
+
+                     withCV.forEach((c, index) => {
+                       // Small delay to bypass some simple popup blockers
+                       setTimeout(() => {
+                         const url = c.cvUrl.startsWith('http') ? c.cvUrl : `${BASE_URL}${c.cvUrl.startsWith('/') ? '' : '/'}${c.cvUrl}`;
+                         window.open(url, '_blank');
+                       }, index * 300);
+                     });
+
+                     toast.success(`Opening ${withCV.length} CV(s)...`);
+                     // We don't clear selection here so user can do other actions after viewing
+                   }}
+                   className="px-4 h-10 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center justify-center border border-white/5 gap-2 text-[10px] font-bold"
+                 >
+                   <FileText size={16} />
+                   VIEW CV
+                 </button>
                 <button
                   onClick={() => setSelectedIds([])}
                   className="text-[10px] font-bold text-white/40 hover:text-white transition-all ml-4 uppercase tracking-[2px]"
@@ -1144,6 +1179,20 @@ export default function CandidatesPage({ setActiveTab }) {
                           {selectedCandidate.name}
                         </h3>
                         <CheckSquare size={18} className="text-emerald-500" />
+                        {candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()] && (
+                          <div className="flex items-center gap-1 ml-2">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                size={14}
+                                className={s <= candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()].rating ? "fill-amber-400 text-amber-400" : "text-[#C5C5D2] opacity-30"}
+                              />
+                            ))}
+                            <span className="text-[10px] font-black text-amber-500 ml-1 mt-0.5">
+                              {candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()].rating}/5
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs font-bold text-[#6B6B7E] uppercase tracking-[2px]">{selectedCandidate.role}</span>
@@ -1281,6 +1330,26 @@ export default function CandidatesPage({ setActiveTab }) {
                         ))}
                     </div>
                   </div>
+
+                  {/* Interview Feedback Section */}
+                  {candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()] && (
+                    <div className="space-y-4 pt-4 border-t border-[#F4F3EF]">
+                      <h4 className="text-[10px] font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-3 flex items-center justify-between">
+                        Interviewer Feedback
+                        <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-lg border border-amber-100 uppercase tracking-widest">
+                          {candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()].rating} / 5 STARS
+                        </span>
+                      </h4>
+                      <div className="bg-[#FFF9EE] border border-[#FFE4B5]/30 p-5 rounded-3xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform">
+                          <AlertCircle size={48} className="text-amber-900" />
+                        </div>
+                        <p className="text-sm font-medium text-[#1A1A2E] leading-relaxed relative z-10 italic">
+                          "{candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()].note || "No detailed notes provided."}"
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

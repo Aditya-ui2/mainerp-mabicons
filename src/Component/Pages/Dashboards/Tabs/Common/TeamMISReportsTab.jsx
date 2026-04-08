@@ -350,7 +350,7 @@ const TeamMISReportsTab = () => {
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
       `}</style>
 
-      <div className="w-full font-jakarta">
+      <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
         <AnimatePresence>
           {toast && <Toast message={toast.message} type={toast.type} />}
         </AnimatePresence>
@@ -358,8 +358,8 @@ const TeamMISReportsTab = () => {
         {/* Header */}
         <div className="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 text-left">
           <div>
-            <h1 className="text-[36px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Team MIS Reports</h1>
-            <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide">Daily performance metric summary & team intelligence</p>
+            <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Team MIS Reports</h1>
+            <p className="text-sm font-medium text-[#9B9BAD] mt-1">Daily performance metric summary & team intelligence</p>
           </div>
 
           <div className="flex items-center gap-3">

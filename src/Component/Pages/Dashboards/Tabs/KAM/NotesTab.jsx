@@ -97,17 +97,14 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
       `}</style>
 
-      <div className="w-full font-jakarta">
+      <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
         <>
           <div className="space-y-6">
               {/* Header */}
               <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                 <div>
-                  <h1 className="text-[36px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Notes Hub</h1>
-                  <p className="text-[#9B9BAD] text-sm mt-2 font-medium tracking-wide">
-                    Strategy archives
-                    {!loading && <span> • {notes.length} Active Records</span>}
-                  </p>
+                  <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Notes Hub</h1>
+                  <p className="text-sm font-medium text-[#9B9BAD] mt-1">Strategic knowledge & team archives</p>
                 </div>
 
                 <div className="flex items-center gap-3">

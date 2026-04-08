@@ -1,374 +1,299 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FiMoon, FiSun, FiUser, FiLock, FiBell, FiGlobe, FiCamera, FiShield, FiClock, FiChevronDown, FiCheck } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FiUser, 
+  FiLock, 
+  FiMail, 
+  FiPhone, 
+  FiShield, 
+  FiCamera, 
+  FiCheckCircle, 
+  FiArrowRight,
+  FiLogOut,
+  FiActivity
+} from 'react-icons/fi';
 import { jwtDecode } from 'jwt-decode';
 
 const SettingsTab = () => {
-  const [darkMode, setDarkMode] = useState(false);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [saveMessage, setSaveMessage] = useState({ text: '', type: '' });
   
-  // Profile data
+  // Profile data synchronized with backend fields
   const [profileData, setProfileData] = useState({
-    fullName: 'Admin User',
-    email: 'superadmin@crmpro.com',
-    recoveryEmail: '',
-    statusTag: 'Super Admin',
-    createdAt: new Date().toISOString(),
-    lastLogin: new Date().toISOString(),
+    fullName: 'Sachin (HR Recruitment Head)',
+    email: 'recruitment.mabicons@gmail.com',
+    phone: '+91 9876543210',
+    role: 'HR Recruitment Head',
+    status: 'Active',
+    joinDate: 'April 08, 2026',
   });
-  
-  const [language, setLanguage] = useState('English (US)');
-  const [timezone, setTimezone] = useState('(GMT-05:00) Eastern Time');
-  
-  // Recent activity (mock data that would come from API)
-  const [recentActivity, setRecentActivity] = useState([
-    { action: 'Updated Client Record', entity: 'client-id-123', datetime: new Date().toLocaleString(), status: 'Success' },
-    { action: 'Created Admin', entity: 'admin-id-456', datetime: new Date().toLocaleString(), status: 'Success' },
-  ]);
 
   useEffect(() => {
-    // Load dark mode preference
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(isDarkMode);
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    
-    // Load profile data from token
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const decoded = jwtDecode(token);
+        // Map token fields to profile data
         setProfileData(prev => ({
           ...prev,
-          fullName: decoded.name || 'Admin User',
-          email: decoded.email || 'superadmin@crmpro.com',
-          createdAt: decoded.iat ? new Date(decoded.iat * 1000).toISOString() : new Date().toISOString(),
+          fullName: decoded.name || prev.fullName,
+          email: decoded.email || prev.email,
+          role: decoded.role || decoded.userType || prev.role,
         }));
       } catch (e) {
-        console.log('Error decoding token');
+        console.error('Error decoding token:', e);
       }
     }
   }, []);
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    document.documentElement.classList.toggle('dark', newDarkMode);
+  const handleSaveChanges = async () => {
+    setLoading(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setLoading(false);
+    setSaveMessage({ text: 'Profile updated successfully!', type: 'success' });
+    setTimeout(() => setSaveMessage({ text: '', type: '' }), 3000);
   };
 
   const getInitials = (name) => {
-    return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AA';
+    return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'S';
   };
-
-  const handleSaveChanges = async () => {
-    setLoading(true);
-    setSaveMessage('');
-    
-    try {
-      // Here you would call the API to save changes
-      // await updateSuperAdmin(profileData);
-      
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated delay
-      setSaveMessage('Changes saved successfully!');
-      setTimeout(() => setSaveMessage(''), 3000);
-    } catch (error) {
-      setSaveMessage('Failed to save changes');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePasswordReset = () => {
-    // Trigger password reset flow
-    alert('Password reset email will be sent to your email address.');
-  };
-
-  const Toggle = ({ enabled, onToggle }) => (
-    <button
-      onClick={onToggle}
-      className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors flex-shrink-0 ${
-        enabled ? 'bg-indigo-600' : 'bg-slate-300'
-      }`}
-    >
-      <span
-        className={`inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-          enabled ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0.5'
-        }`}
-      />
-    </button>
-  );
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden space-y-4 sm:space-y-6 px-1 sm:px-0">
-      {/* Header */}
-      <div className="text-center px-2">
-        <h2 className="text-lg sm:text-2xl font-bold text-slate-800">Settings</h2>
-        <p className="text-xs sm:text-base text-slate-500 mt-1">Manage your account settings</p>
-      </div>
-
-      {/* Profile Section Header */}
-      <div className="text-center">
-        <h3 className="text-base sm:text-xl font-semibold text-slate-700">Profile</h3>
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
+    <div className="min-h-screen pb-20 pt-4" style={{ fontFamily: "'Calibri', sans-serif" }}>
+      <div className="max-w-4xl mx-auto px-4 space-y-8">
         
-        {/* Identity & Security */}
-        <div className="bg-white rounded-xl p-3 sm:p-6 shadow-sm border border-slate-100 overflow-hidden">
-          <h4 className="font-semibold text-slate-800 mb-1 text-sm sm:text-base">Identity & Security</h4>
-          <p className="text-[10px] sm:text-sm text-slate-500 mb-3 sm:mb-6">Update your contact details and credentials.</p>
+        {/* Header Section */}
+        <div className="flex flex-col items-center text-center space-y-2 mb-12">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl font-bold text-[#1A1A2E] tracking-tight"
+            style={{ fontFamily: "'Syne', sans-serif" }}
+          >
+            Account Settings
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-[#9B9BAD] font-medium"
+          >
+            Manage your recruitment head profile and security credentials
+          </motion.p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
           
-          {/* Avatar */}
-          <div className="flex flex-col items-center mb-3 sm:mb-6">
-            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xl sm:text-3xl font-bold">
-              {getInitials(profileData.fullName)}
-            </div>
-            <button className="mt-2 sm:mt-3 bg-indigo-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs flex items-center gap-1 hover:bg-indigo-700 transition-colors">
-              <FiCamera className="text-xs sm:text-sm" />
-              Upload
-            </button>
+          {/* Left Side: Identity Card */}
+          <div className="md:col-span-5 space-y-6">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 flex flex-col items-center text-center relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-[#1B4DA0]/5 to-[#6366F1]/5" />
+              
+              <div className="relative mt-4">
+                <div className="w-28 h-28 rounded-[36px] bg-gradient-to-tr from-[#1B4DA0] to-[#6366F1] flex items-center justify-center text-white text-3xl font-bold shadow-xl border-4 border-white">
+                  {getInitials(profileData.fullName)}
+                </div>
+                <button className="absolute -bottom-2 -right-2 w-10 h-10 bg-white shadow-lg rounded-xl flex items-center justify-center text-[#1B4DA0] hover:scale-110 transition-transform border border-gray-100">
+                  <FiCamera size={18} />
+                </button>
+              </div>
+
+              <div className="mt-6 space-y-1">
+                <h2 className="text-xl font-bold text-[#1A1A2E] font-syne">{profileData.fullName}</h2>
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">{profileData.status}</span>
+                </div>
+              </div>
+
+              <div className="w-full mt-8 pt-6 border-t border-gray-50 space-y-4">
+                <div className="flex items-center justify-between text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                      <FiShield size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest leading-none mb-1">Role Type</p>
+                      <p className="text-sm font-bold text-[#1A1A2E]">{profileData.role}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                      <FiActivity size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest leading-none mb-1">Joined Date</p>
+                      <p className="text-sm font-bold text-[#1A1A2E]">{profileData.joinDate}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Logout Action */}
+            <motion.button 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              onClick={() => { localStorage.clear(); window.location.href = '/'; }}
+              className="w-full py-4 px-6 bg-white rounded-2xl border border-gray-100 text-rose-500 font-bold text-sm flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors group"
+            >
+              <FiLogOut className="group-hover:-translate-x-1 transition-transform" />
+              Sign Out from Account
+            </motion.button>
           </div>
-          
-          {/* Form Fields */}
-          <div className="space-y-2 sm:space-y-4">
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1">Full Name</label>
-              <input
-                type="text"
-                value={profileData.fullName}
-                onChange={(e) => setProfileData(prev => ({ ...prev, fullName: e.target.value }))}
-                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                value={profileData.email}
-                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-slate-200 rounded-lg bg-slate-50 truncate"
-                disabled
-              />
-            </div>
-            
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1">Recovery Email</label>
-              <input
-                type="email"
-                value={profileData.recoveryEmail}
-                onChange={(e) => setProfileData(prev => ({ ...prev, recoveryEmail: e.target.value }))}
-                placeholder="Recovery Email"
-                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-0.5">Login Security</label>
-              <p className="text-[10px] sm:text-sm text-slate-500 break-words">Last Login: {new Date(profileData.lastLogin).toLocaleDateString()}</p>
-            </div>
-            
-            <div>
-              <button
-                onClick={handlePasswordReset}
-                className="w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors text-[10px] sm:text-sm"
+
+          {/* Right Side: Configuration Fields */}
+          <div className="md:col-span-7 space-y-6">
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 card-glow"
+            >
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
+                  <FiUser size={20} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">Personal Information</h3>
+              </div>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Legal Full Name</label>
+                    <div className="relative group">
+                      <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1B4DA0] transition-colors" />
+                      <input 
+                        type="text" 
+                        value={profileData.fullName}
+                        onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/20 transition-all outline-none"
+                        placeholder="John Doe"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Email Address</label>
+                    <div className="relative">
+                      <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                        type="email" 
+                        value={profileData.email}
+                        readOnly
+                        className="w-full bg-[#F4F3EF]/50 border-0 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-[#9B9BAD] cursor-not-allowed outline-none"
+                      />
+                    </div>
+                    <p className="text-[10px] text-[#9B9BAD] font-medium mt-1 ml-1">Login email cannot be changed for security</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Phone Number</label>
+                    <div className="relative group">
+                      <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1B4DA0] transition-colors" />
+                      <input 
+                        type="tel" 
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/20 transition-all outline-none"
+                        placeholder="+91 XXXXX XXXXX"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 overflow-hidden relative"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                    <FiLock size={20} />
+                  </div>
+                  <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">Security</h3>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-[#F4F3EF] rounded-2xl border border-dashed border-gray-200">
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-[#1A1A2E]">Update Password</p>
+                  <p className="text-xs text-[#9B9BAD] font-medium">Reset your credential frequently for better safety</p>
+                </div>
+                <button className="px-5 py-2.5 bg-white text-[#1A1A2E] font-bold text-xs rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2">
+                  Reset Now <FiArrowRight size={14} />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Profile Action Bar */}
+            <div className="flex items-center justify-end gap-4 pt-4">
+              <button className="px-8 py-4 bg-transparent text-[#9B9BAD] font-bold text-sm hover:text-[#1A1A2E] transition-colors">
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveChanges}
+                disabled={loading}
+                className={`relative px-10 py-4 bg-[#1B4DA0] text-white font-bold text-sm rounded-2xl shadow-xl shadow-blue-900/10 hover:bg-[#153e82] transition-all flex items-center gap-3 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                <FiLock className="flex-shrink-0 text-xs sm:text-sm" />
-                Reset Password
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <FiCheckCircle size={18} />
+                )}
+                Save Changes
               </button>
             </div>
           </div>
         </div>
 
-        {/* Role & Status */}
-        <div className="bg-white rounded-xl p-3 sm:p-6 shadow-sm border border-slate-100 overflow-hidden">
-          <h4 className="font-semibold text-slate-800 mb-1 text-sm sm:text-base">Role & Status</h4>
-          <p className="text-[10px] sm:text-sm text-slate-500 mb-3 sm:mb-6">Your admin permissions overview.</p>
-          
-          <div className="space-y-3 sm:space-y-4">
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1">Status:</label>
-              <span className="inline-block px-2 py-0.5 sm:py-1 bg-green-100 text-green-700 rounded-full text-[10px] sm:text-sm font-medium">
-                {profileData.statusTag}
-              </span>
-            </div>
-            
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-0.5">Created</label>
-              <p className="text-[10px] sm:text-sm text-slate-500">{new Date(profileData.createdAt).toLocaleDateString()}</p>
-            </div>
-            
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Permissions</label>
-              <ul className="space-y-1.5 sm:space-y-2 text-[10px] sm:text-sm text-slate-600">
-                <li className="flex items-center gap-1.5 sm:gap-2">
-                  <FiShield className="text-amber-500 flex-shrink-0 text-xs sm:text-sm" />
-                  <span className="truncate">System Settings</span>
-                </li>
-                <li className="flex items-center gap-1.5 sm:gap-2">
-                  <FiUser className="text-blue-500 flex-shrink-0 text-xs sm:text-sm" />
-                  <span className="truncate">User Management</span>
-                </li>
-                <li className="flex items-center gap-1.5 sm:gap-2">
-                  <FiBell className="text-green-500 flex-shrink-0 text-xs sm:text-sm" />
-                  <span className="truncate">Client Access</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* My Preferences */}
-        <div className="bg-white rounded-xl p-3 sm:p-6 shadow-sm border border-slate-100 overflow-hidden">
-          <h4 className="font-semibold text-slate-800 mb-1 text-sm sm:text-base">Preferences</h4>
-          <p className="text-[10px] sm:text-sm text-slate-500 mb-3 sm:mb-6">Customize your experience.</p>
-          
-          <div className="space-y-2 sm:space-y-4">
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1">Language</label>
-              <div className="relative">
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-8"
-                >
-                  <option>English (US)</option>
-                  <option>Hindi</option>
-                  <option>Spanish</option>
-                </select>
-                <FiChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs sm:text-sm" />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1">Timezone</label>
-              <div className="relative">
-                <select
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white pr-8"
-                >
-                  <option>Eastern Time</option>
-                  <option>India (IST)</option>
-                  <option>UTC</option>
-                </select>
-                <FiChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs sm:text-sm" />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1.5 sm:mb-3">Notifications</label>
-              <div className="space-y-1.5 sm:space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-sm text-slate-600">Push</span>
-                  <Toggle enabled={pushNotifications} onToggle={() => setPushNotifications(!pushNotifications)} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-sm text-slate-600">Email</span>
-                  <Toggle enabled={emailNotifications} onToggle={() => setEmailNotifications(!emailNotifications)} />
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-[10px] sm:text-sm font-medium text-slate-700 mb-1.5 sm:mb-3">Theme</label>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-sm text-slate-600 flex items-center gap-1 sm:gap-2">
-                  {darkMode ? <FiMoon className="text-xs sm:text-sm" /> : <FiSun className="text-xs sm:text-sm" />}
-                  Dark Mode
-                </span>
-                <Toggle enabled={darkMode} onToggle={toggleDarkMode} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="bg-white rounded-xl p-3 sm:p-6 shadow-sm border border-slate-100 overflow-hidden">
-        <h4 className="font-semibold text-slate-800 mb-1 text-sm sm:text-base">Recent Activity</h4>
-        <p className="text-[10px] sm:text-sm text-slate-500 mb-3 sm:mb-4">Your last actions.</p>
-        
-        {/* Desktop Table */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Action</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Entity</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Datetime</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentActivity.map((activity, index) => (
-                <tr key={index} className="border-b border-slate-50 hover:bg-slate-50">
-                  <td className="py-3 px-4 text-sm text-slate-700">{activity.action}</td>
-                  <td className="py-3 px-4 text-sm text-slate-500">{activity.entity}</td>
-                  <td className="py-3 px-4 text-sm text-slate-500">{activity.datetime}</td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                      activity.status === 'Success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {activity.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Mobile Cards */}
-        <div className="sm:hidden space-y-2">
-          {recentActivity.map((activity, index) => (
-            <div key={index} className="p-2 bg-slate-50 rounded-lg">
-              <div className="flex justify-between items-start gap-2 mb-1">
-                <span className="text-[11px] font-medium text-slate-700 flex-1 truncate">{activity.action}</span>
-                <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                  activity.status === 'Success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                  {activity.status}
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400">{new Date(activity.datetime).toLocaleDateString()}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Save Changes Button */}
-      <div className="flex justify-center pb-4 px-1">
-        <button
-          onClick={handleSaveChanges}
-          disabled={loading}
-          className="w-full sm:w-auto px-4 sm:px-8 py-2 sm:py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 flex items-center justify-center gap-2 text-xs sm:text-base"
-        >
-          {loading ? (
-            <>
-              <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Changes'
+        <AnimatePresence>
+          {saveMessage.text && (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-50 ${
+                saveMessage.type === 'success' ? 'bg-[#1A1A2E] text-white' : 'bg-rose-500 text-white'
+              }`}
+            >
+              {saveMessage.type === 'success' && <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white"><FiCheckCircle size={14} /></div>}
+              <span className="text-sm font-bold">{saveMessage.text}</span>
+            </motion.div>
           )}
-        </button>
+        </AnimatePresence>
+
       </div>
-      
-      {saveMessage && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`text-center py-2 px-4 rounded-lg ${
-            saveMessage.includes('success') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}
-        >
-          {saveMessage}
-        </motion.div>
-      )}
+
+      <style jsx="true">{`
+        .card-glow {
+          position: relative;
+        }
+        .card-glow::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 32px;
+          padding: 1px;
+          background: linear-gradient(135deg, rgba(27, 77, 160, 0.2) 0%, rgba(99, 102, 241, 0.1) 100%);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   );
 };
