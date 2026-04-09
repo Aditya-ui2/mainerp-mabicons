@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Filter, X, MapPin, Users, Clock, ChevronRight, Pencil, Check, Plus, Download, Briefcase, Tag, Globe, AlignLeft, BarChart3, DollarSign, ShieldCheck, Share2, Compass, Waves, TrendingUp, MessageSquare, ExternalLink, Calendar, User, ArrowLeft, RefreshCw, Target, FileText, Clipboard, Award, Layers, Database, Mail, Phone, Star, AlertCircle, CheckCircle, Edit2, Send, Trash2, ChevronDown, UserPlus
+  Search, Filter, X, MapPin, Users, Clock, ChevronRight, Pencil, Check, Plus, Download, Briefcase, Tag, Globe, AlignLeft, BarChart3, DollarSign, ShieldCheck, Share2, Compass, Waves, TrendingUp, MessageSquare, ExternalLink, Calendar, User, ArrowLeft, RefreshCw, Target, FileText, Clipboard, Award, Layers, Database, Mail, Phone, Star, AlertCircle, CheckCircle, Edit2, Send, Trash2, ChevronDown, UserPlus, FileUp
 } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { toast } from "sonner";
 import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers, createDepartmentTask, getAllCandidates, assignResumesToPosition, distributeJobToPlatforms } from '../../../service/api';
@@ -609,8 +610,127 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [assignDropdownJobId, setAssignDropdownJobId] = useState(null);
   const [jobAssignments, setJobAssignments] = useState({});
   const [selectedJobs, setSelectedJobs] = useState([]);
+  const [isUploadingBulk, setIsUploadingBulk] = useState(false);
+  const [bulkPreviewData, setBulkPreviewData] = useState([]);
+  const [showBulkPreview, setShowBulkPreview] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const fileInputRef = useRef(null);
+
+  // ── Bulk Upload Handler ──
+  const handleBulkUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingBulk(true);
+    const toastId = toast.loading("Reading file...");
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+          if (!jsonData || jsonData.length === 0) {
+            toast.error("The file is empty or invalid.", { id: toastId });
+            return;
+          }
+
+          const mappedData = jsonData.map((row, idx) => ({
+            id: `preview-${idx}-${Date.now()}`,
+            title: row.Title || row.title || row.Position || row['Job Title'] || "",
+            clientName: row.Client || row.client || row.Company || row['Company Name'] || "",
+            location: row.Location || row.location || "Remote",
+            type: row.Type || row.type || "Full-time",
+            salary: String(row.Salary || row.salary || row.Package || ""),
+            openings: parseInt(row.Openings || row.openings || 1),
+            experience: String(row.Experience || row.experience || ""),
+            priority: row.Priority || row.priority || "Medium",
+            roleType: row.RoleType || row['Role Type'] || row.Category || "",
+            status: 'Pending review'
+          }));
+
+          setBulkPreviewData(mappedData);
+          setShowBulkPreview(true);
+          toast.success(`Found ${mappedData.length} positions to review`, { id: toastId });
+        } catch (err) {
+          console.error("Parse error:", err);
+          toast.error("Failed to parse file format", { id: toastId });
+        } finally {
+          setIsUploadingBulk(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error("Bulk upload error:", error);
+      toast.error("Error reading file", { id: toastId });
+      setIsUploadingBulk(false);
+    }
+  };
 
   // Handle assign/unassign with backend sync
+  const handleConfirmBulkImport = async () => {
+    setIsUploadingBulk(true);
+    setBulkProgress(0);
+    const total = bulkPreviewData.length;
+    let successCount = 0;
+    
+    const toastId = toast.loading(`Importing 0 / ${total} positions...`);
+
+    for (let i = 0; i < total; i++) {
+        const item = bulkPreviewData[i];
+        try {
+            const clientMatch = clients.find(c => 
+                (c.displayName || '').toLowerCase() === (item.clientName || '').toLowerCase() ||
+                (c.companyName || '').toLowerCase() === (item.clientName || '').toLowerCase()
+            );
+
+            const payload = {
+                title: item.title,
+                clientId: clientMatch?.id || (clients[0]?.id),
+                description: `Imported via bulk upload. Priority: ${item.priority}`,
+                location: item.location,
+                type: item.type,
+                salary: item.salary,
+                status: 'Open',
+                priority: item.priority || 'Medium',
+                openings: item.openings || 1,
+                experience: item.experience,
+                roleType: item.roleType || 'General'
+            };
+
+            await createRecruitmentPosition(payload);
+            successCount++;
+            
+            setBulkPreviewData(prev => prev.map((p, idx) => 
+                idx === i ? { ...p, status: 'Success' } : p
+            ));
+        } catch (error) {
+            console.error(`Failed to import ${item.title}:`, error);
+            setBulkPreviewData(prev => prev.map((p, idx) => 
+                idx === i ? { ...p, status: 'Failed' } : p
+            ));
+        }
+        
+        const progress = Math.round(((i + 1) / total) * 100);
+        setBulkProgress(progress);
+        toast.loading(`Importing ${progress}% complete...`, { id: toastId });
+    }
+
+    toast.success(`Imported ${successCount} positions successfully!`, { id: toastId });
+    setIsUploadingBulk(false);
+    
+    // Refresh jobs
+    const response = await getAllRecruitmentPositions();
+    if (response) {
+      setJobs(response.data || response || []);
+    }
+  };
+
   const handleAssignJob = async (jobId, name) => {
     const prev = { ...jobAssignments };
     if (name) {
@@ -744,7 +864,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         salary: p.salary || '',
         openings: p.openings || 1,
         filled: p.filled || 0,
-        status: p.status || 'Open',
+        status: p.status === 'Closed' ? 'Hold' : (p.status || 'Open'),
         priority: p.priority || 'Medium',
         postedDate: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : '',
         deadline: p.deadline ? new Date(p.deadline).toISOString().split('T')[0] : '',
@@ -1189,21 +1309,26 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     setConfirmDelete(null);
   };
 
-  const handleBulkHold = async () => {
-    if (window.confirm(`Put ${selectedJobs.length} positions on hold?`)) {
+  const handleBulkStatusUpdate = async (targetStatus) => {
+    const actionLabel = targetStatus === 'Hold' ? 'put on hold' : 'opened again';
+    const confirmMsg = targetStatus === 'Hold'
+      ? `Put ${selectedJobs.length} positions on hold?`
+      : `Open ${selectedJobs.length} positions again?`;
+
+    if (window.confirm(confirmMsg)) {
       const originalJobs = [...jobs];
       try {
-        // Optimistic UI Update: update locally first for instant feedback
+        // Optimistic UI Update
         setJobs(prev => prev.map(j =>
-          selectedJobs.includes(j.id) ? { ...j, status: 'Hold' } : j
+          selectedJobs.includes(j.id) ? { ...j, status: targetStatus } : j
         ));
 
-        await Promise.all(selectedJobs.map(id => updateRecruitmentPosition(id, { status: 'Hold' })));
+        await Promise.all(selectedJobs.map(id => updateRecruitmentPosition(id, { status: targetStatus })));
         setSelectedJobs([]);
-        toast.success(`${selectedJobs.length} positions put on hold`);
+        toast.success(`${selectedJobs.length} positions ${actionLabel}`);
         fetchPositions(); // Sync with server
       } catch (err) {
-        console.error('Bulk hold failed:', err);
+        console.error(`Bulk ${targetStatus} failed:`, err);
         toast.error('Failed to update some positions');
         setJobs(originalJobs); // Rollback on failure
       }
@@ -1214,7 +1339,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     total: jobs.length,
     open: jobs.filter(j => j.status === 'Open' || j.status === 'Urgent').length,
     inProgress: jobs.filter(j => j.status === 'In Progress').length,
-    closed: jobs.filter(j => j.status === 'Closed').length,
+    onHold: jobs.filter(j => j.status === 'Hold' || j.status === 'Closed').length,
     totalOpenings: jobs.reduce((sum, j) => sum + j.openings, 0),
     totalFilled: jobs.reduce((sum, j) => sum + j.filled, 0),
   };
@@ -1622,7 +1747,22 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <span className="text-[#0D47A1] font-bold">{filteredJobs.length}</span> Active Positions {filterClient !== 'all' ? `for ${filterClient}` : 'in Recruitment'}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleBulkUpload}
+              accept=".csv, .xlsx, .xls"
+              className="hidden"
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingBulk}
+              className={`flex items-center gap-2 px-6 py-3 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-[#F4F3EF] transition-all shadow-sm active:scale-95 ${isUploadingBulk ? 'opacity-50' : ''}`}
+            >
+              <FileUp size={14} className={isUploadingBulk ? 'animate-bounce' : ''} /> 
+              {isUploadingBulk ? 'Uploading...' : 'Bulk Upload'}
+            </button>
             <button
               onClick={() => { setShowFullPageForm(true); setEditingJob(null); resetModal(); }}
               className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
@@ -1632,11 +1772,11 @@ const JobOpeningsTab = ({ isDarkMode }) => {
           </div>
         </div>
 
-        {/* Filter Bar Redesigned based on Task Assignment style */}
-        <div className="flex flex-wrap items-center gap-3 mb-8">
+        {/* Filter Bar Unification based on Task Assignment style */}
+        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
           {/* Search Bar */}
-          <div className="relative flex-1 min-w-[300px]">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+          <div className="relative flex-1 group min-w-[200px]">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
             <input
               type="text"
               value={searchTerm}
@@ -1651,7 +1791,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             <select
               value={filterClient}
               onChange={(e) => setFilterClient(e.target.value)}
-              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+              className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
             >
               <option value="all">All Clients</option>
               {clients.map(c => <option key={c.id} value={c.displayName}>{c.displayName}</option>)}
@@ -1664,20 +1804,20 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             <select
               value={filterPosition}
               onChange={(e) => setFilterPosition(e.target.value)}
-              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+              className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
             >
               <option value="all">All Status</option>
               <option value="Open">Open</option>
               <option value="Urgent">Urgent</option>
               <option value="Hold">Hold</option>
             </select>
-            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
           </div>
         </div>
 
         {/* Table Interface */}
         <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
-          <div className="grid grid-cols-[40px_1fr_140px_120px_130px_100px_140px_36px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+          <div className="grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -1690,7 +1830,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               />
             </div>
             {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => (
-              <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-center`}>
+              <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start justify-start">
                 {h}
               </div>
             ))}
@@ -1705,7 +1845,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <div
                 key={job.id}
                 onClick={() => setSelectedJob(job)}
-                className="grid grid-cols-[40px_1fr_140px_120px_130px_100px_140px_36px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+                className="grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
               >
                 <div className="flex items-center" onClick={e => e.stopPropagation()}>
                   <input
@@ -1722,27 +1862,33 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     }}
                   />
                 </div>
-                <div>
-                  <p className="text-[14px] font-bold text-[#0f172a] group-hover:text-[#0D47A1] transition-colors flex items-center gap-2">
+                <div className="flex flex-col justify-center items-start min-w-0 py-1">
+                  <p className="text-[14px] font-bold text-[#0f172a] group-hover:text-[#0D47A1] transition-colors truncate text-left">
                     {job.title}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-1">
+                  <div className="flex items-center justify-start gap-1.5 mt-0.5">
                     <MapPin size={11} className="text-[#9B9BAD]" />
-                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{job.location}</span>
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest truncate text-left">{job.location}</span>
                   </div>
                 </div>
-                <div className="text-[13px] font-medium text-[#64748b] truncate flex items-center">{job.client}</div>
-                <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${STATUS_STYLES[job.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
-                  {job.status}
-                </span>
-                <span className="text-sm font-bold text-[#9B9BAD]">
-                  {new Date(job.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
-                    <Users size={14} />
+                <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
+                  {job.client}
+                </div>
+                <div className="flex items-center justify-start py-1">
+                  <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${STATUS_STYLES[job.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
+                    {job.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-start py-1">
+                   <span className="text-xs font-bold text-[#94a3b8]">
+                    {new Date(job.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                   </span>
+                </div>
+                <div className="flex items-center justify-start gap-2 py-1">
+                  <div className="w-7 h-7 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
+                    <Users size={12} />
                   </div>
-                  <span className="text-sm font-black text-[#1A1A2E]">{job.candidateCount}</span>
+                  <span className="text-[13px] font-black text-[#1A1A2E]">{job.candidateCount}</span>
                 </div>
                 <div className="relative" onClick={e => e.stopPropagation()}>
                   {jobAssignments[job.id] ? (
@@ -1841,13 +1987,20 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <span className="text-sm font-bold text-white">positions selected</span>
             </div>
             <div className="flex items-center gap-6">
-              <button
-                onClick={handleBulkHold}
-                className="flex items-center gap-2 text-sm font-bold text-[#1B4DA0] hover:text-[#0D47A1] transition-colors"
-              >
-                <RefreshCw size={18} />
-                Hold Selected
-              </button>
+              {(() => {
+                const selectedData = jobs.filter(j => selectedJobs.includes(j.id));
+                const allHold = selectedData.length > 0 && selectedData.every(j => j.status === 'Hold');
+
+                return (
+                  <button
+                    onClick={() => handleBulkStatusUpdate(allHold ? 'Open' : 'Hold')}
+                    className="flex items-center gap-2 text-sm font-bold text-[#1B4DA0] hover:text-[#0D47A1] transition-colors"
+                  >
+                    <RefreshCw size={18} className={allHold ? "rotate-180" : ""} />
+                    {allHold ? 'Open Again' : 'Hold Selected'}
+                  </button>
+                );
+              })()}
             </div>
             <button
               onClick={() => setSelectedJobs([])}
@@ -1947,7 +2100,140 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         </AnimatePresence>,
         document.body
       )}
+      <BulkJobPreviewModal 
+        show={showBulkPreview}
+        data={bulkPreviewData}
+        progress={bulkProgress}
+        isImporting={isUploadingBulk}
+        onClose={() => setShowBulkPreview(false)}
+        onConfirm={handleConfirmBulkImport}
+      />
     </>
+  );
+};
+
+/* ── Bulk Job Preview Modal ── */
+const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImporting }) => {
+  if (!show) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[2001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-300">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-white rounded-[32px] w-full max-w-5xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+      >
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+          <div>
+            <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Bulk Import Preview
+            </h3>
+            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">
+              Review {data.length} positions found in your file
+            </p>
+          </div>
+          {!isImporting && (
+            <button onClick={onClose} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center">
+              <X size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Progress Bar (Visible during import) */}
+        {isImporting && (
+          <div className="bg-[#F4F3EF] h-1.5 w-full relative overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              className="absolute left-0 top-0 bottom-0 bg-[#0D47A1] shadow-[0_0_10px_rgba(13,71,161,0.5)]"
+            />
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-4 custom-scrollbar">
+          <div className="rounded-2xl border border-[#F4F3EF] overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-[#F8FAFF]">
+                <tr>
+                   {["Position", "Client", "Location", "Role Type", "Salary", "Priority", "Status"].map((h, i) => (
+                      <th key={i} className="px-6 py-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest border-b border-[#F4F3EF]">
+                        {h}
+                      </th>
+                   ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F4F3EF]">
+                {data.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-[#F8FAFF]/50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-bold text-[#1A1A2E] truncate max-w-[200px]">{row.title}</td>
+                    <td className="px-6 py-4 text-[13px] font-medium text-[#64748b]">{row.clientName}</td>
+                    <td className="px-6 py-4 text-[12px] font-bold text-[#9B9BAD] uppercase tracking-wider">{row.location}</td>
+                    <td className="px-6 py-4 text-[13px] font-medium text-[#64748b]">{row.roleType}</td>
+                    <td className="px-6 py-4 text-[13px] font-bold text-[#1A1A2E]">{row.salary}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                        row.priority === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' : 
+                        row.priority === 'High' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
+                      }`}>
+                        {row.priority}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {row.status === 'Success' ? (
+                          <CheckCircle size={14} className="text-emerald-500" />
+                        ) : row.status === 'Failed' ? (
+                          <AlertCircle size={14} className="text-red-500" />
+                        ) : row.status === 'Importing' ? (
+                          <RefreshCw size={14} className="text-[#0D47A1] animate-spin" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-slate-300" />
+                        )}
+                        <span className={`text-[11px] font-bold ${
+                          row.status === 'Success' ? 'text-emerald-600' : 
+                          row.status === 'Failed' ? 'text-red-600' : 'text-slate-500'
+                        }`}>
+                          {row.status}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-8 py-6 border-t border-[#F4F3EF] flex items-center justify-between bg-[#FAFAF8]">
+           <div className="text-sm font-medium text-[#9B9BAD]">
+              {data.filter(r => r.status === 'Success').length} items imported successfully
+           </div>
+           <div className="flex gap-4">
+              <button 
+                onClick={onClose} 
+                disabled={isImporting}
+                className="px-6 py-2.5 bg-white border border-[#E5E5EA] text-[#6B6B7E] rounded-xl text-sm font-bold hover:bg-[#F4F3EF] transition-all disabled:opacity-50"
+              >
+                {progress === 100 ? 'Close' : 'Cancel'}
+              </button>
+              {progress < 100 && (
+                <button 
+                  onClick={onConfirm}
+                  disabled={isImporting}
+                  className="px-8 py-2.5 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isImporting ? <RefreshCw size={14} className="animate-spin" /> : <Check size={16} />}
+                  {isImporting ? `Importing... ${progress}%` : 'Confirm Import'}
+                </button>
+              )}
+           </div>
+        </div>
+      </motion.div>
+    </div>,
+    document.body
   );
 };
 

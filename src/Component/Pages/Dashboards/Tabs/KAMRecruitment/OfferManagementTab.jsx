@@ -127,7 +127,7 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
 
         {/* Content - Scrollable area */}
         <div className="flex-1 p-10 space-y-12 overflow-y-auto custom-scrollbar">
-          
+
           {/* Refined Details Grid - Matching Specific Field List */}
           <div className="grid grid-cols-2 gap-x-8 gap-y-12 px-2">
             <div>
@@ -244,6 +244,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'offerDate', direction: 'desc' });
   const [filterClient, setFilterClient] = useState('all');
+  const [selectedRowIds, setSelectedRowIds] = useState([]);
   const [filterJob, setFilterJob] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
@@ -482,7 +483,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
       const payload = new FormData();
       payload.append('candidateId', offer.candidateId || offer.id);
       payload.append('status', newStatus);
-      
+
       // Keep existing data to avoid overwriting with empties if API requires full object
       payload.append('candidateName', offer.candidateName);
       payload.append('email', offer.email);
@@ -492,7 +493,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
       payload.append('currentCTC', offer.currentCTC);
 
       await saveOffer(payload);
-      
+
       setOffers(prev => prev.map(o => o.id === offerId ? { ...o, status: newStatus } : o));
       if (viewingOffer && viewingOffer.id === offerId) {
         setViewingOffer(prev => ({ ...prev, status: newStatus }));
@@ -510,11 +511,28 @@ const OfferManagementTab = ({ isDarkMode }) => {
     try {
       await deleteOffer(candidateId);
       setOffers(prev => prev.filter(o => o.id !== candidateId));
+      setSelectedRowIds(prev => prev.filter(id => id !== candidateId));
       setViewingOffer(null);
       toast.success("Offer deleted successfully and candidate moved back to pipeline");
     } catch (error) {
       console.error('Failed to delete offer:', error);
       toast.error("Failed to delete offer");
+    }
+  };
+
+  // Selection handlers
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedRowIds(prev =>
+      prev.includes(id) ? prev.filter(rid => rid !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (filteredOffers) => {
+    if (selectedRowIds.length === filteredOffers.length) {
+      setSelectedRowIds([]);
+    } else {
+      setSelectedRowIds(filteredOffers.map(o => o.id));
     }
   };
 
@@ -537,7 +555,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
     const matchesStatus = filterStatus === 'all' || o.status === filterStatus;
     const matchesClient = filterClient === 'all' || o.client === filterClient;
     const matchesJob = filterJob === 'all' || o.position === filterJob;
-    
+
     // Date filter on offerDate
     let matchesDate = true;
     if (dateFilter !== "all" && o.offerDate) {
@@ -546,8 +564,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
       if (dateFilter === "today") {
         matchesDate = o.offerDate === now.toISOString().split('T')[0];
       } else if (dateFilter === "week") {
-        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
-        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23, 59, 59, 999);
         matchesDate = offerTime >= weekStart && offerTime <= weekEnd;
       } else if (dateFilter === "month") {
         matchesDate = offerTime.getMonth() === now.getMonth() && offerTime.getFullYear() === now.getFullYear();
@@ -605,372 +623,481 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
   return (
     <>
-    <div className="p-0 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
-      <style>{`
+      <div className="p-0 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
+        <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif !important; }
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
       `}</style>
-      
-      {/* Main Dashboard Content - Always Rendered */}
-      <div className="max-w-full mx-auto" style={{ fontFamily: "'Calibri', sans-serif" }}>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 flex-wrap gap-4 px-0">
-          <div className="flex flex-col items-start text-left">
-            <h1 className={`text-3xl font-bold tracking-tight font-syne leading-none mb-1 ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>
-              Offer Management
-            </h1>
-            <p className={`text-sm font-medium mt-1 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>
-              {offers.length} Total Compensation Packages In Lifecycle
-            </p>
-          </div>
-          <button
-            onClick={handleCreateOffer}
-            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/10 hover:bg-[#153e82] transition-all active:scale-95 text-center"
-          >
-            <Plus size={18} /> Generate Offer
-          </button>
-        </div>
 
-        {/* Search Bar Container - Matching Candidate/Job tabs */}
-        <div className="bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-[24px] p-2 mb-10 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-4 bg-[#F4F3EF] dark:bg-slate-800 rounded-2xl px-6 h-[48px] flex-1">
-              <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
-              <input 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search candidate, role, or client..."
-                className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold" 
-              />
-            </div>
-            <select
-              value={filterClient}
-              onChange={(e) => setFilterClient(e.target.value)}
-              className="bg-[#F4F3EF] dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-            >
-              <option value="all">All Clients</option>
-              {[...new Set(offers.map(o => o.client).filter(Boolean))].sort().map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <select
-              value={filterJob}
-              onChange={(e) => setFilterJob(e.target.value)}
-              className="bg-[#F4F3EF] dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-            >
-              <option value="all">All Jobs</option>
-              {[...new Set(offers.map(o => o.position).filter(Boolean))].sort().map(j => (
-                <option key={j} value={j}>{j}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Active Filters */}
-        <AnimatePresence>
-          {filterClient !== 'all' && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="flex items-center gap-3 mb-6"
-            >
-              <div className={`px-4 py-2 rounded-2xl border flex items-center gap-3 shadow-sm ${isDarkMode ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-blue-50 border-blue-100 text-[#1B4DA0]'}`}>
-                <FiUsers size={14} />
-                <span className="text-xs font-bold uppercase tracking-widest">Viewing: {filterClient}</span>
-                <button
-                  onClick={() => setFilterClient('all')}
-                  className={`p-1 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-blue-500/20 text-blue-400/60 hover:text-blue-400' : 'hover:bg-blue-100 text-blue-400 hover:text-blue-600'}`}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <p className={`text-[11px] font-medium opacity-50 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>
-                Showing candidates specifically for this account
+        {/* Main Dashboard Content - Always Rendered */}
+        <div className="max-w-full mx-auto" style={{ fontFamily: "'Calibri', sans-serif" }}>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 flex-wrap gap-4 px-0">
+            <div className="flex flex-col items-start text-left">
+              <h1 className={`text-3xl font-bold tracking-tight font-syne leading-none mb-1 ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>
+                Offer Management
+              </h1>
+              <p className={`text-sm font-medium mt-1 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>
+                {offers.length} Total Compensation Packages In Lifecycle
               </p>
-            </motion.div>
+            </div>
+            <button
+              onClick={handleCreateOffer}
+              className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/10 hover:bg-[#153e82] transition-all active:scale-95 text-center"
+            >
+              <Plus size={18} /> Generate Offer
+            </button>
+          </div>
+
+          {/* Search Bar Container - Matching Candidate/Job tabs */}
+          <div className="bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-[24px] p-2 mb-10 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 bg-[#F4F3EF] dark:bg-slate-800 rounded-2xl px-6 h-[48px] flex-1">
+                <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
+                <input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search candidate, role, or client..."
+                  className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold"
+                />
+              </div>
+              <select
+                value={filterClient}
+                onChange={(e) => setFilterClient(e.target.value)}
+                className="bg-[#F4F3EF] dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+              >
+                <option value="all">All Clients</option>
+                {[...new Set(offers.map(o => o.client).filter(Boolean))].sort().map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <select
+                value={filterJob}
+                onChange={(e) => setFilterJob(e.target.value)}
+                className="bg-[#F4F3EF] dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+              >
+                <option value="all">All Jobs</option>
+                {[...new Set(offers.map(o => o.position).filter(Boolean))].sort().map(j => (
+                  <option key={j} value={j}>{j}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Active Filters */}
+          <AnimatePresence>
+            {filterClient !== 'all' && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-3 mb-6"
+              >
+                <div className={`px-4 py-2 rounded-2xl border flex items-center gap-3 shadow-sm ${isDarkMode ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-blue-50 border-blue-100 text-[#1B4DA0]'}`}>
+                  <FiUsers size={14} />
+                  <span className="text-xs font-bold uppercase tracking-widest">Viewing: {filterClient}</span>
+                  <button
+                    onClick={() => setFilterClient('all')}
+                    className={`p-1 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-blue-500/20 text-blue-400/60 hover:text-blue-400' : 'hover:bg-blue-100 text-blue-400 hover:text-blue-600'}`}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <p className={`text-[11px] font-medium opacity-50 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>
+                  Showing candidates specifically for this account
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Offers Deck - Table Interface */}
+          <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-10">
+            <div className="flex items-center gap-8 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
+              <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={filteredOffers.length > 0 && selectedRowIds.length === filteredOffers.length}
+                  onChange={() => toggleSelectAll(filteredOffers)}
+                  className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                />
+              </div>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-10 flex-shrink-0 text-left">Icon</span>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest lg:w-[320px] flex-shrink-0 text-left">Candidate</span>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 px-8 border-x border-[#F4F3EF] dark:border-slate-800 text-left">Client / Status</span>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[140px] text-left">Actions</span>
+            </div>
+
+            {filteredOffers.length === 0 ? (
+              <div className={`py-24 flex flex-col items-center gap-4 text-[#9B9BAD]`}>
+                <div className={`w-16 h-16 rounded-3xl flex items-center justify-center ${isDarkMode ? 'bg-slate-900' : 'bg-[#FAFAF8]'}`}>
+                  <FileText size={32} />
+                </div>
+                <p className="text-sm font-bold">No offers found matching your criteria</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#F4F3EF] dark:divide-slate-800">
+                {filteredOffers.map((offer) => (
+                  <div
+                    key={offer.id}
+                    onClick={() => handleViewOffer(offer)}
+                    className={`group px-8 py-3 transition-all duration-300 cursor-pointer relative z-10 flex flex-col lg:flex-row lg:items-center gap-8 overflow-hidden ${
+                      selectedRowIds.includes(offer.id) 
+                        ? (isDarkMode ? 'bg-blue-500/10' : 'bg-[#F0F7FF]') 
+                        : (isDarkMode ? 'bg-slate-900 hover:bg-slate-800/50' : 'bg-white hover:bg-[#F8FAFF]')
+                    }`}
+                  >
+                    <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedRowIds.includes(offer.id)}
+                        onChange={(e) => toggleSelectRow(offer.id, e)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                      />
+                    </div>
+                    {/* Candidate Info */}
+                    <div className="lg:w-[320px] flex-shrink-0 flex items-start gap-4">
+                      <div className={`w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 flex items-center justify-center text-[#1B4DA0] font-bold text-xs flex-shrink-0 mt-0.5`}>
+                        {getInitials(offer.candidateName)}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-[14px] font-bold text-[#1A1A2E] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
+                          {offer.candidateName}
+                        </h3>
+                        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5 text-left">
+                          {offer.position}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={`flex-1 grid grid-cols-2 gap-8 px-0 lg:px-8 lg:border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
+                      <div>
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-1 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Client</p>
+                        <p className={`text-[13px] font-medium ${isDarkMode ? 'text-white' : 'text-[#64748b]'}`}>{offer.client || '—'}</p>
+                      </div>
+                      <div>
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-1 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Hiring Stage</p>
+                        <StatusBadge status={offer.status} />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-start gap-6 flex-shrink-0 w-[140px]">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] group-hover:text-[#1B4DA0] group-hover:bg-[#F8FAFF] shadow-sm`}>
+                        <ChevronRight size={16} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {showFullPageForm && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleBackToOffers}
+                className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+              />
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl custom-scrollbar"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">
+                      {editingOffer ? 'Edit Offer' : 'Generate New Offer'}
+                    </h2>
+                    <p className="text-[10px] font-bold text-[#9B9BAD] mt-1">
+                      Offer Lifecycle Management
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleBackToOffers}
+                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-10 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="relative">
+                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Candidate Name *</label>
+                      <input
+                        type="text"
+                        value={formData.candidateName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, candidateId: '', candidateName: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                        onFocus={() => {
+                          if (candidateSuggestions.length > 0) setShowCandidateSuggestions(true);
+                        }}
+                        placeholder="Search candidate..."
+                      />
+                      <AnimatePresence>
+                        {showCandidateSuggestions && candidateSuggestions.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="absolute z-50 w-full mt-2 rounded-2xl shadow-xl bg-white border border-[#F4F3EF] overflow-hidden max-h-64 overflow-y-auto font-jakarta"
+                          >
+                            {candidateSuggestions.map((candidate) => (
+                              <button
+                                key={candidate.id}
+                                type="button"
+                                onClick={() => handleSelectCandidateSuggestion(candidate)}
+                                className="w-full text-left px-5 py-3.5 transition-all hover:bg-[#F4F3EF] border-b border-[#F4F3EF] last:border-b-0"
+                              >
+                                <div className="font-bold text-sm text-[#1A1A2E]">{candidate.name}</div>
+                                <div className="text-[10px] text-[#9B9BAD] font-medium">Pipeline: {candidate.position || 'General'}</div>
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Email Address *</label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                        placeholder="email@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Target Position *</label>
+                      <input
+                        type="text"
+                        value={formData.position}
+                        onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                        placeholder="e.g. Frontend Developer"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Hiring Client *</label>
+                      <input
+                        type="text"
+                        value={formData.client}
+                        onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                        placeholder="Client Name"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Current CTC (LPA)</label>
+                      <input
+                        type="text"
+                        value={formData.currentCTC}
+                        onChange={(e) => setFormData(prev => ({ ...prev, currentCTC: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                        placeholder="e.g. 12.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Proposed CTC (LPA) *</label>
+                      <input
+                        type="text"
+                        value={formData.offeredCTC}
+                        onChange={(e) => setFormData(prev => ({ ...prev, offeredCTC: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1B4DA0] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                        placeholder="e.g. 15.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Offer Date</label>
+                      <input
+                        type="date"
+                        value={formData.offerDate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Joining Date</label>
+                      <input
+                        type="date"
+                        value={formData.joiningDate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Negotiation Notes</label>
+                    <textarea
+                      value={formData.negotiationNotes}
+                      onChange={(e) => setFormData(prev => ({ ...prev, negotiationNotes: e.target.value }))}
+                      rows={3}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50 resize-none text-left"
+                      placeholder="Additional details about the offer..."
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="group relative flex flex-col items-center justify-center w-full py-8 rounded-2xl border-2 border-dashed bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="p-3 rounded-xl bg-white shadow-sm mb-2">
+                          <Paperclip className="w-5 h-5 text-[#1B4DA0]" />
+                        </div>
+                        <p className="text-xs font-bold text-[#1A1A2E]">
+                          {formData.offerLetterName || 'Click to upload Signed Offer Letter (PDF)'}
+                        </p>
+                        <p className="text-[10px] font-bold text-[#9B9BAD] mt-1">Max 10MB</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setFormData(prev => ({
+                            ...prev,
+                            offerLetter: file,
+                            offerLetterName: file?.name || prev.offerLetterName || '',
+                          }));
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="pt-6 flex gap-4 border-t border-[#F4F3EF]">
+                    <button
+                      onClick={handleBackToOffers}
+                      className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleSaveOffer}
+                      className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-xl shadow-blue-500/10 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2"
+                    >
+                      {editingOffer ? <Edit2 size={18} /> : <Plus size={18} />}
+                      {editingOffer ? 'Update Offer' : 'Generate Offer'}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
-        {/* Offers Deck - Table Interface */}
-        <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-10">
-          <div className="flex items-center gap-8 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
-            <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-10 flex-shrink-0 text-center">Icon</span>
-            <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest lg:w-[320px] flex-shrink-0">Candidate</span>
-            <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 px-8 border-x border-[#F4F3EF] dark:border-slate-800">Client / Status</span>
-            <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[140px] text-right">Actions</span>
-          </div>
+        <AnimatePresence>
+          {viewingOffer && (
+            <OfferDetailDrawer
+              offer={viewingOffer}
+              onClose={() => setViewingOffer(null)}
+              onEdit={handleEditOffer}
+              onDelete={handleDeleteOffer}
+              onStatusUpdate={handleUpdateStatus}
+              isDarkMode={isDarkMode}
+            />
+          )}
+        </AnimatePresence>
 
-          {filteredOffers.length === 0 ? (
-            <div className={`py-24 flex flex-col items-center gap-4 text-[#9B9BAD]`}>
-              <div className={`w-16 h-16 rounded-3xl flex items-center justify-center ${isDarkMode ? 'bg-slate-900' : 'bg-[#FAFAF8]'}`}>
-                <FileText size={32} />
-              </div>
-              <p className="text-sm font-bold">No offers found matching your criteria</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-[#F4F3EF] dark:divide-slate-800">
-              {filteredOffers.map((offer) => (
-                <div
-                  key={offer.id}
-                  onClick={() => handleViewOffer(offer)}
-                  className={`group bg-white dark:bg-slate-900 px-8 py-3 hover:bg-[#F8FAFF] dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer relative z-10 flex flex-col lg:flex-row lg:items-center gap-8 overflow-hidden`}
-                >
-                  <div className="flex items-center gap-5 lg:w-[320px] flex-shrink-0">
-                    <div className={`w-[42px] h-[42px] rounded-[14px] flex items-center justify-center text-[13px] font-bold flex-shrink-0 shadow-sm transition-transform duration-500 group-hover:scale-105 bg-[#F8FAFF] dark:bg-slate-800 text-[#1B4DA0] dark:text-blue-400 border border-[#EEF2FB] dark:border-slate-700`}>
-                      {getInitials(offer.candidateName)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className={`text-[14px] font-bold truncate transition-colors ${isDarkMode ? 'text-white group-hover:text-blue-400' : 'text-[#0f172a] group-hover:text-[#1B4DA0]'}`}>{offer.candidateName}</p>
-                        <BadgeCheck size={14} className="text-[#10B981] flex-shrink-0" />
-                      </div>
-                      <p className={`text-[10px] font-bold uppercase tracking-[0.2em] truncate ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>{offer.position}</p>
-                    </div>
+        {/* Floating Bulk Action Bar */}
+        <AnimatePresence>
+          {selectedRowIds.length > 0 && (
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl px-4">
+              <motion.div
+                initial={{ y: 100, opacity: 0, scale: 0.9 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 100, opacity: 0, scale: 0.9 }}
+                className={`rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl border border-white/20 p-4 flex items-center justify-between gap-4 ${
+                  isDarkMode ? 'bg-slate-900/90' : 'bg-[#1A1A2E]/95'
+                } text-white`}
+              >
+                <div className="flex items-center gap-4 pl-2">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">
+                    {selectedRowIds.length}
                   </div>
-
-                  <div className={`flex-1 grid grid-cols-2 gap-8 px-0 lg:px-8 lg:border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
-                    <div>
-                      <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-1 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Client</p>
-                      <p className={`text-[13px] font-medium ${isDarkMode ? 'text-white' : 'text-[#64748b]'}`}>{offer.client || '—'}</p>
-                    </div>
-                    <div>
-                      <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-1 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Hiring Stage</p>
-                      <StatusBadge status={offer.status} />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between lg:justify-end gap-6 flex-shrink-0 w-[140px]">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] group-hover:text-[#1B4DA0] group-hover:bg-[#F8FAFF] shadow-sm`}>
-                      <ChevronRight size={16} />
-                    </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-400">Selected</p>
+                    <p className="text-[10px] font-medium opacity-60">Offer Records</p>
                   </div>
                 </div>
-              ))}
+
+                <div className="flex items-center gap-2">
+                  {selectedRowIds.length === 1 && (
+                    <button
+                      onClick={() => {
+                        const offer = offers.find(o => o.id === selectedRowIds[0]);
+                        if (offer) handleEditOffer(offer);
+                        setSelectedRowIds([]);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-xs font-bold"
+                    >
+                      <Edit2 size={14} className="text-blue-400" />
+                      Edit
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      selectedRowIds.forEach(id => handleUpdateStatus(id, 'Sent'));
+                      setSelectedRowIds([]);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-xs font-bold"
+                  >
+                    <Send size={14} className="text-emerald-400" />
+                    Mark Sent
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      selectedRowIds.forEach(id => handleUpdateStatus(id, 'Declined'));
+                      setSelectedRowIds([]);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-xs font-bold text-rose-400"
+                  >
+                    <XCircle size={14} />
+                    Reject
+                  </button>
+
+                  <div className="w-px h-8 bg-white/10 mx-1" />
+
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Are you sure you want to delete ${selectedRowIds.length} offers?`)) {
+                        selectedRowIds.forEach(id => handleDeleteOffer(id));
+                        setSelectedRowIds([]);
+                      }
+                    }}
+                    className="w-10 h-10 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 flex items-center justify-center transition-all"
+                    title="Bulk Delete"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedRowIds([])}
+                    className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </motion.div>
             </div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
-
-      <AnimatePresence>
-        {showFullPageForm && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleBackToOffers}
-              className="absolute inset-0 bg-black/60 backdrop-blur-xl"
-            />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl custom-scrollbar"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                <div>
-                <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">
-                  {editingOffer ? 'Edit Offer' : 'Generate New Offer'}
-                </h2>
-                <p className="text-[10px] font-bold text-[#9B9BAD] mt-1">
-                  Offer Lifecycle Management
-                </p>
-                </div>
-                <button
-                  onClick={handleBackToOffers}
-                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="p-10 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="relative">
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Candidate Name *</label>
-                    <input
-                      type="text"
-                      value={formData.candidateName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, candidateId: '', candidateName: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                      onFocus={() => {
-                        if (candidateSuggestions.length > 0) setShowCandidateSuggestions(true);
-                      }}
-                      placeholder="Search candidate..."
-                    />
-                    <AnimatePresence>
-                      {showCandidateSuggestions && candidateSuggestions.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          className="absolute z-50 w-full mt-2 rounded-2xl shadow-xl bg-white border border-[#F4F3EF] overflow-hidden max-h-64 overflow-y-auto font-jakarta"
-                        >
-                          {candidateSuggestions.map((candidate) => (
-                            <button
-                              key={candidate.id}
-                              type="button"
-                              onClick={() => handleSelectCandidateSuggestion(candidate)}
-                              className="w-full text-left px-5 py-3.5 transition-all hover:bg-[#F4F3EF] border-b border-[#F4F3EF] last:border-b-0"
-                            >
-                              <div className="font-bold text-sm text-[#1A1A2E]">{candidate.name}</div>
-                              <div className="text-[10px] text-[#9B9BAD] font-medium">Pipeline: {candidate.position || 'General'}</div>
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Email Address *</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                      placeholder="email@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Target Position *</label>
-                    <input
-                      type="text"
-                      value={formData.position}
-                      onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                      placeholder="e.g. Frontend Developer"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Hiring Client *</label>
-                    <input
-                      type="text"
-                      value={formData.client}
-                      onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                      placeholder="Client Name"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Current CTC (LPA)</label>
-                    <input
-                      type="text"
-                      value={formData.currentCTC}
-                      onChange={(e) => setFormData(prev => ({ ...prev, currentCTC: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                      placeholder="e.g. 12.0"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Proposed CTC (LPA) *</label>
-                    <input
-                      type="text"
-                      value={formData.offeredCTC}
-                      onChange={(e) => setFormData(prev => ({ ...prev, offeredCTC: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1B4DA0] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                      placeholder="e.g. 15.5"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Offer Date</label>
-                    <input
-                      type="date"
-                      value={formData.offerDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Joining Date</label>
-                    <input
-                      type="date"
-                      value={formData.joiningDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Negotiation Notes</label>
-                  <textarea
-                    value={formData.negotiationNotes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, negotiationNotes: e.target.value }))}
-                    rows={3}
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50 resize-none text-left"
-                    placeholder="Additional details about the offer..."
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <label className="group relative flex flex-col items-center justify-center w-full py-8 rounded-2xl border-2 border-dashed bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
-                    <div className="flex flex-col items-center text-center">
-                      <div className="p-3 rounded-xl bg-white shadow-sm mb-2">
-                        <Paperclip className="w-5 h-5 text-[#1B4DA0]" />
-                      </div>
-                      <p className="text-xs font-bold text-[#1A1A2E]">
-                        {formData.offerLetterName || 'Click to upload Signed Offer Letter (PDF)'}
-                      </p>
-                      <p className="text-[10px] font-bold text-[#9B9BAD] mt-1">Max 10MB</p>
-                    </div>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        setFormData(prev => ({
-                          ...prev,
-                          offerLetter: file,
-                          offerLetterName: file?.name || prev.offerLetterName || '',
-                        }));
-                      }}
-                    />
-                  </label>
-                </div>
-
-                <div className="pt-6 flex gap-4 border-t border-[#F4F3EF]">
-                  <button
-                    onClick={handleBackToOffers}
-                    className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleSaveOffer}
-                    className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-xl shadow-blue-500/10 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2"
-                  >
-                    {editingOffer ? <Edit2 size={18} /> : <Plus size={18} />}
-                    {editingOffer ? 'Update Offer' : 'Generate Offer'}
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {viewingOffer && (
-          <OfferDetailDrawer
-            offer={viewingOffer}
-            onClose={() => setViewingOffer(null)}
-            onEdit={handleEditOffer}
-            onDelete={handleDeleteOffer}
-            onStatusUpdate={handleUpdateStatus}
-            isDarkMode={isDarkMode}
-          />
-        )}
-      </AnimatePresence>
-    </div>
     </>
   );
 };

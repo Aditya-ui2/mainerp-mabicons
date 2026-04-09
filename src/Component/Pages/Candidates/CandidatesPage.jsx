@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
-  X, Mail, Phone, Calendar, ChevronRight, Plus, Download, Search, Filter,
+  X, Mail, Phone, Calendar, ChevronRight, ChevronDown, Plus, Download, Search, Filter,
   User, Briefcase, Tag, AlignLeft, LayoutGrid, List, AlertCircle,
   CheckSquare, Square, Trash2, Send, MapPin, DollarSign, Clock, Award,
   FileText, Upload, Eye, Video, Star
@@ -469,7 +469,7 @@ export default function CandidatesPage({ setActiveTab }) {
       result = result.filter(c => (c.clientName?.trim() || "Internal Team") === selectedClientFilter);
     }
     if (targetRoleFilter) {
-      result = result.filter(c => c.role === targetRoleFilter);
+      result = result.filter(c => c.positionId === targetRoleFilter || c.role === targetRoleFilter);
     }
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
@@ -626,22 +626,26 @@ export default function CandidatesPage({ setActiveTab }) {
           />
         </div>
 
-        <select
-          value={dateFilter}
-          onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
-        >
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="week">This Week</option>
-          <option value="prev-week">Previous Week</option>
-          <option value="month">This Month</option>
-          <option value="prev-month">Previous Month</option>
-          <option value="quarter">This Quarter</option>
-          <option value="prev-quarter">Previous Quarter</option>
-          <option value="year">This Year</option>
-          <option value="custom">Custom Range</option>
-        </select>
+        <div className="relative">
+          <select
+            value={dateFilter}
+            onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="prev-week">Previous Week</option>
+            <option value="month">This Month</option>
+            <option value="prev-month">Previous Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="prev-quarter">Previous Quarter</option>
+            <option value="year">This Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          <ChevronDown size={14} className="absolute right-7 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+        </div>
+
         {dateFilter === 'custom' && (
           <div className="flex items-center gap-2">
             <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
@@ -651,31 +655,38 @@ export default function CandidatesPage({ setActiveTab }) {
               className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer" />
           </div>
         )}
-        <select
-          value={targetRoleFilter}
-          onChange={(e) => setTargetRoleFilter(e.target.value)}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
-        >
-          <option value="">All Roles</option>
-          {positions.map(p => (
-            <option key={p.id} value={p.title}>{p.title}</option>
-          ))}
-        </select>
+
+        <div className="relative">
+          <select
+            value={targetRoleFilter}
+            onChange={(e) => setTargetRoleFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="">All Openings</option>
+            {positions.map(p => (
+              <option key={p.id} value={p.id}>{p.title} {p.clientName ? `(${p.clientName})` : ''}</option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="absolute right-7 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+        </div>
 
         {/* Client Filter Dropdown */}
-        <select
-          value={selectedClientFilter}
-          onChange={(e) => setSelectedClientFilter(e.target.value)}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer"
-        >
-          <option value="All Clients">All Clients</option>
-          <option value="Google">Google</option>
-          <option value="Microsoft">Microsoft</option>
-          <option value="Amazon">Amazon</option>
-          {activeClientNames.filter(name => !["Google", "Microsoft", "Amazon"].includes(name)).map(name => (
-            <option key={name} value={name}>{name}</option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={selectedClientFilter}
+            onChange={(e) => setSelectedClientFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="All Clients">All Clients</option>
+            <option value="Google">Google</option>
+            <option value="Microsoft">Microsoft</option>
+            <option value="Amazon">Amazon</option>
+            {activeClientNames.filter(name => !["Google", "Microsoft", "Amazon"].includes(name)).map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+        </div>
 
       </div>
 
@@ -745,11 +756,11 @@ export default function CandidatesPage({ setActiveTab }) {
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <p className="text-sm font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors pb-0.5" style={{ fontFamily: "'Syne', sans-serif" }}>
+                                <p className="text-sm font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors pb-0.5">
                                   {candidate.name}
-                              </p>
-                              <CheckSquare size={12} className="text-emerald-500 flex-shrink-0" />
-                            </div>
+                                </p>
+                                <CheckSquare size={12} className="text-emerald-500 flex-shrink-0" />
+                              </div>
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleSelect(candidate.id); }}
                                 className={`p-1 rounded-md transition-all ${selectedIds.includes(candidate.id) ? 'text-[#1B4DA0]' : 'text-[#C5C5D2] hover:bg-[#F4F3EF] opacity-0 group-hover:opacity-100'}`}
@@ -769,12 +780,12 @@ export default function CandidatesPage({ setActiveTab }) {
                               <Briefcase size={10} />
                               Pipeline Progress
                             </span>
-                            <span>{Math.round(((PIPELINE_STAGES.indexOf(candidate.stage) + 1) / PIPELINE_STAGES.length) * 100)}%</span>
+                            <span>{Math.round(((Math.max(0, PIPELINE_STAGES.indexOf(candidate.stage)) + 1) / PIPELINE_STAGES.length) * 100)}%</span>
                           </div>
-                          <div className="h-1 bg-[#F4F3EF] rounded-full overflow-hidden">
+                          <div className="h-1.5 bg-[#F4F3EF] rounded-full overflow-hidden shadow-inner">
                             <div
-                              className="h-full bg-slate-300 transition-all duration-700"
-                              style={{ width: `${((PIPELINE_STAGES.indexOf(candidate.stage) + 1) / PIPELINE_STAGES.length) * 100}%` }}
+                              className="h-full bg-slate-500 transition-all duration-700 rounded-full shadow-sm"
+                              style={{ width: `${((Math.max(0, PIPELINE_STAGES.indexOf(candidate.stage)) + 1) / PIPELINE_STAGES.length) * 100}%` }}
                             />
                           </div>
                         </div>
@@ -843,7 +854,7 @@ export default function CandidatesPage({ setActiveTab }) {
                     </button>
                   </th>
                   {["Candidate Info", "Department / Role", "Applied Date", "Pipeline Stage", "Quick Actions", ""].map((h) => (
-                    <th key={h} className={`py-4 px-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${h === "" ? "text-right" : ""}`}>{h}</th>
+                    <th key={h} className={`py-4 px-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${h === "" ? "text-right" : ""}`} style={{ fontFamily: "'Syne', sans-serif" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -955,63 +966,63 @@ export default function CandidatesPage({ setActiveTab }) {
               </div>
 
               <div className="flex items-center gap-4 ml-4">
-                 <button
-                   onClick={async () => {
-                     const count = selectedIds.length;
-                     if (window.confirm(`Are you sure you want to reject and remove ${count} selected candidates?`)) {
-                       try {
-                         // Optimistic local state update
-                         const idsToRemove = [...selectedIds];
-                         setCandidates(prev => prev.filter(c => !idsToRemove.includes(c.id)));
-                         setSelectedIds([]);
-                         
-                         const promises = idsToRemove.map(id => 
-                           rejectPipelineCandidate(id, 'Batch Rejected')
-                         );
-                         await Promise.all(promises);
-                         toast.success(`${count} candidates rejected successfully`);
-                       } catch (error) {
-                         toast.error("Failed to reject some candidates");
-                         console.error(error);
-                         fetchCandidates(); // Revert on failure
-                       }
-                     }
-                   }}
-                   className="w-10 h-10 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition-all flex items-center justify-center border border-rose-500/10"
-                   title="Reject Selected"
-                 >
-                   <Trash2 size={18} />
-                 </button>
-                 <button
-                   onClick={() => {
-                     const selected = candidates.filter(c => selectedIds.includes(c.id));
-                     const withCV = selected.filter(c => c.cvUrl);
-                     
-                     if (withCV.length === 0) {
-                       toast.error("No CVs available for selected candidates");
-                       return;
-                     }
+                <button
+                  onClick={async () => {
+                    const count = selectedIds.length;
+                    if (window.confirm(`Are you sure you want to reject and remove ${count} selected candidates?`)) {
+                      try {
+                        // Optimistic local state update
+                        const idsToRemove = [...selectedIds];
+                        setCandidates(prev => prev.filter(c => !idsToRemove.includes(c.id)));
+                        setSelectedIds([]);
 
-                     if (withCV.length > 3 && !window.confirm(`You are about to open ${withCV.length} CVs. Your browser might block these popups. Continue?`)) {
-                       return;
-                     }
+                        const promises = idsToRemove.map(id =>
+                          rejectPipelineCandidate(id, 'Batch Rejected')
+                        );
+                        await Promise.all(promises);
+                        toast.success(`${count} candidates rejected successfully`);
+                      } catch (error) {
+                        toast.error("Failed to reject some candidates");
+                        console.error(error);
+                        fetchCandidates(); // Revert on failure
+                      }
+                    }
+                  }}
+                  className="w-10 h-10 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition-all flex items-center justify-center border border-rose-500/10"
+                  title="Reject Selected"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <button
+                  onClick={() => {
+                    const selected = candidates.filter(c => selectedIds.includes(c.id));
+                    const withCV = selected.filter(c => c.cvUrl);
 
-                     withCV.forEach((c, index) => {
-                       // Small delay to bypass some simple popup blockers
-                       setTimeout(() => {
-                         const url = c.cvUrl.startsWith('http') ? c.cvUrl : `${BASE_URL}${c.cvUrl.startsWith('/') ? '' : '/'}${c.cvUrl}`;
-                         window.open(url, '_blank');
-                       }, index * 300);
-                     });
+                    if (withCV.length === 0) {
+                      toast.error("No CVs available for selected candidates");
+                      return;
+                    }
 
-                     toast.success(`Opening ${withCV.length} CV(s)...`);
-                     // We don't clear selection here so user can do other actions after viewing
-                   }}
-                   className="px-4 h-10 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center justify-center border border-white/5 gap-2 text-[10px] font-bold"
-                 >
-                   <FileText size={16} />
-                   VIEW CV
-                 </button>
+                    if (withCV.length > 3 && !window.confirm(`You are about to open ${withCV.length} CVs. Your browser might block these popups. Continue?`)) {
+                      return;
+                    }
+
+                    withCV.forEach((c, index) => {
+                      // Small delay to bypass some simple popup blockers
+                      setTimeout(() => {
+                        const url = c.cvUrl.startsWith('http') ? c.cvUrl : `${BASE_URL}${c.cvUrl.startsWith('/') ? '' : '/'}${c.cvUrl}`;
+                        window.open(url, '_blank');
+                      }, index * 300);
+                    });
+
+                    toast.success(`Opening ${withCV.length} CV(s)...`);
+                    // We don't clear selection here so user can do other actions after viewing
+                  }}
+                  className="px-4 h-10 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center justify-center border border-white/5 gap-2 text-[10px] font-bold"
+                >
+                  <FileText size={16} />
+                  VIEW CV
+                </button>
                 <button
                   onClick={() => setSelectedIds([])}
                   className="text-[10px] font-bold text-white/40 hover:text-white transition-all ml-4 uppercase tracking-[2px]"
@@ -1220,13 +1231,13 @@ export default function CandidatesPage({ setActiveTab }) {
                       <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1.5 leading-none flex items-center gap-1.5">
                         <Mail size={10} /> Email
                       </p>
-                      <p className="text-xs font-bold text-[#1A1A2E] truncate" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedCandidate.email}</p>
+                      <p className="text-xs font-bold text-[#1A1A2E] truncate">{selectedCandidate.email}</p>
                     </div>
                     <div className="bg-[#FAFAF8] p-4 rounded-2xl border border-[#F4F3EF]">
                       <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1.5 leading-none flex items-center gap-1.5">
                         <Phone size={10} /> Phone
                       </p>
-                      <p className="text-xs font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedCandidate.phone}</p>
+                      <p className="text-xs font-bold text-[#1A1A2E]">{selectedCandidate.phone}</p>
                     </div>
                   </div>
 
@@ -1903,7 +1914,7 @@ export default function CandidatesPage({ setActiveTab }) {
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Salary (CTC) *</label>
-                <input 
+                <input
                   className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
                   placeholder="e.g., 12 LPA"
                   value={offerForm.salary}
@@ -1932,7 +1943,7 @@ export default function CandidatesPage({ setActiveTab }) {
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Notes</label>
-                <textarea 
+                <textarea
                   className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50 min-h-[100px] resize-none"
                   placeholder="Additional notes..."
                   value={offerForm.notes}

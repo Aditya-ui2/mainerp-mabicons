@@ -96,7 +96,7 @@ const TaskDetailView = ({ task, onBack, onEdit }) => {
             <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">RECRUITMENT OPERATIONS</p>
           </div>
         </div>
-        <button 
+        <button
           onClick={() => onEdit(task)}
           className="flex items-center gap-2 px-5 py-2.5 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20"
         >
@@ -167,7 +167,7 @@ const TaskDetailView = ({ task, onBack, onEdit }) => {
 
       {/* Footer */}
       <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF8]">
-        <button 
+        <button
           onClick={onBack}
           className="w-full py-4 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-bold text-sm hover:bg-[#F4F3EF] transition-all"
         >
@@ -417,7 +417,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
             <option value="High">High</option>
             <option value="Urgent">Urgent</option>
           </select>
-          <FiChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none rotate-90" size={14} />
+          <FiChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none rotate-90" size={14} />
         </div>
 
         <div className="relative">
@@ -482,8 +482,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                 </tr>
               ) : (
                 filteredTasks.map((task) => (
-                  <tr 
-                    key={task.id} 
+                  <tr
+                    key={task.id}
                     onClick={() => {
                       setViewingTask(task);
                       setShowDrawer(true);
@@ -542,11 +542,11 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                         >
                           <FiEdit2 size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setConfirmDelete(task.id);
-                          }} 
+                          }}
                           className="p-2 text-[#9B9BAD] hover:text-[#E11D48] transition-colors"
                         >
                           <FiTrash2 size={16} />
@@ -786,8 +786,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
                 className="fixed inset-y-0 right-0 w-full sm:w-[500px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
               >
-                <TaskDetailView 
-                  task={viewingTask} 
+                <TaskDetailView
+                  task={viewingTask}
                   onBack={() => { setShowDrawer(false); setViewingTask(null); }}
                   onEdit={(task) => {
                     setEditingTask(task);

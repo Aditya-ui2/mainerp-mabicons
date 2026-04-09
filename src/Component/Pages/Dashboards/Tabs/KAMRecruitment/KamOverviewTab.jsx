@@ -39,7 +39,6 @@ const RupeeIcon = ({ className }) => (
 const StatusBadge = ({ status, isDarkMode }) => {
   const configs = {
     Open: { bg: '#dcfce7', text: '#16a34a', darkBg: 'rgba(22, 163, 74, 0.2)', icon: FiCheckCircle },
-    Closed: { bg: '#f1f5f9', text: '#64748b', darkBg: 'rgba(100, 116, 139, 0.2)', icon: FiCheckCircle },
     Hold: { bg: '#fef3c7', text: '#d97706', darkBg: 'rgba(217, 119, 6, 0.2)', icon: FiPauseCircle },
   };
   const config = configs[status] || configs.Open;
@@ -126,9 +125,6 @@ const ClientCard = ({ client, isDarkMode, onViewDetails }) => {
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
                 {client.positions.filter(p => p.status === 'Hold').length} Hold
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}>
-                {client.positions.filter(p => p.status === 'Closed').length} Closed
               </span>
             </div>
             <motion.div
@@ -262,7 +258,6 @@ const KamCard = ({ kam, isDarkMode, isExpanded, onToggle }) => {
   const totalPositions = kam.clients.reduce((sum, c) => sum + c.positions.length, 0);
   const openPositions = kam.clients.reduce((sum, c) => sum + c.positions.filter(p => p.status === 'Open').length, 0);
   const holdPositions = kam.clients.reduce((sum, c) => sum + c.positions.filter(p => p.status === 'Hold').length, 0);
-  const closedPositions = kam.clients.reduce((sum, c) => sum + c.positions.filter(p => p.status === 'Closed').length, 0);
   const totalCVs = kam.clients.reduce((sum, c) => sum + c.positions.reduce((s, p) => s + p.sharedCVs, 0), 0);
   const shortlisted = kam.clients.reduce((sum, c) => sum + c.positions.reduce((s, p) => s + p.shortlisted, 0), 0);
 
@@ -443,7 +438,17 @@ const KamOverviewTab = ({ isDarkMode }) => {
     try {
       const res = await getKamsWithRecruitment();
       if (res?.success && res.data) {
-        setKams(res.data);
+        const normalizedData = res.data.map(kam => ({
+          ...kam,
+          clients: kam.clients.map(client => ({
+            ...client,
+            positions: client.positions.map(pos => ({
+              ...pos,
+              status: pos.status === 'Closed' ? 'Hold' : pos.status
+            }))
+          }))
+        }));
+        setKams(normalizedData);
       }
     } catch (err) {
       console.error('Failed to fetch KAM data:', err);
@@ -462,7 +467,6 @@ const KamOverviewTab = ({ isDarkMode }) => {
     totalPositions: kams.reduce((sum, k) => sum + k.clients.reduce((s, c) => s + c.positions.length, 0), 0),
     openPositions: kams.reduce((sum, k) => sum + k.clients.reduce((s, c) => s + c.positions.filter(p => p.status === 'Open').length, 0), 0),
     holdPositions: kams.reduce((sum, k) => sum + k.clients.reduce((s, c) => s + c.positions.filter(p => p.status === 'Hold').length, 0), 0),
-    closedPositions: kams.reduce((sum, k) => sum + k.clients.reduce((s, c) => s + c.positions.filter(p => p.status === 'Closed').length, 0), 0),
     totalCVsShared: kams.reduce((sum, k) => sum + k.clients.reduce((s, c) => s + c.positions.reduce((t, p) => t + p.sharedCVs, 0), 0), 0),
     totalShortlisted: kams.reduce((sum, k) => sum + k.clients.reduce((s, c) => s + c.positions.reduce((t, p) => t + p.shortlisted, 0), 0), 0),
   };

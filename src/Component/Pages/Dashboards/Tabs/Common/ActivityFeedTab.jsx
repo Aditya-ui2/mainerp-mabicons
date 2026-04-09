@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Activity, Briefcase, UserPlus, CheckCircle2, MoreVertical, 
-  ShieldCheck, RefreshCw
+  ShieldCheck, RefreshCw, Search, ChevronDown, Calendar, X
 } from 'lucide-react';
 import { toast } from "sonner";
 import { getDepartmentActivityLogs } from '../../../service/api';
@@ -53,10 +53,40 @@ const ActivityIcon = ({ type }) => {
 const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
 
   useEffect(() => {
     fetchActivities();
   }, [department]);
+
+  const filteredActivities = activities.filter(activity => {
+    const matchesSearch = 
+      (activity.action || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (activity.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (activity.performedByName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      
+    let matchesDate = true;
+    if (dateFilter !== 'all') {
+      const activityDate = new Date(activity.createdAt);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (dateFilter === 'today') {
+        matchesDate = activityDate >= today;
+      } else if (dateFilter === 'yesterday') {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        matchesDate = activityDate >= yesterday && activityDate < today;
+      } else if (dateFilter === 'week') {
+        const lastWeek = new Date(today);
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        matchesDate = activityDate >= lastWeek;
+      }
+    }
+    
+    return matchesSearch && matchesDate;
+  });
 
   const fetchActivities = async () => {
     try {
@@ -96,6 +126,55 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
           </div>
         </div>
 
+        {/* Unified Filter Bar */}
+        <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-3 flex-wrap">
+          {/* Search Bar */}
+          <div className="relative flex-1 group min-w-[200px]">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+            <input 
+              type="text" 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by action, description, or team member..." 
+              className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white" 
+            />
+          </div>
+
+          {/* Date Filter */}
+          <div className="relative">
+            <select 
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="bg-[#F4F3EF] dark:bg-slate-900 text-xs font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
+            >
+              <option value="all">All Registry</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">This Week</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          </div>
+
+          {/* Refresh button */}
+          <button 
+            onClick={fetchActivities}
+            className="w-[48px] h-[48px] flex items-center justify-center bg-[#F4F3EF] dark:bg-slate-900 rounded-xl text-[#9B9BAD] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm active:scale-95"
+            title="Refresh Data"
+          >
+            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+          </button>
+
+          {/* Reset Button */}
+          {(searchTerm !== '' || dateFilter !== 'all') && (
+            <button 
+              onClick={() => { setSearchTerm(''); setDateFilter('all'); }}
+              className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+
         {/* Main Feed Container */}
         <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
           
@@ -119,7 +198,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
           {/* Timeline List */}
           <div className="px-8 py-12 space-y-12 relative z-10">
             <AnimatePresence>
-              {activities.map((activity, index) => (
+              {filteredActivities.map((activity, index) => (
                 <motion.div 
                   key={activity._id || index}
                   initial={{ opacity: 0, y: 10 }}
@@ -188,9 +267,9 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
               ))}
             </AnimatePresence>
             
-            {activities.length === 0 && (
+            {filteredActivities.length === 0 && (
               <div className="text-center py-20">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Awaiting operation signals...</p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No matching activities found...</p>
               </div>
             )}
           </div>

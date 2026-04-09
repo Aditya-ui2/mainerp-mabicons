@@ -31,14 +31,13 @@ import {
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import InterviewFeedbackModal from './InterviewFeedbackModal';
 import { getLocalISODate, toLocalISODate } from '../../../Utilities/dateUtils';
-import { 
-  getAllInterviews, 
-  scheduleNewInterview, 
+import {
+  getAllInterviews,
+  scheduleNewInterview,
   sendInterviewReminder,
-  cancelInterview as cancelInterviewAPI,
-  deleteInterview,
   updateInterview,
   updateInterviewStatus,
+  cancelInterview,
   getAllCandidates,
   getAllRecruitmentPositions,
   getAllClients,
@@ -135,12 +134,13 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [interviewIdToCancel, setInterviewIdToCancel] = useState(null);
   const [modalActionType, setModalActionType] = useState('cancel'); // 'cancel' or 'delete'
-  
+
   // NEW STATE FOR FULL PAGE FORM
   const [showFullPageForm, setShowFullPageForm] = useState(false);
   const [editingInterview, setEditingInterview] = useState(null);
   const [detailInterview, setDetailInterview] = useState(null);
-  
+  const [selectedRowIds, setSelectedRowIds] = useState([]);
+
   const [newInterview, setNewInterview] = useState({
     candidateId: '',
     positionId: '',
@@ -179,26 +179,26 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
       const mapped = data.map(iv => {
         const meetingLink = iv.meetingLink || iv.meetLink || null;
         return {
-        id: iv._id || iv.id,
-        candidateName: iv.candidateName || iv.candidate?.name || '',
-        candidateEmail: iv.candidateEmail || iv.candidate?.email || '',
-        position: iv.positionTitle || iv.position?.title || iv.position || '',
-        client: iv.clientName || iv.client?.companyName || iv.client || '',
-        round: iv.interviewType || iv.round || '',
-        type: meetingLink ? 'Video' : (iv.meetingType || iv.type || 'Video'),
-        date: iv.interviewDate ? toLocalISODate(iv.interviewDate) : iv.date || '',
-        time: iv.startTime || iv.time || '',
-        duration: iv.duration ? `${iv.duration} mins` : '60 mins',
-        interviewer: iv.interviewerName || iv.interviewer || '',
-        interviewerRole: iv.interviewerRole || '',
-        status: iv.status || 'Scheduled',
-        meetLink: meetingLink,
-        photo: null,
-        feedback: iv.feedback || null,
+          id: iv._id || iv.id,
+          candidateName: iv.candidateName || iv.candidate?.name || '',
+          candidateEmail: iv.candidateEmail || iv.candidate?.email || '',
+          position: iv.positionTitle || iv.position?.title || iv.position || '',
+          client: iv.clientName || iv.client?.companyName || iv.client || '',
+          round: iv.interviewType || iv.round || '',
+          type: meetingLink ? 'Video' : (iv.meetingType || iv.type || 'Video'),
+          date: iv.interviewDate ? toLocalISODate(iv.interviewDate) : iv.date || '',
+          time: iv.startTime || iv.time || '',
+          duration: iv.duration ? `${iv.duration} mins` : '60 mins',
+          interviewer: iv.interviewerName || iv.interviewer || '',
+          interviewerRole: iv.interviewerRole || '',
+          status: iv.status || 'Scheduled',
+          meetLink: meetingLink,
+          photo: null,
+          feedback: iv.feedback || null,
         };
       });
       setInterviews(mapped);
-      try { localStorage.setItem(CACHE_KEY_INTERVIEWS, JSON.stringify(mapped)); } catch {}
+      try { localStorage.setItem(CACHE_KEY_INTERVIEWS, JSON.stringify(mapped)); } catch { }
     } catch (error) {
       console.error('Failed to fetch interviews from backend:', error);
       if (interviews.length === 0) {
@@ -211,7 +211,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
   useEffect(() => {
     fetchInterviews();
-    
+
     const fetchRecruitmentData = async () => {
       try {
         const [candidatesData, positionsData, clientsData, hrRecData, hrOpsData] = await Promise.all([
@@ -224,7 +224,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
         setAvailableCandidates(candidatesData.data || []);
         setAvailablePositions(positionsData.data || []);
         setAvailableClients(clientsData.data || []);
-        
+
         const hrStaff = [
           ...(hrRecData.data || []),
           ...(hrOpsData.data || [])
@@ -278,19 +278,6 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
   // Stats
   const today = getLocalISODate();
-  const stats = {
-    todayCount: interviews.filter(i => i.date === today).length,
-    scheduled: interviews.filter(i => i.status === 'Scheduled').length,
-    completed: interviews.filter(i => i.status === 'Completed').length,
-    cancelled: interviews.filter(i => i.status === 'Cancelled').length,
-  };
-
-  const statCards = [
-    { label: 'Today\'s Interviews', value: stats.todayCount, icon: FiCalendar, color: '#3FA9F5', shadowColor: '63, 169, 245' },
-    { label: 'Scheduled', value: stats.scheduled, icon: FiClock, color: '#1E88E5', shadowColor: '30, 136, 229' },
-    { label: 'Completed', value: stats.completed, icon: FiCheckCircle, color: '#0D47A1', shadowColor: '13, 71, 161' },
-    { label: 'Cancelled', value: stats.cancelled, icon: FiXCircle, color: '#ef4444', shadowColor: '239, 68, 68' },
-  ];
 
   // Filter interviews
   const filteredInterviews = interviews.filter(i => {
@@ -304,12 +291,12 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
       if (filterDate === 'today') {
         matchesDate = i.date === today;
       } else if (filterDate === 'week') {
-        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
-        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23, 59, 59, 999);
         matchesDate = interviewDate >= weekStart && interviewDate <= weekEnd;
       } else if (filterDate === 'prev-week') {
-        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() - 7); weekStart.setHours(0,0,0,0);
-        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() - 7); weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23, 59, 59, 999);
         matchesDate = interviewDate >= weekStart && interviewDate <= weekEnd;
       } else if (filterDate === 'month') {
         matchesDate = interviewDate.getMonth() === now.getMonth() && interviewDate.getFullYear() === now.getFullYear();
@@ -419,7 +406,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
       setTimeout(() => setToast(null), 2000);
       return;
     }
-    
+
     const interview = {
       id: editingInterview?.id || Date.now(),
       ...newInterview,
@@ -448,7 +435,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
       };
 
       console.log('Sending interview data to backend:', apiData);
-      
+
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingInterview?.id);
 
       if (editingInterview && isUuid) {
@@ -459,14 +446,14 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
         // This is either a brand new interview OR a local record that hasn't been saved to backend yet
         const result = await scheduleNewInterview(apiData);
         if (result.success && result.data?.id) {
-            interview.id = result.data.id;
+          interview.id = result.data.id;
         }
-        
+
         if (editingInterview) {
-            // Replace the local record with the new backend-synchronized record
-            setInterviews(prev => prev.map(i => i.id === editingInterview.id ? interview : i));
+          // Replace the local record with the new backend-synchronized record
+          setInterviews(prev => prev.map(i => i.id === editingInterview.id ? interview : i));
         } else {
-            setInterviews(prev => [interview, ...prev]);
+          setInterviews(prev => [interview, ...prev]);
         }
       }
     } catch (error) {
@@ -477,7 +464,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
         setInterviews(prev => prev.map(i => i.id === editingInterview.id ? interview : i));
       }
     }
-    
+
     setShowFullPageForm(false);
     resetForm();
     setToast(editingInterview ? 'Interview updated successfully!' : 'Interview scheduled successfully!');
@@ -519,8 +506,8 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
   // Handle feedback submission
   const handleFeedbackSubmitted = () => {
-    const updatedInterviews = interviews.map(iv => 
-      iv.id === selectedInterview?.id 
+    const updatedInterviews = interviews.map(iv =>
+      iv.id === selectedInterview?.id
         ? { ...iv, status: 'Completed' }
         : iv
     );
@@ -549,8 +536,8 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
   // Start interview (change status to In Progress)
   const handleStartInterview = async (interview) => {
-    const updatedInterviews = interviews.map(iv => 
-      iv.id === interview.id 
+    const updatedInterviews = interviews.map(iv =>
+      iv.id === interview.id
         ? { ...iv, status: 'In Progress' }
         : iv
     );
@@ -560,11 +547,11 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
     } catch (e) { console.error('Backend status update failed:', e); }
     setToast('Interview started!');
     setTimeout(() => setToast(null), 2000);
-    
+
     if (interview.meetLink && interview.type === 'Video') {
       window.open(interview.meetLink, '_blank', 'noopener,noreferrer');
     }
-    
+
     setTimeout(() => {
       handleOpenFeedback(interview);
     }, 1000);
@@ -577,17 +564,33 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
     setShowCancelConfirm(true);
   };
 
+  // Selection handlers
+  const toggleSelectRow = (id, e) => {
+    e.stopPropagation();
+    setSelectedRowIds(prev =>
+      prev.includes(id) ? prev.filter(rid => rid !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedRowIds.length === filteredInterviews.length) {
+      setSelectedRowIds([]);
+    } else {
+      setSelectedRowIds(filteredInterviews.map(i => i.id));
+    }
+  };
+
   // Execute Action (Cancel or Delete)
   const handleConfirmAction = async () => {
     if (!interviewIdToCancel) return;
-    
+
     try {
       if (modalActionType === 'delete') {
         await deleteInterview(interviewIdToCancel);
         setInterviews(prev => prev.filter(i => i.id !== interviewIdToCancel));
         setToast('Interview deleted permanently!');
       } else {
-        await cancelInterviewAPI(interviewIdToCancel);
+        await cancelInterview(interviewIdToCancel, "Cancelled by user from Dashboard");
         setInterviews(prev => prev.map(i => i.id === interviewIdToCancel ? { ...i, status: 'Cancelled' } : i));
         setToast('Interview cancelled successfully!');
       }
@@ -656,242 +659,242 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
               <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-7">
 
-                  {/* Section: Candidate Details */}
-                  <div className="mt-2 flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
-                      <FiUser size={18} />
-                    </div>
-                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Details</h3>
+                {/* Section: Candidate Details */}
+                <div className="mt-2 flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl">
+                    <FiUser size={18} />
                   </div>
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Details</h3>
+                </div>
 
-                  <div className="space-y-1.5 relative">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name *</label>
-                    <input type="text" value={newInterview.candidateName}
-                      onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, candidateName: val })); setShowCandidateSuggestions(val.length > 0); }}
-                      onFocus={() => setShowCandidateSuggestions(newInterview.candidateName.length > 0)}
-                      placeholder="Enter candidate name"
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                    />
-                    <AnimatePresence>
-                      {showCandidateSuggestions && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                          className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
-                          {availableCandidates
-                            .filter(c => { const search = (newInterview.candidateName || '').toLowerCase().trim(); return (c.name || '').toLowerCase().includes(search) || (c.email || '').toLowerCase().includes(search); })
-                            .map((candidate) => (
-                              <button key={candidate.id} className="w-full text-left px-4 py-3 flex flex-col transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
-                                onClick={() => { setNewInterview(prev => ({ ...prev, candidateId: candidate.id, candidateName: candidate.name, candidateEmail: candidate.email || '', positionId: candidate.positionId || '', position: candidate.position?.title || candidate.jobTitle || '', clientId: candidate.clientId || '', client: (candidate.client?.companyName || candidate.client?.name) || '' })); setShowCandidateSuggestions(false); }}>
-                                <span className="font-semibold text-sm text-[#1A1A2E]">{candidate.name}</span>
-                                <span className="text-[10px] text-[#9B9BAD]">{candidate.email} • {candidate.jobTitle || 'No Title'}</span>
-                              </button>
-                            ))}
-                          {availableCandidates.filter(c => { const search = (newInterview.candidateName || '').toLowerCase().trim(); return (c.name || '').toLowerCase().includes(search) || (c.email || '').toLowerCase().includes(search); }).length === 0 && (
-                            <div className="p-4 text-center text-xs text-[#9B9BAD]">No matching candidates found</div>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
-                      <FiMail size={12} className="text-[#1B4DA0]" /> Candidate Email
-                    </label>
-                    <input type="email" value={newInterview.candidateEmail}
-                      onChange={(e) => setNewInterview(prev => ({ ...prev, candidateEmail: e.target.value }))}
-                      placeholder="Enter candidate email"
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                    />
-                  </div>
-
-                  {/* Section: Position Details */}
-                  <div className="mt-4 flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl">
-                      <FiBriefcase size={18} />
-                    </div>
-                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Position Details</h3>
-                  </div>
-
-                  <div className="space-y-1.5 relative">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
-                    <input type="text" value={newInterview.position}
-                      onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, position: val })); setShowPositionSuggestions(val.length > 0); }}
-                      onFocus={() => setShowPositionSuggestions(newInterview.position.length > 0)}
-                      placeholder="e.g. Senior Software Engineer"
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                    />
-                    <AnimatePresence>
-                      {showPositionSuggestions && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                          className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
-                          {availablePositions.filter(p => (p.title || '').toLowerCase().includes((newInterview.position || '').toLowerCase().trim())).map((pos) => (
-                            <button key={pos.id} className="w-full text-left px-4 py-3 transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
-                              onClick={() => { setNewInterview(prev => ({ ...prev, positionId: pos.id, position: pos.title, clientId: pos.clientId || prev.clientId, client: pos.client?.companyName || pos.client?.name || prev.client })); setShowPositionSuggestions(false); }}>
-                              <span className="font-semibold text-sm text-[#1A1A2E]">{pos.title}</span>
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name *</label>
+                  <input type="text" value={newInterview.candidateName}
+                    onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, candidateName: val })); setShowCandidateSuggestions(val.length > 0); }}
+                    onFocus={() => setShowCandidateSuggestions(newInterview.candidateName.length > 0)}
+                    placeholder="Enter candidate name"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  />
+                  <AnimatePresence>
+                    {showCandidateSuggestions && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
+                        {availableCandidates
+                          .filter(c => { const search = (newInterview.candidateName || '').toLowerCase().trim(); return (c.name || '').toLowerCase().includes(search) || (c.email || '').toLowerCase().includes(search); })
+                          .map((candidate) => (
+                            <button key={candidate.id} className="w-full text-left px-4 py-3 flex flex-col transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                              onClick={() => { setNewInterview(prev => ({ ...prev, candidateId: candidate.id, candidateName: candidate.name, candidateEmail: candidate.email || '', positionId: candidate.positionId || '', position: candidate.position?.title || candidate.jobTitle || '', clientId: candidate.clientId || '', client: (candidate.client?.companyName || candidate.client?.name) || '' })); setShowCandidateSuggestions(false); }}>
+                              <span className="font-semibold text-sm text-[#1A1A2E]">{candidate.name}</span>
+                              <span className="text-[10px] text-[#9B9BAD]">{candidate.email} • {candidate.jobTitle || 'No Title'}</span>
                             </button>
                           ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                        {availableCandidates.filter(c => { const search = (newInterview.candidateName || '').toLowerCase().trim(); return (c.name || '').toLowerCase().includes(search) || (c.email || '').toLowerCase().includes(search); }).length === 0 && (
+                          <div className="p-4 text-center text-xs text-[#9B9BAD]">No matching candidates found</div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-                  <div className="space-y-1.5 relative">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
-                    <input type="text" value={newInterview.client}
-                      onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, client: val })); setShowClientSuggestions(val.length > 0); }}
-                      onFocus={() => setShowClientSuggestions(newInterview.client.length > 0)}
-                      placeholder="e.g. TechCorp India"
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                    />
-                    <AnimatePresence>
-                      {showClientSuggestions && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                          className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
-                          {availableClients.filter(cl => (cl.companyName || cl.name || '').toLowerCase().includes((newInterview.client || '').toLowerCase().trim())).map((cl) => (
-                            <button key={cl.id} className="w-full text-left px-4 py-3 transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
-                              onClick={() => { setNewInterview(prev => ({ ...prev, clientId: cl.id, client: cl.companyName || cl.name })); setShowClientSuggestions(false); }}>
-                              <span className="font-semibold text-sm text-[#1A1A2E]">{cl.companyName || cl.name}</span>
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
+                    <FiMail size={12} className="text-[#1B4DA0]" /> Candidate Email
+                  </label>
+                  <input type="email" value={newInterview.candidateEmail}
+                    onChange={(e) => setNewInterview(prev => ({ ...prev, candidateEmail: e.target.value }))}
+                    placeholder="Enter candidate email"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  />
+                </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
-                    <div className="relative group">
-                      <select value={newInterview.round} onChange={(e) => setNewInterview(prev => ({ ...prev, round: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
-                        <option value="">Select Round</option>
-                        <option value="Phone Screening">Phone Screening</option>
-                        <option value="Technical Round">Technical Round</option>
-                        <option value="HR Round">HR Round</option>
-                        <option value="Client Interview">Client Interview</option>
-                        <option value="Final Round">Final Round</option>
-                      </select>
-                      <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
-                    </div>
+                {/* Section: Position Details */}
+                <div className="mt-4 flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl">
+                    <FiBriefcase size={18} />
                   </div>
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Position Details</h3>
+                </div>
 
-                  {/* Section: Interview Details */}
-                  <div className="mt-4 flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl">
-                      <FiCalendar size={18} />
-                    </div>
-                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Interview Details</h3>
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
+                  <input type="text" value={newInterview.position}
+                    onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, position: val })); setShowPositionSuggestions(val.length > 0); }}
+                    onFocus={() => setShowPositionSuggestions(newInterview.position.length > 0)}
+                    placeholder="e.g. Senior Software Engineer"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                  />
+                  <AnimatePresence>
+                    {showPositionSuggestions && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
+                        {availablePositions.filter(p => (p.title || '').toLowerCase().includes((newInterview.position || '').toLowerCase().trim())).map((pos) => (
+                          <button key={pos.id} className="w-full text-left px-4 py-3 transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                            onClick={() => { setNewInterview(prev => ({ ...prev, positionId: pos.id, position: pos.title, clientId: pos.clientId || prev.clientId, client: pos.client?.companyName || pos.client?.name || prev.client })); setShowPositionSuggestions(false); }}>
+                            <span className="font-semibold text-sm text-[#1A1A2E]">{pos.title}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
+                  <input type="text" value={newInterview.client}
+                    onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, client: val })); setShowClientSuggestions(val.length > 0); }}
+                    onFocus={() => setShowClientSuggestions(newInterview.client.length > 0)}
+                    placeholder="e.g. TechCorp India"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                  />
+                  <AnimatePresence>
+                    {showClientSuggestions && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
+                        {availableClients.filter(cl => (cl.companyName || cl.name || '').toLowerCase().includes((newInterview.client || '').toLowerCase().trim())).map((cl) => (
+                          <button key={cl.id} className="w-full text-left px-4 py-3 transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                            onClick={() => { setNewInterview(prev => ({ ...prev, clientId: cl.id, client: cl.companyName || cl.name })); setShowClientSuggestions(false); }}>
+                            <span className="font-semibold text-sm text-[#1A1A2E]">{cl.companyName || cl.name}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
+                  <div className="relative group">
+                    <select value={newInterview.round} onChange={(e) => setNewInterview(prev => ({ ...prev, round: e.target.value }))}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
+                      <option value="">Select Round</option>
+                      <option value="Phone Screening">Phone Screening</option>
+                      <option value="Technical Round">Technical Round</option>
+                      <option value="HR Round">HR Round</option>
+                      <option value="Client Interview">Client Interview</option>
+                      <option value="Final Round">Final Round</option>
+                    </select>
+                    <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
                   </div>
+                </div>
 
+                {/* Section: Interview Details */}
+                <div className="mt-4 flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl">
+                    <FiCalendar size={18} />
+                  </div>
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Interview Details</h3>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
+                    <FiCalendar size={12} className="text-[#1B4DA0]" /> Date *
+                  </label>
+                  <input type="date" value={newInterview.date}
+                    onChange={(e) => setNewInterview(prev => ({ ...prev, date: e.target.value }))}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
+                    <FiClock size={12} className="text-[#1B4DA0]" /> Time *
+                  </label>
+                  <input type="time" value={newInterview.time}
+                    onChange={(e) => setNewInterview(prev => ({ ...prev, time: e.target.value }))}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
+                  <div className="relative group">
+                    <select value={newInterview.duration} onChange={(e) => setNewInterview(prev => ({ ...prev, duration: e.target.value }))}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
+                      <option value="30 mins">30 mins</option>
+                      <option value="45 mins">45 mins</option>
+                      <option value="60 mins">60 mins</option>
+                      <option value="90 mins">90 mins</option>
+                    </select>
+                    <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
+                  <div className="relative group">
+                    <select value={newInterview.type}
+                      onChange={(e) => setNewInterview(prev => ({ ...prev, type: e.target.value, meetLink: e.target.value === 'Video' ? prev.meetLink : '' }))}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
+                      <option value="Video">Video Call</option>
+                      <option value="Phone">Phone</option>
+                      <option value="In-Person">In-Person</option>
+                    </select>
+                    <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
+                  </div>
+                </div>
+
+                {/* Google Meet Link - Only for Video */}
+                {newInterview.type === 'Video' && (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
-                      <FiCalendar size={12} className="text-[#1B4DA0]" /> Date *
+                      <FiVideo size={12} className="text-[#1B4DA0]" /> Google Meet Link
                     </label>
-                    <input type="date" value={newInterview.date}
-                      onChange={(e) => setNewInterview(prev => ({ ...prev, date: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
-                      <FiClock size={12} className="text-[#1B4DA0]" /> Time *
-                    </label>
-                    <input type="time" value={newInterview.time}
-                      onChange={(e) => setNewInterview(prev => ({ ...prev, time: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
-                    <div className="relative group">
-                      <select value={newInterview.duration} onChange={(e) => setNewInterview(prev => ({ ...prev, duration: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
-                        <option value="30 mins">30 mins</option>
-                        <option value="45 mins">45 mins</option>
-                        <option value="60 mins">60 mins</option>
-                        <option value="90 mins">90 mins</option>
-                      </select>
-                      <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
-                    <div className="relative group">
-                      <select value={newInterview.type}
-                        onChange={(e) => setNewInterview(prev => ({ ...prev, type: e.target.value, meetLink: e.target.value === 'Video' ? prev.meetLink : '' }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
-                        <option value="Video">Video Call</option>
-                        <option value="Phone">Phone</option>
-                        <option value="In-Person">In-Person</option>
-                      </select>
-                      <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
-                    </div>
-                  </div>
-
-                  {/* Google Meet Link - Only for Video */}
-                  {newInterview.type === 'Video' && (
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2">
-                        <FiVideo size={12} className="text-[#1B4DA0]" /> Google Meet Link
-                      </label>
-                      <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <input type="text" value={newInterview.meetLink}
-                            onChange={(e) => setNewInterview(prev => ({ ...prev, meetLink: e.target.value }))}
-                            placeholder="Click generate or paste your meet link"
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                          />
-                          {newInterview.meetLink && (
-                            <button onClick={() => copyToClipboard(newInterview.meetLink, setToast)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100">
-                              <FiCopy className="w-4 h-4 text-[#9B9BAD]" />
-                            </button>
-                          )}
-                        </div>
-                        <button onClick={handleGenerateMeetLink}
-                          className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
-                          style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
-                          <FiRefreshCw className="w-4 h-4" /> Generate
-                        </button>
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <input type="text" value={newInterview.meetLink}
+                          onChange={(e) => setNewInterview(prev => ({ ...prev, meetLink: e.target.value }))}
+                          placeholder="Click generate or paste your meet link"
+                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                        />
+                        {newInterview.meetLink && (
+                          <button onClick={() => copyToClipboard(newInterview.meetLink, setToast)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100">
+                            <FiCopy className="w-4 h-4 text-[#9B9BAD]" />
+                          </button>
+                        )}
                       </div>
+                      <button onClick={handleGenerateMeetLink}
+                        className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
+                        style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
+                        <FiRefreshCw className="w-4 h-4" /> Generate
+                      </button>
                     </div>
-                  )}
-
-                  {/* Interviewer Details */}
-                  <div className="space-y-1.5 relative">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name</label>
-                    <input type="text" value={newInterview.interviewer}
-                      onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, interviewer: val })); setShowInterviewerSuggestions(val.length > 0); }}
-                      onFocus={() => setShowInterviewerSuggestions(newInterview.interviewer.length > 0)}
-                      placeholder="Interviewer name"
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                    />
-                    <AnimatePresence>
-                      {showInterviewerSuggestions && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                          className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
-                          {availableInterviewers.filter(hr => (hr.name || '').toLowerCase().includes((newInterview.interviewer || '').toLowerCase().trim())).map((hr) => (
-                            <button key={hr.id} type="button" className="w-full text-left px-4 py-3 flex flex-col transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
-                              onClick={() => { setNewInterview(prev => ({ ...prev, interviewer: hr.name, interviewerRole: hr.role || 'HR Executive' })); setShowInterviewerSuggestions(false); }}>
-                              <span className="font-semibold text-sm text-[#1A1A2E]">{hr.name}</span>
-                              <span className="text-[10px] text-[#9B9BAD]">{hr.department} • {hr.role}</span>
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
+                )}
 
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
-                    <input type="text" value={newInterview.interviewerRole}
-                      onChange={(e) => setNewInterview(prev => ({ ...prev, interviewerRole: e.target.value }))}
-                      placeholder="e.g. Tech Lead"
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                    />
-                  </div>
+                {/* Interviewer Details */}
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name</label>
+                  <input type="text" value={newInterview.interviewer}
+                    onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, interviewer: val })); setShowInterviewerSuggestions(val.length > 0); }}
+                    onFocus={() => setShowInterviewerSuggestions(newInterview.interviewer.length > 0)}
+                    placeholder="Interviewer name"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                  />
+                  <AnimatePresence>
+                    {showInterviewerSuggestions && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
+                        {availableInterviewers.filter(hr => (hr.name || '').toLowerCase().includes((newInterview.interviewer || '').toLowerCase().trim())).map((hr) => (
+                          <button key={hr.id} type="button" className="w-full text-left px-4 py-3 flex flex-col transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                            onClick={() => { setNewInterview(prev => ({ ...prev, interviewer: hr.name, interviewerRole: hr.role || 'HR Executive' })); setShowInterviewerSuggestions(false); }}>
+                            <span className="font-semibold text-sm text-[#1A1A2E]">{hr.name}</span>
+                            <span className="text-[10px] text-[#9B9BAD]">{hr.department} • {hr.role}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
+                  <input type="text" value={newInterview.interviewerRole}
+                    onChange={(e) => setNewInterview(prev => ({ ...prev, interviewerRole: e.target.value }))}
+                    placeholder="e.g. Tech Lead"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                  />
+                </div>
 
                 {/* Footer Buttons */}
                 <div className="pt-4 flex gap-4">
@@ -912,316 +915,285 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
       {/* Main Content */}
       <div className="space-y-6">
-            {/* Error Banner */}
-            {error && (
-              <div className={`flex items-center justify-between gap-3 px-5 py-3 rounded-xl ${isDarkMode ? 'bg-red-900/30 border border-red-700/50 text-red-300' : 'bg-red-50 border border-red-200 text-red-600'}`}>
-                <span className="text-sm font-medium">{error}</span>
-                <button onClick={fetchInterviews} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
-                  <FiRefreshCw className="w-3 h-3" /> Retry
-                </button>
-              </div>
-            )}
-            
-            {/* Header */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.3)' }}>
-                  <FiCalendar className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex flex-col justify-center items-start">
-                  <h2 className="text-2xl font-bold leading-tight text-left" style={{ background: 'linear-gradient(90deg, #3FA9F5, #1E88E5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-    Interview Schedule
-  </h2>
-                  <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Manage and track all scheduled interviews
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* View Toggle */}
-                <div className={`flex items-center rounded-xl p-1 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'list' ? 'bg-white shadow text-slate-700' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}
-                  >
-                    List
-                  </button>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={fetchInterviews}
-                  className={`p-2.5 rounded-xl transition-colors ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'}`}
-                  title="Refresh interviews"
-                >
-                  <FiRefreshCw className="w-4 h-4" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => { setShowFullPageForm(true); resetForm(); }}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
-                >
-                  <FiPlus className="w-4 h-4" />
-                  Schedule Interview
-                </motion.button>
-              </div>
-            </motion.div>
+        {/* Error Banner */}
+        {error && (
+          <div className={`flex items-center justify-between gap-3 px-5 py-3 rounded-xl ${isDarkMode ? 'bg-red-900/30 border border-red-700/50 text-red-300' : 'bg-red-50 border border-red-200 text-red-600'}`}>
+            <span className="text-sm font-medium">{error}</span>
+            <button onClick={fetchInterviews} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">
+              <FiRefreshCw className="w-3 h-3" /> Retry
+            </button>
+          </div>
+        )}
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-              {statCards.map((card, i) => {
-                const Icon = card.icon;
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.3)' }}>
+              <FiCalendar className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex flex-col justify-center items-start">
+              <h2 className="text-2xl font-bold leading-tight text-left" style={{ background: 'linear-gradient(90deg, #3FA9F5, #1E88E5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                Interview Schedule
+              </h2>
+              <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Manage and track all scheduled interviews
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* View Toggle */}
+            <div className={`flex items-center rounded-xl p-1 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'list' ? 'bg-white shadow text-slate-700' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}
+              >
+                List
+              </button>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={fetchInterviews}
+              className={`p-2.5 rounded-xl transition-colors ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'}`}
+              title="Refresh interviews"
+            >
+              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </motion.button>
+
+            <button
+              onClick={() => setShowFullPageForm(true)}
+              className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
+            >
+              <FiPlus className="w-4 h-4" />
+              Schedule Interview
+            </button>
+
+          </div>
+        </motion.div>
+
+
+        {/* Search Bar */}
+        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
+          <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+            <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
+            <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by candidate, position, interviewer..."
+              className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')}>
+                <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Interview List */}
+        {viewMode === 'list' && (
+          <div className="space-y-6">
+            {sortedDates.length === 0 ? (
+              <div className={`text-center py-16 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <FiCalendar size={40} className="mx-auto mb-3 opacity-30" />
+                <p className="font-medium">No interviews found</p>
+                <p className="text-sm mt-1">Schedule interviews to see them here</p>
+              </div>
+            ) : (
+              sortedDates.map(date => (
+                <motion.div
+                  key={date}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3"
+                >
+                  <h3 className={`text-sm font-semibold px-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    {formatDate(date)}
+                    <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>
+                      {groupedByDate[date].length} interview{groupedByDate[date].length > 1 ? 's' : ''}
+                    </span>
+                  </h3>
+                  <div className="space-y-3">
+                    <AnimatePresence>
+                      {groupedByDate[date].map((interview, idx) => (
+                        <motion.div
+                          key={interview.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ delay: idx * 0.05 }}
+                          whileHover={{ scale: 1.01 }}
+                          onClick={() => setDetailInterview(interview)}
+                          className={`rounded-2xl border-2 p-4 transition-shadow cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200'}`}
+                        >
+                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                            {/* Left: Time & Candidate */}
+                            <div className="flex items-start gap-4">
+                              <div className={`text-left px-3 py-2 rounded-xl ${isDarkMode ? 'bg-slate-700' : 'bg-blue-50'}`}>
+                                <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>{interview.time}</p>
+                                <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-blue-500'}`}>{interview.duration}</p>
+                              </div>
+                              {interview.photo ? (
+                                <div className="relative">
+                                  <img
+                                    src={interview.photo}
+                                    alt={interview.candidateName}
+                                    className="h-12 w-12 rounded-xl object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
+                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                  />
+                                  <div className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg hidden" style={{ background: getAvatarGradient(interview.candidateName) }}>
+                                    {getInitials(interview.candidateName)}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg" style={{ background: getAvatarGradient(interview.candidateName) }}>
+                                  {getInitials(interview.candidateName)}
+                                </div>
+                              )}
+                              <div className="flex flex-col items-start text-left">
+                                <div className="flex items-center gap-2 flex-wrap justify-start">
+                                  <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{interview.candidateName}</h4>
+                                  <TypeBadge type={interview.type} />
+                                  <StatusBadge status={interview.status} />
+                                </div>
+                                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} text-left`}>{interview.position} • {interview.round}</p>
+                                <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'} text-left`}>Interviewer: {interview.interviewer} ({interview.interviewerRole})</p>
+                              </div>
+                            </div>
+
+                            {/* Right: Actions */}
+                            <div className="flex items-center gap-2">
+                              {/* Feedback Button */}
+                              {(interview.status === 'Scheduled' || interview.status === 'In Progress' || interview.status === 'Completed') && (
+                                <motion.button
+                                  onClick={() => handleOpenFeedback(interview)}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  title="Fill Interview Feedback"
+                                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl transition-colors ${interview.status === 'Completed'
+                                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                      : isDarkMode
+                                        ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'
+                                        : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                                    }`}
+                                >
+                                  <FiClipboard className="w-4 h-4" />
+                                  {interview.status === 'Completed' ? 'View Feedback' : 'Fill Feedback'}
+                                </motion.button>
+                              )}
+
+                              {interview.meetLink && (interview.status === 'Scheduled' || interview.status === 'In Progress') && (
+                                <motion.button
+                                  onClick={() => handleJoinMeeting(interview.meetLink)}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-xl shadow-lg cursor-pointer"
+                                  style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 8px 20px rgba(63, 169, 245, 0.35)' }}
+                                >
+                                  <FiVideo className="w-4 h-4" />
+                                  Join Meeting
+                                </motion.button>
+                              )}
+
+                              {interview.meetLink && (
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => copyToClipboard(interview.meetLink, setToast)}
+                                  title="Copy meeting link"
+                                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-blue-100 text-slate-500 hover:text-blue-600'}`}
+                                >
+                                  <FiLink className="w-4 h-4" />
+                                </motion.button>
+                              )}
+
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => handleEditInterview(interview)}
+                                className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-blue-100 text-slate-500 hover:text-blue-600'}`}
+                              >
+                                <FiEdit2 className="w-4 h-4" />
+                              </motion.button>
+
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => handleOpenActionModal(interview.id, interview.status === 'Cancelled' ? 'delete' : 'cancel')}
+                                title={interview.status === 'Cancelled' ? "Delete Interview" : "Cancel Interview"}
+                                className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900/40 text-slate-400 hover:text-red-400' : 'hover:bg-red-100 text-slate-500 hover:text-red-600'}`}
+                              >
+                                {interview.status === 'Cancelled' ? (
+                                  <FiTrash2 className="w-4 h-4" />
+                                ) : (
+                                  <FiXCircle className="w-4 h-4" />
+                                )}
+                              </motion.button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Calendar View (Simple) */}
+        {viewMode === 'calendar' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`rounded-2xl border-2 p-6 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50'}`}
+          >
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center gap-4">
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}>
+                  <FiChevronLeft className="w-5 h-5" />
+                </motion.button>
+                <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                  March 2026
+                </h3>
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}>
+                  <FiChevronRight className="w-5 h-5" />
+                </motion.button>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-2 text-center">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className={`text-xs font-semibold py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {day}
+                </div>
+              ))}
+              {[...Array(31)].map((_, i) => {
+                const dayNum = i + 1;
+                const dateStr = `2026-03-${String(dayNum).padStart(2, '0')}`;
+                const hasInterview = interviews.some(iv => iv.date === dateStr);
+                const isToday = dayNum === 18;
                 return (
                   <motion.div
                     key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    className="bg-white p-6 rounded-2xl border border-[#E8E7E2] shadow-sm relative overflow-hidden group cursor-pointer"
+                    whileHover={{ scale: 1.1 }}
+                    className={`py-3 rounded-xl cursor-pointer transition-all ${isToday
+                        ? 'text-white shadow-lg'
+                        : hasInterview
+                          ? isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
+                          : isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                      }`}
+                    style={isToday ? { background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' } : {}}
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#F4F3EF] rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
-                    <div className="relative z-10 flex flex-col items-start text-left">
-                      <div className="p-2.5 rounded-xl bg-white group-hover:scale-110 transition-transform mb-3" style={{ color: card.color }}>
-                        <Icon size={18} />
-                      </div>
-                      <p className="text-2xl font-bold text-[#1A1A2E] leading-none mb-1">
-                        {card.value}
-                      </p>
-                      <p className="text-xs font-medium text-[#6B6B7E]">
-                        {card.label}
-                      </p>
-                    </div>
+                    <span className="text-sm font-medium">{dayNum}</span>
+                    {hasInterview && !isToday && <span className="block w-1 h-1 rounded-full bg-blue-500 mx-auto mt-1"></span>}
                   </motion.div>
                 );
               })}
             </div>
-
-            {/* Search Bar */}
-            <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
-              <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
-                <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
-                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by candidate, position, interviewer..."
-                  className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
-                {searchTerm && (
-                  <button onClick={() => setSearchTerm('')}>
-                    <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Interview List */}
-            {viewMode === 'list' && (
-              <div className="space-y-6">
-                {sortedDates.length === 0 ? (
-                  <div className={`text-center py-16 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    <FiCalendar size={40} className="mx-auto mb-3 opacity-30" />
-                    <p className="font-medium">No interviews found</p>
-                    <p className="text-sm mt-1">Schedule interviews to see them here</p>
-                  </div>
-                ) : (
-                  sortedDates.map(date => (
-                    <motion.div
-                      key={date}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="space-y-3"
-                    >
-                      <h3 className={`text-sm font-semibold px-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                        {formatDate(date)}
-                        <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>
-                          {groupedByDate[date].length} interview{groupedByDate[date].length > 1 ? 's' : ''}
-                        </span>
-                      </h3>
-                      <div className="space-y-3">
-                        <AnimatePresence>
-                          {groupedByDate[date].map((interview, idx) => (
-                            <motion.div
-                              key={interview.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: 20 }}
-                              transition={{ delay: idx * 0.05 }}
-                              whileHover={{ scale: 1.01 }}
-                              onClick={() => setDetailInterview(interview)}
-                              className={`rounded-2xl border-2 p-4 transition-shadow cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200'}`}
-                            >
-                              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                                {/* Left: Time & Candidate */}
-                                <div className="flex items-center gap-4">
-                                  <div className={`text-center px-3 py-2 rounded-xl ${isDarkMode ? 'bg-slate-700' : 'bg-blue-50'}`}>
-                                    <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>{interview.time}</p>
-                                    <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-blue-500'}`}>{interview.duration}</p>
-                                  </div>
-                                  {interview.photo ? (
-                                    <div className="relative">
-                                      <img 
-                                        src={interview.photo} 
-                                        alt={interview.candidateName}
-                                        className="h-12 w-12 rounded-xl object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
-                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                                      />
-                                      <div className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg hidden" style={{ background: getAvatarGradient(interview.candidateName) }}>
-                                        {getInitials(interview.candidateName)}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg" style={{ background: getAvatarGradient(interview.candidateName) }}>
-                                      {getInitials(interview.candidateName)}
-                                    </div>
-                                  )}
-                                  <div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{interview.candidateName}</h4>
-                                      <TypeBadge type={interview.type} />
-                                      <StatusBadge status={interview.status} />
-                                    </div>
-                                    <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{interview.position} • {interview.round}</p>
-                                    <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Interviewer: {interview.interviewer} ({interview.interviewerRole})</p>
-                                  </div>
-                                </div>
-
-                                {/* Right: Actions */}
-                                <div className="flex items-center gap-2">
-                                  {/* Feedback Button */}
-                                  {(interview.status === 'Scheduled' || interview.status === 'In Progress' || interview.status === 'Completed') && (
-                                    <motion.button
-                                      onClick={() => handleOpenFeedback(interview)}
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.95 }}
-                                      title="Fill Interview Feedback"
-                                      className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl transition-colors ${
-                                        interview.status === 'Completed' 
-                                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
-                                          : isDarkMode 
-                                            ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50' 
-                                            : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                                      }`}
-                                    >
-                                      <FiClipboard className="w-4 h-4" />
-                                      {interview.status === 'Completed' ? 'View Feedback' : 'Fill Feedback'}
-                                    </motion.button>
-                                  )}
-                                  
-                                  {interview.meetLink && (interview.status === 'Scheduled' || interview.status === 'In Progress') && (
-                                    <motion.button
-                                      onClick={() => handleJoinMeeting(interview.meetLink)}
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.95 }}
-                                      className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-xl shadow-lg cursor-pointer"
-                                      style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 8px 20px rgba(63, 169, 245, 0.35)' }}
-                                    >
-                                      <FiVideo className="w-4 h-4" />
-                                      Join Meeting
-                                    </motion.button>
-                                  )}
-                                  
-                                  {interview.meetLink && (
-                                    <motion.button
-                                      whileHover={{ scale: 1.1 }}
-                                      whileTap={{ scale: 0.9 }}
-                                      onClick={() => copyToClipboard(interview.meetLink, setToast)}
-                                      title="Copy meeting link"
-                                      className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-blue-100 text-slate-500 hover:text-blue-600'}`}
-                                    >
-                                      <FiLink className="w-4 h-4" />
-                                    </motion.button>
-                                  )}
-                                  
-                                  <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={() => handleEditInterview(interview)}
-                                    className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-blue-100 text-slate-500 hover:text-blue-600'}`}
-                                  >
-                                    <FiEdit2 className="w-4 h-4" />
-                                  </motion.button>
-                                  
-                                  <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={() => handleOpenActionModal(interview.id, interview.status === 'Cancelled' ? 'delete' : 'cancel')}
-                                    title={interview.status === 'Cancelled' ? "Delete Interview" : "Cancel Interview"}
-                                    className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900/40 text-slate-400 hover:text-red-400' : 'hover:bg-red-100 text-slate-500 hover:text-red-600'}`}
-                                  >
-                                    {interview.status === 'Cancelled' ? (
-                                      <FiTrash2 className="w-4 h-4" />
-                                    ) : (
-                                      <FiXCircle className="w-4 h-4" />
-                                    )}
-                                  </motion.button>
-                                </div>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {/* Calendar View (Simple) */}
-            {viewMode === 'calendar' && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`rounded-2xl border-2 p-6 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-200/50'}`}
-              >
-                <div className="text-center mb-6">
-                  <div className="flex items-center justify-center gap-4">
-                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}>
-                      <FiChevronLeft className="w-5 h-5" />
-                    </motion.button>
-                    <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                      March 2026
-                    </h3>
-                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}>
-                      <FiChevronRight className="w-5 h-5" />
-                    </motion.button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-7 gap-2 text-center">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className={`text-xs font-semibold py-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {day}
-                    </div>
-                  ))}
-                  {[...Array(31)].map((_, i) => {
-                    const dayNum = i + 1;
-                    const dateStr = `2026-03-${String(dayNum).padStart(2, '0')}`;
-                    const hasInterview = interviews.some(iv => iv.date === dateStr);
-                    const isToday = dayNum === 18;
-                    return (
-                      <motion.div
-                        key={i}
-                        whileHover={{ scale: 1.1 }}
-                        className={`py-3 rounded-xl cursor-pointer transition-all ${
-                          isToday 
-                            ? 'text-white shadow-lg' 
-                            : hasInterview 
-                              ? isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                        }`}
-                        style={isToday ? { background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' } : {}}
-                      >
-                        <span className="text-sm font-medium">{dayNum}</span>
-                        {hasInterview && !isToday && <span className="block w-1 h-1 rounded-full bg-blue-500 mx-auto mt-1"></span>}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </div>
+          </motion.div>
+        )}
+      </div>
 
       {/* ── Interview Detail Drawer ── */}
       <AnimatePresence>
@@ -1325,18 +1297,12 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                       <FiVideo className="w-5 h-5" /> Join Meeting
                     </button>
                   )}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <button
                       onClick={() => { handleOpenFeedback(detailInterview); setDetailInterview(null); }}
                       className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]"
                     >
-                      <FiClipboard className="w-4 h-4" /> Feedback
-                    </button>
-                    <button
-                      onClick={() => { handleEditInterview(detailInterview); setDetailInterview(null); }}
-                      className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]"
-                    >
-                      <FiCalendar className="w-4 h-4" /> Reschedule
+                      <FiClipboard className="w-4 h-4" /> Add Feedback
                     </button>
                   </div>
                 </div>
@@ -1386,7 +1352,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                     {modalActionType === 'delete' ? 'Delete Interview?' : 'Cancel Interview?'}
                   </h3>
                   <p className={`text-sm mt-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {modalActionType === 'delete' 
+                    {modalActionType === 'delete'
                       ? 'Are you sure you want to permanently delete this interview record? This cannot be undone.'
                       : 'Are you sure you want to cancel this interview? This action cannot be undone.'}
                   </p>
@@ -1407,9 +1373,8 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                       setShowCancelConfirm(false);
                       setInterviewIdToCancel(null);
                     }}
-                    className={`w-full py-3 rounded-xl font-semibold transition-colors ${
-                      isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+                    className={`w-full py-3 rounded-xl font-semibold transition-colors ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
                   >
                     {modalActionType === 'delete' ? 'No, Keep Record' : 'No, Keep Interview'}
                   </motion.button>
@@ -1418,9 +1383,89 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
             </motion.div>
           </motion.div>
         )}
+       </AnimatePresence>
+
+      {/* ── Selection Action Bar ── */}
+      <AnimatePresence>
+        {selectedRowIds.length > 0 && (
+          <div className="fixed bottom-10 inset-x-0 flex justify-center z-[200] pointer-events-none">
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="bg-[#1A1A2E] text-white px-8 py-4 rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] flex items-center gap-8 border border-white/10 pointer-events-auto"
+            >
+              <div className="flex items-center gap-3 border-r border-white/10 pr-8">
+                <div className="w-6 h-6 rounded-full bg-[#3B82F6] flex items-center justify-center text-[10px] font-black">
+                  {selectedRowIds.length}
+                </div>
+                <span className="text-[13px] font-bold tracking-wide">Interviews Selected</span>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    const first = interviews.find(i => i.id === selectedRowIds[0]);
+                    if (first) handleEditInterview(first);
+                    setSelectedRowIds([]);
+                  }}
+                  className="flex items-center gap-2 hover:bg-white/10 px-4 py-2 rounded-xl transition-all active:scale-95 text-xs font-bold"
+                >
+                  <FiClock size={16} className="text-[#3B82F6]" />
+                  Reschedule
+                </button>
+
+                <button
+                  onClick={() => {
+                    const first = interviews.find(i => i.id === selectedRowIds[0]);
+                    if (first) {
+                      setNewInterview({
+                        candidateId: first.candidateId, candidateName: first.candidateName, candidateEmail: first.candidateEmail,
+                        position: first.position, client: first.client, round: first.round, type: first.type,
+                        date: '', time: '', duration: first.duration, interviewer: first.interviewer,
+                        interviewerRole: first.interviewerRole, meetLink: ''
+                      });
+                      setShowFullPageForm(true);
+                    }
+                    setSelectedRowIds([]);
+                  }}
+                  className="flex items-center gap-2 hover:bg-white/10 px-4 py-2 rounded-xl transition-all active:scale-95 text-xs font-bold"
+                >
+                  <FiPlus size={16} className="text-[#3B82F6]" />
+                  Schedule Again
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (selectedRowIds.length === 1) {
+                      handleOpenActionModal(selectedRowIds[0], 'cancel');
+                    } else {
+                      // Quick bulk cancel
+                      setToast(`${selectedRowIds.length} Interviews marked as Cancelled`);
+                      setInterviews(prev => prev.map(i => selectedRowIds.includes(i.id) ? { ...i, status: 'Cancelled' } : i));
+                      setTimeout(() => setToast(null), 3000);
+                    }
+                    setSelectedRowIds([]);
+                  }}
+                  className="flex items-center gap-2 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl transition-all active:scale-95 text-xs font-bold"
+                >
+                  <FiXCircle size={16} />
+                  Cancel Interview
+                </button>
+              </div>
+
+              <button
+                onClick={() => setSelectedRowIds([])}
+                className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-red-500/20 hover:text-red-400 transition-all ml-4"
+              >
+                <FiX size={20} />
+              </button>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );
-};
+}
 
 export default InterviewScheduleTab;

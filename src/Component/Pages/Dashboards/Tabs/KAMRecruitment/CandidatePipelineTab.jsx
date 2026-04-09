@@ -470,15 +470,15 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       (c.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.jobTitle || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.skills && c.skills.some(skill => (skill || '').toLowerCase().includes(searchTerm.toLowerCase())));
-    
+
     const matchesStage = filterStage === 'all' || c.stage === filterStage;
     const matchesPipelineStatus = filterPipelineStatus === 'all' || (c.pipelineStatus || 'pending') === filterPipelineStatus;
-    
-    const matchesJob = filterJob === 'all' || 
-      String(c.positionId) === String(filterJob) || 
+
+    const matchesJob = filterJob === 'all' ||
+      String(c.positionId) === String(filterJob) ||
       (c.jobTitle || '').toLowerCase() === filterJob.toLowerCase();
 
-    const matchesClient = filterClient === 'all' || 
+    const matchesClient = filterClient === 'all' ||
       (c.client || '').toLowerCase().trim() === filterClient.toLowerCase().trim();
 
     return matchesSearch && matchesStage && matchesPipelineStatus && matchesJob && matchesClient;
@@ -784,34 +784,34 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           ))}
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-4 items-center mb-8">
-          <div className="flex-1 w-full bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
-            <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
-              <FiSearch className="text-[#9B9BAD]" size={18} />
-              <input
-                type="text"
-                placeholder="Search by candidate name, skill or title..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-transparent text-sm font-bold outline-none w-full placeholder:text-[#9B9BAD]/60"
-              />
-            </div>
+        {/* Unified Filter Bar */}
+        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-8">
+          {/* Search Bar */}
+          <div className="relative flex-1 group min-w-[200px]">
+            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+            <input
+              type="text"
+              placeholder="Search by candidate name, skill or title..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-bold outline-none transition-all placeholder:text-[#9B9BAD]/60"
+            />
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             {/* Job Opening Filter */}
             <div className="relative">
               <select
                 value={filterJob}
                 onChange={(e) => setFilterJob(e.target.value)}
-                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px]"
+                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[160px]"
               >
                 <option value="all">All Job Openings</option>
                 {jobOpenings.map(job => (
                   <option key={job.id} value={job.id}>{job.title}</option>
                 ))}
               </select>
-              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+              <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
             </div>
 
             {/* Stage Filter */}
@@ -819,14 +819,14 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               <select
                 value={filterStage}
                 onChange={(e) => setFilterStage(e.target.value)}
-                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
               >
                 <option value="all">All Stages</option>
                 {fullStageOrder.map(stage => (
                   <option key={stage} value={stage}>{stage}</option>
                 ))}
               </select>
-              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+              <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
             </div>
 
             {/* Client Filter */}
@@ -834,14 +834,14 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               <select
                 value={filterClient}
                 onChange={(e) => setFilterClient(e.target.value)}
-                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
               >
                 <option value="all">All Clients</option>
                 {[...new Set(jobOpenings.map(j => j.client).filter(Boolean))].map(client => (
                   <option key={client} value={client}>{client}</option>
                 ))}
               </select>
-              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+              <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
             </div>
           </div>
         </div>

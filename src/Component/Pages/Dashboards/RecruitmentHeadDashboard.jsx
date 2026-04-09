@@ -41,7 +41,7 @@ import {
   FiArrowRight,
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
+import AdminLayout, { StatCard } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLocalISODate } from '../Utilities/dateUtils';
 import {
@@ -383,8 +383,7 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
 
       {/* Team Directory Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100/60 overflow-hidden relative">
-        <div className="px-6 py-5 border-b border-gray-100 space-y-4">
-          <h2 className="text-[17px] font-bold text-[#0f172a]">Team Directory</h2>
+        <div className="px-6 py-4 border-b border-gray-100">
           <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
             <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
               <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
@@ -1421,13 +1420,6 @@ const RecruitmentHeadDashboard = () => {
         const screening = s.funnel?.screening ?? 0;
         const interviewed = (s.funnel?.phoneInterview || 0) + (s.funnel?.technical || 0) + (s.funnel?.hrRound || 0) + (s.funnel?.clientInterview || 0);
         const selected = s.candidates?.selected ?? 0;
-
-        const barData = [
-          { label: 'TOTAL CANDIDATES', value: total, percentage: '100%', color: 'bg-blue-500' },
-          { label: 'IN INTERVIEW', value: interviewed || s.candidates?.shortlisted || 0, percentage: total > 0 ? `${Math.round(((interviewed || s.candidates?.shortlisted || 0) / total) * 100)}%` : '0%', color: 'bg-purple-500' },
-          { label: 'OFFERS EXTENDED', value: selected, percentage: total > 0 ? `${Math.round((selected / total) * 100)}%` : '0%', color: 'bg-emerald-500' },
-        ];
-        setStatsBarData(barData);
       }
     } catch (e) {
       console.error('Failed to fetch global stats:', e);
@@ -1946,14 +1938,12 @@ const RecruitmentHeadDashboard = () => {
                         onClick={() => setActiveTab('Team Overview')}
                         className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-bold whitespace-nowrap"
                       >
-                        <FiUsers className="w-5 h-5" />
                         <span>View Team</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* Modern Stat Cards Grid */}
-                  {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard
                       title="Active Positions"
                       value={stats.activePositions || 0}
@@ -2290,13 +2280,13 @@ const RecruitmentHeadDashboard = () => {
 
                   {/* Live Notes */}
                   <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
-                    <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-gradient-to-r from-slate-50/50 to-transparent">
+                    <div className="p-6 flex items-center justify-between bg-gradient-to-r from-slate-50/50 to-transparent">
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-white border border-slate-100 text-indigo-500 shadow-sm">
                           <FiEdit3 className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-lg text-[#1A1A2E] tracking-tight font-syne leading-none">Strategy Notes</h3>
+                          <h3 className="font-bold text-lg text-[#1A1A2E] tracking-tight font-syne leading-none">Notes</h3>
                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Directives and guidelines</p>
                         </div>
                       </div>
@@ -2309,30 +2299,17 @@ const RecruitmentHeadDashboard = () => {
                         </div>
                       ) : recentNotes.length > 0 ? (
                         recentNotes.map((note) => (
-                          <div key={note.id} className="p-5 rounded-2xl bg-[#FAFAF8] border border-[#F4F3EF] hover:bg-white hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 group relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 rounded-full scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="font-bold text-[15px] text-slate-800 tracking-tight group-hover:text-indigo-600 transition-colors font-syne">{note.title}</h4>
-                              <div className="flex items-center gap-2 px-2 py-1 bg-white rounded-lg border border-slate-100 shadow-sm">
-                                <FiClock className="w-3 h-3 text-slate-400" />
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                                  {new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                </span>
-                              </div>
+                          <div key={note.id} className="p-4 rounded-xl bg-[#FAFAF8] border border-[#F4F3EF] hover:bg-white hover:border-indigo-100 transition-all duration-300 group relative">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <h4 className="font-bold text-[14px] text-slate-800 tracking-tight transition-colors font-syne">{note.title}</h4>
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                                {new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                              </span>
                             </div>
-                            <p className="text-[13px] text-slate-600 leading-relaxed font-medium mb-4">{note.content}</p>
-                            <div className="flex items-center justify-between pt-4 border-t border-slate-200/60">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-lg bg-[#1B4DA0] flex items-center justify-center text-[10px] font-bold text-white shadow-md shadow-blue-500/20">
-                                  {note.createdByName?.[0] || 'S'}
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[10px] font-black text-slate-800 uppercase tracking-tight leading-none">{note.createdByName || 'System Office'}</span>
-                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">HOD - Recruitment</span>
-                                </div>
-                              </div>
-                              <button className="p-2 rounded-lg bg-white border border-slate-100 text-slate-400 hover:text-indigo-500 hover:border-indigo-100 transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0">
-                                <FiArrowRight className="w-4 h-4" />
+                            <p className="text-[12px] text-slate-600 leading-relaxed font-medium mb-2">{note.content}</p>
+                            <div className="flex items-center justify-end">
+                              <button className="text-slate-300 hover:text-indigo-500 transition-all opacity-0 group-hover:opacity-100">
+                                <FiArrowRight className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </div>
@@ -2342,7 +2319,7 @@ const RecruitmentHeadDashboard = () => {
                           <div className="w-16 h-16 rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-center mb-4 text-slate-200">
                             <FiEdit3 size={24} />
                           </div>
-                          <h4 className="text-sm font-bold text-slate-800 mb-1">No Strategy Notes Found</h4>
+                          <h4 className="text-sm font-bold text-slate-800 mb-1">No Notes Found</h4>
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team directives will appear here</p>
                         </div>
                       )}

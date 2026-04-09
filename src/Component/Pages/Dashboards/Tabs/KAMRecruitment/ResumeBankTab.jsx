@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Filter, Download, UserPlus, FileText, CheckCircle2, ChevronLeft, ChevronRight,
-  Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye
+  Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye, ChevronDown
 } from 'lucide-react';
 import { toast } from "sonner";
 import {
@@ -55,22 +55,38 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const ResumeCard = ({ resume, isDarkMode, onPreviewResume }) => (
+const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSelected, onToggleSelect }) => (
   <div 
-    onClick={() => onPreviewResume(resume.id, resume.fileName)}
-    className="group bg-white dark:bg-slate-800 px-8 py-3 border-b border-[#F4F3EF] dark:border-slate-700 hover:bg-[#FAFAF8] dark:hover:bg-slate-700/50 transition-all duration-300 cursor-pointer overflow-hidden relative flex items-center gap-6"
+    onClick={() => onViewProfile(resume.id)}
+    className={`group px-8 py-3 border-b transition-all duration-300 cursor-pointer overflow-hidden relative flex items-center gap-6 ${
+      isSelected 
+        ? (isDarkMode ? 'bg-blue-500/10 border-blue-500/20' : 'bg-[#F0F7FF] border-[#D0E5FF]') 
+        : (isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700/50' : 'bg-white border-[#F4F3EF] hover:bg-[#FAFAF8]')
+    }`}
   >
+    {/* Selection Checkbox */}
+    <div className="w-6 flex-shrink-0 flex items-center justify-center">
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onChange={(e) => onToggleSelect(resume.id, e)}
+        onClick={(e) => e.stopPropagation()}
+        className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
+      />
+    </div>
+
+    {/* Avatar / Initials */}
     {/* Avatar / Initials */}
     <div className="w-[42px] h-[42px] rounded-[14px] bg-[#EEF2FB] dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0] dark:text-blue-400 font-bold text-[13px] border border-[#EEF2FB] dark:border-slate-700 flex-shrink-0">
       {getInitials(resume.candidateName || resume.fileName)}
     </div>
 
     {/* Candidate Info */}
-    <div className="flex-1 min-w-[200px] flex items-center gap-3">
-      <h3 className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate">
+    <div className="flex-1 min-w-[200px] flex items-start gap-3">
+      <h3 className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
         {resume.candidateName || resume.fileName.split('.')[0]}
       </h3>
-      <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
+      <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
     </div>
 
     {/* Role Info */}
@@ -88,7 +104,7 @@ const ResumeCard = ({ resume, isDarkMode, onPreviewResume }) => (
     </div>
 
     {/* Actions */}
-    <div className="flex items-center gap-3 ml-auto">
+    <div className="flex items-center gap-3 w-[140px] flex-shrink-0">
       <button 
         onClick={(e) => { e.stopPropagation(); onPreviewResume(resume.id, resume.fileName); }}
         className="flex items-center gap-2 px-3 py-1.5 bg-[#F4F3EF] dark:bg-slate-700 text-[#6B6B7E] dark:text-slate-300 rounded-lg text-[11px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
@@ -260,10 +276,11 @@ const ResumeBankTab = () => {
   // Assignment Modal State
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [allPositions, setAllPositions] = useState([]);
-  const [assigningResumeId, setAssigningResumeId] = useState(null);
+  const [assigningResumeIds, setAssigningResumeIds] = useState([]);
   const [selectedPositionId, setSelectedPositionId] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
   const [allClients, setAllClients] = useState([]);
+  const [selectedRowIds, setSelectedRowIds] = useState([]);
   // Filters
   const [filters, setFilters] = useState({
     search: '',
@@ -380,6 +397,23 @@ const ResumeBankTab = () => {
     }
   };
 
+  // Selection handlers
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedRowIds(prev =>
+      prev.includes(id) ? prev.filter(rid => rid !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (filteredResumes) => {
+    if (filteredResumes.length === 0) return;
+    if (selectedRowIds.length === filteredResumes.length) {
+      setSelectedRowIds([]);
+    } else {
+      setSelectedRowIds(filteredResumes.map(r => r.id));
+    }
+  };
+
   const handleToggleStar = async (resumeId, currentStatus) => {
     try {
       await toggleStarResumes([resumeId], !currentStatus);
@@ -390,7 +424,7 @@ const ResumeBankTab = () => {
   };
 
   const handleUpdatePosition = (resumeId) => {
-    setAssigningResumeId(resumeId);
+    setAssigningResumeIds([resumeId]);
     setSelectedPositionId('');
     setShowAssignModal(true);
   };
@@ -402,10 +436,11 @@ const ResumeBankTab = () => {
     }
     try {
       setIsAssigning(true);
-      await assignResumesToPosition([assigningResumeId], selectedPositionId);
-      toast.success("Candidate successfully updated to position");
+      await assignResumesToPosition(assigningResumeIds, selectedPositionId);
+      toast.success(`${assigningResumeIds.length} candidate(s) successfully updated to position`);
       setShowAssignModal(false);
       setShowDetailDrawer(false);
+      setSelectedRowIds([]);
       fetchResumes();
     } catch (error) {
       console.error('Assignment failed:', error);
@@ -560,60 +595,76 @@ const ResumeBankTab = () => {
         )}
       </AnimatePresence>
 
-      {/* Control Bar */}
-      <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-2 w-full">
-        <div className="flex items-center gap-3 bg-[#F4F3EF] dark:bg-slate-900 rounded-2xl px-5 py-3 h-[48px] min-w-[300px] flex-[2]">
-          <Search size={18} className="text-[#9B9BAD]" />
+      {/* Control Bar (Unified with Job Openings Style) */}
+      <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-3 flex-wrap">
+        {/* Search Bar */}
+        <div className="relative flex-1 group min-w-[200px]">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input 
             type="text" 
             value={filters.search} 
             onChange={(e) => handleFilterChange('search', e.target.value)}
             placeholder="Search by name, expertise, or tech stack..." 
-            className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD] outline-none w-full font-bold" 
+            className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white" 
           />
         </div>
-        <div className="flex items-center gap-2 justify-end flex-initial">
+
+        {/* Global Roles Filter */}
+        <div className="relative">
           <select 
             value={filters.roleType}
             onChange={(e) => handleFilterChange('roleType', e.target.value)}
-            className="bg-[#F4F3EF] dark:bg-slate-900 text-[10px] font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl px-4 py-3 h-[48px] border-0 outline-none cursor-pointer hover:bg-[#E8E7E2] dark:hover:bg-slate-700 transition-colors uppercase tracking-widest"
+            className="bg-[#F4F3EF] dark:bg-slate-900 text-xs font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
           >
             <option value="">Roles (Global)</option>
             {roleTypes.map(role => (
               <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
             ))}
           </select>
-          <button 
-            onClick={async () => {
-              setLoading(true);
-              await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes(), fetchClients(), fetchPositions()]);
-              setLoading(false);
-              toast.success("Data refreshed!");
-            }}
-            className="w-[48px] h-[48px] flex items-center justify-center bg-[#F4F3EF] dark:bg-slate-900 rounded-xl text-[#9B9BAD] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm active:scale-95"
-            title="Refresh Data"
-          >
-            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-          </button>
-          {(filters.search || filters.roleType) && (
-            <button 
-              onClick={handleResetFilters}
-              className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
-            >
-              Reset
-            </button>
-          )}
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
+
+        {/* Refresh button */}
+        <button 
+          onClick={async () => {
+            setLoading(true);
+            await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes(), fetchClients(), fetchPositions()]);
+            setLoading(false);
+            toast.success("Data refreshed!");
+          }}
+          className="w-[48px] h-[48px] flex items-center justify-center bg-[#F4F3EF] dark:bg-slate-900 rounded-xl text-[#9B9BAD] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm active:scale-95"
+          title="Refresh Data"
+        >
+          <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+        </button>
+
+        {/* Reset Button */}
+        {(filters.search || filters.roleType) && (
+          <button 
+            onClick={handleResetFilters}
+            className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
+          >
+            Reset
+          </button>
+        )}
       </div>
 
       {/* Profile Deck - Table Interface */}
       <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-20">
         <div className="flex items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[42px] flex-shrink-0 text-center">Icon</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 min-w-[200px]">Candidate</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[200px] flex-shrink-0">Target Role</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1">Skills</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[140px] flex-shrink-0 text-right">Actions</span>
+          <div className="w-6 flex-shrink-0 flex items-center justify-center">
+            <input
+              type="checkbox"
+              checked={resumes.length > 0 && selectedRowIds.length === resumes.length}
+              onChange={() => toggleSelectAll(resumes)}
+              className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
+            />
+          </div>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[42px] flex-shrink-0 text-left">Icon</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 min-w-[200px] text-left">Candidate</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[200px] flex-shrink-0 text-left">Target Role</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 text-left">Skills</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[140px] flex-shrink-0 text-left">Actions</span>
         </div>
 
         {loading ? (
@@ -634,6 +685,9 @@ const ResumeBankTab = () => {
                  resume={resume} 
                  isDarkMode={isDarkMode}
                  onPreviewResume={handlePreviewResume}
+                 onViewProfile={handleViewDetails}
+                 isSelected={selectedRowIds.includes(resume.id)}
+                 onToggleSelect={toggleSelectRow}
                />
              ))}
            </div>
@@ -802,6 +856,55 @@ const ResumeBankTab = () => {
               <div className="flex gap-4 pt-2">
                 <button onClick={() => setShowUploadModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-xs uppercase tracking-widest text-[#6B6B7E] hover:bg-[#F4F3EF] dark:hover:bg-slate-800 transition-all">Cancel</button>
                 <button onClick={handleConfirmUploadResumes} disabled={uploading} className="flex-1 h-14 bg-[#1B4DA0] text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all disabled:opacity-50">{uploading ? 'Saving...' : 'Add Candidate'}</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Bulk Action Bar */}
+      <AnimatePresence>
+        {selectedRowIds.length > 0 && (
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-3xl px-4">
+            <motion.div
+              initial={{ y: 100, opacity: 0, scale: 0.9 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 100, opacity: 0, scale: 0.9 }}
+              className={`rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl border border-white/20 p-4 flex items-center justify-between gap-4 ${
+                isDarkMode ? 'bg-slate-900/95' : 'bg-[#1A1A2E]/95'
+              } text-white`}
+            >
+              <div className="flex items-center gap-4 pl-2">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">
+                  {selectedRowIds.length}
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-400">Selected</p>
+                  <p className="text-[10px] font-medium opacity-60">Talent Profiles</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    setAssigningResumeIds(selectedRowIds);
+                    setSelectedPositionId('');
+                    setShowAssignModal(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-xs font-bold"
+                >
+                  <Briefcase size={14} className="text-emerald-400" />
+                  Assign Jobs
+                </button>
+
+                <div className="w-px h-8 bg-white/10 mx-1" />
+
+                <button
+                  onClick={() => setSelectedRowIds([])}
+                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all"
+                >
+                  <X size={18} />
+                </button>
               </div>
             </motion.div>
           </div>
