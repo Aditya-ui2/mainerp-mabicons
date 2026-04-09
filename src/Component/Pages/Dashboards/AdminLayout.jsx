@@ -380,6 +380,7 @@ export const StatCard = ({ title, value, change, changeType = 'increase', icon: 
     rose: "bg-rose-50 text-rose-600",
     amber: "bg-amber-50 text-amber-600",
     violet: "bg-violet-50 text-violet-600",
+    white: "bg-white text-[#0f172a] border border-[#F4F3EF] shadow-sm",
   };
 
   return (
@@ -389,7 +390,7 @@ export const StatCard = ({ title, value, change, changeType = 'increase', icon: 
       className="bg-white rounded-3xl p-6 shadow-sm border border-[#F4F3EF] hover:shadow-xl hover:shadow-blue-500/5 transition-all group"
     >
       <div className="flex items-start justify-between">
-        <div className={`p-3 rounded-2xl ${colors[color] || colors.blue} transition-transform group-hover:scale-110 duration-300`}>
+        <div className={`p-3 rounded-2xl ${colors[color] || colors.blue} transition-transform group-hover:scale-110 group-hover:text-[#0D47A1] duration-300`}>
           {Icon && <Icon size={22} />}
         </div>
         {change && (
@@ -398,8 +399,8 @@ export const StatCard = ({ title, value, change, changeType = 'increase', icon: 
           </span>
         )}
       </div>
-      <div className="mt-4">
-        <p className="text-[#9B9BAD] text-xs font-bold uppercase tracking-widest">{title}</p>
+      <div className="mt-4 text-left">
+        <p className="text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest">{title}</p>
         <p className="text-2xl font-black text-[#1A1A2E] mt-1">{value}</p>
       </div>
     </motion.div>

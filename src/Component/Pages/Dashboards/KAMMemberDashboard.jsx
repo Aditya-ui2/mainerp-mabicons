@@ -70,269 +70,20 @@ const TabLoader = () => (
 // Sidebar Configuration for KAM Member
 const sidebarConfig = [
   {
-    heading: 'MAIN',
     items: [
-      {
-        id: 'work',
-        title: 'MY WORK',
-        icon: FiClipboard,
-        submenu: [
-          { id: 1, title: 'My Tasks' },
-          { id: 2, title: 'Daily Report' },
-          { id: 3, title: 'My Performance' },
-        ],
-      },
-      {
-        id: 'recruitment',
-        title: 'RECRUITMENT',
-        icon: FiBriefcase,
-        submenu: [
-          { id: 4, title: 'Job Openings' },
-          { id: 5, title: 'Candidate Pipeline' },
-          { id: 6, title: 'Interview Schedule' },
-        ],
-      },
-    ]
-  },
-  {
-    heading: 'GENERAL',
-    items: [
-      {
-        id: 'assessment',
-        title: 'ASSESSMENT',
-        icon: FiAward,
-        submenu: [
-          { id: 8, title: 'Offer Management' },
-        ],
-      },
-      {
-        id: 'resources',
-        title: 'RESOURCES',
-        icon: FiDatabase,
-        submenu: [
-          { id: 9, title: 'Resume Bank' },
-          { id: 10, title: 'Activity Feed' },
-        ],
-      },
-    ]
-  },
-  {
-    heading: 'OTHERS',
-    items: [
+      { id: 1, title: 'My Tasks', icon: FiCheckSquare },
+      { id: 2, title: 'Daily Report', icon: FiFileText },
+      { id: 4, title: 'Job Openings', icon: FiBriefcase },
+      { id: 5, title: 'Candidate Pipeline', icon: FiUserPlus },
+      { id: 6, title: 'Interview Schedule', icon: FiCalendar },
+      { id: 8, title: 'Offer Management', icon: FiAward },
+      { id: 9, title: 'Resume Bank', icon: FiDatabase },
+      { id: 10, title: 'Activity Feed', icon: FiActivity },
       { id: 11, title: 'My Profile', icon: FiUsers },
     ],
   },
 ];
 
-// My Performance Content
-const MyPerformanceContent = ({ stats, period, onPeriodChange, user }) => {
-  const isHead = user?.role === 'Department Head' || user?.role === 'Admin' || user?.id === '60de4380-0140-49ff-b26d-a8d06333af11';
-  
-  const targets = {
-    hires: isHead ? 25 : 5,
-    interviews: isHead ? 75 : 15,
-    screening: isHead ? 150 : 30,
-    offers: isHead ? 40 : 8,
-  };
-
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">{isHead ? 'Team Performance' : 'My Performance'}</h2>
-        <select 
-          value={period}
-          onChange={(e) => onPeriodChange(e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-        >
-          <option>This Month</option>
-          <option>Last Month</option>
-          <option>This Quarter</option>
-          <option>All Time</option>
-        </select>
-      </div>
-
-      {/* Performance Overview */}
-      <div
-        className="rounded-3xl p-8 text-white shadow-lg"
-        style={{
-          background: 'linear-gradient(135deg, #0f766e 0%, #0ea5a4 45%, #2563eb 100%)'
-        }}
-      >
-        <div className="flex items-start justify-between gap-6 mb-8">
-          <div className="max-w-2xl">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
-              Performance Overview
-            </p>
-            <h3 className="text-3xl font-bold text-white">
-              {isHead ? 'Department Performance' : 'Great Progress!'}
-            </h3>
-            <p className="mt-3 max-w-xl text-sm md:text-base text-cyan-50">
-              {isHead ? "Here is your team's cumulative impact" : "You're on track to meet your monthly targets."}
-            </p>
-          </div>
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15">
-            <FiStar className="w-7 h-7 text-white" />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="rounded-2xl bg-white p-4 text-center shadow-sm text-gray-900">
-            <p className="text-3xl font-extrabold text-gray-900">{stats.thisWeekHires || 0}</p>
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-700">Hires</p>
-          </div>
-          <div className="rounded-2xl bg-white p-4 text-center shadow-sm text-gray-900">
-            <p className="text-3xl font-extrabold text-gray-900">{stats.interviewsScheduled || 0}</p>
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-blue-700">Interviews</p>
-          </div>
-          <div className="rounded-2xl bg-white p-4 text-center shadow-sm text-gray-900">
-            <p className="text-3xl font-extrabold text-gray-900">{stats.candidatesPipeline}</p>
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-purple-700">Screenings</p>
-          </div>
-          <div className="rounded-2xl bg-white p-4 text-center shadow-sm text-gray-900">
-            <p className="text-3xl font-extrabold text-gray-900">{stats.offersExtended}</p>
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-amber-700">Offers</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Target Progress */}
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        <h3 className="font-bold text-lg text-gray-900 mb-6">Monthly Target Progress</h3>
-        <div className="space-y-6">
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-medium text-gray-700">Hiring Target</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.thisWeekHires}/{targets.hires}</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((stats.thisWeekHires / targets.hires) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-medium text-gray-700">Interviews Scheduled</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.interviewsScheduled}/{targets.interviews}</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((stats.interviewsScheduled / targets.interviews) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-medium text-gray-700">Candidates Screened</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.candidatesPipeline}/{targets.screening}</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((stats.candidatesPipeline / targets.screening) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-medium text-gray-700">Offers Extended</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.offersExtended}/{targets.offers}</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((stats.offersExtended / targets.offers) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Weekly Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h3 className="font-bold text-lg text-gray-900 mb-5">This Week's Activity</h3>
-          <div className="space-y-4">
-            {(stats.weeklyActivity && stats.weeklyActivity.length > 0 ? stats.weeklyActivity : [
-              { day: 'Monday', hires: 0, interviews: 0, screenings: 0 },
-              { day: 'Tuesday', hires: 0, interviews: 0, screenings: 0 },
-              { day: 'Wednesday', hires: 0, interviews: 0, screenings: 0 },
-              { day: 'Thursday', hires: 0, interviews: 0, screenings: 0 },
-              { day: 'Friday', hires: 0, interviews: 0, screenings: 0 },
-            ]).map((day, idx) => (
-              <div key={idx} className="flex items-center gap-4">
-                <span className="w-24 text-sm font-medium text-gray-600">{day.day}</span>
-                <div className="flex-1 flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                      style={{ width: `${day.hires > 0 ? Math.min((day.hires / 2) * 100, 100) : 0}%` }}
-                    />
-                  </div>
-                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                      style={{ width: `${day.interviews > 0 ? Math.min((day.interviews / 5) * 100, 100) : 0}%` }}
-                    />
-                  </div>
-                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500 rounded-full transition-all duration-500"
-                      style={{ width: `${day.screenings > 0 ? Math.min((day.screenings / 10) * 100, 100) : 0}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-6 mt-6 pt-4 border-t border-gray-100">
-            <span className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 rounded-full bg-emerald-500"></div> Hires
-            </span>
-            <span className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div> Interviews
-            </span>
-            <span className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div> Screenings
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h3 className="font-bold text-lg text-gray-900 mb-5">Conversion Metrics</h3>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100">
-              <div>
-                <p className="text-sm font-medium text-blue-700">Screening to Interview</p>
-                <p className="text-2xl font-bold text-blue-900">{stats.conversionMetrics?.screeningToInterview || 0}%</p>
-              </div>
-              <FiTrendingUp className="w-8 h-8 text-blue-300" />
-            </div>
-            <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-              <div>
-                <p className="text-sm font-medium text-emerald-700">Interview to Offer</p>
-                <p className="text-2xl font-bold text-emerald-900">{stats.conversionMetrics?.interviewToOffer || 0}%</p>
-              </div>
-              <FiTrendingUp className="w-8 h-8 text-emerald-300" />
-            </div>
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-100">
-              <div>
-                <p className="text-sm font-medium text-purple-700">Offer to Join</p>
-                <p className="text-2xl font-bold text-purple-900">{stats.conversionMetrics?.offerToJoin || 0}%</p>
-              </div>
-              <FiTrendingUp className="w-8 h-8 text-purple-300" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Main KAM Member Dashboard Component
 const KAMMemberDashboard = () => {
@@ -369,6 +120,13 @@ const KAMMemberDashboard = () => {
   const currentHour = currentTime.getHours();
   const greetingText = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
   const greetingEmoji = currentHour < 12 ? '🌞' : currentHour < 17 ? '☀️' : '🌙';
+
+  const formattedHeaderDate = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(currentTime);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -632,15 +390,6 @@ const KAMMemberDashboard = () => {
               return <MyTasksTab />;
             case 'Daily Report':
               return <DailyReportTab />;
-            case 'My Performance':
-              return (
-                <MyPerformanceContent 
-                  stats={personalStats} 
-                  period={performancePeriod} 
-                  onPeriodChange={onPerformancePeriodChange}
-                  user={userInfo}
-                />
-              );
             case 'Job Openings':
               return <JobOpeningsTab />;
             case 'Candidate Pipeline':
@@ -668,39 +417,32 @@ const KAMMemberDashboard = () => {
               // Dashboard
               return (
                 <div className="space-y-8">
-                  {/* Welcome Banner */}
-                  <div 
-                    className="rounded-2xl p-8 text-white relative overflow-hidden shadow-lg"
-                    style={{ background: 'linear-gradient(to right, #7c3aed, #9333ea, #4f46e5)' }}
-                  >
-                    {/* Decorative elements */}
-                    <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'rgba(255,255,255,0.1)' }} />
-                    <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full pointer-events-none" style={{ background: 'rgba(255,255,255,0.1)' }} />
-                    <div className="relative z-10">
-                      <h1 className="text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
-                        {greetingText}, {userInfo.name.split(' ')[0]}! {greetingEmoji}
+                  {/* Modern Header Section */}
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
+                    <div>
+                      <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-jakarta">
+                        Welcome {userInfo.name.split(' ')[0]}
                       </h1>
-                      <p className="mt-2 text-lg" style={{ color: 'rgba(233, 213, 255, 1)' }}>
-                        You have {todayTasks.filter((t) => t.status === 'pending').length} pending tasks today
+                      <p className="text-slate-500 font-medium mt-1">
+                        Today is {formattedHeaderDate}
                       </p>
-                      <div className="flex flex-wrap items-center gap-3 mt-5">
-                        <button 
-                          onClick={() => setActiveTab('Interview Schedule')}
-                          className="px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 text-white shadow-md hover:opacity-90 transition-all cursor-pointer transform hover:scale-105"
-                          style={{ background: '#4f46e5' }}
-                        >
-                          <FiCalendar className="w-4 h-4" />
-                          {upcomingInterviews.length} Interviews Today
-                        </button>
-                        <button 
-                          onClick={() => setActiveTab('Candidate Pipeline')}
-                          className="px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 text-white shadow-md hover:opacity-90 transition-all cursor-pointer transform hover:scale-105"
-                          style={{ background: '#9333ea' }}
-                        >
-                          <FiCheckSquare className="w-4 h-4" />
-                          {stats.candidatesPipeline} Candidates in Pipeline
-                        </button>
-                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setActiveTab('Interview Schedule')}
+                        className="flex items-center gap-2 bg-[#0D47A1] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+                      >
+                        <FiCalendar className="w-4 h-4 text-white/90" />
+                        <span>{upcomingInterviews.length} Interviews Today</span>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('Candidate Pipeline')}
+                        className="flex items-center gap-2 bg-[#0D47A1] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+                      >
+                        <FiUserPlus className="w-4 h-4 text-white/90" />
+                        <span>{stats.candidatesPipeline} Candidates in Pipeline</span>
+                      </button>
                     </div>
                   </div>
 
@@ -719,7 +461,7 @@ const KAMMemberDashboard = () => {
                           title="My Active Jobs"
                           value={stats.activePositions}
                           icon={FiBriefcase}
-                          color="pink"
+                          color="white"
                         />
                       </div>
                       <div onClick={() => setActiveTab('Candidate Pipeline')} className="cursor-pointer transform hover:scale-[1.02] transition-all">
@@ -727,7 +469,7 @@ const KAMMemberDashboard = () => {
                           title="Candidates in Pipeline"
                           value={stats.candidatesPipeline}
                           icon={FiUsers}
-                          color="purple"
+                          color="white"
                         />
                       </div>
                       <div onClick={() => setActiveTab('Interview Schedule')} className="cursor-pointer transform hover:scale-[1.02] transition-all">
@@ -735,7 +477,7 @@ const KAMMemberDashboard = () => {
                           title="Scheduled Interviews"
                           value={stats.interviewsScheduled}
                           icon={FiCalendar}
-                          color="blue"
+                          color="white"
                         />
                       </div>
                       <div onClick={() => setActiveTab('Offer Management')} className="cursor-pointer transform hover:scale-[1.02] transition-all">
@@ -743,7 +485,7 @@ const KAMMemberDashboard = () => {
                           title="This Month's Hires"
                           value={stats.thisWeekHires}
                           icon={FiCheckCircle}
-                          color="green"
+                          color="white"
                         />
                       </div>
                     </div>
@@ -851,98 +593,76 @@ const KAMMemberDashboard = () => {
                   </div>
 
                   {/* Quick Actions */}
-                  <div className="bg-white rounded-2xl shadow-sm p-6">
-                    <h3 className="font-bold text-lg text-gray-900 mb-5">Quick Actions</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-[32px] shadow-sm p-8 border border-[#F4F3EF]">
+                    <div className="flex flex-col items-start mb-6">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 rounded-lg bg-blue-50 text-[#1B4DA0]">
+                          <FiActivity size={18} />
+                        </div>
+                        <h3 className="font-bold text-[#1A1A2E] text-lg tracking-tight">Quick Actions</h3>
+                      </div>
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em] ml-1">COMMON RECRUITMENT TASKS</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* View Jobs */}
                       <button
                         onClick={() => handleQuickAction('Job Openings')}
-                        className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-400 hover:from-blue-100 hover:to-indigo-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
+                        className="flex items-center gap-4 p-4 rounded-3xl border border-[#F4F3EF] bg-white hover:border-[#1B4DA0] hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group text-left"
                       >
-                        <div className="p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
-                          <FiBriefcase className="w-6 h-6" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4 }} />
+                        <div className="w-12 h-12 flex-shrink-0 rounded-2xl border border-[#F4F3EF] bg-white flex items-center justify-center text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors shadow-sm">
+                          <FiBriefcase className="w-6 h-6" />
                         </div>
-                        <span className="text-sm font-bold text-blue-900">View Jobs</span>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">Job Openings</span>
+                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">{stats.activePositions} Open Positions</span>
+                        </div>
                       </button>
+
+                      {/* Add Candidate */}
                       <button
                         onClick={() => handleQuickAction('Candidate Pipeline', 'add-candidate')}
-                        className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
+                        className="flex items-center gap-4 p-4 rounded-3xl border border-[#F4F3EF] bg-white hover:border-[#1B4DA0] hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group text-left"
                       >
-                        <div className="p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #10b981, #0d9488)' }}>
-                          <FiUserPlus className="w-6 h-6" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4 }} />
+                        <div className="w-12 h-12 flex-shrink-0 rounded-2xl border border-[#F4F3EF] bg-white flex items-center justify-center text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors shadow-sm">
+                          <FiUserPlus className="w-6 h-6" />
                         </div>
-                        <span className="text-sm font-bold text-emerald-900">Add Candidate</span>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">Candidate Pipeline</span>
+                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">{stats.candidatesPipeline} Total</span>
+                        </div>
                       </button>
+
+                      {/* Schedule Interview */}
                       <button
                         onClick={() => handleQuickAction('Interview Schedule', 'schedule-interview')}
-                        className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 hover:border-violet-400 hover:from-violet-100 hover:to-purple-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
+                        className="flex items-center gap-4 p-4 rounded-3xl border border-[#F4F3EF] bg-white hover:border-[#1B4DA0] hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group text-left"
                       >
-                        <div className="p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
-                          <FiCalendar className="w-6 h-6" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4 }} />
+                        <div className="w-12 h-12 flex-shrink-0 rounded-2xl border border-[#F4F3EF] bg-white flex items-center justify-center text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors shadow-sm">
+                          <FiCalendar className="w-6 h-6" />
                         </div>
-                        <span className="text-sm font-bold text-violet-900">Schedule Interview</span>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">Interviews</span>
+                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">{stats.interviewsScheduled} Scheduled Today</span>
+                        </div>
                       </button>
+
+                      {/* Submit Report */}
                       <button
                         onClick={() => handleQuickAction('Daily Report')}
-                        className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 hover:border-amber-400 hover:from-amber-100 hover:to-orange-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
+                        className="flex items-center gap-4 p-4 rounded-3xl border border-[#F4F3EF] bg-white hover:border-[#1B4DA0] hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group text-left"
                       >
-                        <div className="p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(135deg, #f59e0b, #ea580c)' }}>
-                          <FiEdit3 className="w-6 h-6" style={{ color: '#ffffff', stroke: '#ffffff', strokeWidth: 2.4 }} />
+                        <div className="w-12 h-12 flex-shrink-0 rounded-2xl border border-[#F4F3EF] bg-white flex items-center justify-center text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors shadow-sm">
+                          <FiEdit3 className="w-6 h-6" />
                         </div>
-                        <span className="text-sm font-bold text-amber-900">Submit Report</span>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">Daily Report</span>
+                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">Submit MIS</span>
+                        </div>
                       </button>
                     </div>
                   </div>
 
-                  {/* Performance Summary */}
-                  <div className="bg-white rounded-2xl shadow-sm p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="font-bold text-lg text-gray-900">This Month's Progress</h3>
-                      <button
-                        onClick={() => setActiveTab('My Performance')}
-                        className="text-blue-600 hover:text-blue-700 font-semibold text-sm"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-gray-600">Hiring Target</span>
-                          <span className="text-sm font-semibold text-gray-900">{stats.thisWeekHires}/5</span>
-                        </div>
-                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"
-                            style={{ width: `${(stats.thisWeekHires / 5) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-gray-600">Interview Target</span>
-                          <span className="text-sm font-semibold text-gray-900">{stats.interviewsScheduled}/15</span>
-                        </div>
-                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
-                            style={{ width: `${(stats.interviewsScheduled / 15) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-gray-600">Screening Target</span>
-                          <span className="text-sm font-semibold text-gray-900">{stats.candidatesPipeline}/50</span>
-                        </div>
-                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full"
-                            style={{ width: `${(stats.candidatesPipeline / 50) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               );
           }

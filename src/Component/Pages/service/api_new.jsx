@@ -69,10 +69,7 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401 && !_sessionExpiredShown) {
       const isLoginRoute = window.location.pathname.includes('/login') || window.location.pathname === '/';
-      const errorMessage = error.response.data?.message?.toLowerCase() || "";
-      const isAuthError = errorMessage.includes('token') || errorMessage.includes('session') || errorMessage.includes('auth') || errorMessage.includes('expired');
-
-      if (!isLoginRoute && (isAuthError || !error.response.data?.message)) {
+      if (!isLoginRoute) {
         // Only auto-logout if NOT using a mock token
         if (!isMockToken) {
           _sessionExpiredShown = true;
@@ -85,10 +82,6 @@ axiosInstance.interceptors.response.use(
         } else {
           console.warn('API returned 401 for mock token. Ignoring auto-logout redirect.');
         }
-
-      } else if (error.response.data?.message) {
-        // If it's a 401 but not auth-related (misconfigured backend), just show the error
-        toast.error(error.response.data.message);
       }
     }
     return Promise.reject(error);
@@ -216,8 +209,6 @@ export const uploadAdminImage = async (adminId, image) => {
   formData.append("adminId", adminId);
   formData.append("image", image);
 
-  const token = localStorage.getItem('token');
-
   try {
     const response = await axios.post(`${BASE_URL}/admin/uploadDP`, formData, {
       headers: {
@@ -234,7 +225,6 @@ export const uploadAdminImage = async (adminId, image) => {
 
 export const createAdmin = async (adminData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/admin/create', {
       name: adminData.name,
       email: adminData.email
@@ -255,7 +245,6 @@ export const createAdmin = async (adminData) => {
 
 export const getAllAdmins = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/admin/all', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -273,7 +262,6 @@ export const getAllAdmins = async () => {
 
 export const deleteAdmin = async (adminId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/admin/delete', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -345,6 +333,10 @@ export const updateTaskStatus = async (taskId, status) => {
     const response = await axiosInstance.put('/task/update-status', {
       taskId: taskId,
       status: status
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
     return response.data;
   } catch (error) {
@@ -356,7 +348,6 @@ export const updateTaskStatus = async (taskId, status) => {
 
 export const deleteTask = async (taskId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/task/delete', {
       taskId: taskId
     }, {
@@ -385,7 +376,6 @@ export const logout = () => {
 
 export const updateAdmin = async (adminId, updateData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put('/admin/edit', {
       adminId: adminId,
       password: updateData.password
@@ -407,7 +397,6 @@ export const updateTeamleader = async (teamLeaderId, updateData) => {
 
 export const updateEmployee = async (employeeId, updateData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put('/employee/edit', {
       id: employeeId,
       password: updateData
@@ -427,7 +416,6 @@ export const updateEmployee = async (employeeId, updateData) => {
 // Add this new API endpoint
 export const createTeamLeader = async (teamLeaderData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/teamLeader/create', {
       name: teamLeaderData.name,
       email: teamLeaderData.email,
@@ -449,7 +437,6 @@ export const createTeamLeader = async (teamLeaderData) => {
 // Add this new API endpoint
 export const createEmployee = async (employeeData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/employee/create', {
       name: employeeData.name,
       email: employeeData.email,
@@ -471,7 +458,6 @@ export const createEmployee = async (employeeData) => {
 // Update the getAdminHierarchy API endpoint
 export const getAdminHierarchy = async (id, role) => {
   try {
-    const token = localStorage.getItem('token');
     const endpoint = role === 'TeamLeader' ? '/teamLeader/hierarchy' : '/admin/hierarchy';
 
     const response = await axiosInstance.post(endpoint, {
@@ -497,7 +483,6 @@ export const getAdminHierarchy = async (id, role) => {
 // Add this new API endpoint to get all clients
 export const getAllClients = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/client/all', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -513,7 +498,6 @@ export const getAllClients = async () => {
 
 export const deleteEmployee = async (employeeId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/employee/delete', {
       data: { employeeId },
       headers: {
@@ -530,7 +514,6 @@ export const deleteEmployee = async (employeeId) => {
 
 export const deleteTeamLeader = async (teamLeaderId, newTeamLeaderId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/teamLeader/deleteTeamLeaderWithReassignment', {
       data: {
         teamLeaderId,
@@ -551,7 +534,6 @@ export const deleteTeamLeader = async (teamLeaderId, newTeamLeaderId) => {
 // Add this new API endpoint for admin tasks
 export const getAllTasks = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/task/allTasks', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -568,7 +550,6 @@ export const getAllTasks = async () => {
 // Add this new function to handle document uploads
 export const uploadClientDocuments = async (formData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axios.post(
       `${BASE_URL}/client/upload-documents`,
       formData,
@@ -597,7 +578,6 @@ export const uploadClientDocuments = async (formData) => {
 // Add new function for creating task by Team Leader
 export const createTaskForEmployee = async (taskData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/task/createTaskForEmployeeByTL', {
       title: taskData.title,
       description: taskData.description,
@@ -626,7 +606,6 @@ export const createTaskForEmployee = async (taskData) => {
 
 export const onboardClient = async (clientData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/client/onboard-client', clientData, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -643,7 +622,7 @@ export const onboardClient = async (clientData) => {
 // Add this new API endpoint for deleting a client
 export const deleteClient = async (clientId) => {
   try {
-    const token = localStorage.getItem('token'); // Get the token from local storage
+    // Get the token from local storage
     const response = await axiosInstance.delete('/client/delete', {
       data: { clientId }, // Send the clientId in the request body
       headers: {
@@ -660,7 +639,6 @@ export const deleteClient = async (clientId) => {
 
 export const getClientRequestedTasks = async (clientId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/task/requested-tasks', {
       teamLeaderId: clientId
     }, {
@@ -679,7 +657,6 @@ export const getClientRequestedTasks = async (clientId) => {
 // Function to get user profile image
 export const getUserProfileImage = async (role, adminId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post(`/${role}/dp`, { adminId }, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -696,7 +673,6 @@ export const getUserProfileImage = async (role, adminId) => {
 // New function to upload admin profile image
 export const uploadAdminProfileImage = async (imageFile, adminId) => {
   try {
-    const token = localStorage.getItem('token');
     const formData = new FormData();
     formData.append('image', imageFile);
     formData.append('adminId', adminId);
@@ -725,7 +701,6 @@ export const uploadAdminProfileImage = async (imageFile, adminId) => {
 export const createTaskByTL = async (taskData) => {
   try {
     console.log('Creating task with data:', taskData);
-    const token = localStorage.getItem('token');
     console.log('Using token:', token);
 
     // Use axiosInstance instead of fetch and use the correct endpoint
@@ -750,7 +725,6 @@ export const createTaskByTL = async (taskData) => {
 // Add this new API endpoint to get team leader hierarchy
 export const getTeamLeaderHierarchy = async (teamLeaderId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/teamLeader/hierarchy', {
       teamLeaderId: teamLeaderId
     }, {
@@ -773,7 +747,6 @@ export const getTeamLeaderHierarchy = async (teamLeaderId) => {
 // First, move the getTeamLeaderDetails function definition before the default export
 export const getTeamLeaderDetails = async (teamLeaderId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/teamLeader/getTeamLeaderDetails', {
       teamLeaderId: teamLeaderId
     }, {
@@ -793,7 +766,6 @@ export const getTeamLeaderDetails = async (teamLeaderId) => {
 // Add this new API endpoint to get all notifications
 export const getAllNotifications = async (userId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/notification/get-all', { userId }, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -811,7 +783,6 @@ export const getAllNotifications = async (userId) => {
 // Add this new API endpoint to mark a notification as read
 export const markNotificationRead = async (notificationId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/notification/mark-read', { notificationId }, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -829,7 +800,6 @@ export const markNotificationRead = async (notificationId) => {
 // Add this new API endpoint to mark a notification as unread
 export const markNotificationUnread = async (notificationId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/notification/mark-unread', { notificationId }, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -847,7 +817,6 @@ export const markNotificationUnread = async (notificationId) => {
 // Add this new API endpoint to mark all notifications as read
 export const markAllNotificationsRead = async (userId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/notification/mark-all-read', { userId }, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -865,7 +834,6 @@ export const markAllNotificationsRead = async (userId) => {
 // Add this new API endpoint to delete one notification
 export const deleteNotification = async (notificationId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/notification/delete-one', {
       data: { notificationId },
       headers: {
@@ -884,7 +852,6 @@ export const deleteNotification = async (notificationId) => {
 // Add this new API endpoint to delete all notifications
 export const deleteAllNotifications = async (userId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/notification/delete-all', {
       data: { userId },
       headers: {
@@ -905,7 +872,6 @@ export const deleteAllNotifications = async (userId) => {
 // Get chat history between two users
 export const getChatHistory = async (userId1, userId2) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/chat/messages/${userId1}/${userId2}`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -922,7 +888,6 @@ export const getChatHistory = async (userId1, userId2) => {
 // Mark messages as read
 export const markMessagesAsRead = async (senderId, receiverId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put('/chat/messages/read', {
       senderId,
       receiverId
@@ -942,7 +907,6 @@ export const markMessagesAsRead = async (senderId, receiverId) => {
 // Get unread message count
 export const getUnreadMessageCount = async (userId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/chat/messages/unread/${userId}`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -959,7 +923,6 @@ export const getUnreadMessageCount = async (userId) => {
 // Add this new API endpoint to get client details
 export const getClientDetails = async (clientId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/client/getClientDetails', {
       clientId: clientId
     }, {
@@ -982,7 +945,6 @@ export const getClientDetails = async (clientId) => {
 // Add this new API endpoint for client password reset
 export const resetClientPassword = async (clientId, newPassword) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put('client/edit', {
       clientId: clientId,
       newPassword: newPassword
@@ -1005,7 +967,6 @@ export const resetClientPassword = async (clientId, newPassword) => {
 // Add this new API endpoint to get client documents
 export const getClientDocuments = async (clientId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/client/getClientDocuments',
       { clientId: clientId },
       {
@@ -1106,7 +1067,6 @@ export const resetPassword = async (password, token, userType) => {
 // Update the API endpoint for getting employee tasks
 export const getEmployeeTasks = async (employeeId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/employee/employeeTasks',
       { employeeId: employeeId },
       {
@@ -1127,7 +1087,6 @@ export const getEmployeeTasks = async (employeeId) => {
 // Add this new API endpoint to get all recurring tasks
 export const getAllRecurringTasks = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/task/getAllRecurringTasks', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1145,7 +1104,6 @@ export const getAllRecurringTasks = async () => {
 // Add this new API endpoint to delete or deactivate recurring task
 export const deleteOrDeactivateRecurringTask = async (recurringTaskId, action) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/task/deleteOrDeactivateRecurringTask', {
       recurringTaskId,
       action // 'delete' or 'deactivate'
@@ -1166,7 +1124,6 @@ export const deleteOrDeactivateRecurringTask = async (recurringTaskId, action) =
 // Add this new API endpoint to get recurring tasks for team leader
 export const getRecurringTasksByTeamLeader = async (teamLeaderId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/task/getRecurringTasksForTL', {
       teamLeaderId: teamLeaderId,
     }, {
@@ -1186,7 +1143,6 @@ export const getRecurringTasksByTeamLeader = async (teamLeaderId) => {
 // KAM Productivity Dashboard
 export const getKamProductivity = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/task/kam-productivity', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1204,7 +1160,6 @@ export const getKamProductivity = async () => {
 // ── Work Agreement APIs ──
 export const createWorkAgreement = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/workAgreement/create', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -1216,7 +1171,6 @@ export const createWorkAgreement = async (data) => {
 
 export const getWorkAgreements = async (params = {}) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/workAgreement/all', {
       params,
       headers: { 'Authorization': `Bearer ${token}` }
@@ -1229,7 +1183,6 @@ export const getWorkAgreements = async (params = {}) => {
 
 export const getWorkAgreementSummary = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/workAgreement/summary', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -1241,7 +1194,6 @@ export const getWorkAgreementSummary = async () => {
 
 export const updateWorkAgreement = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put('/workAgreement/update', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -1253,7 +1205,6 @@ export const updateWorkAgreement = async (data) => {
 
 export const deleteWorkAgreement = async (agreementId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/workAgreement/delete', {
       data: { agreementId },
       headers: { 'Authorization': `Bearer ${token}` }
@@ -1267,7 +1218,6 @@ export const deleteWorkAgreement = async (agreementId) => {
 // ── Work Handover API functions ──
 export const createWorkHandover = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/workHandover/create', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -1279,7 +1229,6 @@ export const createWorkHandover = async (data) => {
 
 export const getWorkHandovers = async (params = {}) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/workHandover/all', {
       params,
       headers: { 'Authorization': `Bearer ${token}` }
@@ -1292,7 +1241,6 @@ export const getWorkHandovers = async (params = {}) => {
 
 export const updateWorkHandover = async (id, data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/workHandover/update/${id}`, data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -1304,7 +1252,6 @@ export const updateWorkHandover = async (id, data) => {
 
 export const changeHandoverStatus = async (id, status) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/workHandover/status/${id}`, { status }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -1316,7 +1263,6 @@ export const changeHandoverStatus = async (id, status) => {
 
 export const deleteWorkHandover = async (id) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete(`/workHandover/delete/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -1328,7 +1274,6 @@ export const deleteWorkHandover = async (id) => {
 
 export const editClient = async (clientData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put('/client/edit-Client', {
       clientId: clientData.clientId,
       name: clientData.name,
@@ -1365,7 +1310,6 @@ export const editClient = async (clientData) => {
 // Delete team leader and reassign employees to another team leader
 export const deleteTeamLeaderWithReassignment = async ({ teamLeaderId, newTeamLeaderId }) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/teamLeader/deleteTeamLeaderWithReassignment', {
       data: {
         teamLeaderId,
@@ -1386,7 +1330,6 @@ export const deleteTeamLeaderWithReassignment = async ({ teamLeaderId, newTeamLe
 // Delete team leader and promote an employee to team leader
 export const deleteTeamLeaderAndPromoteEmployee = async ({ oldTeamLeaderId, employeeToPromoteId }) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete('/teamLeader/deleteTeamLeaderAndPromoteEmployee', {
       data: {
         oldTeamLeaderId,
@@ -1407,7 +1350,6 @@ export const deleteTeamLeaderAndPromoteEmployee = async ({ oldTeamLeaderId, empl
 // Add this new API endpoint for recruitment requests
 export const createRecruitmentRequest = async (requestData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/request', {
       name: requestData.name,
       position: requestData.position,
@@ -1437,7 +1379,6 @@ export const createRecruitmentRequest = async (requestData) => {
 // Add this new API endpoint for accepting recruitment requests
 export const acceptRecruitmentRequest = async (acceptData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/accept', {
       reason: acceptData.reason,
       teamLeaderId: acceptData.teamLeaderId,
@@ -1459,7 +1400,6 @@ export const acceptRecruitmentRequest = async (acceptData) => {
 // Add this new API endpoint for rejecting recruitment requests
 export const rejectRecruitmentRequest = async (rejectData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/reject', {
       reason: rejectData.reason,
       teamLeaderId: rejectData.teamLeaderId,
@@ -1483,7 +1423,6 @@ export const rejectRecruitmentRequest = async (rejectData) => {
 
 export const getRecruitmentRequests = async (teamLeaderid) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/recruitment/getRequests', {
       params: { teamLeaderid },
       headers: {
@@ -1502,7 +1441,6 @@ export const getRecruitmentRequests = async (teamLeaderid) => {
 // Add this new API endpoint for uploading resumes
 export const uploadResumes = async (formData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axios.post(
       `${BASE_URL}/recruitment/upload-resumes`,
       formData,
@@ -1531,7 +1469,6 @@ export const uploadResumes = async (formData) => {
 // Add this new API endpoint to get shortlisted candidates
 export const getShortlistedCandidates = async (payload) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/shortlisted', {
       teamLeaderId: payload.teamLeaderId,
       clientId: payload.clientId
@@ -1552,7 +1489,6 @@ export const getShortlistedCandidates = async (payload) => {
 // Add this new function for client requests
 export const getClientRequests = async (clientId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/recruitment/getRequests-client?clientId=${clientId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1571,7 +1507,6 @@ export const getClientRequests = async (clientId) => {
 // Add function to handle single request details if needed
 export const getClientRequestDetails = async (requestId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/recruitment/request/${requestId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1590,7 +1525,6 @@ export const getClientRequestDetails = async (requestId) => {
 // Add function to create new request if needed
 export const createClientRequest = async (requestData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/create-request', requestData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1609,7 +1543,6 @@ export const createClientRequest = async (requestData) => {
 // Add these new API endpoints for recruitment candidate actions
 export const acceptCandidate = async (acceptData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/accept', {
       reason: acceptData.reason,
       recruitmentId: acceptData.recruitmentId,
@@ -1630,7 +1563,6 @@ export const acceptCandidate = async (acceptData) => {
 
 export const rejectCandidate = async (rejectData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/reject', {
       reason: rejectData.reason,
       recruitmentId: rejectData.recruitmentId,
@@ -1652,7 +1584,6 @@ export const rejectCandidate = async (rejectData) => {
 // Add this new API endpoint to get recruitment status
 export const getRecruitmentStatus = async (payload) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/status', {
       recruitmentId: payload.recruitmentId,
       clientId: payload.clientId,
@@ -1674,7 +1605,6 @@ export const getRecruitmentStatus = async (payload) => {
 
 export const scheduleInterview = async (interviewData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/schedule-interview', {
       recruitmentId: interviewData.recruitmentId,
       fileId: interviewData.fileId,
@@ -1696,7 +1626,6 @@ export const scheduleInterview = async (interviewData) => {
 };
 export const closeRecruitmentRequest = async (closeData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/close-request', {
       recruitmentId: closeData.recruitmentId,
       userType: closeData.userType,
@@ -1719,7 +1648,6 @@ export const closeRecruitmentRequest = async (closeData) => {
 // Update the API endpoint to generate meeting link with additional parameters
 export const generateMeetLink = async (meetingData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/meet-link', {
       interviewDate: meetingData.interviewDate,
       interviewTime: meetingData.interviewTime,
@@ -1747,7 +1675,6 @@ export const generateMeetLink = async (meetingData) => {
 // Create a new lead
 export const createLead = async (leadData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/bd/leads', leadData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1770,7 +1697,6 @@ export const createLead = async (leadData) => {
 // Get all leads
 export const getAllLeads = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axios.get('http://localhost:3000/leads', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1787,7 +1713,6 @@ export const getAllLeads = async () => {
 // Get lead by ID
 export const getLeadById = async (leadId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/bd/leads/${leadId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1810,7 +1735,6 @@ export const getLeadById = async (leadId) => {
 // Update lead
 export const updateLead = async (leadId, updateData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/bd/leads/${leadId}`, updateData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1833,7 +1757,6 @@ export const updateLead = async (leadId, updateData) => {
 // Delete lead
 export const deleteLead = async (leadId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete(`/bd/leads/${leadId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1856,7 +1779,6 @@ export const deleteLead = async (leadId) => {
 // Get all leads for a specific business developer
 export const getBusinessDevLeads = async (businessDevId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/bd/leads/business-dev/${businessDevId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1875,7 +1797,6 @@ export const getBusinessDevLeads = async (businessDevId) => {
 // Get all BD executives
 export const getAllBDExecutives = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/bd/executives', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1894,7 +1815,6 @@ export const getAllBDExecutives = async () => {
 // Create a new proposal
 export const createProposal = async (proposalData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/bd/proposals', {
       leadId: proposalData.leadId,
       subject: proposalData.subject,
@@ -1922,7 +1842,6 @@ export const createProposal = async (proposalData) => {
 // Send a proposal
 export const sendProposal = async (proposalData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/bd/leads/send-proposal', proposalData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1947,7 +1866,6 @@ export const sendProposal = async (proposalData) => {
 // Send a profile
 export const sendProfile = async (profileData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/bd/leads/send-profile', profileData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1972,7 +1890,6 @@ export const sendProfile = async (profileData) => {
 // Business Development API Endpoints
 export const createBDExecutive = async (bdData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/bd/create', {
       name: bdData.name,
       email: bdData.email,
@@ -2003,7 +1920,11 @@ export const createBDExecutive = async (bdData) => {
 export const getAllInterviews = async (filters = {}) => {
   try {
     const queryParams = new URLSearchParams(filters).toString();
-    const response = await axiosInstance.get(`/interview${queryParams ? `?${queryParams}` : ''}`);
+    const response = await axiosInstance.get(`/interview${queryParams ? `?${queryParams}` : ''}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch interviews:', error);
@@ -2016,7 +1937,6 @@ export const getAllInterviews = async (filters = {}) => {
 // Schedule new interview with automatic email
 export const scheduleNewInterview = async (interviewData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/interview/schedule', interviewData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -2035,7 +1955,6 @@ export const scheduleNewInterview = async (interviewData) => {
 // Get interview by ID
 export const getInterviewById = async (interviewId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/interview/${interviewId}`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -2066,7 +1985,6 @@ export const getInterviewByToken = async (token) => {
 // Get interview feedback form
 export const getInterviewFeedbackForm = async (interviewId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/interview/${interviewId}/feedback-form`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -2084,7 +2002,6 @@ export const getInterviewFeedbackForm = async (interviewId) => {
 // Submit interview feedback/evaluation
 export const submitInterviewFeedback = async (interviewId, feedbackData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post(`/interview/${interviewId}/feedback`, feedbackData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -2103,7 +2020,6 @@ export const submitInterviewFeedback = async (interviewId, feedbackData) => {
 // Update interview status
 export const updateInterviewStatus = async (interviewId, statusData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/interview/${interviewId}/status`, statusData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -2121,7 +2037,6 @@ export const updateInterviewStatus = async (interviewId, statusData) => {
 
 export const updateInterview = async (interviewId, interviewData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/interview/${interviewId}`, interviewData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -2140,7 +2055,6 @@ export const updateInterview = async (interviewId, interviewData) => {
 // Delete interview permanently
 export const deleteInterview = async (interviewId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete(`/interview/${interviewId}/hard`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -2158,7 +2072,6 @@ export const deleteInterview = async (interviewId) => {
 // Send interview reminder
 export const sendInterviewReminder = async (interviewId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post(`/interview/${interviewId}/remind`, {}, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -2176,7 +2089,6 @@ export const sendInterviewReminder = async (interviewId) => {
 // Cancel interview
 export const cancelInterview = async (interviewId, reason) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete(`/interview/${interviewId}`, {
       data: { reason },
       headers: {
@@ -2871,7 +2783,6 @@ export const getAllRecruitmentPositions = async (filters = {}) => {
 // Create recruitment position
 export const createRecruitmentPosition = async (positionData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/positions', positionData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -2888,7 +2799,6 @@ export const createRecruitmentPosition = async (positionData) => {
 // Distribute job to external platforms
 export const distributeJobToPlatforms = async (positionId, platforms) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post(`/recruitment/positions/${positionId}/distribute`, { platforms }, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -2905,7 +2815,6 @@ export const distributeJobToPlatforms = async (positionId, platforms) => {
 // Update recruitment position
 export const updateRecruitmentPosition = async (positionId, updateData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/recruitment/positions/${positionId}`, updateData, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -3071,7 +2980,6 @@ export const getDepartmentStats = async (department) => {
 
 export const getClientsForTeamLeader = async (payload) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/client/getClientsForTeamLeader',
       payload,  // Send the payload object
       {
@@ -3089,7 +2997,6 @@ export const getClientsForTeamLeader = async (payload) => {
 
 export const getClosedDeals = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axios.get('http://localhost:3000/deals/closed', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -3105,7 +3012,6 @@ export const getClosedDeals = async () => {
 
 export const getPendingAgreements = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axios.get('http://localhost:3000/agreements/pending', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -3121,7 +3027,6 @@ export const getPendingAgreements = async () => {
 
 export const getUpcomingActivities = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axios.get('http://localhost:3000/activities/upcoming', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -3137,7 +3042,6 @@ export const getUpcomingActivities = async () => {
 
 export const getBDMetrics = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axios.get('http://localhost:3000/bd/metrics', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -3153,7 +3057,6 @@ export const getBDMetrics = async () => {
 
 export const bdExecutiveLogin = async (credentials) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axios.post('http://localhost:3000/bd/login', credentials, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -3171,7 +3074,6 @@ export const bdExecutiveLogin = async (credentials) => {
 
 export const getKamsWithRecruitment = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/recruitment/kams', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -3188,7 +3090,6 @@ export const getKamsWithRecruitment = async () => {
 
 export const getClientRecruitmentProgress = async (clientId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/recruitment/client-progress/${clientId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3201,7 +3102,6 @@ export const getClientRecruitmentProgress = async (clientId) => {
 
 export const getClientDashboardOverview = async (clientId) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/client/dashboard-overview/${clientId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3214,7 +3114,6 @@ export const getClientDashboardOverview = async (clientId) => {
 
 export const getDepartmentActivityLogs = async (department, limit = 50, actionType = null) => {
   try {
-    const token = localStorage.getItem('token');
     const params = { department, limit };
     if (actionType) params.actionType = actionType;
 
@@ -3231,7 +3130,6 @@ export const getDepartmentActivityLogs = async (department, limit = 50, actionTy
 
 export const createDepartmentActivityLog = async (activityData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/activities', activityData, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3244,7 +3142,6 @@ export const createDepartmentActivityLog = async (activityData) => {
 
 export const getDepartmentTasks = async (department, status = null, assignedTo = null) => {
   try {
-    const token = localStorage.getItem('token');
     const params = { department };
     if (status) params.status = status;
     if (assignedTo) params.assignedTo = assignedTo;
@@ -3262,7 +3159,6 @@ export const getDepartmentTasks = async (department, status = null, assignedTo =
 
 export const createDepartmentTask = async (taskData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/tasks', taskData, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3275,7 +3171,9 @@ export const createDepartmentTask = async (taskData) => {
 
 export const updateDepartmentTask = async (taskId, updateData) => {
   try {
-    const response = await axiosInstance.put(`/department/tasks/${taskId}`, updateData);
+    const response = await axiosInstance.put(`/department/tasks/${taskId}`, updateData, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     return response.data;
   } catch (error) {
     console.error('Error updating department task:', error);
@@ -3285,7 +3183,9 @@ export const updateDepartmentTask = async (taskId, updateData) => {
 
 export const deleteDepartmentTask = async (taskId) => {
   try {
-    const response = await axiosInstance.delete(`/department/tasks/${taskId}`);
+    const response = await axiosInstance.delete(`/department/tasks/${taskId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     return response.data;
   } catch (error) {
     console.error('Error deleting department task:', error);
@@ -3299,7 +3199,8 @@ export const getMyDepartmentTasks = async (status = null) => {
     if (status) params.status = status;
 
     const response = await axiosInstance.get('/department/my-tasks', {
-      params
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     return response.data;
   } catch (error) {
@@ -3310,7 +3211,9 @@ export const getMyDepartmentTasks = async (status = null) => {
 
 export const getMyDepartmentStats = async () => {
   try {
-    const response = await axiosInstance.get('/department/my-stats');
+    const response = await axiosInstance.get('/department/my-stats', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching my stats:', error);
@@ -3320,7 +3223,6 @@ export const getMyDepartmentStats = async () => {
 
 export const getMyProfile = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/my-profile', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3332,7 +3234,6 @@ export const getMyProfile = async () => {
 
 export const updateMyProfile = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put('/department/my-profile', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3344,7 +3245,6 @@ export const updateMyProfile = async (data) => {
 
 export const getMyLeaves = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/leaves', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3356,7 +3256,6 @@ export const getMyLeaves = async () => {
 
 export const applyLeave = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/leaves', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3368,7 +3267,6 @@ export const applyLeave = async (data) => {
 
 export const approveRejectLeave = async (id, data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/department/leaves/${id}/approve`, data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3380,7 +3278,6 @@ export const approveRejectLeave = async (id, data) => {
 
 export const checkIn = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/attendance/check-in', {}, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3392,7 +3289,6 @@ export const checkIn = async () => {
 
 export const checkOut = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/attendance/check-out', {}, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3404,7 +3300,6 @@ export const checkOut = async () => {
 
 export const getMyAttendance = async (month, year) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/my-attendance', {
       params: { month, year },
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3417,7 +3312,6 @@ export const getMyAttendance = async (month, year) => {
 
 export const getPerformanceStats = async (period) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/performance', {
       params: { period },
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3430,7 +3324,6 @@ export const getPerformanceStats = async (period) => {
 
 export const submitDailyReport = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/daily-report', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3442,7 +3335,6 @@ export const submitDailyReport = async (data) => {
 
 export const getMyReports = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/my-reports', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3454,7 +3346,6 @@ export const getMyReports = async () => {
 
 export const getMISReports = async (params = {}) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/mis-reports', {
       params,
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3467,7 +3358,6 @@ export const getMISReports = async (params = {}) => {
 
 export const addHeadComment = async (reportId, comment) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post(`/department/daily-report/${reportId}/comment`, { comment }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3479,7 +3369,6 @@ export const addHeadComment = async (reportId, comment) => {
 
 export const getAnnouncements = async (department) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/announcements', {
       params: { department },
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3492,7 +3381,6 @@ export const getAnnouncements = async (department) => {
 
 export const createAnnouncement = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/announcements', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3504,7 +3392,6 @@ export const createAnnouncement = async (data) => {
 
 export const deleteAnnouncement = async (id) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete(`/department/announcements/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3516,7 +3403,6 @@ export const deleteAnnouncement = async (id) => {
 
 export const uploadDeptDocument = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/documents', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3528,7 +3414,6 @@ export const uploadDeptDocument = async (data) => {
 
 export const deleteDeptDocument = async (id) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete(`/department/documents/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3540,7 +3425,6 @@ export const deleteDeptDocument = async (id) => {
 
 export const getMyTrainings = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/my-trainings', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3552,7 +3436,6 @@ export const getMyTrainings = async () => {
 
 export const updateTraining = async (id, data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/department/trainings/${id}`, data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3564,7 +3447,6 @@ export const updateTraining = async (id, data) => {
 
 export const assignTraining = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/trainings', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3576,7 +3458,6 @@ export const assignTraining = async (data) => {
 
 export const getMyPayslips = async () => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/my-payslips', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3588,7 +3469,6 @@ export const getMyPayslips = async () => {
 
 export const generatePayslip = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/payslips', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3600,7 +3480,6 @@ export const generatePayslip = async (data) => {
 
 export const getChatMessages = async (department) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/chat', {
       params: { department },
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3613,7 +3492,6 @@ export const getChatMessages = async (department) => {
 
 export const sendChatMessage = async (data) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/chat', data, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -3625,7 +3503,6 @@ export const sendChatMessage = async (data) => {
 
 export const getCalendarEvents = async (month, year) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/calendar', {
       params: { month, year },
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3639,7 +3516,6 @@ export const getCalendarEvents = async (month, year) => {
 // ============== NOTES ==============
 export const getNotes = async (params = {}) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.get('/department/notes', {
       params,
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3652,7 +3528,6 @@ export const getNotes = async (params = {}) => {
 
 export const createNote = async (noteData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/department/notes', noteData, {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
@@ -3664,7 +3539,6 @@ export const createNote = async (noteData) => {
 
 export const updateNote = async (id, noteData) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.put(`/department/notes/${id}`, noteData, {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
@@ -3676,7 +3550,6 @@ export const updateNote = async (id, noteData) => {
 
 export const deleteNote = async (id) => {
   try {
-    const token = localStorage.getItem('token');
     const response = await axiosInstance.delete(`/department/notes/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });

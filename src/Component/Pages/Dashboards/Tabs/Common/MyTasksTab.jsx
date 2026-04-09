@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiCheckSquare,
@@ -14,6 +15,11 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiFilter,
+  FiX,
+  FiEdit2,
+  FiActivity,
+  FiLayers,
+  FiChevronRight,
 } from 'react-icons/fi';
 import {
   getMyDepartmentTasks,
@@ -22,10 +28,10 @@ import {
 
 const StatusBadge = ({ status }) => {
   const config = {
-    Pending: { bg: '#fef3c7', text: '#92400e', dot: '#f59e0b' },
-    'In Progress': { bg: '#dbeafe', text: '#1e40af', dot: '#3b82f6' },
-    Completed: { bg: '#d1fae5', text: '#065f46', dot: '#10b981' },
-    Overdue: { bg: '#fee2e2', text: '#991b1b', dot: '#ef4444' },
+    Pending: { bg: '#fffbeb', text: '#92400e', dot: '#f59e0b' },
+    'In Progress': { bg: '#eff6ff', text: '#1e40af', dot: '#3b82f6' },
+    Completed: { bg: '#ecfdf5', text: '#065f46', dot: '#10b981' },
+    Overdue: { bg: '#fef2f2', text: '#991b1b', dot: '#ef4444' },
   };
   const c = config[status] || config.Pending;
   return (
@@ -40,15 +46,26 @@ const StatusBadge = ({ status }) => {
 
 const PriorityBadge = ({ priority }) => {
   const config = {
-    Low: { bg: '#f1f5f9', text: '#475569' },
-    Medium: { bg: '#fef3c7', text: '#92400e' },
-    High: { bg: '#ffedd5', text: '#c2410c' },
-    Urgent: { bg: '#fee2e2', text: '#991b1b' },
+    Low: { bg: '#f1f5f9', text: '#64748b' },
+    Medium: { bg: '#fff7ed', text: '#c2410c' },
+    High: { bg: '#fff1f2', text: '#e11d48' },
+    Urgent: { bg: '#fef2f2', text: '#991b1b' },
   };
   const c = config[priority] || config.Medium;
   return (
-    <span style={{ background: c.bg, color: c.text, display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
-      <FiFlag style={{ width: '12px', height: '12px' }} />
+    <span style={{ 
+      background: c.bg, 
+      color: c.text, 
+      display: 'inline-flex', 
+      alignItems: 'center', 
+      padding: '2px 8px', 
+      borderRadius: '6px', 
+      fontSize: '10px', 
+      fontWeight: 900, 
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px',
+      border: `1px solid ${c.text}20`
+    }}>
       {priority}
     </span>
   );
@@ -60,6 +77,14 @@ const statusOptions = [
   { value: 'In Progress', label: 'In Progress', dot: '#3b82f6' },
   { value: 'Completed', label: 'Completed', dot: '#10b981' },
   { value: 'Overdue', label: 'Overdue', dot: '#ef4444' },
+];
+
+const priorityOptions = [
+  { value: 'all', label: 'All Priority' },
+  { value: 'Low', label: 'Low', dot: '#475569' },
+  { value: 'Medium', label: 'Medium', dot: '#f59e0b' },
+  { value: 'High', label: 'High', dot: '#c2410c' },
+  { value: 'Urgent', label: 'Urgent', dot: '#ef4444' },
 ];
 
 const StatusFilterDropdown = ({ filterStatus, setFilterStatus }) => {
@@ -77,22 +102,15 @@ const StatusFilterDropdown = ({ filterStatus, setFilterStatus }) => {
   const selected = statusOptions.find(o => o.value === filterStatus) || statusOptions[0];
 
   return (
-    <div ref={ref} style={{ position: 'relative', minWidth: '160px' }}>
+    <div ref={ref} className="relative min-w-[140px]">
       <button
         onClick={() => setOpen(!open)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          padding: '10px 16px', borderRadius: '12px',
-          border: '2px solid #e5e7eb', background: '#fff',
-          cursor: 'pointer', fontSize: '14px', fontWeight: 500,
-          color: '#374151', width: '100%', justifyContent: 'space-between',
-        }}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-100 bg-[#F5F5F2] hover:bg-[#EEEEE8] cursor-pointer text-[11px] font-black text-slate-700 w-full justify-between transition-all uppercase tracking-wider"
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: selected.dot }}></span>
+        <span className="flex items-center gap-2">
           {selected.label}
         </span>
-        <FiChevronDown style={{ width: '16px', height: '16px', color: '#9ca3af', transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'rotate(0)' }} />
+        <FiChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} />
       </button>
 
       <AnimatePresence>
@@ -101,36 +119,15 @@ const StatusFilterDropdown = ({ filterStatus, setFilterStatus }) => {
             initial={{ opacity: 0, y: -8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
-            style={{
-              position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-              background: '#fff', borderRadius: '12px',
-              boxShadow: '0 10px 40px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06)',
-              border: '1px solid #e5e7eb', overflow: 'hidden',
-              zIndex: 50, minWidth: '180px',
-            }}
+            className="absolute top-full right-0 mt-1.5 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 min-w-[170px]"
           >
             {statusOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => { setFilterStatus(option.value); setOpen(false); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '10px 16px', width: '100%',
-                  background: filterStatus === option.value ? '#f0f4ff' : 'transparent',
-                  border: 'none', cursor: 'pointer', fontSize: '13px',
-                  fontWeight: filterStatus === option.value ? 600 : 400,
-                  color: filterStatus === option.value ? '#4338ca' : '#374151',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => { if (filterStatus !== option.value) e.currentTarget.style.background = '#f9fafb'; }}
-                onMouseLeave={(e) => { if (filterStatus !== option.value) e.currentTarget.style.background = 'transparent'; }}
+                className="flex items-center px-4 py-2.5 w-full text-left text-xs font-bold text-slate-700 hover:bg-gray-100 transition-all border-none cursor-pointer"
               >
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: option.dot, flexShrink: 0 }}></span>
-                <span style={{ flex: 1, textAlign: 'left' }}>{option.label}</span>
-                {filterStatus === option.value && (
-                  <FiCheckCircle style={{ width: '14px', height: '14px', color: '#4338ca' }} />
-                )}
+                {option.label}
               </button>
             ))}
           </motion.div>
@@ -140,20 +137,132 @@ const StatusFilterDropdown = ({ filterStatus, setFilterStatus }) => {
   );
 };
 
+const PriorityFilterDropdown = ({ filterPriority, setFilterPriority }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const selected = priorityOptions.find(o => o.value === filterPriority) || priorityOptions[0];
+
+  return (
+    <div ref={ref} className="relative min-w-[140px]">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-100 bg-[#F5F5F2] hover:bg-[#EEEEE8] cursor-pointer text-[11px] font-black text-slate-700 w-full justify-between transition-all uppercase tracking-wider"
+      >
+        <span className="flex items-center gap-2">
+          {selected.label}
+        </span>
+        <FiChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            className="absolute top-full right-0 mt-1.5 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 min-w-[170px]"
+          >
+            {priorityOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => { setFilterPriority(option.value); setOpen(false); }}
+                className="flex items-center px-4 py-2.5 w-full text-left text-xs font-bold text-slate-700 hover:bg-gray-100 transition-all border-none cursor-pointer"
+              >
+                {option.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+
+const TaskActionDropdown = ({ currentStatus, onStatusChange, isUpdating, isOpen, setIsOpen }) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const options = [
+    { value: 'Completed', label: 'Completed' },
+    { value: 'Pending', label: 'Pending' }
+  ];
+
+  return (
+    <div ref={ref} className={`relative ${isOpen ? 'z-[60]' : 'z-auto'}`}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+        className="flex items-center gap-2 bg-[#1B4DA0] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50"
+        disabled={isUpdating}
+      >
+        <span>{currentStatus === 'Completed' ? 'Completed' : 'Actions'}</span>
+        <FiChevronDown className={`w-3 h-3 text-white/70 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            className="absolute top-full right-0 mt-1.5 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 min-w-[140px]"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={(e) => { 
+                  e.stopPropagation();
+                  onStatusChange(opt.value); 
+                  setIsOpen(false); 
+                }}
+                className={`flex items-center px-4 py-2.5 w-full text-left text-xs font-bold transition-all border-none cursor-pointer ${
+                  currentStatus === opt.value ? 'bg-indigo-50 text-[#1B4DA0]' : 'text-slate-600 hover:bg-gray-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+
 const MyTasksTab = ({ initialFilter = 'all' }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState(initialFilter);
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
 
   useEffect(() => {
     setFilterStatus(initialFilter);
   }, [initialFilter]);
-  const [expandedTask, setExpandedTask] = useState(null);
   const [commentText, setCommentText] = useState('');
   const [updatingTaskId, setUpdatingTaskId] = useState(null);
   const [toast, setToast] = useState(null);
   const [sendingComment, setSendingComment] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+
 
   const MOCK_TASKS = [
     {
@@ -186,7 +295,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
       status: 'Pending',
       priority: 'Medium',
       dueDate: new Date(Date.now() + 86400000 * 3).toISOString(),
-      assignedByName: 'Sachin Singh',
+      assignedByName: 'Vipul Kumar',
       comments: []
     },
     {
@@ -209,7 +318,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
       status: 'Pending',
       priority: 'Medium',
       dueDate: new Date(Date.now() + 86400000 * 5).toISOString(),
-      assignedByName: 'Sachin Singh',
+      assignedByName: 'Pooja Rani',
       comments: []
     }
   ];
@@ -271,7 +380,8 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
     const matchesSearch = task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
+    return matchesSearch && matchesStatus && matchesPriority;
   });
 
   const stats = {
@@ -343,293 +453,277 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
         )}
       </AnimatePresence>
       {/* Header */}
-      <div className="flex flex-col items-start text-left mb-6">
-        <h1 className="text-[30px] font-bold text-[#0f172a] mb-1 tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Tasks</h1>
-        <p className="text-[#64748b] font-medium text-[15px]">Your assigned tasks and todo items</p>
+      <div className="flex flex-col items-start text-left mb-6 px-1">
+        <h1 className="text-[28px] font-bold text-[#0f172a] mb-1 tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Tasks</h1>
+        <p className="text-[#64748b] font-medium text-[14px]">Your assigned tasks and todo items</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {[
-          { label: 'Total', value: stats.total, color: '#0f172a', icon: FiCheckSquare },
-          { label: 'Pending', value: stats.pending, color: '#0f172a', icon: FiClock },
-          { label: 'In Progress', value: stats.inProgress, color: '#0f172a', icon: FiLoader },
-          { label: 'Completed', value: stats.completed, color: '#0f172a', icon: FiCheckCircle },
-          { label: 'Overdue', value: stats.overdue, color: '#0f172a', icon: FiAlertCircle },
-        ].map((stat, idx) => (
-          <div
-            key={stat.label}
-            className="bg-white p-6 rounded-2xl border border-[#E8E7E2] shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300"
-          >
-            {/* Decorative Corner Shape */}
-            <div className="absolute -top-4 -right-4 w-12 h-12 bg-gray-50 rounded-full transition-transform group-hover:scale-110" />
-            
-            <div className="relative z-10 flex flex-col items-start text-left h-full">
-              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#0f172a] group-hover:text-[#0D47A1] transition-colors mb-4">
-                <stat.icon className="w-5 h-5" strokeWidth="2.5" />
-              </div>
-              <div className="mt-auto">
-                <p className="text-[28px] font-bold text-[#0f172a] leading-none mb-1.5">{stat.value}</p>
-                <p className="text-[13px] font-medium text-[#64748b] tracking-wide">{stat.label}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
 
-      {/* Search & Filter */}
-      <div className="flex flex-col md:flex-row gap-3">
+      {/* Search & Filter - Integrated Container */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-2 md:p-2 flex flex-col md:flex-row gap-3 shadow-sm mb-8 relative z-[110]">
         <div className="relative flex-1">
-          <FiSearch style={{ width: '20px', height: '20px', color: '#9ca3af', position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search tasks..."
-            className="w-full rounded-xl border border-gray-200 py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-[#0D47A1] focus:ring-4 focus:ring-[#0D47A1]/5 transition-all"
+            placeholder="Search by title, description..."
+            className="w-full rounded-xl border-none bg-[#F5F5F2] py-2.5 pl-11 pr-4 text-xs font-semibold text-slate-700 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-slate-100 transition-all"
           />
         </div>
-        <StatusFilterDropdown filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
+        <div className="flex items-center gap-2">
+          <PriorityFilterDropdown filterPriority={filterPriority} setFilterPriority={setFilterPriority} />
+          <StatusFilterDropdown filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
+        </div>
       </div>
 
       {/* Task List */}
-      {filteredTasks.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
-          <FiCheckSquare style={{ width: '48px', height: '48px', margin: '0 auto 12px', opacity: 0.3 }} />
-          <p className="font-medium">{tasks.length === 0 ? 'No tasks assigned yet' : 'No tasks match your filters'}</p>
-          <p className="text-sm mt-1">Tasks assigned by your team head will appear here</p>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Table Header */}
+        <div className="hidden lg:grid grid-cols-[2.5fr_1.2fr_1fr_1.2fr_40px] gap-4 px-4 py-4 bg-gray-50/50 border-b border-gray-100">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-left">Position / Task</span>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Assigned By</span>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Status</span>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</span>
+          <span></span>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredTasks.map((task, idx) => {
-            const daysInfo = getDaysLeft(task.dueDate);
-            const isExpanded = expandedTask === task.id;
 
-            return (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.04 }}
-                className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-              >
-                <div className="p-5">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      {/* Title Row */}
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                        {task.status === 'Completed' ? (
-                          <FiCheckCircle style={{ width: '20px', height: '20px', color: '#10b981', flexShrink: 0 }} />
-                        ) : task.status === 'Overdue' ? (
-                          <FiAlertCircle style={{ width: '20px', height: '20px', color: '#ef4444', flexShrink: 0 }} />
-                        ) : (
-                          <FiClock style={{ width: '20px', height: '20px', color: '#6b7280', flexShrink: 0 }} />
-                        )}
-                        <h3 className={`font-semibold ${task.status === 'Completed' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+        <div className="divide-y divide-gray-100 min-h-[400px]">
+          {filteredTasks.length === 0 ? (
+            <div className="text-center py-24 text-gray-500">
+              <FiCheckSquare style={{ width: '48px', height: '48px', margin: '0 auto 12px', opacity: 0.3 }} />
+              <p className="font-medium">{tasks.length === 0 ? 'No tasks assigned yet' : 'No tasks match your filters'}</p>
+              <p className="text-sm mt-1 text-gray-400">Tasks assigned by your team head will appear here</p>
+            </div>
+          ) : (
+            filteredTasks.map((task, idx) => {
+              const isOverdue = task.status !== 'Completed' && task.dueDate && new Date(task.dueDate) < new Date();
+              const displayStatus = isOverdue ? 'Overdue' : task.status;
+              const isActiveDropdown = activeDropdownId === task.id;
+
+              return (
+                <motion.div
+                  layout
+                  key={task.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className={`group cursor-pointer hover:bg-[#F0F7FF]/50 transition-all ${isActiveDropdown ? 'relative z-[100]' : ''}`}
+                  onClick={() => setSelectedTask(task)}
+                >
+                  <div className="px-4 py-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-[2.5fr_1.2fr_1fr_1.2fr_40px] gap-4 items-center">
+                      {/* Task Info Column */}
+                      <div className="flex flex-col gap-1.5 text-left">
+                        <h3 className={`text-[15px] font-bold tracking-tight text-left transition-colors text-[#0f172a] ${task.status === 'Completed' ? 'opacity-50 line-through' : ''}`}>
                           {task.title}
                         </h3>
-                        <StatusBadge status={task.status} />
-                        <PriorityBadge priority={task.priority} />
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            {task.department || 'RECRUITMENT'}
+                          </span>
+                          <PriorityBadge priority={task.priority} />
+                        </div>
                       </div>
 
-                      {/* Description */}
-                      {task.description && (
-                        <p className="text-sm text-gray-500 mb-3 ml-7">{task.description}</p>
-                      )}
+                      {/* Assigned By Column */}
+                      <div className="flex flex-col items-start lg:items-center">
+                        <span className="text-sm font-semibold text-slate-600">
+                          {task.assignedByName || 'Admin'}
+                        </span>
+                      </div>
 
-                      {/* Meta Info */}
-                      <div className="flex items-center gap-4 text-sm text-gray-500 ml-7">
-                        {task.dueDate && (
-                          <div className="flex items-center gap-1.5">
-                            <FiCalendar style={{ width: '14px', height: '14px' }} />
-                            <span>{new Date(task.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                          </div>
-                        )}
-                        {daysInfo && (
-                          <span style={{ color: daysInfo.color, fontWeight: 600, fontSize: '12px' }}>
-                            {daysInfo.text}
-                          </span>
-                        )}
-                        {task.assignedByName && (
-                          <span className="text-xs text-gray-400">
-                            Assigned by: {task.assignedByName}
-                          </span>
-                        )}
-                        {task.comments?.length > 0 && (
-                          <div className="flex items-center gap-1">
-                            <FiMessageSquare style={{ width: '14px', height: '14px' }} />
-                            <span>{task.comments.length}</span>
-                          </div>
+                      {/* Status Column */}
+                      <div className="flex justify-start lg:justify-center">
+                        <StatusBadge status={displayStatus} />
+                      </div>
+
+                      {/* Actions Column */}
+                      <div className="flex items-center justify-end gap-2">
+                        <TaskActionDropdown 
+                          currentStatus={task.status} 
+                          isUpdating={updatingTaskId === task.id}
+                          isOpen={isActiveDropdown}
+                          setIsOpen={(val) => setActiveDropdownId(val ? task.id : null)}
+                          onStatusChange={(newStatus) => handleStatusChange(task.id, newStatus)}
+                        />
+                        {updatingTaskId === task.id && (
+                          <FiLoader className="w-4 h-4 text-[#1B4DA0] animate-spin" />
                         )}
                       </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      {task.status !== 'Completed' && (
-                        <select
-                          value={task.status}
-                          onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                          disabled={updatingTaskId === task.id}
-                          className="text-xs px-3 py-2 rounded-lg border border-gray-200 bg-white font-medium cursor-pointer disabled:opacity-50"
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Completed">Mark Complete</option>
-                        </select>
-                      )}
-                      {updatingTaskId === task.id && (
-                        <FiLoader style={{ width: '16px', height: '16px', color: '#3b82f6', animation: 'spin 1s linear infinite' }} />
-                      )}
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setExpandedTask(isExpanded ? null : task.id)}
-                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-                      >
-                        {isExpanded ? <FiChevronUp style={{ width: '16px', height: '16px' }} /> : <FiChevronDown style={{ width: '16px', height: '16px' }} />}
-                      </motion.button>
+                      {/* Chevron Column */}
+                      <div className="flex justify-end pr-2">
+                        <div className="w-8 h-8 rounded-full bg-[#F0F7FF] flex items-center justify-center text-[#1B4DA0] opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                          <FiChevronRight className="w-4 h-4" />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
+              );
+            })
+          )}
+        </div>
+      </div>
 
-                {/* Expanded Section - Comments */}
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-gray-100 overflow-hidden"
-                    >
-                      <div style={{ padding: '20px', background: 'linear-gradient(180deg, #f8fafc, #f1f5f9)' }}>
-                        {/* Comments Header */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                          <FiMessageSquare style={{ width: '18px', height: '18px', color: '#6366f1' }} />
-                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
-                            Comments
-                          </span>
-                          {task.comments?.length > 0 && (
-                            <span style={{
-                              fontSize: '11px', fontWeight: 600, color: '#6366f1',
-                              background: '#e0e7ff', padding: '2px 8px', borderRadius: '9999px',
-                            }}>
-                              {task.comments.length}
-                            </span>
-                          )}
+      {/* Task Detail Sidebar - Using Portal for global overlay */}
+      {selectedTask && createPortal(
+        <div className="fixed inset-0 z-[9999] isolation-auto">
+          <AnimatePresence>
+            {selectedTask && (
+              <>
+                {/* Backdrop Blur Overlay */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setSelectedTask(null)}
+                  className="fixed inset-0 bg-black/20 backdrop-blur-[8px]"
+                />
+
+                {/* Sidebar Content */}
+                <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="fixed right-0 top-0 h-full w-full md:w-[600px] xl:w-[700px] bg-white shadow-2xl flex flex-col"
+                >
+                  {/* Sidebar Header */}
+                  <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-slate-900 mb-1">{selectedTask.title}</h2>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-[#1B4DA0] uppercase tracking-widest">{selectedTask.assignedByName || 'ADMIN'}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">TASK ID: #{selectedTask.id.slice(-4).toUpperCase()}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setSelectedTask(null)}
+                        className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Sidebar Body */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+                    {/* Stats Grid - Premium Box */}
+                    <div className="bg-[#F8F9FA] rounded-2xl p-8 mb-8">
+                      <div className="grid grid-cols-2 gap-y-8 gap-x-12">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
+                            <FiActivity className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">STATUS</p>
+                            <p className="text-sm font-bold text-slate-700">{selectedTask.status}</p>
+                          </div>
                         </div>
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
+                            <FiLayers className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">PRIORITY</p>
+                            <p className="text-sm font-bold text-slate-700">{selectedTask.priority}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
+                            <FiCalendar className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">DEADLINE</p>
+                            <p className="text-sm font-bold text-slate-700">
+                              {new Date(selectedTask.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
+                            <FiCheckCircle className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">TASK TYPE</p>
+                            <p className="text-sm font-bold text-slate-700">Department Task</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                        {/* Comments List - Chat Style */}
-                        {task.comments?.length > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
-                            {task.comments.map((comment, i) => (
-                              <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                                style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}
-                              >
-                                {/* Avatar */}
-                                <div style={{
-                                  width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                                  background: `linear-gradient(135deg, ${comment.byType === 'TeamLeader' ? '#f59e0b, #ea580c' : '#3b82f6, #6366f1'})`,
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  color: '#fff', fontSize: '13px', fontWeight: 700,
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                }}>
-                                  {(comment.byName || 'U').charAt(0).toUpperCase()}
-                                </div>
-                                {/* Message Bubble */}
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{
-                                    background: '#fff', borderRadius: '0 12px 12px 12px',
-                                    padding: '12px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                                    border: '1px solid #e2e8f0',
-                                  }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
-                                        {comment.byName || 'User'}
-                                      </span>
-                                      {comment.byType === 'TeamLeader' && (
-                                        <span style={{
-                                          fontSize: '10px', fontWeight: 600, color: '#b45309',
-                                          background: '#fef3c7', padding: '1px 6px', borderRadius: '4px',
-                                        }}>
-                                          Manager
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', margin: 0, wordBreak: 'break-word' }}>
-                                      {comment.text}
-                                    </p>
-                                  </div>
-                                  <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'block', paddingLeft: '4px' }}>
+                    {/* Description Section */}
+                    <div className="mb-8">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Task Description</h3>
+                      <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100">
+                        <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                          {selectedTask.description || 'No detailed description provided for this task.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Discussion Section */}
+                    <div>
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Activity & Comments</h3>
+                      <div className="space-y-6">
+                        {selectedTask.comments?.map((comment, i) => (
+                          <div key={i} className="flex gap-4">
+                            <div className="w-9 h-9 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-600 border-2 border-white shadow-sm ring-1 ring-slate-100">
+                              {comment.byName?.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-xs font-bold text-slate-800">{comment.byName}</span>
+                                  <span className="text-[10px] text-slate-400 font-medium">
                                     {new Date(comment.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </div>
-                              </motion.div>
-                            ))}
+                                <p className="text-[13px] text-slate-600 leading-relaxed">{comment.text}</p>
+                              </div>
+                            </div>
                           </div>
-                        ) : (
-                          <div style={{
-                            textAlign: 'center', padding: '24px 16px', marginBottom: '16px',
-                            background: '#fff', borderRadius: '12px', border: '1px dashed #cbd5e1',
-                          }}>
-                            <FiMessageSquare style={{ width: '28px', height: '28px', color: '#cbd5e1', margin: '0 auto 8px' }} />
-                            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>No comments yet — start the conversation!</p>
-                          </div>
-                        )}
-
-                        {/* Add Comment Input */}
-                        {task.status !== 'Completed' && (
-                          <div style={{
-                            display: 'flex', gap: '10px', alignItems: 'center',
-                            background: '#fff', borderRadius: '16px', padding: '6px 6px 6px 16px',
-                            border: '2px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                            transition: 'border-color 0.2s',
-                          }}>
-                            <input
-                              type="text"
-                              value={expandedTask === task.id ? commentText : ''}
-                              onChange={(e) => setCommentText(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && !sendingComment && handleAddComment(task.id)}
-                              placeholder="Write a message..."
-                              style={{
-                                flex: 1, border: 'none', outline: 'none', fontSize: '14px',
-                                color: '#1e293b', background: 'transparent',
-                              }}
-                            />
-                            <motion.button
-                              whileHover={{ scale: 1.08 }}
-                              whileTap={{ scale: 0.92 }}
-                              onClick={() => handleAddComment(task.id)}
-                              disabled={sendingComment || !commentText.trim()}
-                              style={{
-                                width: '40px', height: '40px', borderRadius: '12px',
-                                background: commentText.trim() ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : '#e2e8f0',
-                                border: 'none', cursor: commentText.trim() ? 'pointer' : 'default',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                transition: 'background 0.2s',
-                                opacity: sendingComment ? 0.6 : 1,
-                              }}
-                            >
-                              {sendingComment ? (
-                                <FiLoader style={{ width: '16px', height: '16px', color: '#fff', animation: 'spin 1s linear infinite' }} />
-                              ) : (
-                                <FiSend style={{ width: '16px', height: '16px', color: commentText.trim() ? '#fff' : '#94a3b8' }} />
-                              )}
-                            </motion.button>
-                          </div>
-                        )}
+                        ))}
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
-        </div>
+                    </div>
+                  </div>
+
+                  {/* Sidebar Footer - Add Comment */}
+                  <div className="p-6 border-t border-slate-100 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
+                    <div className="flex gap-3 items-center">
+                      <div className="flex-1 relative group">
+                        <input
+                          type="text"
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          placeholder="Share your thoughts..."
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-[#1B4DA0] transition-all"
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleAddComment(selectedTask.id)}
+                        disabled={!commentText.trim() || sendingComment}
+                        className="bg-[#1B4DA0] text-white px-8 py-3.5 rounded-2xl text-sm font-bold hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {sendingComment ? <FiLoader className="w-4 h-4 animate-spin" /> : (
+                          <>
+                            <span>Post</span>
+                            <FiSend className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>,
+        document.body
       )}
     </div>
   );

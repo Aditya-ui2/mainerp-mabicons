@@ -23,15 +23,62 @@ const MyProfileTab = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const res = await getMyProfile();
-      setProfile(res.member);
+      
+      // Get fallback data from localStorage
+      const localName = localStorage.getItem('userName');
+      const localEmail = localStorage.getItem('userEmail');
+      const localRole = localStorage.getItem('userType');
+      const localDept = localStorage.getItem('department');
+
+      try {
+        const res = await getMyProfile();
+        if (res && res.member) {
+          const mergedProfile = {
+            ...res.member,
+            name: res.member.name || localName,
+            email: res.member.email || localEmail,
+            role: res.member.role || localRole,
+            department: res.member.department || localDept
+          };
+          setProfile(mergedProfile);
+          setForm({
+            name: mergedProfile.name || '',
+            email: mergedProfile.email || '',
+            role: mergedProfile.role || '',
+            department: mergedProfile.department || '',
+            phone: mergedProfile.phone || '',
+            address: mergedProfile.address || '',
+            emergencyContact: mergedProfile.emergencyContact || '',
+          });
+          return;
+        }
+      } catch (apiErr) {
+        console.warn('Profile API failed, using local data:', apiErr);
+      }
+
+      // If API fails or returns no data, use local fallback
+      const fallbackProfile = {
+        name: localName || 'User',
+        email: localEmail || 'Email not set',
+        role: localRole || 'Member',
+        department: localDept || 'Department not set',
+        phone: '',
+        address: '',
+        createdAt: null
+      };
+      setProfile(fallbackProfile);
       setForm({
-        phone: res.member.phone || '',
-        address: res.member.address || '',
-        emergencyContact: res.member.emergencyContact || '',
+        name: localName || 'User',
+        email: localEmail || 'Email not set',
+        role: localRole || 'Member',
+        department: localDept || 'Department not set',
+        phone: '',
+        address: '',
+        emergencyContact: '',
       });
+
     } catch (err) {
-      showToast(err.message || 'Failed to load profile', 'error');
+      console.error('Profile fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -63,73 +110,87 @@ const MyProfileTab = () => {
   }
 
   const infoItems = [
-    { icon: FiMail, label: 'Email', value: profile?.email, color: '#3b82f6' },
-    { icon: FiPhone, label: 'Phone', value: profile?.phone || 'Not set', color: '#10b981' },
-    { icon: FiBriefcase, label: 'Department', value: profile?.department, color: '#8b5cf6' },
-    { icon: FiShield, label: 'Role', value: profile?.role, color: '#f59e0b' },
-    { icon: FiMapPin, label: 'Address', value: profile?.address || 'Not set', color: '#ef4444' },
-    { icon: FiCalendar, label: 'Joined', value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A', color: '#06b6d4' },
+    { icon: FiMail, label: 'Email', value: profile?.email },
+    { icon: FiPhone, label: 'Phone', value: profile?.phone || 'Not set' },
+    { icon: FiBriefcase, label: 'Department', value: profile?.department },
+    { icon: FiShield, label: 'Role', value: profile?.role },
+    { icon: FiMapPin, label: 'Address', value: profile?.address || 'Not set' },
+    { icon: FiCalendar, label: 'Joined', value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A' },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-8 py-4">
       {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 right-4 z-50 px-5 py-3 rounded-xl shadow-lg text-white font-medium"
-            style={{ background: toast.type === 'error' ? '#ef4444' : '#10b981' }}
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed top-8 right-8 z-[100] px-6 py-3 rounded-2xl shadow-xl text-white font-bold backdrop-blur-md"
+            style={{ background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(13, 71, 161, 0.9)' }}
           >
             {toast.message}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Profile Header */}
+      {/* Modern Minimalist Header */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl overflow-hidden shadow-sm border border-gray-100"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="relative bg-white rounded-[40px] border border-[#F4F3EF] overflow-hidden"
       >
-        <div className="h-32" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7)' }} />
-        <div className="bg-white px-8 pb-8 relative">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12">
-            <div
-              className="w-24 h-24 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
-            >
-              {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+        <div className="h-32 bg-[#FAFAF8] border-b border-[#F4F3EF]" />
+        <div className="px-10 pb-10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-8 -mt-16">
+            <div className="relative group">
+              <div className="w-36 h-36 rounded-3xl bg-white p-1.5 shadow-2xl shadow-slate-200">
+                <div className="w-full h-full rounded-2xl bg-[#0D47A1] flex items-center justify-center text-white text-5xl font-black">
+                  {profile?.name?.charAt(0)?.toUpperCase()}
+                </div>
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white rounded-xl shadow-lg border border-[#F4F3EF] flex items-center justify-center text-[#0D47A1]">
+                <FiShield size={18} />
+              </div>
             </div>
-            <div className="flex-1 pt-2">
-              <h2 className="text-2xl font-bold text-gray-900">{profile?.name}</h2>
-              <p className="text-gray-500">{profile?.role} • {profile?.department}</p>
+
+            <div className="flex-1 pb-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-4xl font-black text-[#1A1A2E] tracking-tight">{profile?.name}</h1>
+                {!editing && <span className="px-3 py-1 rounded-full bg-[#0D47A1]/5 text-[#0D47A1] text-[10px] font-black uppercase tracking-[2px]">Active</span>}
+              </div>
+              <div className="flex flex-wrap items-center gap-6 mt-4">
+                <div className="flex items-center gap-2">
+                  <FiShield size={14} className="text-[#0D47A1]" />
+                  <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px]">{profile?.role}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FiBriefcase size={14} className="text-[#0D47A1]" />
+                  <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px]">{profile?.department}</span>
+                </div>
+              </div>
             </div>
+
             {!editing ? (
               <button
                 onClick={() => setEditing(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-medium transition-all hover:shadow-md"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                className="group flex items-center gap-2 px-8 py-4 bg-[#0D47A1] text-white rounded-2xl text-sm font-bold hover:bg-[#0a3a82] transition-all active:scale-95 shadow-lg shadow-[#0D47A1]/20"
               >
-                <FiEdit3 style={{ width: '16px', height: '16px' }} />
+                <FiEdit3 className="group-hover:rotate-12 transition-transform" />
                 Edit Profile
               </button>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-white font-medium"
-                  style={{ background: '#10b981' }}
+                  className="flex items-center gap-2 px-8 py-4 bg-[#0D47A1] text-white rounded-2xl text-sm font-bold hover:bg-[#0a3a82] transition-all active:scale-95 shadow-lg shadow-[#0D47A1]/20 disabled:opacity-50"
                 >
-                  <FiSave style={{ width: '16px', height: '16px' }} />
-                  {saving ? 'Saving...' : 'Save'}
+                  <FiSave /> {saving ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                   onClick={() => setEditing(false)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-medium"
+                  className="flex items-center gap-2 px-8 py-4 bg-[#FAFAF8] text-[#9B9BAD] rounded-2xl text-sm font-bold hover:text-[#1A1A2E] transition-all border border-[#F4F3EF]"
                 >
-                  <FiX style={{ width: '16px', height: '16px' }} />
-                  Cancel
+                  <FiX /> Cancel
                 </button>
               </div>
             )}
@@ -137,54 +198,60 @@ const MyProfileTab = () => {
         </div>
       </motion.div>
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Minimalist Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {infoItems.map((item, idx) => (
           <motion.div
             key={idx}
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
+            className="group bg-white rounded-[32px] p-8 border border-[#F4F3EF] hover:border-[#0D47A1]/20 hover:shadow-2xl hover:shadow-slate-100 transition-all duration-500"
           >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg" style={{ background: `${item.color}15` }}>
-                <item.icon style={{ width: '20px', height: '20px', color: item.color }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">{item.label}</p>
-                {editing && (item.label === 'Phone' || item.label === 'Address') ? (
-                  <input
-                    type="text"
-                    value={item.label === 'Phone' ? form.phone : form.address}
-                    onChange={(e) => setForm(prev => ({
-                      ...prev,
-                      [item.label === 'Phone' ? 'phone' : 'address']: e.target.value
-                    }))}
-                    className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                ) : (
-                  <p className="text-sm font-semibold text-gray-800 truncate">{item.value}</p>
-                )}
-              </div>
+            <item.icon className="w-5 h-5 text-[#0D47A1] mb-6 opactity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{item.label}</p>
+              {editing && item.label !== 'Joined' ? (
+                <input
+                  type="text"
+                  value={
+                    item.label === 'Email' ? form.email :
+                    item.label === 'Phone' ? form.phone :
+                    item.label === 'Department' ? form.department :
+                    item.label === 'Role' ? form.role :
+                    item.label === 'Address' ? form.address : item.value
+                  }
+                  onChange={(e) => setForm(prev => ({
+                    ...prev,
+                    [item.label.toLowerCase()]: e.target.value
+                  }))}
+                  className="mt-2 w-full px-4 py-2 bg-slate-50 border-b-2 border-[#0D47A1] rounded-t-xl text-base font-bold text-[#1A1A2E] outline-none transition-all placeholder:text-slate-200"
+                />
+              ) : (
+                <h3 className="text-base font-bold text-[#1A1A2E] truncate">{item.value || `Set ${item.label}`}</h3>
+              )}
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Emergency Contact */}
+      {/* Emergency Section */}
       {editing && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm"
+          initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-[40px] p-10 border border-[#F4F3EF] shadow-sm"
         >
-          <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Emergency Contact</label>
-          <input
-            type="text"
-            value={form.emergencyContact}
-            onChange={(e) => setForm(prev => ({ ...prev, emergencyContact: e.target.value }))}
-            className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Enter emergency contact number"
-          />
+          <div className="max-w-md">
+            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mb-4">Emergency Support</p>
+            <div className="flex gap-4">
+              <input
+                type="text"
+                value={form.emergencyContact}
+                onChange={(e) => setForm(prev => ({ ...prev, emergencyContact: e.target.value }))}
+                className="flex-1 px-6 py-4 bg-[#FAFAF8] border border-[#F4F3EF] rounded-2xl text-sm font-bold text-[#1A1A2E] focus:border-[#0D47A1] outline-none transition-all"
+                placeholder="Emergency Contact Number"
+              />
+            </div>
+          </div>
         </motion.div>
       )}
     </div>
