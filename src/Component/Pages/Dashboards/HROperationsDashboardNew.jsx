@@ -480,6 +480,7 @@ const HROperationsDashboard = () => {
       breadcrumbs={breadcrumbs}
       userInfo={userInfo}
       notifications={[]}
+      isLoading={loading}
     >
       {renderContent()}
     </AdminLayout>

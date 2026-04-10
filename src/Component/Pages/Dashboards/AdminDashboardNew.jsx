@@ -384,6 +384,7 @@ const AdminDashboardNew = () => {
       breadcrumbs={breadcrumbs}
       userInfo={userInfo}
       notifications={[]}
+      isLoading={loading}
     >
       {renderContent()}
     </AdminLayout>

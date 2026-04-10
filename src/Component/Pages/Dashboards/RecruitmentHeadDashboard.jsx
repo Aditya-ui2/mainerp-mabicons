@@ -2350,6 +2350,7 @@ const RecruitmentHeadDashboard = () => {
         userInfo={userInfo}
         notifications={notifications}
         onNotificationClick={handleNotificationClick}
+        isLoading={loading}
       >
         {renderContent()}
       </AdminLayout>

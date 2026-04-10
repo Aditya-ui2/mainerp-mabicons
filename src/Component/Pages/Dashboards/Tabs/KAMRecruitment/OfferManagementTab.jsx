@@ -263,6 +263,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const [templatePdf, setTemplatePdf] = useState(null);
   const [templateViewports, setTemplateViewports] = useState([]);
   const [templateLayout, setTemplateLayout] = useState(null);
+  const [isUploadingTemplate, setIsUploadingTemplate] = useState(false);
   const templateCanvasRefs = useRef([]);
 
   const [formData, setFormData] = useState({
@@ -350,17 +351,26 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
     setTemplateFileName(file.name);
     try {
+      setIsUploadingTemplate(true);
+      console.log('🚀 Starting template upload for client:', formData.client);
+      console.log('📄 File details:', { name: file.name, size: file.size, type: file.type });
+
       const buf = await file.arrayBuffer();
       const doc = await pdfjsLib.getDocument({ data: buf }).promise;
       setTemplatePdf(doc);
+      
       const saved = await saveOfferTemplate(formData.client, file, resolvedTemplateLayout);
+      console.log('✅ Template upload successful:', saved);
+
       if (saved?.data?.fieldMap) setTemplateLayout(saved.data.fieldMap);
       toast.success('Template saved for selected client');
     } catch (e) {
-      console.error(e);
-      toast.error('Failed to load PDF template');
+      console.error('❌ Template upload failed:', e);
+      toast.error(e.response?.data?.message || 'Failed to load PDF template');
       setTemplatePdf(null);
       setTemplateViewports([]);
+    } finally {
+      setIsUploadingTemplate(false);
     }
   };
 
@@ -1165,26 +1175,52 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       </div>
 
                       <div className="pt-2">
-                        <label className="group relative flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
-                          <div className="flex flex-col items-center text-center">
-                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">
-                              <FileText className="w-4 h-4 text-[#1B4DA0]" />
-                            </div>
-                            <p className="text-[10px] font-bold text-[#1A1A2E]">
-                              {templateFileName || 'Upload Offer Letter Template (PDF)'}
-                            </p>
-                            <p className="text-[9px] font-bold text-[#9B9BAD] mt-1">Max 10MB</p>
-                          </div>
-                          <input
-                            type="file"
-                            accept=".pdf,application/pdf"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0] || null;
-                              handleTemplateUpload(file);
+                        <div className="relative">
+                          <label
+                            className={`flex flex-col items-center justify-center h-44 rounded-[28px] border-2 border-dashed transition-all cursor-pointer ${isUploadingTemplate ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#1B4DA0] hover:bg-[#F8FAFF]'} ${templatePdf ? 'border-[#1B4DA0] bg-[#EEF2FB]/30' : 'border-[#F4F3EF] bg-[#FDFDFD]'}`}
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (isUploadingTemplate) return;
+                              const file = e.dataTransfer.files?.[0];
+                              if (file) {
+                                console.log("File dropped:", file.name);
+                                handleTemplateUpload(file);
+                              }
                             }}
-                          />
-                        </label>
+                          >
+                            {isUploadingTemplate ? (
+                              <div className="flex flex-col items-center gap-3">
+                                <div className="w-10 h-10 border-4 border-[#1B4DA0]/20 border-t-[#1B4DA0] rounded-full animate-spin" />
+                                <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest">Uploading Template...</span>
+                              </div>
+                            ) : (
+                              <>
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all ${templatePdf ? 'bg-[#1B4DA0] text-white' : 'bg-[#FAFAFA] text-[#1B4DA0]'}`}>
+                                  {templatePdf ? <FiCheckCircle size={24} /> : <FiFileText size={24} />}
+                                </div>
+                                <span className={`text-[11px] font-black uppercase tracking-[2px] mb-2 ${templatePdf ? 'text-[#1B4DA0]' : 'text-[#1A1A2E]'}`}>
+                                  {templatePdf ? 'Template Uploaded' : 'Upload Offer Letter Template (PDF)'}
+                                </span>
+                                <span className="text-[10px] font-bold text-[#9B9BAD]">MAX 10MB</span>
+                              </>
+                            )}
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              disabled={isUploadingTemplate}
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                if (file) {
+                                  console.log("File selected:", file.name);
+                                  handleTemplateUpload(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       <div className="pt-2">

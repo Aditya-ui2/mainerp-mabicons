@@ -23,7 +23,6 @@ import CRMDashboard from './Component/Pages/Dashboards/CRMDashboard'
 import ResetPassword from './Component/Pages/reset_password'
 import ForgotPassword from './Component/Pages/forgetpassword'
 import ClientLogin from './Component/Pages/ClientLogin'
-import CRMLogin from './Component/Pages/CRMLogin'
 import DepartmentProtectedRoute from './Component/Pages/DepartmentProtectedRoute'
 import ProtectedRoute from './Component/Pages/ProtectedRoute'
 import CandidatesPage from './Component/Pages/Candidates/CandidatesPage'
@@ -41,7 +40,6 @@ function App() {
       <Route path='/reset-password/:token/:userType' element={<ResetPassword />} />
       <Route path='/reset-password' element={<ResetPassword />} />
       <Route path='/client-login' element={<ClientLogin />} />
-      <Route path='/crm-login' element={<CRMLogin />} />
       <Route path='/bd-dashboard' element={
         <ProtectedRoute allowedRoles={['bd']}>
           <BdDashboard />
@@ -97,7 +95,7 @@ function App() {
         </ProtectedRoute>
       } />
       <Route path='/crm-dashboard' element={
-        <ProtectedRoute allowedRoles={['admin', 'bd', 'superadmin', 'teamleader']}>
+        <ProtectedRoute allowedRoles={['admin', 'bd', 'superadmin', 'teamleader', 'crm']}>
           <CRMDashboard />
         </ProtectedRoute>
       } />

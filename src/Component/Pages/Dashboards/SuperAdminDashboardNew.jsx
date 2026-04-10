@@ -391,6 +391,7 @@ const SuperAdminDashboard = () => {
       breadcrumbs={breadcrumbs}
       userInfo={userInfo}
       notifications={notifications}
+      isLoading={loading}
     >
       {renderContent()}
     </AdminLayout>

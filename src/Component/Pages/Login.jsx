@@ -165,19 +165,19 @@ const Rocket = ({ isDarkMode }) => (
 // KAMs under Sachin: Priyanshi Sharma, Manju, Jyoti
 const USER_CREDENTIALS = {
   // Super Admin - Ashish (Boss)
-  'superadmin.mabicons@gmail.com': { password: 'SuperAdmin@123', role: 'superAdmin', department: null, name: 'Ashish (Super Admin)' },
+  'superadmin.mabicons@gmail.com': { password: 'Mabicons@123', role: 'superAdmin', department: null, name: 'Ashish (Super Admin)' },
   'ashish.mabicons@gmail.com': { password: 'Ashish@123', role: 'superAdmin', department: null, name: 'Ashish (Super Admin)' },
   
   // Admins
-  'admin.mabicons@gmail.com': { password: 'Admin@123', role: 'admin', department: null, name: 'Admin' },
+  'admin.mabicons@gmail.com': { password: 'Mabicons@123', role: 'admin', department: null, name: 'Admin' },
   'ashwin.mabicons@gmail.com': { password: 'Ashwin@123', role: 'admin', department: null, name: 'Ashwin (Manager)' },
   
   // Operation Head - Ramesh
-  'operation.mabicons@gmail.com': { password: 'Operation@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
+  'operation.mabicons@gmail.com': { password: 'Mabicons@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
   'ramesh.mabicons@gmail.com': { password: 'Ramesh@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
   
   // Recruitment Head - Sachin
-  'recruitment.mabicons@gmail.com': { password: 'Recruitment@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
+  'recruitment.mabicons@gmail.com': { password: 'Mabicons@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
   'sachin.mabicons@gmail.com': { password: 'Sachin@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
   
   // KAM - Priyanshi Sharma (Under Sachin)

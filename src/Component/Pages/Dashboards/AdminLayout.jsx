@@ -31,6 +31,8 @@ import logo from '../../../assets/images/mabicons logo blue.png';
  * @param {Object} props.userInfo - User information {name, role, avatar}
  * @param {React.ReactNode} props.headerActions - Optional actions rendered in the right side of top header
  */
+import Loader from '../../Common/Loader';
+
 const AdminLayout = ({
   children,
   sidebarItems = [],
@@ -44,6 +46,7 @@ const AdminLayout = ({
   showGlobalHeader = true,
   headerActions = null,
   showSearch = true,
+  isLoading = false,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,6 +102,9 @@ const AdminLayout = ({
 
   return (
     <div className="flex h-screen bg-[#FDFDFD] dark:bg-gray-950 overflow-hidden font-['Plus_Jakarta_Sans']">
+      <AnimatePresence>
+        {isLoading && <Loader key="loader" />}
+      </AnimatePresence>
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {mobileSidebarOpen && (
@@ -288,7 +294,7 @@ const AdminLayout = ({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Modern Top Header */}
         {showGlobalHeader && (
-           <header className="h-16 bg-transparent sticky top-0 z-30 flex items-center justify-between px-6">
+           <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6 border-b border-[#F4F3EF] dark:border-gray-800">
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setMobileSidebarOpen(true)}

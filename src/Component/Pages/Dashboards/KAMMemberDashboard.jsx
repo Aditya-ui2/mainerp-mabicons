@@ -682,6 +682,7 @@ const KAMMemberDashboard = () => {
       notifications={notifications}
       onNotificationClick={handleNotificationClick}
       showGlobalHeader={false}
+      isLoading={loading}
     >
       {renderContent()}
     </AdminLayout>
