@@ -29,6 +29,7 @@ import logo from '../../../assets/images/mabicons logo blue.png';
  * @param {string} props.dashboardTitle - Dashboard title displayed in header
  * @param {Array} props.breadcrumbs - Breadcrumb items [{label, path}]
  * @param {Object} props.userInfo - User information {name, role, avatar}
+ * @param {React.ReactNode} props.headerActions - Optional actions rendered in the right side of top header
  */
 const AdminLayout = ({
   children,
@@ -41,6 +42,8 @@ const AdminLayout = ({
   notifications = [],
   onNotificationClick,
   showGlobalHeader = true,
+  headerActions = null,
+  showSearch = true,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -285,7 +288,7 @@ const AdminLayout = ({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Modern Top Header */}
         {showGlobalHeader && (
-          <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-[#F4F3EF] dark:border-gray-800 flex items-center justify-between px-6">
+           <header className="h-16 bg-transparent sticky top-0 z-30 flex items-center justify-between px-6">
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setMobileSidebarOpen(true)}
@@ -299,11 +302,14 @@ const AdminLayout = ({
             </div>
 
             <div className="flex items-center gap-3">
+              {headerActions}
                {/* Search - Subtle */}
-               <div className="hidden sm:flex items-center gap-2 bg-[#F4F3EF] dark:bg-gray-800 px-3 py-2 rounded-xl border border-transparent focus-within:border-[#1B4DA0]/20 transition-all">
-                                  <Search size={14} className="text-[#9B9BAD]" />
-                                  <input type="text" placeholder="Search..." className="bg-transparent border-0 outline-none text-xs text-[#1A1A2E] dark:text-white w-32 focus:w-48 transition-all placeholder-[#9B9BAD]" />
-                              </div>
+               {showSearch && (
+                 <div className="hidden sm:flex items-center gap-2 bg-[#F4F3EF] dark:bg-gray-800 px-3 py-2 rounded-xl border border-transparent focus-within:border-[#1B4DA0]/20 transition-all">
+                    <Search size={14} className="text-[#9B9BAD]" />
+                    <input type="text" placeholder="Search..." className="bg-transparent border-0 outline-none text-xs text-[#1A1A2E] dark:text-white w-32 focus:w-48 transition-all placeholder-[#9B9BAD]" />
+                 </div>
+               )}
 
               {/* Notification Hub */}
               <div className="relative" ref={notificationRef}>
@@ -375,33 +381,32 @@ const AdminLayout = ({
  */
 export const StatCard = ({ title, value, change, changeType = 'increase', icon: Icon, color = 'blue' }) => {
   const colors = {
-    blue: "bg-blue-50 text-blue-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    rose: "bg-rose-50 text-rose-600",
-    amber: "bg-amber-50 text-amber-600",
-    violet: "bg-violet-50 text-violet-600",
-    white: "bg-white text-[#0f172a] border border-[#F4F3EF] shadow-sm",
+    blue: "bg-blue-50/50 text-[#1B4DA0]",
+    emerald: "bg-emerald-50/50 text-emerald-600",
+    rose: "bg-rose-50/50 text-rose-600",
+    amber: "bg-amber-50/50 text-amber-600",
+    violet: "bg-violet-50/50 text-violet-600",
+    white: "bg-white text-[#1A1A2E] border border-[#F4F3EF] shadow-sm",
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-3xl p-6 shadow-sm border border-[#F4F3EF] hover:shadow-xl hover:shadow-blue-500/5 transition-all group"
+      whileHover={{ y: -4 }}
+      className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF] transition-all group"
     >
-      <div className="flex items-start justify-between">
-        <div className={`p-3 rounded-2xl ${colors[color] || colors.blue} transition-transform group-hover:scale-110 group-hover:text-[#0D47A1] duration-300`}>
-          {Icon && <Icon size={22} />}
+      <div className="flex items-center justify-between">
+        <div className={`p-4 rounded-2xl ${colors[color] || colors.blue} transition-all duration-300`}>
+          {Icon && <Icon size={24} />}
         </div>
         {change && (
-          <span className={`text-[11px] font-bold px-2 py-1 rounded-lg ${changeType === 'increase' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+          <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest ${changeType === 'increase' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
             {changeType === 'increase' ? '↑' : '↓'} {change}
           </span>
         )}
       </div>
-      <div className="mt-4 text-left">
-        <p className="text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest">{title}</p>
-        <p className="text-2xl font-black text-[#1A1A2E] mt-1">{value}</p>
+      <div className="mt-6 text-left">
+        <p className="text-[#9B9BAD] text-[10px] font-black uppercase tracking-[2px]">{title}</p>
+        <p className="text-3xl font-black text-[#1A1A2E] mt-2 tracking-tight">{value}</p>
       </div>
     </motion.div>
   );
@@ -411,11 +416,11 @@ export const StatsBar = ({ stats }) => (
   <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden">
     <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-[#F4F3EF]">
       {stats.map((stat, idx) => (
-        <div key={idx} className="p-6 text-center hover:bg-[#FAFAFA] transition-colors cursor-default">
-          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1.5">{stat.label}</p>
-          <p className="text-xl font-black text-[#1A1A2E]">{stat.value}</p>
+        <div key={idx} className="p-8 text-center hover:bg-[#F8FAFF] transition-all cursor-default">
+          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mb-2">{stat.label}</p>
+          <p className="text-2xl font-black text-[#1A1A2E]">{stat.value}</p>
           {stat.percentage && (
-            <div className="mt-3 h-1.5 bg-[#F4F3EF] rounded-full overflow-hidden">
+            <div className="mt-4 h-1.5 bg-[#F4F3EF] rounded-full overflow-hidden max-w-[80px] mx-auto">
               <div className={`h-full rounded-full ${stat.color || 'bg-[#1B4DA0]'}`} style={{ width: stat.percentage }} />
             </div>
           )}

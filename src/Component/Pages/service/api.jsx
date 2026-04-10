@@ -2284,6 +2284,35 @@ export const deleteOffer = async (candidateId) => {
   }
 };
 
+export const saveOfferTemplate = async (clientName, templateFile, fieldMap = {}) => {
+  try {
+    const formData = new FormData();
+    formData.append('clientName', clientName);
+    formData.append('template', templateFile);
+    formData.append('fieldMap', JSON.stringify(fieldMap));
+    const response = await axiosInstance.post('/recruitment/offer-templates', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to save offer template:', error);
+    throw error.response?.data || { message: 'Failed to save offer template' };
+  }
+};
+
+export const getOfferTemplate = async (clientName) => {
+  try {
+    const response = await axiosInstance.get('/recruitment/offer-templates', {
+      params: { clientName }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) return { success: false, data: null };
+    console.error('Failed to fetch offer template:', error);
+    throw error.response?.data || { message: 'Failed to fetch offer template' };
+  }
+};
+
 // Update resume details
 export const updateResumeDetails = async (resumeId, data) => {
   try {

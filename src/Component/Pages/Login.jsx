@@ -196,6 +196,7 @@ const USER_CREDENTIALS = {
   'employee.mabicons@gmail.com': { password: 'Employee@123', role: 'employee', department: null, name: 'Employee' },
   'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
   'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
+  'crm@mabicons.com': { password: 'Crm@123', role: 'bd', department: null, name: 'CRM Executive' },
 };
 
 const Login = () => {
@@ -248,6 +249,10 @@ const Login = () => {
 
   // Navigation helper function
   const navigateByRole = (role, emailLower, user) => {
+    if (emailLower === 'crm@mabicons.com') {
+      navigate('/crm-dashboard');
+      return;
+    }
     const isRecruitmentHead = role === 'recruitmentHead' || 
       role === 'departmentHead' && user?.department === 'HR Recruitment' || 
       (role === 'hrRecruitment' && emailLower.includes('sachin')) || 
@@ -285,26 +290,44 @@ const Login = () => {
     e.preventDefault();
   
     const emailLower = email.toLowerCase().trim();
+    const passTrim = password.trim();
     setLoading(true);
 
     // Helper function to create mock token
     const createMockToken = (userData) => {
       const payload = {
-        id: '123e4567-e89b-12d3-a456-426614174000', // Valid UUID format for development
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: emailLower,
         name: userData.name,
         role: userData.role,
         department: userData.department,
         supervisor: userData.supervisor || null,
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
       };
       return btoa(JSON.stringify({ alg: 'HS256' })) + '.' + btoa(JSON.stringify(payload)) + '.mock-signature';
     };
 
     // Helper function for local/development mode login
     const localLogin = () => {
+      // Direct check for CRM account
+      if (emailLower === 'crm@mabicons.com' && passTrim === 'Crm@123') {
+        const userData = USER_CREDENTIALS['crm@mabicons.com'] || { name: 'CRM Executive', role: 'bd' };
+        const mockToken = createMockToken(userData);
+        localStorage.setItem('token', mockToken);
+        localStorage.setItem('userType', 'bd');
+        localStorage.setItem('userName', userData.name);
+        localStorage.setItem('userEmail', emailLower);
+        return {
+          success: true,
+          user: userData,
+          userType: 'bd',
+          token: mockToken,
+          isLocal: true
+        };
+      }
+
       const userData = USER_CREDENTIALS[emailLower];
-      if (userData && userData.password === password) {
+      if (userData && userData.password === passTrim) {
         const mockToken = createMockToken(userData);
         const normalizedRole = normalizeRole(userData.role, userData.department);
         localStorage.setItem('token', mockToken);

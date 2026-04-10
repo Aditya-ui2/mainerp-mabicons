@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -36,17 +36,22 @@ import {
   FiCheckCircle,
   FiPlus,
   FiFileText,
-  FiCalendar
+  FiCalendar,
+  FiMail,
+  FiUserPlus,
 } from "react-icons/fi";
 import { toast } from "sonner";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
-import { getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer } from '../../../service/api';
+import * as pdfjsLib from 'pdfjs-dist';
+import { BASE_URL, getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer, saveOfferTemplate, getOfferTemplate } from '../../../service/api';
 import {
   OFFER_STATUS_COLORS,
   STATUS_ICONS,
   AVATAR_COLORS,
   statusOrder
 } from './OfferConstants';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 /* ── Status Badge ── */
 const StatusBadge = ({ status }) => {
@@ -250,6 +255,16 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+  const previewWrapRef = useRef(null);
+  const formWrapRef = useRef(null);
+  const [previewScale, setPreviewScale] = useState(1);
+  const [templateFileName, setTemplateFileName] = useState('');
+  const [templatePdf, setTemplatePdf] = useState(null);
+  const [templateViewports, setTemplateViewports] = useState([]);
+  const [templateLayout, setTemplateLayout] = useState(null);
+  const templateCanvasRefs = useRef([]);
+
   const [formData, setFormData] = useState({
     candidateId: '',
     candidateName: '',
@@ -259,7 +274,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
     offeredCTC: '',
     currentCTC: '',
     joiningDate: '',
-    offerDate: '',
+    offerDate: new Date().toISOString().split('T')[0],
     expiryDate: '',
     status: 'Generated',
     negotiationNotes: '',
@@ -268,6 +283,196 @@ const OfferManagementTab = ({ isDarkMode }) => {
     offerLetterName: '',
     offerLetterUrl: '',
   });
+
+  const offerTemplateData = useMemo(() => ({
+    candidateName: formData.candidateName || 'Candidate Name',
+    client: formData.client || 'Hiring Client',
+    position: formData.position || 'Job Title',
+    ctc: formData.offeredCTC || '0',
+    offerDate: formData.offerDate || new Date().toISOString().split('T')[0],
+    joiningDate: formData.joiningDate || '',
+    address: formData.negotiationNotes || 'Permanent Address'
+  }), [formData]);
+
+  const templateFieldLayout = useMemo(() => ({
+    1: [
+      { key: 'offerDate', x: 0.12, y: 0.165, fontSize: 10 },
+      { key: 'candidateName', x: 0.12, y: 0.187, fontSize: 11 },
+      { key: 'address', x: 0.12, y: 0.235, fontSize: 9, maxWidth: 0.44 },
+      { key: 'joiningDate', x: 0.52, y: 0.355, fontSize: 9 },
+      { key: 'ctc', x: 0.35, y: 0.52, fontSize: 9 },
+    ],
+  }), []);
+
+  const resolvedTemplateLayout = templateLayout || templateFieldLayout;
+
+  const templateOverlayFields = useMemo(() => {
+    const formatDate = (value) => {
+      if (!value) return '';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    };
+
+    const values = {
+      offerDate: formatDate(offerTemplateData.offerDate),
+      candidateName: offerTemplateData.candidateName,
+      address: offerTemplateData.address,
+      joiningDate: formatDate(offerTemplateData.joiningDate),
+      ctc: offerTemplateData.ctc ? `₹${offerTemplateData.ctc}` : '',
+    };
+
+    const out = {};
+    for (const [pageKey, fields] of Object.entries(resolvedTemplateLayout || {})) {
+      out[pageKey] = (fields || []).map((f) => ({
+        ...f,
+        value: values[f.key] || '',
+        weight: 700,
+      }));
+    }
+    return out;
+  }, [offerTemplateData, resolvedTemplateLayout]);
+
+  const handleTemplateUpload = async (file) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('Please upload a PDF template');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Template PDF must be less than 10MB');
+      return;
+    }
+    if (!formData.client) {
+      toast.error('Please select Hiring Client before uploading template');
+      return;
+    }
+
+    setTemplateFileName(file.name);
+    try {
+      const buf = await file.arrayBuffer();
+      const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+      setTemplatePdf(doc);
+      const saved = await saveOfferTemplate(formData.client, file, resolvedTemplateLayout);
+      if (saved?.data?.fieldMap) setTemplateLayout(saved.data.fieldMap);
+      toast.success('Template saved for selected client');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to load PDF template');
+      setTemplatePdf(null);
+      setTemplateViewports([]);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!showFullPageForm) return;
+    if (!formData.client) return;
+
+    (async () => {
+      try {
+        const res = await getOfferTemplate(formData.client);
+        const record = res?.data;
+        if (!record?.templateUrl) return;
+
+        setTemplateFileName(record.templateFileName || '');
+        if (record.fieldMap && Object.keys(record.fieldMap).length > 0) {
+          setTemplateLayout(record.fieldMap);
+        } else {
+          setTemplateLayout(null);
+        }
+
+        const url = `${BASE_URL}${record.templateUrl}`;
+        const fileRes = await fetch(url);
+        if (!fileRes.ok) return;
+        const buf = await fileRes.arrayBuffer();
+        const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+        if (!cancelled) setTemplatePdf(doc);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showFullPageForm, formData.client, BASE_URL]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!templatePdf) return;
+
+    (async () => {
+      const vps = [];
+      for (let i = 1; i <= templatePdf.numPages; i += 1) {
+        const page = await templatePdf.getPage(i);
+        const vp = page.getViewport({ scale: 1 });
+        vps.push({ width: Math.round(vp.width), height: Math.round(vp.height) });
+      }
+      if (!cancelled) setTemplateViewports(vps);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [templatePdf]);
+
+  useEffect(() => {
+    if (!showFullPageForm) return;
+    const t = setTimeout(() => {
+      if (formWrapRef.current) formWrapRef.current.scrollTop = 0;
+      if (previewWrapRef.current) previewWrapRef.current.scrollTop = 0;
+    }, 0);
+    return () => clearTimeout(t);
+  }, [showFullPageForm]);
+
+  useEffect(() => {
+    if (!showFullPageForm) return;
+    if (!previewWrapRef.current) return;
+
+    const update = () => {
+      const el = previewWrapRef.current;
+      if (!el) return;
+      const padding = 40;
+      const availableWidth = Math.max(0, el.clientWidth - padding);
+      const baseWidth = templateViewports[0]?.width || 595;
+      const nextScale = Math.min(1, availableWidth / baseWidth);
+      setPreviewScale(nextScale || 1);
+    };
+
+    update();
+
+    const ro = new ResizeObserver(() => update());
+    ro.observe(previewWrapRef.current);
+    return () => ro.disconnect();
+  }, [showFullPageForm, templateViewports]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!templatePdf) return;
+    if (!templateViewports.length) return;
+
+    (async () => {
+      for (let idx = 0; idx < templateViewports.length; idx += 1) {
+        if (cancelled) return;
+        const canvas = templateCanvasRefs.current[idx];
+        if (!canvas) continue;
+        const page = await templatePdf.getPage(idx + 1);
+        const viewport = page.getViewport({ scale: 1 });
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = `${viewport.width}px`;
+        canvas.style.height = `${viewport.height}px`;
+        await page.render({ canvasContext: ctx, viewport }).promise;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [templatePdf, templateViewports]);
 
   const fetchOffers = async () => {
     setLoading(true);
@@ -436,6 +641,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
       payload.append('negotiationNotes', formData.negotiationNotes || '');
       if (formData.offerLetter instanceof File) {
         payload.append('offerLetter', formData.offerLetter);
+      }
+      if (!(formData.offerLetter instanceof File) && templatePdf) {
+        payload.append('useTemplate', 'true');
       }
 
       const response = await saveOffer(payload);
@@ -797,7 +1005,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
         <AnimatePresence>
           {showFullPageForm && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -810,7 +1018,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl custom-scrollbar"
+                className="relative w-full max-w-[520px] max-h-[90vh] overflow-hidden rounded-[32px] bg-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
@@ -831,169 +1039,200 @@ const OfferManagementTab = ({ isDarkMode }) => {
                   </button>
                 </div>
 
-                <div className="p-10 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="relative">
-                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Candidate Name *</label>
-                      <input
-                        type="text"
-                        value={formData.candidateName}
-                        onChange={(e) => setFormData(prev => ({ ...prev, candidateId: '', candidateName: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                        onFocus={() => {
-                          if (candidateSuggestions.length > 0) setShowCandidateSuggestions(true);
-                        }}
-                        placeholder="Search candidate..."
-                      />
-                      <AnimatePresence>
-                        {showCandidateSuggestions && candidateSuggestions.length > 0 && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="absolute z-50 w-full mt-2 rounded-2xl shadow-xl bg-white border border-[#F4F3EF] overflow-hidden max-h-64 overflow-y-auto font-jakarta"
-                          >
-                            {candidateSuggestions.map((candidate) => (
-                              <button
-                                key={candidate.id}
-                                type="button"
-                                onClick={() => handleSelectCandidateSuggestion(candidate)}
-                                className="w-full text-left px-5 py-3.5 transition-all hover:bg-[#F4F3EF] border-b border-[#F4F3EF] last:border-b-0"
+                <div className="flex-1 p-0 flex h-[calc(94vh-120px)] overflow-hidden">
+                  {/* Left: Form */}
+                  <div ref={formWrapRef} className="w-full p-10 overflow-y-auto border-r border-[#F4F3EF] custom-scrollbar">
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="relative">
+                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Candidate Name *</label>
+                          <input
+                            type="text"
+                            value={formData.candidateName}
+                            onChange={(e) => setFormData(prev => ({ ...prev, candidateId: '', candidateName: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                            onFocus={() => {
+                              if (candidateSuggestions.length > 0) setShowCandidateSuggestions(true);
+                            }}
+                            placeholder="Search candidate..."
+                          />
+                          <AnimatePresence>
+                            {showCandidateSuggestions && candidateSuggestions.length > 0 && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute z-50 w-full mt-2 rounded-2xl shadow-xl bg-white border border-[#F4F3EF] overflow-hidden max-h-64 overflow-y-auto font-jakarta"
                               >
-                                <div className="font-bold text-sm text-[#1A1A2E]">{candidate.name}</div>
-                                <div className="text-[10px] text-[#9B9BAD] font-medium">Pipeline: {candidate.position || 'General'}</div>
-                              </button>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Email Address *</label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                        placeholder="email@example.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Target Position *</label>
-                      <input
-                        type="text"
-                        value={formData.position}
-                        onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                        placeholder="e.g. Frontend Developer"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Hiring Client *</label>
-                      <input
-                        type="text"
-                        value={formData.client}
-                        onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                        placeholder="Client Name"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Current CTC (LPA)</label>
-                      <input
-                        type="text"
-                        value={formData.currentCTC}
-                        onChange={(e) => setFormData(prev => ({ ...prev, currentCTC: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                        placeholder="e.g. 12.0"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Proposed CTC (LPA) *</label>
-                      <input
-                        type="text"
-                        value={formData.offeredCTC}
-                        onChange={(e) => setFormData(prev => ({ ...prev, offeredCTC: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1B4DA0] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                        placeholder="e.g. 15.5"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Offer Date</label>
-                      <input
-                        type="date"
-                        value={formData.offerDate}
-                        onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Joining Date</label>
-                      <input
-                        type="date"
-                        value={formData.joiningDate}
-                        onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-4">
-                    <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Negotiation Notes</label>
-                    <textarea
-                      value={formData.negotiationNotes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, negotiationNotes: e.target.value }))}
-                      rows={3}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50 resize-none text-left"
-                      placeholder="Additional details about the offer..."
-                    />
-                  </div>
-
-                  <div className="pt-2">
-                    <label className="group relative flex flex-col items-center justify-center w-full py-8 rounded-2xl border-2 border-dashed bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
-                      <div className="flex flex-col items-center text-center">
-                        <div className="p-3 rounded-xl bg-white shadow-sm mb-2">
-                          <Paperclip className="w-5 h-5 text-[#1B4DA0]" />
+                                {candidateSuggestions.map((candidate) => (
+                                  <button
+                                    key={candidate.id}
+                                    type="button"
+                                    onClick={() => handleSelectCandidateSuggestion(candidate)}
+                                    className="w-full text-left px-5 py-3.5 transition-all hover:bg-[#F4F3EF] border-b border-[#F4F3EF] last:border-b-0"
+                                  >
+                                    <div className="font-bold text-sm text-[#1A1A2E]">{candidate.name}</div>
+                                    <div className="text-[10px] text-[#9B9BAD] font-medium">Pipeline: {candidate.position || 'General'}</div>
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                        <p className="text-xs font-bold text-[#1A1A2E]">
-                          {formData.offerLetterName || 'Click to upload Signed Offer Letter (PDF)'}
-                        </p>
-                        <p className="text-[10px] font-bold text-[#9B9BAD] mt-1">Max 10MB</p>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Email Address *</label>
+                          <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                            placeholder="email@example.com"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Target Position *</label>
+                          <input
+                            type="text"
+                            value={formData.position}
+                            onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                            placeholder="e.g. Frontend Developer"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Hiring Client *</label>
+                          <select
+                            value={formData.client}
+                            onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer"
+                          >
+                            <option value="">Select Client</option>
+                            <option value="Voltiq Energy">Voltiq Energy</option>
+                            {activeClientNames.map(name => (
+                              <option key={name} value={name}>{name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Current CTC (LPA)</label>
+                          <input
+                            type="text"
+                            value={formData.currentCTC}
+                            onChange={(e) => setFormData(prev => ({ ...prev, currentCTC: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                            placeholder="e.g. 12.0"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Proposed CTC (Monthly) *</label>
+                          <input
+                            type="text"
+                            value={formData.offeredCTC}
+                            onChange={(e) => setFormData(prev => ({ ...prev, offeredCTC: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1B4DA0] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
+                            placeholder="e.g. 15,000"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Offer Date</label>
+                          <input
+                            type="date"
+                            value={formData.offerDate}
+                            onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Joining Date</label>
+                          <input
+                            type="date"
+                            value={formData.joiningDate}
+                            onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
+                          />
+                        </div>
                       </div>
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          setFormData(prev => ({
-                            ...prev,
-                            offerLetter: file,
-                            offerLetterName: file?.name || prev.offerLetterName || '',
-                          }));
-                        }}
-                      />
-                    </label>
-                  </div>
 
-                  <div className="pt-6 flex gap-4 border-t border-[#F4F3EF]">
-                    <button
-                      onClick={handleBackToOffers}
-                      className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleSaveOffer}
-                      className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-xl shadow-blue-500/10 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2"
-                    >
-                      {editingOffer ? <Edit2 size={18} /> : <Plus size={18} />}
-                      {editingOffer ? 'Update Offer' : 'Generate Offer'}
-                    </motion.button>
+                      <div className="pt-4">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Permanent Address</label>
+                        <textarea
+                          value={formData.negotiationNotes}
+                          onChange={(e) => setFormData(prev => ({ ...prev, negotiationNotes: e.target.value }))}
+                          rows={3}
+                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50 resize-none text-left"
+                          placeholder="Enter full address for the letter..."
+                        />
+                      </div>
+
+                      <div className="pt-2">
+                        <label className="group relative flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
+                          <div className="flex flex-col items-center text-center">
+                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">
+                              <FileText className="w-4 h-4 text-[#1B4DA0]" />
+                            </div>
+                            <p className="text-[10px] font-bold text-[#1A1A2E]">
+                              {templateFileName || 'Upload Offer Letter Template (PDF)'}
+                            </p>
+                            <p className="text-[9px] font-bold text-[#9B9BAD] mt-1">Max 10MB</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,application/pdf"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null;
+                              handleTemplateUpload(file);
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="pt-2">
+                        <label className="group relative flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
+                          <div className="flex flex-col items-center text-center">
+                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">
+                              <Paperclip className="w-4 h-4 text-[#1B4DA0]" />
+                            </div>
+                            <p className="text-[10px] font-bold text-[#1A1A2E]">
+                              {formData.offerLetterName || 'Signed Offer Letter (Optional)'}
+                            </p>
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null;
+                              setFormData(prev => ({
+                                ...prev,
+                                offerLetter: file,
+                                offerLetterName: file?.name || prev.offerLetterName || '',
+                              }));
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="pt-6 flex gap-4 border-t border-[#F4F3EF]">
+                        <button
+                          onClick={handleBackToOffers}
+                          className="flex-1 py-4 rounded-3xl border-2 border-[#F4F3EF] text-xs font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleSaveOffer}
+                          className="flex-[2] bg-[#1B4DA0] text-white py-4 rounded-3xl text-xs font-bold shadow-xl shadow-blue-500/10 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2"
+                        >
+                          <Send size={16} />
+                          {editingOffer ? 'Update & Send' : 'Generate & Send'}
+                        </motion.button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                  </div>
               </motion.div>
             </div>
           )}
