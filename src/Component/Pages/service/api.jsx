@@ -2486,6 +2486,7 @@ export const searchS3Resumes = async (query) => {
 // Using /recruitment/kams and /department/members endpoints
 
 // Get all KAM members (recruitment department)
+// Get all KAM members (recruitment department) with local fallback
 export const getAllKAMMembers = async (filtersOrDepartment = 'HR Recruitment') => {
   try {
     const filters = typeof filtersOrDepartment === 'string' ? {} : (filtersOrDepartment || {});
@@ -2493,49 +2494,96 @@ export const getAllKAMMembers = async (filtersOrDepartment = 'HR Recruitment') =
       ? filtersOrDepartment
       : (filtersOrDepartment?.department || 'HR Recruitment');
 
-    // Try recruitment/kams endpoint first (has recruitment data)
+    // Try recruitment/kams endpoint first
     const response = await axiosInstance.get('/recruitment/kams', {
       params: filters
     });
-    return response.data;
+    
+    // Merge with local mock members
+    const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
+    const serverMembers = response.data?.data || response.data?.members || (Array.isArray(response.data) ? response.data : []);
+    
+    const combined = [...serverMembers];
+    const serverEmails = new Set(serverMembers.map(m => m.email?.toLowerCase()));
+    
+    mockMembers.forEach(mock => {
+      if (!serverEmails.has(mock.email?.toLowerCase())) {
+        combined.push({ ...mock, isOffline: true });
+      }
+    });
+
+    return { success: true, data: combined };
   } catch (error) {
-    console.error('Failed to fetch KAM members:', error);
-    // Fallback to department/members
+    console.warn('Failed to fetch KAM members from server, trying fallback or local storage:', error.message);
     try {
+      const department = typeof filtersOrDepartment === 'string' ? filtersOrDepartment : 'HR Recruitment';
       const fallbackResponse = await axiosInstance.get('/department/members', {
-        params: { department, role: 'KAM', ...(typeof filtersOrDepartment === 'object' ? filtersOrDepartment : {}) }
+        params: { department, role: 'KAM' }
       });
-      return fallbackResponse.data;
+      
+      const serverMembers = fallbackResponse.data?.data || fallbackResponse.data?.members || (Array.isArray(fallbackResponse.data) ? fallbackResponse.data : []);
+      const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
+      const combined = [...serverMembers];
+      const serverEmails = new Set(serverMembers.map(m => m.email?.toLowerCase()));
+      mockMembers.forEach(mock => {
+        if (!serverEmails.has(mock.email?.toLowerCase())) combined.push({ ...mock, isOffline: true });
+      });
+      
+      return { success: true, data: combined };
     } catch (fallbackError) {
-      throw fallbackError.response?.data || { message: 'Failed to fetch KAM members' };
+      const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
+      return { success: true, data: mockMembers };
     }
   }
 };
 
 // Create new KAM member (uses /department/members)
+// Create new KAM member (uses /department/members) with local fallback
 export const createKAMMember = async (kamData) => {
+  const payload = {
+    name: kamData.name,
+    email: kamData.email,
+    phone: kamData.phone,
+    password: kamData.password || 'Mabicons@123',
+    department: kamData.department || 'HR Recruitment',
+    role: kamData.role || 'KAM - Recruitment',
+    supervisorId: kamData.supervisorId,
+    skills: kamData.skills,
+    targets: kamData.targets
+  };
+
   try {
-    const response = await axiosInstance.post('/department/members', {
-      name: kamData.name,
-      email: kamData.email,
-      phone: kamData.phone,
-      password: kamData.password || 'Mabicons@123',
-      department: kamData.department || 'HR Recruitment',
-      role: kamData.role || 'KAM - Recruitment',
-      supervisorId: kamData.supervisorId,
-      skills: kamData.skills,
-      targets: kamData.targets
-    }, {
+    const response = await axiosInstance.post('/department/members', payload, {
       headers: { 'Content-Type': 'application/json' }
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to create KAM member:', error);
-    throw error.response?.data || { message: 'Failed to create KAM member' };
+    console.warn('Failed to add member to server, saving locally for now:', error.message);
+    
+    // Save to local storage mock list
+    const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
+    const newMock = {
+      id: "offline-" + Date.now(),
+      ...payload,
+      status: 'Active',
+      stats: { activePositions: 0, candidatesPipeline: 0, interviewsScheduled: 0, offersExtended: 0, thisWeekHires: 0 },
+      isOffline: true,
+      createdAt: new Date().toISOString()
+    };
+    
+    mockMembers.push(newMock);
+    localStorage.setItem('mock_kam_members', JSON.stringify(mockMembers));
+    
+    return { 
+      success: true, 
+      data: newMock, 
+      message: 'Member added locally (Server unreachable)' 
+    };
   }
 };
 
 // Update KAM member (uses /department/members/:id)
+// Update KAM member with local fallback
 export const updateKAMMember = async (kamId, updateData) => {
   try {
     const response = await axiosInstance.put(`/department/members/${kamId}`, updateData, {
@@ -2543,7 +2591,17 @@ export const updateKAMMember = async (kamId, updateData) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to update KAM member:', error);
+    console.warn('Failed to update member on server, updating locally:', error.message);
+    
+    if (String(kamId).startsWith('offline-')) {
+      const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
+      const index = mockMembers.findIndex(m => m.id === kamId);
+      if (index !== -1) {
+        mockMembers[index] = { ...mockMembers[index], ...updateData };
+        localStorage.setItem('mock_kam_members', JSON.stringify(mockMembers));
+        return { success: true, data: mockMembers[index], message: 'Updated locally' };
+      }
+    }
     throw error.response?.data || { message: 'Failed to update KAM member' };
   }
 };

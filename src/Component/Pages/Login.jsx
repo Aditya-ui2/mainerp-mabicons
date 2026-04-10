@@ -197,6 +197,7 @@ const USER_CREDENTIALS = {
   'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
   'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
   'crm@mabicons.com': { password: 'Crm@123', role: 'bd', department: null, name: 'CRM Executive' },
+  'client.mabicons@gmail.com': { password: 'Mabicons@123', role: 'client', department: null, name: 'Sample Client' },
 };
 
 const Login = () => {
@@ -281,6 +282,8 @@ const Login = () => {
       navigate('/teamleader-dashboard');
     } else if (role === 'bdExecutive' || role === 'bd') {
       navigate('/bd-dashboard');
+    } else if (role === 'client' || role === 'customer') {
+      navigate('/client-dashboard');
     } else {
       navigate('/employee-dashboard');
     }
