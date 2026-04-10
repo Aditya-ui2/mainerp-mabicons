@@ -25,6 +25,7 @@ import {
   deleteWorkHandover,
   getAllClients,
   getAdminHierarchy,
+  getClientsForTeamLeader,
 } from '../../../service/api';
 
 const statusColors = {
@@ -43,6 +44,8 @@ export default function WorkHandoverTab({ isDarkMode }) {
   const [showModal, setShowModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [fromUserClients, setFromUserClients] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
 
   const [form, setForm] = useState({
     fromUserId: '',
@@ -153,6 +156,58 @@ export default function WorkHandoverTab({ isDarkMode }) {
         : [...f.clientIds, clientId]
     }));
   };
+
+  const isRecruitmentHeadUser = (user) => {
+    if (!user) return false;
+    const email = String(user.email || '').toLowerCase();
+    const name = String(user.name || '').toLowerCase();
+    return email.includes('sachin') || name.includes('sachin') || String(user.role || '').toLowerCase().includes('recruitmenthead');
+  };
+
+  const findHeadAssigneeId = () => {
+    const headFromTeamLeaders = teamLeaders.find(tl => {
+      const email = String(tl.email || '').toLowerCase();
+      const name = String(tl.name || '').toLowerCase();
+      return email.includes('sachin') || name.includes('sachin');
+    });
+    if (headFromTeamLeaders) return headFromTeamLeaders.id;
+    if (isRecruitmentHeadUser(currentUser)) return currentUser.id;
+    return '';
+  };
+
+  useEffect(() => {
+    const loadFromUserClients = async () => {
+      if (!form.fromUserId) {
+        setFromUserClients([]);
+        return;
+      }
+      setLoadingClients(true);
+      try {
+        const response = await getClientsForTeamLeader({ teamLeaderId: form.fromUserId });
+        const clientsForFromUser = Array.isArray(response.clients) ? response.clients : response.data?.clients || [];
+        setFromUserClients(clientsForFromUser);
+        setForm(f => {
+          const newForm = {
+            ...f,
+            clientIds: clientsForFromUser.map(c => c.id)
+          };
+          const headId = findHeadAssigneeId();
+          if (!newForm.toUserId && headId) {
+            newForm.toUserId = headId;
+          }
+          return newForm;
+        });
+      } catch (error) {
+        console.warn('Could not load clients for selected KAM:', error?.message || error);
+        setFromUserClients([]);
+        setForm(f => ({ ...f, clientIds: [] }));
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+
+    loadFromUserClients();
+  }, [form.fromUserId, currentUser, teamLeaders]);
 
   /* ── filtered list ── */
   const filtered = handovers.filter(h => {
@@ -392,6 +447,9 @@ export default function WorkHandoverTab({ isDarkMode }) {
                     <option key={tl.id} value={tl.id}>{tl.name} ({tl.email})</option>
                   ))}
                 </select>
+                <p className={`text-xs mt-1 ${textSub}`}>
+                  If no covering KAM is selected, this will default to Sachin (Recruitment Head) when available.
+                </p>
               </div>
 
               {/* Reason */}
@@ -427,11 +485,16 @@ export default function WorkHandoverTab({ isDarkMode }) {
                 <label className={`text-xs font-semibold ${textSub} mb-1 block`}>
                   Clients to Hand Over ({form.clientIds.length} selected)
                 </label>
+                {form.fromUserId && (
+                  <p className={`text-xs ${textSub} mb-2`}>Auto-selected all current clients for the absent KAM.</p>
+                )}
                 <div className={`max-h-40 overflow-y-auto rounded-xl ${border} border p-2 space-y-1`}>
-                  {clients.length === 0 ? (
-                    <p className={`text-sm ${textSub} text-center py-2`}>No clients available</p>
+                  {loadingClients ? (
+                    <p className={`text-sm ${textSub} text-center py-2`}>Loading clients for selected KAM…</p>
+                  ) : fromUserClients.length === 0 ? (
+                    <p className={`text-sm ${textSub} text-center py-2`}>No clients found for the selected absent KAM.</p>
                   ) : (
-                    clients.map(c => (
+                    fromUserClients.map(c => (
                       <button key={c.id} type="button"
                         onClick={() => toggleClientSelection(c.id)}
                         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${form.clientIds.includes(c.id)

@@ -222,9 +222,34 @@ const Login = () => {
     kamRecruitment: 'kamRecruitment'
   };
 
+  const normalizeRole = (role, department = '') => {
+    const value = String(role || '').trim().toLowerCase();
+    const dept = String(department || '').trim().toLowerCase();
+
+    if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
+    if (['admin'].includes(value)) return 'admin';
+    if (['teamleader', 'team_leader', 'team leader'].includes(value)) return 'teamleader';
+    if (['employee'].includes(value)) return 'employee';
+    if (['bdexecutive', 'bd_executive', 'bd executive', 'bd'].includes(value)) return 'bd';
+    if (['hroperations', 'hr_operations', 'hr operations', 'operations'].includes(value)) return 'hrOperations';
+    if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmentHead';
+    if (['department head', 'departmenthead', 'department_head'].includes(value)) {
+      if (dept === 'hr recruitment') return 'recruitmentHead';
+      if (dept === 'hr operations') return 'hrOperations';
+      return 'departmentHead';
+    }
+    if (['hr executive', 'hrexecutive', 'hr_executive'].includes(value)) {
+      return dept === 'hr operations' ? 'hrOperations' : 'kamRecruitment';
+    }
+    if (['hrrecruitment', 'hr_recruitment', 'hr recruitment', 'recruitmenthr', 'recruitment_hr', 'recruitment hr'].includes(value)) return 'hrRecruitment';
+    if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam'].includes(value)) return 'kamRecruitment';
+    return value;
+  };
+
   // Navigation helper function
   const navigateByRole = (role, emailLower, user) => {
     const isRecruitmentHead = role === 'recruitmentHead' || 
+      role === 'departmentHead' && user?.department === 'HR Recruitment' || 
       (role === 'hrRecruitment' && emailLower.includes('sachin')) || 
       emailLower.includes('recruitment.mabicons');
     const isKAM = role === 'kamRecruitment' || 
@@ -232,8 +257,8 @@ const Login = () => {
       emailLower.includes('manju') || 
       emailLower.includes('jyoti');
     const isOperations = role === 'hrOperations' || 
+      role === 'departmentHead' && user?.department === 'HR Operations' || 
       role === 'hr_operations' || 
-      (role === 'Department Head' && user?.department === 'HR Operations') || 
       emailLower.includes('operation') || 
       emailLower.includes('ramesh');
 
@@ -281,8 +306,9 @@ const Login = () => {
       const userData = USER_CREDENTIALS[emailLower];
       if (userData && userData.password === password) {
         const mockToken = createMockToken(userData);
+        const normalizedRole = normalizeRole(userData.role, userData.department);
         localStorage.setItem('token', mockToken);
-        localStorage.setItem('userType', userData.role);
+        localStorage.setItem('userType', normalizedRole);
         localStorage.setItem('userName', userData.name);
         localStorage.setItem('userEmail', emailLower);
         if (userData.department) {
@@ -291,7 +317,7 @@ const Login = () => {
         return {
           success: true,
           user: userData,
-          userType: userData.role,
+          userType: normalizedRole,
           token: mockToken,
           isLocal: true
         };
@@ -309,7 +335,7 @@ const Login = () => {
         setIsError(false);
 
         setTimeout(() => {
-          navigateByRole(localResult.user.role, emailLower, localResult.user);
+          navigateByRole(localResult.userType, emailLower, localResult.user);
         }, 800);
         return;
       }
@@ -347,11 +373,12 @@ const Login = () => {
       if (response && response.success) {
         const user = response.user;
         const role = response.userType || user.role || user.userType;
-        console.log("✅ API Login SUCCESS! Role:", role, "User:", user);
+        const normalizedRole = normalizeRole(role, user.department);
+        console.log("✅ API Login SUCCESS! Role:", normalizedRole, "User:", user);
         
         // Save necessary info for ProtectedRoutes
         if (response.token) localStorage.setItem('token', response.token);
-        localStorage.setItem('userType', role);
+        localStorage.setItem('userType', normalizedRole);
         localStorage.setItem('userName', user.name);
         localStorage.setItem('userEmail', emailLower);
         if (user.department) {
@@ -363,7 +390,7 @@ const Login = () => {
         setIsError(false);
   
         setTimeout(() => {
-          navigateByRole(role, emailLower, user);
+          navigateByRole(normalizedRole, emailLower, user);
         }, 800);
       } else {
         throw new Error(response.message || 'Login failed');

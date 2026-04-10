@@ -75,6 +75,34 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
     instructions: '',
   });
 
+  const getCurrentUserIdFromToken = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload?.id?.toString();
+    } catch {
+      return null;
+    }
+  };
+
+  const activeCurrentUserId = currentUserId || getCurrentUserIdFromToken();
+  const normalizeUserType = (type = '') => {
+    const value = type.toString().trim().toLowerCase();
+    if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
+    if (['admin'].includes(value)) return 'admin';
+    if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmenthead';
+    if (['hrrecruitment', 'hr_recruitment', 'hr recruitment', 'recruitmenthr', 'recruitment_hr', 'recruitment hr'].includes(value)) return 'hrrecruitment';
+    if (['hroperations', 'hr_operations', 'hr operations', 'operations', 'hroperations'].includes(value)) return 'hroperations';
+    if (['department head', 'departmenthead', 'department_head'].includes(value)) return 'departmenthead';
+    if (['hr executive', 'hrexecutive', 'hr_executive'].includes(value)) return 'kamrecruitment';
+    if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam'].includes(value)) return 'kamrecruitment';
+    if (['hr', 'hrdepartment', 'hr department'].includes(value)) return 'hr';
+    return value;
+  };
+  const currentUserType = normalizeUserType(localStorage.getItem('userType') || userRole || '');
+  const canAssignTasks = ['admin', 'superadmin', 'recruitmenthead', 'departmenthead', 'hroperations', 'hrrecruitment', 'hr'].includes(currentUserType);
+
   const fetchTeamMembers = async () => {
     try {
       const res = await getDepartmentTeamMembers('HR Recruitment');
@@ -148,8 +176,20 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
   const getAssigneePhoto = (id) => teamMembers.find(m => m.id === id)?.photo || null;
 
   const handleCreateTask = async () => {
+    if (!canAssignTasks) {
+      setToast('Only admins can assign tasks');
+      setTimeout(() => setToast(null), 2000);
+      return;
+    }
+
     if (!newTask.title || !newTask.assignedTo || !newTask.dueDate) {
       setToast('Please fill required fields');
+      setTimeout(() => setToast(null), 2000);
+      return;
+    }
+
+    if (activeCurrentUserId && newTask.assignedTo === activeCurrentUserId) {
+      setToast('You cannot assign a task to yourself');
       setTimeout(() => setToast(null), 2000);
       return;
     }
@@ -254,7 +294,7 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
             </p>
           </div>
         </div>
-        {userRole === 'KAM' && (
+        {canAssignTasks ? (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -265,6 +305,10 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
             <FiPlus className="w-4 h-4" />
             Create Task
           </motion.button>
+        ) : (
+          <div className="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-500 bg-slate-100 border border-slate-200">
+            Only admins can assign tasks.
+          </div>
         )}
       </motion.div>
 

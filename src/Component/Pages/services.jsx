@@ -308,7 +308,7 @@ function Services() {
 
         {/* Modal */}
         <Dialog size="xl" open={isModalOpen} handler={() => setIsModalOpen(false)}>
-          {selectedService && (
+          {selectedService ? (
             <>
               <DialogHeader className="flex items-center gap-3">
                 <div className="text-gray-600">
@@ -367,6 +367,8 @@ function Services() {
                 </Button>
               </DialogFooter>
             </>
+          ) : (
+            <div />
           )}
         </Dialog>
       </motion.div>

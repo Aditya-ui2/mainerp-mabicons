@@ -47,9 +47,11 @@ function About() {
   const ServiceSection = ({ title, description, services }) => (
     <div className="mb-20">
       <div className="text-center mb-16">
-        <Typography variant="h2" className="text-[#2D3748] text-4xl font-bold mb-4">
-          {title}
-        </Typography>
+        {title && (
+          <Typography variant="h2" className="text-[#2D3748] text-4xl font-bold mb-4">
+            {title}
+          </Typography>
+        )}
         {description && (
           <Typography className="text-gray-600 max-w-2xl mx-auto">
             {description}
@@ -72,12 +74,16 @@ function About() {
               className=" mb-4"
               style={{ color: '#68D391' }}
             />
-            <Typography variant="h5" className="text-[#2D3748] text-xl font-semibold mb-2">
-              {service.title}
-            </Typography>
-            <Typography className="text-gray-600 text-sm leading-relaxed flex-grow">
-              {service.description}
-            </Typography>
+            {service.title && (
+              <Typography variant="h5" className="text-[#2D3748] text-xl font-semibold mb-2">
+                {service.title}
+              </Typography>
+            )}
+            {service.description && (
+              <Typography className="text-gray-600 text-sm leading-relaxed flex-grow">
+                {service.description}
+              </Typography>
+            )}
             <button className="text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors mt-auto">
               {service.buttonText}
             </button>

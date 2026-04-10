@@ -178,7 +178,7 @@ const TaskDetailView = ({ task, onBack, onEdit }) => {
   );
 };
 
-const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
+const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
   const [tasks, setTasks] = useState([
     { id: 't1', title: 'Process March Payroll', description: 'Review and approve payroll for all department staff for March 2024.', status: 'Pending', priority: 'High', category: 'Admin', assignedToName: 'Manju', dueDate: new Date().toISOString() },
     { id: 't2', title: 'Employee Onboarding - John Doe', description: 'Complete onboarding documentation and hardware setup for the new Senior KAM.', status: 'Pending', priority: 'Urgent', category: 'Onboarding', assignedToName: 'Priyanshi', dueDate: new Date().toISOString() },
@@ -212,6 +212,33 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
   });
   const [viewingTask, setViewingTask] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
+
+  const normalizeUserType = (type = '') => {
+    const value = type.toString().trim().toLowerCase();
+    if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
+    if (['admin'].includes(value)) return 'admin';
+    if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmenthead';
+    if (['hrrecruitment', 'hr_recruitment', 'hr recruitment', 'recruitmenthr', 'recruitment_hr', 'recruitment hr'].includes(value)) return 'hrrecruitment';
+    if (['hroperations', 'hr_operations', 'hr operations', 'operations', 'hroperations'].includes(value)) return 'hroperations';
+    if (['department head', 'departmenthead', 'department_head'].includes(value)) return 'departmenthead';
+    if (['hr executive', 'hrexecutive', 'hr_executive'].includes(value)) return 'kamrecruitment';
+    if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam'].includes(value)) return 'kamrecruitment';
+    if (['hr', 'hrdepartment', 'hr department'].includes(value)) return 'hr';
+    return value;
+  };
+  const currentUserRole = normalizeUserType(localStorage.getItem('userType') || userRole || '');
+  const canAssignTasks = ['admin', 'superadmin', 'super_admin', 'recruitmenthead', 'departmenthead', 'hroperations', 'hrrecruitment', 'hr'].includes(currentUserRole);
+
+  const getCurrentUserIdFromToken = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload?.id?.toString();
+    } catch {
+      return null;
+    }
+  };
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -249,6 +276,17 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canAssignTasks) {
+      showToast('Only admins can assign tasks', 'error');
+      return;
+    }
+
+    const currentUserId = getCurrentUserIdFromToken();
+    if (currentUserId && formData.assignedTo === currentUserId) {
+      showToast('You cannot assign a task to yourself', 'error');
+      return;
+    }
+
     try {
       const taskData = {
         ...formData,
@@ -379,15 +417,22 @@ const TaskAssignmentTab = ({ department = 'HR Operations' }) => {
           <h2 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Assignment</h2>
           <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">Assign and track tasks for your team</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02, translateY: -2 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' }); setShowModal(true); }}
-          className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#0D47A1]/20 transition-all border border-white/10"
-        >
-          <FiPlus size={20} />
-          Assign Task
-        </motion.button>
+        {canAssignTasks ? (
+          <motion.button
+            whileHover={{ scale: 1.02, translateY: -2 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' }); setShowModal(true); }}
+            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#0D47A1]/20 transition-all border border-white/10"
+          >
+            <FiPlus size={20} />
+            Assign Task
+          </motion.button>
+        ) : (
+          <div className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] text-sm font-medium text-[#6B7280]">
+            <FiAlertCircle size={18} />
+            Only admins can assign tasks.
+          </div>
+        )}
       </div>
 
 

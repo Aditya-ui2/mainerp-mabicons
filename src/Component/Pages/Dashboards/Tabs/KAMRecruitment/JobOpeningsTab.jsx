@@ -387,7 +387,7 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 const RADAR_COLORS = { stroke: '#a5b4fc', fill: '#a5b4fc' };
 const DONUT_COLORS = ['#3B82F6', '#6366F1', '#22D3EE'];
 
-const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob }) => {
+const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob, canAssignJobs }) => {
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const skillsArr = (Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean);
   const reqsArr = (Array.isArray(job.requirements) ? job.requirements : (job.requirements || '').split('\n')).filter(Boolean);
@@ -509,65 +509,84 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
             Cancel
           </button>
           <div className="relative flex-[2]">
-            <button
-              id="detail-assign-btn"
-              onClick={() => setShowAssignDropdown(!showAssignDropdown)}
-              className="w-full py-4 bg-[#1B4DA0] text-white rounded-[24px] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#153a7a] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
-            >
-              <UserPlus size={18} />
-              {jobAssignments[job.id] ? `Assigned to ${jobAssignments[job.id]}` : 'Assign To'}
-            </button>
-            {showAssignDropdown && createPortal(
+            {canAssignJobs ? (
               <>
-                <div className="fixed inset-0 z-[9998]" onClick={() => setShowAssignDropdown(false)} />
-                <div
-                  className="fixed z-[9999] w-52 bg-white rounded-xl shadow-2xl border border-[#E5E5EA] py-2"
-                  style={(() => {
-                    const btn = document.getElementById('detail-assign-btn');
-                    if (!btn) return { top: 0, left: 0 };
-                    const rect = btn.getBoundingClientRect();
-                    return { bottom: window.innerHeight - rect.top + 8, left: rect.left + rect.width / 2 - 104 };
-                  })()}
+                <button
+                  id="detail-assign-btn"
+                  onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+                  className="w-full py-4 bg-[#1B4DA0] text-white rounded-[24px] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#153a7a] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
                 >
-                  <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
-                  <button
-                    onClick={() => { handleAssignJob(job.id, 'Me'); setShowAssignDropdown(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                      }`}
-                  >
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                      }`}><User size={13} /></span>
-                    Assign to me
-                    {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
-                  </button>
-                  <div className="border-t border-[#F4F3EF] my-1" />
-                  {['Jyoti', 'Manju', 'Priyanshi'].map(name => (
-                    <button key={name}
-                      onClick={() => { handleAssignJob(job.id, name); setShowAssignDropdown(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                        }`}
+                  <UserPlus size={18} />
+                  {jobAssignments[job.id] ? `Assigned to ${jobAssignments[job.id]}` : 'Assign To'}
+                </button>
+                {showAssignDropdown && createPortal(
+                  <>
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setShowAssignDropdown(false)} />
+                    <div
+                      className="fixed z-[9999] w-52 bg-white rounded-xl shadow-2xl border border-[#E5E5EA] py-2"
+                      style={(() => {
+                        const btn = document.getElementById('detail-assign-btn');
+                        if (!btn) return { top: 0, left: 0 };
+                        const rect = btn.getBoundingClientRect();
+                        return { bottom: window.innerHeight - rect.top + 8, left: rect.left + rect.width / 2 - 104 };
+                      })()}
                     >
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                        }`}>{name.charAt(0)}</span>
-                      {name}
-                      {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
-                    </button>
-                  ))}
-                  {jobAssignments[job.id] && (
-                    <>
-                      <div className="border-t border-[#F4F3EF] my-1" />
+                      <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
                       <button
-                        onClick={() => { handleAssignJob(job.id, null); setShowAssignDropdown(false); }}
-                        className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                        onClick={() => {
+                          if (isSelfAssignment('Me')) return;
+                          handleAssignJob(job.id, 'Me');
+                          setShowAssignDropdown(false);
+                        }}
+                        disabled={isSelfAssignment('Me')}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'} ${isSelfAssignment('Me') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={isSelfAssignment('Me') ? 'You cannot assign a job to yourself.' : undefined}
                       >
-                        <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
-                        Remove Assignment
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'}`}><User size={13} /></span>
+                        Assign to me
+                        {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
                       </button>
-                    </>
-                  )}
-                </div>
-              </>,
-              document.body
+                      <div className="border-t border-[#F4F3EF] my-1" />
+                      {['Jyoti', 'Manju', 'Priyanshi'].map(name => {
+                        const disabled = isSelfAssignment(name);
+                        return (
+                          <button key={name}
+                            onClick={() => {
+                              if (disabled) return;
+                              handleAssignJob(job.id, name);
+                              setShowAssignDropdown(false);
+                            }}
+                            disabled={disabled}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title={disabled ? 'You cannot assign a job to yourself.' : undefined}
+                          >
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'}`}>{name.charAt(0)}</span>
+                            {name}
+                            {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                          </button>
+                        );
+                      })}
+                      {jobAssignments[job.id] && (
+                        <>
+                          <div className="border-t border-[#F4F3EF] my-1" />
+                          <button
+                            onClick={() => { handleAssignJob(job.id, null); setShowAssignDropdown(false); }}
+                            className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                          >
+                            <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
+                            Remove Assignment
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>,
+                  document.body
+                )}
+              </>
+            ) : (
+              <div className="w-full py-4 rounded-[24px] bg-[#F4F4F7] border border-[#E5E5EA] text-center text-[#6B7280] text-sm font-bold">
+                Assignment access is limited to recruitment head or admin.
+              </div>
             )}
           </div>
         </div>
@@ -610,6 +629,23 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [assignDropdownJobId, setAssignDropdownJobId] = useState(null);
   const [jobAssignments, setJobAssignments] = useState({});
   const [selectedJobs, setSelectedJobs] = useState([]);
+  const normalizeUserType = (type = '') => {
+    const value = type.toString().trim().toLowerCase();
+    if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
+    if (['admin'].includes(value)) return 'admin';
+    if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmenthead';
+    if (['hrrecruitment', 'hr_recruitment', 'hr recruitment', 'recruitmenthr', 'recruitment_hr', 'recruitment hr'].includes(value)) return 'hrrecruitment';
+    if (['hroperations', 'hr_operations', 'hr operations', 'operations'].includes(value)) return 'hroperations';
+    if (['department head', 'departmenthead', 'department_head'].includes(value)) return 'departmenthead';
+    if (['hr executive', 'hrexecutive', 'hr_executive'].includes(value)) return 'kamrecruitment';
+    if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam'].includes(value)) return 'kamrecruitment';
+    if (['hr', 'hrdepartment', 'hr department'].includes(value)) return 'hr';
+    return value;
+  };
+  const currentUserType = normalizeUserType(localStorage.getItem('userType') || '');
+  const ASSIGNABLE_JOB_ROLES = ['admin', 'superadmin', 'recruitmenthead', 'departmenthead', 'hroperations', 'hrrecruitment', 'hr'];
+  const isKAM = currentUserType === 'kamrecruitment';
+  const canAssignJobs = ASSIGNABLE_JOB_ROLES.includes(currentUserType);
   const [isUploadingBulk, setIsUploadingBulk] = useState(false);
   const [bulkPreviewData, setBulkPreviewData] = useState([]);
   const [showBulkPreview, setShowBulkPreview] = useState(false);
@@ -731,7 +767,26 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     }
   };
 
+  const getNormalizedName = (name) => String(name || '').trim().split(' ')[0].toLowerCase();
+  const currentUserName = localStorage.getItem('userName') || '';
+  const currentUserFirstName = getNormalizedName(currentUserName);
+  const isSelfAssignment = (name) => {
+    if (!name) return false;
+    if (name === 'Me') return !!currentUserName;
+    return getNormalizedName(name) === currentUserFirstName;
+  };
+
   const handleAssignJob = async (jobId, name) => {
+    if (!canAssignJobs) {
+      toast.error(isKAM ? 'KAM users cannot assign jobs.' : 'Only recruitment heads or admins can assign jobs.');
+      return;
+    }
+
+    if (isSelfAssignment(name)) {
+      toast.error('You cannot assign a job to yourself.');
+      return;
+    }
+
     const prev = { ...jobAssignments };
     if (name) {
       setJobAssignments(p => ({ ...p, [jobId]: name }));
@@ -1891,25 +1946,31 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   <span className="text-[13px] font-black text-[#1A1A2E]">{job.candidateCount}</span>
                 </div>
                 <div className="relative" onClick={e => e.stopPropagation()}>
-                  {jobAssignments[job.id] ? (
-                    <button
-                      id={`assign-btn-${job.id}`}
-                      onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all"
-                    >
-                      <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
-                      {jobAssignments[job.id]}
-                    </button>
+                  {canAssignJobs ? (
+                    jobAssignments[job.id] ? (
+                      <button
+                        id={`assign-btn-${job.id}`}
+                        onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all"
+                      >
+                        <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
+                        {jobAssignments[job.id]}
+                      </button>
+                    ) : (
+                      <button
+                        id={`assign-btn-${job.id}`}
+                        onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-[#0D47A1] text-white rounded-lg text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                      >
+                        <UserPlus size={13} /> Assign
+                      </button>
+                    )
                   ) : (
-                    <button
-                      id={`assign-btn-${job.id}`}
-                      onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-[#0D47A1] text-white rounded-lg text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
-                    >
-                      <UserPlus size={13} /> Assign
-                    </button>
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold">
+                      <span>{jobAssignments[job.id] || job.assignedToName || (isKAM ? 'KAM cannot assign' : 'Not assignable')}</span>
+                    </div>
                   )}
-                  {assignDropdownJobId === job.id && createPortal(
+                  {canAssignJobs && assignDropdownJobId === job.id && createPortal(
                     <>
                       <div className="fixed inset-0 z-[9998]" onClick={() => setAssignDropdownJobId(null)} />
                       <div
@@ -2054,6 +2115,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     jobAssignments={jobAssignments}
                     setJobAssignments={setJobAssignments}
                     handleAssignJob={handleAssignJob}
+                    canAssignJobs={canAssignJobs}
                   />
                 </div>
               )}
