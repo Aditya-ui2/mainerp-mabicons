@@ -388,244 +388,244 @@ export default function ClientJobsTab() {
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="bg-white rounded-[44px] w-full max-w-2xl max-h-[92vh] overflow-hidden shadow-[0_32px_128px_rgba(0,0,0,0.25)] relative z-[2001] flex flex-col animate-in zoom-in-95 duration-300 border border-white/20"
               >
-              {/* Modal Header */}
-              <div className="sticky top-0 z-20 px-10 pt-10 pb-8 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF] text-center">
-                <div className="relative">
-                  <h2 className="text-3xl font-extrabold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    Create New Position
-                  </h2>
-                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[4px] mt-2">
-                    JOB POSTING & RECRUITMENT
-                  </p>
-                  
-                  <button
-                    onClick={() => setShowAddJob(false)}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-[#FAFAF8] text-[#1A1A2E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 group shadow-sm border border-[#F4F3EF]"
-                  >
-                    <FiX size={20} className="group-hover:rotate-90 transition-transform duration-300" />
-                  </button>
+                {/* Modal Header */}
+                <div className="sticky top-0 z-20 px-10 pt-10 pb-8 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF] text-center">
+                  <div className="relative">
+                    <h2 className="text-3xl font-extrabold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                      Create New Position
+                    </h2>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[4px] mt-2">
+                      JOB POSTING & RECRUITMENT
+                    </p>
+
+                    <button
+                      onClick={() => setShowAddJob(false)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-[#FAFAF8] text-[#1A1A2E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 group shadow-sm border border-[#F4F3EF]"
+                    >
+                      <FiX size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Scrollable Form Body */}
-              <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">
-                <div className="space-y-6">
-                  {/* Row 1: Job Title */}
-                  <div>
-                    <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Job Title *</label>
-                    <input type="text" value={newJob.title} onChange={e => setNewJob(f => ({ ...f, title: e.target.value }))}
-                      placeholder="e.g. Senior Software Engineer"
-                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/20"
-                    />
-                  </div>
-
-                  {/* Row 2: Role Type & Client/Company */}
-                  <div className="grid grid-cols-2 gap-4">
+                {/* Scrollable Form Body */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">
+                  <div className="space-y-6">
+                    {/* Row 1: Job Title */}
                     <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Role Type *</label>
-                      <div className="relative">
-                        <select value={newJob.roleType || ''} onChange={e => setNewJob(f => ({ ...f, roleType: e.target.value }))}
-                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
-                        >
-                          <option value="">Select Role Category</option>
-                          <option value="Engineering">Engineering</option>
-                          <option value="Design">Design</option>
-                          <option value="Marketing">Marketing</option>
-                          <option value="Sales">Sales</option>
-                          <option value="Operations">Operations</option>
-                          <option value="Finance">Finance</option>
-                          <option value="HR">HR</option>
-                          <option value="Product">Product</option>
-                          <option value="Data Science">Data Science</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Job Title *</label>
+                      <input type="text" value={newJob.title} onChange={e => setNewJob(f => ({ ...f, title: e.target.value }))}
+                        placeholder="e.g. Senior Software Engineer"
+                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/20"
+                      />
+                    </div>
+
+                    {/* Row 2: Role Type & Client/Company */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Role Type *</label>
+                        <div className="relative">
+                          <select value={newJob.roleType || ''} onChange={e => setNewJob(f => ({ ...f, roleType: e.target.value }))}
+                            className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
+                          >
+                            <option value="">Select Role Category</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Design">Design</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Operations">Operations</option>
+                            <option value="Finance">Finance</option>
+                            <option value="HR">HR</option>
+                            <option value="Product">Product</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="Other">Other</option>
+                          </select>
+                          <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Client/Company *</label>
+                        <div className="relative">
+                          <select
+                            disabled={true} // As this is Client Portal, client is fixed
+                            className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all opacity-60 cursor-not-allowed appearance-none pr-10"
+                          >
+                            <option>Select Company</option>
+                          </select>
+                          <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Client/Company *</label>
-                      <div className="relative">
-                        <select
-                          disabled={true} // As this is Client Portal, client is fixed
-                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all opacity-60 cursor-not-allowed appearance-none pr-10"
-                        >
-                          <option>Select Company</option>
-                        </select>
-                        <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Row 3: Location */}
-                  <div>
-                    <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Location</label>
-                    <input type="text" value={newJob.location} onChange={e => setNewJob(f => ({ ...f, location: e.target.value }))}
-                      placeholder="e.g. Bangalore, Remote"
-                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
-                    />
-                  </div>
-
-                  {/* Row 4: Type & Priority */}
-                  <div className="grid grid-cols-2 gap-4">
+                    {/* Row 3: Location */}
                     <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Type</label>
-                      <div className="relative">
-                        <select value={newJob.type} onChange={e => setNewJob(f => ({ ...f, type: e.target.value }))}
-                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
-                        >
-                          <option value="Full-time">Full-time</option>
-                          <option value="Part-time">Part-time</option>
-                          <option value="Contract">Contract</option>
-                          <option value="Internship">Internship</option>
-                        </select>
-                        <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Priority</label>
-                      <div className="relative">
-                        <select value={newJob.priority} onChange={e => setNewJob(f => ({ ...f, priority: e.target.value }))}
-                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
-                        >
-                          <option value="Low">Low</option>
-                          <option value="Medium">Medium</option>
-                          <option value="High">High</option>
-                          <option value="Critical">Critical</option>
-                        </select>
-                        <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Row 5: Salary & Experience */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Salary Range</label>
-                      <input type="text" value={newJob.salary} onChange={e => setNewJob(f => ({ ...f, salary: e.target.value }))}
-                        placeholder="e.g. 15-25 LPA"
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Location</label>
+                      <input type="text" value={newJob.location} onChange={e => setNewJob(f => ({ ...f, location: e.target.value }))}
+                        placeholder="e.g. Bangalore, Remote"
                         className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
                       />
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Experience</label>
-                      <input type="text" value={newJob.experience} onChange={e => setNewJob(f => ({ ...f, experience: e.target.value }))}
-                        placeholder="e.g. 3-5 Years"
-                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Row 6: Openings & Deadline */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">No. of Openings</label>
-                      <input type="number" value={newJob.openings} onChange={e => setNewJob(f => ({ ...f, openings: e.target.value }))} min="1"
-                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
-                      />
+                    {/* Row 4: Type & Priority */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Type</label>
+                        <div className="relative">
+                          <select value={newJob.type} onChange={e => setNewJob(f => ({ ...f, type: e.target.value }))}
+                            className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
+                          >
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Internship">Internship</option>
+                          </select>
+                          <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Priority</label>
+                        <div className="relative">
+                          <select value={newJob.priority} onChange={e => setNewJob(f => ({ ...f, priority: e.target.value }))}
+                            className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
+                          >
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                          </select>
+                          <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Deadline</label>
-                      <div className="relative">
-                        <input type="date" value={newJob.deadline} onChange={e => setNewJob(f => ({ ...f, deadline: e.target.value }))}
-                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white cursor-pointer"
+
+                    {/* Row 5: Salary & Experience */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Salary Range</label>
+                        <input type="text" value={newJob.salary} onChange={e => setNewJob(f => ({ ...f, salary: e.target.value }))}
+                          placeholder="e.g. 15-25 LPA"
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
                         />
-                        <FiCalendar size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Experience</label>
+                        <input type="text" value={newJob.experience} onChange={e => setNewJob(f => ({ ...f, experience: e.target.value }))}
+                          placeholder="e.g. 3-5 Years"
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
+                        />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Skills Section */}
-                  <div>
-                    <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Required Skills</label>
-                    <div className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-4 py-3 flex flex-wrap items-center gap-2 min-h-[56px] transition-all focus-within:bg-white cursor-text"
-                      onClick={() => document.getElementById('client-skill-tag-input')?.focus()}>
-                      {newJob.skills.split(',').map(s => s.trim()).filter(Boolean).map((skill, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-[#E5E5EA] rounded-full px-3 py-1 text-xs font-bold text-[#1A1A2E] shadow-sm animate-in fade-in zoom-in-95 duration-200">
-                          {skill}
-                          <button type="button" onClick={(e) => { e.stopPropagation(); const updated = newJob.skills.split(',').map(s => s.trim()).filter(Boolean).filter((_, i) => i !== idx).join(', '); setNewJob(f => ({ ...f, skills: updated })); }}
-                            className="ml-0.5 text-[#9B9BAD] hover:text-red-500 transition-colors text-sm leading-none font-bold">&times;</button>
-                        </span>
-                      ))}
-                      <input id="client-skill-tag-input" type="text" value={clientSkillInput}
-                        onChange={e => setClientSkillInput(e.target.value)}
-                        onKeyDown={e => {
-                          if ((e.key === ' ' || e.key === 'Enter' || e.key === ',') && clientSkillInput.trim()) {
-                            e.preventDefault();
-                            const val = clientSkillInput.trim().replace(/,$/, '');
-                            if (val) {
+                    {/* Row 6: Openings & Deadline */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">No. of Openings</label>
+                        <input type="number" value={newJob.openings} onChange={e => setNewJob(f => ({ ...f, openings: e.target.value }))} min="1"
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Deadline</label>
+                        <div className="relative">
+                          <input type="date" value={newJob.deadline} onChange={e => setNewJob(f => ({ ...f, deadline: e.target.value }))}
+                            className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white cursor-pointer"
+                          />
+                          <FiCalendar size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Skills Section */}
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Required Skills</label>
+                      <div className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-4 py-3 flex flex-wrap items-center gap-2 min-h-[56px] transition-all focus-within:bg-white cursor-text"
+                        onClick={() => document.getElementById('client-skill-tag-input')?.focus()}>
+                        {newJob.skills.split(',').map(s => s.trim()).filter(Boolean).map((skill, idx) => (
+                          <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-[#E5E5EA] rounded-full px-3 py-1 text-xs font-bold text-[#1A1A2E] shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                            {skill}
+                            <button type="button" onClick={(e) => { e.stopPropagation(); const updated = newJob.skills.split(',').map(s => s.trim()).filter(Boolean).filter((_, i) => i !== idx).join(', '); setNewJob(f => ({ ...f, skills: updated })); }}
+                              className="ml-0.5 text-[#9B9BAD] hover:text-red-500 transition-colors text-sm leading-none font-bold">&times;</button>
+                          </span>
+                        ))}
+                        <input id="client-skill-tag-input" type="text" value={clientSkillInput}
+                          onChange={e => setClientSkillInput(e.target.value)}
+                          onKeyDown={e => {
+                            if ((e.key === ' ' || e.key === 'Enter' || e.key === ',') && clientSkillInput.trim()) {
+                              e.preventDefault();
+                              const val = clientSkillInput.trim().replace(/,$/, '');
+                              if (val) {
+                                const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
+                                if (!existing.some(s => s.toLowerCase() === val.toLowerCase())) {
+                                  setNewJob(f => ({ ...f, skills: existing.length ? existing.join(', ') + ', ' + val : val }));
+                                }
+                              }
+                              setClientSkillInput('');
+                            } else if (e.key === 'Backspace' && !clientSkillInput) {
                               const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
-                              if (!existing.some(s => s.toLowerCase() === val.toLowerCase())) {
-                                setNewJob(f => ({ ...f, skills: existing.length ? existing.join(', ') + ', ' + val : val }));
+                              if (existing.length) {
+                                setNewJob(f => ({ ...f, skills: existing.slice(0, -1).join(', ') }));
                               }
                             }
-                            setClientSkillInput('');
-                          } else if (e.key === 'Backspace' && !clientSkillInput) {
-                            const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
-                            if (existing.length) {
-                              setNewJob(f => ({ ...f, skills: existing.slice(0, -1).join(', ') }));
-                            }
-                          }
-                        }}
-                        placeholder={newJob.skills ? 'Add more...' : 'Type a skill & press space'}
-                        className="flex-1 min-w-[120px] bg-transparent border-0 outline-none text-sm font-bold text-[#1A1A2E] placeholder:text-[#9B9BAD]/50 py-1"
-                      />
+                          }}
+                          placeholder={newJob.skills ? 'Add more...' : 'Type a skill & press space'}
+                          className="flex-1 min-w-[120px] bg-transparent border-0 outline-none text-sm font-bold text-[#1A1A2E] placeholder:text-[#9B9BAD]/50 py-1"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Requirements & Responsibilities */}
-                  <div className="grid grid-cols-1 gap-4">
+                    {/* Requirements & Responsibilities */}
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Requirements (one per line)</label>
+                        <textarea value={newJob.requirements} onChange={e => setNewJob(f => ({ ...f, requirements: e.target.value }))}
+                          rows={4}
+                          placeholder="Detailed requirements..."
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[24px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Responsibilities (one per line)</label>
+                        <textarea value={newJob.responsibilities} onChange={e => setNewJob(f => ({ ...f, responsibilities: e.target.value }))}
+                          rows={4}
+                          placeholder="Key responsibilities..."
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[24px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Short Description */}
                     <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Requirements (one per line)</label>
-                      <textarea value={newJob.requirements} onChange={e => setNewJob(f => ({ ...f, requirements: e.target.value }))}
-                        rows={4}
-                        placeholder="Detailed requirements..."
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Job Description</label>
+                      <textarea value={newJob.description} onChange={e => setNewJob(f => ({ ...f, description: e.target.value }))}
+                        rows={3}
+                        placeholder="Describe the role..."
                         className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[24px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white resize-none"
                       />
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Responsibilities (one per line)</label>
-                      <textarea value={newJob.responsibilities} onChange={e => setNewJob(f => ({ ...f, responsibilities: e.target.value }))}
-                        rows={4}
-                        placeholder="Key responsibilities..."
-                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[24px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white resize-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Short Description */}
-                  <div>
-                    <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Short Description</label>
-                    <textarea value={newJob.description} onChange={e => setNewJob(f => ({ ...f, description: e.target.value }))}
-                      rows={3}
-                      placeholder="Describe the role..."
-                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[24px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white resize-none"
-                    />
                   </div>
                 </div>
-              </div>
 
-              {/* Modal Footer Actions */}
-              <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-8 flex items-center justify-end gap-4">
-                <button
-                  onClick={() => setShowAddJob(false)}
-                  className="px-8 py-4 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddJob}
-                  disabled={submitting || !newJob.title.trim()}
-                  className="px-10 py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl active:scale-95 disabled:opacity-50"
-                >
-                  <FiPlus size={18} /> {submitting ? 'Creating...' : 'Create Position'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>,
-      document.body
-    )}
+                {/* Modal Footer Actions */}
+                <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-8 flex items-center justify-end gap-4">
+                  <button
+                    onClick={() => setShowAddJob(false)}
+                    className="px-8 py-4 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddJob}
+                    disabled={submitting || !newJob.title.trim()}
+                    className="px-10 py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl active:scale-95 disabled:opacity-50"
+                  >
+                    <FiPlus size={18} /> {submitting ? 'Creating...' : 'Create Position'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Positions Table */}
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
