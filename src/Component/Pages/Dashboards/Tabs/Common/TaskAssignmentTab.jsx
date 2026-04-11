@@ -24,6 +24,12 @@ import {
   FiAlignLeft,
   FiActivity,
   FiChevronRight,
+  FiTarget,
+  FiPhone,
+  FiUsers,
+  FiUserPlus,
+  FiEye,
+  FiMinusCircle,
 } from 'react-icons/fi';
 import {
   getDepartmentTasks,
@@ -144,6 +150,27 @@ const TaskDetailView = ({ task, onBack, onEdit }) => {
                 </p>
               </div>
             </div>
+            {task.targets && task.targets.length > 0 && (
+              <div className="col-span-2 space-y-4 pt-4 border-t border-[#F4F3EF]">
+                <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Targets & Metrics</span>
+                <div className="grid grid-cols-2 gap-4">
+                  {task.targets.map((tg, idx) => (
+                    <div key={idx} className="bg-white border border-[#F4F3EF] rounded-2x p-4 flex items-center gap-4 group hover:shadow-md transition-all duration-300">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        {tg.type === 'Calling' && <FiPhone size={18} />}
+                        {tg.type === 'Interviews' && <FiUsers size={18} />}
+                        {tg.type === 'Hiring' && <FiUserPlus size={18} />}
+                        {tg.type === 'Profile Visited' && <FiEye size={18} />}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-wider">{tg.type}</p>
+                        <p className="text-lg font-black text-[#1A1A2E]">{tg.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="pt-8 mt-8 border-t border-[#F4F3EF] text-left">
@@ -212,7 +239,10 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
     assignedTo: '',
     priority: 'Medium',
     dueDate: '',
+    targets: [], // Array of { type, value }
   });
+  const [currentTargetType, setCurrentTargetType] = useState('Calling');
+  const [currentTargetValue, setCurrentTargetValue] = useState('');
   const [viewingTask, setViewingTask] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
 
@@ -304,7 +334,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
 
       setShowModal(false);
       setEditingTask(null);
-      setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' });
+      setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '', targets: [] });
       showToast(editingTask ? 'Task updated!' : 'Task assigned!');
       fetchData();
     } catch (error) {
@@ -424,7 +454,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
           <motion.button
             whileHover={{ scale: 1.02, translateY: -2 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' }); setShowModal(true); }}
+            onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '', targets: [] }); setShowModal(true); }}
             className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#0D47A1]/20 transition-all border border-white/10"
           >
             <FiPlus size={20} />
@@ -583,6 +613,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                               assignedTo: task.assignedTo?.id || task.assignedTo?._id || '',
                               priority: task.priority,
                               dueDate: task.dueDate?.split('T')[0] || '',
+                              targets: task.targets || [],
                             });
                             setShowModal(true);
                           }}
@@ -760,19 +791,86 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     </div>
                   </div>
 
-                  {/* Due Date */}
-                  <div className="space-y-1.5 w-full">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Due Date</label>
-                    <div className="relative group">
-                      <FiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
-                      <input
-                        type="date"
-                        value={formData.dueDate}
-                        onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                        className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-12 pr-4 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all"
-                      />
+                  {/* Due Date & Dynamic Target Builder */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5 w-full">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Due Date</label>
+                      <div className="relative group">
+                        <FiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                        <input
+                          type="date"
+                          value={formData.dueDate}
+                          onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                          className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-12 pr-4 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 w-full">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Add Target (Optional)</label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <select
+                            value={currentTargetType}
+                            onChange={(e) => setCurrentTargetType(e.target.value)}
+                            className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all appearance-none cursor-pointer"
+                          >
+                            <option value="Hiring">Hiring</option>
+                            <option value="Calling">Calling</option>
+                            <option value="Interviews">Interviews</option>
+                            <option value="Profile Visited">Profile Visit</option>
+                          </select>
+                          <FiChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none rotate-90" size={14} />
+                        </div>
+                        <input
+                          type="number"
+                          value={currentTargetValue}
+                          onChange={(e) => setCurrentTargetValue(e.target.value)}
+                          placeholder="Count"
+                          className="w-24 bg-[#F8F9FA] border-none rounded-2xl py-3 px-4 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (currentTargetValue && !isNaN(currentTargetValue)) {
+                              setFormData(prev => ({
+                                ...prev,
+                                targets: [...prev.targets, { type: currentTargetType, value: parseInt(currentTargetValue) }]
+                              }));
+                              setCurrentTargetValue('');
+                            }
+                          }}
+                          className="w-10 h-10 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm shrink-0 self-end mb-0.5"
+                        >
+                          <FiPlus size={18} />
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Added Targets List */}
+                  {formData.targets.length > 0 && (
+                    <div className="bg-[#FAFAF8] rounded-2xl p-4 flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                      {formData.targets.map((tg, idx) => (
+                        <div key={idx} className="flex items-center gap-2 bg-white border border-[#E5E5EA] px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-[#1A1A2E] group">
+                          <span className="text-blue-600">
+                             {tg.type === 'Calling' && <FiPhone size={14} />}
+                             {tg.type === 'Interviews' && <FiUsers size={14} />}
+                             {tg.type === 'Hiring' && <FiUserPlus size={14} />}
+                             {tg.type === 'Profile Visited' && <FiEye size={14} />}
+                          </span>
+                          {tg.type}: {tg.value}
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, targets: prev.targets.filter((_, i) => i !== idx) }))}
+                            className="ml-1 text-[#9B9BAD] hover:text-rose-500 transition-colors"
+                          >
+                            <FiMinusCircle size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Description */}
                   <div className="space-y-1.5 w-full">
@@ -845,6 +943,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                       assignedTo: task.assignedTo?.id || task.assignedTo?._id || '',
                       priority: task.priority,
                       dueDate: task.dueDate?.split('T')[0] || '',
+                      targets: task.targets || [],
                     });
                     setShowDrawer(false);
                     setShowModal(true);
