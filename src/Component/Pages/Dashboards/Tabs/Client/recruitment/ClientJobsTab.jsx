@@ -1,16 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FiBriefcase,
-  FiMapPin,
-  FiChevronDown,
-  FiChevronUp,
-  FiPlus,
-  FiSearch,
-  FiRefreshCw,
-  FiCalendar,
-  FiX,
-} from 'react-icons/fi';
+import { FiBriefcase, FiMapPin, FiChevronDown, FiChevronUp, FiPlus, FiSearch, FiRefreshCw, FiCalendar, FiX, FiZap, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import { Briefcase, FileText, Settings, DollarSign, MapPin, Clock, Users, Target, Calendar, AlignLeft } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { getClientDashboardOverview, createRecruitmentPosition } from '../../../../service/api';
@@ -146,77 +136,117 @@ export default function ClientJobsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Job Positions
-          </h1>
-          <p className="text-sm text-[#6B6B7E] mt-1 font-medium">Manage and track all open positions</p>
+      {/* Detached Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col items-start text-left">
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Job Positions</h1>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Manage and track all your active recruitment requirements</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowAddJob(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] hover:bg-[#153b7a] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+          >
+            <FiPlus className="w-5 h-5" strokeWidth="3" />
+            <span>Post New Job</span>
+          </button>
         </div>
       </div>
 
-      {/* Search, Date Filter & Add Job */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B9BAD]" />
-          <input
-            type="text"
-            placeholder="Search positions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-[#E8E7E2] rounded-xl bg-white text-[#1A1A2E] placeholder:text-[#9B9BAD] focus:outline-none focus:ring-2 focus:ring-blue-200"
-          />
+      {/* Filter Bar */}
+      <div className="bg-white rounded-[24px] p-4 border border-[#E8E7E2] shadow-sm mb-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex-1 min-w-[240px] relative group">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" />
+            <input
+              type="text"
+              placeholder="Search by role, location or skills..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 text-sm bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] placeholder:text-[#9B9BAD] focus:outline-none focus:ring-2 focus:ring-blue-100 font-bold transition-all"
+            />
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <select
+                value={dateFilter}
+                onChange={e => setDateFilter(e.target.value)}
+                className="pl-10 pr-10 py-3 text-xs font-bold bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] appearance-none outline-none cursor-pointer hover:bg-[#E8E7E2] transition-all min-w-[140px]"
+              >
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="prev-month">Previous Month</option>
+                <option value="quarter">This Quarter</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              <FiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1B4DA0]" />
+              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B9BAD] pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}
+                className="pl-10 pr-10 py-3 text-xs font-bold bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] appearance-none outline-none cursor-pointer hover:bg-[#E8E7E2] transition-all min-w-[140px]"
+              >
+                <option value="all">All Statuses</option>
+                <option value="Open">Open</option>
+                <option value="Urgent">Urgent</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Closed">Closed</option>
+              </select>
+              <Target className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
+              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B9BAD] pointer-events-none" />
+            </div>
+
+            <button
+               onClick={fetchData}
+               className="p-3 bg-[#F4F3EF] text-[#1B4DA0] rounded-2xl hover:bg-[#E8E7E2] transition-all active:scale-95 shadow-sm"
+               title="Refresh Data"
+            >
+              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
-        <select
-          value={dateFilter}
-          onChange={e => setDateFilter(e.target.value)}
-          className="text-xs font-semibold px-3 py-2.5 rounded-xl border border-[#E8E7E2] bg-white text-[#1A1A2E] outline-none cursor-pointer focus:ring-2 focus:ring-blue-200"
-        >
-          <option value="all">All Dates</option>
-          <option value="today">Today</option>
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="prev-month">Previous Month</option>
-          <option value="quarter">This Quarter</option>
-          <option value="custom">Custom Range</option>
-        </select>
+
         {dateFilter === 'custom' && (
-          <>
-            <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="text-xs px-2 py-2 rounded-xl border border-[#E8E7E2] bg-white outline-none" />
-            <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="text-xs px-2 py-2 rounded-xl border border-[#E8E7E2] bg-white outline-none" />
-          </>
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="flex items-center gap-3 mt-4 pt-4 border-t border-[#F4F3EF]"
+          >
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">From</label>
+              <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="text-xs px-3 py-2 rounded-xl border border-[#E8E7E2] bg-[#FAFAF8] outline-none font-bold" />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">To</label>
+              <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="text-xs px-3 py-2 rounded-xl border border-[#E8E7E2] bg-[#FAFAF8] outline-none font-bold" />
+            </div>
+          </motion.div>
         )}
-        <select
-          value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value)}
-          className="text-xs font-semibold px-3 py-2.5 rounded-xl border border-[#E8E7E2] bg-white text-[#1A1A2E] outline-none cursor-pointer focus:ring-2 focus:ring-blue-200"
-        >
-          <option value="all">All Statuses</option>
-          <option value="Open">Open</option>
-          <option value="Urgent">Urgent</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Closed">Closed</option>
-        </select>
-        <button
-          onClick={() => setShowAddJob(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#1B4DA0] text-white text-xs font-bold rounded-xl hover:bg-[#164090] transition-colors shadow-sm"
-        >
-          <FiPlus className="w-4 h-4" /> Post New Job
-        </button>
       </div>
 
-      {/* Stats Row — black icons, light blue on hover */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
         {[
-          { label: 'Total', count: filteredPositions?.length || 0 },
-          { label: 'Open', count: filteredPositions?.filter(p => p.status === 'Open').length || 0 },
-          { label: 'Urgent', count: filteredPositions?.filter(p => p.status === 'Urgent').length || 0 },
-          { label: 'Closed', count: filteredPositions?.filter(p => p.status === 'Closed').length || 0 },
+          { label: 'Total Positions', count: filteredPositions?.length || 0, icon: FiBriefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Active Open', count: filteredPositions?.filter(p => p.status === 'Open').length || 0, icon: FiZap, color: 'text-amber-500', bg: 'bg-amber-50' },
+          { label: 'Urgent Needs', count: filteredPositions?.filter(p => p.status === 'Urgent').length || 0, icon: FiAlertCircle, color: 'text-rose-500', bg: 'bg-rose-50' },
+          { label: 'Fulfilled', count: filteredPositions?.filter(p => p.status === 'Closed').length || 0, icon: FiCheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50' },
         ].map((s, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-[#E8E7E2] p-4 shadow-sm group hover:shadow-md transition-all cursor-default">
-            <p className="text-2xl font-extrabold text-black group-hover:text-[#5B9DF0] transition-colors duration-300">{s.count}</p>
-            <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">{s.label}</p>
+          <div key={i} className="bg-white rounded-[24px] border border-[#E8E7E2] p-6 shadow-sm group hover:shadow-md transition-all cursor-default relative overflow-hidden">
+            <div className={`absolute top-0 right-0 w-16 h-16 ${s.bg} rounded-full -mr-8 -mt-8 opacity-40 group-hover:scale-110 transition-transform duration-500`} />
+            <div className="relative z-10">
+              <div className={`w-10 h-10 rounded-xl ${s.bg} ${s.color} flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110`}>
+                <s.icon size={20} />
+              </div>
+              <p className="text-3xl font-extrabold text-[#1A1A2E] leading-none mb-1">{s.count}</p>
+              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{s.label}</p>
+            </div>
           </div>
         ))}
       </div>

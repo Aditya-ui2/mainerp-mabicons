@@ -25,6 +25,8 @@ import {
   BadgeCheck,
   X,
   FilePlus,
+  FilePlus2,
+  ChevronDown,
   ArrowUpRight
 } from "lucide-react";
 import {
@@ -39,6 +41,12 @@ import {
   FiCalendar,
   FiMail,
   FiUserPlus,
+  FiInfo,
+  FiUploadCloud,
+  FiSearch,
+  FiMaximize,
+  FiFile,
+  FiUser,
 } from "react-icons/fi";
 import { toast } from "sonner";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
@@ -298,6 +306,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const templateFieldLayout = useMemo(() => ({
     1: [
       { key: 'offerDate', x: 0.12, y: 0.165, fontSize: 10 },
+      { key: 'client', x: 0.12, y: 0.143, fontSize: 10 },
       { key: 'candidateName', x: 0.12, y: 0.187, fontSize: 11 },
       { key: 'address', x: 0.12, y: 0.235, fontSize: 9, maxWidth: 0.44 },
       { key: 'joiningDate', x: 0.52, y: 0.355, fontSize: 9 },
@@ -317,6 +326,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
     const values = {
       offerDate: formatDate(offerTemplateData.offerDate),
+      client: offerTemplateData.client,
       candidateName: offerTemplateData.candidateName,
       address: offerTemplateData.address,
       joiningDate: formatDate(offerTemplateData.joiningDate),
@@ -635,6 +645,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
   };
 
   const handleSaveOffer = async () => {
+    if (!formData.candidateId && !editingOffer) {
+      toast.error("Please select a candidate from the suggestions dropdown first");
+      return;
+    }
     try {
       const payload = new FormData();
       payload.append('candidateId', formData.candidateId || editingOffer?.candidateId || editingOffer?.id || '');
@@ -673,7 +687,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
       setEditingOffer(null);
     } catch (error) {
       console.error('Failed to save offer:', error);
-      toast.error("Failed to save offer");
+      const errorMsg = error.response?.data?.message || error.message || "Failed to save offer";
+      toast.error(errorMsg);
     }
   };
 
@@ -1028,182 +1043,220 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-[520px] max-h-[90vh] overflow-hidden rounded-[32px] bg-white shadow-2xl"
+                className={`relative w-full ${templatePdf ? 'max-w-[1040px]' : 'max-w-[520px]'} max-h-[92vh] overflow-hidden rounded-[40px] bg-white shadow-2xl transition-all duration-500 ease-out`}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
                 <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                  <div>
-                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">
-                      {editingOffer ? 'Edit Offer' : 'Generate New Offer'}
-                    </h2>
-                    <p className="text-[10px] font-bold text-[#9B9BAD] mt-1">
-                      Offer Lifecycle Management
-                    </p>
+                  <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-[#1B4DA0] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                      <FilePlus2 className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne tracking-tight">
+                        {editingOffer ? 'Refine Offer Details' : 'Generate Strategic Offer'}
+                      </h2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.1em]">
+                          Live Template Precision Protocol
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   <button
                     onClick={handleBackToOffers}
-                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"
+                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm border border-transparent hover:border-red-100"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="flex-1 p-0 flex h-[calc(94vh-120px)] overflow-hidden">
+                <div className="flex-1 p-0 flex h-[calc(92vh-110px)] overflow-hidden">
                   {/* Left: Form */}
-                  <div ref={formWrapRef} className="w-full p-10 overflow-y-auto border-r border-[#F4F3EF] custom-scrollbar">
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="relative">
-                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Candidate Name *</label>
-                          <input
-                            type="text"
-                            value={formData.candidateName}
-                            onChange={(e) => setFormData(prev => ({ ...prev, candidateId: '', candidateName: e.target.value }))}
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                            onFocus={() => {
-                              if (candidateSuggestions.length > 0) setShowCandidateSuggestions(true);
-                            }}
-                            placeholder="Search candidate..."
-                          />
-                          <AnimatePresence>
-                            {showCandidateSuggestions && candidateSuggestions.length > 0 && (
-                              <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
-                                className="absolute z-50 w-full mt-2 rounded-2xl shadow-xl bg-white border border-[#F4F3EF] overflow-hidden max-h-64 overflow-y-auto font-jakarta"
+                  <div ref={formWrapRef} className={`${templatePdf ? 'w-1/2' : 'w-full'} p-10 overflow-y-auto border-r border-[#F4F3EF] custom-scrollbar bg-white`}>
+                    <div className="space-y-8">
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-[#1B4DA0]">
+                            <FiUser size={14} />
+                          </div>
+                          <h3 className="text-xs font-black uppercase tracking-widest text-[#1A1A2E]">Candidate & Position</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className="relative">
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Candidate Name *</label>
+                            <input
+                              type="text"
+                              value={formData.candidateName}
+                              onChange={(e) => setFormData(prev => ({ ...prev, candidateId: '', candidateName: e.target.value }))}
+                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/40 focus:bg-white focus:border-blue-100"
+                              onFocus={() => {
+                                if (candidateSuggestions.length > 0) setShowCandidateSuggestions(true);
+                              }}
+                              placeholder="Search or type name..."
+                            />
+                            <AnimatePresence>
+                              {showCandidateSuggestions && candidateSuggestions.length > 0 && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: 10 }}
+                                  className="absolute z-50 w-full mt-2 rounded-2xl shadow-2xl bg-white border border-[#F4F3EF] overflow-hidden max-h-64 overflow-y-auto font-jakarta"
+                                >
+                                  {candidateSuggestions.map((candidate) => (
+                                    <button
+                                      key={candidate.id}
+                                      type="button"
+                                      onClick={() => handleSelectCandidateSuggestion(candidate)}
+                                      className="w-full text-left px-5 py-4 transition-all hover:bg-blue-50/50 border-b border-[#F4F3EF] last:border-b-0 group"
+                                    >
+                                      <div className="font-bold text-sm text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{candidate.name}</div>
+                                      <div className="text-[10px] text-[#9B9BAD] font-medium mt-0.5">Pipeline: {candidate.position || 'General'}</div>
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Email Address *</label>
+                            <input
+                              type="email"
+                              value={formData.email}
+                              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/40 focus:bg-white focus:border-blue-100"
+                              placeholder="email@example.com"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Target Position *</label>
+                            <input
+                              type="text"
+                              value={formData.position}
+                              onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
+                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/40 focus:bg-white focus:border-blue-100"
+                              placeholder="e.g. Senior Architect"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Hiring Client *</label>
+                            <div className="relative">
+                              <select
+                                value={formData.client}
+                                onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
+                                className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer focus:bg-white focus:border-blue-100"
                               >
-                                {candidateSuggestions.map((candidate) => (
-                                  <button
-                                    key={candidate.id}
-                                    type="button"
-                                    onClick={() => handleSelectCandidateSuggestion(candidate)}
-                                    className="w-full text-left px-5 py-3.5 transition-all hover:bg-[#F4F3EF] border-b border-[#F4F3EF] last:border-b-0"
-                                  >
-                                    <div className="font-bold text-sm text-[#1A1A2E]">{candidate.name}</div>
-                                    <div className="text-[10px] text-[#9B9BAD] font-medium">Pipeline: {candidate.position || 'General'}</div>
-                                  </button>
+                                <option value="">Select Client</option>
+                                <option value="Voltiq Energy">Voltiq Energy</option>
+                                {activeClientNames.map(name => (
+                                  <option key={name} value={name}>{name}</option>
                                 ))}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                              </select>
+                              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-[#9B9BAD]">
+                                <ChevronDown size={16} />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Email Address *</label>
-                          <input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                            placeholder="email@example.com"
-                          />
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                            <FiDollarSign size={14} />
+                          </div>
+                          <h3 className="text-xs font-black uppercase tracking-widest text-[#1A1A2E]">Compensation & Timeline</h3>
                         </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Target Position *</label>
-                          <input
-                            type="text"
-                            value={formData.position}
-                            onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                            placeholder="e.g. Frontend Developer"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Hiring Client *</label>
-                          <select
-                            value={formData.client}
-                            onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer"
-                          >
-                            <option value="">Select Client</option>
-                            <option value="Voltiq Energy">Voltiq Energy</option>
-                            {activeClientNames.map(name => (
-                              <option key={name} value={name}>{name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Current CTC (LPA)</label>
-                          <input
-                            type="text"
-                            value={formData.currentCTC}
-                            onChange={(e) => setFormData(prev => ({ ...prev, currentCTC: e.target.value }))}
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                            placeholder="e.g. 12.0"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Proposed CTC (Monthly) *</label>
-                          <input
-                            type="text"
-                            value={formData.offeredCTC}
-                            onChange={(e) => setFormData(prev => ({ ...prev, offeredCTC: e.target.value }))}
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1B4DA0] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50"
-                            placeholder="e.g. 15,000"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Offer Date</label>
-                          <input
-                            type="date"
-                            value={formData.offerDate}
-                            onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Joining Date</label>
-                          <input
-                            type="date"
-                            value={formData.joiningDate}
-                            onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
-                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100"
-                          />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Current CTC (LPA)</label>
+                            <input
+                              type="text"
+                              value={formData.currentCTC}
+                              onChange={(e) => setFormData(prev => ({ ...prev, currentCTC: e.target.value }))}
+                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/40 focus:bg-white focus:border-blue-100"
+                              placeholder="e.g. 12.0"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Proposed Monthly *</label>
+                            <input
+                              type="text"
+                              value={formData.offeredCTC}
+                              onChange={(e) => setFormData(prev => ({ ...prev, offeredCTC: e.target.value }))}
+                              className="w-full bg-[#1B4DA0]/5 border border-[#1B4DA0]/10 rounded-2xl px-6 py-4 text-sm font-bold text-[#1B4DA0] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#1B4DA0]/30 focus:bg-white focus:border-[#1B4DA0]/30"
+                              placeholder="e.g. 15,000"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Offer Date</label>
+                            <input
+                              type="date"
+                              value={formData.offerDate}
+                              onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
+                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-100"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Joining Date</label>
+                            <input
+                              type="date"
+                              value={formData.joiningDate}
+                              onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
+                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-100"
+                            />
+                          </div>
                         </div>
                       </div>
 
                       <div className="pt-4">
-                        <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left">Permanent Address</label>
+                        <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Permanent Address for Letter</label>
                         <textarea
                           value={formData.negotiationNotes}
                           onChange={(e) => setFormData(prev => ({ ...prev, negotiationNotes: e.target.value }))}
                           rows={3}
-                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/50 resize-none text-left"
-                          placeholder="Enter full address for the letter..."
+                          className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/40 resize-none text-left focus:bg-white focus:border-blue-100"
+                          placeholder="Complete address (for dynamic injection)..."
                         />
                       </div>
 
-                      <div className="pt-2">
+                      <div className="pt-2 space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
+                            <FiFile size={14} />
+                          </div>
+                          <h3 className="text-xs font-black uppercase tracking-widest text-[#1A1A2E]">Offer Letter Assets</h3>
+                        </div>
+                        
                         <div className="relative">
                           <label
-                            className={`flex flex-col items-center justify-center h-44 rounded-[28px] border-2 border-dashed transition-all cursor-pointer ${isUploadingTemplate ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#1B4DA0] hover:bg-[#F8FAFF]'} ${templatePdf ? 'border-[#1B4DA0] bg-[#EEF2FB]/30' : 'border-[#F4F3EF] bg-[#FDFDFD]'}`}
+                            className={`flex flex-col items-center justify-center h-44 rounded-[32px] border-2 border-dashed transition-all cursor-pointer ${isUploadingTemplate ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#1B4DA0] hover:bg-blue-50/10'} ${templatePdf ? 'border-[#1B4DA0] bg-[#EEF2FB]/20' : 'border-[#F4F3EF] bg-[#FDFDFD]'}`}
                             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onDrop={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               if (isUploadingTemplate) return;
                               const file = e.dataTransfer.files?.[0];
-                              if (file) {
-                                console.log("File dropped:", file.name);
-                                handleTemplateUpload(file);
-                              }
+                              if (file) handleTemplateUpload(file);
                             }}
                           >
                             {isUploadingTemplate ? (
-                              <div className="flex flex-col items-center gap-3">
-                                <div className="w-10 h-10 border-4 border-[#1B4DA0]/20 border-t-[#1B4DA0] rounded-full animate-spin" />
-                                <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest">Uploading Template...</span>
+                              <div className="flex flex-col items-center gap-4">
+                                <div className="w-12 h-12 border-4 border-[#1B4DA0]/10 border-t-[#1B4DA0] rounded-full animate-spin" />
+                                <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest">Injecting protocol...</span>
                               </div>
                             ) : (
                               <>
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all ${templatePdf ? 'bg-[#1B4DA0] text-white' : 'bg-[#FAFAFA] text-[#1B4DA0]'}`}>
-                                  {templatePdf ? <FiCheckCircle size={24} /> : <FiFileText size={24} />}
+                                <div className={`w-14 h-14 rounded-3xl flex items-center justify-center mb-4 transition-all shadow-sm ${templatePdf ? 'bg-[#1B4DA0] text-white' : 'bg-[#FAFAFA] text-[#1B4DA0]'}`}>
+                                  {templatePdf ? <FiCheckCircle size={24} /> : <FiUploadCloud size={24} />}
                                 </div>
-                                <span className={`text-[11px] font-black uppercase tracking-[2px] mb-2 ${templatePdf ? 'text-[#1B4DA0]' : 'text-[#1A1A2E]'}`}>
-                                  {templatePdf ? 'Template Uploaded' : 'Upload Offer Letter Template (PDF)'}
-                                </span>
-                                <span className="text-[10px] font-bold text-[#9B9BAD]">MAX 10MB</span>
+                                <div className="text-center">
+                                  <span className={`block text-[11px] font-black uppercase tracking-[2px] mb-1 ${templatePdf ? 'text-[#1B4DA0]' : 'text-[#1A1A2E]'}`}>
+                                    {templatePdf ? 'Protocol Template Ready' : 'Upload Offer Template (PDF)'}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-[#9B9BAD] opacity-60">System will auto-inject dynamic data</span>
+                                </div>
                               </>
                             )}
                             <input
@@ -1213,24 +1266,19 @@ const OfferManagementTab = ({ isDarkMode }) => {
                               className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0] || null;
-                                if (file) {
-                                  console.log("File selected:", file.name);
-                                  handleTemplateUpload(file);
-                                }
+                                if (file) handleTemplateUpload(file);
                               }}
                             />
                           </label>
                         </div>
-                      </div>
 
-                      <div className="pt-2">
-                        <label className="group relative flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed bg-[#F4F3EF] border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
+                        <label className="group relative flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed bg-[#F4F3EF]/40 border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
                           <div className="flex flex-col items-center text-center">
-                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">
-                              <Paperclip className="w-4 h-4 text-[#1B4DA0]" />
+                            <div className={`p-2 rounded-xl shadow-sm mb-2 transition-colors ${formData.offerLetter ? 'bg-[#1B4DA0] text-white' : 'bg-white text-[#1B4DA0]'}`}>
+                              <Paperclip className="w-4 h-4" />
                             </div>
-                            <p className="text-[10px] font-bold text-[#1A1A2E]">
-                              {formData.offerLetterName || 'Signed Offer Letter (Optional)'}
+                            <p className="text-[10px] font-bold text-[#1A1A2E] max-w-[200px] truncate">
+                              {formData.offerLetterName || 'External Signed Letter (Optional)'}
                             </p>
                           </div>
                           <input
@@ -1249,26 +1297,104 @@ const OfferManagementTab = ({ isDarkMode }) => {
                         </label>
                       </div>
 
-                      <div className="pt-6 flex gap-4 border-t border-[#F4F3EF]">
+                      <div className="pt-8 flex gap-4 border-t border-[#F4F3EF]">
                         <button
                           onClick={handleBackToOffers}
-                          className="flex-1 py-4 rounded-3xl border-2 border-[#F4F3EF] text-xs font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
+                          className="flex-1 py-4 rounded-[20px] border-2 border-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
                         >
-                          Cancel
+                          Discard
                         </button>
                         <motion.button
-                          whileHover={{ scale: 1.02 }}
+                          whileHover={{ scale: 1.02, x: 5 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={handleSaveOffer}
-                          className="flex-[2] bg-[#1B4DA0] text-white py-4 rounded-3xl text-xs font-bold shadow-xl shadow-blue-500/10 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2"
+                          className="flex-[2] bg-[#1B4DA0] text-white py-4 rounded-[20px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-3"
                         >
                           <Send size={16} />
-                          {editingOffer ? 'Update & Send' : 'Generate & Send'}
+                          {editingOffer ? 'Finalize Changes' : 'Execute Generation'}
                         </motion.button>
                       </div>
                     </div>
                   </div>
-                  </div>
+
+                  {/* Right: Live Preview */}
+                  {templatePdf && (
+                    <div ref={previewWrapRef} className="w-1/2 bg-[#FAFAFA] overflow-y-auto p-12 custom-scrollbar flex flex-col items-center relative gap-8">
+                       <div className="absolute top-6 left-12 right-12 flex items-center justify-between z-10 pointer-events-none">
+                        <div className="px-4 py-2 bg-[#1A1A2E] text-white rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Live Precision Preview
+                        </div>
+                        <div className="flex gap-2">
+                           <div className="w-8 h-8 rounded-lg bg-white shadow-md flex items-center justify-center text-[#9B9BAD]">
+                             <FiSearch size={14} />
+                           </div>
+                           <div className="w-8 h-8 rounded-lg bg-white shadow-md flex items-center justify-center text-[#9B9BAD]">
+                             <FiMaximize size={14} />
+                           </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-10 mt-10 w-full items-center">
+                        {templateViewports.map((vp, idx) => (
+                          <div 
+                            key={idx} 
+                            className="relative shadow-[0_30px_70px_rgba(0,0,0,0.12)] bg-white rounded-sm border border-[#E8E7E2]"
+                            style={{ 
+                              width: vp.width * previewScale, 
+                              height: vp.height * previewScale 
+                            }}
+                          >
+                            <canvas
+                              ref={(el) => { templateCanvasRefs.current[idx] = el; }}
+                              className="absolute inset-0 w-full h-full pointer-events-none"
+                            />
+                            
+                            {/* Field Overlay */}
+                            <div className="absolute inset-0 pointer-events-none overflow-hidden origin-top-left" style={{ transform: `scale(${previewScale})` }}>
+                              {templateOverlayFields[idx + 1]?.map((f, fIdx) => (
+                                <div
+                                  key={fIdx}
+                                  className="absolute bg-blue-500/5 text-blue-900 overflow-hidden"
+                                  style={{
+                                    left: `${f.x * 100}%`,
+                                    top: `${f.y * 100}%`,
+                                    fontSize: `${f.fontSize}px`,
+                                    fontWeight: f.weight || 600,
+                                    maxWidth: f.maxWidth ? `${f.maxWidth * 100}%` : 'auto',
+                                    lineHeight: 1.2,
+                                    whiteSpace: 'pre-wrap',
+                                    fontFamily: "'Calibri', sans-serif"
+                                  }}
+                                >
+                                  {f.value || <span className="opacity-20 italic">Missing protocol data...</span>}
+                                  <div className="absolute -left-1 -top-1 w-2 h-2 rounded-full bg-blue-500/20" />
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Page Indicator */}
+                            <div className="absolute -right-16 top-0 bottom-0 flex flex-col items-center justify-center gap-2 pointer-events-none opacity-40">
+                              <span className="text-[10px] font-black text-[#1A1A2E] vertical-text uppercase tracking-widest">Page</span>
+                              <div className="w-px flex-1 bg-gradient-to-b from-transparent via-[#1A1A2E] to-transparent" />
+                              <span className="text-sm font-bold text-[#1A1A2E]">{idx + 1}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Info Notice */}
+                      <div className="w-full max-w-sm mt-8 p-6 rounded-3xl bg-blue-50 border border-blue-100 flex gap-4">
+                        <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-[#1B4DA0] flex-shrink-0">
+                          <FiInfo size={16} />
+                        </div>
+                        <p className="text-[11px] font-bold text-[#1B4DA0]/80 leading-relaxed italic">
+                          "System will intelligently render your chosen fonts and brand assets during final document execution."
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             </div>
           )}

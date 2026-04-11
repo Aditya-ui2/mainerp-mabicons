@@ -178,9 +178,19 @@ const PremiumOverview = ({ clientData }) => {
       try {
         const token = localStorage.getItem('token');
         if (!token) { setDashData(MOCK_DASHBOARD); return; }
-        const decoded = jwtDecode(token);
+        let decoded;
+        try {
+          decoded = jwtDecode(token);
+          if (!decoded?.id) throw new Error("Invalid token");
+        } catch (e) {
+          console.error("JWT Decode failed:", e);
+          setDashData(MOCK_DASHBOARD);
+          setLoading(false);
+          return;
+        }
+
         const res = await getClientDashboardOverview(decoded.id);
-        if (res?.success && res.data) {
+        if (res?.success && res.data && typeof res.data === 'object') {
           const rd = res.data;
           const recruitment = rd.recruitment || {};
           const rSum = recruitment.summary || {};
@@ -330,46 +340,48 @@ const PremiumOverview = ({ clientData }) => {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-6 mb-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Welcome {cName}!
-          </h1>
-          <p className="text-sm text-[#6B6B7E] mt-1 font-medium">{dateStr}</p>
+      {/* Detached Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+        <div className="flex flex-col items-start text-left">
+          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Welcome Back, {cName}!</h1>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1 flex items-center gap-2">
+            <FiCalendar className="text-[#1B4DA0]" /> {dateStr}
+          </p>
         </div>
+        
         <div className="flex items-center gap-3">
-          {/* Filter */}
-          <div className="relative" ref={filterPanelRef}>
+          {/* Main Actions */}
+          <div className="flex items-center gap-3">
+            <div className="relative" ref={filterPanelRef}>
+              <button
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl border text-xs font-bold transition-all ${filterStatus !== 'All' ? 'bg-blue-50 border-[#1B4DA0]/30 text-[#1B4DA0]' : 'bg-white border-[#E8E7E2] text-[#1A1A2E] hover:bg-[#F4F3EF]'}`}
+              >
+                <Filter className="w-4 h-4" />
+                {filterStatus !== 'All' ? filterStatus : 'Filter Scope'}
+              </button>
+              {showFilterPanel && (
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-[#E8E7E2] rounded-[20px] shadow-xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
+                  {['All', 'Approved', 'Pending', 'Rejected'].map((s) => (
+                    <div
+                      key={s}
+                      onClick={() => { setFilterStatus(s); setShowFilterPanel(false); }}
+                      className={`px-5 py-2.5 hover:bg-[#F4F3EF] cursor-pointer text-xs font-bold ${filterStatus === s ? 'bg-blue-50 text-[#1B4DA0]' : 'text-[#6B6B7E]'}`}
+                    >
+                      {s} Registry
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             <button
-              onClick={() => setShowFilterPanel(!showFilterPanel)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold transition-all ${filterStatus !== 'All' ? 'bg-blue-50 border-[#1B4DA0]/30 text-[#1B4DA0]' : 'bg-white border-[#E8E7E2] text-[#1A1A2E] hover:bg-[#F4F3EF]'}`}
+              onClick={handleExport}
+              className="flex items-center gap-2 px-6 py-3 bg-[#1A1A2E] text-white rounded-2xl text-xs font-bold shadow-lg shadow-gray-400/20 hover:bg-[#000] transition-all active:scale-95"
             >
-              <Filter className="w-4 h-4" />
-              {filterStatus !== 'All' ? filterStatus : 'Filter'}
+              <Download size={16} /> Export Data
             </button>
-            {showFilterPanel && (
-              <div className="absolute mt-2 w-44 bg-white border rounded-xl shadow-lg z-50 py-1">
-                {['All', 'Approved', 'Pending', 'Rejected'].map((s) => (
-                  <div
-                    key={s}
-                    onClick={() => { setFilterStatus(s); setShowFilterPanel(false); }}
-                    className={`px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm ${filterStatus === s ? 'bg-blue-50 text-[#1B4DA0] font-semibold' : ''}`}
-                  >
-                    {s}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-          
-          {/* Export */}
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all active:scale-95"
-          >
-            <Download size={16} /> Export Registry
-          </button>
         </div>
       </div>
 

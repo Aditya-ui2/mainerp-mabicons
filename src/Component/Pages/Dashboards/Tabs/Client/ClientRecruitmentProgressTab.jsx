@@ -257,98 +257,105 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Recruitment Progress
-          </h1>
-          <p className="text-sm text-[#6B6B7E] mt-1 font-medium">Track your hiring pipeline in real-time</p>
+      {/* Detached Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col items-start text-left">
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Recruitment Overview</h1>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Track your hiring pipeline and candidate progress</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
           {/* Date Filter */}
           <div className="relative" ref={datePickerRef}>
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
                 datePreset !== 'all'
-                  ? 'bg-blue-50 border-[#1B4DA0]/30 text-[#1B4DA0]'
+                  ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white shadow-lg shadow-blue-500/20'
                   : 'bg-white border-[#E8E7E2] text-[#1A1A2E] hover:bg-[#F4F3EF]'
-              } shadow-sm`}
+              } shadow-sm active:scale-95`}
             >
-              <FiCalendar className="w-4 h-4" />
+              <FiCalendar className={`w-4 h-4 ${datePreset !== 'all' ? 'text-white' : 'text-[#1B4DA0]'}`} />
               <span className="max-w-[180px] truncate">{datePresetLabel[datePreset]}</span>
+              <FiChevronDown className={`w-4 h-4 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
             </button>
 
-            {showDatePicker && (
-              <div className="absolute right-0 mt-2 w-72 bg-white border border-[#E8E7E2] rounded-2xl shadow-xl z-50 overflow-hidden">
-                {/* Quick presets */}
-                <div className="p-2 border-b border-[#F4F3EF]">
-                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest px-3 py-1.5">Quick Filter</p>
-                  <div className="grid grid-cols-2 gap-1">
-                    {['all', 'today', 'week', 'month', 'quarter', 'year'].map(preset => (
+            <AnimatePresence>
+              {showDatePicker && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute right-0 mt-2 w-72 bg-white border border-[#E8E7E2] rounded-2xl shadow-xl z-50 overflow-hidden"
+                >
+                  {/* Quick presets */}
+                  <div className="p-2 border-b border-[#F4F3EF]">
+                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest px-3 py-1.5">Quick Filter</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      {['all', 'today', 'week', 'month', 'quarter', 'year'].map(preset => (
+                        <button
+                          key={preset}
+                          onClick={() => { setDatePreset(preset); if (preset !== 'custom') setShowDatePicker(false); fetchData(); }}
+                          className={`px-3 py-2 rounded-lg text-xs font-semibold text-left transition-all ${
+                            datePreset === preset
+                              ? 'bg-[#1B4DA0] text-white'
+                              : 'text-[#1A1A2E] hover:bg-[#F4F3EF]'
+                          }`}
+                        >
+                          {{ all: 'All Time', today: 'Today', week: 'This Week', month: 'This Month', quarter: 'This Quarter', year: 'This Year' }[preset]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Custom date range */}
+                  <div className="p-3">
+                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2">Custom Range</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <label className="text-[10px] font-semibold text-[#9B9BAD] block mb-1">From</label>
+                        <input
+                          type="date"
+                          value={customFrom}
+                          onChange={(e) => { setCustomFrom(e.target.value); setDatePreset('custom'); }}
+                          className="w-full px-2.5 py-1.5 text-xs border border-[#E8E7E2] rounded-lg bg-[#FAFAF8] text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        />
+                      </div>
+                      <span className="text-[#9B9BAD] text-xs mt-4">→</span>
+                      <div className="flex-1">
+                        <label className="text-[10px] font-semibold text-[#9B9BAD] block mb-1">To</label>
+                        <input
+                          type="date"
+                          value={customTo}
+                          onChange={(e) => { setCustomTo(e.target.value); setDatePreset('custom'); }}
+                          className="w-full px-2.5 py-1.5 text-xs border border-[#E8E7E2] rounded-lg bg-[#FAFAF8] text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-3">
                       <button
-                        key={preset}
-                        onClick={() => { setDatePreset(preset); if (preset !== 'custom') setShowDatePicker(false); }}
-                        className={`px-3 py-2 rounded-lg text-xs font-semibold text-left transition-all ${
-                          datePreset === preset
-                            ? 'bg-[#1B4DA0] text-white'
-                            : 'text-[#1A1A2E] hover:bg-[#F4F3EF]'
-                        }`}
+                        onClick={() => { setDatePreset('all'); setCustomFrom(''); setCustomTo(''); setShowDatePicker(false); fetchData(); }}
+                        className="text-[10px] font-bold text-red-500 hover:text-red-600"
                       >
-                        {{ all: 'All Time', today: 'Today', week: 'This Week', month: 'This Month', quarter: 'This Quarter', year: 'This Year' }[preset]}
+                        Clear Filter
                       </button>
-                    ))}
-                  </div>
-                </div>
-                {/* Custom date range */}
-                <div className="p-3">
-                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2">Custom Range</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <label className="text-[10px] font-semibold text-[#9B9BAD] block mb-1">From</label>
-                      <input
-                        type="date"
-                        value={customFrom}
-                        onChange={(e) => { setCustomFrom(e.target.value); setDatePreset('custom'); }}
-                        className="w-full px-2.5 py-1.5 text-xs border border-[#E8E7E2] rounded-lg bg-[#FAFAF8] text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-blue-200"
-                      />
-                    </div>
-                    <span className="text-[#9B9BAD] text-xs mt-4">→</span>
-                    <div className="flex-1">
-                      <label className="text-[10px] font-semibold text-[#9B9BAD] block mb-1">To</label>
-                      <input
-                        type="date"
-                        value={customTo}
-                        onChange={(e) => { setCustomTo(e.target.value); setDatePreset('custom'); }}
-                        className="w-full px-2.5 py-1.5 text-xs border border-[#E8E7E2] rounded-lg bg-[#FAFAF8] text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-blue-200"
-                      />
+                      <button
+                        onClick={() => setShowDatePicker(false)}
+                        className="px-3 py-1.5 text-[10px] font-bold text-white bg-[#1B4DA0] rounded-lg hover:bg-[#153e82] transition-all"
+                      >
+                        Apply
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <button
-                      onClick={() => { setDatePreset('all'); setCustomFrom(''); setCustomTo(''); setShowDatePicker(false); }}
-                      className="text-[10px] font-bold text-red-500 hover:text-red-600"
-                    >
-                      Clear Filter
-                    </button>
-                    <button
-                      onClick={() => setShowDatePicker(false)}
-                      className="px-3 py-1.5 text-[10px] font-bold text-white bg-[#1B4DA0] rounded-lg hover:bg-[#153e82] transition-all"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E8E7E2] rounded-xl text-sm font-semibold text-[#1A1A2E] hover:bg-[#F4F3EF] transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E8E7E2] rounded-xl text-sm font-semibold text-[#1A1A2E] hover:bg-[#F4F3EF] transition-all shadow-sm active:scale-95"
           >
-            <FiRefreshCw className="w-4 h-4 text-[#9B9BAD]" /> Refresh
+            <FiRefreshCw className={`w-4 h-4 text-[#1B4DA0] ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </div>
