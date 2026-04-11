@@ -275,8 +275,8 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
                       </p>
                     </div>
                     <button onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}
-                      className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
-                      <X size={20} />
+                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                      <X size={18} />
                     </button>
                   </div>
 

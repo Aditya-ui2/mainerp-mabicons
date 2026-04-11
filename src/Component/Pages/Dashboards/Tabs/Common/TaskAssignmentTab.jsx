@@ -87,21 +87,24 @@ const TaskDetailView = ({ task, onBack, onEdit }) => {
     <div className="flex flex-col h-full bg-white relative">
       {/* Header */}
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-white hover:shadow-md transition-all">
+        <div className="text-left">
+          <h2 className="text-xl font-bold text-[#1A1A2E] leading-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Task Details</h2>
+          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">RECRUITMENT OPERATIONS</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onEdit(task)}
+            className="w-10 h-10 rounded-2xl bg-[#F4F3EF]/50 flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300"
+          >
+            <FiEdit2 size={18} />
+          </button>
+          <button
+            onClick={onBack}
+            className="w-10 h-10 rounded-2xl bg-[#F4F3EF]/50 flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+          >
             <FiX size={20} />
           </button>
-          <div>
-            <h2 className="text-xl font-bold text-[#1A1A2E] leading-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Task Details</h2>
-            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">RECRUITMENT OPERATIONS</p>
-          </div>
         </div>
-        <button
-          onClick={() => onEdit(task)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20"
-        >
-          <FiEdit2 size={16} /> Edit Task
-        </button>
       </div>
 
       <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
@@ -829,7 +832,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: '100%', opacity: 0.5 }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="fixed inset-y-0 right-0 w-full sm:w-[500px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+                className="fixed inset-y-0 right-0 w-full sm:w-[698px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
               >
                 <TaskDetailView
                   task={viewingTask}

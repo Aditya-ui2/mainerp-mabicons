@@ -2549,7 +2549,8 @@ export const createKAMMember = async (kamData) => {
     role: kamData.role || 'KAM - Recruitment',
     supervisorId: kamData.supervisorId,
     skills: kamData.skills,
-    targets: kamData.targets
+    targets: kamData.targets,
+    profilePhoto: kamData.profilePhotoPreview || kamData.profilePhoto // Support base64 or file reference
   };
 
   try {

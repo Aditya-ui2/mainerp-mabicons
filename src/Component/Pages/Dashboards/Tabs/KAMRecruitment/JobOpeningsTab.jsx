@@ -228,8 +228,8 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
           <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">Assign Task for {job?.title}</h2>
           <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Task Assignment</p>
         </div>
-        <button onClick={onClose} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
-          <X className="w-5 h-5" />
+        <button onClick={onClose} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+          <X size={18} />
         </button>
       </div>
 
@@ -767,6 +767,27 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        'Title': 'Software Engineer',
+        'Client': 'Client Name',
+        'Location': 'City, State',
+        'Type': 'Full-time',
+        'Salary': '10-15 LPA',
+        'Openings': 1,
+        'Experience': '2-4 Years',
+        'Priority': 'Medium',
+        'Role Type': 'Engineering'
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "Job_Opening_Template.xlsx");
+    toast.success("Template downloaded successfully!");
+  };
+
   const getNormalizedName = (name) => String(name || '').trim().split(' ')[0].toLowerCase();
   const currentUserName = localStorage.getItem('userName') || '';
   const currentUserFirstName = getNormalizedName(currentUserName);
@@ -831,6 +852,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     responsibilities: '',
     roleType: '',
   });
+  const [otherRole, setOtherRole] = useState('');
   const positionDeadlineInputRef = useRef(null);
   const [skillInput, setSkillInput] = useState('');
   const [reqInput, setReqInput] = useState('');
@@ -1152,6 +1174,14 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         responsibilities: Array.isArray(editingJob.responsibilities) ? editingJob.responsibilities.join('\n') : '',
         roleType: editingJob.roleType || '',
       });
+      // Check if the current roleType is one of the predefined ones
+      const isPredefined = roleTypes.some(r => r.role === editingJob.roleType);
+      if (!isPredefined && editingJob.roleType) {
+        setOtherRole(editingJob.roleType);
+        setNewJobForm(f => ({ ...f, roleType: 'other' }));
+      } else {
+        setOtherRole('');
+      }
     } else {
       resetModal();
     }
@@ -1187,7 +1217,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         responsibilities: parseListInput(newJobForm.responsibilities),
         experience: newJobForm.experience,
         deadline: newJobForm.deadline || undefined,
-        roleType: newJobForm.roleType,
+        roleType: newJobForm.roleType === 'other' ? otherRole : newJobForm.roleType,
         departmentTeamId,
         postPlatforms: newJobForm.postPlatforms || [],
       };
@@ -1268,7 +1298,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         skills: newJobForm.skills.split(',').map(s => s.trim()).filter(Boolean),
         requirements: parseListInput(newJobForm.requirements),
         responsibilities: parseListInput(newJobForm.responsibilities),
-        roleType: newJobForm.roleType,
+        roleType: newJobForm.roleType === 'other' ? otherRole : newJobForm.roleType,
       };
       await updateRecruitmentPosition(editingJob.id, updates);
     } catch (error) {
@@ -1498,16 +1528,41 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">
                         Role Type *
                       </label>
-                      <div className="relative group">
-                        <select value={newJobForm.roleType} onChange={e => setNewJobForm(f => ({ ...f, roleType: e.target.value }))}
-                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
-                        >
-                          <option value="">Select Role Category</option>
-                          {roleTypes.map(r => (
-                            <option key={r.role} value={r.role}>{r.role} ({r.count})</option>
-                          ))}
-                        </select>
-                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50" />
+                      <div className="space-y-3">
+                        <div className="relative group">
+                          <select 
+                            value={newJobForm.roleType} 
+                            onChange={e => setNewJobForm(f => ({ ...f, roleType: e.target.value }))}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
+                          >
+                            <option value="">Select Role Category</option>
+                            {roleTypes.map(r => (
+                              <option key={r.role} value={r.role}>{r.role} ({r.count})</option>
+                            ))}
+                            <option value="other" className="text-blue-600 font-bold">+ Add other role...</option>
+                          </select>
+                          <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50" />
+                        </div>
+                        
+                        {newJobForm.roleType === 'other' && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="relative"
+                          >
+                            <input
+                              type="text"
+                              autoFocus
+                              value={otherRole}
+                              onChange={e => setOtherRole(e.target.value)}
+                              placeholder="Enter Custom Role Type..."
+                              className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-2xl px-6 py-4 text-sm font-bold text-[#0D47A1] outline-none transition-all placeholder:text-[#0D47A1]/30 focus:border-[#0D47A1]/30"
+                            />
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#0D47A1] uppercase tracking-widest opacity-40">
+                              NEW ROLE
+                            </div>
+                          </motion.div>
+                        )}
                       </div>
                     </div>
 
@@ -1811,11 +1866,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               className="hidden"
             />
             <button 
+              onClick={handleDownloadTemplate}
+              className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95"
+            >
+              <Download size={14} className="transition-colors duration-300" /> 
+              Template
+            </button>
+            <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingBulk}
-              className={`flex items-center gap-2 px-6 py-3 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-[#F4F3EF] transition-all shadow-sm active:scale-95 ${isUploadingBulk ? 'opacity-50' : ''}`}
+              className={`group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 ${isUploadingBulk ? 'opacity-50' : ''}`}
             >
-              <FileUp size={14} className={isUploadingBulk ? 'animate-bounce' : ''} /> 
+              <FileUp size={14} className={`${isUploadingBulk ? 'animate-bounce' : ''} transition-colors duration-300`} /> 
               {isUploadingBulk ? 'Uploading...' : 'Bulk Upload'}
             </button>
             <button

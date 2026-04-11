@@ -911,8 +911,12 @@ const KAMPerformanceContent = ({
                     <td className="px-10 py-4">
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <div className="w-12 h-12 rounded-[16px] flex items-center justify-center text-[#1B4DA0] font-bold text-lg shadow-sm group-hover:scale-110 transition-transform bg-[#F0F7FF] border border-[#E0E7FF]">
-                            {kam.avatar}
+                          <div className="w-12 h-12 rounded-[16px] flex items-center justify-center text-[#1B4DA0] font-bold text-lg shadow-sm group-hover:scale-110 transition-transform bg-[#F0F7FF] border border-[#E0E7FF] overflow-hidden">
+                            {String(kam.avatar).includes('data:image') || String(kam.avatar).includes('http') ? (
+                              <img src={kam.avatar} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              kam.avatar
+                            )}
                           </div>
                         </div>
                         <div className="flex flex-col">
@@ -1024,9 +1028,285 @@ const KAMPerformanceContent = ({
               );
             })}
           </div>
+
         </div>
       </div>
 
+    </div>
+  );
+};
+
+/* ── Client Distribution Modal ── */
+const ClientDistributionModal = ({ distribution, onClose }) => {
+  const [selectedClient, setSelectedClient] = useState(null);
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'High': return 'bg-rose-50 text-rose-600 border-rose-100';
+      case 'Medium': return 'bg-amber-50 text-amber-600 border-amber-100';
+      default: return 'bg-blue-50 text-blue-600 border-blue-100';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+      {/* Root Modal Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 30 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="relative w-full max-w-[1160px] bg-[#FFFFFF] rounded-[48px] shadow-2xl overflow-hidden border border-white flex h-[85vh] animate-in fade-in slide-in-from-bottom-8 duration-500"
+      >
+        {/* Detail Panel Backdrop (Internal to Modal) */}
+        <AnimatePresence>
+          {selectedClient && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-white/40 backdrop-blur-md z-[50]"
+              onClick={() => setSelectedClient(null)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Main List Section */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          {/* Header */}
+          <div className="px-12 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#FBFCFF]">
+            <div className="text-left">
+              <h3 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne text-left">
+                Clients
+              </h3>
+              <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[4px] mt-2 text-left">
+                Strategic Partner Distribution Portfolio
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-14 h-14 rounded-3xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm group/close"
+            >
+              <FiX size={28} className="transition-transform duration-300" />
+            </button>
+          </div>
+
+          {/* Table Content */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
+            {/* Table Header */}
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm px-12 py-5 border-b border-[#F1F5F9] grid grid-cols-[1.8fr_1.2fr_1.2fr_0.8fr] gap-6 text-[11px] font-bold uppercase tracking-[2px] text-[#94A3B8]">
+              <div>Client Partner</div>
+              <div>Industry Segment</div>
+              <div>Priority Status</div>
+              <div className="text-right">Openings</div>
+            </div>
+
+            {/* Table Rows */}
+            <div className="px-6">
+              {distribution.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedClient(item)}
+                  className="group grid grid-cols-[1.8fr_1.2fr_1.2fr_0.8fr] items-center gap-6 px-6 py-6 border-b border-[#F8FAFC] hover:bg-[#FBFDFF] transition-all cursor-pointer relative"
+                >
+                  {/* Client Partner Column */}
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 rounded-[14px] bg-[#F8FAFC] text-[#475569] flex items-center justify-center font-bold text-sm border border-[#F1F5F9] group-hover:border-blue-200 group-hover:bg-blue-50 transition-all duration-300">
+                      {item.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="text-[15px] font-bold text-[#1e293b] group-hover:text-blue-600 transition-colors leading-tight mb-1">
+                        {item.name}
+                      </h4>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          {item.lastActive}
+                        </div>
+                        <span className="text-[#E2E8F0]">|</span>
+                        <span className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">{item.location || 'India'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Industry Column */}
+                  <div className="flex items-center">
+                    <span className="text-[12px] font-semibold text-[#64748b] bg-[#F8FAFC] px-3.5 py-1.5 rounded-lg border border-[#F1F5F9]">
+                      {item.industry}
+                    </span>
+                  </div>
+
+                  {/* Priority Status Column */}
+                  <div>
+                    <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-widest border ${item.priority === 'High'
+                      ? 'bg-red-50 text-red-600 border-red-100'
+                      : 'bg-amber-50 text-amber-600 border-amber-100'
+                      }`}>
+                      {item.priority}
+                    </span>
+                  </div>
+
+                  {/* Openings Column */}
+                  <div className="flex items-center justify-end gap-10">
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-[14px] font-bold text-[#334155]">{item.jobCount}</p>
+                        <p className="text-[9px] font-black text-[#94a3b8] uppercase tracking-tighter">Active</p>
+                      </div>
+                    </div>
+                    <FiChevronRight size={18} className="text-[#CBD5E1] group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 698px DETAIL PANEL (Right side drawer within modal) */}
+        <AnimatePresence>
+          {selectedClient && (
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 35, stiffness: 250 }}
+              className="absolute inset-y-0 right-0 w-[550px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] border-l border-[#F4F3EF] flex flex-col z-[60] overflow-hidden"
+            >
+              {/* Detail Header */}
+              <div className="p-10 border-b border-[#F4F3EF] bg-white relative flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="text-left">
+                    <h4 className="text-[28px] font-bold text-[#1e293b] tracking-tight leading-tight mb-1 text-left">{selectedClient.name}</h4>
+                    <div className="flex items-center gap-2 justify-start">
+                      <span className="text-[11px] font-bold text-blue-600 uppercase tracking-[2px] text-left">{selectedClient.name.toUpperCase()}</span>
+                      <span className="text-slate-300">|</span>
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[2px] text-left">Strategic Partner</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setSelectedClient(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all shadow-sm">
+                    <FiX size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Detail Content */}
+              <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-12 bg-white">
+                {/* Visual Stats Row - Matching reference pattern */}
+                <div className="grid grid-cols-2 gap-y-10 gap-x-16 px-4">
+                  <div>
+                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Industry Segment</p>
+                    <p className="text-lg font-bold text-[#334155]">{selectedClient.industry}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Scale of Operations</p>
+                    <p className="text-lg font-bold text-[#334155] uppercase">{selectedClient.industry.slice(0, 3)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Total Openings</p>
+                    <p className="text-lg font-bold text-[#334155]">{selectedClient.jobCount} Positions</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Partnership Status</p>
+                    <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${selectedClient.priority === 'High' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                      }`}>
+                      {selectedClient.priority} Priority
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Established</p>
+                    <p className="text-lg font-bold text-[#334155]">{selectedClient.founded || '2012'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Location HQ</p>
+                    <p className="text-lg font-bold text-[#334155]">{selectedClient.location || 'Bangalore / Remote'}</p>
+                  </div>
+                </div>
+
+                {/* Account Manager Card */}
+                <div className="space-y-4">
+                  <h5 className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[3px] ml-1">Primary Stakeholder</h5>
+                  <div className="p-8 rounded-[32px] bg-[#F8FAFC] border border-[#F1F5F9] flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-[#1e293b] text-lg font-bold border border-[#e2e8f0] shadow-sm">
+                        {selectedClient.hiringManager.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-[#1e293b] leading-tight">{selectedClient.hiringManager}</p>
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1.5">Hiring Decision Maker</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button className="w-11 h-11 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center text-[#64748b] hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
+                        <FiMail size={16} />
+                      </button>
+                      <button className="w-11 h-11 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center text-[#64748b] hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
+                        <FiPhone size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Company Context */}
+                <div className="space-y-4">
+                  <h5 className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[3px] ml-1">Market Intelligence</h5>
+                  <div className="p-8 rounded-[32px] bg-white border border-[#F1F5F9]">
+                    <p className="text-[15px] font-medium text-[#475569] leading-relaxed italic">"{selectedClient.description}"</p>
+                    <div className="mt-8 flex flex-wrap gap-2 text-left">
+                      {['Global Leader', 'Tech Unicorn', 'Scaling Now', 'Remote First'].map(tag => (
+                        <span key={tag} className="px-4 py-2 bg-[#F8FAFC] border border-[#F1F5F9] rounded-xl text-[9px] font-bold text-[#64748b] uppercase tracking-widest">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mandate List */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between ml-1">
+                    <h5 className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[3px]">Active Mandates</h5>
+                    <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[9px] font-bold uppercase tracking-wider">{selectedClient.topRoles.length} ACTIVE POSITIONS</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {selectedClient.topRoles.map((role, idx) => (
+                      <div key={idx} className="p-6 rounded-[24px] bg-white border border-[#F1F5F9] hover:border-blue-200 group transition-all flex items-center justify-between shadow-sm hover:shadow-md">
+                        <div className="flex items-center gap-5 text-left">
+                          <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] flex items-center justify-center text-[#94a3b8] group-hover:bg-blue-50 group-hover:text-blue-500 transition-all border border-[#F1F5F9]">
+                            <FiBriefcase size={16} />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-bold text-[#1e293b] group-hover:text-blue-600 transition-all text-left">{role}</p>
+                            <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest mt-1 text-left">Urgent Fill · Full Time</p>
+                          </div>
+                        </div>
+                        <FiChevronRight size={18} className="text-[#CBD5E1] group-hover:translate-x-1 group-hover:text-blue-500 transition-all" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Detail Footer */}
+              <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-6">
+                <button
+                  onClick={() => setSelectedClient(null)}
+                  className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 };
@@ -1064,16 +1344,33 @@ const RecruitmentHeadDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: 'Sachin', role: 'Recruitment Head' });
+  const [upcomingInterviews, setUpcomingInterviews] = useState([
+    { id: 1, candidate: 'Rahul Sharma', position: 'Backend Developer', time: '10:30 AM', status: 'Upcoming', type: 'Technical' },
+    { id: 2, candidate: 'Priya Singh', position: 'UI/UX Designer', time: '02:00 PM', status: 'In Progress', type: 'Portfolio Review' },
+    { id: 3, candidate: 'Amit Verma', position: 'Project Manager', time: '04:30 PM', status: 'Scheduled', type: 'Final Round' },
+    { id: 4, candidate: 'Sneha Patel', position: 'HR Specialist', time: 'Tomorrow', status: 'Scheduled', type: 'Initial Screening' },
+  ]);
   const [notifications, setNotifications] = useState([]);
   const [selectedKAM, setSelectedKAM] = useState(null);
   const [showKAMModal, setShowKAMModal] = useState(false);
   const [showCallsBreakdownModal, setShowCallsBreakdownModal] = useState(false);
   const [showStatsInsightModal, setShowStatsInsightModal] = useState(false);
+  const [showClientsModal, setShowClientsModal] = useState(false);
+  const [selectedClientInModal, setSelectedClientInModal] = useState(null);
+  const [clientJobDistribution, setClientJobDistribution] = useState([]);
   const [statsInsightType, setStatsInsightType] = useState(null);
   const [showKAMFormModal, setShowKAMFormModal] = useState(false);
   const [kamFormMode, setKamFormMode] = useState('add'); // 'add' or 'edit'
-  const [kamFormData, setKamFormData] = useState({ name: '', email: '', phone: '', role: 'KAM - Recruitment' });
+  const [kamFormData, setKamFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'KAM - Recruitment',
+    profilePhoto: null,
+    profilePhotoPreview: null
+  });
   const [kamTeam, setKamTeam] = useState([]);
+  const [selectedInterview, setSelectedInterview] = useState(null);
   const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'error' }
   const [performanceKam, setPerformanceKam] = useState(null);
   const [stats, setStats] = useState({
@@ -1300,10 +1597,136 @@ const RecruitmentHeadDashboard = () => {
     try {
       const res = await getRecruitmentClients();
       if (res.success) {
-        setClients(res.data || []);
+        const clientList = res.data || [];
+        setClients(clientList);
+
+        // After fetching clients, fetch job distribution
+        fetchClientJobDistribution(clientList);
       }
     } catch (e) {
       console.error('Failed to fetch clients:', e);
+    }
+  };
+
+  const fetchClientJobDistribution = async (clientList) => {
+    try {
+      // 3 PREMIUM MOCK CLIENTS as requested - ALWAYS SHOW even if API fails
+      const premiumMocks = [
+        {
+          id: 'mock-Google',
+          name: 'Google Inc.',
+          jobCount: 24,
+          industry: 'Technology',
+          priority: 'High',
+          lastActive: 'Today',
+          hiringManager: 'Sundar P.',
+          topRoles: ['Staff Software Engineer', 'Cloud Architect', 'ML Researcher'],
+          description: 'Global leader in search and cloud computing, expanding their AI division in India.',
+          location: 'Bangalore / Remote',
+          founded: '1998'
+        },
+        {
+          id: 'mock-Microsoft',
+          name: 'Microsoft',
+          jobCount: 18,
+          industry: 'Technology',
+          priority: 'High',
+          lastActive: 'Yesterday',
+          hiringManager: 'Satya Nadella',
+          topRoles: ['Azure Lead', 'Principal Consultant', 'Security Analyst'],
+          description: 'Dominating enterprise software and cloud services, looking for senior leadership roles.',
+          location: 'Hyderabad',
+          founded: '1975'
+        },
+        {
+          id: 'mock-Amazon',
+          name: 'Amazon',
+          jobCount: 12,
+          industry: 'E-commerce',
+          priority: 'Medium',
+          lastActive: '2 days ago',
+          hiringManager: 'Jeff Bezos',
+          topRoles: ['SDE-III', 'Logistics Manager', 'UX Researcher'],
+          description: 'Scaling logistics and retail operations globally with focus on sustainability.',
+          location: 'Gurgaon',
+          founded: '1994'
+        }
+      ];
+
+      const res = await getAllRecruitmentPositions();
+      let distribution = [...premiumMocks];
+
+      if (res.success) {
+        const jobs = res.data || [];
+        const mockIndustries = ['Technology', 'Healthcare', 'Fintech', 'EduTech', 'E-commerce', 'Manufacturing'];
+        const mockPriorities = ['High', 'Medium', 'Medium', 'Standard'];
+
+        const apiClients = clientList.map((client, idx) => {
+          const clientName = (client.companyName || client.name || '').toLowerCase();
+          const jobCount = jobs.filter(job =>
+            (job.client || job.companyName || '').toLowerCase() === clientName
+          ).length;
+
+          return {
+            id: client.id || client._id,
+            name: client.companyName || client.name,
+            jobCount: jobCount,
+            industry: mockIndustries[idx % mockIndustries.length],
+            priority: mockPriorities[idx % mockPriorities.length],
+            lastActive: new Date(Date.now() - (idx * 24 * 60 * 60 * 1000)).toLocaleDateString(),
+            hiringManager: ['Sarah Chen', 'Robert Fox', 'Jane Cooper', 'Cody Fisher'][idx % 4],
+            topRoles: ['Senior Frontend Dev', 'Backend Lead', 'Product Designer'].slice(0, (idx % 3) + 1)
+          };
+        });
+
+        distribution = [...premiumMocks, ...apiClients].sort((a, b) => b.jobCount - a.jobCount);
+      }
+
+      setClientJobDistribution(distribution);
+    } catch (e) {
+      console.error('Failed to fetch job distribution:', e);
+      // Fallback to just mocks on error
+      setClientJobDistribution([
+        {
+          id: 'mock-Google',
+          name: 'Google Inc.',
+          jobCount: 24,
+          industry: 'Technology',
+          priority: 'High',
+          lastActive: 'Today',
+          hiringManager: 'Sundar P.',
+          topRoles: ['Staff Software Engineer', 'Cloud Architect', 'ML Researcher'],
+          description: 'Global leader in search and cloud computing, expanding their AI division in India.',
+          location: 'Bangalore / Remote',
+          founded: '1998'
+        },
+        {
+          id: 'mock-Microsoft',
+          name: 'Microsoft',
+          jobCount: 18,
+          industry: 'Technology',
+          priority: 'High',
+          lastActive: 'Yesterday',
+          hiringManager: 'Satya Nadella',
+          topRoles: ['Azure Lead', 'Principal Consultant', 'Security Analyst'],
+          description: 'Dominating enterprise software and cloud services, looking for senior leadership roles.',
+          location: 'Hyderabad',
+          founded: '1975'
+        },
+        {
+          id: 'mock-Amazon',
+          name: 'Amazon',
+          jobCount: 12,
+          industry: 'E-commerce',
+          priority: 'Medium',
+          lastActive: '2 days ago',
+          hiringManager: 'Jeff Bezos',
+          topRoles: ['SDE-III', 'Logistics Manager', 'UX Researcher'],
+          description: 'Scaling logistics and retail operations globally with focus on sustainability.',
+          location: 'Gurgaon',
+          founded: '1994'
+        }
+      ]);
     }
   };
 
@@ -1661,6 +2084,28 @@ const RecruitmentHeadDashboard = () => {
     }
   };
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file size (1 MB limit)
+    if (file.size > 1024 * 1024) {
+      showToast('Photo size must be less than 1 MB', 'error');
+      e.target.value = null;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setKamFormData(prev => ({
+        ...prev,
+        profilePhoto: file,
+        profilePhotoPreview: reader.result
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Submit KAM form (add/edit)
   const handleSubmitKAMForm = async (e) => {
     e.preventDefault();
@@ -1678,7 +2123,8 @@ const RecruitmentHeadDashboard = () => {
             email: newMember.email,
             phone: newMember.phone,
             role: newMember.role || 'KAM - Recruitment',
-            avatar: newMember.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+            avatar: newMember.profilePhoto || newMember.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+            profilePhoto: newMember.profilePhoto,
             status: 'Active',
             color: AVATAR_COLORS[colorIndex],
             stats: { activePositions: 0, candidatesPipeline: 0, interviewsScheduled: 0, offersExtended: 0, thisWeekHires: 0 },
@@ -1691,7 +2137,7 @@ const RecruitmentHeadDashboard = () => {
         if (response.success || response.data) {
           setKamTeam(prev => prev.map(k =>
             k.id === kamFormData.id
-              ? { ...k, name: kamFormData.name, email: kamFormData.email, phone: kamFormData.phone, role: kamFormData.role }
+              ? { ...k, name: kamFormData.name, email: kamFormData.email, phone: kamFormData.phone, role: kamFormData.role, profilePhoto: kamFormData.profilePhotoPreview, avatar: kamFormData.profilePhotoPreview || k.avatar }
               : k
           ));
           showToast(`${kamFormData.name}'s details have been updated!`, 'success');
@@ -1945,6 +2391,14 @@ const RecruitmentHeadDashboard = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard
+                      title="All Clients"
+                      value={clients.length || 0}
+                      icon={FiUsers}
+                      trend={`${clients.length > 0 ? 'Active' : 'No Clients'}`}
+                      color="bg-rose-500"
+                      onClick={() => setShowClientsModal(true)}
+                    />
+                    <StatCard
                       title="Active Positions"
                       value={stats.activePositions || 0}
                       icon={FiBriefcase}
@@ -1952,14 +2406,7 @@ const RecruitmentHeadDashboard = () => {
                       color="bg-blue-500"
                       onClick={() => setActiveTab('Job Openings')}
                     />
-                    <StatCard
-                      title="Candidates Pipeline"
-                      value={stats.candidatesPipeline || 0}
-                      icon={FiTarget}
-                      trend="+12 new"
-                      color="bg-emerald-500"
-                      onClick={() => setActiveTab('Candidate Pipeline')}
-                    />
+
                     <StatCard
                       title="Interviews Scheduled"
                       value={stats.interviewsScheduled || 0}
@@ -2201,42 +2648,114 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Active Team Section - Full Width Carousel */}
-                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-8 mb-8">
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-500">
-                          <FiUsers className="w-5 h-5" />
+                  {/* Interactive Sections Row */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    {/* Active Team Section */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 rounded-2xl bg-blue-50/50 border border-blue-100/50 text-[#1B4DA0] shadow-sm">
+                            <FiUsers className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">Active Team</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Live performance tracking</p>
+                          </div>
                         </div>
-                        <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">Active Team</h3>
+                        <button className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-500 transition-all">
+                          <FiMoreHorizontal size={18} />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
+                        {kamTeam.slice(0, 4).map((kam, idx) => {
+                          const initials = kam.avatar || (kam.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                          return (
+                            <div
+                              key={kam.id}
+                              onClick={() => handleViewKAM(kam)}
+                              className="bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 flex flex-col items-center text-center group hover:bg-white hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 cursor-pointer relative overflow-hidden"
+                            >
+                              <div className="w-16 h-16 rounded-[24px] bg-white border border-slate-100 flex items-center justify-center font-bold text-[#1B4DA0] text-lg shadow-sm group-hover:scale-110 transition-transform duration-500 mb-5 relative z-10">
+                                {String(initials).includes('data:image') || String(initials).includes('http') ? (
+                                  <img src={initials} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  initials
+                                )}
+                              </div>
+
+                              <div className="space-y-1">
+                                <p className="text-base font-bold text-[#1A1A2E] tracking-tight group-hover:text-blue-600 transition-colors uppercase font-syne leading-tight">{kam.name}</p>
+                                <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[1px]">{kam.role?.split(' ')[0] || 'KAM'}</p>
+                              </div>
+
+                              <div className="mt-6 pt-6 border-t border-slate-100/80 w-full grid grid-cols-2 gap-3">
+                                <div className="text-center">
+                                  <p className="text-lg font-black text-[#1A1A2E] leading-none mb-1">{kam.stats?.thisWeekHires}</p>
+                                  <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest leading-none">Hires</p>
+                                </div>
+                                <div className="text-center border-l border-slate-100/80">
+                                  <p className="text-lg font-black text-[#1A1A2E] leading-none mb-1">{kam.stats?.activePositions}</p>
+                                  <p className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest leading-none">Roles</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 scroll-smooth">
-                      {kamTeam.map((kam, idx) => {
-                        const initials = kam.avatar || (kam.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-                        return (
+                    {/* Upcoming Interviews Section */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-[#3FA9F5]/5">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 rounded-2xl bg-[#E3F2FD80] text-[#3FA9F5] shadow-sm">
+                            <FiCalendar className="w-5 h-5" />
+                          </div>
+                          <div className="text-left">
+                            <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne text-left">Upcoming Interviews</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 text-left">Today's breakdown</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('Interview Schedule')}
+                          className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors"
+                        >
+                          View All
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
+                        {upcomingInterviews.slice(0, 4).map((interview) => (
                           <div
-                            key={kam.id}
-                            onClick={() => handleViewKAM(kam)}
-                            className="min-w-[280px] bg-white border border-slate-100 rounded-[24px] p-5 flex items-center justify-between group hover:border-blue-400/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer"
+                            key={interview.id}
+                            onClick={() => setSelectedInterview(interview)}
+                            className="bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-[#3FA9F5]/50 hover:shadow-2xl hover:shadow-[#3FA9F5]/5 transition-all duration-500 cursor-pointer relative text-left flex flex-col justify-between"
                           >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-[18px] bg-[#E3F2FD] border border-[#BBDEFB] flex items-center justify-center font-bold text-[#1976D2] text-sm shadow-sm group-hover:scale-105 transition-transform">
-                                {initials}
+                            <div>
+                              <div className="flex justify-between items-start mb-5">
+                                <div className={`px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${interview.status === 'In Progress' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
+                                  }`}>
+                                  {interview.status}
+                                </div>
+                                <span className="text-[9px] font-bold text-slate-500 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-50">{interview.time}</span>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">{kam.name}</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{kam.stats?.activePositions} OPEN POSITIONS</span>
+
+                              <div className="mb-6">
+                                <h4 className="text-sm font-bold text-[#1A1A2E] tracking-tight group-hover:text-[#3FA9F5] transition-colors uppercase leading-tight">{interview.candidate}</h4>
+                                <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1 leading-none">{interview.position}</p>
                               </div>
                             </div>
-                            <div className="flex flex-col items-end">
-                              <span className="text-xl font-black text-slate-900 leading-none">{kam.stats?.thisWeekHires}</span>
-                              <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter mt-1">HIRES</span>
+
+                            <div className="flex items-center gap-2 pt-5 border-t border-slate-100/80">
+                              <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400">
+                                <FiTarget size={10} />
+                              </div>
+                              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{interview.type}</span>
                             </div>
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -2353,6 +2872,16 @@ const RecruitmentHeadDashboard = () => {
         isLoading={loading}
       >
         {renderContent()}
+
+        {/* Client Job Distribution Modal - Global */}
+        <AnimatePresence>
+          {showClientsModal && (
+            <ClientDistributionModal
+              distribution={clientJobDistribution}
+              onClose={() => setShowClientsModal(false)}
+            />
+          )}
+        </AnimatePresence>
       </AdminLayout>
 
       {/* KAM Detail Drawer */}
@@ -2371,7 +2900,7 @@ const RecruitmentHeadDashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-[400px] bg-white z-[120] shadow-2xl flex flex-col"
+              className="fixed right-0 top-0 h-full w-full max-w-[698px] bg-white z-[120] shadow-2xl flex flex-col"
               style={{ boxShadow: "-12px 0 40px rgba(0,0,0,0.12)" }}
             >
               {/* Drawer Header */}
@@ -2379,7 +2908,7 @@ const RecruitmentHeadDashboard = () => {
                 <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Member Details</h3>
                 <button
                   onClick={() => setShowKAMModal(false)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-[#F4F3EF] transition-all"
+                  className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
                 >
                   <FiX className="w-5 h-5" />
                 </button>
@@ -2389,9 +2918,13 @@ const RecruitmentHeadDashboard = () => {
               <div className="flex-1 overflow-y-auto p-8 space-y-8">
                 {/* Profile Header */}
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-20 h-20 rounded-[28px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-blue-500/20"
+                  <div className="w-20 h-20 rounded-[28px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-blue-500/20 overflow-hidden"
                     style={{ background: selectedKAM.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}>
-                    {selectedKAM.avatar || (selectedKAM.name || 'U')[0]}
+                    {String(selectedKAM.avatar).includes('data:image') || String(selectedKAM.avatar).includes('http') ? (
+                      <img src={selectedKAM.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      selectedKAM.avatar || (selectedKAM.name || 'U')[0]
+                    )}
                   </div>
                   <div>
                     <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedKAM.name}</h4>
@@ -2399,11 +2932,12 @@ const RecruitmentHeadDashboard = () => {
                   </div>
                 </div>
 
-                {/* Info Grid */}
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="p-4 bg-[#FAFAF8] rounded-2xl border border-[#F4F3EF]">
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-3">Professional Info</p>
-                    <div className="space-y-3">
+                {/* Unified Info Container */}
+                <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-6 space-y-8">
+                  {/* Professional Info */}
+                  <div>
+                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-4 text-center">Professional Info</p>
+                    <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
                         <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.department || 'HR Recruitment'}</span>
@@ -2416,36 +2950,34 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-[#FAFAF8] rounded-2xl border border-[#F4F3EF]">
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-3">Contact Details</p>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#9B9BAD] border border-[#E8E7E2]">
-                          <FiMail className="w-4 h-4" />
-                        </div>
-                        <span className="text-sm text-[#1A1A2E] font-medium">{selectedKAM.email}</span>
+                  <div className="h-px bg-[#F4F3EF]" />
+
+                  {/* Contact Details */}
+                  <div>
+                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-4 text-center">Contact Details</p>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#6B6B7E] font-medium">Email</span>
+                        <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.email}</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#9B9BAD] border border-[#E8E7E2]">
-                          <FiPhone className="w-4 h-4" />
-                        </div>
-                        <span className="text-sm text-[#1A1A2E] font-medium">{selectedKAM.phone}</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#6B6B7E] font-medium">Contact</span>
+                        <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.phone}</span>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Performance Mini-Card */}
-                <div className="p-5 bg-[#1B4DA0] text-white rounded-2xl relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-white/20 transition-all" />
-                  <div className="relative z-10 flex justify-between items-center">
+                  <div className="h-px bg-[#F4F3EF]" />
+
+                  {/* Performance Section */}
+                  <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-1">Total Hires</p>
-                      <p className="text-2xl font-bold">{selectedKAM.stats?.thisWeekHires || 0}</p>
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1">Total Hires</p>
+                      <p className="text-2xl font-bold text-[#1A1A2E]">{selectedKAM.stats?.thisWeekHires || 0}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-1">Interviews</p>
-                      <p className="text-2xl font-bold">{selectedKAM.stats?.interviewsScheduled || 0}</p>
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1">Interviews</p>
+                      <p className="text-2xl font-bold text-[#1A1A2E]">{selectedKAM.stats?.interviewsScheduled || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -2500,9 +3032,9 @@ const RecruitmentHeadDashboard = () => {
                   </div>
                   <button
                     onClick={() => setShowCallsBreakdownModal(false)}
-                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
                   >
-                    <FiX className="w-5 h-5" />
+                    <FiX size={18} />
                   </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
@@ -2599,9 +3131,9 @@ const RecruitmentHeadDashboard = () => {
                   </div>
                   <button
                     onClick={() => setShowStatsInsightModal(false)}
-                    className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
                   >
-                    <FiX className="w-5 h-5" />
+                    <FiX size={18} />
                   </button>
                 </div>
               </div>
@@ -2701,189 +3233,131 @@ const RecruitmentHeadDashboard = () => {
                 </div>
                 <button
                   onClick={() => setShowKAMFormModal(false)}
-                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
                   disabled={formSubmitting}
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX size={18} />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <form onSubmit={handleSubmitKAMForm} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
-                {/* Profile Photo Upload */}
-                <div className="flex items-center gap-6">
+              <form onSubmit={handleSubmitKAMForm} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                {/* Profile Photo Section */}
+                <div className="flex flex-col items-center justify-center pb-4">
                   <div className="relative group">
-                    {kamFormData.profilePhotoPreview ? (
-                      <img src={kamFormData.profilePhotoPreview} alt="Profile" className="w-20 h-20 rounded-2xl object-cover border-2 border-[#E0E7FF]" />
-                    ) : (
-                      <div className="w-20 h-20 rounded-2xl bg-[#F0F7FF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center text-[24px] font-bold text-[#1B4DA0]">
-                        {kamFormData.name ? kamFormData.name.charAt(0).toUpperCase() : <FiUsers className="w-6 h-6 text-[#C5C5D2]" />}
-                      </div>
+                    <div className="w-24 h-24 rounded-[32px] bg-[#F4F3EF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center overflow-hidden transition-all group-hover:border-[#1B4DA0]/50">
+                      {kamFormData.profilePhotoPreview ? (
+                        <img src={kamFormData.profilePhotoPreview} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <FiUsers size={32} className="text-[#C5C5D2]" />
+                      )}
+
+                      <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                        <FiEdit2 className="text-white w-6 h-6" />
+                        <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} disabled={formSubmitting} />
+                      </label>
+                    </div>
+                    {kamFormData.profilePhotoPreview && (
+                      <button
+                        type="button"
+                        onClick={() => setKamFormData(prev => ({ ...prev, profilePhoto: null, profilePhotoPreview: null }))}
+                        className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-all scale-0 group-hover:scale-100"
+                        disabled={formSubmitting}
+                      >
+                        <FiX size={14} />
+                      </button>
                     )}
-                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                      <FiEdit2 className="w-5 h-5 text-white" />
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => setKamFormData({ ...kamFormData, profilePhoto: file, profilePhotoPreview: ev.target.result });
-                          reader.readAsDataURL(file);
-                        }
-                      }} disabled={formSubmitting} />
-                    </label>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#1A1A2E]">Profile Photo</p>
-                    <p className="text-[11px] text-[#9B9BAD] mt-0.5">Upload a photo (JPG, PNG). Max 2MB.</p>
-                  </div>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mt-3">Profile Photo (Max 1MB)</p>
                 </div>
 
                 {/* Personal Information */}
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl"><FiUsers className="w-4 h-4" /></div>
-                    <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Personal Information</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Full Name *</label>
-                      <div className="relative flex items-center">
-                        <FiUsers className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="text" required placeholder="e.g. John Doe"
-                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                          value={kamFormData.name} onChange={(e) => setKamFormData({ ...kamFormData, name: e.target.value })} disabled={formSubmitting} />
-                      </div>
+
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Full Name *</label>
+                    <div className="relative flex items-center">
+                      <FiUsers className="absolute left-4 text-[#C5C5D2]" />
+                      <input type="text" required placeholder="e.g. John Doe"
+                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                        value={kamFormData.name} onChange={(e) => setKamFormData({ ...kamFormData, name: e.target.value })} disabled={formSubmitting} />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Employee ID</label>
-                      <div className="relative flex items-center">
-                        <FiFileText className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="text" placeholder="e.g. MAB-0042"
-                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                          value={kamFormData.employeeId || ''} onChange={(e) => setKamFormData({ ...kamFormData, employeeId: e.target.value })} disabled={formSubmitting} />
-                      </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Employee ID</label>
+                    <div className="relative flex items-center">
+                      <FiFileText className="absolute left-4 text-[#C5C5D2]" />
+                      <input type="text" placeholder="e.g. MAB-0042"
+                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                        value={kamFormData.employeeId || ''} onChange={(e) => setKamFormData({ ...kamFormData, employeeId: e.target.value })} disabled={formSubmitting} />
                     </div>
                   </div>
                 </div>
 
-                {/* Contact Details */}
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center text-white shadow-xl"><FiMail className="w-4 h-4" /></div>
-                    <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Contact Details</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address *</label>
-                      <div className="relative flex items-center">
-                        <FiMail className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="email" required placeholder="john@mabicons.com"
-                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                          value={kamFormData.email} onChange={(e) => setKamFormData({ ...kamFormData, email: e.target.value })} disabled={formSubmitting} />
-                      </div>
+
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address *</label>
+                    <div className="relative flex items-center">
+                      <FiMail className="absolute left-4 text-[#C5C5D2]" />
+                      <input type="email" required placeholder="john@mabicons.com"
+                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                        value={kamFormData.email} onChange={(e) => setKamFormData({ ...kamFormData, email: e.target.value })} disabled={formSubmitting} />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number *</label>
-                      <div className="relative flex items-center">
-                        <FiPhone className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="tel" required placeholder="+91 9876543210"
-                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                          value={kamFormData.phone} onChange={(e) => setKamFormData({ ...kamFormData, phone: e.target.value })} disabled={formSubmitting} />
-                      </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number *</label>
+                    <div className="relative flex items-center">
+                      <FiPhone className="absolute left-4 text-[#C5C5D2]" />
+                      <input type="tel" required placeholder="+91 9876543210"
+                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                        value={kamFormData.phone} onChange={(e) => setKamFormData({ ...kamFormData, phone: e.target.value })} disabled={formSubmitting} />
                     </div>
                   </div>
                 </div>
 
-                {/* Role & Department */}
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-[#10B981] rounded-xl flex items-center justify-center text-white shadow-xl"><FiBriefcase className="w-4 h-4" /></div>
-                    <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Role & Department</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Role *</label>
-                      <div className="relative flex items-center">
-                        <FiBriefcase className="absolute left-4 text-[#C5C5D2]" />
-                        <select
-                          className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
-                          value={kamFormData.role} onChange={(e) => setKamFormData({ ...kamFormData, role: e.target.value })} disabled={formSubmitting}>
-                          <option value="KAM - Recruitment">KAM - Recruitment</option>
-                          <option value="HR Executive">HR Executive</option>
-                          <option value="Senior KAM">Senior KAM</option>
-                          <option value="KAM Lead">KAM Lead</option>
-                          <option value="Recruiter">Recruiter</option>
-                          <option value="Team Lead">Team Lead</option>
-                          <option value="Admin">Admin</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Department</label>
-                      <div className="relative flex items-center">
-                        <FiLayers className="absolute left-4 text-[#C5C5D2]" />
-                        <select
-                          className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
-                          value={kamFormData.department || 'HR Recruitment'} onChange={(e) => setKamFormData({ ...kamFormData, department: e.target.value })} disabled={formSubmitting}>
-                          <option value="HR Recruitment">HR Recruitment</option>
-                          <option value="HR Operations">HR Operations</option>
-                          <option value="IT">IT</option>
-                          <option value="Sales">Sales</option>
-                          <option value="Marketing">Marketing</option>
-                          <option value="BD">Business Development</option>
-                          <option value="Finance">Finance</option>
-                          <option value="Management">Management</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Designation</label>
-                      <div className="relative flex items-center">
-                        <FiAward className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="text" placeholder="e.g. Senior Executive"
-                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                          value={kamFormData.designation || ''} onChange={(e) => setKamFormData({ ...kamFormData, designation: e.target.value })} disabled={formSubmitting} />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Reporting To</label>
-                      <div className="relative flex items-center">
-                        <FiUsers className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="text" placeholder="e.g. Sachin Rawat"
-                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                          value={kamFormData.reportingTo || ''} onChange={(e) => setKamFormData({ ...kamFormData, reportingTo: e.target.value })} disabled={formSubmitting} />
-                      </div>
+
+
+                <div className="grid grid-cols-2 gap-4">
+
+                  <div className="space-y-2">
+                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Department</label>
+                    <div className="relative flex items-center">
+                      <FiLayers className="absolute left-4 text-[#C5C5D2]" />
+                      <select
+                        className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
+                        value={kamFormData.department || 'HR Recruitment'} onChange={(e) => setKamFormData({ ...kamFormData, department: e.target.value })} disabled={formSubmitting}>
+                        <option value="HR Recruitment">HR Recruitment</option>
+                        <option value="HR Operations">HR Operations</option>
+                        <option value="IT">IT</option>
+                        <option value="Sales">Sales</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="BD">Business Development</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Management">Management</option>
+                      </select>
                     </div>
                   </div>
+
+
+
+
+
+
+                  <div className="space-y-2">
+                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>
+                    <div className="relative flex items-center">
+                      <FiCalendar className="absolute left-4 text-[#C5C5D2]" />
+                      <input type="date"
+                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                        value={kamFormData.joiningDate || ''} onChange={(e) => setKamFormData({ ...kamFormData, joiningDate: e.target.value })} disabled={formSubmitting} />
+                    </div>
+                  </div>
+
                 </div>
 
-                {/* Additional Details */}
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-xl"><FiCalendar className="w-4 h-4" /></div>
-                    <h4 className="text-xl font-bold text-[#1A1A2E] font-syne">Additional Details</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>
-                      <div className="relative flex items-center">
-                        <FiCalendar className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="date"
-                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                          value={kamFormData.joiningDate || ''} onChange={(e) => setKamFormData({ ...kamFormData, joiningDate: e.target.value })} disabled={formSubmitting} />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Location</label>
-                      <div className="relative flex items-center">
-                        <FiExternalLink className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="text" placeholder="e.g. Jaipur"
-                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                          value={kamFormData.location || ''} onChange={(e) => setKamFormData({ ...kamFormData, location: e.target.value })} disabled={formSubmitting} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Modal Footer */}
                 <div className="pt-4 flex gap-4">
@@ -3001,6 +3475,127 @@ const RecruitmentHeadDashboard = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {selectedInterview && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedInterview(null)}
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm z-[200]"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[201] flex flex-col"
+            >
+              {/* Header - Sticky Style */}
+              <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
+                <div className="text-left">
+                  <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">{selectedInterview.candidate}</h2>
+                  <div className="flex items-center gap-2 mt-1.5 justify-start">
+                    <span className="text-[10px] font-bold text-[#3FA9F5] uppercase tracking-[3px] text-left">{selectedInterview.position}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">{selectedInterview.type}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSelectedInterview(null)}
+                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border-2 border-transparent hover:border-red-100 shadow-sm"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              {/* Detailed Content - Scrollable Area */}
+              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-10">
+                {/* Snapshot Grid Grid - Pattern from Job Detail */}
+                <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
+                  <div className="grid grid-cols-2 gap-y-10 gap-x-12">
+                    <div className="space-y-2 text-left">
+                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interview Time</p>
+                       <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.time}</p>
+                    </div>
+                    <div className="space-y-2 text-left">
+                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Status</p>
+                       <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border text-left ${
+                         selectedInterview.status === 'In Progress' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-[#E3F2FD80] text-[#3FA9F5] border-blue-100'
+                       }`}>
+                         {selectedInterview.status}
+                       </span>
+                    </div>
+                    <div className="space-y-2 text-left">
+                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Round Type</p>
+                       <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.type}</p>
+                    </div>
+                    <div className="space-y-2 text-left">
+                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Mode</p>
+                       <p className="text-sm font-bold text-[#1A1A2E] text-left">Remote (Teams)</p>
+                    </div>
+                    <div className="space-y-2 text-left">
+                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Experience</p>
+                       <p className="text-sm font-bold text-[#1A1A2E] text-left">4.5 Years</p>
+                    </div>
+                    <div className="space-y-2 text-left">
+                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interviewer</p>
+                       <p className="text-sm font-bold text-[#1A1A2E] text-left">Aravind Swamy</p>
+                    </div>
+                  </div>
+
+                  {/* Profile Summary */}
+                  <div className="pt-8 border-t border-[#F4F3EF] text-left">
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-3 text-left">Candidate Profile</p>
+                    <p className="text-[14px] font-medium text-[#4B4B5E] leading-relaxed italic text-left">
+                      "Professional developer with expertise in building high-performance systems and modern web technologies."
+                    </p>
+                  </div>
+
+                  {/* Skills Section */}
+                  <div className="pt-8 border-t border-[#F4F3EF] text-left">
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-4 text-left">Technical Skills</p>
+                    <div className="flex flex-wrap gap-2 justify-start">
+                      {['React.js', 'Node.js', 'System Design', 'Redux'].map(skill => (
+                        <span key={skill} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Round Details */}
+                  <div className="pt-8 border-t border-[#F4F3EF] text-left">
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-4 text-left">Interview Context</p>
+                    <ul className="space-y-3 text-left">
+                      {[
+                        'Performance optimization and profiling',
+                        'System architecture and scaling',
+                        'Team leadership qualities',
+                        'Cultural alignment'
+                      ].map((item, idx) => (
+                        <li key={idx} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3FA9F5] mt-2 flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
+                <button 
+                  onClick={() => setSelectedInterview(null)}
+                  className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  Cancel
+                </button>
               </div>
             </motion.div>
           </>

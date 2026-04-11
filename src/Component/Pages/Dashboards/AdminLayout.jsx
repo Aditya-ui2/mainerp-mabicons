@@ -385,7 +385,7 @@ const AdminLayout = ({
 /**
  * StatCard - High Fidelity recruitment stat cards
  */
-export const StatCard = ({ title, value, change, changeType = 'increase', icon: Icon, color = 'blue' }) => {
+export const StatCard = ({ title, value, change, changeType = 'increase', icon: Icon, color = 'blue', onClick }) => {
   const colors = {
     blue: "bg-blue-50/50 text-[#1B4DA0]",
     emerald: "bg-emerald-50/50 text-emerald-600",
@@ -398,7 +398,8 @@ export const StatCard = ({ title, value, change, changeType = 'increase', icon: 
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF] transition-all group"
+      onClick={onClick}
+      className={`bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF] transition-all group ${onClick ? 'cursor-pointer active:scale-[0.98]' : 'cursor-default'}`}
     >
       <div className="flex items-center justify-between">
         <div className={`p-4 rounded-2xl ${colors[color] || colors.blue} transition-all duration-300`}>

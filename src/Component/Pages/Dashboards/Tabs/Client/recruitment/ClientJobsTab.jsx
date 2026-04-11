@@ -1,20 +1,21 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBriefcase, FiMapPin, FiChevronDown, FiChevronUp, FiPlus, FiSearch, FiRefreshCw, FiCalendar, FiX, FiZap, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
-import { Briefcase, FileText, Settings, DollarSign, MapPin, Clock, Users, Target, Calendar, AlignLeft } from 'lucide-react';
+import { FiBriefcase, FiMapPin, FiChevronDown, FiChevronUp, FiPlus, FiSearch, FiRefreshCw, FiCalendar, FiX, FiZap, FiAlertCircle, FiCheckCircle, FiChevronRight } from 'react-icons/fi';
+import { Briefcase, FileText, Settings, DollarSign, MapPin, Clock, Users, Target, Calendar, AlignLeft, Search } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { getClientDashboardOverview, createRecruitmentPosition } from '../../../../service/api';
 
 const StatusBadge = ({ status }) => {
   const config = {
-    Open: 'bg-blue-50 text-blue-600 border border-blue-100',
-    Urgent: 'bg-amber-50 text-amber-600 border border-amber-100',
-    'In Progress': 'bg-slate-50 text-slate-500 border border-slate-100',
-    Closed: 'bg-gray-50 text-gray-400 border border-gray-100',
-    Hold: 'bg-amber-50 text-amber-500 border border-amber-100',
+    Open: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    Urgent: 'bg-rose-50 text-rose-600 border-rose-100',
+    'In Progress': 'bg-blue-50 text-[#0D47A1] border-blue-100',
+    Closed: 'bg-slate-50 text-slate-400 border-slate-100',
+    Hold: 'bg-amber-50 text-amber-600 border-amber-100',
   };
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${config[status] || 'bg-slate-50 text-slate-500 border border-slate-100'}`}>
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest w-fit border ${config[status] || 'bg-slate-50 text-slate-500 border-slate-100'}`}>
       {status}
     </span>
   );
@@ -30,6 +31,135 @@ const PriorityBadge = ({ priority }) => {
   return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${config[priority] || config.Medium}`}>{priority}</span>;
 };
 
+/* ── Job Detail Sidebar ── */
+const JobDetailSidebar = ({ job, onClose }) => {
+  if (!job) return null;
+
+  const skillsArr = (Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean);
+  const reqsArr = (Array.isArray(job.requirements) ? job.requirements : (job.requirements || '').split('\n')).filter(Boolean);
+  const respArr = (Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || '').split('\n')).filter(Boolean);
+
+  return (
+    <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right duration-500">
+      {/* Header */}
+      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+        <div>
+          <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{job.title}</h2>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px] font-jakarta">{job.client || 'Engineering'}</span>
+            <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] font-jakarta">{job.type || 'Full-time'}</span>
+          </div>
+        </div>
+        <button onClick={onClose} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm">
+          <FiX size={20} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar font-jakarta">
+        {/* Job Snapshot Info Grid */}
+        <div className="px-8 py-8 space-y-8">
+          <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Location</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.location || 'Not Specified'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Salary Range</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.salary || 'Competitive'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.experience || 'Not Mentioned'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Openings</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.openings || 1} Position(s)</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Deadline</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.deadline ? new Date(job.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Deadline'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Priority</span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${job.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : job.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'}`}>
+                {job.priority || 'Medium'}
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-[#F4F3EF] text-left">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4 text-left">Required Skills</span>
+            <div className="flex flex-wrap gap-2 justify-start">
+              {skillsArr.length > 0 ? skillsArr.map((skill, i) => (
+                <span key={i} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">
+                  {skill.trim()}
+                </span>
+              )) : <span className="text-sm text-[#9B9BAD] italic text-left">No specific skills listed</span>}
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-[#F4F3EF] text-left">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Job Description</span>
+            <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium text-left">
+              {job.description || <span className="italic text-[#9B9BAD]">No description provided</span>}
+            </p>
+          </div>
+
+          <div className="pt-6 border-t border-[#F4F3EF] text-left">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3 text-left">Requirements</span>
+            {reqsArr.length > 0 ? (
+              <ul className="space-y-2.5 text-left">
+                {reqsArr.map((req, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0D47A1] mt-1.5 flex-shrink-0" />
+                    {req.trim()}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm italic text-[#9B9BAD] text-left">No specific requirements listed</p>
+            )}
+          </div>
+
+          <div className="pt-6 border-t border-[#F4F3EF] text-left">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3 text-left">Responsibilities</span>
+            {respArr.length > 0 ? (
+              <ul className="space-y-2.5 text-left">
+                {respArr.map((resp, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0D47A1] mt-1.5 flex-shrink-0" />
+                    {resp.trim()}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm italic text-[#9B9BAD] text-left">No specific responsibilities listed</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-6 flex items-center gap-4 z-20">
+        <button
+          onClick={onClose}
+          className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-bold text-sm hover:bg-[#E8E7E2] transition-all active:scale-[0.98]"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => { /* Prepare for edit logic */ }}
+          className="flex-[2] py-4 bg-[#0D47A1] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#0a3a82] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
+        >
+          <FiBriefcase size={18} />
+          Edit Position
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function ClientJobsTab() {
   const [positions, setPositions] = useState([]);
   const [candidates, setCandidates] = useState([]);
@@ -38,9 +168,11 @@ export default function ClientJobsTab() {
   const [expandedPosition, setExpandedPosition] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
+  const [selectedPositions, setSelectedPositions] = useState([]);
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showAddJob, setShowAddJob] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [clientId, setClientId] = useState(null);
   const [newJob, setNewJob] = useState({
@@ -56,11 +188,21 @@ export default function ClientJobsTab() {
       const token = localStorage.getItem('token');
       if (!token) return;
       const decoded = jwtDecode(token);
-      setClientId(decoded.id);  
+      setClientId(decoded.id);
       const res = await getClientDashboardOverview(decoded.id);
+
+      const mockJobs = [
+        { id: 'mock-1', title: 'HR Operations Team Leader', client: 'Zomato', location: 'JAIPUR', status: 'Open', priority: 'High', postedDate: '2026-04-07', candidateCount: 0, filled: 0, openings: 1, type: 'Full-time' },
+        { id: 'mock-2', title: 'Data Scientist - 19', client: 'Wipro', location: 'BANGALORE', status: 'Open', priority: 'Medium', postedDate: '2026-04-07', candidateCount: 4, filled: 0, openings: 5, type: 'Full-time' },
+        { id: 'mock-3', title: 'React Native Developer - 18', client: 'TCS', location: 'BANGALORE', status: 'Open', priority: 'Medium', postedDate: '2026-04-07', candidateCount: 7, filled: 0, openings: 3, type: 'Full-time' }
+      ];
+
       if (res?.success && res.data?.recruitment) {
-        setPositions(res.data.recruitment.positions || []);
+        const apiPositions = res.data.recruitment.positions || [];
+        setPositions(apiPositions.length > 0 ? apiPositions : mockJobs);
         setCandidates(res.data.recruitment.candidates || []);
+      } else {
+        setPositions(mockJobs);
       }
     } catch (err) {
       console.error('Failed to load jobs:', err);
@@ -80,12 +222,12 @@ export default function ClientJobsTab() {
         if (dateFilter === 'all') return true;
         const d = new Date(p.postedDate || p.createdAt);
         if (isNaN(d)) return true;
-        if (dateFilter === 'today') { const t = new Date(); t.setHours(0,0,0,0); return d >= t; }
-        if (dateFilter === 'week') { const s = new Date(now); s.setDate(s.getDate() - s.getDay()); s.setHours(0,0,0,0); return d >= s; }
+        if (dateFilter === 'today') { const t = new Date(); t.setHours(0, 0, 0, 0); return d >= t; }
+        if (dateFilter === 'week') { const s = new Date(now); s.setDate(s.getDate() - s.getDay()); s.setHours(0, 0, 0, 0); return d >= s; }
         if (dateFilter === 'month') { return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }
         if (dateFilter === 'prev-month') { const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1); const pe = new Date(now.getFullYear(), now.getMonth(), 0); return d >= pm && d <= pe; }
         if (dateFilter === 'quarter') { const qm = Math.floor(now.getMonth() / 3) * 3; return d >= new Date(now.getFullYear(), qm, 1) && d <= now; }
-        if (dateFilter === 'custom') { const s = customStartDate ? new Date(customStartDate) : null; const e = customEndDate ? new Date(customEndDate) : null; if (s && d < s) return false; if (e) { e.setHours(23,59,59); if (d > e) return false; } return true; }
+        if (dateFilter === 'custom') { const s = customStartDate ? new Date(customStartDate) : null; const e = customEndDate ? new Date(customEndDate) : null; if (s && d < s) return false; if (e) { e.setHours(23, 59, 59); if (d > e) return false; } return true; }
         return true;
       });
   }, [positions, filterStatus, searchQuery, dateFilter, customStartDate, customEndDate]);
@@ -140,12 +282,12 @@ export default function ClientJobsTab() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex flex-col items-start text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Job Positions</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Manage and track all your active recruitment requirements</p>
+          <p className="text-base font-medium text-[#94A3B8] mt-1">Manage and track all your active recruitment requirements</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowAddJob(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] hover:bg-[#153b7a] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-2xl text-xs font-bold hover:bg-[#0a3a82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
           >
             <FiPlus className="w-5 h-5" strokeWidth="3" />
             <span>Post New Job</span>
@@ -153,431 +295,449 @@ export default function ClientJobsTab() {
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white rounded-[24px] p-4 border border-[#E8E7E2] shadow-sm mb-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[240px] relative group">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" />
-            <input
-              type="text"
-              placeholder="Search by role, location or skills..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 text-sm bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] placeholder:text-[#9B9BAD] focus:outline-none focus:ring-2 focus:ring-blue-100 font-bold transition-all"
-            />
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <select
-                value={dateFilter}
-                onChange={e => setDateFilter(e.target.value)}
-                className="pl-10 pr-10 py-3 text-xs font-bold bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] appearance-none outline-none cursor-pointer hover:bg-[#E8E7E2] transition-all min-w-[140px]"
-              >
-                <option value="all">All Dates</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="prev-month">Previous Month</option>
-                <option value="quarter">This Quarter</option>
-                <option value="custom">Custom Range</option>
-              </select>
-              <FiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1B4DA0]" />
-              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B9BAD] pointer-events-none" />
-            </div>
-
-            <div className="relative">
-              <select
-                value={filterStatus}
-                onChange={e => setFilterStatus(e.target.value)}
-                className="pl-10 pr-10 py-3 text-xs font-bold bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] appearance-none outline-none cursor-pointer hover:bg-[#E8E7E2] transition-all min-w-[140px]"
-              >
-                <option value="all">All Statuses</option>
-                <option value="Open">Open</option>
-                <option value="Urgent">Urgent</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Closed">Closed</option>
-              </select>
-              <Target className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B9BAD] pointer-events-none" />
-            </div>
-
-            <button
-               onClick={fetchData}
-               className="p-3 bg-[#F4F3EF] text-[#1B4DA0] rounded-2xl hover:bg-[#E8E7E2] transition-all active:scale-95 shadow-sm"
-               title="Refresh Data"
-            >
-              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
+      {/* Modern Pill Filter Bar */}
+      <div className="bg-white rounded-full p-2 border border-[#E8E7E2] shadow-sm mb-8 flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        {/* Search Input */}
+        <div className="flex-1 relative group h-12">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <input
+            type="text"
+            placeholder="Search jobs, clients or location..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-full pl-14 pr-5 text-sm bg-[#F4F3EF] border-none rounded-2xl text-[#1A1A2E] placeholder:text-[#9B9BAD] focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all font-medium"
+          />
         </div>
 
-        {dateFilter === 'custom' && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="flex items-center gap-3 mt-4 pt-4 border-t border-[#F4F3EF]"
-          >
-            <div className="flex items-center gap-2">
-              <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">From</label>
-              <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="text-xs px-3 py-2 rounded-xl border border-[#E8E7E2] bg-[#FAFAF8] outline-none font-bold" />
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">To</label>
-              <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="text-xs px-3 py-2 rounded-xl border border-[#E8E7E2] bg-[#FAFAF8] outline-none font-bold" />
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        {[
-          { label: 'Total Positions', count: filteredPositions?.length || 0, icon: FiBriefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Active Open', count: filteredPositions?.filter(p => p.status === 'Open').length || 0, icon: FiZap, color: 'text-amber-500', bg: 'bg-amber-50' },
-          { label: 'Urgent Needs', count: filteredPositions?.filter(p => p.status === 'Urgent').length || 0, icon: FiAlertCircle, color: 'text-rose-500', bg: 'bg-rose-50' },
-          { label: 'Fulfilled', count: filteredPositions?.filter(p => p.status === 'Closed').length || 0, icon: FiCheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-        ].map((s, i) => (
-          <div key={i} className="bg-white rounded-[24px] border border-[#E8E7E2] p-6 shadow-sm group hover:shadow-md transition-all cursor-default relative overflow-hidden">
-            <div className={`absolute top-0 right-0 w-16 h-16 ${s.bg} rounded-full -mr-8 -mt-8 opacity-40 group-hover:scale-110 transition-transform duration-500`} />
-            <div className="relative z-10">
-              <div className={`w-10 h-10 rounded-xl ${s.bg} ${s.color} flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110`}>
-                <s.icon size={20} />
-              </div>
-              <p className="text-3xl font-extrabold text-[#1A1A2E] leading-none mb-1">{s.count}</p>
-              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{s.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Add Job Modal — exact KAM-style overlay */}
-      <AnimatePresence>
-        {showAddJob && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-8">
-            {/* Backdrop Blur Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAddJob(false)}
-              className="absolute inset-0 bg-slate-950/40 backdrop-blur-xl"
-            />
-
-            {/* Modal Content Card */}
-            <motion.div
-              key="client-job-modal"
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-[40px] w-full max-w-6xl max-h-[92vh] overflow-hidden shadow-[0_32px_128px_rgba(0,0,0,0.25)] relative z-10 flex flex-col animate-in zoom-in-95 duration-300 border border-white/20"
+        {/* Filters Group */}
+        <div className="flex items-center gap-2">
+          <div className="relative h-12">
+            <select
+              value={dateFilter}
+              onChange={e => setDateFilter(e.target.value)}
+              className="h-full pl-5 pr-10 text-[10px] font-bold bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] appearance-none outline-none cursor-pointer hover:bg-[#E8E7E2] transition-all min-w-[130px] uppercase tracking-wider"
             >
+              <option value="all">All Dates</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="prev-month">Previous Month</option>
+              <option value="quarter">This Quarter</option>
+              <option value="custom">Custom Range</option>
+            </select>
+            <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B9BAD] pointer-events-none" />
+          </div>
+
+          <div className="relative h-12">
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              className="h-full pl-5 pr-10 text-[10px] font-bold bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] appearance-none outline-none cursor-pointer hover:bg-[#E8E7E2] transition-all min-w-[130px] uppercase tracking-wider"
+            >
+              <option value="all">All Status</option>
+              <option value="Open">Open</option>
+              <option value="Urgent">Urgent</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Closed">Closed</option>
+            </select>
+            <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B9BAD] pointer-events-none" />
+          </div>
+        </div>
+      </div>
+
+      {dateFilter === 'custom' && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="flex items-center gap-3 mt-4 pt-4 border-t border-[#F4F3EF]"
+        >
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">From</label>
+            <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="text-xs px-3 py-2 rounded-xl border border-[#E8E7E2] bg-[#FAFAF8] outline-none font-bold" />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">To</label>
+            <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="text-xs px-3 py-2 rounded-xl border border-[#E8E7E2] bg-[#FAFAF8] outline-none font-bold" />
+          </div>
+        </motion.div>
+      )}
+
+
+
+
+      {/* Add Job Modal — expert-level portal rendering */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showAddJob && (
+            <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-8">
+              {/* Backdrop Blur Overlay */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowAddJob(false)}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+              />
+
+              {/* Modal Content Card */}
+              <motion.div
+                key="client-job-modal"
+                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white rounded-[44px] w-full max-w-2xl max-h-[92vh] overflow-hidden shadow-[0_32px_128px_rgba(0,0,0,0.25)] relative z-[2001] flex flex-col animate-in zoom-in-95 duration-300 border border-white/20"
+              >
               {/* Modal Header */}
-              <div className="sticky top-0 z-20 flex items-center justify-between px-10 py-8 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF]">
-                <div>
-                   <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                     Create New Position
-                   </h2>
-                   <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Client Portal</span>
-                      <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">New Request</span>
-                   </div>
+              <div className="sticky top-0 z-20 px-10 pt-10 pb-8 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF] text-center">
+                <div className="relative">
+                  <h2 className="text-3xl font-extrabold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    Create New Position
+                  </h2>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[4px] mt-2">
+                    JOB POSTING & RECRUITMENT
+                  </p>
+                  
+                  <button
+                    onClick={() => setShowAddJob(false)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-[#FAFAF8] text-[#1A1A2E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 group shadow-sm border border-[#F4F3EF]"
+                  >
+                    <FiX size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowAddJob(false)}
-                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#1A1A2E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95 group shadow-sm"
-                >
-                  <FiX size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-                </button>
               </div>
 
               {/* Scrollable Form Body */}
-              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                  {/* Column 1: Basic Information */}
-                  <div className="space-y-6">
-                    <h3 className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
-                      <Briefcase size={14} /> Basic Information
-                    </h3>
+              <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">
+                <div className="space-y-6">
+                  {/* Row 1: Job Title */}
+                  <div>
+                    <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Job Title *</label>
+                    <input type="text" value={newJob.title} onChange={e => setNewJob(f => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. Senior Software Engineer"
+                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/20"
+                    />
+                  </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Job Title *</label>
-                        <input type="text" value={newJob.title} onChange={e => setNewJob(f => ({ ...f, title: e.target.value }))}
-                          placeholder="e.g. Senior Software Engineer"
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] border border-transparent focus:border-[#1B4DA0]/20"
-                        />
+                  {/* Row 2: Role Type & Client/Company */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Role Type *</label>
+                      <div className="relative">
+                        <select value={newJob.roleType || ''} onChange={e => setNewJob(f => ({ ...f, roleType: e.target.value }))}
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
+                        >
+                          <option value="">Select Role Category</option>
+                          <option value="Engineering">Engineering</option>
+                          <option value="Design">Design</option>
+                          <option value="Marketing">Marketing</option>
+                          <option value="Sales">Sales</option>
+                          <option value="Operations">Operations</option>
+                          <option value="Finance">Finance</option>
+                          <option value="HR">HR</option>
+                          <option value="Product">Product</option>
+                          <option value="Data Science">Data Science</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
                       </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Role Type *</label>
-                        <div className="relative">
-                          <select value={newJob.roleType || ''} onChange={e => setNewJob(f => ({ ...f, roleType: e.target.value }))}
-                            className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] appearance-none pr-10"
-                          >
-                            <option value="">Select Role Category</option>
-                            <option value="Engineering">Engineering</option>
-                            <option value="Design">Design</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Sales">Sales</option>
-                            <option value="Operations">Operations</option>
-                            <option value="Finance">Finance</option>
-                            <option value="HR">HR</option>
-                            <option value="Product">Product</option>
-                            <option value="Data Science">Data Science</option>
-                            <option value="Other">Other</option>
-                          </select>
-                          <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Location</label>
-                        <input type="text" value={newJob.location} onChange={e => setNewJob(f => ({ ...f, location: e.target.value }))}
-                          placeholder="e.g. Bangalore, Remote"
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
-                        />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Client/Company *</label>
+                      <div className="relative">
+                        <select
+                          disabled={true} // As this is Client Portal, client is fixed
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all opacity-60 cursor-not-allowed appearance-none pr-10"
+                        >
+                          <option>Select Company</option>
+                        </select>
+                        <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Column 2: Job Details & Compensation */}
-                  <div className="space-y-6">
-                    <h3 className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
-                      <FileText size={14} /> Job Details
-                    </h3>
+                  {/* Row 3: Location */}
+                  <div>
+                    <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Location</label>
+                    <input type="text" value={newJob.location} onChange={e => setNewJob(f => ({ ...f, location: e.target.value }))}
+                      placeholder="e.g. Bangalore, Remote"
+                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
+                    />
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="col-span-1">
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Type</label>
+                  {/* Row 4: Type & Priority */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Type</label>
+                      <div className="relative">
                         <select value={newJob.type} onChange={e => setNewJob(f => ({ ...f, type: e.target.value }))}
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] appearance-none"
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
                         >
                           <option value="Full-time">Full-time</option>
                           <option value="Part-time">Part-time</option>
                           <option value="Contract">Contract</option>
                           <option value="Internship">Internship</option>
                         </select>
+                        <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
                       </div>
-                      <div className="col-span-1">
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Priority</label>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Priority</label>
+                      <div className="relative">
                         <select value={newJob.priority} onChange={e => setNewJob(f => ({ ...f, priority: e.target.value }))}
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] appearance-none"
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white appearance-none pr-10"
                         >
                           <option value="Low">Low</option>
                           <option value="Medium">Medium</option>
                           <option value="High">High</option>
                           <option value="Critical">Critical</option>
                         </select>
-                      </div>
-                      <div className="col-span-1">
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Salary</label>
-                        <input type="text" value={newJob.salary} onChange={e => setNewJob(f => ({ ...f, salary: e.target.value }))}
-                          placeholder="15-25 LPA"
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Experience</label>
-                        <input type="text" value={newJob.experience} onChange={e => setNewJob(f => ({ ...f, experience: e.target.value }))}
-                          placeholder="3-5 yrs"
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Openings</label>
-                        <input type="number" value={newJob.openings} onChange={e => setNewJob(f => ({ ...f, openings: e.target.value }))} min="1"
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF]"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Deadline</label>
-                        <div className="relative">
-                          <input type="date" value={newJob.deadline} onChange={e => setNewJob(f => ({ ...f, deadline: e.target.value }))}
-                            className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] cursor-pointer"
-                          />
-                          <Calendar size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
-                        </div>
+                        <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Column 3: Skills & Technical Requirements */}
-                  <div className="space-y-6">
-                    <h3 className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-4 flex items-center gap-2">
-                      <Target size={14} /> Skills & Detailed Info
-                    </h3>
-
+                  {/* Row 5: Salary & Experience */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Skills</label>
-                      <div className="w-full bg-[#FAFAF8] rounded-2xl px-4 py-3 flex flex-wrap items-center gap-2 min-h-[52px] transition-all focus-within:bg-[#F0F2FF] cursor-text"
-                        onClick={() => document.getElementById('client-skill-tag-input')?.focus()}>
-                        {newJob.skills.split(',').map(s => s.trim()).filter(Boolean).map((skill, idx) => (
-                          <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-[#E5E5EA] rounded-full px-3 py-1.5 text-xs font-bold text-[#1A1A2E] shadow-sm">
-                            {skill}
-                            <button type="button" onClick={(e) => { e.stopPropagation(); const updated = newJob.skills.split(',').map(s => s.trim()).filter(Boolean).filter((_, i) => i !== idx).join(', '); setNewJob(f => ({ ...f, skills: updated })); }}
-                              className="ml-0.5 text-[#9B9BAD] hover:text-red-500 transition-colors text-sm leading-none font-bold">&times;</button>
-                          </span>
-                        ))}
-                        <input id="client-skill-tag-input" type="text" value={clientSkillInput}
-                          onChange={e => setClientSkillInput(e.target.value)}
-                          onKeyDown={e => {
-                            if ((e.key === ' ' || e.key === 'Enter' || e.key === ',') && clientSkillInput.trim()) {
-                              e.preventDefault();
-                              const val = clientSkillInput.trim().replace(/,$/,'');
-                              if (val) {
-                                const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
-                                if (!existing.some(s => s.toLowerCase() === val.toLowerCase())) {
-                                  setNewJob(f => ({ ...f, skills: existing.length ? existing.join(', ') + ', ' + val : val }));
-                                }
-                              }
-                              setClientSkillInput('');
-                            } else if (e.key === 'Backspace' && !clientSkillInput) {
-                              const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
-                              if (existing.length) {
-                                setNewJob(f => ({ ...f, skills: existing.slice(0, -1).join(', ') }));
-                              }
-                            }
-                          }}
-                          placeholder={newJob.skills ? 'Add more...' : 'Type a skill & press space'}
-                          className="flex-1 min-w-[120px] bg-transparent border-0 outline-none text-sm font-bold text-[#1A1A2E] placeholder:text-[#9B9BAD]/50 py-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Requirements (one per line)</label>
-                        <textarea value={newJob.requirements} onChange={e => setNewJob(f => ({ ...f, requirements: e.target.value }))}
-                          rows={4}
-                          placeholder="Detailed requirements..."
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] resize-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Responsibilities (one per line)</label>
-                        <textarea value={newJob.responsibilities} onChange={e => setNewJob(f => ({ ...f, responsibilities: e.target.value }))}
-                          rows={4}
-                          placeholder="Key responsibilities..."
-                          className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] resize-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Short Description</label>
-                      <textarea value={newJob.description} onChange={e => setNewJob(f => ({ ...f, description: e.target.value }))}
-                        rows={3}
-                        placeholder="Describe the role..."
-                        className="w-full bg-[#FAFAF8] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#F0F2FF] resize-none"
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Salary Range</label>
+                      <input type="text" value={newJob.salary} onChange={e => setNewJob(f => ({ ...f, salary: e.target.value }))}
+                        placeholder="e.g. 15-25 LPA"
+                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
                       />
                     </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Experience</label>
+                      <input type="text" value={newJob.experience} onChange={e => setNewJob(f => ({ ...f, experience: e.target.value }))}
+                        placeholder="e.g. 3-5 Years"
+                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 6: Openings & Deadline */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">No. of Openings</label>
+                      <input type="number" value={newJob.openings} onChange={e => setNewJob(f => ({ ...f, openings: e.target.value }))} min="1"
+                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Deadline</label>
+                      <div className="relative">
+                        <input type="date" value={newJob.deadline} onChange={e => setNewJob(f => ({ ...f, deadline: e.target.value }))}
+                          className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white cursor-pointer"
+                        />
+                        <FiCalendar size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Skills Section */}
+                  <div>
+                    <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Required Skills</label>
+                    <div className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-4 py-3 flex flex-wrap items-center gap-2 min-h-[56px] transition-all focus-within:bg-white cursor-text"
+                      onClick={() => document.getElementById('client-skill-tag-input')?.focus()}>
+                      {newJob.skills.split(',').map(s => s.trim()).filter(Boolean).map((skill, idx) => (
+                        <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-[#E5E5EA] rounded-full px-3 py-1 text-xs font-bold text-[#1A1A2E] shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                          {skill}
+                          <button type="button" onClick={(e) => { e.stopPropagation(); const updated = newJob.skills.split(',').map(s => s.trim()).filter(Boolean).filter((_, i) => i !== idx).join(', '); setNewJob(f => ({ ...f, skills: updated })); }}
+                            className="ml-0.5 text-[#9B9BAD] hover:text-red-500 transition-colors text-sm leading-none font-bold">&times;</button>
+                        </span>
+                      ))}
+                      <input id="client-skill-tag-input" type="text" value={clientSkillInput}
+                        onChange={e => setClientSkillInput(e.target.value)}
+                        onKeyDown={e => {
+                          if ((e.key === ' ' || e.key === 'Enter' || e.key === ',') && clientSkillInput.trim()) {
+                            e.preventDefault();
+                            const val = clientSkillInput.trim().replace(/,$/, '');
+                            if (val) {
+                              const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
+                              if (!existing.some(s => s.toLowerCase() === val.toLowerCase())) {
+                                setNewJob(f => ({ ...f, skills: existing.length ? existing.join(', ') + ', ' + val : val }));
+                              }
+                            }
+                            setClientSkillInput('');
+                          } else if (e.key === 'Backspace' && !clientSkillInput) {
+                            const existing = newJob.skills.split(',').map(s => s.trim()).filter(Boolean);
+                            if (existing.length) {
+                              setNewJob(f => ({ ...f, skills: existing.slice(0, -1).join(', ') }));
+                            }
+                          }
+                        }}
+                        placeholder={newJob.skills ? 'Add more...' : 'Type a skill & press space'}
+                        className="flex-1 min-w-[120px] bg-transparent border-0 outline-none text-sm font-bold text-[#1A1A2E] placeholder:text-[#9B9BAD]/50 py-1"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Requirements & Responsibilities */}
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Requirements (one per line)</label>
+                      <textarea value={newJob.requirements} onChange={e => setNewJob(f => ({ ...f, requirements: e.target.value }))}
+                        rows={4}
+                        placeholder="Detailed requirements..."
+                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[24px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Responsibilities (one per line)</label>
+                      <textarea value={newJob.responsibilities} onChange={e => setNewJob(f => ({ ...f, responsibilities: e.target.value }))}
+                        rows={4}
+                        placeholder="Key responsibilities..."
+                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[24px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Short Description */}
+                  <div>
+                    <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Short Description</label>
+                    <textarea value={newJob.description} onChange={e => setNewJob(f => ({ ...f, description: e.target.value }))}
+                      rows={3}
+                      placeholder="Describe the role..."
+                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[24px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white resize-none"
+                    />
                   </div>
                 </div>
               </div>
 
               {/* Modal Footer Actions */}
               <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-8 flex items-center justify-end gap-4">
-                 <button 
-                   onClick={() => setShowAddJob(false)}
-                   className="px-8 py-4 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
-                 >
-                   Cancel
-                 </button>
-                 <button 
-                   onClick={handleAddJob}
-                   disabled={submitting || !newJob.title.trim()}
-                   className="px-10 py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl active:scale-95 disabled:opacity-50"
-                 >
-                   <FiPlus size={18} /> {submitting ? 'Creating...' : 'Create Position'}
-                 </button>
+                <button
+                  onClick={() => setShowAddJob(false)}
+                  className="px-8 py-4 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddJob}
+                  disabled={submitting || !newJob.title.trim()}
+                  className="px-10 py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl active:scale-95 disabled:opacity-50"
+                >
+                  <FiPlus size={18} /> {submitting ? 'Creating...' : 'Create Position'}
+                </button>
               </div>
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
-      {/* Positions List */}
-      <div className="bg-white rounded-[32px] p-6 border border-[#E8E7E2] shadow-sm">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold text-[#1A1A2E] flex items-center gap-2" style={{ fontFamily: "'Syne', sans-serif" }}>
-            <FiBriefcase className="w-5 h-5 text-amber-500" /> Positions ({filteredPositions.length})
-          </h2>
+      {/* Positions Table */}
+      <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+        {/* Table Header */}
+        <div className="grid grid-cols-[2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+          {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => (
+            <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start justify-start">
+              {h}
+            </div>
+          ))}
         </div>
 
         {filteredPositions.length === 0 ? (
-          <p className="text-sm text-center py-12 text-[#9B9BAD]">No positions found</p>
+          <div className="py-24 text-center">
+            <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No positions found</p>
+          </div>
         ) : (
-          <div className="space-y-3">
-            {filteredPositions.map(pos => {
-              const isExpanded = expandedPosition === pos.id;
-              const progress = pos.openings ? Math.round((pos.filled / pos.openings) * 100) : 0;
-              const posCandidates = (candidates || []).filter(c => c.position === pos.title);
+          <div className="divide-y divide-[#F4F3EF]">
+            {filteredPositions.map((pos) => (
+              <div
+                key={pos.id}
+                onClick={() => setSelectedJob(pos)}
+                className="grid grid-cols-[2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 items-center px-8 py-3 last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+              >
 
-              return (
-                <div key={pos.id} className="rounded-2xl border border-[#E8E7E2] bg-[#FAFAF8] overflow-hidden hover:shadow-sm transition-all">
-                  <button
-                    onClick={() => setExpandedPosition(isExpanded ? null : pos.id)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-[#F4F3EF] transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold text-[#1A1A2E] truncate">{pos.title}</span>
-                        <StatusBadge status={pos.status} />
-                        <PriorityBadge priority={pos.priority} />
-                      </div>
-                      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-[#9B9BAD] font-medium">
-                        {pos.location && <span className="flex items-center gap-1"><FiMapPin className="w-3 h-3" />{pos.location}</span>}
-                        <span>{pos.type}</span>
-                        <span>{pos.candidateCount} candidate{pos.candidateCount !== 1 ? 's' : ''}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-10">
-                        <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
-                          <path d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E8E7E2" strokeWidth="3" />
-                          <path d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1B4DA0" strokeWidth="3" strokeDasharray={`${progress}, 100`} strokeLinecap="round" />
-                        </svg>
-                        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-[#1A1A2E]">{pos.filled}/{pos.openings}</span>
-                      </div>
-                      {isExpanded ? <FiChevronUp className="w-4 h-4 text-[#9B9BAD]" /> : <FiChevronDown className="w-4 h-4 text-[#9B9BAD]" />}
-                    </div>
-                  </button>
-
-                  {isExpanded && (
-                    <div className="border-t border-[#E8E7E2] p-4">
-                      {posCandidates.length > 0 ? (
-                        <>
-                          <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-3">Candidates in Pipeline</p>
-                          <div className="space-y-2">
-                            {posCandidates.map(c => (
-                              <div key={c.id} className="flex items-center justify-between py-2 px-3 rounded-xl bg-white border border-[#E8E7E2]">
-                                <div className="flex items-center gap-2.5">
-                                  <div className="w-7 h-7 rounded-full bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-[10px] font-bold">
-                                    {c.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                  </div>
-                                  <span className="text-xs font-semibold text-[#1A1A2E]">{c.name}</span>
-                                </div>
-                                <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
-                                  {c.stage}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-xs text-center text-[#9B9BAD]">No candidates yet for this position</p>
-                      )}
-                    </div>
-                  )}
+                {/* Position Info */}
+                <div className="flex flex-col justify-center items-start min-w-0 py-1">
+                  <p className="text-[14px] font-bold text-[#0f172a] group-hover:text-[#0D47A1] transition-colors truncate text-left">
+                    {pos.title}
+                  </p>
+                  <div className="flex items-center justify-start gap-1.5 mt-0.5">
+                    <MapPin size={11} className="text-[#9B9BAD]" />
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest truncate text-left">{pos.location || 'Remote'}</span>
+                  </div>
                 </div>
-              );
-            })}
+
+                {/* Client */}
+                <div className="flex items-center justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
+                  {pos.client || 'Internal'}
+                </div>
+
+                {/* Status */}
+                <div className="flex items-center justify-start py-1">
+                  <StatusBadge status={pos.status} />
+                </div>
+
+                {/* Posted Date */}
+                <div className="flex items-center justify-start py-1">
+                  <span className="text-xs font-bold text-[#94a3b8]">
+                    {new Date(pos.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                </div>
+
+                {/* Applicants */}
+                <div className="flex items-center justify-start gap-2 py-1">
+                  <div className="w-7 h-7 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
+                    <Users size={12} />
+                  </div>
+                  <span className="text-[13px] font-black text-[#1A1A2E]">{pos.candidateCount || 0}</span>
+                </div>
+
+                {/* Assign To */}
+                <div className="flex items-center justify-start py-1">
+                  <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-wider">
+                    {pos.assignedToName || 'Not assignable'}
+                  </span>
+                </div>
+
+                {/* Chevron */}
+                <div className="flex justify-end">
+                  <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
+                    <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {/* Right Side Drawer for Job Details */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedJob && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedJob(null)}
+                className="fixed inset-0 bg-black/40 backdrop-blur-xl z-[999]"
+              />
+
+              {/* Sliding Panel */}
+              <motion.div
+                initial={{ x: '100%', opacity: 0.5 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: '100%', opacity: 0.5 }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed inset-y-0 right-0 w-[698px] bg-white shadow-2xl z-[1000] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+              >
+                <JobDetailSidebar
+                  job={selectedJob}
+                  onClose={() => setSelectedJob(null)}
+                />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

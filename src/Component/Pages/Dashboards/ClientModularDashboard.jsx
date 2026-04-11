@@ -343,41 +343,20 @@ const PremiumOverview = ({ clientData }) => {
       {/* Detached Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div className="flex flex-col items-start text-left">
-          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Welcome Back, {cName}!</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1 flex items-center gap-2">
-            <FiCalendar className="text-[#1B4DA0]" /> {dateStr}
+          <h2 className="text-3xl font-bold text-[#1E293B] mb-1" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Welcome, {cName}!</h2>
+          <p className="text-base font-medium text-[#64748b]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+            {dateStr}
           </p>
         </div>
         
         <div className="flex items-center gap-3">
           {/* Main Actions */}
           <div className="flex items-center gap-3">
-            <div className="relative" ref={filterPanelRef}>
-              <button
-                onClick={() => setShowFilterPanel(!showFilterPanel)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl border text-xs font-bold transition-all ${filterStatus !== 'All' ? 'bg-blue-50 border-[#1B4DA0]/30 text-[#1B4DA0]' : 'bg-white border-[#E8E7E2] text-[#1A1A2E] hover:bg-[#F4F3EF]'}`}
-              >
-                <Filter className="w-4 h-4" />
-                {filterStatus !== 'All' ? filterStatus : 'Filter Scope'}
-              </button>
-              {showFilterPanel && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-[#E8E7E2] rounded-[20px] shadow-xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
-                  {['All', 'Approved', 'Pending', 'Rejected'].map((s) => (
-                    <div
-                      key={s}
-                      onClick={() => { setFilterStatus(s); setShowFilterPanel(false); }}
-                      className={`px-5 py-2.5 hover:bg-[#F4F3EF] cursor-pointer text-xs font-bold ${filterStatus === s ? 'bg-blue-50 text-[#1B4DA0]' : 'text-[#6B6B7E]'}`}
-                    >
-                      {s} Registry
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+
             
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-6 py-3 bg-[#1A1A2E] text-white rounded-2xl text-xs font-bold shadow-lg shadow-gray-400/20 hover:bg-[#000] transition-all active:scale-95"
+              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-2xl text-xs font-bold hover:bg-[#0a3a82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
             >
               <Download size={16} /> Export Data
             </button>
@@ -390,24 +369,21 @@ const PremiumOverview = ({ clientData }) => {
         {kpiCards.map((kpi, i) => {
           const Icon = kpi.icon;
           return (
-            <div key={i} className="bg-white p-6 rounded-[24px] border border-[#E8E7E2] shadow-sm hover:shadow-md transition-all duration-300 group">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center bg-[#F4F3EF] ${kpi.color}`}>
-                  <Icon size={20} />
-                </div>
+            <div key={i} className="bg-white p-7 rounded-[28px] border border-[#F0F0F2] shadow-sm hover:shadow-md transition-all duration-300 group text-left h-[236px]">
+              {/* Icon Box */}
+              <div className="w-12 h-12 rounded-[16px] flex items-center justify-center bg-[#F0F7FF] text-[#1B4DA0] mb-6 transition-transform group-hover:scale-105 duration-300">
+                <Icon size={24} strokeWidth={2.2} />
               </div>
-              <p className="text-4xl font-extrabold text-[#1A1A2E] mb-1">{kpi.value}</p>
-              <p className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest mb-3">{kpi.label}</p>
-              <div className="flex items-center gap-1.5 mt-auto">
-                {kpi.up === true ? (
-                  <ArrowUpRight size={14} className="text-emerald-500" />
-                ) : kpi.up === false ? (
-                  <ArrowDownRight size={14} className="text-rose-500" />
-                ) : (
-                  <Minus size={14} className="text-[#C5C5D2]" />
-                )}
-                <span className={`text-[10px] font-bold ${kpi.up === null ? 'text-[#9B9BAD]' : 'text-emerald-500'}`}>{kpi.change}</span>
-              </div>
+              
+              {/* Label */}
+              <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[0.05em] mb-2">
+                {kpi.label}
+              </p>
+              
+              {/* Value */}
+              <h3 className="text-[32px] font-bold text-[#1E293B] leading-none tracking-tight">
+                {kpi.value}
+              </h3>
             </div>
           );
         })}
@@ -416,8 +392,8 @@ const PremiumOverview = ({ clientData }) => {
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Donut - Staff Applications */}
-        <div className="lg:col-span-4 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col items-center">
-          <div className="w-full flex items-center justify-between mb-8">
+        <div className="lg:col-span-4 bg-white rounded-[32px] p-6 border border-[#E8E7E2] shadow-sm flex flex-col items-center h-fit">
+          <div className="w-full flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Staff applications card</h2>
             <select
               value={staffDateFilter}
@@ -447,7 +423,7 @@ const PremiumOverview = ({ clientData }) => {
               <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">Total Volume</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-6 mt-8 w-full">
+          <div className="grid grid-cols-3 gap-6 mt-4 w-full">
             {applicationData.map((dd, i) => (
               <div key={i} className="flex flex-col items-center">
                 <div className="w-3 h-3 rounded-full" style={{ background: dd.color }} />
@@ -459,8 +435,8 @@ const PremiumOverview = ({ clientData }) => {
         </div>
 
         {/* Bar - Annual Recruitment Summary */}
-        <div className="lg:col-span-8 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
-          <div className="flex items-center justify-between mb-8">
+        <div className="lg:col-span-8 bg-white rounded-[32px] p-6 border border-[#E8E7E2] shadow-sm h-fit">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Recruitment pipeline</h2>
           </div>
           <div className="h-[300px] w-full">
@@ -739,7 +715,7 @@ const ClientModularDashboard = () => {
   const clientInitial = clientName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-[#FDFDFD] overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {mobileSidebarOpen && (
@@ -1043,102 +1019,10 @@ const ClientModularDashboard = () => {
 
       {/* ═══════ MAIN CONTENT AREA ═══════ */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="h-16 bg-white flex items-center justify-between px-6 shadow-sm border-b border-slate-100 sticky top-0 z-40">
-          {/* Left: Tab Title + Mobile Hamburger */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden h-9 w-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:text-[#3FA9F5] transition-all"
-              aria-label="Open menu"
-            >
-              <FiMenu className="w-5 h-5" />
-            </button>
-            <h2 className="text-[18px] font-semibold text-slate-800 tracking-tight leading-tight">{activeTab}</h2>
-          </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-3">
-            {/* Notifications */}
-            <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="h-9 w-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:text-[#3FA9F5] transition-all"
-              >
-                <FiBell className="w-5 h-5" />
-              </button>
-
-              <AnimatePresence>
-                {showNotifications && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
-                  >
-                    <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900">Notifications</h3>
-                    </div>
-                    <div className="p-8 text-center text-gray-500">
-                      <FiBell style={{ width: '32px', height: '32px', margin: '0 auto 8px', opacity: 0.5 }} />
-                      <p className="text-sm">No notifications yet</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Profile */}
-            <div className="relative" ref={profileRef}>
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-50 transition-all"
-              >
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-bold border-2 border-white shadow-sm">
-                  {clientInitial}
-                </div>
-              </button>
-
-              <AnimatePresence>
-                {showProfileMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
-                  >
-                    <div className="p-4 border-b border-gray-100">
-                      <p className="font-medium text-gray-900">{clientName}</p>
-                      <p className="text-sm text-gray-500">Client</p>
-                    </div>
-                    <div className="py-2">
-                      <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                        <FiUser style={{ width: '16px', height: '16px' }} />
-                        My Profile
-                      </button>
-                      <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                        <FiSettings style={{ width: '16px', height: '16px' }} />
-                        Settings
-                      </button>
-                    </div>
-                    <div className="border-t border-gray-100 py-2">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3"
-                      >
-                        <FiLogOut style={{ width: '16px', height: '16px' }} />
-                        Logout
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-gray-100 p-4 lg:p-6">
+        <main className="flex-1 overflow-auto bg-[#FDFDFD] p-4 lg:p-6">
           <Suspense fallback={<TabLoader />}>
             <PageTransition tabKey={activeTab}>
               {renderTabContent()}
