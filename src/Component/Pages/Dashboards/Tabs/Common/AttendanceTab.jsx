@@ -104,8 +104,8 @@ const AttendanceTab = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Attendance</h2>
-          <p className="text-gray-500 text-sm mt-1">Track your daily attendance</p>
+          <h2 className={`text-3xl font-bold tracking-tight mb-1 font-syne ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>Attendance</h2>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left" style={{ fontFamily: "'Calibri', sans-serif" }}>Track your daily attendance</p>
         </div>
       </div>
 

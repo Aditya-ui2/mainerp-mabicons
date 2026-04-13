@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { FiTrendingUp, FiCheckCircle, FiClock, FiAlertCircle, FiArrowRight, FiArrowLeft, FiEdit3, FiEye, FiDownload, FiBarChart2, FiTarget, FiFilter, FiCalendar, FiChevronDown, FiUser, FiActivity } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Search, ChevronRight } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 const BulkAssessmentView = ({ onBack, onComplete, isDarkMode, statCards }) => {
   const [stage, setStage] = useState('summary'); // summary, processing, success
@@ -216,6 +218,7 @@ const PerformanceTab = ({ isDarkMode, selectedClient }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('2025-Q4');
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     // Mock simulation
@@ -279,173 +282,162 @@ const PerformanceTab = ({ isDarkMode, selectedClient }) => {
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-12"
             >
-              <div className="flex items-center gap-4">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-xl shadow-blue-500/20">
-                  <FiTrendingUp className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-left">
-                  <h2 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] bg-clip-text text-transparent tracking-tight mb-1">
-                    Performance
-                  </h2>
-                  <div className="flex items-center gap-2 text-slate-600 font-bold">
-                    <FiCalendar className="w-4 h-4" />
-                    <span className="text-sm">
-                      {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} • {performanceData.length} Employee Growth Records
-                    </span>
-                  </div>
-                </div>
+              <div className="text-left">
+                <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  Performance
+                </h1>
+                <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left" style={{ fontFamily: "'Calibri', sans-serif" }}>
+                  {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} • <span className="text-[#0D47A1] font-bold">{performanceData.length}</span> Employee Growth Records
+                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-4">
-                <div className="relative">
-                  <select
-                    value={selectedPeriod}
-                    onChange={(e) => setSelectedPeriod(e.target.value)}
-                    className={`appearance-none rounded-2xl border-2 px-6 py-3.5 pr-12 font-bold cursor-pointer transition-all focus:ring-4 focus:ring-blue-500/10 outline-none w-40 ${isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-100 text-slate-700 shadow-sm'
-                      }`}
+                  <motion.button
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setView('bulk-assessment')}
+                    className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
+                    style={{ fontFamily: "'Calibri', sans-serif" }}
                   >
-                    <option value="2025-Q4">2025 Q4</option>
-                    <option value="2025-Q3">2025 Q3</option>
-                    <option value="Annual-2025">Annual Review 2025</option>
-                  </select>
-                  <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-slate-400" />
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setView('bulk-assessment')}
-                  className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-2xl font-black shadow-xl shadow-blue-500/30 transition-all uppercase tracking-widest text-xs"
-                >
-                  <FiBarChart2 className="w-5 h-5" />
-                  Performance Review
-                </motion.button>
+                    <FiBarChart2 size={18} />
+                    Performance Review
+                  </motion.button>
               </div>
             </motion.div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-              {statCards.map((stat, index) => (
-                <motion.div
-                  key={stat.key}
-                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20, delay: index * 0.1 }}
-                  onMouseEnter={() => setHoveredCard(stat.key)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 cursor-pointer border-2 ${isDarkMode
-                    ? 'bg-slate-800/80 border-slate-700/50 text-white'
-                    : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-white shadow-sm hover:shadow-xl'
-                    } ${hoveredCard === stat.key ? 'scale-[1.02] border-blue-200 dark:border-blue-800' : ''}`}
-                >
-                  <div className="relative text-left">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className={`text-[10px] font-extrabold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {stat.label}
-                      </p>
-                      <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg flex-shrink-0`}>
-                        <stat.icon className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <p className={`text-4xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-[#0D47A1]'}`}>
-                        {stat.value}
-                      </p>
-                      <div className="pb-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Growth</span>
-                      </div>
-                    </div>
+            {/* Modern Search Bar (Matched with Attendance Layout) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className={`rounded-[24px] p-2 border flex items-center gap-3 mb-8 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-[#F4F3EF] shadow-sm'}`}
+            >
+              <div className="relative flex-1 group">
+                <Search className={`absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors`} size={18} />
+                <input
+                  type="text"
+                  placeholder="Search by name or Employee ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] ${isDarkMode ? 'bg-slate-800 text-white focus:ring-2 focus:ring-slate-700' : 'bg-[#F4F3EF] text-[#1A1A2E] focus:ring-2 focus:ring-[#F4F3EF]'}`}
+                />
+              </div>
+            </motion.div>
 
-                    <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-white/50'}`}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: '65%' }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        className={`h-full bg-gradient-to-r ${stat.gradient}`}
-                      />
-                    </div>
+
+            {/* Modern Table Interface - Matched with Attendance */}
+            <div className={`rounded-[32px] border overflow-hidden transition-all ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-[#F4F3EF] shadow-sm'}`}>
+              
+              {/* Header Columns */}
+              <div className={`hidden md:grid grid-cols-[1.5fr_180px_180px_120px_250px_180px_40px] gap-8 px-10 py-4 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/20' : 'border-[#F4F3EF] bg-[#F8FAFF]/50'}`}>
+                {["Employee", "Department", "Review Date", "Score", "Growth Analysis", "Status", ""].map((h, i) => (
+                  <div key={i} className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">
+                    {h}
                   </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Employee Performance Row List */}
-            <div className="flex flex-col gap-4 pb-12 max-w-6xl mx-auto">
-              <AnimatePresence>
-                {performanceData.map((emp, index) => (
-                  <motion.div
-                    key={emp.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => { setSelectedEmployee(emp); setView('details'); }}
-                    className={`group relative overflow-hidden rounded-[2rem] border transition-all duration-300 cursor-pointer ${isDarkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-[#f8fbff] border-white shadow-sm hover:shadow-md'
-                      }`}
-                  >
-                    <div className="p-4 px-8 flex items-center justify-between gap-6">
-                      {/* Avatar and Identity */}
-                      <div className="flex items-center gap-6 min-w-[250px]">
-                        <div className={`w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center text-white font-black text-xl shadow-lg ring-2 ring-white dark:ring-slate-800`}>
-                          {emp.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="text-left">
-                          <h3 className="font-extrabold text-lg text-slate-900 dark:text-white leading-tight">{emp.name}</h3>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{emp.empId}</p>
-                        </div>
-                      </div>
-
-                      {/* Department / Category */}
-                      <div className="hidden md:block text-left min-w-[150px]">
-                        <p className="text-[11px] font-black text-slate-900 dark:text-slate-200 uppercase tracking-widest">
-                          {emp.department} DEPARTMENT
-                        </p>
-                      </div>
-
-                      {/* Reference Date */}
-                      <div className="hidden lg:flex items-center gap-3 text-left min-w-[180px]">
-                        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-500">
-                          <FiCalendar className="w-4 h-4" />
-                        </div>
-                        <div className="flex flex-col">
-                          <p className="text-[12px] font-black text-slate-800 dark:text-slate-200 leading-tight">
-                            {emp.lastReview}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Score Badge */}
-                      <div className="hidden sm:flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl px-4 py-2 shadow-sm border border-slate-100 dark:border-slate-700 min-w-[60px]">
-                        <span className="text-lg font-black text-slate-900 dark:text-white">
-                          {Math.round(emp.score / 10)}
-                        </span>
-                      </div>
-
-                      {/* Details / Reason */}
-                      <div className="hidden xl:block flex-1 text-left px-4">
-                        <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
-                          Professional Growth: {emp.position}
-                        </p>
-                      </div>
-
-                      {/* Status Pill Badge */}
-                      <div className="flex items-center gap-4">
-                        <div className={`px-5 py-2.5 rounded-full flex items-center gap-2.5 border ${emp.score >= 90
-                          ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/50'
-                          : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800/50'
-                          }`}>
-                          <div className={`w-2 h-2 rounded-full ${emp.score >= 90 ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500 animate-pulse'}`}></div>
-                          <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${emp.score >= 90 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                            {emp.score >= 90 ? 'EXCELLENT' : 'MET GOALS'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
                 ))}
-              </AnimatePresence>
+              </div>
+
+              <div className="flex flex-col">
+                <AnimatePresence mode="popLayout">
+                  {performanceData
+                    .filter(emp => 
+                      emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                      emp.empId.toLowerCase().includes(searchTerm.toLowerCase())
+                    ).length === 0 ? (
+                      <div className="py-24 text-center">
+                        <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest font-syne">No results matching your DNA scan</p>
+                      </div>
+                    ) : (
+                    performanceData
+                      .filter(emp => 
+                        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        emp.empId.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((emp, index) => (
+                        <motion.div
+                          key={emp.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ delay: index * 0.05 }}
+                          onClick={() => setSelectedEmployee(emp)}
+                          className={`grid grid-cols-[1fr] md:grid-cols-[1.5fr_180px_180px_120px_250px_180px_40px] gap-8 items-center px-10 py-6 border-b last:border-0 cursor-pointer transition-all group relative ${
+                            isDarkMode ? 'border-slate-800 hover:bg-slate-800/40' : 'border-[#F4F3EF] hover:bg-[#F8FAFF]'
+                          }`}
+                        >
+                          {/* Employee Identity */}
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="w-[42px] h-[42px] rounded-[14px] flex items-center justify-center font-bold shadow-sm transition-transform group-hover:scale-110 bg-[#F0F7FF]"
+                              style={{ color: '#1B4DA0', fontSize: '13px', fontFamily: "'Calibri', sans-serif" }}>
+                              {emp.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                                <p className={`text-[16px] font-bold truncate transition-colors ${isDarkMode ? 'text-white group-hover:text-blue-400' : 'text-[#1A1A2E] group-hover:text-[#0D47A1]'}`}>
+                                  {emp.name}
+                                </p>
+                                <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5">{emp.empId}</p>
+                            </div>
+                          </div>
+
+                          {/* Department */}
+                          <div className="hidden md:block">
+                            <p className={`text-[13px] font-bold uppercase tracking-tight ${isDarkMode ? 'text-slate-400' : 'text-[#1A1A2E]'}`}>
+                              {emp.department}
+                            </p>
+                          </div>
+
+                          {/* Last Review */}
+                          <div className="hidden md:flex items-center gap-2">
+                             <div className="p-2 rounded-lg bg-blue-50/50 text-[#0D47A1]">
+                               <FiCalendar size={14} />
+                             </div>
+                             <span className={`text-[13px] font-bold ${isDarkMode ? 'text-slate-300' : 'text-[#1A1A2E]'}`}>
+                               {emp.lastReview}
+                             </span>
+                          </div>
+
+                          {/* Score Badge */}
+                          <div className="hidden md:flex justify-start">
+                            <div className="w-10 h-10 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[15px] font-black text-[#0D47A1] shadow-sm">
+                              {Math.round(emp.score / 10)}
+                            </div>
+                          </div>
+
+                          {/* Growth Preview */}
+                          <div className="hidden md:block">
+                            <p className="text-[12px] font-medium text-[#9B9BAD] truncate italic max-w-[200px]">
+                              "Growth Analysis: {emp.position}"
+                            </p>
+                          </div>
+
+                          {/* Status Pill */}
+                          <div className="flex items-center">
+                            <div className={`px-5 py-2 rounded-full flex items-center gap-2 border shadow-sm ${
+                              emp.score >= 90
+                                ? 'bg-emerald-50 border-emerald-100/50 text-emerald-700'
+                                : 'bg-amber-50 border-amber-100/50 text-amber-700'
+                            }`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${emp.score >= 90 ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
+                              <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                                {emp.score >= 90 ? 'EXCELLENT' : 'MET GOALS'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Arrow Right */}
+                          <div className="flex justify-end pr-2">
+                             <ChevronRight size={20} className={`transition-all ${isDarkMode ? 'text-slate-700 group-hover:text-blue-400' : 'text-[#C5C5D2] group-hover:text-[#0D47A1]'}`} />
+                          </div>
+                        </motion.div>
+                      )
+                    )
+                  )
+                }
+                </AnimatePresence>
+              </div>
             </div>
           </motion.div>
-        ) : view === 'bulk-assessment' ? (
+        ) : (
           <BulkAssessmentView
             key="bulk-assessment-view"
             onBack={() => setView('list')}
@@ -453,16 +445,23 @@ const PerformanceTab = ({ isDarkMode, selectedClient }) => {
             isDarkMode={isDarkMode}
             statCards={statCards}
           />
-        ) : (
-          <EmployeePerformanceDetailView
-            key="performance-detail"
-            employee={selectedEmployee}
-            onBack={() => { setSelectedEmployee(null); setView('list'); }}
-            isDarkMode={isDarkMode}
-            getAvatarColor={getAvatarColor}
-          />
         )}
       </AnimatePresence>
+
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedEmployee && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedEmployee(null)} className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]" />
+              <motion.div initial={{ x: '100%', opacity: 0.5 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '100%', opacity: 0.5 }} transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className={`fixed inset-y-0 right-0 w-full sm:w-[600px] md:w-[750px] shadow-2xl z-[110] border-l flex flex-col overflow-hidden ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-[#F4F3EF]'}`}>
+                <EmployeePerformanceDetailView employee={selectedEmployee} onBack={() => setSelectedEmployee(null)} isDarkMode={isDarkMode} getAvatarColor={getAvatarColor} />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };
@@ -471,97 +470,87 @@ const EmployeePerformanceDetailView = ({ employee, onBack, isDarkMode, getAvatar
   if (!employee) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 50, transition: { duration: 0.2 } }}
-      className={`w-full ${isDarkMode ? 'text-white' : 'text-slate-800'}`}
-    >
-      {/* Banner Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-[#1E88E5] to-[#0D47A1] p-10 lg:p-12 relative overflow-hidden rounded-[3rem] mb-10">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] opacity-10 bg-white/20 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
-        <div className="flex items-center gap-6 relative z-10">
-          <button
-            onClick={onBack}
-            className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/10"
-          >
-            <FiArrowLeft className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-5">
-            <div className={`p-4 bg-white/15 rounded-2xl border border-white/20 shadow-inner rotate-3`}>
-              <FiUser className="w-8 h-8 text-white" />
-            </div>
-            <div className="flex flex-col text-left">
-              <h2 className="text-3xl font-black text-white tracking-tight uppercase">{employee.name}</h2>
-              <p className="text-blue-100/70 font-semibold text-xs uppercase tracking-[0.2em] mt-1 italic">Growth Analytics & KPI Matrix</p>
-            </div>
+    <div className={`flex flex-col h-full ${isDarkMode ? 'text-white bg-slate-900' : 'text-slate-800 bg-white'}`} style={{ fontFamily: "'Calibri', sans-serif" }}>
+      {/* Drawer Header */}
+      <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
+        <div className="flex flex-col gap-1 text-left">
+          <h2 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+            {employee.name}
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black text-[#0D47A1] uppercase tracking-[3px]">{employee.empId}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#F4F3EF]" />
+            <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Growth Analytics</span>
           </div>
         </div>
+        <button onClick={onBack} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm">
+          <FiArrowRight size={20} />
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
-        {/* Profile Card */}
-        <div className={`p-8 rounded-[3rem] border-2 shadow-xl flex flex-col items-center text-center space-y-6 ${isDarkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-100'
-          }`}>
-          <div className="relative group">
-            <div className={`w-32 h-32 rounded-[2.5rem] bg-gradient-to-br ${getAvatarColor(employee.name)} flex items-center justify-center text-white text-5xl font-black shadow-2xl ring-4 ring-white transition-transform group-hover:rotate-6`}>
-              {employee.name.charAt(0).toUpperCase()}
-            </div>
-            <div className="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-emerald-500 text-white shadow-lg ring-4 ring-white">
-              <FiTrendingUp className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-2xl font-black tracking-tight uppercase">{employee.name}</h3>
-            <p className="text-blue-500 font-bold tracking-widest text-xs uppercase">{employee.empId}</p>
-          </div>
-
-          <div className="w-full pt-8 space-y-5 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex justify-between items-center text-sm font-bold">
-              <span className="text-slate-400 uppercase tracking-widest text-[10px]">Department</span>
-              <span className="uppercase">{employee.department}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm font-bold">
-              <span className="text-slate-400 uppercase tracking-widest text-[10px]">Position</span>
-              <span className="uppercase">{employee.position}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm font-bold">
-              <span className="text-slate-400 uppercase tracking-widest text-[10px]">Email</span>
-              <span className="text-xs">{employee.email}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Metrics Grid */}
-        <div className="lg:col-span-2 space-y-8">
-          <div className={`p-8 rounded-[3rem] border-2 shadow-xl space-y-8 ${isDarkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-100'
-            }`}>
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-              <h4 className="text-lg font-black uppercase tracking-tight flex items-center gap-3">
-                <FiActivity className="text-blue-500" />
-                KPI Performance DNA
-              </h4>
-              <span className="px-5 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full text-xs font-black uppercase">Level: Senior</span>
-            </div>
-
-            <div className="space-y-8">
-              {[
-                { label: 'Technical Proficiency', val: 94, color: 'from-blue-400 to-blue-600' },
-                { label: 'Team Collaboration', val: 88, color: 'from-emerald-400 to-emerald-600' },
-                { label: 'Leadership Qualities', val: 75, color: 'from-amber-400 to-amber-600' },
-              ].map(kpi => (
-                <div key={kpi.label} className="space-y-3">
-                  <div className="flex justify-between text-xs font-black uppercase tracking-widest">
-                    <span>{kpi.label}</span>
-                    <span className="text-blue-600 font-mono">{kpi.val}%</span>
+      <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+        <div className="space-y-10">
+          {/* Hero Section */}
+          <div className="bg-gradient-to-r from-[#0D47A1] to-[#1E88E5] p-10 rounded-[40px] relative overflow-hidden shadow-xl shadow-blue-500/10">
+             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+             <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                <div className="relative">
+                  <div className={`w-32 h-32 rounded-[2.5rem] bg-indigo-500 overflow-hidden shadow-2xl ring-4 ring-white/20 flex items-center justify-center text-white text-5xl font-black`}>
+                    {employee.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-800 p-0.5 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${kpi.val}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      className={`h-full rounded-full bg-gradient-to-r ${kpi.color}`}
+                  <div className="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-white text-[#0D47A1] shadow-lg">
+                    <FiActivity size={24} />
+                  </div>
+                </div>
+                <div className="text-left text-white">
+                   <h3 className="text-3xl font-bold tracking-tight mb-2 uppercase" style={{ fontFamily: "'Syne', sans-serif" }}>{employee.position}</h3>
+                   <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-xs font-black uppercase tracking-widest inline-block mb-4">
+                     {employee.department} DEPARTMENT
+                   </div>
+                   <p className="text-blue-100/70 text-sm font-medium italic opacity-80 leading-relaxed max-w-sm">
+                     "Demonstrating consistent growth and technical proficiency within the mabicons ecosystem."
+                   </p>
+                </div>
+             </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="p-8 rounded-[32px] bg-[#F4F3EF]/50 border border-[#F4F3EF] text-left">
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mb-2">Cycle Status</p>
+                <div className="flex items-center gap-3">
+                   <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                   <p className="text-2xl font-black text-[#1A1A2E] tracking-tight uppercase">Excellent</p>
+                </div>
+             </div>
+             <div className="p-8 rounded-[32px] bg-[#F4F3EF]/50 border border-[#F4F3EF] text-left">
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mb-2">Growth Score</p>
+                <p className="text-4xl font-black text-[#0D47A1] tracking-tighter">
+                   {Math.round(employee.score / 10)}<span className="text-lg text-[#9B9BAD]">/10</span>
+                </p>
+             </div>
+          </div>
+
+          {/* Metrics Section */}
+          <div className="space-y-6">
+            <h4 className="text-[11px] font-black text-[#0D47A1] uppercase tracking-[4px] text-left px-1">KPI Analysis DNA</h4>
+            <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm p-8 space-y-8">
+              {[
+                { label: 'Technical DNA', val: 94, color: 'bg-[#0D47A1]' },
+                { label: 'Growth Velocity', val: 88, color: 'bg-[#1E88E5]' },
+                { label: 'Professional Integrity', val: 75, color: 'bg-[#3FA9F5]' },
+              ].map(kpi => (
+                <div key={kpi.label} className="space-y-4">
+                  <div className="flex justify-between items-end px-1">
+                    <span className="text-sm font-bold text-[#1A1A2E] uppercase tracking-tight">{kpi.label}</span>
+                    <span className="text-lg font-black text-[#0D47A1] font-mono">{kpi.val}%</span>
+                  </div>
+                  <div className="h-4 rounded-full bg-[#F4F3EF] p-1 overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }} 
+                      animate={{ width: `${kpi.val}%` }} 
+                      transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+                      className={`h-full rounded-full ${kpi.color} shadow-lg shadow-blue-500/10`} 
                     />
                   </div>
                 </div>
@@ -569,21 +558,14 @@ const EmployeePerformanceDetailView = ({ employee, onBack, isDarkMode, getAvatar
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className={`p-8 rounded-[2.5rem] border-2 shadow-lg transition-transform hover:-translate-y-1 ${isDarkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-gradient-to-br from-emerald-50 to-teal-50 border-white'
-              }`}>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Cycle Status</p>
-              <p className="text-2xl font-black text-emerald-600 uppercase">Excellent</p>
-            </div>
-            <div className={`p-8 rounded-[2.5rem] border-2 shadow-lg transition-transform hover:-translate-y-1 ${isDarkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-white'
-              }`}>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Growth Potential</p>
-              <p className="text-2xl font-black text-blue-600 uppercase">High Pro</p>
-            </div>
+          {/* Action Footer */}
+          <div className="pt-10 flex gap-4">
+            <button className="flex-1 py-5 rounded-[24px] bg-[#F4F3EF] text-[#6B6B7E] text-sm font-bold hover:bg-[#EAEAE8] transition-all">Download Report</button>
+            <button onClick={onBack} className="flex-1 py-5 rounded-[24px] bg-[#0D47A1] text-white text-sm font-bold shadow-xl shadow-blue-500/20 hover:bg-[#0a3a82] transition-all">Close Performance Review</button>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

@@ -43,7 +43,7 @@ const AdminLayout = ({
   userInfo = { name: 'Admin', role: 'Administrator' },
   notifications = [],
   onNotificationClick,
-  showGlobalHeader = true,
+  showGlobalHeader = false,
   headerActions = null,
   showSearch = true,
   isLoading = false,

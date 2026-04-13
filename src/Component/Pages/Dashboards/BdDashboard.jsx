@@ -1495,26 +1495,7 @@ function BdDashboard() {
 
       <main className="flex-1 ml-64 p-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <Typography variant="h4" className="text-gray-800 font-bold">
-              {activeSidebarItem}
-            </Typography>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white w-64 transition-all duration-200"
-                />
-                <div className="absolute left-3 top-2.5 text-gray-400">
-                  <FiSearch className="h-5 w-5" />
-                </div>
-              </div>
-              <button className="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors duration-200">
-                <FiBell className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
+
 
           {activeSidebarItem === "Dashboard" && (
             <DashboardView />

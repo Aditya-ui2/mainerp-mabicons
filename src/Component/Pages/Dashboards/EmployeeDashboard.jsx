@@ -182,54 +182,7 @@ const Dashboard = () => {
 
         <main className="relative z-10 flex-1 p-5 md:p-6">
           <div className="max-w-[1600px] mx-auto">
-            <div className="mb-5 flex items-center justify-between gap-4 border-b border-[#e8e4f3] pb-4">
-              <div className="relative flex-1 max-w-3xl">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full rounded-xl border border-[#e4dfef] bg-[#f2eff8] py-3 pl-10 pr-4 text-base leading-none text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-200"
-                />
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              </div>
 
-              <div className="flex items-center gap-2 md:gap-3 text-slate-600 relative">
-                <button
-                  onClick={() => setShowNotifications((prev) => !prev)}
-                  className="relative rounded-full p-2 hover:bg-white/60"
-                >
-                  <FiBell className="h-5 w-5" />
-                  {!!notifications.find((item) => item.status === 'unread') && (
-                    <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-500" />
-                  )}
-                </button>
-                <button className="rounded-full p-2 hover:bg-white/60">
-                  <FiBell className="h-5 w-5" />
-                </button>
-                <button className="rounded-full p-2 hover:bg-white/60">
-                  <FiSettings className="h-5 w-5" />
-                </button>
-                <div className="h-11 w-11 rounded-full bg-violet-400 text-white flex items-center justify-center font-bold text-sm">
-                  p
-                </div>
-
-                {showNotifications && (
-                  <div className="absolute top-14 right-0 w-80 rounded-xl border border-slate-200 bg-white shadow-xl p-4 z-20">
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Notifications</h3>
-                    <div className="max-h-64 overflow-auto space-y-2">
-                      {notifications.length ? (
-                        notifications.slice(0, 6).map((item) => (
-                          <div key={item._id} className="rounded-lg bg-slate-50 p-2">
-                            <p className="text-xs text-slate-700">{item.message}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-slate-500">No notifications yet</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {activeTab === 'Dashboard' && renderDashboardState()}
             {activeTab === 'My Tasks' && <TaskTab isDarkMode={false} />}

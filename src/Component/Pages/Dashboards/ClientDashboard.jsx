@@ -218,32 +218,7 @@ const Dashboard = () => {
 
         <main className="relative z-10 flex-1 p-5 md:p-6">
           <div className="max-w-[1600px] mx-auto">
-            <div className="mb-5 flex items-center justify-between gap-4 border-b border-[#e8e4f3] pb-4">
-              <div className="relative flex-1 max-w-3xl">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full rounded-xl border border-[#e4dfef] bg-[#f2eff8] py-3 pl-10 pr-4 text-base leading-none text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-200"
-                />
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              </div>
 
-              <div className="flex items-center gap-2 md:gap-3 text-slate-600">
-                <button
-                  onClick={() => setIsDarkMode((prev) => !prev)}
-                  className="rounded-full p-2 hover:bg-white/60"
-                >
-                  <FiMoon className="h-5 w-5" />
-                </button>
-                <button className="rounded-full p-2 hover:bg-white/60">
-                  <FiBell className="h-5 w-5" />
-                </button>
-                <button className="rounded-full p-2 hover:bg-white/60">
-                  <FiSettings className="h-5 w-5" />
-                </button>
-                <div className="h-11 w-11 rounded-full bg-violet-400 text-white flex items-center justify-center font-bold text-sm">CL</div>
-              </div>
-            </div>
 
             {activeTab === 'Dashboard' && renderDashboard()}
             {activeTab === 'Clients' && <CustomersTab isDarkMode={isDarkMode} />}
