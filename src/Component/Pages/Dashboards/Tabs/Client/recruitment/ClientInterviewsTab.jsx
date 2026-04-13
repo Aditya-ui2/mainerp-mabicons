@@ -115,51 +115,55 @@ export default function ClientInterviewsTab() {
                   <div className="h-[1px] bg-[#F4F3EF] flex-1" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="flex flex-col gap-3">
                   {items.map((iv, i) => (
                     <motion.div
-                      whileHover={{ y: -4 }}
+                      whileHover={{ x: 4, backgroundColor: '#FAFAFA' }}
                       key={i}
-                      className="bg-white rounded-[24px] border border-[#F4F3EF] p-6 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group"
+                      className="bg-white rounded-[20px] border border-[#F4F3EF] p-4 shadow-sm transition-all relative overflow-hidden group flex items-center justify-between gap-6"
                     >
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 opacity-50 group-hover:scale-110 transition-transform duration-700" />
-                      
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest ${isToday ? 'bg-blue-50 text-[#1B4DA0]' : 'bg-[#F4F3EF] text-[#9B9BAD]'}`}>
+                      {/* Left: Candidate Info */}
+                      <div className="flex items-center gap-5 flex-1 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] font-black text-sm shadow-inner transition-transform group-hover:scale-105">
+                          {iv.candidateName ? iv.candidateName.split(' ').map(n=>n[0]).join('').slice(0, 2) : <FiUser />}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-base font-bold text-[#1A1A2E] truncate font-jakarta group-hover:text-[#1B4DA0] transition-colors">{iv.candidateName}</h4>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-[11px] font-semibold text-[#9B9BAD] truncate uppercase tracking-wider">{iv.positionTitle || 'Requirement Mapping'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Middle: Stats / Type */}
+                      <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Interview Type</span>
+                          <div className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-blue-50 text-[#1B4DA0] whitespace-nowrap">
                             {iv.interviewType || 'Video Call'}
                           </div>
-                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-800">
-                             <FiClock size={12} className="text-blue-500" /> {iv.startTime || 'TBA'}
+                        </div>
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Scheduled Time</span>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                             <FiClock size={14} className="text-blue-500" /> {iv.startTime || 'TBA'}
                           </div>
                         </div>
+                      </div>
 
-                        <div className="flex items-center gap-4 mb-5">
-                          <div className="w-12 h-12 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] font-bold text-sm">
-                            {iv.candidateName ? iv.candidateName.split(' ').map(n=>n[0]).join('') : <FiUser />}
-                          </div>
-                          <div className="min-w-0">
-                            <h4 className="text-base font-bold text-[#1A1A2E] truncate font-jakarta group-hover:text-[#1B4DA0] transition-colors">{iv.candidateName}</h4>
-                            <p className="text-[11px] font-medium text-[#9B9BAD] truncate mt-0.5">{iv.positionTitle || 'Requirement Mapping'}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-4 border-t border-[#F4F3EF]">
-                          <button className="flex-1 py-2.5 bg-[#F4F3EF] hover:bg-slate-100 rounded-xl text-[10px] font-bold uppercase tracking-widest text-[#1A1A2E] transition-all flex items-center justify-center gap-2">
-                             Details
-                             <FiChevronRight />
-                          </button>
-                          {iv.meetingLink && (
-                            <a 
-                              href={iv.meetingLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-10 h-10 bg-[#1B4DA0] hover:bg-[#153e82] rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 transition-all active:scale-95"
-                            >
-                               <FiVideo size={16} />
-                            </a>
-                          )}
-                        </div>
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-3 shrink-0">
+                         {iv.meetingLink && (
+                          <a 
+                            href={iv.meetingLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-12 h-12 bg-[#1B4DA0] hover:bg-[#153e82] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-500/10 transition-all active:scale-95 group/btn"
+                            title="Join Meeting"
+                          >
+                             <FiVideo size={20} className="group-hover/btn:scale-110 transition-transform" />
+                          </a>
+                        )}
                       </div>
                     </motion.div>
                   ))}

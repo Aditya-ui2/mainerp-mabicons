@@ -3287,16 +3287,58 @@ export const getClientRecruitmentProgress = async (clientId) => {
   }
 };
 
-export const getClientDashboardOverview = async (clientId) => {
+export const getClientDashboardOverview = async (clientId, timeRange = 'all') => {
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.get(`/client/dashboard-overview/${clientId}`, {
+      params: { timeRange },
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return response.data;
   } catch (error) {
     console.error('Error fetching client dashboard overview:', error);
     throw error.response?.data || { message: 'Failed to fetch dashboard overview' };
+  }
+};
+
+export const getClientAttendance = async (clientId, month) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get(`/client/attendance/${clientId}`, {
+      params: { month },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client attendance:', error);
+    throw error.response?.data || { message: 'Failed to fetch attendance data' };
+  }
+};
+
+export const getClientPayroll = async (clientId, month) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get(`/client/payroll/${clientId}`, {
+      params: { month },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client payroll:', error);
+    throw error.response?.data || { message: 'Failed to fetch payroll data' };
+  }
+};
+
+export const getClientMasterData = async (clientId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get(`/client/master-data/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client master data:', error);
+    throw error.response?.data || { message: 'Failed to fetch master data' };
   }
 };
 

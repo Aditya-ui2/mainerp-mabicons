@@ -21,6 +21,8 @@ import {
   FiUserCheck,
   FiCalendar,
   FiCheckCircle,
+  FiPlus,
+  FiExternalLink,
 } from 'react-icons/fi';
 import {
   ArrowUpRight,
@@ -77,11 +79,11 @@ const MOCK_DASHBOARD = {
     { name: 'Rejected', value: 40, color: '#f43f5e' },
   ],
   annualSummaryData: [
-    { name: '30 Sep', applicants: 400, interviews: 240, offers: 100 },
-    { name: '10 Oct', applicants: 300, interviews: 139, offers: 150 },
-    { name: '20 Oct', applicants: 200, interviews: 480, offers: 180 },
-    { name: '30 Oct', applicants: 500, interviews: 390, offers: 250 },
-    { name: '10 Nov', applicants: 450, interviews: 430, offers: 220 },
+    { name: 'Screening', count: 40, color: '#f59e0b' },
+    { name: 'Phone', count: 30, color: '#f43f5e' },
+    { name: 'Technical', count: 20, color: '#8b5cf6' },
+    { name: 'Final Rounds', count: 50, color: '#1B4DA0' },
+    { name: 'Hired', count: 45, color: '#10b981' },
   ],
   totalAcquisitionData: [
     { name: '30 Sep', value: 2000000 },
@@ -125,7 +127,7 @@ const TableItem = ({ name, date, status }) => (
 );
 
 /* ── Premium Overview Dashboard ──────────────────────── */
-const PremiumOverview = ({ clientData }) => {
+const PremiumOverview = ({ clientData, setActiveTab }) => {
   const [dashData, setDashData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -189,7 +191,7 @@ const PremiumOverview = ({ clientData }) => {
           return;
         }
 
-        const res = await getClientDashboardOverview(decoded.id);
+        const res = await getClientDashboardOverview(decoded.id, staffDateFilter);
         if (res?.success && res.data && typeof res.data === 'object') {
           const rd = res.data;
           const recruitment = rd.recruitment || {};
@@ -233,13 +235,13 @@ const PremiumOverview = ({ clientData }) => {
               : 'Pending',
           }));
 
-          // ── Bar chart: build from real monthly data if available, else summary ──
+          // ── Bar chart: current candidate pipeline snapshot ──
           const annualSummary = [
-            { name: 'Screening', applicants: funnel.screening || 0, interviews: funnel.phoneInterview || 0, offers: funnel.offerSent || 0 },
-            { name: 'Phone', applicants: funnel.phoneInterview || 0, interviews: funnel.technical || 0, offers: funnel.hrRound || 0 },
-            { name: 'Technical', applicants: funnel.technical || 0, interviews: funnel.hrRound || 0, offers: funnel.clientInterview || 0 },
-            { name: 'HR/Client', applicants: funnel.hrRound || 0, interviews: funnel.clientInterview || 0, offers: funnel.offerSent || 0 },
-            { name: 'Final', applicants: funnel.clientInterview || 0, interviews: funnel.offerSent || 0, offers: funnel.joined || 0 },
+            { name: 'Screening', count: funnel.screening || 0, color: '#f59e0b' },
+            { name: 'Phone', count: funnel.phoneInterview || 0, color: '#f43f5e' },
+            { name: 'Technical', count: funnel.technical || 0, color: '#8b5cf6' },
+            { name: 'Final Rounds', count: (funnel.hrRound || 0) + (funnel.clientInterview || 0), color: '#1B4DA0' },
+            { name: 'Hired', count: funnel.joined || 0, color: '#10b981' },
           ];
 
           // ── Area chart: task progress over time ──
@@ -249,6 +251,7 @@ const PremiumOverview = ({ clientData }) => {
           const wipTasks = taskSummary.wip || 0;
 
           const acquisitionData = [
+            { name: 'Requested', value: taskSummary.requested || 0 },
             { name: 'Active', value: activeTasks },
             { name: 'In Progress', value: wipTasks },
             { name: 'Review', value: taskSummary.review || 0 },
@@ -278,8 +281,8 @@ const PremiumOverview = ({ clientData }) => {
             ],
             annualSummaryData: annualSummary,
             totalAcquisitionData: acquisitionData,
-            recentApplicants: recentApplicants.length > 0 ? recentApplicants : MOCK_DASHBOARD.recentApplicants,
-            jobProgress: jobProg.length > 0 ? jobProg : MOCK_DASHBOARD.jobProgress,
+            recentApplicants: recentApplicants,
+            jobProgress: jobProg,
             // Pass extra real data for display
             _real: {
               totalTasks,
@@ -299,7 +302,7 @@ const PremiumOverview = ({ clientData }) => {
       }
     };
     load();
-  }, []);
+  }, [staffDateFilter]);
 
   if (loading) {
     return (
@@ -441,15 +444,20 @@ const PremiumOverview = ({ clientData }) => {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={annualSummaryData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <BarChart data={annualSummaryData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 600 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 600 }} />
-                <Tooltip cursor={{ fill: '#F4F3EF' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Legend verticalAlign="bottom" align="left" iconType="circle" wrapperStyle={{ paddingTop: '30px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }} />
-                <Bar dataKey="applicants" name="Applicants" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar dataKey="interviews" name="Interviews" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar dataKey="offers" name="Offers" fill="#1B4DA0" radius={[4, 4, 0, 0]} barSize={20} />
+                <Tooltip 
+                  cursor={{ fill: '#F4F3EF' }} 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  formatter={(value) => [value, 'Candidates']}
+                />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={45}>
+                  {annualSummaryData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -474,50 +482,108 @@ const PremiumOverview = ({ clientData }) => {
               </div>
             </div>
           </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={totalAcquisitionData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 600 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 600 }} />
-                <Tooltip cursor={{ fill: '#F4F3EF' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Bar dataKey="value" name="Tasks" fill="#8b5cf6" radius={[8, 8, 0, 0]} barSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-[300px] w-full relative">
+            {totalTaskValue === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-100 p-6 text-center">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                  <FiClipboard className="text-slate-300" size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">No Task Activity Found</h3>
+                <p className="text-sm text-slate-500 mt-1 mb-6 max-w-[280px]">
+                  You haven't requested or been assigned any tasks for the selected period.
+                </p>
+                <button 
+                  onClick={() => setActiveTab('Assign Task to KAM')}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#8b5cf6] text-white rounded-xl font-bold text-sm hover:bg-[#7c4dff] transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                >
+                  <FiPlus size={16} /> Create New Task
+                </button>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={totalAcquisitionData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 700 }} 
+                    dy={12}
+                    interval={0}
+                  />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 600 }} />
+                  <Tooltip 
+                    cursor={{ fill: '#F4F3EF' }} 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  />
+                  <Bar dataKey="value" name="Tasks" fill="#8b5cf6" radius={[8, 8, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
         {/* Table - Recent Applicants */}
-        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
+        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Recent Applicants</h2>
+            <button 
+              onClick={() => setActiveTab('Candidates')}
+              className="text-sm font-bold text-[#3FA9F5] hover:text-[#2d8cd3] transition-colors flex items-center gap-1"
+            >
+              View All <FiExternalLink size={14} />
+            </button>
           </div>
-          <div className="space-y-1">
-            <div className="grid grid-cols-4 gap-4 pb-4 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] border-b border-[#F4F3EF]">
-              <div className="col-span-2">Candidate</div>
-              <div>Date</div>
-              <div>Status</div>
+          <div className="space-y-1 flex-1">
+            <div className="grid grid-cols-4 gap-4 px-2 mb-2">
+              <p className="col-span-2 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Candidate</p>
+              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Date</p>
+              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider text-right">Status</p>
             </div>
-            {filteredApplicants.map((item, i) => (
-              <TableItem key={i} name={item.name} date={item.date} status={item.status} />
-            ))}
+            {filteredApplicants.length > 0 ? (
+              filteredApplicants.map((app, idx) => (
+                <TableItem key={idx} {...app} />
+              ))
+            ) : (
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                  <FiUsers className="text-slate-300" size={24} />
+                </div>
+                <p className="text-sm font-medium text-slate-400">No recent applicants found</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Table - Job Progress */}
-        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
+        {/* Table - Job Progress History */}
+        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Job Progress History</h2>
+            <button 
+              onClick={() => setActiveTab('Job Positions')}
+              className="text-sm font-bold text-[#3FA9F5] hover:text-[#2d8cd3] transition-colors flex items-center gap-1"
+            >
+              View All <FiExternalLink size={14} />
+            </button>
           </div>
-          <div className="space-y-1">
-            <div className="grid grid-cols-4 gap-4 pb-4 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] border-b border-[#F4F3EF]">
-              <div className="col-span-2">Position</div>
-              <div>Applicants</div>
-              <div>Status</div>
+          <div className="space-y-1 flex-1">
+            <div className="grid grid-cols-4 gap-4 px-2 mb-2">
+              <p className="col-span-2 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Position</p>
+              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Applicants</p>
+              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider text-right">Status</p>
             </div>
-            {filteredJobs.map((item, i) => (
-              <TableItem key={i} name={item.name} date={item.date} status={item.status} />
-            ))}
+            {filteredJobs.length > 0 ? (
+              filteredJobs.map((job, idx) => (
+                <TableItem key={idx} {...job} />
+              ))
+            ) : (
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                  <FiBriefcase className="text-slate-300" size={24} />
+                </div>
+                <p className="text-sm font-medium text-slate-400">No job progress recorded</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -695,7 +761,7 @@ const ClientModularDashboard = () => {
   const renderTabContent = () => {
     const tabProps = { isDarkMode, clientData };
     switch (activeTab) {
-      case 'Dashboard Overview':        return <PremiumOverview clientData={clientData} />;
+      case 'Dashboard Overview':        return <PremiumOverview clientData={clientData} setActiveTab={setActiveTab} />;
       case 'Attendance Share / Review': return <ClientAttendanceTab {...tabProps} />;
       case 'Payroll':                   return <ClientPayrollTab {...tabProps} />;
       case 'Policy & Documents':        return <ClientPolicyTab {...tabProps} />;

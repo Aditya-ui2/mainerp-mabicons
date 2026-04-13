@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiBriefcase,
@@ -10,7 +11,12 @@ import {
   FiChevronUp,
   FiMapPin,
   FiRefreshCw,
+  FiX,
+  FiDownload,
+  FiMail,
+  FiPhone,
 } from 'react-icons/fi';
+import { FaRupeeSign } from 'react-icons/fa';
 import {
   Briefcase,
   Users as LuUsers,
@@ -81,6 +87,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
   const datePickerRef = useRef(null);
 
   // Close date picker on outside click
@@ -133,10 +140,11 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token');
-      const decoded = jwtDecode(token);
-      const res = await getClientDashboardOverview(decoded.id);
+      // Use the clientId passed via props or from localStorage if user is a client
+      const cid = clientData?.id;
+      if (!cid) throw new Error('Client ID not found');
+      
+      const res = await getClientDashboardOverview(cid, datePreset);
       if (res?.success && res.data?.recruitment) {
         const r = res.data.recruitment;
         setData({
@@ -173,7 +181,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [datePreset, clientData?.id]);
 
   if (loading) {
     return (
@@ -252,8 +260,8 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
   const kpiCards = [
     { label: 'Open Positions', value: computedSummary.openPositions, change: `${computedSummary.totalPositions} total`, up: computedSummary.openPositions > 0, icon: Briefcase },
     { label: 'Candidates', value: computedSummary.inPipeline, change: `${computedSummary.totalCandidates} total`, up: computedSummary.inPipeline > 0 ? true : null, icon: LuUsers },
-    { label: 'Interviews', value: computedSummary.scheduledInterviews, change: `${computedSummary.totalInterviews} total`, up: computedSummary.scheduledInterviews > 0, icon: LuTarget },
-    { label: 'Hired', value: computedSummary.hired, change: `${computedSummary.totalCandidates} total`, up: computedSummary.hired > 0, icon: UserCheck },
+    { label: 'Interviews', value: computedSummary.scheduledInterviews || 0, change: `${computedSummary.totalInterviews || 0} total`, up: (computedSummary.scheduledInterviews || 0) > 0, icon: LuTarget },
+    { label: 'Hired', value: computedSummary.hired || 0, change: `${computedSummary.totalCandidates || 0} total`, up: (computedSummary.hired || 0) > 0, icon: UserCheck },
   ];
 
   return (
@@ -368,8 +376,8 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
           return (
             <div key={i} className="bg-white p-6 rounded-[24px] border border-[#E8E7E2] shadow-sm hover:shadow-md transition-all duration-300 group">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 rounded-[14px] flex items-center justify-center bg-[#F4F3EF] text-black group-hover:text-[#5B9DF0] transition-colors duration-300">
-                  <Icon size={20} />
+                <div className="text-black group-hover:text-[#5B9DF0] transition-colors duration-300">
+                  <Icon size={24} strokeWidth={2.5} />
                 </div>
               </div>
               <p className="text-4xl font-extrabold text-[#1A1A2E] mb-1">{kpi.value}</p>
@@ -391,6 +399,18 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
 
       {/* Candidates Pie Chart */}
       {(() => {
+        const CustomTooltip = ({ active, payload }) => {
+          if (active && payload && payload.length) {
+            return (
+              <div className="bg-white p-3 rounded-xl border border-[#E8E7E2] shadow-xl">
+                <p className="text-xs font-bold text-[#1A1A2E] mb-1">{payload[0].name}</p>
+                <p className="text-sm font-extrabold text-[#1B4DA0]">{payload[0].value} candidates</p>
+              </div>
+            );
+          }
+          return null;
+        };
+
         const pieColors = ['#cbd5e1', '#fde68a', '#fcd34d', '#fdba74', '#fbbf24', '#c4b5fd', '#93c5fd'];
         const chartData = funnelStages
           .map((stage, i) => ({
@@ -403,56 +423,59 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
         const totalCandidates = chartData.reduce((sum, d) => sum + d.value, 0);
 
         return (
-          <div className="bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-2" style={{ fontFamily: "'Syne', sans-serif" }}>
-                <FiUsers className="w-5 h-5 text-[#1B4DA0]" /> Candidates
-              </h2>
-              <span className="text-sm font-semibold text-[#9B9BAD]">{totalCandidates} total</span>
-            </div>
-            {totalCandidates === 0 ? (
-              <div className="flex flex-col items-center justify-center h-[280px]">
-                <FiUsers className="w-10 h-10 text-[#E8E7E2] mb-3" />
-                <p className="text-sm text-[#9B9BAD]">No candidates in pipeline</p>
+          <div className="bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col items-start">
+            <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3 mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
+              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                <FiUsers className="w-5 h-5 text-[#1B4DA0]" />
               </div>
-            ) : (
-              <div className="h-[320px] w-full">
+              Candidates
+            </h2>
+            <div className="flex flex-col xl:flex-row items-center xl:items-start gap-12 w-full">
+              <div className="relative w-[280px] h-[280px] flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={chartData}
                       cx="50%"
-                      cy="45%"
-                      innerRadius={70}
-                      outerRadius={120}
-                      paddingAngle={3}
+                      cy="50%"
+                      innerRadius={85}
+                      outerRadius={110}
+                      paddingAngle={5}
                       dataKey="value"
-                      stroke="none"
                     >
                       {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                        <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #E8E7E2', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '13px', fontWeight: 600, padding: '8px 14px' }}
-                      formatter={(value, name) => [`${value} candidates`, name]}
-                    />
-                    <Legend
-                      verticalAlign="bottom"
-                      align="center"
-                      iconType="circle"
-                      iconSize={8}
-                      wrapperStyle={{ fontSize: '12px', fontWeight: 600, color: '#6B6B7E' }}
-                    />
+                    <Tooltip content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-4xl font-extrabold text-[#1A1A2E] leading-none mb-1">{totalCandidates}</span>
+                  <span className="text-[10px] font-bold text-[#9B9BAD] tracking-widest uppercase">Total</span>
+                </div>
               </div>
-            )}
-            {computedFunnel.rejected > 0 && (
-              <p className="text-xs mt-2 text-[#9B9BAD] text-center">
-                <span className="text-red-500 font-bold">{computedFunnel.rejected}</span> candidate{computedFunnel.rejected > 1 ? 's' : ''} rejected
-              </p>
-            )}
+
+              <div className="grid grid-cols-2 lg:grid-cols-1 gap-x-8 gap-y-4 flex-1">
+                {chartData.map((entry, i) => (
+                  <div key={i} className="flex items-center justify-between group cursor-pointer w-full max-w-[240px]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.fill }} />
+                      <span className="text-sm font-semibold text-[#1A1A2E]">{entry.name}</span>
+                    </div>
+                    <span className="text-sm font-bold text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors">{entry.value}</span>
+                  </div>
+                ))}
+                {computedFunnel.rejected > 0 && (
+                  <div className="col-span-2 lg:col-span-1 pt-4 mt-4 border-t border-[#F4F3EF] flex items-center gap-2">
+                    <FiUsers className="w-3.5 h-3.5 text-red-400" />
+                    <p className="text-xs text-[#9B9BAD]">
+                      <span className="text-red-500 font-bold">{computedFunnel.rejected}</span> rejected candidates
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         );
       })()}
@@ -462,8 +485,11 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
         {/* Positions List */}
         <div className="lg:col-span-8 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-2" style={{ fontFamily: "'Syne', sans-serif" }}>
-              <FiBriefcase className="w-5 h-5 text-amber-500" /> Positions ({filteredPositions.length})
+            <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3" style={{ fontFamily: "'Syne', sans-serif" }}>
+              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                <FiBriefcase className="w-5 h-5 text-amber-500" />
+              </div>
+              <span>Positions ({filteredPositions.length})</span>
             </h2>
             <select
               value={filterStatus}
@@ -472,8 +498,6 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
             >
               <option value="all">All Statuses</option>
               <option value="Open">Open</option>
-              <option value="Urgent">Urgent</option>
-              <option value="In Progress">In Progress</option>
               <option value="Closed">Closed</option>
             </select>
           </div>
@@ -523,7 +547,11 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
                         <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-3">Candidates in Pipeline</p>
                         <div className="space-y-2">
                           {posCandidates.map(c => (
-                            <div key={c.id} className="flex items-center justify-between py-2 px-3 rounded-xl bg-white border border-[#E8E7E2]">
+                            <div 
+                              key={c.id} 
+                              onClick={(e) => { e.stopPropagation(); setSelectedCandidate(c); }}
+                              className="flex items-center justify-between py-2 px-3 rounded-xl bg-white border border-[#E8E7E2] cursor-pointer hover:border-[#1B4DA0] transition-all"
+                            >
                               <div className="flex items-center gap-2.5">
                                 <div className="w-7 h-7 rounded-full bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-[10px] font-bold">
                                   {c.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -553,8 +581,11 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
 
         {/* Upcoming Interviews */}
         <div className="lg:col-span-4 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
-          <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-2 mb-6" style={{ fontFamily: "'Syne', sans-serif" }}>
-            <FiCalendar className="w-5 h-5 text-[#1B4DA0]" /> Upcoming Interviews
+          <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3 mb-6" style={{ fontFamily: "'Syne', sans-serif" }}>
+            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <FiCalendar className="w-5 h-5 text-[#1B4DA0]" />
+            </div>
+            Upcoming Interviews
           </h2>
           {(!dateFilteredInterviews || dateFilteredInterviews.length === 0) ? (
             <div className="text-center py-12">
@@ -570,7 +601,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
                 const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
                 return (
-                  <div key={i} className="flex items-start gap-3 p-3.5 rounded-2xl border border-[#E8E7E2] bg-[#FAFAF8] hover:shadow-sm transition-all">
+                  <div key={i} className="flex items-center gap-4 p-3.5 rounded-2xl border border-[#E8E7E2] bg-[#FAFAF8] hover:shadow-sm transition-all group">
                     <div
                       className={`flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center ${isToday ? 'text-white shadow-lg shadow-blue-500/20' : 'bg-[#F4F3EF] text-[#1A1A2E]'}`}
                       style={isToday ? { background: '#1B4DA0' } : {}}
@@ -600,19 +631,30 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
       {/* All Candidates Table */}
       {dateFilteredCandidates.length > 0 && (
         <div className="bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
-          <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-2 mb-6" style={{ fontFamily: "'Syne', sans-serif" }}>
-            <FiUsers className="w-5 h-5 text-[#1B4DA0]" /> All Candidates ({dateFilteredCandidates.length})
+          <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3 mb-6" style={{ fontFamily: "'Syne', sans-serif" }}>
+            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <FiUsers className="w-5 h-5 text-[#1B4DA0]" />
+            </div>
+            All Candidates ({dateFilteredCandidates.length})
           </h2>
           <div className="overflow-x-auto">
             <div className="space-y-1">
-              <div className="grid grid-cols-4 gap-4 pb-4 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] border-b border-[#F4F3EF]">
-                <div>Candidate</div>
+              <div 
+                className="grid gap-4 pb-4 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] border-b border-[#F4F3EF]"
+                style={{ gridTemplateColumns: '240px 180px 160px 1fr' }}
+              >
+                <div style={{ paddingLeft: '44px' }}>Candidate</div>
                 <div>Position</div>
                 <div>Stage</div>
                 <div>Last Updated</div>
               </div>
               {dateFilteredCandidates.slice(0, 20).map(c => (
-                <div key={c.id} className="grid grid-cols-4 gap-4 py-3.5 border-b border-[#F4F3EF] last:border-0 hover:bg-[#FAFAF8] transition-colors px-2 rounded-lg cursor-pointer">
+                <div 
+                  key={c.id} 
+                  onClick={() => setSelectedCandidate(c)}
+                  className="grid gap-4 py-3.5 border-b border-[#F4F3EF] last:border-0 hover:bg-[#FAFAF8] transition-colors px-2 rounded-lg cursor-pointer"
+                  style={{ gridTemplateColumns: '240px 180px 160px 1fr' }}
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xs font-bold">
                       {c.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -636,6 +678,117 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
             )}
           </div>
         </div>
+      )}
+      {/* Candidate Detail Sidebar */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedCandidate && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedCandidate(null)}
+                className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[2000]"
+              />
+
+              {/* Sidebar */}
+              <motion.div
+                initial={{ x: '100%', opacity: 0.5 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: '100%', opacity: 0.5 }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed inset-y-0 right-0 w-full max-w-[580px] bg-white shadow-2xl z-[2001] flex flex-col overflow-hidden text-left"
+              >
+                {/* Header */}
+                <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xl font-black shadow-inner">
+                      {selectedCandidate.name?.split(' ').map(n=>n[0]).join('').slice(0,2) || '??'}
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">{selectedCandidate.name}</h2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest ${STAGE_CONFIG[Object.keys(STAGE_CONFIG).find(k => STAGE_CONFIG[k].label === selectedCandidate.stage)]?.bg || 'bg-slate-100 text-slate-600'}`}>
+                          {selectedCandidate.stage}
+                        </span>
+                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">• {selectedCandidate.position || selectedCandidate.position?.title || 'Unknown Position'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedCandidate(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar space-y-10">
+                  {/* Professional Summary */}
+                  <div className="pt-0">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience</span>
+                        <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
+                          <FiClock className="text-[#1B4DA0]" /> {selectedCandidate.experience ? (selectedCandidate.experience.toString().toLowerCase().includes('year') ? selectedCandidate.experience : `${selectedCandidate.experience} Years`) : 'Not Specified'}
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Location</span>
+                        <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
+                          <FiMapPin className="text-[#1B4DA0]" /> {selectedCandidate.location || 'Remote / Not Specified'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Skills Section */}
+                  <div className="pt-8 border-t border-[#F4F3EF]">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4">Core Skills</span>
+                    <div className="flex flex-wrap gap-2">
+                      {Array.isArray(selectedCandidate.skills) && selectedCandidate.skills.length > 0 ? (
+                        selectedCandidate.skills.map((skill, idx) => (
+                          <span key={idx} className="px-3 py-1.5 bg-[#F4F3EF] rounded-lg text-xs font-bold text-[#1A1A2E] border border-[#E8E7E2]">
+                            {skill}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-xs text-[#9B9BAD] italic font-bold">No specific skills listed</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Compensation */}
+                  <div className="grid grid-cols-2 gap-8 pt-8 border-t border-[#F4F3EF]">
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Current Salary</span>
+                      <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2 text-emerald-600">
+                        <FaRupeeSign size={12} /> {selectedCandidate.currentSalary ? (selectedCandidate.currentSalary.toString().toLowerCase().includes('lpa') ? selectedCandidate.currentSalary : `${selectedCandidate.currentSalary} LPA`) : 'Competitive'}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Expected Salary</span>
+                      <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2 text-blue-600">
+                        <FaRupeeSign size={12} /> {selectedCandidate.expectedSalary ? (selectedCandidate.expectedSalary.toString().toLowerCase().includes('lpa') ? selectedCandidate.expectedSalary : `${selectedCandidate.expectedSalary} LPA`) : 'Negotiable'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF9]">
+                  <button 
+                    onClick={() => setSelectedCandidate(null)}
+                    className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl shadow-gray-200"
+                  >
+                    Close Profile
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

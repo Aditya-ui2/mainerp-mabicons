@@ -66,11 +66,14 @@ const JobDetailSidebar = ({ job, onClose }) => {
             </div>
             <div className="space-y-1.5">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Salary Range</span>
-              <p className="text-sm font-bold text-[#1A1A2E]">{job.salary || 'Competitive'}</p>
+              <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-1.5">
+                <span className="text-[#9B9BAD]">₹</span>
+                {job.salary ? (job.salary.toString().toLowerCase().includes('lpa') ? job.salary : `${job.salary} LPA`) : 'Competitive'}
+              </p>
             </div>
             <div className="space-y-1.5">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience</span>
-              <p className="text-sm font-bold text-[#1A1A2E]">{job.experience || 'Not Mentioned'}</p>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.experience ? (job.experience.toString().toLowerCase().includes('year') ? job.experience : `${job.experience} Years`) : 'Not Mentioned'}</p>
             </div>
             <div className="space-y-1.5">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Openings</span>
@@ -191,18 +194,11 @@ export default function ClientJobsTab() {
       setClientId(decoded.id);
       const res = await getClientDashboardOverview(decoded.id);
 
-      const mockJobs = [
-        { id: 'mock-1', title: 'HR Operations Team Leader', client: 'Zomato', location: 'JAIPUR', status: 'Open', priority: 'High', postedDate: '2026-04-07', candidateCount: 0, filled: 0, openings: 1, type: 'Full-time' },
-        { id: 'mock-2', title: 'Data Scientist - 19', client: 'Wipro', location: 'BANGALORE', status: 'Open', priority: 'Medium', postedDate: '2026-04-07', candidateCount: 4, filled: 0, openings: 5, type: 'Full-time' },
-        { id: 'mock-3', title: 'React Native Developer - 18', client: 'TCS', location: 'BANGALORE', status: 'Open', priority: 'Medium', postedDate: '2026-04-07', candidateCount: 7, filled: 0, openings: 3, type: 'Full-time' }
-      ];
-
       if (res?.success && res.data?.recruitment) {
-        const apiPositions = res.data.recruitment.positions || [];
-        setPositions(apiPositions.length > 0 ? apiPositions : mockJobs);
+        setPositions(res.data.recruitment.positions || []);
         setCandidates(res.data.recruitment.candidates || []);
       } else {
-        setPositions(mockJobs);
+        setPositions([]);
       }
     } catch (err) {
       console.error('Failed to load jobs:', err);
@@ -336,8 +332,6 @@ export default function ClientJobsTab() {
             >
               <option value="all">All Status</option>
               <option value="Open">Open</option>
-              <option value="Urgent">Urgent</option>
-              <option value="In Progress">In Progress</option>
               <option value="Closed">Closed</option>
             </select>
             <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B9BAD] pointer-events-none" />
