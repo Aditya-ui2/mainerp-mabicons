@@ -20,6 +20,8 @@ import {
   FiMessageSquare,
   FiClipboard,
   FiEdit3,
+  FiRefreshCw,
+  FiShield,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -46,6 +48,8 @@ const MyTasksTab = lazy(() => import('./Tabs/Common/MyTasksTab'));
 const MyProfileTab = lazy(() => import('./Tabs/Common/MyProfileTab'));
 const DailyReportTab = lazy(() => import('./Tabs/Common/DailyReportTab'));
 const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
+const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
+const DocumentVerifyTab = lazy(() => import('./Tabs/KAM/DocumentVerifyTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -68,21 +72,34 @@ const TabLoader = () => (
 );
 
 // Sidebar Configuration for KAM Member
-const sidebarConfig = [
-  {
-    items: [
-      { id: 1, title: 'My Tasks', icon: FiCheckSquare },
-      { id: 2, title: 'Daily Report', icon: FiFileText },
-      { id: 4, title: 'Job Openings', icon: FiBriefcase },
-      { id: 5, title: 'Candidate Pipeline', icon: FiUserPlus },
-      { id: 6, title: 'Interview Schedule', icon: FiCalendar },
-      { id: 8, title: 'Offer Management', icon: FiAward },
-      { id: 9, title: 'Resume Bank', icon: FiDatabase },
-      { id: 10, title: 'Activity Feed', icon: FiActivity },
-      { id: 11, title: 'My Profile', icon: FiUsers },
-    ],
-  },
-];
+const getSidebarConfig = (name = '') => {
+  const isSpecialKAM = name.toLowerCase().includes('manju') || 
+                       name.toLowerCase().includes('jyoti') || 
+                       name.toLowerCase().includes('priyanshi');
+
+  const items = [
+    { id: 1, title: 'My Tasks', icon: FiCheckSquare },
+    { id: 2, title: 'Daily Report', icon: FiFileText },
+    { id: 4, title: 'Job Openings', icon: FiBriefcase },
+    { id: 5, title: 'Candidate Pipeline', icon: FiUserPlus },
+    { id: 6, title: 'Interview Schedule', icon: FiCalendar },
+    { id: 8, title: 'Offer Management', icon: FiAward },
+    { id: 9, title: 'Resume Bank', icon: FiDatabase },
+    { id: 10, title: 'Activity Feed', icon: FiActivity },
+    { id: 11, title: 'My Profile', icon: FiUsers },
+    { id: 12, title: 'Document Verification', icon: FiShield },
+  ];
+
+  if (isSpecialKAM) {
+    items.push({ id: 18, title: 'Work Handover', icon: FiRefreshCw });
+  }
+
+  return [
+    {
+      items: items,
+    },
+  ];
+};
 
 
 // Main KAM Member Dashboard Component
@@ -413,6 +430,10 @@ const KAMMemberDashboard = () => {
               return <ActivityFeedTab department="HR Recruitment" />;
             case 'My Profile':
               return <MyProfileTab />;
+            case 'Work Handover':
+              return <WorkHandoverTab />;
+            case 'Document Verification':
+              return <DocumentVerifyTab isDarkMode={false} />;
             default:
               // Dashboard
               return (
@@ -673,7 +694,7 @@ const KAMMemberDashboard = () => {
 
   return (
     <AdminLayout
-      sidebarItems={sidebarConfig}
+      sidebarItems={getSidebarConfig(userInfo.name)}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
       dashboardTitle="KAM Recruitment"

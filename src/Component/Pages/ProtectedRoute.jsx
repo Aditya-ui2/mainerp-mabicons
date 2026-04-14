@@ -33,6 +33,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
           return <Navigate to="/bd-dashboard" />;
         case 'crm':
           return <Navigate to="/crm-dashboard" />;
+        case 'candidate':
+          return <Navigate to="/candidate-dashboard" />;
         default:
           return <Navigate to="/login" />;
       }

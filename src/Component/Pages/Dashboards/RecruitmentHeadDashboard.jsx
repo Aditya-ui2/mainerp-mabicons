@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy, useRef } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FiBriefcase,
@@ -39,10 +39,12 @@ import {
   FiStar,
   FiExternalLink,
   FiArrowRight,
+  FiShield,
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import AdminLayout, { StatCard } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
+import { jwtDecode } from 'jwt-decode';
 import { getLocalISODate } from '../Utilities/dateUtils';
 import {
   getAllNotifications,
@@ -60,8 +62,9 @@ import {
   getRecruitmentClients,
 } from '../service/api';
 
-
 // Lazy load Tab Components
+const DocumentVerifyTab = lazy(() => import('./Tabs/KAM/DocumentVerifyTab'));
+const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
 const CandidatePipelineTab = lazy(() => import('../Candidates/CandidatesPage'));
 const InterviewScheduleTab = lazy(() => import('../Candidates/InterviewsPage'));
@@ -187,7 +190,6 @@ const transformKAMData = (apiData) => {
   }));
 };
 
-// Sidebar Configuration for Recruitment Head
 const sidebarConfig = [
   {
     items: [
@@ -201,7 +203,8 @@ const sidebarConfig = [
       { id: 'activity-feed', title: 'Activity Feed', icon: FiActivity },
       { id: 'mis-reports', title: 'Team MIS Reports', icon: FiBarChart2 },
       { id: 'notes', title: 'Notes', icon: FiEdit2 },
-
+      { id: 'document-verification', title: 'Document Verification', icon: FiShield },
+      { id: 'work-handover', title: 'Work Handover', icon: FiRefreshCw },
     ],
   },
 ];
@@ -2223,13 +2226,17 @@ const RecruitmentHeadDashboard = () => {
             case 'Team MIS Reports':
               return <TeamMISReportsTab />;
             case 'Notes':
-              return <NotesTab isDarkMode={false} />;
+              return <NotesTab isDarkMode={false} department="HR Recruitment" />;
             case 'Settings':
               return <SettingsTab />;
+            case 'Document Verification':
+            case 'document-verification':
+              return <DocumentVerifyTab isDarkMode={false} />;
+            case 'Work Handover':
+              return <WorkHandoverTab />;
             default:
-              // Dashboard
               return (
-                <div className="space-y-6">
+                <>
                   {/* Simple Welcome Header */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="flex flex-col items-start text-left">
@@ -2844,7 +2851,7 @@ const RecruitmentHeadDashboard = () => {
                       )}
                     </div>
                   </div>
-                </div>
+                </>
               );
           }
         })()}
@@ -3507,7 +3514,7 @@ const RecruitmentHeadDashboard = () => {
                     <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">{selectedInterview.type}</span>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedInterview(null)}
                   className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border-2 border-transparent hover:border-red-100 shadow-sm"
                 >
@@ -3521,32 +3528,31 @@ const RecruitmentHeadDashboard = () => {
                 <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
                   <div className="grid grid-cols-2 gap-y-10 gap-x-12">
                     <div className="space-y-2 text-left">
-                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interview Time</p>
-                       <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.time}</p>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interview Time</p>
+                      <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.time}</p>
                     </div>
                     <div className="space-y-2 text-left">
-                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Status</p>
-                       <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border text-left ${
-                         selectedInterview.status === 'In Progress' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-[#E3F2FD80] text-[#3FA9F5] border-blue-100'
-                       }`}>
-                         {selectedInterview.status}
-                       </span>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Status</p>
+                      <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border text-left ${selectedInterview.status === 'In Progress' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-[#E3F2FD80] text-[#3FA9F5] border-blue-100'
+                        }`}>
+                        {selectedInterview.status}
+                      </span>
                     </div>
                     <div className="space-y-2 text-left">
-                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Round Type</p>
-                       <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.type}</p>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Round Type</p>
+                      <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.type}</p>
                     </div>
                     <div className="space-y-2 text-left">
-                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Mode</p>
-                       <p className="text-sm font-bold text-[#1A1A2E] text-left">Remote (Teams)</p>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Mode</p>
+                      <p className="text-sm font-bold text-[#1A1A2E] text-left">Remote (Teams)</p>
                     </div>
                     <div className="space-y-2 text-left">
-                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Experience</p>
-                       <p className="text-sm font-bold text-[#1A1A2E] text-left">4.5 Years</p>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Experience</p>
+                      <p className="text-sm font-bold text-[#1A1A2E] text-left">4.5 Years</p>
                     </div>
                     <div className="space-y-2 text-left">
-                       <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interviewer</p>
-                       <p className="text-sm font-bold text-[#1A1A2E] text-left">Aravind Swamy</p>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interviewer</p>
+                      <p className="text-sm font-bold text-[#1A1A2E] text-left">Aravind Swamy</p>
                     </div>
                   </div>
 
@@ -3590,7 +3596,7 @@ const RecruitmentHeadDashboard = () => {
 
               {/* Footer Actions */}
               <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
-                <button 
+                <button
                   onClick={() => setSelectedInterview(null)}
                   className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
                 >

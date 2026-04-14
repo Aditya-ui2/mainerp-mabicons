@@ -2561,14 +2561,14 @@ export const getAllKAMMembers = async (filtersOrDepartment = 'HR Recruitment') =
     const response = await axiosInstance.get('/recruitment/kams', {
       params: filters
     });
-    
+
     // Merge with local mock members
     const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
     const serverMembers = response.data?.data || response.data?.members || (Array.isArray(response.data) ? response.data : []);
-    
+
     const combined = [...serverMembers];
     const serverEmails = new Set(serverMembers.map(m => m.email?.toLowerCase()));
-    
+
     mockMembers.forEach(mock => {
       if (!serverEmails.has(mock.email?.toLowerCase())) {
         combined.push({ ...mock, isOffline: true });
@@ -2583,7 +2583,6 @@ export const getAllKAMMembers = async (filtersOrDepartment = 'HR Recruitment') =
       const fallbackResponse = await axiosInstance.get('/department/members', {
         params: { department, role: 'KAM' }
       });
-      
       const serverMembers = fallbackResponse.data?.data || fallbackResponse.data?.members || (Array.isArray(fallbackResponse.data) ? fallbackResponse.data : []);
       const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
       const combined = [...serverMembers];
@@ -2591,7 +2590,6 @@ export const getAllKAMMembers = async (filtersOrDepartment = 'HR Recruitment') =
       mockMembers.forEach(mock => {
         if (!serverEmails.has(mock.email?.toLowerCase())) combined.push({ ...mock, isOffline: true });
       });
-      
       return { success: true, data: combined };
     } catch (fallbackError) {
       const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
@@ -2623,7 +2621,7 @@ export const createKAMMember = async (kamData) => {
     return response.data;
   } catch (error) {
     console.warn('Failed to add member to server, saving locally for now:', error.message);
-    
+
     // Save to local storage mock list
     const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
     const newMock = {
@@ -2634,14 +2632,14 @@ export const createKAMMember = async (kamData) => {
       isOffline: true,
       createdAt: new Date().toISOString()
     };
-    
+
     mockMembers.push(newMock);
     localStorage.setItem('mock_kam_members', JSON.stringify(mockMembers));
-    
-    return { 
-      success: true, 
-      data: newMock, 
-      message: 'Member added locally (Server unreachable)' 
+
+    return {
+      success: true,
+      data: newMock,
+      message: 'Member added locally (Server unreachable)'
     };
   }
 };
@@ -2656,7 +2654,7 @@ export const updateKAMMember = async (kamId, updateData) => {
     return response.data;
   } catch (error) {
     console.warn('Failed to update member on server, updating locally:', error.message);
-    
+
     if (String(kamId).startsWith('offline-')) {
       const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
       const index = mockMembers.findIndex(m => m.id === kamId);

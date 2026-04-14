@@ -23,6 +23,8 @@ import CRMDashboard from './Component/Pages/Dashboards/CRMDashboard'
 import ResetPassword from './Component/Pages/reset_password'
 import ForgotPassword from './Component/Pages/forgetpassword'
 import ClientLogin from './Component/Pages/ClientLogin'
+import CandidateLogin from './Component/Pages/CandidateLogin'
+import CandidateDashboard from './Component/Pages/CandidateDashboard'
 import DepartmentProtectedRoute from './Component/Pages/DepartmentProtectedRoute'
 import ProtectedRoute from './Component/Pages/ProtectedRoute'
 import CandidatesPage from './Component/Pages/Candidates/CandidatesPage'
@@ -119,6 +121,14 @@ function App() {
       } />
       <Route path='/interview-schedule' element={
         <InterviewsPage />
+      } />
+      
+      {/* Candidate Portal Routes */}
+      <Route path='/candidate-login' element={<CandidateLogin />} />
+      <Route path='/candidate-dashboard' element={
+        <ProtectedRoute allowedRoles={['candidate']}>
+          <CandidateDashboard />
+        </ProtectedRoute>
       } />
      
     </Routes>

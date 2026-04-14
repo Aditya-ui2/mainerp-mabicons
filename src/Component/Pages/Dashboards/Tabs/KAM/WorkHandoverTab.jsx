@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiRefreshCw,
   FiPlus,
@@ -13,39 +12,50 @@ import {
   FiCheck,
   FiXCircle,
   FiTrash2,
-  FiEdit,
   FiClock,
   FiAlertCircle,
   FiChevronDown,
+  FiEdit,
+  FiBookOpen,
+  FiRepeat,
+  FiBriefcase,
+  FiInfo,
+  FiCheckCircle,
+  FiPackage,
+  FiFileText,
+  FiFilter
 } from 'react-icons/fi';
 import {
   createWorkHandover,
   getWorkHandovers,
   changeHandoverStatus,
   deleteWorkHandover,
-  getAllClients,
   getAdminHierarchy,
   getClientsForTeamLeader,
 } from '../../../service/api';
+import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const statusColors = {
-  Active: { bg: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
-  Completed: { bg: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-  Cancelled: { bg: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
+  Active: { bg: 'bg-blue-50 text-blue-600', dot: 'bg-blue-500', label: 'In Progress' },
+  Completed: { bg: 'bg-emerald-50 text-emerald-600', dot: 'bg-emerald-500', label: 'Finalized' },
+  Cancelled: { bg: 'bg-rose-50 text-rose-600', dot: 'bg-rose-500', label: 'Revoked' },
 };
 
-export default function WorkHandoverTab({ isDarkMode }) {
+/**
+ * Standardized Work Handover Hub
+ * Design Language: Minimalist Professional (Outfit, Slate, High-Radius)
+ */
+export default function WorkHandoverTab({ isDarkMode = false }) {
   const [handovers, setHandovers] = useState([]);
-  const [clients, setClients] = useState([]);
   const [teamLeaders, setTeamLeaders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('All');
   const [showModal, setShowModal] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [fromUserClients, setFromUserClients] = useState([]);
   const [loadingClients, setLoadingClients] = useState(false);
+  const [selectedHandoverId, setSelectedHandoverId] = useState(null);
 
   const [form, setForm] = useState({
     fromUserId: '',
@@ -57,507 +67,438 @@ export default function WorkHandoverTab({ isDarkMode }) {
     notes: '',
   });
 
-  /* ── palette ── */
-  const bg = isDarkMode ? 'bg-[#1e1b2e]' : 'bg-white';
-  const bgSub = isDarkMode ? 'bg-[#282440]' : 'bg-[#f7f5fc]';
-  const text = isDarkMode ? 'text-gray-100' : 'text-gray-800';
-  const textSub = isDarkMode ? 'text-gray-400' : 'text-gray-500';
-  const border = isDarkMode ? 'border-[#3a3556]' : 'border-[#ece8f8]';
-  const inputBg = isDarkMode ? 'bg-[#322d4a] text-gray-100' : 'bg-[#f2f0fa] text-gray-800';
-  const cardBg = isDarkMode ? 'bg-[#282440]' : 'bg-white';
-
-  /* ── load data ── */
   const fetchAll = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
       if (!token) return;
-      const decoded = jwtDecode(token);
-      setCurrentUser(decoded);
 
-      const [handoverRes, clientsRes] = await Promise.all([
-        getWorkHandovers(),
-        getAllClients(),
-      ]);
-
-      setHandovers(handoverRes?.data || []);
-      const clientList = Array.isArray(clientsRes) ? clientsRes : clientsRes?.data?.clients ?? clientsRes?.clients ?? [];
-      setClients(clientList);
-
-      // Try loading team leaders from admin hierarchy
+      let decoded = null;
       try {
-        const hierarchy = await getAdminHierarchy(decoded.id, decoded.role === 'Admin' ? 'Admin' : 'TeamLeader');
-        if (decoded.role === 'Admin') {
-          const tls = hierarchy?.adminHierarchy?.teamLeaders || [];
-          setTeamLeaders(tls);
-        } else {
-          // If current user is a TL, they might not have access to admin hierarchy
-          // We'll use the handover data to build a team leader list
-          const allTlIds = new Set();
-          (handoverRes?.data || []).forEach(h => {
-            if (h.fromUser) allTlIds.add(JSON.stringify(h.fromUser));
-            if (h.toUser) allTlIds.add(JSON.stringify(h.toUser));
-          });
-          const uniqueTls = [...allTlIds].map(s => JSON.parse(s));
-          // Also add self
-          uniqueTls.push({ id: decoded.id, name: decoded.name || 'Me', email: decoded.email || '' });
-          setTeamLeaders(uniqueTls);
+        decoded = jwtDecode(token);
+        setCurrentUser(decoded);
+      } catch (e) { console.error('JWT Decode failed'); }
+
+      const handoverRes = await getWorkHandovers();
+      const rawHandovers = Array.isArray(handoverRes?.data) ? handoverRes.data : [];
+      setHandovers(rawHandovers);
+
+      if (rawHandovers.length > 0 && !selectedHandoverId) {
+        setSelectedHandoverId(rawHandovers[0]._id);
+      }
+
+      if (decoded) {
+        try {
+          const hierarchy = await getAdminHierarchy(decoded.id, decoded.role === 'Admin' ? 'Admin' : 'TeamLeader');
+          setTeamLeaders(hierarchy?.adminHierarchy?.teamLeaders || []);
+        } catch {
+          setTeamLeaders([{ id: decoded.id, name: decoded.name || 'Me', email: '' }]);
         }
-      } catch {
-        // Fallback: at least add self
-        setTeamLeaders([{ id: decoded.id, name: decoded.name || 'Me', email: '' }]);
       }
     } catch (e) {
-      console.error('Failed to load handover data', e);
+      console.error('WorkHandoverTab error:', e);
+      toast.error('Sync Failure');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedHandoverId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  /* ── handlers ── */
-  const handleCreate = async () => {
-    if (!form.fromUserId || !form.toUserId || !form.reason || !form.startDate || !form.endDate || !form.clientIds.length) return;
-    try {
-      await createWorkHandover(form);
-      setShowModal(false);
-      setForm({ fromUserId: '', toUserId: '', reason: '', startDate: '', endDate: '', clientIds: [], notes: '' });
-      fetchAll();
-    } catch (e) {
-      console.error('Create handover error', e);
-    }
-  };
-
-  const handleStatusChange = async (id, status) => {
-    try {
-      await changeHandoverStatus(id, status);
-      fetchAll();
-    } catch (e) {
-      console.error('Status change error', e);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteWorkHandover(id);
-      setConfirmDelete(null);
-      fetchAll();
-    } catch (e) {
-      console.error('Delete error', e);
-    }
-  };
-
-  const toggleClientSelection = (clientId) => {
-    setForm(f => ({
-      ...f,
-      clientIds: f.clientIds.includes(clientId)
-        ? f.clientIds.filter(id => id !== clientId)
-        : [...f.clientIds, clientId]
-    }));
-  };
-
-  const isRecruitmentHeadUser = (user) => {
-    if (!user) return false;
-    const email = String(user.email || '').toLowerCase();
-    const name = String(user.name || '').toLowerCase();
-    return email.includes('sachin') || name.includes('sachin') || String(user.role || '').toLowerCase().includes('recruitmenthead');
-  };
-
-  const findHeadAssigneeId = () => {
-    const headFromTeamLeaders = teamLeaders.find(tl => {
-      const email = String(tl.email || '').toLowerCase();
-      const name = String(tl.name || '').toLowerCase();
-      return email.includes('sachin') || name.includes('sachin');
-    });
-    if (headFromTeamLeaders) return headFromTeamLeaders.id;
-    if (isRecruitmentHeadUser(currentUser)) return currentUser.id;
-    return '';
-  };
-
   useEffect(() => {
-    const loadFromUserClients = async () => {
-      if (!form.fromUserId) {
-        setFromUserClients([]);
-        return;
-      }
+    if (form.fromUserId) {
       setLoadingClients(true);
-      try {
-        const response = await getClientsForTeamLeader({ teamLeaderId: form.fromUserId });
-        const clientsForFromUser = Array.isArray(response.clients) ? response.clients : response.data?.clients || [];
-        setFromUserClients(clientsForFromUser);
-        setForm(f => {
-          const newForm = {
-            ...f,
-            clientIds: clientsForFromUser.map(c => c.id)
-          };
-          const headId = findHeadAssigneeId();
-          if (!newForm.toUserId && headId) {
-            newForm.toUserId = headId;
-          }
-          return newForm;
-        });
-      } catch (error) {
-        console.warn('Could not load clients for selected KAM:', error?.message || error);
-        setFromUserClients([]);
-        setForm(f => ({ ...f, clientIds: [] }));
-      } finally {
-        setLoadingClients(false);
-      }
-    };
-
-    loadFromUserClients();
-  }, [form.fromUserId, currentUser, teamLeaders]);
-
-  /* ── filtered list ── */
-  const filtered = handovers.filter(h => {
-    if (filterStatus !== 'All' && h.status !== filterStatus) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const matchName = (h.fromUser?.name || '').toLowerCase().includes(q) ||
-        (h.toUser?.name || '').toLowerCase().includes(q);
-      const matchReason = (h.reason || '').toLowerCase().includes(q);
-      const matchClient = (h.clients || []).some(c => (c.name || c.companyName || '').toLowerCase().includes(q));
-      return matchName || matchReason || matchClient;
+      getClientsForTeamLeader(form.fromUserId)
+        .then(res => setFromUserClients(res?.data || []))
+        .catch(() => setFromUserClients([]))
+        .finally(() => setLoadingClients(false));
+    } else {
+      setFromUserClients([]);
     }
-    return true;
-  });
+  }, [form.fromUserId]);
 
-  /* ── summary ── */
-  const summary = {
-    total: handovers.length,
-    active: handovers.filter(h => h.status === 'Active').length,
-    completed: handovers.filter(h => h.status === 'Completed').length,
-    cancelled: handovers.filter(h => h.status === 'Cancelled').length,
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (!form.toUserId || !form.fromUserId || !form.reason) {
+        return toast.error('Complete required fields');
+      }
+      const res = await createWorkHandover(form);
+      if (res?.success) {
+        toast.success('Delegation Active');
+        setShowModal(false);
+        setForm({ fromUserId: '', toUserId: '', reason: '', startDate: '', endDate: '', clientIds: [], notes: '' });
+        fetchAll();
+      }
+    } catch (e) {
+      toast.error(e.message || 'Transmission Error');
+    }
   };
 
-  if (loading) {
+  const updateStatus = async (id, status) => {
+    try {
+      const res = await changeHandoverStatus(id, status);
+      if (res?.success) {
+        toast.success(`Asset marked as ${status}`);
+        fetchAll();
+      }
+    } catch (e) { toast.error('Status update failed'); }
+  };
+
+  const removeHandover = async (id) => {
+    if (!window.confirm('Revoke this delegation permanently?')) return;
+    try {
+      const res = await deleteWorkHandover(id);
+      if (res?.success) {
+        toast.success('Asset purged');
+        fetchAll();
+      }
+    } catch (e) { toast.error('Purge failed'); }
+  };
+
+  const filteredHandovers = useMemo(() =>
+    (handovers || []).filter(h => {
+      const q = search.toLowerCase();
+      return (h.fromUser?.name || '').toLowerCase().includes(q) ||
+        (h.toUser?.name || '').toLowerCase().includes(q) ||
+        (h.reason || '').toLowerCase().includes(q);
+    }), [handovers, search]);
+
+  const selectedHandover = handovers.find(h => h._id === selectedHandoverId);
+
+  if (loading && handovers.length === 0) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-500 border-t-transparent rounded-full" />
+      <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[3rem] w-full h-[400px]">
+        <div className="w-10 h-10 border-4 border-[#3056D3] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Synchronizing Archive...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow">
-            <FiRefreshCw size={22} />
+    <div className="flex flex-col h-[calc(100vh-180px)] overflow-hidden font-['Outfit'] text-slate-900 text-left">
+      
+      {/* STANDARD HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#3056D3] text-white flex items-center justify-center shadow-lg shadow-[#3056D3]/20">
+            <FiPackage size={24} />
           </div>
           <div>
-            <h2 className={`text-xl font-bold ${text}`}>Work Handover</h2>
-            <p className={`text-sm ${textSub}`}>Manage absences & delegate client work to other KAMs</p>
+            <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Work Handover</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">Asset Migration & Duty Delegation</p>
           </div>
         </div>
-        <button
-          onClick={() => {
-            setForm(f => ({ ...f, fromUserId: currentUser?.id || '' }));
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-semibold shadow hover:shadow-md transition-all"
-        >
-          <FiPlus size={16} /> New Handover
-        </button>
-      </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Total', value: summary.total, icon: FiUsers, color: 'violet' },
-          { label: 'Active', value: summary.active, icon: FiClock, color: 'green' },
-          { label: 'Completed', value: summary.completed, icon: FiCheck, color: 'blue' },
-          { label: 'Cancelled', value: summary.cancelled, icon: FiXCircle, color: 'red' },
-        ].map(c => (
-          <div key={c.label} className={`${cardBg} rounded-xl ${border} border p-4 flex items-center gap-3`}>
-            <div className={`p-2 rounded-lg bg-${c.color}-100 ${isDarkMode ? `bg-${c.color}-900/30` : ''}`}>
-              <c.icon size={18} className={`text-${c.color}-500`} />
-            </div>
-            <div>
-              <p className={`text-2xl font-bold ${text}`}>{c.value}</p>
-              <p className={`text-xs ${textSub}`}>{c.label}</p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search handovers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-11 pr-4 py-3.5 bg-white rounded-2xl border border-slate-100 shadow-sm text-sm font-medium w-[260px] focus:ring-2 focus:ring-[#3056D3]/5 outline-none transition-all"
+            />
           </div>
-        ))}
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-6 py-3.5 bg-[#3056D3] text-white rounded-2xl font-bold text-[11px] uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-[#3056D3]/10 hover:bg-[#254adb] transition-all"
+          >
+            <FiPlus size={14} /> NEW DELEGATION
+          </button>
+        </div>
       </div>
 
-      {/* Search + filter */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${inputBg} flex-1`}>
-          <FiSearch className={textSub} size={16} />
-          <input
-            type="text" placeholder="Search handovers…"
-            value={search} onChange={e => setSearch(e.target.value)}
-            className={`bg-transparent outline-none text-sm w-full ${text}`}
-          />
-        </div>
-        <div className="flex gap-2">
-          {['All', 'Active', 'Completed', 'Cancelled'].map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${filterStatus === s
-                ? 'bg-violet-500 text-white'
-                : `${bgSub} ${text} ${border} border`
+      <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
+        
+        {/* LEFT PANEL: Handover List */}
+        <div className="w-[340px] flex flex-col gap-3 overflow-y-auto no-scrollbar pb-10">
+          {filteredHandovers.length === 0 ? (
+            <div className="bg-white rounded-[2rem] border border-slate-100 p-10 text-center opacity-40">
+              <FiBriefcase className="mx-auto mb-4 text-slate-300" size={32} />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Empty Ledger</p>
+            </div>
+          ) : (
+            filteredHandovers.map(h => (
+              <div
+                key={h._id}
+                onClick={() => setSelectedHandoverId(h._id)}
+                className={`p-5 rounded-[2rem] cursor-pointer transition-all duration-200 border ${
+                  selectedHandoverId === h._id
+                    ? 'bg-white border-[#3056D3] shadow-xl shadow-[#3056D3]/5 ring-1 ring-[#3056D3]/5'
+                    : 'bg-white border-slate-100 hover:border-slate-200 shadow-sm'
                 }`}
-            >{s}</button>
-          ))}
-        </div>
-      </div>
-
-      {/* Handover list */}
-      {filtered.length === 0 ? (
-        <div className={`text-center py-16 ${textSub}`}>
-          <FiAlertCircle size={40} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No handovers found</p>
-          <p className="text-sm mt-1">Create one to delegate client work during absence</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <AnimatePresence>
-            {filtered.map(h => (
-              <motion.div key={h.id}
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className={`${cardBg} ${border} border rounded-2xl p-5 flex flex-col gap-3`}
               >
-                {/* Top row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {/* From user */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 text-xs font-bold">
-                        {(h.fromUser?.name || '?')[0]}
-                      </div>
-                      <div>
-                        <p className={`text-sm font-semibold ${text}`}>{h.fromUser?.name || 'Unknown'}</p>
-                        <p className={`text-[10px] ${textSub}`}>Absent</p>
-                      </div>
-                    </div>
-                    <FiArrowRight className={textSub} />
-                    {/* To user */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xs font-bold">
-                        {(h.toUser?.name || '?')[0]}
-                      </div>
-                      <div>
-                        <p className={`text-sm font-semibold ${text}`}>{h.toUser?.name || 'Unknown'}</p>
-                        <p className={`text-[10px] ${textSub}`}>Covering</p>
-                      </div>
-                    </div>
+                <div className="flex justify-between items-start mb-3">
+                  <div className={`px-2.5 py-1 rounded-full text-[8px] font-bold uppercase tracking-wider ${statusColors[h.status || 'Active'].bg}`}>
+                    {statusColors[h.status || 'Active'].label}
                   </div>
-
-                  {/* Status badge */}
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusColors[h.status]?.bg || 'bg-gray-100 text-gray-600'}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${statusColors[h.status]?.dot || 'bg-gray-400'}`} />
-                    {h.status}
-                  </span>
+                  <p className="text-[10px] font-medium text-slate-400 tracking-tight flex items-center gap-1">
+                    <FiCalendar size={10} /> {new Date(h.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`text-sm font-bold truncate ${selectedHandoverId === h._id ? 'text-[#3056D3]' : 'text-slate-900'}`}>
+                      {h.fromUser?.name || 'User'}
+                    </h4>
+                    <FiArrowRight size={10} className="my-1 text-slate-300" />
+                    <h4 className="text-sm font-medium text-slate-600 truncate">{h.toUser?.name || 'Recipient'}</h4>
+                  </div>
                 </div>
 
-                {/* Details */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                  <div>
-                    <p className={`text-xs ${textSub}`}>Reason</p>
-                    <p className={`font-medium ${text}`}>{h.reason}</p>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                  <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-widest">
+                    <FiBriefcase size={10} /> {h.clientIds?.length || 0} Assets
+                  </span>
+                  <div className={`w-2 h-2 rounded-full ${statusColors[h.status || 'Active'].dot} shadow-sm`} />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* RIGHT PANEL: Detail View */}
+        <div className="flex-1 bg-white rounded-[3rem] border border-slate-100 overflow-hidden flex flex-col shadow-sm">
+          {selectedHandover ? (
+            <div className="flex flex-col h-full overflow-hidden">
+              <div className="px-10 py-8 border-b border-slate-50 bg-[#fafbfc] flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center -space-x-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-[#3056D3] text-xl font-bold shadow-sm ring-4 ring-white">
+                      {(selectedHandover.fromUser?.name || 'U')[0]}
+                    </div>
+                    <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 text-xl font-bold shadow-sm ring-4 ring-[#fafbfc]">
+                      {(selectedHandover.toUser?.name || 'R')[0]}
+                    </div>
                   </div>
                   <div>
-                    <p className={`text-xs ${textSub}`}>Period</p>
-                    <p className={`font-medium ${text}`}>
-                      {new Date(h.startDate).toLocaleDateString()} — {new Date(h.endDate).toLocaleDateString()}
+                    <h2 className="text-xl font-bold text-slate-900">Task Delegation Cycle</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">
+                      {selectedHandover.fromUser?.name} <span className="mx-2 text-slate-200">/</span> {selectedHandover.toUser?.name}
                     </p>
                   </div>
-                  <div>
-                    <p className={`text-xs ${textSub}`}>Clients ({(h.clients || []).length})</p>
-                    <div className="flex flex-wrap gap-1 mt-0.5">
-                      {(h.clients || []).slice(0, 3).map(c => (
-                        <span key={c.id} className={`px-2 py-0.5 rounded-md text-[11px] font-medium ${bgSub} ${text}`}>
-                          {c.companyName || c.name}
-                        </span>
-                      ))}
-                      {(h.clients || []).length > 3 && (
-                        <span className={`px-2 py-0.5 rounded-md text-[11px] ${textSub}`}>
-                          +{(h.clients || []).length - 3} more
-                        </span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => updateStatus(selectedHandover._id, 'Completed')}
+                    className="p-3.5 bg-white text-emerald-500 rounded-2xl hover:bg-emerald-50 transition-all border border-slate-100 shadow-sm"
+                    title="Finalize Handover"
+                  >
+                    <FiCheckCircle size={18} />
+                  </button>
+                  <button 
+                    onClick={() => removeHandover(selectedHandover._id)}
+                    className="p-3.5 bg-white text-rose-500 rounded-2xl hover:bg-rose-50 transition-all border border-slate-100 shadow-sm"
+                    title="Revoke Delegation"
+                  >
+                    <FiTrash2 size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 p-10 overflow-y-auto no-scrollbar bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  {/* Info Cards */}
+                  <div className="space-y-6">
+                    <div className="p-6 rounded-[2rem] bg-slate-50/50 border border-slate-100">
+                      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <FiInfo size={12} className="text-[#3056D3]" /> Context & Logic
+                      </h3>
+                      <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
+                        "{selectedHandover.reason}"
+                      </p>
+                      {selectedHandover.notes && (
+                        <div className="mt-4 pt-4 border-t border-slate-100">
+                          <p className="text-[11px] text-slate-500 line-clamp-3">{selectedHandover.notes}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-sm">
+                      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <FiClock size={12} className="text-[#3056D3]" /> Temporal Scope
+                      </h3>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Effective From</p>
+                          <p className="text-sm font-bold text-slate-800">{new Date(selectedHandover.startDate).toLocaleDateString()}</p>
+                        </div>
+                        <FiArrowRight className="text-slate-200" />
+                        <div className="text-right">
+                          <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Target End</p>
+                          <p className="text-sm font-bold text-slate-800">{selectedHandover.endDate ? new Date(selectedHandover.endDate).toLocaleDateString() : 'Continuous'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Asset Map */}
+                  <div className="space-y-4">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+                      <FiPackage size={12} className="text-[#3056D3]" /> Assigned Portfolio
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {selectedHandover.clientIds?.length > 0 ? (
+                        selectedHandover.clientIds.map((client, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-slate-200 transition-all group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400 group-hover:bg-[#3056D3] group-hover:text-white transition-all">
+                                {idx + 1}
+                              </div>
+                              <span className="text-xs font-bold text-slate-700">{client.name || 'Client Asset'}</span>
+                            </div>
+                            <FiCheck className="text-emerald-400" size={14} />
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-10 border-2 border-dashed border-slate-100 rounded-[2rem] text-center opacity-40">
+                          <p className="text-[9px] font-bold uppercase tracking-widest">No Clients Mapped</p>
+                        </div>
                       )}
                     </div>
                   </div>
+
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-20 opacity-30 text-center">
+              <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 animate-[spin_30s_linear_infinite] mb-8" />
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[6px]">Selection Pending from Archive</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* CREATE HANDOVER MODAL */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowModal(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-hidden"
+            >
+              <div className="px-10 py-8 bg-[#fafbfc] border-b border-slate-50 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">Active Duty Delegation</h2>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">Initialize Work Migration Sequence</p>
+                </div>
+                <button onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-100 rounded-2xl transition-all">
+                  <FiX size={20} className="text-slate-400" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-10">
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Source User</label>
+                    <select
+                      value={form.fromUserId}
+                      onChange={(e) => setForm({ ...form, fromUserId: e.target.value })}
+                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none"
+                    >
+                      <option value="">Select Primary</option>
+                      {teamLeaders.map(tl => <option key={tl.id} value={tl.id}>{tl.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Target Recipient</label>
+                    <select
+                      value={form.toUserId}
+                      onChange={(e) => setForm({ ...form, toUserId: e.target.value })}
+                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none"
+                    >
+                      <option value="">Select Destination</option>
+                      {teamLeaders.map(tl => <option key={tl.id} value={tl.id}>{tl.name}</option>)}
+                    </select>
+                  </div>
                 </div>
 
-                {h.notes && (
-                  <p className={`text-xs ${textSub} italic`}>Notes: {h.notes}</p>
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lifecycle Start</label>
+                    <input
+                      type="date"
+                      value={form.startDate}
+                      onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lifecycle End</label>
+                    <input
+                      type="date"
+                      value={form.endDate}
+                      onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-8">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Migration Logic (Reason)</label>
+                    <textarea
+                      value={form.reason}
+                      onChange={(e) => setForm({ ...form, reason: e.target.value })}
+                      placeholder="Brief context for migration..."
+                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none min-h-[100px] resize-none"
+                    />
+                </div>
+
+                {fromUserClients.length > 0 && (
+                  <div className="space-y-3 mb-8">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Asset Map Selection</label>
+                    <div className="grid grid-cols-2 gap-3 max-h-[160px] overflow-y-auto no-scrollbar p-1">
+                      {fromUserClients.map(client => (
+                        <div
+                          key={client.id}
+                          onClick={() => {
+                            const current = form.clientIds;
+                            const newVal = current.includes(client.id) ? current.filter(id => id !== client.id) : [...current, client.id];
+                            setForm({ ...form, clientIds: newVal });
+                          }}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between hover:scale-[1.02] active:scale-95 ${
+                            form.clientIds.includes(client.id) ? 'bg-[#3056D3] border-[#3056D3] text-white' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200'
+                          }`}
+                        >
+                          <span className="text-[11px] font-bold truncate pr-4 uppercase tracking-tighter">{client.name}</span>
+                          {form.clientIds.includes(client.id) && <FiCheck size={12} />}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 pt-1 border-t border-dashed" style={{ borderColor: isDarkMode ? '#3a3556' : '#ece8f8' }}>
-                  {h.status === 'Active' && (
-                    <>
-                      <button onClick={() => handleStatusChange(h.id, 'Completed')}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition">
-                        <FiCheck size={12} /> Complete
-                      </button>
-                      <button onClick={() => handleStatusChange(h.id, 'Cancelled')}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition">
-                        <FiXCircle size={12} /> Cancel
-                      </button>
-                    </>
-                  )}
-                  <button onClick={() => setConfirmDelete(h.id)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-semibold hover:bg-gray-200 transition ml-auto">
-                    <FiTrash2 size={12} /> Delete
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
+                <button
+                  type="submit"
+                  className="w-full py-5 bg-[#3056D3] text-white rounded-[2rem] font-bold text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-[#3056D3]/20 hover:bg-[#254adb] transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+                >
+                  Confirm Asset Migration <FiArrowRight />
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
-      {/* ═══ Create Modal ═══ */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowModal(false)}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className={`${bg} rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto`}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: isDarkMode ? '#3a3556' : '#ece8f8' }}>
-              <h3 className={`text-lg font-bold ${text}`}>New Work Handover</h3>
-              <button onClick={() => setShowModal(false)}><FiX size={20} className={textSub} /></button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              {/* From KAM */}
-              <div>
-                <label className={`text-xs font-semibold ${textSub} mb-1 block`}>Absent KAM</label>
-                <select value={form.fromUserId} onChange={e => setForm(f => ({ ...f, fromUserId: e.target.value }))}
-                  className={`w-full px-3 py-2.5 rounded-xl text-sm ${inputBg} outline-none ${border} border`}>
-                  <option value="">Select KAM…</option>
-                  {teamLeaders.map(tl => (
-                    <option key={tl.id} value={tl.id}>{tl.name} ({tl.email})</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* To KAM */}
-              <div>
-                <label className={`text-xs font-semibold ${textSub} mb-1 block`}>Covering KAM</label>
-                <select value={form.toUserId} onChange={e => setForm(f => ({ ...f, toUserId: e.target.value }))}
-                  className={`w-full px-3 py-2.5 rounded-xl text-sm ${inputBg} outline-none ${border} border`}>
-                  <option value="">Select KAM…</option>
-                  {teamLeaders.filter(tl => tl.id !== form.fromUserId).map(tl => (
-                    <option key={tl.id} value={tl.id}>{tl.name} ({tl.email})</option>
-                  ))}
-                </select>
-                <p className={`text-xs mt-1 ${textSub}`}>
-                  If no covering KAM is selected, this will default to Sachin (Recruitment Head) when available.
-                </p>
-              </div>
-
-              {/* Reason */}
-              <div>
-                <label className={`text-xs font-semibold ${textSub} mb-1 block`}>Reason for Absence</label>
-                <select value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
-                  className={`w-full px-3 py-2.5 rounded-xl text-sm ${inputBg} outline-none ${border} border`}>
-                  <option value="">Select reason…</option>
-                  {['Sick Leave', 'Vacation', 'Personal Leave', 'Training', 'Maternity/Paternity Leave', 'Other'].map(r => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={`text-xs font-semibold ${textSub} mb-1 block`}>Start Date</label>
-                  <input type="date" value={form.startDate}
-                    onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
-                    className={`w-full px-3 py-2.5 rounded-xl text-sm ${inputBg} outline-none ${border} border`} />
-                </div>
-                <div>
-                  <label className={`text-xs font-semibold ${textSub} mb-1 block`}>End Date</label>
-                  <input type="date" value={form.endDate}
-                    onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-                    className={`w-full px-3 py-2.5 rounded-xl text-sm ${inputBg} outline-none ${border} border`} />
-                </div>
-              </div>
-
-              {/* Client selection */}
-              <div>
-                <label className={`text-xs font-semibold ${textSub} mb-1 block`}>
-                  Clients to Hand Over ({form.clientIds.length} selected)
-                </label>
-                {form.fromUserId && (
-                  <p className={`text-xs ${textSub} mb-2`}>Auto-selected all current clients for the absent KAM.</p>
-                )}
-                <div className={`max-h-40 overflow-y-auto rounded-xl ${border} border p-2 space-y-1`}>
-                  {loadingClients ? (
-                    <p className={`text-sm ${textSub} text-center py-2`}>Loading clients for selected KAM…</p>
-                  ) : fromUserClients.length === 0 ? (
-                    <p className={`text-sm ${textSub} text-center py-2`}>No clients found for the selected absent KAM.</p>
-                  ) : (
-                    fromUserClients.map(c => (
-                      <button key={c.id} type="button"
-                        onClick={() => toggleClientSelection(c.id)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${form.clientIds.includes(c.id)
-                          ? isDarkMode ? 'bg-violet-900/40 text-violet-300' : 'bg-violet-50 text-violet-700'
-                          : `${bgSub} ${text}`
-                          }`}>
-                        <span className={`h-4 w-4 rounded border flex items-center justify-center text-[10px] ${form.clientIds.includes(c.id)
-                          ? 'bg-violet-500 border-violet-500 text-white' : `${border} border`
-                          }`}>
-                          {form.clientIds.includes(c.id) && '✓'}
-                        </span>
-                        <span className="truncate">{c.clientName || c.name} {c.companyName ? `(${c.companyName})` : ''}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className={`text-xs font-semibold ${textSub} mb-1 block`}>Notes (optional)</label>
-                <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Any special instructions for the covering KAM…"
-                  rows={2}
-                  className={`w-full px-3 py-2.5 rounded-xl text-sm ${inputBg} outline-none ${border} border resize-none`} />
-              </div>
-            </div>
-
-            {/* Modal footer */}
-            <div className="flex items-center justify-end gap-3 p-5 border-t" style={{ borderColor: isDarkMode ? '#3a3556' : '#ece8f8' }}>
-              <button onClick={() => setShowModal(false)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold ${bgSub} ${text} ${border} border`}>
-                Cancel
-              </button>
-              <button onClick={handleCreate}
-                disabled={!form.fromUserId || !form.toUserId || !form.reason || !form.startDate || !form.endDate || !form.clientIds.length}
-                className="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow disabled:opacity-40 disabled:cursor-not-allowed">
-                Create Handover
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* ═══ Delete Confirm ═══ */}
-      {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setConfirmDelete(null)}>
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className={`${bg} rounded-2xl shadow-xl p-6 w-full max-w-sm`} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-full bg-red-100 text-red-500"><FiTrash2 size={20} /></div>
-              <h3 className={`text-lg font-bold ${text}`}>Delete Handover?</h3>
-            </div>
-            <p className={`text-sm ${textSub} mb-5`}>This action cannot be undone. The handover record will be permanently removed.</p>
-            <div className="flex items-center justify-end gap-3">
-              <button onClick={() => setConfirmDelete(null)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold ${bgSub} ${text}`}>Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete)}
-                className="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500 text-white shadow">Delete</button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <style jsx>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
