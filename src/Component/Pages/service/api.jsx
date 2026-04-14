@@ -303,6 +303,49 @@ export const clientLogin = async (credentials) => {
   }
 };
 
+export const candidateLogin = async (credentials) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/candidate/login', credentials);
+    if (response.data.token) {
+      saveToken(response.data.token, 'candidate', response.data.data?.name);
+    }
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+export const uploadCandidateKYC = async (formData) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/candidate/upload-kyc', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+export const verifyCandidateKYC = async (data) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/candidate/verify-kyc', data);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+export const attachFinalOfferLetter = async (formData) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/candidate/attach-final-offer', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 // Task-related API endpoints
 export const requestTask = async (taskData) => {
   try {
@@ -655,6 +698,26 @@ export const deleteClient = async (clientId) => {
     throw error.response?.data || {
       message: 'Failed to delete client. Please try again.'
     };
+  }
+};
+
+export const getDeptRegularizations = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/department/regularizations', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch department regularizations:', error);
+    throw error.response?.data || { message: 'Failed to fetch department regularizations' };
+  }
+};
+
+export const approveRegularization = async (id, data) => {
+  try {
+    const response = await axiosInstance.put(`/department/regularizations/${id}/approve`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to approve regularization:', error);
+    throw error.response?.data || { message: 'Failed to approve regularization' };
   }
 };
 
