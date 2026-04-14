@@ -11,7 +11,7 @@ import {
   FiExternalLink,
   FiUsers
 } from 'react-icons/fi';
-import { getAllCandidates, verifyCandidateKYC, attachFinalOfferLetter, BASE_URL } from '../../../service/api';
+import { getAllCandidates, verifyCandidateKYC, attachFinalOfferLetter, generateCandidateCredentials, BASE_URL } from '../../../service/api';
 import { toast } from 'sonner';
 
 /**
@@ -39,7 +39,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
       if (res && res.success) {
         const rawData = Array.isArray(res.data) ? res.data : [];
         const filtered = rawData.filter(c =>
-          ['Selected', 'Document Verification', 'Offer Sent', 'Hired'].includes(c.stage) ||
+          ['Selected', 'Document Verification', 'Offer Sent', 'Hired', 'Joined'].includes(c.stage) ||
           (c.kycDocuments && Object.keys(c.kycDocuments).length > 0)
         );
         console.log('Filtered candidates count:', filtered.length);
@@ -94,6 +94,33 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
       }
     } catch (err) {
       toast.error('Upload failed', { id: 'upload' });
+    }
+  };
+
+  const handleGenerateCredentials = async (candidate) => {
+    try {
+      toast.loading('Generating Credentials...', { id: 'creds' });
+      const res = await generateCandidateCredentials(candidate.id);
+      if (res && res.success) {
+        toast.success(`Credentials generated for ${candidate.email}`, { id: 'creds' });
+        
+        // Construct mailto link for manual sending
+        const subject = encodeURIComponent("Your Mabicons ERP Login Credentials");
+        const body = encodeURIComponent(`Dear ${candidate.name},
+
+Welcome to Mabicons! Your ERP login credentials have been generated.
+
+Login URL: https://erp.mabicons.com
+Email: ${candidate.email}
+Password: ${res.data.password}
+
+Best Regards,
+Mabicons Recruitment Team`);
+
+        window.location.href = `mailto:${candidate.email}?subject=${subject}&body=${body}`;
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Failed to generate credentials', { id: 'creds' });
     }
   };
 
@@ -164,7 +191,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                 <div className="flex-1 min-w-0">
                   <h4 className={`text-sm font-bold truncate ${selectedCandidateId === c.id ? 'text-[#3056D3]' : 'text-slate-900'}`}>{c.name}</h4>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                    {c.position || 'Recruitment Pipeline'}
+                    {c.position?.title || 'Recruitment Pipeline'}
                   </p>
                 </div>
               </div>
@@ -179,11 +206,11 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
               <div className="px-10 py-8 border-b border-slate-50 bg-[#fafbfc] flex items-center justify-between">
                 <div className="flex items-center gap-5">
                   <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-[#3056D3] text-xl font-bold shadow-sm">
-                    {selectedCandidate.name[0]}
+                    {selectedCandidate?.name?.[0] || '?'}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-slate-900">{selectedCandidate.name}</h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">{selectedCandidate.email}</p>
+                    <h2 className="text-xl font-bold text-slate-900">{selectedCandidate?.name || 'Unknown Candidate'}</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">{selectedCandidate?.email || 'No Email Provided'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 p-1 bg-slate-100/50 rounded-xl border border-slate-100">
@@ -222,6 +249,22 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                         <button onClick={() => window.open(`${BASE_URL}${selectedCandidate.kycDocuments[selectedDocType].url}`, '_blank')} className="p-4 rounded-2xl bg-white text-slate-900 shadow-2xl hover:bg-slate-50"><FiExternalLink size={20} /></button>
                       </div>
                     </div>
+                    {selectedCandidate.stage === 'Joined' && (
+                      <div className="mb-8 p-6 rounded-[2rem] bg-indigo-50/50 border border-indigo-100 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest focus:ring-2 focus:ring-indigo-200">Candidate Onboarding</p>
+                          <h3 className="text-sm font-bold text-indigo-900 mt-1">Generate Portal Credentials</h3>
+                          <p className="text-[9px] text-indigo-500/70 mt-1 italic">This will mail a random password to {selectedCandidate.email}</p>
+                        </div>
+                        <button
+                          onClick={() => handleGenerateCredentials(selectedCandidate)}
+                          className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center gap-2 group"
+                        >
+                          <FiZap className="group-hover:animate-pulse" /> Create & Send Credentials
+                        </button>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-4 pb-8">
                       <button onClick={() => handleVerify(selectedCandidate.id, selectedDocType, 'verified')} className="py-5 bg-[#10b981] text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-emerald-500/10 hover:bg-emerald-600 transition-all select-none">Verify Coordinate</button>
                       <button onClick={() => handleVerify(selectedCandidate.id, selectedDocType, 'rejected')} className="py-5 bg-white border border-rose-100 text-[#ef4444] rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:bg-rose-50 transition-all select-none">Reject Audit</button>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FiClock, FiCalendar, FiCheckCircle, FiXCircle, FiCoffee, FiDownload, FiSearch, FiChevronDown, FiTrendingUp, FiUsers, FiArrowLeft, FiLogIn, FiLogOut } from 'react-icons/fi';
 import { Search, ChevronDown, ChevronRight, MapPin, Users as UsersIcon, Check, MoreVertical, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDeptAttendance } from '../../../service/api';
 
 const EmployeeDetailView = ({ employee, onBack, isDarkMode, getStatusConfig }) => {
   const statusConfig = getStatusConfig(employee.status);
@@ -134,20 +135,76 @@ const AttendanceTab = ({ isDarkMode, selectedClient }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  // Mock data - Replace with API call
+  // Fetch real attendance data from backend
   useEffect(() => {
-    const mockData = [
-      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', date: '2026-03-17', checkIn: '09:00', checkOut: '18:00', status: 'present', hours: '9h 0m', overtime: '0h', avatar: 'RS', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      { id: 2, empId: 'EMP002', name: 'Priya Singh', date: '2026-03-17', checkIn: '09:15', checkOut: '18:30', status: 'present', hours: '9h 15m', overtime: '15m', avatar: 'PS', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      { id: 3, empId: 'EMP003', name: 'Amit Kumar', date: '2026-03-17', checkIn: '-', checkOut: '-', status: 'absent', hours: '0h', overtime: '0h', avatar: 'AK', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
-      { id: 4, empId: 'EMP004', name: 'Sneha Patel', date: '2026-03-17', checkIn: '10:00', checkOut: '17:00', status: 'halfday', hours: '7h 0m', overtime: '0h', avatar: 'SP', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
-      { id: 5, empId: 'EMP005', name: 'Vikram Rao', date: '2026-03-17', checkIn: '09:00', checkOut: '20:00', status: 'present', hours: '11h 0m', overtime: '2h', avatar: 'VR', photo: 'https://randomuser.me/api/portraits/men/75.jpg' },
-      { id: 6, empId: 'EMP006', name: 'Anjali Gupta', date: '2026-03-17', checkIn: '-', checkOut: '-', status: 'leave', hours: '0h', overtime: '0h', avatar: 'AG', photo: 'https://randomuser.me/api/portraits/women/65.jpg' },
-    ];
-    setTimeout(() => {
-      setAttendanceData(mockData);
-      setLoading(false);
-    }, 500);
+    const fetchAttendanceData = async () => {
+      setLoading(true);
+      try {
+        const params = {
+          date: selectedDate,
+          department: 'HR Operations' // Default department for this dashboard
+        };
+        const response = await getDeptAttendance(params);
+        if (response.success && response.records) {
+          const mappedData = response.records.map(record => {
+            // Helper to map backend status to frontend keys
+            const mapStatus = (status) => {
+              if (!status) return 'absent';
+              const s = status.toLowerCase();
+              if (s.includes('present')) return 'present';
+              if (s.includes('absent')) return 'absent';
+              if (s.includes('half')) return 'halfday';
+              if (s.includes('leave')) return 'leave';
+              if (s.includes('wfh')) return 'present';
+              return 'present';
+            };
+
+            // Helper to format check-in/out times safely
+            const formatTime = (timeStr) => {
+              if (!timeStr || timeStr === '-') return '-';
+              try {
+                // If it's already a time string like "09:00", return it
+                if (typeof timeStr === 'string' && timeStr.length === 5 && timeStr.includes(':')) return timeStr;
+                
+                const d = new Date(timeStr);
+                if (isNaN(d.getTime())) return '-';
+                return d.toLocaleTimeString('en-IN', { 
+                  hour: '2-digit', 
+                  minute: '2-digit', 
+                  hour12: true 
+                });
+              } catch (e) {
+                return '-';
+              }
+            };
+
+            return {
+              id: record.id,
+              empId: record.memberId?.slice(0, 6) || 'EMP' + record.id.toString().slice(0, 3),
+              name: record.memberName || 'Unknown Member',
+              date: record.date,
+              checkIn: formatTime(record.checkIn),
+              checkOut: formatTime(record.checkOut),
+              status: mapStatus(record.status),
+              hours: record.workHours ? `${record.workHours}h` : '0h',
+              overtime: '0h',
+              avatar: record.memberName ? record.memberName.split(' ').map(n => n[0]).join('') : '??',
+              photo: null
+            };
+          });
+          setAttendanceData(mappedData);
+        } else {
+          setAttendanceData([]);
+        }
+      } catch (error) {
+        console.error('Error fetching attendance data:', error);
+        setAttendanceData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAttendanceData();
   }, [selectedDate, selectedClient]);
 
   const stats = {

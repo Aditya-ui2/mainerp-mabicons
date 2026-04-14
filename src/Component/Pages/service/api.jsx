@@ -346,6 +346,15 @@ export const attachFinalOfferLetter = async (formData) => {
   }
 };
 
+export const generateCandidateCredentials = async (candidateId) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/candidate/generate-credentials', { candidateId });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 // Task-related API endpoints
 export const requestTask = async (taskData) => {
   try {

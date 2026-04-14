@@ -4,7 +4,7 @@ import {
   X, Mail, Phone, Calendar, ChevronRight, ChevronDown, Plus, Download, Search, Filter,
   User, Briefcase, Tag, AlignLeft, LayoutGrid, List, AlertCircle,
   CheckSquare, Square, Trash2, Send, MapPin, DollarSign, Clock, Award,
-  FileText, Upload, Eye, Video, Star
+  FileText, Upload, Eye, Video, Star, Zap
 } from "lucide-react";
 import { toast } from "sonner";
 import { PIPELINE_STAGES, AVATAR_COLORS, getAvatarColor } from "./mockData";
@@ -17,6 +17,7 @@ import {
   getAllRecruitmentPositions,
   getAllClients,
   scheduleNewInterview,
+  generateCandidateCredentials,
   BASE_URL
 } from "../service/api";
 
@@ -89,6 +90,11 @@ export default function CandidatesPage({ setActiveTab }) {
   const [scheduleForm, setScheduleForm] = useState({ candidateId: '', candidateName: '', candidateEmail: '', positionTitle: '', clientName: '', date: '', time: '', duration: '60', meetingType: 'Video', meetingLink: '', round: 'Technical Round', interviewerName: '', interviewerRole: '' });
   const [schedulingLoading, setSchedulingLoading] = useState(false);
   const [showCvPreview, setShowCvPreview] = useState(false);
+
+  // Credential Modal State
+  const [isCredsModalOpen, setIsCredsModalOpen] = useState(false);
+  const [credsCandidate, setCredsCandidate] = useState(null);
+  const [credsLoading, setCredsLoading] = useState(false);
 
   // Offer Modal state
   const [isOfferOpen, setIsOfferOpen] = useState(false);
@@ -285,6 +291,12 @@ export default function CandidatesPage({ setActiveTab }) {
         });
         setIsOfferOpen(true);
       }
+
+      // Open Credential Modal when moved to Hired
+      if (stage === 'Hired') {
+        setCredsCandidate(candidate);
+        setIsCredsModalOpen(true);
+      }
     } catch (error) {
       toast.error("Failed to update candidate stage");
     } finally {
@@ -460,6 +472,39 @@ export default function CandidatesPage({ setActiveTab }) {
       }
     } catch (error) {
       console.warn("API Offline - Running in Local Mode");
+    }
+  };
+
+  const handleGenerateCredentials = async () => {
+    if (!credsCandidate) return;
+    try {
+      setCredsLoading(true);
+      const res = await generateCandidateCredentials(credsCandidate.id);
+      if (res && res.success) {
+        toast.success(`Credentials generated for ${credsCandidate.email}`);
+        
+        // Construct mailto link for manual sending
+        const subject = encodeURIComponent("Your Mabicons ERP Login Credentials");
+        const body = encodeURIComponent(`Dear ${credsCandidate.name},
+
+Welcome to Mabicons! Your ERP login credentials have been generated.
+
+Login URL: https://erp.mabicons.com
+Email: ${credsCandidate.email}
+Password: ${res.data.password}
+
+Best Regards,
+Mabicons Recruitment Team`);
+
+        window.location.href = `mailto:${credsCandidate.email}?subject=${subject}&body=${body}`;
+        
+        setIsCredsModalOpen(false);
+        setCredsCandidate(null);
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to generate credentials");
+    } finally {
+      setCredsLoading(false);
     }
   };
 
@@ -1974,6 +2019,66 @@ export default function CandidatesPage({ setActiveTab }) {
         </div>
       )}
 
+      {/* Credential Generation Modal */}
+      {isCredsModalOpen && credsCandidate && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
+          onClick={() => { if (!credsLoading) setIsCredsModalOpen(false); }}>
+          <div className="bg-white w-full max-w-md rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in zoom-in duration-300"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#EEF2FB]">
+              <div>
+                <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Success! Candidate Hired</h3>
+                <p className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] mt-1">Portal Provisioning</p>
+              </div>
+              <button onClick={() => { if (!credsLoading) setIsCredsModalOpen(false); }}
+                className="w-10 h-10 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-10 space-y-6 text-center">
+              <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-2 shadow-inner border border-emerald-100/50">
+                <Award size={40} className="animate-bounce" />
+              </div>
+              
+              <div className="space-y-1">
+                <h4 className="text-lg font-bold text-[#1A1A2E]">{credsCandidate.name}</h4>
+                <p className="text-sm text-[#9B9BAD] font-medium">{credsCandidate.email}</p>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-[#F8FAFF] border border-[#EEF2FB] text-left">
+                <p className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Mail size={12} /> Email Notification
+                </p>
+                <p className="text-[11px] font-medium text-[#6B6B7E] leading-relaxed">
+                  We'll generate a random password and send it to the candidate's email so they can log in to the ERP portal immediately.
+                </p>
+              </div>
+
+              <div className="flex gap-4 pt-2">
+                <button 
+                  onClick={() => setIsCredsModalOpen(false)}
+                  disabled={credsLoading}
+                  className="flex-1 py-4 rounded-2xl border-2 border-[#F4F3EF] text-[11px] font-bold text-[#6B6B7E] uppercase tracking-wider hover:bg-[#F4F3EF] transition-all disabled:opacity-50"
+                >
+                  Skip for now
+                </button>
+                <button 
+                  onClick={handleGenerateCredentials}
+                  disabled={credsLoading}
+                  className="flex-[2] bg-[#1B4DA0] text-white py-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-[#1B4DA0]/20 hover:shadow-[#1B4DA0]/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-70 text-center"
+                >
+                  {credsLoading ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <><Zap size={14} /> Create & Send account</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

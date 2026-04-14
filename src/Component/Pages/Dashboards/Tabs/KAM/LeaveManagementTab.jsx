@@ -3,9 +3,42 @@ import { createPortal } from 'react-dom';
 import { FiCalendar, FiClock, FiCheck, FiX, FiPlus, FiDownload, FiSun, FiMoon, FiCoffee, FiAward, FiTrendingUp, FiArrowLeft, FiSend, FiFileText } from 'react-icons/fi';
 import { Search, ChevronDown, Download, Plus, X, ChevronRight, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDeptLeaveRequests, applyLeave, approveRejectLeave } from '../../../service/api';
+import { toast } from 'react-hot-toast';
 
 const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
-  const [leaveMode, setLeaveMode] = useState('Full Day');
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    leaveType: 'Sick Leave',
+    leaveMode: 'Full Day',
+    startDate: '',
+    endDate: '',
+    reason: ''
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.startDate || !formData.endDate || !formData.reason) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await applyLeave({
+        ...formData,
+        startDate: formData.startDate,
+        endDate: formData.endDate
+      });
+      if (response.success) {
+        toast.success('Leave application submitted successfully');
+        onSubmit();
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to submit application');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -16,7 +49,7 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
       style={{ fontFamily: "'Calibri', sans-serif" }}
     >
       <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 text-left">
           <h2 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
             New Application
           </h2>
@@ -33,30 +66,35 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
 
       <div className="flex-1 p-10 overflow-y-auto custom-scrollbar">
         <div className="space-y-10">
-          <form className="space-y-10" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+          <form className="space-y-10" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-x-12 gap-y-10">
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1">Leave Category</label>
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1 text-left">Leave Category</label>
                 <div className="relative">
-                  <select className="w-full h-14 rounded-2xl bg-[#F4F3EF] border-transparent px-6 text-[15px] font-bold text-[#1A1A2E] outline-none appearance-none focus:ring-2 focus:ring-[#0D47A1]/10">
+                  <select 
+                    value={formData.leaveType}
+                    onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+                    className="w-full h-14 rounded-2xl bg-[#F4F3EF] border-transparent px-6 text-[15px] font-bold text-[#1A1A2E] outline-none appearance-none focus:ring-2 focus:ring-[#0D47A1]/10"
+                  >
                     <option>Sick Leave</option>
                     <option>Casual Leave</option>
                     <option>Earned Leave</option>
                     <option>Compensatory Off</option>
-                    <option>Maternity/Paternity</option>
+                    <option>Maternity Leave</option>
+                    <option>Work From Home</option>
                   </select>
                   <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50" size={18} />
                 </div>
               </div>
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1">Application Mode</label>
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1 text-left">Application Mode</label>
                 <div className="flex gap-2 p-1 bg-[#F4F3EF] rounded-2xl">
                   {['Full Day', 'Half Day'].map((mode) => (
                     <button
                       key={mode}
                       type="button"
-                      onClick={() => setLeaveMode(mode)}
-                      className={`flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${leaveMode === mode ? 'bg-white text-[#0D47A1] shadow-sm' : 'text-[#9B9BAD] hover:text-[#6B6B7E]'}`}
+                      onClick={() => setFormData({ ...formData, leaveMode: mode })}
+                      className={`flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${formData.leaveMode === mode ? 'bg-white text-[#0D47A1] shadow-sm' : 'text-[#9B9BAD] hover:text-[#6B6B7E]'}`}
                     >
                       {mode}
                     </button>
@@ -64,17 +102,29 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
                 </div>
               </div>
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1">Commencement Date</label>
-                <input type="date" className="w-full h-14 rounded-2xl bg-[#F4F3EF] border-transparent px-6 text-[15px] font-bold text-[#1A1A2E] outline-none" />
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1 text-left">Commencement Date</label>
+                <input 
+                  type="date" 
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  className="w-full h-14 rounded-2xl bg-[#F4F3EF] border-transparent px-6 text-[15px] font-bold text-[#1A1A2E] outline-none" 
+                />
               </div>
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1">Conclusion Date</label>
-                <input type="date" className="w-full h-14 rounded-2xl bg-[#F4F3EF] border-transparent px-6 text-[15px] font-bold text-[#1A1A2E] outline-none" />
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1 text-left">Conclusion Date</label>
+                <input 
+                  type="date" 
+                  value={formData.endDate}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  className="w-full h-14 rounded-2xl bg-[#F4F3EF] border-transparent px-6 text-[15px] font-bold text-[#1A1A2E] outline-none" 
+                />
               </div>
               <div className="col-span-2 space-y-3">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1">Official Justification</label>
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block ml-1 text-left">Official Justification</label>
                 <textarea 
                   rows={4}
+                  value={formData.reason}
+                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                   placeholder="Provide a detailed reason for this request..."
                   className="w-full rounded-2xl bg-[#F4F3EF] border-transparent p-6 text-[15px] font-medium text-[#1A1A2E] outline-none focus:ring-2 focus:ring-[#0D47A1]/10 resize-none italic placeholder:text-[#9B9BAD]"
                 />
@@ -82,7 +132,9 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
             </div>
             <div className="flex gap-4 pt-4">
               <button type="button" onClick={onBack} className="flex-1 py-5 rounded-[24px] bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] text-sm font-bold hover:bg-[#F4F3EF] transition-all">Discard</button>
-              <button type="submit" className="flex-[1.5] py-5 rounded-[24px] bg-[#0D47A1] text-white text-sm font-bold shadow-xl shadow-blue-500/20 hover:bg-[#0a3a82] transition-all">Submit Application</button>
+              <button type="submit" disabled={loading} className="flex-[1.5] py-5 rounded-[24px] bg-[#0D47A1] text-white text-sm font-bold shadow-xl shadow-blue-500/20 hover:bg-[#0a3a82] transition-all disabled:opacity-50">
+                {loading ? 'Submitting...' : 'Submit Application'}
+              </button>
             </div>
           </form>
         </div>
@@ -91,9 +143,25 @@ const ApplyLeaveView = ({ onBack, onSubmit, isDarkMode }) => {
   );
 };
 
-const EmployeeDetailsView = ({ employee, onBack, isDarkMode, getStatusConfig }) => {
+const EmployeeDetailsView = ({ employee, onBack, isDarkMode, getStatusConfig, onStatusChange }) => {
+  const [actionLoading, setActionLoading] = useState(false);
+  const [comment, setComment] = useState('');
+
   if (!employee) return null;
   const statusConfig = getStatusConfig(employee.status);
+
+  const handleAction = async (status) => {
+    setActionLoading(true);
+    try {
+      await onStatusChange(employee.id, status, comment);
+      onBack();
+    } catch (error) {
+      // toast handled in parent
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ x: '100%', opacity: 0.5 }}
@@ -104,10 +172,10 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode, getStatusConfig }) 
       style={{ fontFamily: "'Calibri', sans-serif" }}
     >
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{employee.name}</h2>
+        <div className="flex flex-col gap-1 text-left">
+          <h2 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{employee.memberName || employee.name}</h2>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-black text-[#0D47A1] uppercase tracking-[3px]">{employee.empId}</span>
+            <span className="text-[11px] font-black text-[#0D47A1] uppercase tracking-[3px]">{employee.memberId || employee.empId}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-[#F4F3EF]" />
             <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Leave Application Detail</span>
           </div>
@@ -122,19 +190,23 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode, getStatusConfig }) 
             <div className="grid grid-cols-2 gap-x-16 gap-y-10">
               <div className="space-y-2 text-left">
                 <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] block">Leave Type</span>
-                <p className="text-[15px] font-bold text-[#1A1A2E] tracking-tight">{employee.type}</p>
+                <p className="text-[15px] font-bold text-[#1A1A2E] tracking-tight">{employee.leaveType || employee.type}</p>
               </div>
               <div className="space-y-2 text-left">
                 <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] block">Duration</span>
-                <p className="text-[15px] font-bold text-[#1A1A2E] tracking-tight">{employee.days} Days</p>
+                <p className="text-[15px] font-bold text-[#1A1A2E] tracking-tight">{employee.days || 1} Day(s)</p>
               </div>
               <div className="space-y-2 text-left">
                 <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] block">From Date</span>
-                <p className="text-[15px] font-bold text-[#1A1A2E] tracking-tight">{new Date(employee.from).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="text-[15px] font-bold text-[#1A1A2E] tracking-tight">
+                  {employee.startDate ? new Date(employee.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
+                </p>
               </div>
               <div className="space-y-2 text-left">
                 <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] block">To Date</span>
-                <p className="text-[15px] font-bold text-[#1A1A2E] tracking-tight">{new Date(employee.to).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="text-[15px] font-bold text-[#1A1A2E] tracking-tight">
+                  {employee.endDate ? new Date(employee.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
+                </p>
               </div>
               <div className="space-y-2 text-left col-span-2 pt-6 border-t border-[#F4F3EF]">
                 <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] block mb-4">Reason for Leave</span>
@@ -154,6 +226,35 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode, getStatusConfig }) 
             </div>
           </div>
         </div>
+
+        {employee.status?.toLowerCase() === 'pending' && (
+          <div className="bg-white rounded-[32px] border border-[#F4F3EF] p-10 mb-10">
+            <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] block mb-4 text-left">Approver Comments</label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Add your comments here (optional)..."
+              className="w-full h-32 p-6 bg-[#FAFAF8] border border-[#F4F3EF] rounded-2xl text-[15px] outline-none focus:ring-2 focus:ring-[#0D47A1]/10 resize-none mb-8"
+            />
+            <div className="flex gap-4">
+              <button 
+                onClick={() => handleAction('Approved')}
+                disabled={actionLoading}
+                className="flex-1 py-5 rounded-[24px] bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all disabled:opacity-50"
+              >
+                {actionLoading ? 'Processing...' : 'Approve Leave'}
+              </button>
+              <button 
+                onClick={() => handleAction('Rejected')}
+                disabled={actionLoading}
+                className="flex-1 py-5 rounded-[24px] bg-rose-500 text-white text-sm font-bold shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all disabled:opacity-50"
+              >
+                {actionLoading ? 'Processing...' : 'Reject Leave'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex max-w-2xl mx-auto">
           <button onClick={onBack} className="w-full py-5 rounded-[24px] bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] text-sm font-bold hover:bg-[#F4F3EF] transition-all">
             Close Detail View
@@ -172,19 +273,37 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const mockData = [
-      { id: 1, empId: 'EMP001', name: 'Rahul Sharma', type: 'Sick Leave', from: '2026-03-18', to: '2026-03-19', days: 2, reason: 'Fever and cold', status: 'pending', appliedOn: '2026-03-16' },
-      { id: 2, empId: 'EMP002', name: 'Priya Singh', type: 'Casual Leave', from: '2026-03-20', to: '2026-03-20', days: 1, reason: 'Personal work', status: 'approved', appliedOn: '2026-03-15' },
-      { id: 3, empId: 'EMP003', name: 'Amit Kumar', type: 'Earned Leave', from: '2026-03-25', to: '2026-03-28', days: 4, reason: 'Family vacation', status: 'pending', appliedOn: '2026-03-16' },
-      { id: 4, empId: 'EMP004', name: 'Sneha Patel', type: 'Maternity Leave', from: '2026-04-01', to: '2026-06-30', days: 90, reason: 'Maternity', status: 'approved', appliedOn: '2026-03-10' },
-      { id: 5, empId: 'EMP005', name: 'Vikram Rao', type: 'Compensatory Off', from: '2026-03-22', to: '2026-03-22', days: 1, reason: 'Worked on weekend', status: 'rejected', appliedOn: '2026-03-14' },
-    ];
-    setTimeout(() => {
-      setLeaveRequests(mockData);
+  const fetchLeaveRequests = async () => {
+    setLoading(true);
+    try {
+      const response = await getDeptLeaveRequests();
+      if (response.success) {
+        setLeaveRequests(Array.isArray(response.leaves) ? response.leaves : []);
+      }
+    } catch (error) {
+      toast.error('Failed to load leave requests');
+      setLeaveRequests([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaveRequests();
   }, [selectedClient]);
+
+  const handleStatusChange = async (id, status, comment) => {
+    try {
+      const response = await approveRejectLeave(id, { status, approverComment: comment });
+      if (response.success) {
+        toast.success(`Leave request ${status.toLowerCase()} successfully`);
+        fetchLeaveRequests();
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to update leave status');
+      throw error;
+    }
+  };
 
   const getStatusConfig = (status = '') => {
     const s = status.toLowerCase();
@@ -196,9 +315,12 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
     return config[s] || config.pending;
   };
 
-  const filteredRequests = leaveRequests.filter(req => {
-    const matchesSearch = req.name.toLowerCase().includes(searchTerm.toLowerCase()) || req.empId.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || req.status === filterStatus;
+  const filteredRequests = (leaveRequests || []).filter(req => {
+    const memberName = req.memberName || req.name || '';
+    const memberId = req.memberId || req.empId || '';
+    const matchesSearch = memberName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         memberId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || req.status?.toLowerCase() === filterStatus.toLowerCase();
     return matchesSearch && matchesFilter;
   });
 
@@ -285,21 +407,30 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
                         className={`grid grid-cols-[1.2fr_180px_180px_100px_220px_180px_40px] gap-4 items-center px-10 py-6 border-b last:border-0 cursor-pointer transition-all group relative ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/40' : 'border-[#F4F3EF] hover:bg-[#F8FAFF]'}`}
                       >
                         <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-[42px] h-[42px] rounded-[14px] flex items-center justify-center font-bold shadow-sm transition-transform group-hover:scale-110 bg-[#F0F7FF] text-[#1B4DA0] text-[13px]">{req.name.charAt(0).toUpperCase()}</div>
+                          <div className="w-[42px] h-[42px] rounded-[14px] flex items-center justify-center font-bold shadow-sm transition-transform group-hover:scale-110 bg-[#F0F7FF] text-[#1B4DA0] text-[13px]">
+                            {(req.memberName || req.name || '??').charAt(0).toUpperCase()}
+                          </div>
                           <div className="flex flex-col min-w-0 text-left">
-                            <p className={`text-[15px] font-bold truncate transition-colors ${isDarkMode ? 'text-white group-hover:text-[#0D47A1]' : 'text-[#1A1A2E] group-hover:text-[#0D47A1]'}`}>{req.name}</p>
-                            <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5">{req.empId}</p>
+                            <p className={`text-[15px] font-bold truncate transition-colors ${isDarkMode ? 'text-white group-hover:text-[#0D47A1]' : 'text-[#1A1A2E] group-hover:text-[#0D47A1]'}`}>
+                              {req.memberName || req.name}
+                            </p>
+                            <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5">{req.memberId || req.empId}</p>
                           </div>
                         </div>
                         <div className="flex justify-start">
-                          <div className="text-[13px] font-bold text-[#6B6B7E] bg-[#FAFAF8] px-3 py-1.5 rounded-lg border border-[#F4F3EF]">{req.type}</div>
+                          <div className="text-[13px] font-bold text-[#6B6B7E] bg-[#FAFAF8] px-3 py-1.5 rounded-lg border border-[#F4F3EF]">
+                            {req.leaveType || req.type}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-[13px] font-bold text-[#6B6B7E]">
+                        <div className="flex items-center gap-2 text-[13px] font-bold text-[#6B6B7E] text-left">
                           <FiCalendar className="w-4 h-4 text-[#9B9BAD]" />
-                          <span>{new Date(req.from).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - {new Date(req.to).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                          <span className="truncate">
+                            {req.startDate ? new Date(req.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'N/A'} - 
+                            {req.endDate ? new Date(req.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : 'N/A'}
+                          </span>
                         </div>
                         <div className="flex justify-start">
-                           <div className="w-9 h-9 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[13px] font-black text-[#0D47A1]">{req.days}</div>
+                           <div className="w-9 h-9 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[13px] font-black text-[#0D47A1]">{req.days || 1}</div>
                         </div>
                         <div className="text-[13px] font-medium text-[#9B9BAD] truncate italic max-w-[200px] text-left">"{req.reason}"</div>
                         <div className="flex items-center">
@@ -337,7 +468,13 @@ const LeaveManagementTab = ({ isDarkMode, selectedClient }) => {
             <>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setView('list')} className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]" />
               <motion.div className="fixed inset-y-0 right-0 w-full sm:w-[600px] md:w-[750px] shadow-2xl z-[110] border-l bg-white border-[#F4F3EF] overflow-hidden">
-                <EmployeeDetailsView employee={selectedEmployee} onBack={() => setView('list')} isDarkMode={isDarkMode} getStatusConfig={getStatusConfig} />
+                <EmployeeDetailsView 
+                  employee={selectedEmployee} 
+                  onBack={() => setView('list')} 
+                  isDarkMode={isDarkMode} 
+                  getStatusConfig={getStatusConfig} 
+                  onStatusChange={handleStatusChange} 
+                />
               </motion.div>
             </>
           )}
