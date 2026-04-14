@@ -21,6 +21,7 @@ import {
   FiTarget,
   FiActivity,
   FiBriefcase,
+  FiUser,
 } from 'react-icons/fi';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
@@ -71,30 +72,68 @@ const TabLoader = () => (
   </div>
 );
 
+const ComingSoonPlaceholder = ({ title }) => (
+  <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center">
+    <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6 animate-pulse">
+      <FiActivity className="w-10 h-10" />
+    </div>
+    <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
+    <p className="text-gray-500 max-w-md">We're working hard to bring you this feature. Stay tuned for updates!</p>
+    <div className="mt-8 flex gap-3">
+      <div className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold opacity-50 cursor-not-allowed">Coming Soon</div>
+    </div>
+  </div>
+);
+
 // Sidebar configuration
 const sidebarConfig = [
   {
-    heading: '',
+    heading: 'Core Operations',
     items: [
-      { id: 1, title: 'Attendance', icon: FiClock },
-      { id: 2, title: 'Payroll', icon: FaIndianRupeeSign },
-      { id: 13, title: 'Leave Management', icon: FiCalendar },
-      { id: 6, title: 'Performance', icon: FiTrendingUp },
+      { 
+        id: 1, 
+        title: 'Attendance & Leave', 
+        icon: FiClock,
+        submenu: [
+          { id: 101, title: 'Monthly Attendance' },
+          { id: 102, title: 'Correction & regularization' },
+          { id: 103, title: 'Leave management' },
+        ]
+      },
+      { 
+        id: 2, 
+        title: 'Payroll', 
+        icon: FaIndianRupeeSign,
+        submenu: [
+          { id: 201, title: 'Payroll-setup' },
+          { id: 202, title: 'Salary' },
+          { id: 203, title: 'Payroll Process' },
+          { id: 204, title: 'Verification' },
+          { id: 205, title: 'Payment' },
+          { id: 206, title: 'Payslip' },
+        ]
+      },
       { id: 3, title: 'Onboarding', icon: FiUserPlus },
       { id: 7, title: 'Offboarding', icon: FiUserMinus },
       { id: 8, title: 'FnF', icon: FiCheckSquare },
-      { id: 5, title: 'Master Data (Emp)', icon: FiUsers },
-      { id: 9, title: 'Document Verify', icon: FiFile },
-      { id: 4, title: 'Policy Making', icon: FiFileText },
-      { id: 14, title: 'Compliance Management', icon: FiShield },
-      { id: 16, title: 'Work Agreements', icon: FiFileText },
-      { id: 12, title: 'Task by Client', icon: FiClipboard },
+      { id: 5, title: 'Master Data', icon: FiUsers },
+      { id: 22, title: 'Employee', icon: FiUser },
+      {
+        id: 9,
+        title: 'Documentation',
+        icon: FiFileText,
+        submenu: [
+          { id: 301, title: 'Document verify' },
+          { id: 302, title: 'Policy Making' },
+          { id: 303, title: 'Compliance Management' },
+          { id: 304, title: 'Work Agreement' },
+        ]
+      },
+      { id: 14, title: 'Compliance', icon: FiShield },
       { id: 10, title: 'Notes', icon: FiEdit3 },
-      { id: 18, title: 'Work Handover', icon: FiRefreshCw },
-      { id: 15, title: 'KAM Productivity', icon: FiTarget },
-      { id: 19, title: 'Team Members', icon: FiUsers },
-      { id: 20, title: 'Activity Feed', icon: FiActivity },
       { id: 21, title: 'Task Assignment', icon: FiCheckSquare },
+      { id: 19, title: 'Team Member', icon: FiUsers },
+      { id: 20, title: 'Activity Feed', icon: FiActivity },
     ]
   },
 ];
@@ -186,46 +225,72 @@ const HROperationsDashboard = () => {
       <Suspense fallback={<TabLoader />}>
         {(() => {
           switch (activeTab) {
-            case 'Attendance':
+            // Attendance & Leave Dropdown
+            case 'Monthly Attendance':
               return <AttendanceTab />;
-            case 'Payroll':
-              return <PayrollTab />;
+            case 'Correction & regularization':
+              return <ComingSoonPlaceholder title="Correction & regularization" />;
+            case 'Leave management':
+              return <LeaveManagementTab />;
+
+            // Payroll Dropdown
+            case 'Payroll-setup':
+              return <ComingSoonPlaceholder title="Payroll-setup" />;
+            case 'Salary':
+              return <ComingSoonPlaceholder title="Salary" />;
+            case 'Payroll Process':
+              return <ComingSoonPlaceholder title="Payroll Process" />;
+            case 'Verification':
+              return <ComingSoonPlaceholder title="Payroll Verification" />;
+            case 'Payment':
+              return <ComingSoonPlaceholder title="Payment Processing" />;
+            case 'Payslip':
+              return <ComingSoonPlaceholder title="Employee Payslips" />;
+
+            // Core Items
             case 'Onboarding':
               return <OnboardingKamTab />;
-            case 'Policy Making':
-              return <PolicyTab />;
-            case 'Master Data (Emp)':
-              return <MasterDataTab />;
-            case 'Performance':
-              return <PerformanceTab />;
             case 'Offboarding':
               return <OffboardingTab />;
             case 'FnF':
               return <FnFTab />;
-            case 'Document Verify':
-              return <DocumentVerifyTab />;
-            case 'Notes':
-              return <NotesTab />;
+            case 'Master Data':
+              return <MasterDataTab />;
+            case 'Employee':
+              return <ComingSoonPlaceholder title="Employee Directory" />;
 
-            case 'Task by Client':
-              return <TaskByClientTab />;
-            case 'Leave Management':
-              return <LeaveManagementTab />;
+            // Documentation Dropdown
+            case 'Document verify':
+              return <DocumentVerifyTab />;
+            case 'Policy Making':
+              return <PolicyTab />;
             case 'Compliance Management':
               return <ComplianceTab />;
-            case 'KAM Productivity':
-              return <KamProductivityTab />;
-            case 'Work Agreements':
+            case 'Work Agreement':
               return <WorkAgreementTab />;
 
-            case 'Work Handover':
-              return <WorkHandoverTab />;
-            case 'Team Members':
+            case 'Compliance':
+              return <ComplianceTab />;
+            case 'Notes':
+              return <NotesTab />;
+            case 'Task Assignment':
+              return <TaskAssignmentTab department="HR Operations" />;
+            case 'Team Member':
               return <TeamManagementTab department="HR Operations" />;
             case 'Activity Feed':
               return <ActivityFeedTab department="HR Operations" />;
-            case 'Task Assignment':
-              return <TaskAssignmentTab department="HR Operations" />;
+
+            // Legacy mappings (for safety)
+            case 'Attendance':
+              return <AttendanceTab />;
+            case 'Payroll':
+              return <PayrollTab />;
+            case 'Leave Management':
+              return <LeaveManagementTab />;
+            case 'Master Data (Emp)':
+              return <MasterDataTab />;
+            case 'Team Members':
+              return <TeamManagementTab department="HR Operations" />;
             default:
               // Dashboard Overview
               return (
