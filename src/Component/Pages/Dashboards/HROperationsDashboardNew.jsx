@@ -109,7 +109,7 @@ const sidebarConfig = [
           { id: 202, title: 'Salary' },
           { id: 203, title: 'Payroll Process' },
           { id: 204, title: 'Verification' },
-          { id: 205, title: 'Payment' },
+          { id: 205, title: 'Payout' },
           { id: 206, title: 'Payslip' },
         ]
       },
@@ -242,8 +242,8 @@ const HROperationsDashboard = () => {
               return <ComingSoonPlaceholder title="Payroll Process" />;
             case 'Verification':
               return <ComingSoonPlaceholder title="Payroll Verification" />;
-            case 'Payment':
-              return <ComingSoonPlaceholder title="Payment Processing" />;
+            case 'Payout':
+              return <ComingSoonPlaceholder title="Payout Processing" />;
             case 'Payslip':
               return <ComingSoonPlaceholder title="Employee Payslips" />;
 
