@@ -50,8 +50,20 @@ const ActivityIcon = ({ type }) => {
   );
 };
 
+const MOCK_ACTIVITIES_RECRUITMENT = [
+  { _id: 'a1', action: 'job_opening_created', description: 'New position opened for Senior React Developer (TechNexus)', performedByName: 'Aravind Swamy', actionType: 'job', createdAt: new Date(Date.now() - 3600000).toISOString() },
+  { _id: 'a2', action: 'interview_scheduled', description: 'Technical interview scheduled for candidate "Aarti Singh"', performedByName: 'Rahul Kapoor', actionType: 'candidate', createdAt: new Date(Date.now() - 7200000).toISOString() },
+  { _id: 'a3', action: 'task_assigned', description: 'Screening task assigned to junior recruiter', performedByName: 'Aravind Swamy', actionType: 'task', createdAt: new Date(Date.now() - 10800000).toISOString() },
+];
+
+const MOCK_ACTIVITIES_OPERATIONS = [
+  { _id: 'a4', action: 'Payroll Processed', description: 'March 2024 payroll has been successfully processed for 50 employees.', performedByName: 'Priya Sharma', actionType: 'task', createdAt: new Date(Date.now() - 1800000).toISOString() },
+  { _id: 'a5', action: 'Compliance Update', description: 'PF and ESI contribution reports generated for Q1.', performedByName: 'Sameer Khan', actionType: 'job', createdAt: new Date(Date.now() - 5400000).toISOString() },
+  { _id: 'a6', action: 'Policy Updated', description: 'New Remote Work Policy has been published to all staff.', performedByName: 'Priya Sharma', actionType: 'default', createdAt: new Date(Date.now() - 14400000).toISOString() },
+];
+
 const ActivityFeedTab = ({ department = 'HR Operations' }) => {
-  const [activities, setActivities] = useState([]);
+  const [activities, setActivities] = useState(department === 'HR Recruitment' ? MOCK_ACTIVITIES_RECRUITMENT : MOCK_ACTIVITIES_OPERATIONS);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
@@ -92,10 +104,13 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
     try {
       setLoading(true);
       const response = await getDepartmentActivityLogs(department, 50);
-      setActivities(response.activities || []);
+      const apiActivities = response.activities || [];
+      const mockActivities = department === 'HR Recruitment' ? MOCK_ACTIVITIES_RECRUITMENT : MOCK_ACTIVITIES_OPERATIONS;
+      setActivities([...mockActivities, ...apiActivities]);
     } catch (error) {
       console.error('Error fetching activities:', error);
-      toast.error("Failed to load Registry Feed");
+      const mockActivities = department === 'HR Recruitment' ? MOCK_ACTIVITIES_RECRUITMENT : MOCK_ACTIVITIES_OPERATIONS;
+      setActivities(mockActivities);
     } finally {
       setLoading(false);
     }

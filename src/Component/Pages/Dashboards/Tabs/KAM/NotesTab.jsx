@@ -8,8 +8,22 @@ import {
 } from 'lucide-react';
 import { getNotes, createNote, updateNote, deleteNote } from '../../../service/api';
 
-const NotesTab = ({ isDarkMode, selectedClient }) => {
-  const [notes, setNotes] = useState([]);
+const MOCK_NOTES_RECRUITMENT = [
+  { id: 'nr1', title: 'Sourcing Strategy - Tech', content: 'Focused on LinkedIn Boolean strings and referral loops for high-priority React developer roles.', createdAt: new Date(Date.now() - 86400000).toISOString(), updatedAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: 'nr2', title: 'Interview Feedback Loop', content: 'Reminder to follow up with internal stakeholders within 24 hours of technical evaluation.', createdAt: new Date(Date.now() - 172800000).toISOString(), updatedAt: new Date(Date.now() - 172800000).toISOString() },
+  { id: 'nr3', title: 'Client Requirements - TechNexus', description: 'Monthly project status update and requirements gathering for April.', status: 'Pending', priority: 'High', category: 'Client', assignedToName: 'Manju', dueDate: new Date().toISOString() },
+];
+
+const MOCK_NOTES_OPERATIONS = [
+  { id: 'no1', title: 'New Remote Policy', content: 'Details on the hybrid model (3 days office, 2 days home) for the FY24 cycle.', createdAt: new Date(Date.now() - 43200000).toISOString(), updatedAt: new Date(Date.now() - 43200000).toISOString() },
+  { id: 'no2', title: 'Payroll Compliance Check', content: 'Mandatory review of PF and ESI contributions for the newly onboarded batch.', createdAt: new Date(Date.now() - 129600000).toISOString(), updatedAt: new Date(Date.now() - 129600000).toISOString() },
+];
+
+const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) => {
+  // Use prop if provided, otherwise fallback to localStorage, finally default to Operations
+  const department = propDepartment || localStorage.getItem('department') || 'HR Operations';
+  
+  const [notes, setNotes] = useState(department === 'HR Recruitment' ? MOCK_NOTES_RECRUITMENT : MOCK_NOTES_OPERATIONS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,14 +35,26 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
   const fetchNotes = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getNotes();
-      setNotes(res.notes || []);
+      // Pass department to the API to fetch only relevant notes
+      const res = await getNotes({ department });
+      const apiNotes = res.notes || [];
+      
+      // Secondary filter to ensure strict isolation in the UI
+      const filteredApiNotes = apiNotes.filter(n => 
+        n.department && 
+        n.department.trim().toLowerCase() === department.trim().toLowerCase()
+      );
+      
+      const mockNotes = department === 'HR Recruitment' ? MOCK_NOTES_RECRUITMENT : MOCK_NOTES_OPERATIONS;
+      setNotes([...mockNotes, ...filteredApiNotes]);
     } catch (err) {
-      toast.error(err.message || 'Failed to load notes');
+      console.error('Failed to load notes:', err);
+      const mockNotes = department === 'HR Recruitment' ? MOCK_NOTES_RECRUITMENT : MOCK_NOTES_OPERATIONS;
+      setNotes(mockNotes);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [department]);
 
   useEffect(() => {
     fetchNotes();
@@ -41,6 +67,7 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
       const payload = {
         title: newNote.title,
         content: newNote.content,
+        department: department, // Tag the note with its department
       };
 
       if (view === 'edit' && editNote) {
@@ -103,7 +130,9 @@ const NotesTab = ({ isDarkMode, selectedClient }) => {
               {/* Header */}
               <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                 <div>
-                  <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Notes Hub</h1>
+                  <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">
+                    Notes Hub <span className="text-[#1B4DA0] text-sm ml-2 font-medium bg-[#EEF2FB] px-3 py-1 rounded-lg">[{department}]</span>
+                  </h1>
                   <p className="text-sm font-medium text-[#9B9BAD] mt-1">Strategic knowledge & team archives</p>
                 </div>
 

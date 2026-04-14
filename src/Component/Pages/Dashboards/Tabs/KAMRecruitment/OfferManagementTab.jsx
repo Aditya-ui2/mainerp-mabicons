@@ -1048,20 +1048,15 @@ const OfferManagementTab = ({ isDarkMode }) => {
               >
                 {/* Header */}
                 <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                  <div className="flex items-center gap-6">
-                    <div className="w-14 h-14 rounded-2xl bg-[#1B4DA0] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                      <FilePlus2 className="w-7 h-7" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne tracking-tight">
-                        {editingOffer ? 'Refine Offer Details' : 'Generate Strategic Offer'}
-                      </h2>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.1em]">
-                          Live Template Precision Protocol
-                        </p>
-                      </div>
+                  <div className="flex flex-col items-start text-left">
+                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne tracking-tight">
+                      {editingOffer ? 'Refine Offer Details' : 'Generate Strategic Offer'}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">
+                        Live Template Precision Protocol
+                      </p>
                     </div>
                   </div>
                   <button
@@ -1077,12 +1072,6 @@ const OfferManagementTab = ({ isDarkMode }) => {
                   <div ref={formWrapRef} className={`${templatePdf ? 'w-1/2' : 'w-full'} p-10 overflow-y-auto border-r border-[#F4F3EF] custom-scrollbar bg-white`}>
                     <div className="space-y-8">
                       <div className="space-y-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-[#1B4DA0]">
-                            <FiUser size={14} />
-                          </div>
-                          <h3 className="text-xs font-black uppercase tracking-widest text-[#1A1A2E]">Candidate & Position</h3>
-                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div className="relative">
                             <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Candidate Name *</label>
@@ -1162,23 +1151,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       </div>
 
                       <div className="space-y-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                            <FiDollarSign size={14} />
-                          </div>
-                          <h3 className="text-xs font-black uppercase tracking-widest text-[#1A1A2E]">Compensation & Timeline</h3>
-                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <div>
-                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Current CTC (LPA)</label>
-                            <input
-                              type="text"
-                              value={formData.currentCTC}
-                              onChange={(e) => setFormData(prev => ({ ...prev, currentCTC: e.target.value }))}
-                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/40 focus:bg-white focus:border-blue-100"
-                              placeholder="e.g. 12.0"
-                            />
-                          </div>
                           <div>
                             <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Proposed Monthly *</label>
                             <input
@@ -1194,8 +1167,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
                             <input
                               type="date"
                               value={formData.offerDate}
+                              onClick={(e) => e.target.showPicker && e.target.showPicker()}
                               onChange={(e) => setFormData(prev => ({ ...prev, offerDate: e.target.value }))}
-                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-100"
+                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-100 cursor-pointer"
                             />
                           </div>
                           <div>
@@ -1203,8 +1177,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
                             <input
                               type="date"
                               value={formData.joiningDate}
+                              onClick={(e) => e.target.showPicker && e.target.showPicker()}
                               onChange={(e) => setFormData(prev => ({ ...prev, joiningDate: e.target.value }))}
-                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-100"
+                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-100 cursor-pointer"
                             />
                           </div>
                         </div>

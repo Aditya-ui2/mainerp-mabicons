@@ -272,7 +272,7 @@ const HROperationsDashboard = () => {
             case 'Compliance':
               return <ComplianceTab />;
             case 'Notes':
-              return <NotesTab />;
+              return <NotesTab department="HR Operations" />;
             case 'Task Assignment':
               return <TaskAssignmentTab department="HR Operations" />;
             case 'Team Member':

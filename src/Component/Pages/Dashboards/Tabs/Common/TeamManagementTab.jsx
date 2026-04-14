@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUsers,
@@ -17,6 +19,8 @@ import {
   FiAward,
   FiMoreVertical,
   FiUser,
+  FiFileText,
+  FiLayers,
 } from 'react-icons/fi';
 import {
   getDepartmentTeamMembers,
@@ -25,6 +29,114 @@ import {
   deleteDepartmentTeamMember,
   getDepartmentStats,
 } from '../../../service/api';
+
+const MOCK_MEMBERS = [
+  {
+    _id: 'mock-1',
+    name: 'Aravind Swamy',
+    email: 'aravind.s@mabicons.com',
+    phone: '+91 98765 43210',
+    employeeId: 'MAB-1012',
+    department: 'HR Recruitment',
+    joiningDate: '2023-01-15',
+    profilePhoto: null,
+    role: 'Lead Recruiter',
+    status: 'Active',
+    stats: {
+      activePositions: 12,
+      candidatesPipeline: 45,
+      interviewsScheduled: 8,
+      offersExtended: 3,
+      thisWeekHires: 2,
+      profilesShared: 24,
+      callsDone: 156
+    }
+  },
+  {
+    _id: 'mock-2',
+    name: 'Priya Sharma',
+    email: 'priya.sharma@mabicons.com',
+    phone: '+91 87654 32109',
+    employeeId: 'MAB-1045',
+    department: 'HR Operations',
+    joiningDate: '2023-05-20',
+    profilePhoto: null,
+    role: 'Operations Expert',
+    status: 'Active',
+    stats: {
+      activePositions: 0,
+      candidatesPipeline: 12,
+      interviewsScheduled: 15,
+      offersExtended: 5,
+      thisWeekHires: 4,
+      profilesShared: 8,
+      callsDone: 42
+    }
+  },
+  {
+    _id: 'mock-3',
+    name: 'Rahul Kapoor',
+    email: 'rahul.k@mabicons.com',
+    phone: '+91 76543 21098',
+    employeeId: 'MAB-1028',
+    department: 'HR Recruitment',
+    joiningDate: '2023-08-10',
+    profilePhoto: null,
+    role: 'Tech Recruiter',
+    status: 'On Leave',
+    stats: {
+      activePositions: 8,
+      candidatesPipeline: 32,
+      interviewsScheduled: 4,
+      offersExtended: 1,
+      thisWeekHires: 0,
+      profilesShared: 15,
+      callsDone: 89
+    }
+  },
+  {
+    _id: 'mock-4',
+    name: 'Sameer Khan',
+    email: 'sameer.k@mabicons.com',
+    phone: '+91 99887 76655',
+    employeeId: 'MAB-1102',
+    department: 'HR Operations',
+    joiningDate: '2023-11-01',
+    profilePhoto: null,
+    role: 'Compliance Lead',
+    status: 'Active',
+    stats: {
+      activePositions: 0,
+      candidatesPipeline: 8,
+      interviewsScheduled: 2,
+      offersExtended: 0,
+      thisWeekHires: 0,
+      profilesShared: 0,
+      callsDone: 12
+    }
+  },
+  {
+    _id: 'mock-5',
+    name: 'Neha Gupta',
+    email: 'neha.g@mabicons.com',
+    phone: '+91 99112 23344',
+    employeeId: 'MAB-1089',
+    department: 'HR Operations',
+    joiningDate: '2024-01-10',
+    profilePhoto: null,
+    role: 'Payroll Executive',
+    status: 'Active',
+    stats: {
+      activePositions: 0,
+      candidatesPipeline: 5,
+      interviewsScheduled: 0,
+      offersExtended: 0,
+      thisWeekHires: 0,
+      profilesShared: 0,
+      callsDone: 5
+    }
+  }
+];
 
 const StatusBadge = ({ status }) => {
   const config = {
@@ -42,8 +154,10 @@ const StatusBadge = ({ status }) => {
 };
 
 const TeamManagementTab = ({ department = 'HR Operations' }) => {
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState(MOCK_MEMBERS.filter(m => m.department === department));
+  const [loading, setLoading] = useState(false);
+  const [selectedMemberForDetail, setSelectedMemberForDetail] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
@@ -53,24 +167,45 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
     name: '',
     email: '',
     phone: '',
-    role: '',
-    skills: '',
-    status: 'Active',
+    employeeId: '',
+    department: department,
+    joiningDate: '',
+    profilePhoto: null,
+    profilePhotoPreview: null,
+    status: 'Active'
   });
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1024 * 1024) {
+        alert("Photo size should be less than 1MB");
+        return;
+      }
+      setFormData(prev => ({
+        ...prev,
+        profilePhoto: file,
+        profilePhotoPreview: URL.createObjectURL(file)
+      }));
+    }
+  };
 
   useEffect(() => {
     fetchMembers();
     fetchStats();
+    setFormData(prev => ({ ...prev, department: department }));
   }, [department]);
 
   const fetchMembers = async () => {
     try {
       setLoading(true);
       const response = await getDepartmentTeamMembers(department);
-      setMembers(response.members || []);
+      const apiMembers = response.members || [];
+      const filteredMocks = MOCK_MEMBERS.filter(m => m.department === department);
+      setMembers([...filteredMocks, ...apiMembers]);
     } catch (error) {
       console.error('Error fetching team members:', error);
-      setMembers([]);
+      setMembers(MOCK_MEMBERS.filter(m => m.department === department));
     } finally {
       setLoading(false);
     }
@@ -90,8 +225,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
     try {
       const memberData = {
         ...formData,
-        department,
-        skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
+        profilePhoto: formData.profilePhotoPreview || (editingMember?.profilePhoto || null),
       };
 
       if (editingMember) {
@@ -99,10 +233,20 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
       } else {
         await addDepartmentTeamMember(memberData);
       }
-      
+
       setShowModal(false);
       setEditingMember(null);
-      setFormData({ name: '', email: '', phone: '', role: '', skills: '', status: 'Active' });
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        employeeId: '',
+        department: department,
+        joiningDate: '',
+        profilePhoto: null,
+        profilePhotoPreview: null,
+        status: 'Active'
+      });
       fetchMembers();
     } catch (error) {
       console.error('Error saving member:', error);
@@ -113,20 +257,29 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
   const handleEdit = (member) => {
     setEditingMember(member);
     setFormData({
-      name: member.name,
-      email: member.email,
+      name: member.name || '',
+      email: member.email || '',
       phone: member.phone || '',
-      role: member.role || '',
-      skills: member.skills?.join(', ') || '',
+      employeeId: member.employeeId || '',
+      department: member.department || 'HR Recruitment',
+      joiningDate: member.joiningDate || '',
       status: member.status || 'Active',
+      profilePhoto: null,
+      profilePhotoPreview: member.profilePhoto || null
     });
     setShowModal(true);
   };
 
   const handleDelete = async (memberId) => {
     try {
-      await deleteDepartmentTeamMember(memberId);
-      setMembers(members.filter(m => m._id !== memberId));
+      if (memberId === 'bulk') {
+        const remainingMembers = members.filter(m => !selectedIds.includes(m._id));
+        setMembers(remainingMembers);
+        setSelectedIds([]);
+      } else {
+        await deleteDepartmentTeamMember(memberId);
+        setMembers(members.filter(m => m._id !== memberId));
+      }
       setConfirmDelete(null);
     } catch (error) {
       console.error('Error deleting member:', error);
@@ -177,335 +330,535 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg">
-            <FiUsers className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Team Management</h2>
-            <p className="text-sm text-gray-500">{department} - Manage your team members</p>
+          <div className="text-left">
+            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Team Management
+            </h1>
+            <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left" style={{ fontFamily: "Calibri, sans-serif" }}>
+              {department} — Manage your team members
+            </p>
           </div>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => { setEditingMember(null); setFormData({ name: '', email: '', phone: '', role: '', skills: '', status: 'Active' }); setShowModal(true); }}
-          className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
+          onClick={() => {
+            setEditingMember(null);
+            setFormData({
+              name: '',
+              email: '',
+              phone: '',
+              employeeId: '',
+              department: 'HR Recruitment',
+              joiningDate: '',
+              profilePhoto: null,
+              profilePhotoPreview: null,
+              status: 'Active'
+            });
+            setShowModal(true);
+          }}
+          className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-semibold transition-all hover:bg-[#0a3d8a] shadow-md shadow-blue-500/20"
+          style={{ fontFamily: "Calibri, sans-serif" }}
         >
           <FiUserPlus className="w-4 h-4" />
           Add Member
         </motion.button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">Total Members</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{members.length}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
-              <FiUsers className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">Active</p>
-              <p className="text-3xl font-bold text-emerald-600 mt-1">{members.filter(m => m.status === 'Active').length}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600">
-              <FiCheckCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">On Leave</p>
-              <p className="text-3xl font-bold text-amber-600 mt-1">{members.filter(m => m.status === 'On Leave').length}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
-              <FiClock className="w-5 h-5 text-white" />
-            </div>
-          </div>
+
+      {/* Search Bar Block */}
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 group min-w-[200px]">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by name, email, or role..."
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+            style={{ fontFamily: "'Calibri', sans-serif" }}
+          />
         </div>
       </div>
-
-      {/* Search */}
-      <div className="relative">
-        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by name, email, or role..."
-          className="w-full rounded-xl border-2 border-gray-200 py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-violet-500/50 focus:border-violet-300 transition-all"
-        />
-      </div>
-
-      {/* Team Members Grid */}
-      {filteredMembers.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
-          <FiUsers size={48} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No team members found</p>
-          <p className="text-sm mt-1">Add your first team member to get started</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredMembers.map((member, idx) => (
-            <motion.div
-              key={member._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getAvatarGradient(member.name)} flex items-center justify-center text-white text-lg font-bold shadow-lg`}>
-                    {member.name?.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{member.name}</h3>
-                    <p className="text-sm text-gray-500">{member.role}</p>
-                  </div>
-                </div>
-                <StatusBadge status={member.status} />
-              </div>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <FiMail className="w-4 h-4 text-gray-400" />
-                  <span className="truncate">{member.email}</span>
-                </div>
-                {member.phone && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FiPhone className="w-4 h-4 text-gray-400" />
-                    <span>{member.phone}</span>
-                  </div>
-                )}
-                {member.joinDate && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FiCalendar className="w-4 h-4 text-gray-400" />
-                    <span>Joined {new Date(member.joinDate).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Skills */}
-              {member.skills?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {member.skills.slice(0, 3).map(skill => (
-                    <span key={skill} className="text-[10px] font-medium px-2 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-100">
-                      {skill}
-                    </span>
-                  ))}
-                  {member.skills.length > 3 && (
-                    <span className="text-[10px] font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-500">
-                      +{member.skills.length - 3}
-                    </span>
-                  )}
-                </div>
+      {/* Team Directory Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100/60 overflow-hidden relative">
+        <div className="overflow-x-auto min-h-[300px]">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-gray-100 text-left bg-transparent">
+                <th className="py-4 pl-6 pr-4 w-12">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length > 0 && selectedIds.length === filteredMembers.length}
+                    onChange={() => setSelectedIds(selectedIds.length === filteredMembers.length ? [] : filteredMembers.map(m => m._id))}
+                    className="w-4 h-4 rounded text-[#0D47A1] cursor-pointer"
+                    style={{ accentColor: '#0D47A1' }}
+                  />
+                </th>
+                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Member</th>
+                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Department</th>
+                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Email Address</th>
+                <th className="py-4 pl-4 pr-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-24">Contact</th>
+                <th className="py-4 pr-6 w-12"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 text-left">
+              {filteredMembers.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-20 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 bg-[#F4F3EF] rounded-full flex items-center justify-center mb-4">
+                        <FiUsers className="w-8 h-8 text-[#C5C5D2]" />
+                      </div>
+                      <p className="text-gray-500 font-medium">No team members found</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredMembers.map((member) => (
+                  <tr
+                    key={member._id}
+                    onClick={() => setSelectedMemberForDetail(member)}
+                    className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                  >
+                    <td className="py-4 pl-6 pr-4" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(member._id)}
+                        onChange={() => setSelectedIds(prev => prev.includes(member._id) ? prev.filter(id => id !== member._id) : [...prev, member._id])}
+                        style={{ accentColor: '#0D47A1' }}
+                        className="w-4 h-4 rounded text-[#0D47A1] cursor-pointer"
+                      />
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-[42px] h-[42px] rounded-2xl flex items-center justify-center text-[13px] font-bold text-[#1B4DA0] bg-[#E3F2FD] border border-[#D1E9FF] flex-shrink-0">
+                          {member.profilePhoto ? (
+                            <img src={member.profilePhoto} alt={member.name} className="w-full h-full rounded-2xl object-cover" />
+                          ) : (
+                            <span>{(member.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[14px] font-bold text-[#0f172a]">{member.name}</span>
+                          <span className="text-[11px] text-gray-400 font-medium">{member.role}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="text-[13px] font-medium text-[#64748b]">{member.department}</span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="text-[13px] font-medium text-[#64748b]">{member.email}</span>
+                    </td>
+                    <td className="py-4 pl-4 pr-6">
+                      <div className="flex items-center gap-3">
+                        <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiMail className="w-[15px] h-[15px] stroke-[2.5]" /></button>
+                        <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiPhone className="w-[15px] h-[15px] stroke-[2.5]" /></button>
+                      </div>
+                    </td>
+                    <td className="py-4 pr-6 text-right">
+                      <div className="flex items-center gap-2 justify-end">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
+                          className="p-2 text-[#94a3b8] hover:text-[#0D47A1] hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <FiEdit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmDelete(member._id); }}
+                          className="p-2 text-[#94a3b8] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
-
-              {/* Performance */}
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-emerald-600">{member.tasksCompleted || 0}</p>
-                    <p className="text-[10px] text-gray-500">Completed</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-blue-600">{member.tasksAssigned || 0}</p>
-                    <p className="text-[10px] text-gray-500">Assigned</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleEdit(member)}
-                    className="p-2 rounded-lg hover:bg-violet-100 text-gray-500 hover:text-violet-600 transition-colors"
-                  >
-                    <FiEdit2 className="w-4 h-4" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setConfirmDelete(member._id)}
-                    className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
-                  >
-                    <FiTrash2 className="w-4 h-4" />
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+            </tbody>
+          </table>
         </div>
+
+        {/* Floating Action Bar */}
+        <AnimatePresence>
+          {selectedIds.length > 0 && (
+            <div className="absolute bottom-6 left-0 w-full flex justify-center z-[100] pointer-events-none px-4">
+              <motion.div
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 30, scale: 0.95 }}
+                className="bg-[#111827] text-white px-5 py-2.5 rounded-[12px] shadow-2xl flex items-center pointer-events-auto gap-4"
+              >
+                <span className="text-[12px] font-semibold pr-4 border-r border-gray-700 whitespace-nowrap">
+                  {selectedIds.length} members selected
+                </span>
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => {
+                      if (selectedIds.length === 1) {
+                        const memberToEdit = members.find(m => m._id === selectedIds[0]);
+                        if (memberToEdit) handleEdit(memberToEdit);
+                      }
+                    }}
+                    className="text-[12px] font-bold text-gray-300 hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <FiEdit2 className="w-3.5 h-3.5" /> Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConfirmDelete('bulk');
+                    }}
+                    className="text-[12px] font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center gap-2"
+                  >
+                    <FiTrash2 className="w-3.5 h-3.5" /> Remove
+                  </button>
+                </div>
+                <button
+                  onClick={() => setSelectedIds([])}
+                  className="p-1 text-gray-500 hover:text-white transition-colors"
+                >
+                  <FiX className="w-4 h-4" />
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Performance Matrix Detail Drawer */}
+      {createPortal(
+        <AnimatePresence>
+          {selectedMemberForDetail && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-[4px] z-[10000]"
+                onClick={() => setSelectedMemberForDetail(null)}
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[10001] flex flex-col"
+              >
+                {/* Header - Sticky Style */}
+                <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
+                  <div className="text-left">
+                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">Member Detail</h2>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedMemberForDetail(null)}
+                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border-2 border-transparent hover:border-red-100 shadow-sm"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+
+                {/* Scrollable Content */}                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
+                  {/* Profile Header */}
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="w-20 h-20 rounded-[28px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-blue-500/20 overflow-hidden">
+                      {selectedMemberForDetail.profilePhoto ? (
+                        <img src={selectedMemberForDetail.profilePhoto} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{(selectedMemberForDetail.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedMemberForDetail.name}</h4>
+                      <p className="text-sm font-semibold text-[#1B4DA0] mt-1">{selectedMemberForDetail.role || selectedMemberForDetail.department}</p>
+                    </div>
+                  </div>
+
+                  {/* Unified Info Container */}
+                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-6 space-y-8">
+                    {/* Professional Info */}
+                    <div>
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-4 text-center">Professional Info</p>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
+                          <span className="text-sm text-[#1A1A2E] font-bold">{selectedMemberForDetail.department || 'HR Recruitment'}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-[#6B6B7E] font-medium">Status</span>
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${selectedMemberForDetail.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                            {selectedMemberForDetail.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-[#F4F3EF]" />
+
+                    {/* Contact Details */}
+                    <div>
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-4 text-center">Contact Details</p>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-[#6B6B7E] font-medium">Email</span>
+                          <span className="text-sm text-[#1A1A2E] font-bold truncate max-w-[250px]">{selectedMemberForDetail.email}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-[#6B6B7E] font-medium">Contact</span>
+                          <span className="text-sm text-[#1A1A2E] font-bold">{selectedMemberForDetail.phone}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    </div>
+                  </div>
+
+                {/* Footer Actions */}
+                <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
+                  <button 
+                    onClick={() => {
+                      handleEdit(selectedMemberForDetail);
+                      setSelectedMemberForDetail(null);
+                    }}
+                    className="flex-1 py-4 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold hover:bg-[#153e82] transition-all"
+                  >
+                    Edit Profile
+                  </button>
+                  <button 
+                    onClick={() => setSelectedMemberForDetail(null)}
+                    className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
+
+
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
 
       {/* Add/Edit Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {showModal && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => { setShowModal(false); setEditingMember(null); }}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
             >
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {editingMember ? 'Edit Team Member' : 'Add New Member'}
-                </h3>
-                <button
-                  onClick={() => { setShowModal(false); setEditingMember(null); }}
-                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-                >
-                  <FiX className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. Manju Sharma"
-                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/50 focus:border-violet-300"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="email@mabicons.com"
-                      className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/50 focus:border-violet-300"
-                    />
+                    <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                      {editingMember ? 'Edit Member Details' : 'Invite Team Member'}
+                    </h2>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                      {editingMember ? 'Update member details' : 'Send an invitation to join the team'}
+                    </p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="9876543210"
-                      className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/50 focus:border-violet-300"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      placeholder="e.g. HR Executive"
-                      className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/50 focus:border-violet-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/50 focus:border-violet-300"
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                      <option value="On Leave">On Leave</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Skills (comma separated)</label>
-                  <input
-                    type="text"
-                    value={formData.skills}
-                    onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                    placeholder="e.g. Payroll, Attendance, Documentation"
-                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/50 focus:border-violet-300"
-                  />
-                </div>
-                <div className="flex justify-end gap-3 pt-4">
                   <button
-                    type="button"
                     onClick={() => { setShowModal(false); setEditingMember(null); }}
-                    className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                  {/* Profile Photo Section */}
+                  <div className="flex flex-col items-center justify-center pb-4">
+                    <div className="relative group">
+                      <div className="w-24 h-24 rounded-[32px] bg-[#F4F3EF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center overflow-hidden transition-all group-hover:border-[#0D47A1]/50">
+                        {formData.profilePhotoPreview ? (
+                          <img src={formData.profilePhotoPreview} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <FiUsers size={32} className="text-[#C5C5D2]" />
+                        )}
+
+                        <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                          <FiEdit2 className="text-white w-6 h-6" />
+                          <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
+                        </label>
+                      </div>
+                      {formData.profilePhotoPreview && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, profilePhoto: null, profilePhotoPreview: null }))}
+                          className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-all scale-0 group-hover:scale-100"
+                        >
+                          <FiX size={14} />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mt-3">Profile Photo (Max 1MB)</p>
+                  </div>
+
+                  {/* Personal Information */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 text-left">
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Full Name *</label>
+                      <div className="relative flex items-center">
+                        <FiUsers className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="text" required placeholder="e.g. John Doe"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10"
+                          value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          style={{ fontFamily: "'Calibri', sans-serif" }} />
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-left">
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Employee ID</label>
+                      <div className="relative flex items-center">
+                        <FiFileText className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="text" placeholder="e.g. MAB-0042"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10"
+                          value={formData.employeeId} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                          style={{ fontFamily: "'Calibri', sans-serif" }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 text-left">
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address *</label>
+                      <div className="relative flex items-center">
+                        <FiMail className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="email" required placeholder="john@mabicons.com"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10"
+                          value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          style={{ fontFamily: "'Calibri', sans-serif" }} />
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-left">
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number *</label>
+                      <div className="relative flex items-center">
+                        <FiPhone className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="tel" required placeholder="+91 9876543210"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10"
+                          value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          style={{ fontFamily: "'Calibri', sans-serif" }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 text-left">
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Department</label>
+                      <div className="relative flex items-center">
+                        <FiLayers className="absolute left-4 text-[#C5C5D2]" />
+                        <select
+                          className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10 appearance-none cursor-pointer"
+                          value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                          style={{ fontFamily: "'Calibri', sans-serif" }}>
+                          <option value="HR Recruitment">HR Recruitment</option>
+                          <option value="HR Operations">HR Operations</option>
+                          <option value="IT">IT</option>
+                          <option value="Sales">Sales</option>
+                          <option value="Marketing">Marketing</option>
+                          <option value="BD">Business Development</option>
+                          <option value="Finance">Finance</option>
+                          <option value="Management">Management</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-left">
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>
+                      <div className="relative flex items-center">
+                        <FiCalendar className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="date"
+                          className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10"
+                          value={formData.joiningDate} onChange={(e) => setFormData({ ...formData, joiningDate: e.target.value })}
+                          style={{ fontFamily: "'Calibri', sans-serif" }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="pt-6 flex gap-4 border-t border-[#F4F3EF]">
+                    <button
+                      type="button"
+                      onClick={() => { setShowModal(false); setEditingMember(null); }}
+                      className="flex-1 py-4 rounded-2xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
+                      style={{ fontFamily: "'Calibri', sans-serif" }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-[2] py-4 bg-[#0D47A1] text-white rounded-full text-xs font-bold uppercase tracking-widest shadow-lg shadow-[#0D47A1]/20 hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 active:scale-95"
+                      style={{ fontFamily: "'Calibri', sans-serif" }}
+                    >
+                      {editingMember ? 'Save Changes' : 'Send Invitation'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {createPortal(
+        <AnimatePresence>
+          {confirmDelete && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                onClick={() => setConfirmDelete(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="relative bg-white rounded-[32px] shadow-2xl w-full max-w-sm p-8 text-center"
+              >
+                <div className="mx-auto w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-6">
+                  <FiTrash2 className="w-10 h-10 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-[#1A1A2E] mb-2">
+                  {confirmDelete === 'bulk' ? `Remove ${selectedIds.length} Members?` : 'Remove Team Member?'}
+                </h3>
+                <p className="text-sm text-[#9B9BAD] mb-8">
+                  {confirmDelete === 'bulk' 
+                    ? 'Are you sure you want to remove all selected members? This action is permanent.' 
+                    : 'This action is permanent and cannot be undone.'}
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => handleDelete(confirmDelete)}
+                    className="w-full py-4 bg-red-500 text-white rounded-full text-sm font-bold shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all active:scale-95"
+                  >
+                    Confirm Delete
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(null)}
+                    className="w-full py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-full text-sm font-bold hover:bg-[#E8E7E2] transition-all"
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
-                  >
-                    {editingMember ? 'Update Member' : 'Add Member'}
-                  </button>
                 </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Delete Confirmation Modal */}
-      <AnimatePresence>
-        {confirmDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setConfirmDelete(null)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center"
-            >
-              <div className="mx-auto w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <FiTrash2 className="w-8 h-8 text-red-500" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Remove Team Member?</h3>
-              <p className="text-sm text-gray-500 mb-5">This action cannot be undone.</p>
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  onClick={() => setConfirmDelete(null)}
-                  className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDelete(confirmDelete)}
-                  className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/25"
-                >
-                  Remove
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

@@ -90,9 +90,31 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
       if (decoded) {
         try {
           const hierarchy = await getAdminHierarchy(decoded.id, decoded.role === 'Admin' ? 'Admin' : 'TeamLeader');
-          setTeamLeaders(hierarchy?.adminHierarchy?.teamLeaders || []);
+          const fetchedTLs = hierarchy?.adminHierarchy?.teamLeaders || [];
+          
+          // Adding requested names (Manju, Jyoti, Priyanshi) to the options
+          const manualTLs = [
+            { id: 'manju-mock', name: 'Manju' },
+            { id: 'jyoti-mock', name: 'Jyoti' },
+            { id: 'priyanshi-mock', name: 'Priyanshi' }
+          ];
+          
+          // Combine fetched and manual TLs, ensuring no duplicates by name
+          const combined = [...fetchedTLs];
+          manualTLs.forEach(m => {
+            if (!combined.some(c => c.name.toLowerCase() === m.name.toLowerCase())) {
+              combined.push(m);
+            }
+          });
+          
+          setTeamLeaders(combined);
         } catch {
-          setTeamLeaders([{ id: decoded.id, name: decoded.name || 'Me', email: '' }]);
+          setTeamLeaders([
+            { id: decoded.id, name: decoded.name || 'Me', email: '' },
+            { id: 'manju-mock', name: 'Manju' },
+            { id: 'jyoti-mock', name: 'Jyoti' },
+            { id: 'priyanshi-mock', name: 'Priyanshi' }
+          ]);
         }
       }
     } catch (e) {
@@ -180,33 +202,32 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
       
       {/* STANDARD HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#3056D3] text-white flex items-center justify-center shadow-lg shadow-[#3056D3]/20">
-            <FiPackage size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Work Handover</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">Asset Migration & Duty Delegation</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] tracking-tight leading-none mb-1">Work Handover</h1>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">Asset Migration & Duty Delegation</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search handovers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-11 pr-4 py-3.5 bg-white rounded-2xl border border-slate-100 shadow-sm text-sm font-medium w-[260px] focus:ring-2 focus:ring-[#3056D3]/5 outline-none transition-all"
-            />
-          </div>
           <button
             onClick={() => setShowModal(true)}
-            className="px-6 py-3.5 bg-[#3056D3] text-white rounded-2xl font-bold text-[11px] uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-[#3056D3]/10 hover:bg-[#254adb] transition-all"
+            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-semibold hover:bg-[#0a3a82] transition-all shadow-md hover:shadow-lg"
           >
-            <FiPlus size={14} /> NEW DELEGATION
+            <FiPlus size={16} /> New Delegation
           </button>
+        </div>
+      </div>
+
+      {/* FILTER BAR - Modern Job Openings Style */}
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="relative flex-1 group">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors group-focus-within:text-[#0D47A1]" size={18} />
+          <input
+            type="text"
+            placeholder="Search handovers, users or reasons..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+          />
         </div>
       </div>
 
@@ -378,49 +399,46 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
       {/* CREATE HANDOVER MODAL */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowModal(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md transition-all duration-300">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-hidden"
+              className="relative w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500"
             >
-              <div className="px-10 py-8 bg-[#fafbfc] border-b border-slate-50 flex items-center justify-between">
+              {/* Header */}
+              <div className="px-10 py-8 bg-gradient-to-r from-white to-[#F8FAFF] border-b border-[#F4F3EF] flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">Active Duty Delegation</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">Initialize Work Migration Sequence</p>
+                  <h2 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Active Duty Delegation</h2>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Initialize Work Migration Sequence</p>
                 </div>
-                <button onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-100 rounded-2xl transition-all">
-                  <FiX size={20} className="text-slate-400" />
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                >
+                  <FiX size={20} />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="p-10">
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Source User</label>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-7 mb-8">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Source User</label>
                     <select
                       value={form.fromUserId}
                       onChange={(e) => setForm({ ...form, fromUserId: e.target.value })}
-                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
                     >
                       <option value="">Select Primary</option>
                       {teamLeaders.map(tl => <option key={tl.id} value={tl.id}>{tl.name}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Target Recipient</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Target Recipient</label>
                     <select
                       value={form.toUserId}
                       onChange={(e) => setForm({ ...form, toUserId: e.target.value })}
-                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
                     >
                       <option value="">Select Destination</option>
                       {teamLeaders.map(tl => <option key={tl.id} value={tl.id}>{tl.name}</option>)}
@@ -428,40 +446,42 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lifecycle Start</label>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-7 mb-8">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Lifecycle Start</label>
                     <input
                       type="date"
                       value={form.startDate}
+                      onClick={(e) => e.target.showPicker && e.target.showPicker()}
                       onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 cursor-pointer text-left"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lifecycle End</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Lifecycle End</label>
                     <input
                       type="date"
                       value={form.endDate}
+                      onClick={(e) => e.target.showPicker && e.target.showPicker()}
                       onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 cursor-pointer text-left"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-8">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Migration Logic (Reason)</label>
+                <div className="space-y-1.5 mb-8">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Migration Logic (Reason)</label>
                     <textarea
                       value={form.reason}
                       onChange={(e) => setForm({ ...form, reason: e.target.value })}
                       placeholder="Brief context for migration..."
-                      className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#3056D3]/10 transition-all outline-none min-h-[100px] resize-none"
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 min-h-[100px] resize-none placeholder:text-[#9B9BAD]/50"
                     />
                 </div>
 
                 {fromUserClients.length > 0 && (
                   <div className="space-y-3 mb-8">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Asset Map Selection</label>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Asset Map Selection</label>
                     <div className="grid grid-cols-2 gap-3 max-h-[160px] overflow-y-auto no-scrollbar p-1">
                       {fromUserClients.map(client => (
                         <div
@@ -472,7 +492,7 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
                             setForm({ ...form, clientIds: newVal });
                           }}
                           className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between hover:scale-[1.02] active:scale-95 ${
-                            form.clientIds.includes(client.id) ? 'bg-[#3056D3] border-[#3056D3] text-white' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200'
+                            form.clientIds.includes(client.id) ? 'bg-[#0D47A1] border-[#0D47A1] text-white' : 'bg-white border-[#F4F3EF] text-[#6B6B7E] hover:border-[#0D47A1]/20'
                           }`}
                         >
                           <span className="text-[11px] font-bold truncate pr-4 uppercase tracking-tighter">{client.name}</span>
@@ -485,7 +505,7 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
 
                 <button
                   type="submit"
-                  className="w-full py-5 bg-[#3056D3] text-white rounded-[2rem] font-bold text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-[#3056D3]/20 hover:bg-[#254adb] transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+                  className="w-full py-5 bg-[#0D47A1] text-white rounded-full font-bold text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-[#0D47A1]/20 hover:bg-[#0a3a82] transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
                 >
                   Confirm Asset Migration <FiArrowRight />
                 </button>

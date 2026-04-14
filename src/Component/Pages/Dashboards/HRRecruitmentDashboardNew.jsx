@@ -34,6 +34,7 @@ const ResumeBankTab = lazy(() => import('./Tabs/KAMRecruitment/ResumeBankTab'));
 const TeamManagementTab = lazy(() => import('./Tabs/Common/TeamManagementTab'));
 const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
 const TaskAssignmentTab = lazy(() => import('./Tabs/Common/TaskAssignmentTab'));
+const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 
 // Tab Loader Skeleton
 const TabLoader = () => (
@@ -75,6 +76,7 @@ const sidebarConfig = [
     heading: 'ANALYTICS',
     items: [
       { id: 7, title: 'Resume Bank', icon: FiDatabase },
+      { id: 10, title: 'Notes Hub', icon: FiActivity },
     ]
   },
   {
@@ -232,6 +234,8 @@ const HRRecruitmentDashboard = () => {
               return <ActivityFeedTab department="HR Recruitment" />;
             case 'Task Assignment':
               return <TaskAssignmentTab department="HR Recruitment" />;
+            case 'Notes Hub':
+              return <NotesTab department="HR Recruitment" />;
             default:
               // Dashboard Overview
               return (
