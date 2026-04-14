@@ -85,9 +85,47 @@ const getRelativeDate = (date) => {
   return { label: d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }), color: 'text-[#9B9BAD]', bg: 'bg-[#9B9BAD]' };
 };
 
-const TaskDetailView = ({ task, onBack, onEdit }) => {
+const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMembers = [] }) => {
+  const [showAssigneeSuggestions, setShowAssigneeSuggestions] = useState(false);
+  const [editableTask, setEditableTask] = useState({
+    title: task?.title || '',
+    description: task?.description || '',
+    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+    assignedToName: task?.assignedToName || '',
+    assignedTo: task?.assignedTo || '',
+  });
+
+  useEffect(() => {
+    if (!task) return;
+    setEditableTask({
+      title: task.title || '',
+      description: task.description || '',
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
+    });
+  }, [task]);
+
+  const handleBlur = async (field, value) => {
+    let originalValue = task[field];
+    if (field === 'dueDate') {
+      originalValue = task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '';
+    } else {
+      originalValue = originalValue || '';
+    }
+
+    if (value !== originalValue) {
+      try {
+        await updateDepartmentTask(task.id, { [field]: value });
+        if (showToast) showToast(`Updated successfully!`);
+        if (onUpdateTask) onUpdateTask({ [field]: value });
+      } catch (err) {
+        if (showToast) showToast('Failed to update inline', 'error');
+        setEditableTask(prev => ({ ...prev, [field]: originalValue }));
+      }
+    }
+  };
+
   if (!task) return null;
-  const relativeDate = getRelativeDate(task.dueDate);
+  const relativeDate = getRelativeDate(editableTask.dueDate || task.dueDate);
 
   return (
     <div className="flex flex-col h-full bg-white relative">
@@ -120,7 +158,13 @@ const TaskDetailView = ({ task, onBack, onEdit }) => {
             <div className="w-12 h-12 rounded-2xl bg-[#0D47A1]/5 flex items-center justify-center text-[#0D47A1]">
               <FiCheckSquare size={24} />
             </div>
-            <h1 className="text-2xl font-bold text-[#1A1A2E] leading-tight">{task.title}</h1>
+            <input type="text"
+              className="flex-1 bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-2xl font-bold text-[#1A1A2E] leading-tight transition-all outline-none"
+              value={editableTask.title}
+              onChange={e => setEditableTask(p => ({ ...p, title: e.target.value }))}
+              onBlur={e => handleBlur('title', e.target.value)}
+              placeholder="Task Title"
+            />
           </div>
           <div className="flex flex-wrap gap-3">
             <StatusBadge status={task.status} />
@@ -131,23 +175,71 @@ const TaskDetailView = ({ task, onBack, onEdit }) => {
         {/* Info Grid */}
         <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8">
           <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-            <div className="space-y-1.5 text-left">
+            <div className="space-y-1.5 text-left relative">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Assigned To</span>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#F0F7FF] text-[#1B4DA0] flex items-center justify-center font-black text-[10px]">
-                  {task.assignedToName?.split(' ').map(n => n[0]).join('')}
+              <div className="flex items-center gap-2 relative">
+                <div className="w-8 h-8 rounded-lg bg-[#F0F7FF] text-[#1B4DA0] flex items-center justify-center font-black text-[10px] shrink-0">
+                  {editableTask.assignedToName?.split(' ').map(n => n[0]).join('') || '?'}
                 </div>
-                <p className="text-sm font-bold text-[#1A1A2E]">{task.assignedToName}</p>
+                <input
+                  type="text"
+                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
+                  value={editableTask.assignedToName}
+                  onChange={e => {
+                    setEditableTask(p => ({ ...p, assignedToName: e.target.value }));
+                    setShowAssigneeSuggestions(true);
+                  }}
+                  onFocus={() => setShowAssigneeSuggestions(true)}
+                  onBlur={(e) => {
+                    setTimeout(() => setShowAssigneeSuggestions(false), 200);
+                    // Just triggering the backend save with current local state might be tricky if they haven't selected a valid member
+                    // But we will allow them to just type or select from dropdown as fallback
+                  }}
+                />
+                
+                {showAssigneeSuggestions && (
+                  <div className="absolute z-50 top-full left-0 mt-1 w-full bg-white border border-[#F4F3EF] rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                    {teamMembers
+                      .filter(m => m.name.toLowerCase().includes((editableTask.assignedToName || '').toLowerCase()))
+                      .map(m => (
+                        <div
+                          key={m.id || m._id}
+                          className="px-4 py-3 hover:bg-[#FAFAF8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3"
+                          onClick={() => {
+                            const newId = m.id || m._id;
+                            const newName = m.name;
+                            setEditableTask(p => ({ ...p, assignedToName: newName, assignedTo: newId }));
+                            
+                            // Immediately dispatch save for both name and ID
+                            handleBlur('assignedTo', newId);
+                            // To keep parent UI correctly synced with assignedToName instead of UUID, 
+                            // we update the parent state object directly via another action block down in handleBlur:
+                            setTimeout(() => handleBlur('assignedToName', newName), 100);
+                            
+                            setShowAssigneeSuggestions(false);
+                          }}
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[10px]">
+                            {m.name.charAt(0)}
+                          </div>
+                          <span className="text-xs font-bold text-[#1A1A2E]">{m.name}</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
-            <div className="space-y-1.5 text-left">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Due Date</span>
+            <div className="space-y-1.5 text-left group">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Due Date</span>
               <div className="flex items-center gap-2">
                 <FiCalendar className="text-[#9B9BAD]" size={14} />
-                <p className={`text-sm font-bold ${relativeDate.color}`}>
-                  {new Date(task.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  <span className="ml-2 opacity-60">({relativeDate.label})</span>
-                </p>
+                <input type="date"
+                  className={`w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold ${relativeDate.color} outline-none cursor-pointer`}
+                  value={editableTask.dueDate}
+                  onChange={e => setEditableTask(p => ({ ...p, dueDate: e.target.value }))}
+                  onBlur={e => handleBlur('dueDate', e.target.value)}
+                />
+                <span className={`text-sm font-bold ${relativeDate.color} opacity-60 pointer-events-none -ml-2`}>({relativeDate.label})</span>
               </div>
             </div>
             {task.targets && task.targets.length > 0 && (
@@ -173,26 +265,23 @@ const TaskDetailView = ({ task, onBack, onEdit }) => {
             )}
           </div>
 
-          <div className="pt-8 mt-8 border-t border-[#F4F3EF] text-left">
-            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4 text-left">Description</span>
-            <div className="bg-white rounded-2xl p-5 border border-[#F4F3EF]">
-              <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium whitespace-pre-wrap text-left">
-                {task.description || <span className="italic text-[#9B9BAD]">No description provided for this task.</span>}
-              </p>
+          <div className="pt-8 mt-8 border-t border-[#F4F3EF] text-left group">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Description</span>
+              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Click to edit</span>
             </div>
+            <textarea
+              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm text-[#4B4B5E] leading-relaxed font-medium resize-none transition-all outline-none"
+              rows={Math.max(4, editableTask.description.split('\n').length)}
+              value={editableTask.description}
+              onChange={e => setEditableTask(p => ({ ...p, description: e.target.value }))}
+              onBlur={e => handleBlur('description', e.target.value)}
+              placeholder="No description provided for this task (Click to edit)."
+            />
           </div>
         </div>
 
-        {/* Activity Suggestion */}
-        <div className="bg-blue-50/50 rounded-3xl p-6 border border-blue-100 flex items-start gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-blue-500 shadow-sm shrink-0">
-            <FiActivity size={20} />
-          </div>
-          <div className="text-left">
-            <h4 className="text-sm font-bold text-[#1A1A2E] text-left">System Activity</h4>
-            <p className="text-xs text-[#6B6B7E] mt-1 text-left">This task was created by the HR system based on the current recruitment pipeline needs.</p>
-          </div>
-        </div>
+
       </div>
 
       {/* Footer */}
@@ -655,20 +744,29 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             </div>
             <div className="flex items-center gap-6">
               <button
-                onClick={async () => {
-                  try {
-                    await Promise.all(selectedTasks.map(id => updateDepartmentTask(id, { status: 'Completed' })));
-                    setTasks(prev => prev.map(t => selectedTasks.includes(t.id) ? { ...t, status: 'Completed' } : t));
-                    setSelectedTasks([]);
-                    showToast(`${selectedTasks.length} tasks marked as finished`);
-                  } catch (e) {
-                    showToast('Failed to update tasks', 'error');
+                onClick={() => {
+                  if (selectedTasks.length !== 1) {
+                    showToast('Please select exactly 1 task to edit', 'error');
+                    return;
+                  }
+                  const taskToEdit = tasks.find(t => t.id === selectedTasks[0]);
+                  if (taskToEdit) {
+                    setEditingTask(taskToEdit);
+                    setFormData({
+                      title: taskToEdit.title,
+                      description: taskToEdit.description || '',
+                      assignedTo: taskToEdit.assignedTo || '',
+                      priority: taskToEdit.priority || 'Medium',
+                      dueDate: taskToEdit.dueDate ? new Date(taskToEdit.dueDate).toISOString().split('T')[0] : ''
+                    });
+                    setShowModal(true);
                   }
                 }}
-                className="flex items-center gap-2 text-sm font-bold text-green-400 hover:text-green-300 transition-colors"
+                disabled={selectedTasks.length !== 1}
+                className={`flex items-center gap-2 text-sm font-bold transition-colors ${selectedTasks.length === 1 ? 'text-[#3B82F6] hover:text-[#2563EB]' : 'text-gray-500 cursor-not-allowed opacity-50'}`}
               >
-                <FiCheckCircle size={18} />
-                Finish
+                <FiEdit2 size={18} />
+                Edit
               </button>
               <button
                 onClick={() => {
@@ -791,8 +889,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     </div>
                   </div>
 
-                  {/* Due Date & Dynamic Target Builder */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Due Date */}
+                  <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-1.5 w-full">
                       <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Due Date</label>
                       <div className="relative group">
@@ -805,72 +903,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                         />
                       </div>
                     </div>
-
-                    <div className="space-y-1.5 w-full">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Add Target (Optional)</label>
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <select
-                            value={currentTargetType}
-                            onChange={(e) => setCurrentTargetType(e.target.value)}
-                            className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all appearance-none cursor-pointer"
-                          >
-                            <option value="Hiring">Hiring</option>
-                            <option value="Calling">Calling</option>
-                            <option value="Interviews">Interviews</option>
-                            <option value="Profile Visited">Profile Visit</option>
-                          </select>
-                          <FiChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none rotate-90" size={14} />
-                        </div>
-                        <input
-                          type="number"
-                          value={currentTargetValue}
-                          onChange={(e) => setCurrentTargetValue(e.target.value)}
-                          placeholder="Count"
-                          className="w-24 bg-[#F8F9FA] border-none rounded-2xl py-3 px-4 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (currentTargetValue && !isNaN(currentTargetValue)) {
-                              setFormData(prev => ({
-                                ...prev,
-                                targets: [...prev.targets, { type: currentTargetType, value: parseInt(currentTargetValue) }]
-                              }));
-                              setCurrentTargetValue('');
-                            }
-                          }}
-                          className="w-10 h-10 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm shrink-0 self-end mb-0.5"
-                        >
-                          <FiPlus size={18} />
-                        </button>
-                      </div>
-                    </div>
                   </div>
 
-                  {/* Added Targets List */}
-                  {formData.targets.length > 0 && (
-                    <div className="bg-[#FAFAF8] rounded-2xl p-4 flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                      {formData.targets.map((tg, idx) => (
-                        <div key={idx} className="flex items-center gap-2 bg-white border border-[#E5E5EA] px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-[#1A1A2E] group">
-                          <span className="text-blue-600">
-                             {tg.type === 'Calling' && <FiPhone size={14} />}
-                             {tg.type === 'Interviews' && <FiUsers size={14} />}
-                             {tg.type === 'Hiring' && <FiUserPlus size={14} />}
-                             {tg.type === 'Profile Visited' && <FiEye size={14} />}
-                          </span>
-                          {tg.type}: {tg.value}
-                          <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, targets: prev.targets.filter((_, i) => i !== idx) }))}
-                            className="ml-1 text-[#9B9BAD] hover:text-rose-500 transition-colors"
-                          >
-                            <FiMinusCircle size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
 
                   {/* Description */}
                   <div className="space-y-1.5 w-full">
@@ -935,6 +969,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                 <TaskDetailView
                   task={viewingTask}
                   onBack={() => { setShowDrawer(false); setViewingTask(null); }}
+                  showToast={showToast}
+                  onUpdateTask={(updated) => {
+                    Object.assign(viewingTask, updated);
+                    setTasks(prev => [...prev]);
+                  }}
+                  teamMembers={teamMembers}
                   onEdit={(task) => {
                     setEditingTask(task);
                     setFormData({

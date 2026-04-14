@@ -260,6 +260,19 @@ export default function InterviewsPage() {
     }
   };
 
+  const handleInlineEdit = async (field, value, backendField) => {
+    try {
+      const payload = { [backendField || field]: value };
+      const response = await updateInterview(selectedInterview.id, payload);
+      if (response.success) {
+        toast.success("Updated successfully");
+        fetchInterviews();
+      }
+    } catch (error) {
+      toast.error("Failed to update");
+    }
+  };
+
   const handleScheduleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -688,14 +701,14 @@ export default function InterviewsPage() {
           >
             {/* Drawer Header */}
             <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-10">
-              <div>
+              <div className="flex-1 mr-4">
                 <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  {selectedInterview.candidateName}
+                  {selectedInterview?.candidateName || 'Unknown Candidate'}
                 </h2>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedInterview.role}</span>
+                <div className="flex items-center gap-2 mt-1.5 ml-1">
+                  <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedInterview?.role || 'Unknown Position'}</span>
                   <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                  <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{selectedInterview.type}</span>
+                  <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{selectedInterview?.type}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -823,63 +836,144 @@ export default function InterviewsPage() {
                     <div className="grid grid-cols-2 gap-x-12 gap-y-8">
                       <div className="space-y-1.5">
                         <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Schedule</span>
-                        <p className="text-sm font-bold text-[#1A1A2E]">{new Date(selectedInterview.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</p>
+                        <input
+                          type="date"
+                          className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
+                          value={selectedInterview.date || ''}
+                          onChange={(e) => setSelectedInterview(prev => ({ ...prev, date: e.target.value }))}
+                          onBlur={(e) => handleInlineEdit('date', e.target.value, 'interviewDate')}
+                        />
                       </div>
                       <div className="space-y-1.5">
                         <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Time</span>
-                        <p className="text-sm font-bold text-[#1A1A2E]">{formatTime(selectedInterview.time)} · {selectedInterview.duration}m</p>
+                        <input
+                          type="time"
+                          className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
+                          value={selectedInterview.time || ''}
+                          onChange={(e) => setSelectedInterview(prev => ({ ...prev, time: e.target.value }))}
+                          onBlur={(e) => handleInlineEdit('time', e.target.value, 'startTime')}
+                        />
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 relative">
                         <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Interviewer</span>
-                        <p className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.interviewer}</p>
+                        <input
+                          type="text"
+                          className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
+                          value={selectedInterview.interviewer || ''}
+                          onChange={(e) => {
+                            setSelectedInterview(prev => ({ ...prev, interviewer: e.target.value }));
+                            setShowEditInterviewerSuggestions(true);
+                          }}
+                          onFocus={() => setShowEditInterviewerSuggestions(true)}
+                          onBlur={(e) => {
+                            setTimeout(() => setShowEditInterviewerSuggestions(false), 200);
+                            handleInlineEdit('interviewer', e.target.value, 'interviewerName');
+                          }}
+                        />
+                        {showEditInterviewerSuggestions && (
+                          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-[#F4F3EF] rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                            {availableInterviewers
+                              .filter(s => s.name?.toLowerCase().includes((selectedInterview.interviewer || "").toLowerCase()))
+                              .map(s => (
+                                <div
+                                  key={s.id}
+                                  className="px-4 py-3 hover:bg-[#FAFAF8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3"
+                                  onClick={() => {
+                                    setSelectedInterview(prev => ({
+                                      ...prev,
+                                      interviewer: s.name,
+                                      interviewerId: s.id
+                                    }));
+                                    handleInlineEdit('interviewerId', s.id);
+                                    handleInlineEdit('interviewer', s.name, 'interviewerName');
+                                    setShowEditInterviewerSuggestions(false);
+                                  }}
+                                >
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${getAvatarColor(s.name, s.name.charAt(0))}`}>
+                                    {s.name.charAt(0)}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-[#1A1A2E]">{s.name}</span>
+                                    <span className="text-[9px] font-medium text-[#9B9BAD] uppercase tracking-widest">{s.role}</span>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 flex flex-col justify-center">
                         <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Platform</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${selectedInterview.type === 'Video' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                          {selectedInterview.type}
-                        </span>
+                        <select
+                          className={`inline-flex items-center w-fit px-2.5 py-1 outline-none rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${selectedInterview.type === 'Video' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-amber-50 text-amber-600 border-amber-100'} cursor-pointer focus:ring-2 focus:ring-[#0D47A1]`}
+                          value={selectedInterview.type || 'Video'}
+                          onChange={(e) => {
+                            setSelectedInterview(prev => ({ ...prev, type: e.target.value }));
+                            handleInlineEdit('type', e.target.value, 'meetingType');
+                          }}
+                        >
+                          <option value="Video">Video</option>
+                          <option value="In-Person">In-Person</option>
+                          <option value="Phone">Phone</option>
+                        </select>
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 flex flex-col justify-center">
                         <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Status</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${STATUS_COLORS[selectedInterview.status] || 'bg-gray-50 text-gray-600 border-gray-100'}`}>
-                          {selectedInterview.status || 'Scheduled'}
-                        </span>
+                        <select
+                          className={`inline-flex items-center w-fit px-2.5 py-1 outline-none rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${STATUS_COLORS[selectedInterview.status] || 'bg-slate-50 text-slate-600 border-slate-100'} cursor-pointer focus:ring-2 focus:ring-[#0D47A1]`}
+                          value={selectedInterview.status || 'Scheduled'}
+                          onChange={(e) => {
+                            setSelectedInterview(prev => ({ ...prev, status: e.target.value }));
+                            updateInterviewStatus(selectedInterview.id, { status: e.target.value }).then(() => fetchInterviews());
+                          }}
+                        >
+                          <option value="Scheduled">Scheduled</option>
+                          <option value="In-Progress">In Progress</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
                       </div>
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Duration</span>
-                        <p className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.duration} Minutes</p>
+                      <div className="space-y-1.5 leading-[1.3]">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Duration (Minutes)</span>
+                        <input
+                          type="number"
+                          className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
+                          value={selectedInterview.duration || ''}
+                          onChange={(e) => setSelectedInterview(prev => ({ ...prev, duration: e.target.value }))}
+                          onBlur={(e) => handleInlineEdit('duration', e.target.value)}
+                        />
                       </div>
                     </div>
 
                     {/* Meeting Link */}
-                    {selectedInterview.meetingLink && (
-                      <div className="pt-6 border-t border-[#F4F3EF] text-left">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4 text-left">Meeting Link</span>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
-                            <Video size={14} />
-                          </div>
-                          <a
-                            href={selectedInterview.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm font-bold text-[#1B4DA0] hover:underline truncate flex-1"
-                          >
-                            {selectedInterview.meetingLink}
-                          </a>
+                    <div className="pt-6 border-t border-[#F4F3EF] text-left">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4 text-left">Meeting Link</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
+                          <Video size={14} />
                         </div>
+                        <input
+                          type="text"
+                          className="flex-1 bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1B4DA0] outline-none transition-all"
+                          value={selectedInterview.meetingLink || ''}
+                          onChange={(e) => setSelectedInterview(prev => ({ ...prev, meetingLink: e.target.value }))}
+                          onBlur={(e) => handleInlineEdit('meetingLink', e.target.value)}
+                          placeholder="Add link..."
+                        />
                       </div>
-                    )}
+                    </div>
 
                     {/* Briefing Notes */}
-                    {selectedInterview.notes && (
-                      <div className="pt-6 border-t border-[#F4F3EF] text-left">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Briefing Notes</span>
-                        <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium text-left italic">
-                          "{selectedInterview.notes}"
-                        </p>
-                      </div>
-                    )}
+                    <div className="pt-6 border-t border-[#F4F3EF] text-left">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Briefing Notes</span>
+                      <textarea
+                        className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm text-[#4B4B5E] leading-relaxed font-medium transition-all outline-none resize-none"
+                        value={selectedInterview.notes || ''}
+                        onChange={(e) => setSelectedInterview(prev => ({ ...prev, notes: e.target.value }))}
+                        onBlur={(e) => handleInlineEdit('notes', e.target.value)}
+                        placeholder="Add briefing notes for the interviewer..."
+                        rows={3}
+                      />
+                    </div>
                   </div>
 
                   {/* Actions Section */}

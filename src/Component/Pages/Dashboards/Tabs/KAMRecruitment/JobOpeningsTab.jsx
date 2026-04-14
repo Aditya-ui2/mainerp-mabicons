@@ -387,11 +387,59 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 const RADAR_COLORS = { stroke: '#a5b4fc', fill: '#a5b4fc' };
 const DONUT_COLORS = ['#3B82F6', '#6366F1', '#22D3EE'];
 
-const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob, canAssignJobs }) => {
+const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob, canAssignJobs, onJobUpdated }) => {
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
-  const skillsArr = (Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean);
-  const reqsArr = (Array.isArray(job.requirements) ? job.requirements : (job.requirements || '').split('\n')).filter(Boolean);
-  const respArr = (Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || '').split('\n')).filter(Boolean);
+
+  const [editableJob, setEditableJob] = useState({
+    description: job.description || '',
+    requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : (job.requirements || ''),
+    responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities.join('\n') : (job.responsibilities || ''),
+    skills: Array.isArray(job.skills) ? job.skills.join(', ') : (job.skills || ''),
+    location: job.location || '',
+    salary: job.salary || '',
+    experience: job.experience || '',
+    openings: job.openings || 1,
+    deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
+    priority: job.priority || 'Medium'
+  });
+
+  useEffect(() => {
+    setEditableJob({
+      description: job.description || '',
+      requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : (job.requirements || ''),
+      responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities.join('\n') : (job.responsibilities || ''),
+      skills: Array.isArray(job.skills) ? job.skills.join(', ') : (job.skills || ''),
+      location: job.location || '',
+      salary: job.salary || '',
+      experience: job.experience || '',
+      openings: job.openings || 1,
+      deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
+      priority: job.priority || 'Medium'
+    });
+  }, [job]);
+
+  const handleBlur = async (field, value) => {
+    let originalValue = job[field];
+    if (field === 'deadline') {
+        originalValue = job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '';
+    } else if (Array.isArray(originalValue)) {
+        originalValue = originalValue.join(field === 'skills' ? ', ' : '\n');
+    } else {
+        originalValue = originalValue || '';
+        if (field === 'openings') value = parseInt(value, 10) || 1;
+    }
+
+    if (value !== originalValue) {
+      try {
+        await updateRecruitmentPosition(job.id, { [field]: value });
+        toast.success(`Updated successfully!`);
+        if (onJobUpdated) onJobUpdated({ [field]: value });
+      } catch (err) {
+        toast.error('Failed to update');
+        setEditableJob(prev => ({ ...prev, [field]: originalValue }));
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right duration-500">
@@ -419,85 +467,136 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
         {/* Job Snapshot Info Grid */}
         <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
           <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Location</span>
-              <p className="text-sm font-bold text-[#1A1A2E]">{job.location || 'Not Specified'}</p>
+            <div className="space-y-1.5 group">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Location</span>
+              <input type="text"
+                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none"
+                  value={editableJob.location}
+                  onChange={(e) => setEditableJob(p => ({ ...p, location: e.target.value }))}
+                  onBlur={(e) => handleBlur('location', e.target.value)}
+                  placeholder="Not Specified"
+              />
             </div>
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Salary Range</span>
-              <p className="text-sm font-bold text-[#1A1A2E]">{job.salary || 'Competitive'}</p>
+            <div className="space-y-1.5 group">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Salary Range</span>
+              <input type="text"
+                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none"
+                  value={editableJob.salary}
+                  onChange={(e) => setEditableJob(p => ({ ...p, salary: e.target.value }))}
+                  onBlur={(e) => handleBlur('salary', e.target.value)}
+                  placeholder="Competitive"
+              />
             </div>
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience</span>
-              <p className="text-sm font-bold text-[#1A1A2E]">{job.experience || 'Not Mentioned'}</p>
+            <div className="space-y-1.5 group">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Experience</span>
+              <input type="text"
+                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none"
+                  value={editableJob.experience}
+                  onChange={(e) => setEditableJob(p => ({ ...p, experience: e.target.value }))}
+                  onBlur={(e) => handleBlur('experience', e.target.value)}
+                  placeholder="Not Mentioned"
+              />
             </div>
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Openings</span>
-              <p className="text-sm font-bold text-[#1A1A2E]">{job.openings || 1} Position(s)</p>
+            <div className="space-y-1.5 group">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Openings</span>
+              <div className="flex items-center">
+                  <input type="number"
+                      className="w-16 bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none"
+                      value={editableJob.openings}
+                      onChange={(e) => setEditableJob(p => ({ ...p, openings: e.target.value }))}
+                      onBlur={(e) => handleBlur('openings', e.target.value)}
+                  />
+                  <span className="text-sm font-bold text-[#1A1A2E] -ml-2 cursor-default">Position(s)</span>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Deadline</span>
-              <p className="text-sm font-bold text-[#1A1A2E]">{job.deadline ? new Date(job.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Deadline'}</p>
+            <div className="space-y-1.5 group">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Deadline</span>
+              <input type="date"
+                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none cursor-pointer"
+                  value={editableJob.deadline}
+                  onChange={(e) => setEditableJob(p => ({ ...p, deadline: e.target.value }))}
+                  onBlur={(e) => handleBlur('deadline', e.target.value)}
+              />
             </div>
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Priority</span>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${job.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : job.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'}`}>
-                {job.priority || 'Medium'}
-              </span>
+            <div className="space-y-1.5 group relative">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Priority</span>
+              <select
+                  className={`w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-[10px] font-black uppercase tracking-widest transition-all outline-none cursor-pointer appearance-none ${editableJob.priority === 'Critical' ? 'text-rose-500' : editableJob.priority === 'High' ? 'text-amber-500' : 'text-[#0D47A1]'}`}
+                  value={editableJob.priority}
+                  onChange={(e) => {
+                      setEditableJob(p => ({ ...p, priority: e.target.value }));
+                      handleBlur('priority', e.target.value);
+                  }}
+              >
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+              </select>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-[#F4F3EF] text-left">
-            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4 text-left">Required Skills</span>
-            <div className="flex flex-wrap gap-2 justify-start">
-              {skillsArr.length > 0 ? skillsArr.map((skill, i) => (
-                <span key={i} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">
-                  {skill.trim()}
-                </span>
-              )) : <span className="text-sm text-[#9B9BAD] italic text-left">No specific skills listed</span>}
+          <div className="pt-6 border-t border-[#F4F3EF] text-left group">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Required Skills</span>
+              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Comma separated</span>
             </div>
+            <textarea
+              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-[13px] font-bold text-[#1A1A2E] leading-relaxed resize-none transition-all outline-none"
+              rows={Math.max(2, editableJob.skills.split('\n').length)}
+              value={editableJob.skills}
+              onChange={(e) => setEditableJob(p => ({ ...p, skills: e.target.value }))}
+              onBlur={(e) => handleBlur('skills', e.target.value)}
+              placeholder="E.g. React, Node.js, TypeScript (Click to edit)"
+            />
           </div>
 
           {/* Short Description Section */}
-          <div className="pt-6 border-t border-[#F4F3EF] text-left">
-            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Job Description</span>
-            <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium text-left">
-              {job.description || <span className="italic text-[#9B9BAD]">No description provided</span>}
-            </p>
+          <div className="pt-6 border-t border-[#F4F3EF] text-left group">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Job Description</span>
+              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Click to edit</span>
+            </div>
+            <textarea
+              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none"
+              rows={Math.max(3, editableJob.description.split('\n').length)}
+              value={editableJob.description}
+              onChange={(e) => setEditableJob(p => ({ ...p, description: e.target.value }))}
+              onBlur={(e) => handleBlur('description', e.target.value)}
+              placeholder="Provide a description for this position (Click to edit)"
+            />
           </div>
 
           {/* Requirements Section */}
-          <div className="pt-6 border-t border-[#F4F3EF] text-left">
-            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3 text-left">Requirements</span>
-            {reqsArr.length > 0 ? (
-              <ul className="space-y-2.5 text-left">
-                {reqsArr.map((req, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0D47A1] mt-1.5 flex-shrink-0" />
-                    {req.trim()}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm italic text-[#9B9BAD] text-left">No specific requirements listed</p>
-            )}
+          <div className="pt-6 border-t border-[#F4F3EF] text-left group">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Requirements</span>
+              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">One per line</span>
+            </div>
+            <textarea
+              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none whitespace-pre-wrap"
+              rows={Math.max(3, editableJob.requirements.split('\n').length)}
+              value={editableJob.requirements}
+              onChange={(e) => setEditableJob(p => ({ ...p, requirements: e.target.value }))}
+              onBlur={(e) => handleBlur('requirements', e.target.value)}
+              placeholder="List the job requirements (Click to edit)"
+            />
           </div>
 
           {/* Responsibilities Section */}
-          <div className="pt-6 border-t border-[#F4F3EF] text-left">
-            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3 text-left">Responsibilities</span>
-            {respArr.length > 0 ? (
-              <ul className="space-y-2.5 text-left">
-                {respArr.map((resp, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0D47A1] mt-1.5 flex-shrink-0" />
-                    {resp.trim()}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm italic text-[#9B9BAD] text-left">No specific responsibilities listed</p>
-            )}
+          <div className="pt-6 border-t border-[#F4F3EF] text-left group">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Responsibilities</span>
+              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">One per line</span>
+            </div>
+            <textarea
+              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none whitespace-pre-wrap"
+              rows={Math.max(3, editableJob.responsibilities.split('\n').length)}
+              value={editableJob.responsibilities}
+              onChange={(e) => setEditableJob(p => ({ ...p, responsibilities: e.target.value }))}
+              onBlur={(e) => handleBlur('responsibilities', e.target.value)}
+              placeholder="List the job responsibilities (Click to edit)"
+            />
           </div>
         </div>
 
@@ -531,38 +630,29 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                         return { bottom: window.innerHeight - rect.top + 8, left: rect.left + rect.width / 2 - 104 };
                       })()}
                     >
-                      <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
+                      <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Members</p>
                       <button
-                        onClick={() => {
-                          if (isSelfAssignment('Me')) return;
-                          handleAssignJob(job.id, 'Me');
-                          setShowAssignDropdown(false);
-                        }}
-                        disabled={isSelfAssignment('Me')}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'} ${isSelfAssignment('Me') ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        title={isSelfAssignment('Me') ? 'You cannot assign a job to yourself.' : undefined}
+                        onClick={() => { handleAssignJob(job.id, 'Me'); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${(jobAssignments[job.id] || '').includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                          }`}
                       >
-                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'}`}><User size={13} /></span>
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${(jobAssignments[job.id] || '').includes('Me') ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                          }`}><User size={13} /></span>
                         Assign to me
-                        {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                        {(jobAssignments[job.id] || '').includes('Me') && <span className="ml-auto text-[#0D47A1] font-black text-lg">✓</span>}
                       </button>
                       <div className="border-t border-[#F4F3EF] my-1" />
                       {['Jyoti', 'Manju', 'Priyanshi'].map(name => {
-                        const disabled = isSelfAssignment(name);
                         return (
                           <button key={name}
-                            onClick={() => {
-                              if (disabled) return;
-                              handleAssignJob(job.id, name);
-                              setShowAssignDropdown(false);
-                            }}
-                            disabled={disabled}
-                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            title={disabled ? 'You cannot assign a job to yourself.' : undefined}
+                            onClick={() => { handleAssignJob(job.id, name); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${(jobAssignments[job.id] || '').includes(name) ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                              }`}
                           >
-                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'}`}>{name.charAt(0)}</span>
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${(jobAssignments[job.id] || '').includes(name) ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                              }`}>{name.charAt(0)}</span>
                             {name}
-                            {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                            {(jobAssignments[job.id] || '').includes(name) && <span className="ml-auto text-[#0D47A1] font-black text-lg">✓</span>}
                           </button>
                         );
                       })}
@@ -574,7 +664,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                             className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
                           >
                             <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
-                            Remove Assignment
+                            Clear All Assignments
                           </button>
                         </>
                       )}
@@ -809,14 +899,33 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     }
 
     const prev = { ...jobAssignments };
+    let newAssignmentString = null;
+
     if (name) {
-      setJobAssignments(p => ({ ...p, [jobId]: name }));
-    } else {
-      setJobAssignments(p => { const n = { ...p }; delete n[jobId]; return n; });
+      const currentList = (prev[jobId] || '').split(',').map(n => n.trim()).filter(Boolean);
+      
+      if (currentList.includes(name)) {
+        const updatedList = currentList.filter(n => n !== name);
+        newAssignmentString = updatedList.length > 0 ? updatedList.join(', ') : null;
+      } else {
+        currentList.push(name);
+        newAssignmentString = currentList.join(', ');
+      }
     }
+
+    setJobAssignments(p => {
+      const n = { ...p };
+      if (newAssignmentString) {
+        n[jobId] = newAssignmentString;
+      } else {
+        delete n[jobId];
+      }
+      return n;
+    });
+
     try {
       await updateRecruitmentPosition(jobId, {
-        assignedToName: name || null,
+        assignedToName: newAssignmentString,
         assignedToId: null,
       });
     } catch (err) {
@@ -2013,10 +2122,11 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       <button
                         id={`assign-btn-${job.id}`}
                         onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all max-w-[160px]"
+                        title={jobAssignments[job.id]}
                       >
-                        <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
-                        {jobAssignments[job.id]}
+                        <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex shrink-0 items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
+                        <span className="truncate">{jobAssignments[job.id]}</span>
                       </button>
                     ) : (
                       <button
@@ -2028,8 +2138,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       </button>
                     )
                   ) : (
-                    <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold">
-                      <span>{jobAssignments[job.id] || job.assignedToName || (isKAM ? 'KAM cannot assign' : 'Not assignable')}</span>
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold max-w-[160px]" title={jobAssignments[job.id] || job.assignedToName || (isKAM ? 'KAM cannot assign' : 'Not assignable')}>
+                      <span className="truncate">{jobAssignments[job.id] || job.assignedToName || (isKAM ? 'KAM cannot assign' : 'Not assignable')}</span>
                     </div>
                   )}
                   {canAssignJobs && assignDropdownJobId === job.id && createPortal(
@@ -2044,28 +2154,28 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           return { top: rect.bottom + 8, left: rect.left };
                         })()}
                       >
-                        <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Member</p>
+                        <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Members</p>
                         <button
-                          onClick={() => { handleAssignJob(job.id, 'Me'); setAssignDropdownJobId(null); }}
-                          className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                          onClick={() => { handleAssignJob(job.id, 'Me'); }}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${(jobAssignments[job.id] || '').includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
                             }`}
                         >
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === 'Me' ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${(jobAssignments[job.id] || '').includes('Me') ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
                             }`}><User size={13} /></span>
                           Assign to me
-                          {jobAssignments[job.id] === 'Me' && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                          {(jobAssignments[job.id] || '').includes('Me') && <span className="ml-auto text-[#0D47A1] font-black text-lg">✓</span>}
                         </button>
                         <div className="border-t border-[#F4F3EF] my-1" />
                         {['Jyoti', 'Manju', 'Priyanshi'].map(name => (
                           <button key={name}
-                            onClick={() => { handleAssignJob(job.id, name); setAssignDropdownJobId(null); }}
-                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${jobAssignments[job.id] === name ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                            onClick={() => { handleAssignJob(job.id, name); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${(jobAssignments[job.id] || '').includes(name) ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
                               }`}
                           >
-                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${jobAssignments[job.id] === name ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${(jobAssignments[job.id] || '').includes(name) ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
                               }`}>{name.charAt(0)}</span>
                             {name}
-                            {jobAssignments[job.id] === name && <span className="ml-auto text-[#0D47A1]">✓</span>}
+                            {(jobAssignments[job.id] || '').includes(name) && <span className="ml-auto text-[#0D47A1] font-black text-lg">✓</span>}
                           </button>
                         ))}
                         {jobAssignments[job.id] && (
@@ -2076,7 +2186,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                               className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
                             >
                               <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
-                              Remove Assignment
+                              Clear All Assignments
                             </button>
                           </>
                         )}
@@ -2178,6 +2288,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     setJobAssignments={setJobAssignments}
                     handleAssignJob={handleAssignJob}
                     canAssignJobs={canAssignJobs}
+                    onJobUpdated={(updatedFields) => {
+                      Object.assign(selectedJob, updatedFields);
+                      setJobs(prev => [...prev]);
+                    }}
                   />
                 </div>
               )}

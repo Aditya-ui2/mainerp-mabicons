@@ -103,6 +103,156 @@ const StatusBadge = ({ status }) => {
 };
 
 /* ══════════════════════════════════════════════════════ */
+const InterviewDetailView = ({ interview, onBack, onEdit, onUpdateInterview, showToast, onOpenFeedback }) => {
+  const [editableInterview, setEditableInterview] = useState({
+    candidateName: interview?.candidateName || '',
+    position: interview?.position || '',
+    round: interview?.round || '',
+  });
+
+  useEffect(() => {
+    if (!interview) return;
+    setEditableInterview({
+      candidateName: interview.candidateName || '',
+      position: interview.position || '',
+      round: interview.round || '',
+    });
+  }, [interview]);
+
+  const handleBlur = async (field, value) => {
+    const originalValue = interview[field] || '';
+    if (value !== originalValue) {
+      try {
+        await updateInterview(interview.id, { [field]: value });
+        if (showToast) showToast('Updated successfully!');
+        if (onUpdateInterview) onUpdateInterview({ [field]: value });
+      } catch (err) {
+        if (showToast) showToast('Failed to update inline', 'error');
+        setEditableInterview(prev => ({ ...prev, [field]: originalValue }));
+      }
+    }
+  };
+
+  if (!interview) return null;
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+        <div className="flex-1 mr-4">
+          <input type="text"
+            className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-2xl font-bold text-[#1A1A2E] outline-none transition-all"
+            value={editableInterview.candidateName}
+            onChange={e => setEditableInterview(p => ({ ...p, candidateName: e.target.value }))}
+            onBlur={e => handleBlur('candidateName', e.target.value)}
+            style={{ fontFamily: "'Syne', sans-serif" }}
+            placeholder="Candidate Name"
+          />
+          <div className="flex items-center gap-2 mt-1.5 ml-2">
+            <input type="text"
+              className="bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-md px-1 py-0.5 text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] outline-none w-32"
+              value={editableInterview.position}
+              onChange={e => setEditableInterview(p => ({ ...p, position: e.target.value }))}
+              onBlur={e => handleBlur('position', e.target.value)}
+              placeholder="POSITION"
+            />
+            <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+            <input type="text"
+              className="bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-md px-1 py-0.5 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] outline-none w-24"
+              value={editableInterview.round}
+              onChange={e => setEditableInterview(p => ({ ...p, round: e.target.value }))}
+              onBlur={e => handleBlur('round', e.target.value)}
+              placeholder="ROUND"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={(e) => { e.stopPropagation(); onEdit(interview); onBack(); }} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all active:scale-90">
+            <FiEdit2 className="w-4 h-4" />
+          </button>
+          <button onClick={onBack} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
+        {/* Interview Readiness Radar */}
+        <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+          <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-2 text-center">Interview Readiness</h3>
+          <div className="w-full h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={[
+                { axis: 'Preparation', value: interview.status === 'Completed' ? 90 : 65 },
+                { axis: 'Technical', value: interview.feedback?.technicalScore || 70 },
+                { axis: 'Communication', value: interview.feedback?.communicationScore || 60 },
+                { axis: 'Experience', value: 75 },
+              ]} cx="50%" cy="50%" outerRadius="70%">
+                <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
+                <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} />
+                <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
+                <Radar dataKey="value" stroke="#a5b4fc" fill="#a5b4fc" fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Round Progress */}
+        <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+          <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Round Progress</h3>
+          <div className="flex items-center gap-6">
+            <div className="w-[120px] h-[120px] flex-shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={[
+                    { name: 'Done', value: interview.status === 'Completed' ? 100 : interview.status === 'In Progress' ? 60 : 30 },
+                    { name: 'Remaining', value: interview.status === 'Completed' ? 0 : interview.status === 'In Progress' ? 40 : 70 },
+                  ]} innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                    <Cell fill="#3B82F6" />
+                    <Cell fill="#e2e8f0" />
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-3 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Status</span>
+                <StatusBadge status={interview.status} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Type</span>
+                <TypeBadge type={interview.type} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Duration</span>
+                <span className="text-sm font-black text-[#1A1A2E]">{interview.duration}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        {interview.meetLink && (interview.status === 'Scheduled' || interview.status === 'In Progress') && (
+          <button
+            onClick={() => { window.open(interview.meetLink, '_blank'); }}
+            className="w-full py-4 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
+            style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 8px 20px rgba(63, 169, 245, 0.35)' }}
+          >
+            <FiVideo className="w-5 h-5" /> Join Meeting
+          </button>
+        )}
+        <div className="grid grid-cols-1 gap-3">
+          <button
+            onClick={() => { onOpenFeedback(interview); onBack(); }}
+            className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]"
+          >
+            <FiClipboard className="w-4 h-4" /> Add Feedback
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 const CACHE_KEY_INTERVIEWS = 'cache_kamInterviews';
 
 const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled }) => {
@@ -116,7 +266,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterDate, setFilterDate] = useState('all');
+  const [filterDate, setFilterDate] = useState('today');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -1211,102 +1361,17 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="fixed inset-y-0 right-0 w-full sm:w-[480px] md:w-[540px] bg-white shadow-2xl z-[110] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
             >
-              <div className="flex flex-col h-full bg-white">
-                {/* Header */}
-                <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
-                  <div>
-                    <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{detailInterview.candidateName}</h2>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{detailInterview.position}</span>
-                      <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{detailInterview.round}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); handleEditInterview(detailInterview); setDetailInterview(null); }} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all active:scale-90">
-                      <FiEdit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => setDetailInterview(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90">
-                      <FiX className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
-                  {/* Interview Readiness Radar */}
-                  <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
-                    <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-2 text-center">Interview Readiness</h3>
-                    <div className="w-full h-[220px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart data={[
-                          { axis: 'Preparation', value: detailInterview.status === 'Completed' ? 90 : 65 },
-                          { axis: 'Technical', value: detailInterview.feedback?.technicalScore || 70 },
-                          { axis: 'Communication', value: detailInterview.feedback?.communicationScore || 60 },
-                          { axis: 'Experience', value: 75 },
-                        ]} cx="50%" cy="50%" outerRadius="70%">
-                          <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
-                          <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} />
-                          <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
-                          <Radar dataKey="value" stroke="#a5b4fc" fill="#a5b4fc" fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
-                        </RadarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  {/* Round Progress */}
-                  <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
-                    <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Round Progress</h3>
-                    <div className="flex items-center gap-6">
-                      <div className="w-[120px] h-[120px] flex-shrink-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie data={[
-                              { name: 'Done', value: detailInterview.status === 'Completed' ? 100 : detailInterview.status === 'In Progress' ? 60 : 30 },
-                              { name: 'Remaining', value: detailInterview.status === 'Completed' ? 0 : detailInterview.status === 'In Progress' ? 40 : 70 },
-                            ]} innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                              <Cell fill="#3B82F6" />
-                              <Cell fill="#e2e8f0" />
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="space-y-3 flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Status</span>
-                          <StatusBadge status={detailInterview.status} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Type</span>
-                          <TypeBadge type={detailInterview.type} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Duration</span>
-                          <span className="text-sm font-black text-[#1A1A2E]">{detailInterview.duration}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  {detailInterview.meetLink && (detailInterview.status === 'Scheduled' || detailInterview.status === 'In Progress') && (
-                    <button
-                      onClick={() => { window.open(detailInterview.meetLink, '_blank'); }}
-                      className="w-full py-4 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
-                      style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 8px 20px rgba(63, 169, 245, 0.35)' }}
-                    >
-                      <FiVideo className="w-5 h-5" /> Join Meeting
-                    </button>
-                  )}
-                  <div className="grid grid-cols-1 gap-3">
-                    <button
-                      onClick={() => { handleOpenFeedback(detailInterview); setDetailInterview(null); }}
-                      className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]"
-                    >
-                      <FiClipboard className="w-4 h-4" /> Add Feedback
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <InterviewDetailView
+                interview={detailInterview}
+                onBack={() => setDetailInterview(null)}
+                onEdit={handleEditInterview}
+                onOpenFeedback={handleOpenFeedback}
+                showToast={setToast}
+                onUpdateInterview={(updated) => {
+                  Object.assign(detailInterview, updated);
+                  setInterviews(prev => [...prev]);
+                }}
+              />
             </motion.div>
           </>
         )}
