@@ -390,6 +390,7 @@ const DONUT_COLORS = ['#3B82F6', '#6366F1', '#22D3EE'];
 const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob, canAssignJobs, onJobUpdated }) => {
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [editableJob, setEditableJob] = useState({
     description: job.description || '',
@@ -419,214 +420,268 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
     });
   }, [job]);
 
-  const handleBlur = async (field, value) => {
-    let originalValue = job[field];
-    if (field === 'deadline') {
-        originalValue = job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '';
-    } else if (Array.isArray(originalValue)) {
-        originalValue = originalValue.join(field === 'skills' ? ', ' : '\n');
-    } else {
-        originalValue = originalValue || '';
-        if (field === 'openings') value = parseInt(value, 10) || 1;
-    }
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const payload = {
+        ...editableJob,
+        requirements: editableJob.requirements.split('\n').filter(r => r.trim()),
+        responsibilities: editableJob.responsibilities.split('\n').filter(r => r.trim()),
+        skills: editableJob.skills.split(',').map(s => s.trim()).filter(s => s),
+        openings: parseInt(editableJob.openings, 10) || 1
+      };
 
-    if (value !== originalValue) {
-      try {
-        await updateRecruitmentPosition(job.id, { [field]: value });
-        toast.success(`Updated successfully!`);
-        if (onJobUpdated) onJobUpdated({ [field]: value });
-      } catch (err) {
-        toast.error('Failed to update');
-        setEditableJob(prev => ({ ...prev, [field]: originalValue }));
+      await updateRecruitmentPosition(job.id, payload);
+      toast.success('Position updated successfully');
+      
+      if (onJobUpdated) {
+        onJobUpdated(payload);
       }
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Update failed:", err);
+      toast.error(err.message || 'Failed to update position');
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleCancel = () => {
+    setEditableJob({
+      description: job.description || '',
+      requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : (job.requirements || ''),
+      responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities.join('\n') : (job.responsibilities || ''),
+      skills: Array.isArray(job.skills) ? job.skills.join(', ') : (job.skills || ''),
+      location: job.location || '',
+      salary: job.salary || '',
+      experience: job.experience || '',
+      openings: job.openings || 1,
+      deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
+      priority: job.priority || 'Medium'
+    });
+    setIsEditing(false);
+  };
+
+  const fieldClasses = `w-full bg-transparent rounded-xl px-2 py-1 transition-all outline-none border ${
+    isEditing 
+      ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white' 
+      : 'border-transparent cursor-default'
+  }`;
 
   return (
     <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right duration-500">
       {/* Header */}
-      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
-        <div>
+      <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+        <div className="text-left">
           <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{job.title}</h2>
-          <div className="flex items-center gap-2 mt-1.5">
+          <div className="flex items-center gap-2 mt-1.5 justify-start">
             <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{job.department || job.client || 'Engineering'}</span>
             <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
             <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.type || 'Full-time'}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-
-          {isEditing && (
-            <button
-              onClick={() => setIsEditing(false)}
-              className="text-xs font-semibold text-green-600"
-            >
-              Save
-            </button>
+        <div className="flex items-center gap-3">
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <button
+                disabled={isSaving}
+                onClick={handleCancel}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isSaving}
+                onClick={handleSave}
+                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+              >
+                {isSaving ? (
+                  <RefreshCw size={14} className="animate-spin" />
+                ) : (
+                  <Check size={14} />
+                )}
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#0D47A1] transition-all active:scale-90 shadow-sm"
+                title="Edit Position"
+              >
+                <Pencil size={18} />
+              </button>
+              <button
+                onClick={onBack}
+                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                title="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
           )}
-
-          <button
-            onClick={() => setIsEditing(true)}
-            className="p-1 rounded-md hover:bg-gray-100 transition"
-          >
-            <Pencil size={18} className="text-gray-600 hover:text-blue" />
-          </button>
-
-          <button
-            onClick={onBack}
-            className="p-1 rounded-md hover:bg-gray-100 transition"
-          >
-            <X size={18} />
-          </button>
-
         </div>
       </div>
 
-      <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
+      <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10 custom-scrollbar">
         {/* Job Snapshot Info Grid */}
         <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
           <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-            <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Location</span>
+            {/* Location */}
+            <div className="space-y-1.5 group text-left">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Location</span>
               <input 
                   type="text"
                   readOnly={!isEditing}
-                  className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
+                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
                   value={editableJob.location}
                   onChange={(e) => setEditableJob(p => ({ ...p, location: e.target.value }))}
-                  onBlur={(e) => handleBlur('location', e.target.value)}
+                  placeholder="e.g. Remote, City"
               />
             </div>
-            <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Salary Range</span>
+            
+            {/* Salary */}
+            <div className="space-y-1.5 group text-left">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Salary Range</span>
               <input 
                   type="text"
                   readOnly={!isEditing}
-                  className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
+                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
                   value={editableJob.salary}
                   onChange={(e) => setEditableJob(p => ({ ...p, salary: e.target.value }))}
-                  onBlur={(e) => handleBlur('salary', e.target.value)}
+                  placeholder="e.g. 5-8 LPA"
               />
             </div>
-            <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Experience</span>
+
+            {/* Experience */}
+            <div className="space-y-1.5 group text-left">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience Required</span>
               <input
                   type="text"
                   readOnly={!isEditing}
-                  className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
+                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
                   value={editableJob.experience}
                   onChange={(e) => setEditableJob(p => ({ ...p, experience: e.target.value }))}
-                  onBlur={(e) => handleBlur('experience', e.target.value)}
+                  placeholder="e.g. 2-3 Years"
               />
             </div>
-            <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Openings</span>
-              <div className="flex items-center">
+
+            {/* Openings */}
+            <div className="space-y-1.5 group text-left">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Openings</span>
+              <div className="flex items-center gap-2">
                   <input 
                       type="number"
                       readOnly={!isEditing}
-                      className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
+                      className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] max-w-[80px] text-left`}
                       value={editableJob.openings}
                       onChange={(e) => setEditableJob(p => ({ ...p, openings: e.target.value }))}
-                      onBlur={(e) => handleBlur('openings', e.target.value)}
                   />
-                  <span className="text-sm font-bold text-[#1A1A2E] -ml-2 cursor-default">Position(s)</span>
+                  {!isEditing && <span className="text-sm font-bold text-[#1A1A2E]">Position(s)</span>}
               </div>
             </div>
-            <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Deadline</span>
+
+            {/* Deadline */}
+            <div className="space-y-1.5 group text-left">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Deadline</span>
               <input 
                   type="date"
                   readOnly={!isEditing}
-                  className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
+                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left ${isEditing ? 'cursor-pointer' : ''}`}
                   value={editableJob.deadline}
                   onChange={(e) => setEditableJob(p => ({ ...p, deadline: e.target.value }))}
-                  onBlur={(e) => handleBlur('deadline', e.target.value)}
               />
             </div>
-            <div className="space-y-1.5 group relative">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Priority</span>
-              <select
-                  readOnly={!isEditing}
-                  className={`w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-[10px] font-black uppercase tracking-widest transition-all outline-none cursor-pointer appearance-none ${editableJob.priority === 'Critical' ? 'text-rose-500' : editableJob.priority === 'High' ? 'text-amber-500' : 'text-[#0D47A1]'}`}
-                  value={editableJob.priority}
-                  onChange={(e) => {
-                      setEditableJob(p => ({ ...p, priority: e.target.value }));
-                      handleBlur('priority', e.target.value);
-                  }}
-              >
-                  <option value="Critical">Critical</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-              </select>
+
+            {/* Priority */}
+            <div className="space-y-1.5 group text-left relative">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Priority</span>
+              {isEditing ? (
+                <div className="relative">
+                  <select
+                    className="w-full bg-[#0D47A1]/5 border border-[#0D47A1]/20 rounded-xl p-2 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer appearance-none focus:bg-white focus:border-[#0D47A1] transition-all text-left"
+                    value={editableJob.priority}
+                    onChange={(e) => setEditableJob(p => ({ ...p, priority: e.target.value }))}
+                  >
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#9B9BAD] w-3 h-3" />
+                </div>
+              ) : (
+                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+                  editableJob.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : 
+                  editableJob.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
+                }`}>
+                  {editableJob.priority}
+                </span>
+              )}
             </div>
           </div>
 
+          {/* Required Skills */}
           <div className="pt-6 border-t border-[#F4F3EF] text-left group">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left  transition-colors">Required Skills</span>
-              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Comma separated</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Required Skills</span>
+              {isEditing && <span className="text-[9px] font-bold text-[#9B9BAD] italic">Comma separated</span>}
             </div>
             <textarea
               readOnly={!isEditing}
-              className="w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-[13px] font-bold text-[#1A1A2E] leading-relaxed resize-none transition-all outline-none"
-              rows={Math.max(2, editableJob.skills.split('\n').length)}
+              className={`${fieldClasses} p-3 -mx-2 text-[13px] font-bold text-[#1A1A2E] leading-relaxed resize-none text-left`}
+              rows={Math.max(2, editableJob.skills.split(',').length / 3)}
               value={editableJob.skills}
               onChange={(e) => setEditableJob(p => ({ ...p, skills: e.target.value }))}
-              onBlur={(e) => handleBlur('skills', e.target.value)}
-              placeholder="E.g. React, Node.js, TypeScript (Click to edit)"
+              placeholder="e.g. React, Node.js, TypeScript"
             />
           </div>
 
-          {/* Job Description Section */}
+          {/* Job Description */}
           <div className="pt-6 border-t border-[#F4F3EF] text-left group">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left transition-colors">Job Description</span>
-              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Click to edit</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Job Description</span>
             </div>
             <textarea
               readOnly={!isEditing}
-              className="w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none"
-              rows={Math.max(3, editableJob.description.split('\n').length)}
+              className={`${fieldClasses} p-3 -mx-2 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none text-left`}
+              rows={Math.max(4, editableJob.description.split('\n').length)}
               value={editableJob.description}
               onChange={(e) => setEditableJob(p => ({ ...p, description: e.target.value }))}
-              onBlur={(e) => handleBlur('description', e.target.value)}
-              placeholder="Provide a description for this position (Click to edit)"
+              placeholder="Provide a detailed description of the role..."
             />
           </div>
 
-          {/* Requirements Section */}
+          {/* Requirements */}
           <div className="pt-6 border-t border-[#F4F3EF] text-left group">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left transition-colors">Requirements</span>
-              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">One per line</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Requirements</span>
+              {isEditing && <span className="text-[9px] font-bold text-[#9B9BAD] italic">One per line</span>}
             </div>
             <textarea
               readOnly={!isEditing}
-              className="w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none whitespace-pre-wrap"
-              rows={Math.max(3, editableJob.requirements.split('\n').length)}
+              className={`${fieldClasses} p-3 -mx-2 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none text-left whitespace-pre-wrap`}
+              rows={Math.max(4, editableJob.requirements.split('\n').length)}
               value={editableJob.requirements}
               onChange={(e) => setEditableJob(p => ({ ...p, requirements: e.target.value }))}
-              onBlur={(e) => handleBlur('requirements', e.target.value)}
-              placeholder="List the job requirements (Click to edit)"
+              placeholder="List the key requirements..."
             />
           </div>
 
-          {/* Responsibilities Section */}
+          {/* Responsibilities */}
           <div className="pt-6 border-t border-[#F4F3EF] text-left group">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left transition-colors">Responsibilities</span>
-              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">One per line</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Responsibilities</span>
+              {isEditing && <span className="text-[9px] font-bold text-[#9B9BAD] italic">One per line</span>}
             </div>
             <textarea
               readOnly={!isEditing}
-              className="w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none whitespace-pre-wrap"
-              rows={Math.max(3, editableJob.responsibilities.split('\n').length)}
+              className={`${fieldClasses} p-3 -mx-2 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none text-left whitespace-pre-wrap`}
+              rows={Math.max(4, editableJob.responsibilities.split('\n').length)}
               value={editableJob.responsibilities}
               onChange={(e) => setEditableJob(p => ({ ...p, responsibilities: e.target.value }))}
-              onBlur={(e) => handleBlur('responsibilities', e.target.value)}
-              placeholder="List the job responsibilities (Click to edit)"
+              placeholder="List the main responsibilities..."
             />
           </div>
         </div>
@@ -2226,7 +2281,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     document.body
                   )}
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2 items-center">
+                  <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-[#9B9BAD] group-hover:text-[#0D47A1]">
+                    <Pencil size={14} />
+                  </div>
                   <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
                     <ChevronRight size={18} className="text-[#C5C5D2] transition-all" />
                   </div>
@@ -2320,8 +2378,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     handleAssignJob={handleAssignJob}
                     canAssignJobs={canAssignJobs}
                     onJobUpdated={(updatedFields) => {
-                      Object.assign(selectedJob, updatedFields);
-                      setJobs(prev => [...prev]);
+                      const updatedJob = { ...selectedJob, ...updatedFields };
+                      setSelectedJob(updatedJob);
+                      setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
                     }}
                   />
                 </div>
