@@ -137,7 +137,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
         <div className="mb-10 flex justify-between items-center text-left">
           <div>
             <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Activity Feed</h1>
-            <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide">Historical log of all recruitment events and team operations</p>
+
           </div>
         </div>
 

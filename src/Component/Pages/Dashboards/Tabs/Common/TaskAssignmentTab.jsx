@@ -30,6 +30,7 @@ import {
   FiUserPlus,
   FiEye,
   FiMinusCircle,
+  FiCheck,
 } from 'react-icons/fi';
 import {
   getDepartmentTasks,
@@ -86,13 +87,15 @@ const getRelativeDate = (date) => {
 };
 
 const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMembers = [] }) => {
+  const [isEditing, setIsEditing] = useState(false);
   const [showAssigneeSuggestions, setShowAssigneeSuggestions] = useState(false);
   const [editableTask, setEditableTask] = useState({
     title: task?.title || '',
     description: task?.description || '',
     dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
     assignedToName: task?.assignedToName || '',
-    assignedTo: task?.assignedTo || '',
+    assignedTo: task?.assignedTo?._id || task?.assignedTo?.id || task?.assignedTo || '',
+    priority: task?.priority || 'Medium',
   });
 
   useEffect(() => {
@@ -100,28 +103,52 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
     setEditableTask({
       title: task.title || '',
       description: task.description || '',
-      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+      assignedToName: task.assignedToName || '',
+      assignedTo: task.assignedTo?._id || task.assignedTo?.id || task.assignedTo || '',
+      priority: task.priority || 'Medium',
     });
   }, [task]);
 
-  const handleBlur = async (field, value) => {
-    let originalValue = task[field];
-    if (field === 'dueDate') {
-      originalValue = task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '';
-    } else {
-      originalValue = originalValue || '';
-    }
+  const [isSaving, setIsSaving] = useState(false);
 
-    if (value !== originalValue) {
-      try {
-        await updateDepartmentTask(task.id, { [field]: value });
-        if (showToast) showToast(`Updated successfully!`);
-        if (onUpdateTask) onUpdateTask({ [field]: value });
-      } catch (err) {
-        if (showToast) showToast('Failed to update inline', 'error');
-        setEditableTask(prev => ({ ...prev, [field]: originalValue }));
-      }
+  // Check if anything has changed
+  const hasChanges = JSON.stringify(editableTask) !== JSON.stringify({
+    title: task?.title || '',
+    description: task?.description || '',
+    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+    assignedToName: task?.assignedToName || '',
+    assignedTo: task?.assignedTo?._id || task?.assignedTo?.id || task?.assignedTo || '',
+    priority: task?.priority || 'Medium',
+  });
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      
+      const taskId = task._id || task.id;
+      if (!taskId) throw new Error('Task ID is missing');
+
+      // Clean the payload: remove UI-only fields like 'assignedToName'
+      // before sending to the backend API.
+      const { assignedToName, ...payload } = editableTask;
+      
+      await updateDepartmentTask(taskId, payload);
+      
+      if (showToast) showToast(`Task updated successfully!`);
+      if (onUpdateTask) onUpdateTask({ ...editableTask, id: taskId, _id: taskId });
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Save Error:', err);
+      if (showToast) showToast('Failed to save changes. Please check if all fields are valid.', 'error');
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleBlur = (field, value) => {
+    // We no longer trigger immediate API calls on blur to follow the 'Save' button pattern
+    setEditableTask(prev => ({ ...prev, [field]: value }));
   };
 
   if (!task) return null;
@@ -136,18 +163,55 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
           <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">RECRUITMENT OPERATIONS</p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => onEdit(task)}
-            className="w-10 h-10 rounded-2xl bg-[#F4F3EF]/50 flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300"
-          >
-            <FiEdit2 size={18} />
-          </button>
-          <button
-            onClick={onBack}
-            className="w-10 h-10 rounded-2xl bg-[#F4F3EF]/50 flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
-          >
-            <FiX size={20} />
-          </button>
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <button
+                disabled={isSaving}
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditableTask({
+                    title: task?.title || '',
+                    description: task?.description || '',
+                    dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+                    assignedToName: task?.assignedToName || '',
+                    assignedTo: task?.assignedTo?._id || task?.assignedTo?.id || task?.assignedTo || '',
+                    priority: task?.priority || 'Medium',
+                  });
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isSaving}
+                onClick={handleSave}
+                className="w-[145.83px] h-[32px] rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                {isSaving ? (
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <FiCheck size={14} />
+                )}
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+              >
+                <FiEdit2 size={18} />
+              </button>
+
+              <button
+                onClick={onBack}
+                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -159,7 +223,8 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
               <FiCheckSquare size={24} />
             </div>
             <input type="text"
-              className="flex-1 bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-2xl font-bold text-[#1A1A2E] leading-tight transition-all outline-none"
+              readOnly={!isEditing}
+              className={`flex-1 bg-transparent rounded-xl px-3 py-1.5 -ml-2 text-2xl font-bold text-[#1A1A2E] leading-tight transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent'}`}
               value={editableTask.title}
               onChange={e => setEditableTask(p => ({ ...p, title: e.target.value }))}
               onBlur={e => handleBlur('title', e.target.value)}
@@ -183,17 +248,16 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
                 </div>
                 <input
                   type="text"
-                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
+                  readOnly={!isEditing}
+                  className={`w-full bg-transparent rounded-xl px-3 py-1.5 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent'}`}
                   value={editableTask.assignedToName}
                   onChange={e => {
                     setEditableTask(p => ({ ...p, assignedToName: e.target.value }));
-                    setShowAssigneeSuggestions(true);
+                    if (isEditing) setShowAssigneeSuggestions(true);
                   }}
-                  onFocus={() => setShowAssigneeSuggestions(true)}
+                  onFocus={() => isEditing && setShowAssigneeSuggestions(true)}
                   onBlur={(e) => {
                     setTimeout(() => setShowAssigneeSuggestions(false), 200);
-                    // Just triggering the backend save with current local state might be tricky if they haven't selected a valid member
-                    // But we will allow them to just type or select from dropdown as fallback
                   }}
                 />
                 
@@ -234,7 +298,8 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
               <div className="flex items-center gap-2">
                 <FiCalendar className="text-[#9B9BAD]" size={14} />
                 <input type="date"
-                  className={`w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold ${relativeDate.color} outline-none cursor-pointer`}
+                  readOnly={!isEditing}
+                  className={`w-full bg-transparent rounded-xl px-3 py-1.5 -ml-2 text-sm font-bold transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent'} ${relativeDate.color} cursor-pointer`}
                   value={editableTask.dueDate}
                   onChange={e => setEditableTask(p => ({ ...p, dueDate: e.target.value }))}
                   onBlur={e => handleBlur('dueDate', e.target.value)}
@@ -271,8 +336,9 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
               <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Click to edit</span>
             </div>
             <textarea
-              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm text-[#4B4B5E] leading-relaxed font-medium resize-none transition-all outline-none"
-              rows={Math.max(4, editableTask.description.split('\n').length)}
+              readOnly={!isEditing}
+              className={`w-full bg-transparent rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] leading-relaxed font-medium resize-none transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent'}`}
+              rows={Math.max(4, (editableTask.description || '').split('\n').length)}
               value={editableTask.description}
               onChange={e => setEditableTask(p => ({ ...p, description: e.target.value }))}
               onBlur={e => handleBlur('description', e.target.value)}
@@ -384,7 +450,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       ]);
 
       if (tasksRes?.tasks && tasksRes.tasks.length > 0) {
-        setTasks(tasksRes.tasks);
+        setTasks(tasksRes.tasks.map(t => ({ ...t, id: t.id || t._id })));
       }
       if (membersRes?.members && membersRes.members.length > 0) {
         setTeamMembers(membersRes.members);
@@ -416,7 +482,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       };
 
       if (editingTask) {
-        await updateDepartmentTask(editingTask.id, taskData);
+        const taskId = editingTask._id || editingTask.id;
+        await updateDepartmentTask(taskId, taskData);
       } else {
         await createDepartmentTask(taskData);
       }
@@ -432,10 +499,11 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
     }
   };
 
-  const handleStatusChange = async (taskId, newStatus) => {
+  const handleStatusChange = async (task, newStatus) => {
+    const taskId = task._id || task.id;
     try {
       await updateDepartmentTask(taskId, { status: newStatus });
-      setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+      setTasks(tasks.map(t => (t.id === taskId || t._id === taskId) ? { ...t, status: newStatus } : t));
       showToast(`Task marked as ${newStatus}`);
     } catch (error) {
       console.error('Error updating status:', error);
@@ -443,10 +511,11 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
     }
   };
 
-  const handleDelete = async (taskId) => {
+  const handleDelete = async (task) => {
+    const taskId = task?._id || task?.id || task;
     try {
       await deleteDepartmentTask(taskId);
-      setTasks(tasks.filter(t => t.id !== taskId));
+      setTasks(tasks.filter(t => t.id !== taskId && t._id !== taskId));
       setConfirmDelete(null);
       showToast('Task deleted');
     } catch (error) {
@@ -537,7 +606,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="text-left">
           <h2 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Assignment</h2>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">Assign and track tasks for your team</p>
+
         </div>
         {canAssignTasks ? (
           <motion.button
@@ -625,7 +694,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     type="checkbox"
                     className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]"
                     onChange={(e) => {
-                      if (e.target.checked) setSelectedTasks(filteredTasks.map(t => t.id));
+                      if (e.target.checked) setSelectedTasks(filteredTasks.map(t => t._id || t.id));
                       else setSelectedTasks([]);
                     }}
                     checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0}
@@ -650,22 +719,23 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
               ) : (
                 filteredTasks.map((task) => (
                   <tr
-                    key={task.id}
+                    key={task._id || task.id}
                     onClick={() => {
                       setViewingTask(task);
                       setShowDrawer(true);
                     }}
-                    className={`group hover:bg-[#F8FAFC] transition-colors cursor-pointer ${selectedTasks.includes(task.id) ? 'bg-[#F1F5F9]' : ''}`}
+                    className={`group hover:bg-[#F8FAFC] transition-colors cursor-pointer ${selectedTasks.includes(task._id || task.id) ? 'bg-[#F1F5F9]' : ''}`}
                   >
                     <td className="p-5">
                       <input
                         type="checkbox"
                         className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]"
-                        checked={selectedTasks.includes(task.id)}
+                        checked={selectedTasks.includes(task._id || task.id)}
                         onChange={(e) => {
                           e.stopPropagation();
-                          if (selectedTasks.includes(task.id)) setSelectedTasks(selectedTasks.filter(id => id !== task.id));
-                          else setSelectedTasks([...selectedTasks, task.id]);
+                          const taskId = task._id || task.id;
+                          if (selectedTasks.includes(taskId)) setSelectedTasks(selectedTasks.filter(id => id !== taskId));
+                          else setSelectedTasks([...selectedTasks, taskId]);
                         }}
                         onClick={(e) => e.stopPropagation()}
                       />
@@ -695,29 +765,21 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setEditingTask(task);
-                            setFormData({
-                              title: task.title,
-                              description: task.description || '',
-                              assignedTo: task.assignedTo?.id || task.assignedTo?._id || '',
-                              priority: task.priority,
-                              dueDate: task.dueDate?.split('T')[0] || '',
-                              targets: task.targets || [],
-                            });
-                            setShowModal(true);
+                            setViewingTask(task);
+                            setShowDrawer(true);
                           }}
-                          className="p-2 text-[#9B9BAD] hover:text-[#1B4DA0] transition-colors"
+                          className="w-8 h-8 rounded-lg bg-[#F4F3EF] text-[#6B6B7E] hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center shadow-sm"
                         >
-                          <FiEdit2 size={16} />
+                          <FiEdit2 size={14} />
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setConfirmDelete(task.id);
+                            setConfirmDelete(task);
                           }}
-                          className="p-2 text-[#9B9BAD] hover:text-[#E11D48] transition-colors"
+                          className="w-8 h-8 rounded-lg bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shadow-sm"
                         >
-                          <FiTrash2 size={16} />
+                          <FiTrash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -749,17 +811,10 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     showToast('Please select exactly 1 task to edit', 'error');
                     return;
                   }
-                  const taskToEdit = tasks.find(t => t.id === selectedTasks[0]);
+                  const taskToEdit = tasks.find(t => (t._id === selectedTasks[0] || t.id === selectedTasks[0]));
                   if (taskToEdit) {
-                    setEditingTask(taskToEdit);
-                    setFormData({
-                      title: taskToEdit.title,
-                      description: taskToEdit.description || '',
-                      assignedTo: taskToEdit.assignedTo || '',
-                      priority: taskToEdit.priority || 'Medium',
-                      dueDate: taskToEdit.dueDate ? new Date(taskToEdit.dueDate).toISOString().split('T')[0] : ''
-                    });
-                    setShowModal(true);
+                    setViewingTask(taskToEdit);
+                    setShowDrawer(true);
                   }
                 }}
                 disabled={selectedTasks.length !== 1}
@@ -783,9 +838,9 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             </div>
             <button
               onClick={() => setSelectedTasks([])}
-              className="ml-4 p-1 text-gray-400 hover:text-white transition-colors"
+              className="w-8 h-8 rounded-lg bg-white/10 text-white hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
             >
-              <FiX size={18} />
+              <FiX size={16} />
             </button>
           </motion.div>
         )}
@@ -971,22 +1026,13 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                   onBack={() => { setShowDrawer(false); setViewingTask(null); }}
                   showToast={showToast}
                   onUpdateTask={(updated) => {
-                    Object.assign(viewingTask, updated);
-                    setTasks(prev => [...prev]);
+                    const taskId = updated._id || updated.id || viewingTask._id || viewingTask.id;
+                    setTasks(prev => prev.map(t => (t._id === taskId || t.id === taskId) ? { ...t, ...updated } : t));
+                    setViewingTask(prev => ({ ...prev, ...updated }));
                   }}
                   teamMembers={teamMembers}
                   onEdit={(task) => {
-                    setEditingTask(task);
-                    setFormData({
-                      title: task.title,
-                      description: task.description || '',
-                      assignedTo: task.assignedTo?.id || task.assignedTo?._id || '',
-                      priority: task.priority,
-                      dueDate: task.dueDate?.split('T')[0] || '',
-                      targets: task.targets || [],
-                    });
-                    setShowDrawer(false);
-                    setShowModal(true);
+                    // This is handled internally now by isEditing state within TaskDetailView
                   }}
                 />
               </motion.div>

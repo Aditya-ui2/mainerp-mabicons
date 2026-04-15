@@ -368,14 +368,14 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
       {/* Detached Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex flex-col items-start text-left">
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Team Overview</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Manage and track your recruitment team efficiency</p>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
+
         </div>
         <div className="flex items-center gap-3">
           {onAddKAM && (
             <button
               onClick={onAddKAM}
-              style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
+              style={{ fontFamily: '"Syne", sans-serif' }}
               className="flex items-center gap-2 px-4 py-2 bg-[#1B4DA0] hover:bg-[#153b7a] text-white rounded-xl text-sm font-semibold transition-all shadow-sm whitespace-nowrap"
             >
               <FiPlus className="w-4 h-4" strokeWidth="3" />
@@ -542,13 +542,34 @@ const KAMPerformanceContent = ({
 }) => {
   const [activeMetric, setActiveMetric] = useState('callsDone');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [perfSearchQuery, setPerfSearchQuery] = useState('');
   const compactDateInputRef = useRef(null);
+  const clientDropdownRef = useRef(null);
+  const dateDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target)) {
+        setShowClientDropdown(false);
+      }
+      if (dateDropdownRef.current && !dateDropdownRef.current.contains(event.target)) {
+        setShowDateFilter(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [setShowDateFilter, setShowClientDropdown]);
 
   const clientNames = ['All Client', ...clients.map(c => c.companyName || c.name)];
 
-  const filteredData = clientFilter === 'All Client'
+  const filteredData = (clientFilter === 'All Client'
     ? teamData
-    : teamData.filter(kam => kam.client === clientFilter || (Array.isArray(kam.clients) && kam.clients.includes(clientFilter)));
+    : teamData.filter(kam => kam.client === clientFilter || (Array.isArray(kam.clients) && kam.clients.includes(clientFilter)))
+  ).filter(kam => {
+    if (!perfSearchQuery) return true;
+    return (kam.name || '').toLowerCase().includes(perfSearchQuery.toLowerCase()) ||
+      (kam.role || '').toLowerCase().includes(perfSearchQuery.toLowerCase());
+  });
 
   const openDatePicker = (ref) => {
     if (ref && ref.current) {
@@ -572,11 +593,11 @@ const KAMPerformanceContent = ({
   );
 
   const graphMetrics = [
-    { key: 'callsDone', label: 'Total Calling', color: '#ef4444', bg: 'bg-rose-100', text: 'text-rose-700' },
-    { key: 'candidatesPipeline', label: 'Candidates', color: '#8b5cf6', bg: 'bg-violet-100', text: 'text-violet-700' },
-    { key: 'interviewsScheduled', label: 'Interviews', color: '#3b82f6', bg: 'bg-blue-100', text: 'text-blue-700' },
-    { key: 'offersExtended', label: 'Offers', color: '#f59e0b', bg: 'bg-amber-100', text: 'text-amber-700' },
-    { key: 'thisWeekHires', label: 'Hires', color: '#10b981', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+    { key: 'callsDone', label: 'Total Calling', color: '#ef4444', icon: FiPhone },
+    { key: 'candidatesPipeline', label: 'Candidates', color: '#8b5cf6', icon: FiUserPlus },
+    { key: 'interviewsScheduled', label: 'Interviews', color: '#3b82f6', icon: FiCalendar },
+    { key: 'offersExtended', label: 'Offers', color: '#f59e0b', icon: FiAward },
+    { key: 'thisWeekHires', label: 'Hires', color: '#10b981', icon: FiCheckCircle },
   ];
 
   const selectedMetric = graphMetrics.find((metric) => metric.key === activeMetric) || graphMetrics[0];
@@ -590,29 +611,21 @@ const KAMPerformanceContent = ({
 
   if (loading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8" style={{ fontFamily: "'Calibri', sans-serif" }}>
         <div className="flex items-center justify-between">
-          <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
-          <div className="h-10 w-40 bg-gray-200 rounded-xl animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-8 w-64 bg-[#F4F3EF] rounded-2xl animate-pulse" />
+            <div className="h-4 w-40 bg-[#F4F3EF] rounded-xl animate-pulse" />
+          </div>
+          <div className="h-10 w-40 bg-[#F4F3EF] rounded-xl animate-pulse" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-2xl shadow-sm p-6 animate-pulse">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 rounded-xl bg-gray-200" />
-                <div>
-                  <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
-                  <div className="h-3 w-24 bg-gray-100 rounded" />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="h-2 bg-gray-100 rounded-full" />
-                <div className="h-2 bg-gray-100 rounded-full" />
-                <div className="h-2 bg-gray-100 rounded-full" />
-              </div>
-            </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-28 rounded-3xl bg-[#F4F3EF] animate-pulse" />
           ))}
         </div>
+        <div className="h-48 rounded-[32px] bg-[#F4F3EF] animate-pulse" />
+        <div className="h-96 rounded-[32px] bg-[#F4F3EF] animate-pulse" />
       </div>
     );
   }
@@ -621,56 +634,60 @@ const KAMPerformanceContent = ({
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.05 }
+      transition: { staggerChildren: 0.06 }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 120 } }
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 120, damping: 18 } }
   };
 
   return (
-    <motion.div 
+    <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
       className="space-y-8"
+      style={{ fontFamily: "'Calibri', sans-serif" }}
     >
-      <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
-        <div className="text-left w-full">
-          <motion.h1 
+      {/* ── Premium Header ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 relative z-[20]">
+        <div className="text-left">
+          <motion.h1
             variants={itemVariants}
-            className="text-3xl font-bold text-[#1A1A2E]" 
+            className="text-3xl font-bold text-[#1A1A2E] tracking-tight"
+            style={{ fontFamily: "'Syne', sans-serif" }}
           >
             Team Performance
           </motion.h1>
-          <motion.p variants={itemVariants} className="text-[#6B6B7E] text-sm mt-1 font-medium">
-            Real-time performance metrics and key account health tracking.
-          </motion.p>
+
         </div>
 
-        <motion.div variants={itemVariants} className="flex items-center gap-3">
+        <motion.div variants={itemVariants} className="flex items-center gap-3 flex-wrap">
           {/* Client Filter */}
-          <div className="relative">
+          <div className="relative" ref={clientDropdownRef}>
             <button
-              onClick={() => setShowClientDropdown(!showClientDropdown)}
-              className="px-4 py-2.5 bg-white border border-[#E8E7E2] text-[#1A1A2E] rounded-xl text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2 active:scale-95"
+              onClick={() => {
+                setShowClientDropdown(prev => !prev);
+                setShowDateFilter(false);
+              }}
+              className="px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-sm font-bold hover:border-[#E8E7E2] transition-all shadow-sm flex items-center gap-2 active:scale-95"
             >
-              <FiBriefcase size={16} className="text-[#1B4DA0]" />
+              <FiBriefcase size={15} className="text-[#1B4DA0]" />
               <span className="whitespace-nowrap">{clientFilter}</span>
-              <svg className={`w-4 h-4 ml-1 transition-transform ${showClientDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <svg className={`w-3.5 h-3.5 ml-1 text-[#9B9BAD] transition-transform ${showClientDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             <AnimatePresence>
               {showClientDropdown && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden py-1"
+                  className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden py-1.5"
                 >
                   {clientNames.map((client) => (
                     <button
@@ -681,7 +698,7 @@ const KAMPerformanceContent = ({
                         fetchDashboardData(dateFilter, 'All Team', client);
                         fetchKAMTeam(dateFilter, client);
                       }}
-                      className={`w-full px-4 py-2 text-left text-sm transition-colors ${clientFilter === client ? 'bg-[#1B4DA0]/5 text-[#1B4DA0] font-bold' : 'text-gray-600 hover:bg-gray-50'}`}
+                      className={`w-full px-5 py-2.5 text-left text-[13px] transition-colors ${clientFilter === client ? 'bg-[#0D47A1]/5 text-[#0D47A1] font-bold' : 'text-[#4B4B5E] hover:bg-[#FAFAF8] font-medium'}`}
                     >
                       {client}
                     </button>
@@ -691,57 +708,100 @@ const KAMPerformanceContent = ({
             </AnimatePresence>
           </div>
 
-          <div className="relative">
+          {/* Date Filter */}
+          <div className="relative" ref={dateDropdownRef}>
             <button
-              onClick={() => setShowDateFilter(!showDateFilter)}
-              className="px-5 py-2.5 bg-[#1B4DA0] text-white rounded-xl text-sm font-semibold hover:bg-[#153e82] transition-all shadow-md flex items-center gap-2 active:scale-95 relative z-40 whitespace-nowrap min-w-max"
+              onClick={() => {
+                setShowDateFilter(prev => !prev);
+                setShowClientDropdown(false);
+              }}
+              className="px-5 py-2.5 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-blue-500/10 flex items-center gap-2 active:scale-95 whitespace-nowrap min-w-max"
             >
-              <FiCalendar size={16} />
-              <span className="whitespace-nowrap inline-flex items-center gap-2">{getFilterLabel()}</span>
-              <svg className={`w-4 h-4 ml-1 transition-transform ${showDateFilter ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <FiCalendar size={15} />
+              <span className="whitespace-nowrap">{getFilterLabel()}</span>
+              <svg className={`w-3.5 h-3.5 ml-1 transition-transform ${showDateFilter ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             <AnimatePresence>
               {showDateFilter && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden"
+                  className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden"
                 >
-                  <div className="p-4 border-b border-gray-100 bg-gray-50">
-                    <p className="font-semibold text-gray-900 text-left">Select Time Period</p>
+                  <div className="px-5 py-4 border-b border-[#F4F3EF] bg-[#FAFAF8]">
+                    <p className="font-bold text-[#1A1A2E] text-left text-sm">Select Time Period</p>
                   </div>
-                  <div className="p-4 space-y-4">
-                     {/* Simplified filter tabs */}
-                     <div className="flex gap-1 p-1 bg-gray-100 rounded-lg text-left">
-                        {['all', 'last7days', 'year', 'month', 'date'].map((type) => (
-                          <button
-                            key={type}
-                            onClick={() => setDateFilter({ ...dateFilter, filterType: type })}
-                            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${dateFilter.filterType === type ? 'bg-white text-[#1B4DA0] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                          >
-                            {type === 'all' ? 'All' : type === 'last7days' ? 'Week' : type.charAt(0).toUpperCase() + type.slice(1)}
-                          </button>
-                        ))}
-                     </div>
-                     {/* Options */}
-                     {dateFilter.filterType === 'date' && (
-                       <input 
-                         type="date" 
-                         value={dateFilter.date} 
-                         onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
-                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]/20"
-                       />
-                     )}
-                     <button 
-                        onClick={() => applyDateFilter()}
-                        className="w-full py-2 bg-[#1B4DA0] text-white rounded-lg font-bold text-sm shadow-sm active:scale-95 transition-all"
-                      >
-                        Apply Filter
-                      </button>
+                  <div className="p-5 space-y-4">
+                    <div className="flex gap-1 p-1 bg-[#F4F3EF] rounded-xl">
+                      {['all', 'last7days', 'year', 'month', 'date'].map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => setDateFilter({ ...dateFilter, filterType: type })}
+                          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${dateFilter.filterType === type ? 'bg-white text-[#0D47A1] shadow-sm' : 'text-[#9B9BAD] hover:text-[#6B6B7E]'}`}
+                        >
+                          {type === 'all' ? 'All' : type === 'last7days' ? 'Last 7 Days' : type.charAt(0).toUpperCase() + type.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                    {(dateFilter.filterType === 'year' || dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
+                      <div className="space-y-1">
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Year</label>
+                        <select
+                          value={dateFilter.year}
+                          onChange={(e) => setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })}
+                          className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl text-sm font-bold text-[#1A1A2E] bg-white focus:outline-none focus:border-[#1B4DA0] transition-colors cursor-pointer"
+                        >
+                          {years.map((year) => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {(dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
+                      <div className="space-y-1">
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Month</label>
+                        <select
+                          value={dateFilter.month}
+                          onChange={(e) => setDateFilter({ ...dateFilter, month: parseInt(e.target.value) })}
+                          className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl text-sm font-bold text-[#1A1A2E] bg-white focus:outline-none focus:border-[#1B4DA0] transition-colors cursor-pointer"
+                        >
+                          {months.map((month, idx) => (
+                            <option key={idx} value={idx}>{month}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {dateFilter.filterType === 'date' && (
+                      <div className="space-y-1">
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Date</label>
+                        <div
+                          onClick={() => openDatePicker(compactDateInputRef)}
+                          className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl flex items-center justify-between cursor-pointer hover:border-[#E8E7E2] transition-all bg-white"
+                        >
+                          <input
+                            ref={compactDateInputRef}
+                            type="date"
+                            value={dateFilter.date}
+                            onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
+                            className="bg-transparent text-sm font-bold text-[#1A1A2E] outline-none flex-1"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <FiCalendar className="text-[#9B9BAD] w-4 h-4" />
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setShowDateFilter(false)}
+                      className="w-full py-3 bg-[#0D47A1] text-white rounded-xl font-bold text-sm shadow-sm active:scale-[0.98] transition-all"
+                    >
+                      Apply Filter
+                    </button>
                   </div>
                 </motion.div>
               )}
@@ -750,209 +810,242 @@ const KAMPerformanceContent = ({
         </motion.div>
       </div>
 
-      {/* Simplified Totals Grid */}
-      <motion.div 
-        variants={itemVariants}
-        className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8"
-      >
-        {[
-          { label: "Jobs", value: totals.activePositions, icon: FiBriefcase },
-          { label: "Candidates", value: totals.candidatesPipeline, icon: FiTarget },
-          { label: "Interviews", value: totals.interviewsScheduled, icon: FiTrendingUp },
-          { label: "Offers", value: totals.offersExtended, icon: FiZap },
-          { label: "Hires", value: totals.thisWeekHires, icon: FiAward },
-        ].map((kpi, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl border border-[#E8E7E2] shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div className="relative z-10 flex flex-col items-start text-left">
-              <div className="p-2.5 rounded-xl bg-[#F4F3EF] text-[#1A1A2E] mb-3 group-hover:bg-[#1B4DA0]/5 group-hover:text-[#1B4DA0] transition-colors">
-                <kpi.icon size={18} />
-              </div>
-              <p className="text-2xl font-bold text-[#1A1A2E] leading-none mb-1">{kpi.value}</p>
-              <p className="text-xs font-medium text-[#6B6B7E] uppercase tracking-wider">{kpi.label}</p>
-            </div>
-          </div>
-        ))}
-      </motion.div>
+      {/* KPI Stats Grid removed per user request */}
 
+      {/* ── Top 3 Leaderboard ── */}
       {(() => {
         const topKAMs = [...teamData].sort((a, b) => b.stats.thisWeekHires - a.stats.thisWeekHires);
+        if (topKAMs.length < 3) return null;
+
+        const renderAvatar = (kam, size = 16) => {
+          const isImage = kam.avatar && (String(kam.avatar).includes('http') || String(kam.avatar).includes('data:'));
+          return isImage
+            ? <img src={kam.avatar} className="w-full h-full object-cover" alt="" />
+            : <span className="font-bold">{kam.avatar}</span>;
+        };
+
         return (
-          <motion.div variants={itemVariants} className="mb-10">
-            {topKAMs.length >= 3 && (
-              <div className="bg-white rounded-[32px] border border-[#E8E7E2] p-8 shadow-sm flex flex-col md:flex-row items-center justify-around gap-8">
+          <motion.div variants={itemVariants}>
+            <div className="bg-white rounded-[32px] border border-[#F4F3EF] p-8 shadow-sm">
+              <div className="flex items-center gap-2 mb-8 text-left">
+
+                <h3 className="text-lg font-bold text-[#1A1A2E]">Top Performers</h3>
+                <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest ml-auto">By Hires</span>
+              </div>
+
+              <div className="flex flex-col md:flex-row items-center justify-around gap-6">
                 {/* 2nd Place */}
-                <div 
+                <div
                   onClick={() => onViewPerformance(topKAMs[1])}
-                  className="flex items-center gap-4 group cursor-pointer hover:bg-gray-50 p-3 rounded-2xl transition-all"
+                  className="flex items-center gap-4 group cursor-pointer hover:bg-[#FAFAF8] p-4 rounded-2xl transition-all"
                 >
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E] font-bold border border-[#E8E7E2] overflow-hidden">
-                       {topKAMs[1].avatar && (String(topKAMs[1].avatar).includes('http') || String(topKAMs[1].avatar).includes('data:')) ? 
-                         <img src={topKAMs[1].avatar} className="w-full h-full object-cover" alt="" /> : topKAMs[1].avatar}
+                    <div className="w-14 h-14 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E] text-base border border-[#E8E7E2] overflow-hidden group-hover:border-[#0D47A1]/20 transition-colors">
+                      {renderAvatar(topKAMs[1])}
                     </div>
-                    <div className="absolute -top-2 -right-2 bg-gray-400 text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white font-bold text-[10px]">2</div>
+                    <div className="absolute -top-1 -right-1 bg-gradient-to-br from-amber-400 to-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center border-[3px] border-white font-black text-xs shadow-lg">2</div>
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-[#1A1A2E]">{topKAMs[1].name}</p>
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Hires: {topKAMs[1].stats.thisWeekHires}</p>
+                    <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors">{topKAMs[1].name}</p>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-wider">{topKAMs[1].stats.thisWeekHires} Hires</p>
                   </div>
                 </div>
 
-                {/* 1st Place */}
-                <div 
+                {/* 1st Place — Hero */}
+                <div
                   onClick={() => onViewPerformance(topKAMs[0])}
-                  className="flex items-center gap-5 group py-4 px-8 bg-[#1B4DA0]/5 rounded-[28px] border border-[#1B4DA0]/10 relative cursor-pointer hover:bg-[#1B4DA0]/10 transition-all"
+                  className="flex items-center gap-5 group py-5 px-8 bg-gradient-to-r from-[#0D47A1]/5 to-[#0D47A1]/10 rounded-[24px] border-2 border-[#0D47A1]/10 relative cursor-pointer hover:border-[#0D47A1]/25 transition-all shadow-sm"
                 >
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-[28px] bg-white flex items-center justify-center text-[#1B4DA0] text-2xl font-bold border-4 border-white shadow-xl overflow-hidden">
-                       {topKAMs[0].avatar && (String(topKAMs[0].avatar).includes('http') || String(topKAMs[0].avatar).includes('data:')) ? 
-                         <img src={topKAMs[0].avatar} className="w-full h-full object-cover" alt="" /> : topKAMs[0].avatar}
+                    <div className="w-[72px] h-[72px] rounded-[22px] bg-white flex items-center justify-center text-[#0D47A1] text-2xl font-bold border-[3px] border-white shadow-xl overflow-hidden ring-4 ring-[#0D47A1]/5">
+                      {renderAvatar(topKAMs[0])}
                     </div>
-                    <div className="absolute -top-1 -right-1 bg-amber-400 text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-white font-bold text-xs">1</div>
+                    <div className="absolute -top-1 -right-1 bg-gradient-to-br from-amber-400 to-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center border-[3px] border-white font-black text-xs shadow-lg">1</div>
                   </div>
                   <div className="text-left">
-                    <p className="text-base font-bold text-[#1A1A2E]">{topKAMs[0].name}</p>
-                    <p className="text-xs font-bold text-[#1B4DA0] uppercase tracking-widest">Hires: {topKAMs[0].stats.thisWeekHires}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <FiStar size={10} className="text-amber-500 fill-amber-500" />
-                      <span className="text-[9px] font-bold text-amber-600 uppercase">Top Performer</span>
+                    <p className="text-[17px] font-bold text-[#1A1A2E] leading-tight">{topKAMs[0].name}</p>
+                    <p className="text-xs font-black text-[#0D47A1] uppercase tracking-widest mt-0.5">{topKAMs[0].stats.thisWeekHires} Hires</p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <FiStar size={11} className="text-amber-500 fill-amber-500" />
+                      <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Top Performer</span>
                     </div>
                   </div>
                 </div>
 
                 {/* 3rd Place */}
-                <div 
+                <div
                   onClick={() => onViewPerformance(topKAMs[2])}
-                  className="flex items-center gap-4 group cursor-pointer hover:bg-gray-50 p-3 rounded-2xl transition-all"
+                  className="flex items-center gap-4 group cursor-pointer hover:bg-[#FAFAF8] p-4 rounded-2xl transition-all"
                 >
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E] font-bold border border-[#E8E7E2] overflow-hidden">
-                       {topKAMs[2].avatar && (String(topKAMs[2].avatar).includes('http') || String(topKAMs[2].avatar).includes('data:')) ? 
-                         <img src={topKAMs[2].avatar} className="w-full h-full object-cover" alt="" /> : topKAMs[2].avatar}
+                    <div className="w-14 h-14 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E] text-base border border-[#E8E7E2] overflow-hidden group-hover:border-[#0D47A1]/20 transition-colors">
+                      {renderAvatar(topKAMs[2])}
                     </div>
-                    <div className="absolute -top-2 -right-2 bg-amber-700 text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white font-bold text-[10px]">3</div>
+                    <div className="absolute -top-1.5 -right-1.5 bg-amber-700 text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white font-black text-[10px] shadow-sm">3</div>
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-[#1A1A2E]">{topKAMs[2].name}</p>
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Hires: {topKAMs[2].stats.thisWeekHires}</p>
+                    <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors">{topKAMs[2].name}</p>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-wider">{topKAMs[2].stats.thisWeekHires} Hires</p>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </motion.div>
         );
       })()}
 
-      {/* Main Table Content */}
-      <motion.div variants={itemVariants} className="bg-white rounded-[24px] border border-[#E8E7E2] overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-[#F4F3EF] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FiAward className="text-[#1B4DA0]" size={22} />
-            <h2 className="text-lg font-bold text-[#1A1A2E]">Performance Rankings</h2>
-          </div>
+      {/* ── Performance Rankings Table ── */}
+      <motion.div variants={itemVariants} className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+        {/* Table Header with Search */}
+        <div className="px-8 py-5 border-b border-[#F4F3EF] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-             <div className="relative flex items-center bg-[#F4F3EF] rounded-xl px-3 py-2">
-                <FiSearch size={14} className="text-[#9B9BAD] mr-2" />
-                <input type="text" placeholder="Search..." className="bg-transparent text-xs outline-none w-32 font-medium" />
-             </div>
+            {/* <div className="p-2 rounded-xl bg-[#0D47A1]/5 text-[#0D47A1]">
+              <FiAward size={18} strokeWidth={2.5} />
+            </div> */}
+            <div className="text-left">
+              <h2 className="text-lg font-bold text-[#1A1A2E]">Performance Rankings</h2>
+              <p className="text-[11px] font-medium text-[#9B9BAD]">{filteredData.length} team members</p>
+            </div>
+          </div>
+          <div className="bg-[#F4F3EF] rounded-2xl px-4 py-2.5 flex items-center gap-2 min-w-[220px]">
+            <FiSearch size={15} className="text-[#9B9BAD] flex-shrink-0" />
+            <input
+              type="text"
+              value={perfSearchQuery}
+              onChange={(e) => setPerfSearchQuery(e.target.value)}
+              placeholder="Search member..."
+              className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold"
+            />
           </div>
         </div>
 
+        {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#FAFAF8] text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">
-                <th className="px-10 py-4">Account Manager</th>
-                <th className="px-10 py-4 text-center">Current Hires</th>
-                <th className="px-10 py-4 text-center">Achievement</th>
-                <th className="px-10 py-4 text-right">Recent Offers</th>
+              <tr className="border-b border-[#F4F3EF]">
+                <th className="py-4 px-8 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Account Manager</th>
+                <th className="py-4 px-6 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Current Hires</th>
+                <th className="py-4 px-6 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Progress</th>
+                <th className="py-4 px-6 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Calls</th>
+                <th className="py-4 px-8 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-right">Offers</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F4F3EF]">
-              {filteredData.map((kam) => {
-                const targetPercentage = Math.min((kam.stats.thisWeekHires / 5) * 100, 100);
-                return (
-                  <tr
-                    key={kam.id}
-                    onClick={() => onViewPerformance(kam)}
-                    className="hover:bg-[#FAFAF8] transition-all group cursor-pointer"
-                  >
-                    <td className="px-10 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E] font-bold border border-[#E8E7E2] overflow-hidden">
-                           {String(kam.avatar).includes('http') || String(kam.avatar).includes('data:') ? 
-                             <img src={kam.avatar} alt="" className="w-full h-full object-cover" /> : kam.avatar}
-                        </div>
-                        <div className="text-left">
-                          <p className="text-sm font-bold text-[#1A1A2E]">{kam.name}</p>
-                          <p className="text-[10px] font-medium text-gray-500">{kam.role}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-10 py-5 text-center">
-                       <span className="text-sm font-bold text-[#1A1A2E]">{kam.stats.thisWeekHires} <span className="text-gray-400">/ 5</span></span>
-                    </td>
-                    <td className="px-10 py-5 text-center">
-                       <div className="flex flex-col items-center gap-1.5">
-                          <div className="w-32 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                             <div className="h-full bg-[#1B4DA0] rounded-full" style={{ width: `${targetPercentage}%` }} />
+              {filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="py-12 text-center text-[#9B9BAD] font-medium">No members found matching your search.</td>
+                </tr>
+              ) : (
+                filteredData.map((kam, idx) => {
+                  const targetPercentage = Math.min(Math.round((kam.stats.thisWeekHires / 5) * 100), 100);
+                  return (
+                    <tr
+                      key={kam.id}
+                      onClick={() => onViewPerformance(kam)}
+                      className="hover:bg-[#FAFAF8] transition-all group cursor-pointer"
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-[42px] h-[42px] rounded-[14px] bg-[#F0F7FF] flex items-center justify-center text-[13px] font-bold text-[#1B4DA0] border border-[#E0E7FF] overflow-hidden flex-shrink-0 group-hover:border-[#1B4DA0]/30 transition-colors">
+                            {String(kam.avatar).includes('http') || String(kam.avatar).includes('data:') ?
+                              <img src={kam.avatar} alt="" className="w-full h-full object-cover" /> : kam.avatar}
                           </div>
-                          <span className="text-[10px] font-bold text-gray-400">{targetPercentage}%</span>
-                       </div>
-                    </td>
-                    <td className="px-10 py-5 text-right">
-                       <span className="text-sm font-bold text-emerald-600">+{kam.stats.offersExtended}</span>
-                    </td>
-                  </tr>
-                );
-              })}
+                          <div className="text-left">
+                            <p className="text-[14px] font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors">{kam.name}</p>
+                            <p className="text-[11px] font-medium text-[#9B9BAD]">{kam.role}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span className="text-[15px] font-black text-[#1A1A2E]">{kam.stats.thisWeekHires}</span>
+                          <span className="text-[12px] font-bold text-[#C5C5D2]">/ 5</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-28 h-[6px] bg-[#F4F3EF] rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${targetPercentage}%` }}
+                              transition={{ delay: idx * 0.05, duration: 0.6, ease: 'easeOut' }}
+                              className="h-full rounded-full"
+                              style={{ backgroundColor: targetPercentage >= 80 ? '#10B981' : targetPercentage >= 40 ? '#0D47A1' : '#F59E0B' }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-black text-[#9B9BAD]">{targetPercentage}%</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-center">
+                        <span className="text-[14px] font-bold text-[#1A1A2E]">{kam.stats.callsDone || 0}</span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[12px] font-black border border-emerald-100">
+                          +{kam.stats.offersExtended}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       </motion.div>
 
-      {/* Comparison Analytics */}
-      <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-[#E8E7E2] p-8 shadow-sm">
-         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-            <div className="text-left">
-              <h3 className="text-xl font-bold text-[#1A1A2E]">Metric Comparison</h3>
-              <p className="text-sm text-gray-500 font-medium">Visualizing {selectedMetric.label} across the team.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {graphMetrics.map((metric) => (
-                <button
-                  key={metric.key}
-                  onClick={() => setActiveMetric(metric.key)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedMetric.key === metric.key
-                    ? 'bg-[#1B4DA0] text-white shadow-sm'
-                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100 text-left'
-                    }`}
-                >
-                  {metric.label}
-                </button>
-              ))}
-            </div>
-         </div>
+      {/* ── Metric Comparison Chart ── */}
+      <motion.div variants={itemVariants} className="bg-white rounded-[32px] border border-[#F4F3EF] p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 mb-8">
+          <div className="text-left">
+            <h3 className="text-lg font-bold text-[#1A1A2E]">Metric Comparison</h3>
+            <p className="text-[13px] text-[#9B9BAD] font-medium mt-0.5">Visualizing <span className="font-bold text-[#0D47A1]">{selectedMetric.label}</span> across team members</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {graphMetrics.map((metric) => (
+              <button
+                key={metric.key}
+                onClick={() => setActiveMetric(metric.key)}
+                className={`px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${selectedMetric.key === metric.key
+                  ? 'bg-[#0D47A1] text-white shadow-lg shadow-blue-500/10'
+                  : 'bg-[#F4F3EF] text-[#6B6B7E] hover:bg-[#E8E7E2]'
+                  }`}
+              >
+                <metric.icon size={13} />
+                {metric.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-         <div className="space-y-4">
-            {sortedBySelectedMetric.map((kam) => {
-              const value = kam.stats?.[selectedMetric.key] || 0;
-              const widthRatio = maxSelectedMetricValue > 0 ? (value / maxSelectedMetricValue) * 100 : 0;
-              return (
-                <div key={kam.id} className="flex items-center gap-4">
-                   <span className="w-24 text-xs font-bold text-gray-600 text-left truncate">{kam.name}</span>
-                   <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${widthRatio}%` }}
-                        className="h-full bg-[#1B4DA0]/20 border-r-2 border-[#1B4DA0] rounded-full" 
-                      />
-                   </div>
-                   <span className="w-8 text-xs font-black text-[#1A1A2E] text-right">{value}</span>
+        <div className="space-y-3">
+          {sortedBySelectedMetric.map((kam, idx) => {
+            const value = kam.stats?.[selectedMetric.key] || 0;
+            const widthRatio = maxSelectedMetricValue > 0 ? (value / maxSelectedMetricValue) * 100 : 0;
+            return (
+              <div
+                key={kam.id}
+                onClick={() => onViewPerformance(kam)}
+                className="flex items-center gap-4 group cursor-pointer py-2 px-3 -mx-3 rounded-xl hover:bg-[#FAFAF8] transition-all"
+              >
+                <div className="w-8 h-8 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[10px] font-black text-[#9B9BAD] border border-[#E8E7E2] flex-shrink-0 group-hover:bg-[#0D47A1]/5 group-hover:text-[#0D47A1] group-hover:border-[#0D47A1]/15 transition-colors">
+                  {idx + 1}
                 </div>
-              );
-            })}
-         </div>
+                <span className="w-28 text-[13px] font-bold text-[#1A1A2E] text-left truncate flex-shrink-0 group-hover:text-[#0D47A1] transition-colors">{kam.name}</span>
+                <div className="flex-1 h-[10px] bg-[#F4F3EF] rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${widthRatio}%` }}
+                    transition={{ delay: idx * 0.04, duration: 0.7, ease: 'easeOut' }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: selectedMetric.color, opacity: 0.7 }}
+                  />
+                </div>
+                <span className="w-10 text-[14px] font-black text-[#1A1A2E] text-right flex-shrink-0">{value}</span>
+              </div>
+            );
+          })}
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -2153,9 +2246,8 @@ const RecruitmentHeadDashboard = () => {
                       <h2 className="text-3xl font-bold text-slate-900 mb-1">
                         Welcome {userInfo.name.split(' (')[0]}
                       </h2>
-                      <p className="text-slate-500 font-medium">
-                        Today is {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                      </p>
+
+
                     </div>
                     <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
                       {/* Date Filter */}
@@ -2377,7 +2469,7 @@ const RecruitmentHeadDashboard = () => {
                                         setShowTeamDropdown(false);
                                         fetchDashboardData(dateFilter, team);
                                       }}
-                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all font-jakarta ${teamFilter === team ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold transition-all font-syne ${teamFilter === team ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
                                     >
                                       {team}
                                     </button>
@@ -2447,10 +2539,10 @@ const RecruitmentHeadDashboard = () => {
                             </PieChart>
                           </ResponsiveContainer>
                           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-4xl font-extrabold text-[#1A1A2E] tracking-tighter font-jakarta">
+                            <span className="text-4xl font-extrabold text-[#1A1A2E] tracking-tighter font-syne">
                               {getPipelineChartData().reduce((acc, curr) => acc + curr.value, 0)}
                             </span>
-                            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em] mt-1 font-jakarta">IN PIPELINE</span>
+                            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em] mt-1 font-syne">IN PIPELINE</span>
                             {teamFilter !== 'All Team' && (
                               <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{teamFilter}</span>
                             )}
@@ -2462,8 +2554,8 @@ const RecruitmentHeadDashboard = () => {
                           {getPipelineChartData().map((entry) => (
                             <div key={entry.name} className="flex flex-col items-center group">
                               <div className="w-6 h-1.5 rounded-full mb-3 transition-transform group-hover:scale-x-125 shadow-sm" style={{ backgroundColor: entry.color }} />
-                              <span className="text-xl font-bold text-[#1A1A2E] leading-none tracking-tight mb-1 font-jakarta">{entry.value}</span>
-                              <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.1em] font-jakarta">{entry.name}</span>
+                              <span className="text-xl font-bold text-[#1A1A2E] leading-none tracking-tight mb-1 font-syne">{entry.value}</span>
+                              <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.1em] font-syne">{entry.name}</span>
                             </div>
                           ))}
                         </div>
@@ -2525,13 +2617,13 @@ const RecruitmentHeadDashboard = () => {
                               dataKey="name"
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600, fontFamily: 'Plus Jakarta Sans' }}
+                              tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600, fontFamily: 'Syne' }}
                               dy={15}
                             />
                             <YAxis
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600, fontFamily: 'Plus Jakarta Sans' }}
+                              tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600, fontFamily: 'Syne' }}
                             />
                             <Tooltip
                               contentStyle={{
@@ -2539,7 +2631,7 @@ const RecruitmentHeadDashboard = () => {
                                 border: 'none',
                                 boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
                                 padding: '12px 16px',
-                                fontFamily: 'Plus Jakarta Sans',
+                                fontFamily: 'Syne',
                                 fontSize: '11px',
                                 fontWeight: 'bold'
                               }}
@@ -3048,7 +3140,7 @@ const RecruitmentHeadDashboard = () => {
                   </div>
                   <button
                     onClick={() => setShowStatsInsightModal(false)}
-                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
                   >
                     <FiX size={18} />
                   </button>
@@ -3150,7 +3242,7 @@ const RecruitmentHeadDashboard = () => {
                 </div>
                 <button
                   onClick={() => setShowKAMFormModal(false)}
-                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
                   disabled={formSubmitting}
                 >
                   <FiX size={18} />
@@ -3170,7 +3262,7 @@ const RecruitmentHeadDashboard = () => {
                       )}
 
                       <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                        <FiEdit2 className="text-white w-6 h-6" />
+                        <FiEdit2 className="text-white w-6 h-6 hover:scale-110 transition-transform" />
                         <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} disabled={formSubmitting} />
                       </label>
                     </div>
@@ -3333,23 +3425,30 @@ const RecruitmentHeadDashboard = () => {
               className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-[4px] z-[9999]"
               onClick={() => setPerformanceKam(null)}
             />
+
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-[420px] bg-[#FAFAF8] z-[10000] shadow-2xl flex flex-col"
+              className="fixed right-0 top-0 h-full w-full max-w-[698px] bg-[#FAFAF8] z-[10000] shadow-2xl flex flex-col"
               style={{ boxShadow: "-12px 0 40px rgba(0,0,0,0.15)" }}
             >
               {/* Drawer Header */}
               <div className="p-6 bg-white border-b border-[#E8E7E2] flex items-center justify-between sticky top-0 z-10">
                 <div className="flex items-center gap-3">
                   <FiAward className="text-[#1B4DA0]" size={24} />
-                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Performance Matrix</h3>
+                  <h3
+                    className="text-xl font-bold text-[#1A1A2E]"
+                    style={{ fontFamily: "'Syne', sans-serif" }}
+                  >
+                    Performance Matrix
+                  </h3>
                 </div>
+
                 <button
                   onClick={() => setPerformanceKam(null)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-[#F4F3EF] transition-all"
+                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
                 >
                   <FiX size={20} />
                 </button>
@@ -3362,44 +3461,99 @@ const RecruitmentHeadDashboard = () => {
                   <div className="w-24 h-24 rounded-[32px] flex items-center justify-center text-[#1B4DA0] text-4xl font-extrabold shadow-xl mb-6 bg-[#F0F7FF] border-4 border-white transition-transform hover:scale-105 duration-300">
                     {performanceKam.avatar}
                   </div>
+
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{performanceKam.name}</h4>
+                    <h4
+                      className="text-2xl font-bold text-[#1A1A2E]"
+                      style={{ fontFamily: "'Syne', sans-serif" }}
+                    >
+                      {performanceKam.name}
+                    </h4>
                   </div>
-                  <p className="text-xs font-bold text-indigo-600 uppercase tracking-[4px] mt-1 mb-8">{performanceKam.role}</p>
+
+                  <p className="text-xs font-bold text-indigo-600 uppercase tracking-[4px] mt-1 mb-8">
+                    {performanceKam.role}
+                  </p>
 
                   <div className="flex items-center gap-6 mt-2 w-full justify-center">
                     <div className="flex flex-col items-center bg-white p-4 rounded-2xl border border-gray-100 shadow-sm min-w-[80px]">
-                      <span className="text-xl font-bold text-[#1A1A2E]">{performanceKam.stats.thisWeekHires}</span>
-                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[1px]">Hires</span>
+                      <span className="text-xl font-bold text-[#1A1A2E]">
+                        {performanceKam.stats.thisWeekHires}
+                      </span>
+                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[1px]">
+                        Hires
+                      </span>
                     </div>
+
                     <div className="flex flex-col items-center bg-white p-4 rounded-2xl border border-gray-100 shadow-sm min-w-[80px]">
-                      <span className="text-xl font-bold text-[#1A1A2E]">{performanceKam.stats.interviewsScheduled}</span>
-                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[1px]">Interviews</span>
+                      <span className="text-xl font-bold text-[#1A1A2E]">
+                        {performanceKam.stats.interviewsScheduled}
+                      </span>
+                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[1px]">
+                        Interviews
+                      </span>
                     </div>
+
                     <div className="flex flex-col items-center bg-white p-4 rounded-2xl border border-gray-100 shadow-sm min-w-[80px]">
-                      <span className="text-xl font-bold text-emerald-500">+{performanceKam.stats.offersExtended}</span>
-                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[1px]">Offers</span>
+                      <span className="text-xl font-bold text-emerald-500">
+                        +{performanceKam.stats.offersExtended}
+                      </span>
+                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[1px]">
+                        Offers
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Stats Table */}
                 <div className="space-y-4 pt-4">
-                  <h5 className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] ml-1">Key Metrics</h5>
+                  <h5 className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] ml-1">
+                    Key Metrics
+                  </h5>
+
                   <div className="grid grid-cols-1 gap-3">
                     {[
-                      { label: "Total Calling", value: performanceKam.stats.callsDone || 0, icon: FiPhone, color: "text-blue-500", bg: "bg-blue-50" },
-                      { label: "Pipeline Size", value: performanceKam.stats.candidatesPipeline || 0, icon: FiUsers, color: "text-indigo-500", bg: "bg-indigo-50" },
-                      { label: "Profiles Shared", value: performanceKam.stats.profilesShared || 0, icon: FiFileText, color: "text-emerald-500", bg: "bg-emerald-50" },
+                      {
+                        label: "Total Calling",
+                        value: performanceKam.stats.callsDone || 0,
+                        icon: FiPhone,
+                        color: "text-blue-500",
+                        bg: "bg-blue-50",
+                      },
+                      {
+                        label: "Pipeline Size",
+                        value: performanceKam.stats.candidatesPipeline || 0,
+                        icon: FiUsers,
+                        color: "text-indigo-500",
+                        bg: "bg-indigo-50",
+                      },
+                      {
+                        label: "Profiles Shared",
+                        value: performanceKam.stats.profilesShared || 0,
+                        icon: FiFileText,
+                        color: "text-emerald-500",
+                        bg: "bg-emerald-50",
+                      },
                     ].map((m, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all group">
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-4 bg-white rounded-2xl border border-[#E8E7E2] hover:border-[#1B4DA0]/30 transition-all group"
+                      >
                         <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl ${m.bg} ${m.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                          <div
+                            className={`w-10 h-10 rounded-xl ${m.bg} ${m.color} flex items-center justify-center group-hover:scale-110 transition-transform`}
+                          >
                             <m.icon size={18} />
                           </div>
-                          <span className="text-sm font-bold text-[#4B4B5E]">{m.label}</span>
+
+                          <span className="text-sm font-bold text-[#4B4B5E]">
+                            {m.label}
+                          </span>
                         </div>
-                        <span className="text-base font-black text-[#1A1A2E]">{m.value}</span>
+
+                        <span className="text-base font-black text-[#1A1A2E]">
+                          {m.value}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -3438,7 +3592,7 @@ const RecruitmentHeadDashboard = () => {
                 </div>
                 <button
                   onClick={() => setSelectedInterview(null)}
-                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border-2 border-transparent hover:border-red-100 shadow-sm"
+                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
                 >
                   <FiX size={18} />
                 </button>

@@ -289,9 +289,7 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
             <h2 className="text-2xl font-bold" style={{ background: 'linear-gradient(90deg, #10b981, #0d9488)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Task Assignment
             </h2>
-            <p className={`text-sm mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              {userRole === 'KAM' ? 'Manage and track team tasks' : 'Your assigned tasks'}
-            </p>
+
           </div>
         </div>
         {canAssignTasks ? (
@@ -401,11 +399,10 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
                 {/* Checkbox / Status */}
                 <button
                   onClick={() => handleUpdateStatus(task.id, task.status === 'Completed' ? 'In Progress' : 'Completed')}
-                  className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${
-                    task.status === 'Completed'
-                      ? 'bg-emerald-500 border-emerald-500'
-                      : isDarkMode ? 'border-slate-600 hover:border-emerald-500' : 'border-slate-300 hover:border-emerald-500'
-                  }`}
+                  className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${task.status === 'Completed'
+                    ? 'bg-emerald-500 border-emerald-500'
+                    : isDarkMode ? 'border-slate-600 hover:border-emerald-500' : 'border-slate-300 hover:border-emerald-500'
+                    }`}
                 >
                   {task.status === 'Completed' && <FiCheckCircle className="w-4 h-4 text-white" />}
                 </button>
@@ -452,11 +449,10 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
                     )}
 
                     {/* Due Date */}
-                    <span className={`flex items-center gap-1.5 text-sm ${
-                      new Date(task.dueDate) < new Date() && task.status !== 'Completed'
-                        ? 'text-red-500'
-                        : isDarkMode ? 'text-slate-400' : 'text-slate-500'
-                    }`}>
+                    <span className={`flex items-center gap-1.5 text-sm ${new Date(task.dueDate) < new Date() && task.status !== 'Completed'
+                      ? 'text-red-500'
+                      : isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                      }`}>
                       <FiCalendar className="w-4 h-4" />
                       {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                     </span>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Search, Filter, Download, UserPlus, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye, ChevronDown
 } from 'lucide-react';
@@ -56,13 +56,12 @@ const StatusBadge = ({ status }) => {
 };
 
 const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSelected, onToggleSelect }) => (
-  <div 
+  <div
     onClick={() => onViewProfile(resume.id)}
-    className={`group px-8 py-3 border-b transition-all duration-300 cursor-pointer overflow-hidden relative flex items-center gap-6 ${
-      isSelected 
-        ? (isDarkMode ? 'bg-blue-500/10 border-blue-500/20' : 'bg-[#F0F7FF] border-[#D0E5FF]') 
+    className={`group px-8 py-3 border-b transition-all duration-300 cursor-pointer overflow-hidden relative flex items-center gap-6 ${isSelected
+        ? (isDarkMode ? 'bg-blue-500/10 border-blue-500/20' : 'bg-[#F0F7FF] border-[#D0E5FF]')
         : (isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700/50' : 'bg-white border-[#F4F3EF] hover:bg-[#FAFAF8]')
-    }`}
+      }`}
   >
     {/* Selection Checkbox */}
     <div className="w-6 flex-shrink-0 flex items-center justify-center">
@@ -105,7 +104,7 @@ const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSele
 
     {/* Actions */}
     <div className="flex items-center gap-3 w-[140px] flex-shrink-0">
-      <button 
+      <button
         onClick={(e) => { e.stopPropagation(); onPreviewResume(resume.id, resume.fileName); }}
         className="flex items-center gap-2 px-3 py-1.5 bg-[#F4F3EF] dark:bg-slate-700 text-[#6B6B7E] dark:text-slate-300 rounded-lg text-[11px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
       >
@@ -141,56 +140,56 @@ const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onUpdatePosition }) =
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
-           <div className="grid grid-cols-2 gap-6">
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><User size={13} /> Email Address</p>
-                <p className="text-sm font-bold truncate">{resume.email || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><Briefcase size={13} /> Contact Number</p>
-                <p className="text-sm font-bold">{resume.phone || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Target Role</p>
-                <p className="text-sm font-bold">{resume.roleType || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Company</p>
-                <p className="text-sm font-bold">{resume.currentCompany || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Experience</p>
-                <p className="text-sm font-bold">{resume.experience || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Location</p>
-                <p className="text-sm font-bold">{resume.currentLocation || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Salary</p>
-                <p className="text-sm font-bold">{resume.currentSalary || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Expected Salary</p>
-                <p className="text-sm font-bold">{resume.expectedSalary || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Notice Period</p>
-                <p className="text-sm font-bold">{resume.noticePeriod || 'N/A'}</p>
-              </div>
-              <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Preferred Location</p>
-                <p className="text-sm font-bold">{resume.preferredLocation || 'N/A'}</p>
-              </div>
-           </div>
-           <div className="space-y-4">
-             <h3 className={`text-xs font-bold uppercase tracking-[2px] ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>Expertise Stack</h3>
-             <div className="flex flex-wrap gap-2">
-               {(resume.skills || ['React', 'Node.js', 'Typescript', 'AWS']).map((skill, i) => (
-                 <span key={i} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-[#F4F3EF] text-[#1B4DA0]'}`}>{skill}</span>
-               ))}
-             </div>
-           </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><User size={13} /> Email Address</p>
+              <p className="text-sm font-bold truncate">{resume.email || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><Briefcase size={13} /> Contact Number</p>
+              <p className="text-sm font-bold">{resume.phone || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Target Role</p>
+              <p className="text-sm font-bold">{resume.roleType || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Company</p>
+              <p className="text-sm font-bold">{resume.currentCompany || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Experience</p>
+              <p className="text-sm font-bold">{resume.experience || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Location</p>
+              <p className="text-sm font-bold">{resume.currentLocation || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Salary</p>
+              <p className="text-sm font-bold">{resume.currentSalary || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Expected Salary</p>
+              <p className="text-sm font-bold">{resume.expectedSalary || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Notice Period</p>
+              <p className="text-sm font-bold">{resume.noticePeriod || 'N/A'}</p>
+            </div>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Preferred Location</p>
+              <p className="text-sm font-bold">{resume.preferredLocation || 'N/A'}</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <h3 className={`text-xs font-bold uppercase tracking-[2px] ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>Expertise Stack</h3>
+            <div className="flex flex-wrap gap-2">
+              {(resume.skills || ['React', 'Node.js', 'Typescript', 'AWS']).map((skill, i) => (
+                <span key={i} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-[#F4F3EF] text-[#1B4DA0]'}`}>{skill}</span>
+              ))}
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>
@@ -201,39 +200,39 @@ const AssignPositionModal = ({ isOpen, onClose, positions, onConfirm, isAssignin
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm pointer-events-auto" />
-       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className={`relative w-full max-w-md rounded-[32px] p-8 shadow-2xl overflow-hidden pointer-events-auto ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-[#1A1A2E]'}`}>
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold font-syne">Assign to Position</h3>
-            <button onClick={onClose} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}><X size={20} /></button>
-          </div>
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {positions.length === 0 ? (
-              <p className="text-center py-10 text-slate-500 font-medium text-sm">No open positions found</p>
-            ) : positions.map(pos => (
-              <div 
-                key={pos.id} 
-                onClick={() => onSelect(pos.id)}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedId === pos.id ? 'border-[#1B4DA0] bg-[#1B4DA0]/5' : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-[#F4F3EF] hover:border-slate-300')}`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-bold text-sm">{pos.title}</p>
-                    <p className={`text-[10px] font-bold uppercase mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{pos.location} • {pos.type}</p>
-                  </div>
-                  {selectedId === pos.id && <CheckCircle2 size={16} className="text-[#1B4DA0]" />}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm pointer-events-auto" />
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className={`relative w-full max-w-md rounded-[32px] p-8 shadow-2xl overflow-hidden pointer-events-auto ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-[#1A1A2E]'}`}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold font-syne">Assign to Position</h3>
+          <button onClick={onClose} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}><X size={20} /></button>
+        </div>
+        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+          {positions.length === 0 ? (
+            <p className="text-center py-10 text-slate-500 font-medium text-sm">No open positions found</p>
+          ) : positions.map(pos => (
+            <div
+              key={pos.id}
+              onClick={() => onSelect(pos.id)}
+              className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedId === pos.id ? 'border-[#1B4DA0] bg-[#1B4DA0]/5' : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-[#F4F3EF] hover:border-slate-300')}`}
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-bold text-sm">{pos.title}</p>
+                  <p className={`text-[10px] font-bold uppercase mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{pos.location} • {pos.type}</p>
                 </div>
+                {selectedId === pos.id && <CheckCircle2 size={16} className="text-[#1B4DA0]" />}
               </div>
-            ))}
-          </div>
-          <button 
-            disabled={isAssigning || !selectedId}
-            onClick={onConfirm}
-            className="w-full h-14 bg-[#1B4DA0] text-white rounded-2xl mt-8 font-bold text-sm shadow-xl shadow-blue-500/20 hover:bg-[#153e82] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-          >
-            {isAssigning ? <RefreshCw className="animate-spin" size={18} /> : <Briefcase size={18} />} Confirm Assignment
-          </button>
-       </motion.div>
+            </div>
+          ))}
+        </div>
+        <button
+          disabled={isAssigning || !selectedId}
+          onClick={onConfirm}
+          className="w-full h-14 bg-[#1B4DA0] text-white rounded-2xl mt-8 font-bold text-sm shadow-xl shadow-blue-500/20 hover:bg-[#153e82] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+        >
+          {isAssigning ? <RefreshCw className="animate-spin" size={18} /> : <Briefcase size={18} />} Confirm Assignment
+        </button>
+      </motion.div>
     </div>
   );
 };
@@ -243,7 +242,7 @@ const AssignPositionModal = ({ isOpen, onClose, positions, onConfirm, isAssignin
 const ResumeBankTab = () => {
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
-  
+
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
@@ -272,7 +271,7 @@ const ResumeBankTab = () => {
   const [customUploadRoleType, setCustomUploadRoleType] = useState('');
   const [uploadCandidateName, setUploadCandidateName] = useState('');
   const [uploadPhone, setUploadPhone] = useState('');
-  
+
   // Assignment Modal State
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [allPositions, setAllPositions] = useState([]);
@@ -302,7 +301,7 @@ const ResumeBankTab = () => {
         ...filters
       };
       Object.keys(params).forEach(key => !params[key] && delete params[key]);
-      
+
       const response = await getResumeBankResumes(params);
       setResumes(response.data || []);
       setPagination(prev => ({ ...prev, ...response.pagination }));
@@ -380,13 +379,13 @@ const ResumeBankTab = () => {
     try {
       setSyncing(true);
       setShowSyncMenu(false);
-      
+
       if (source === 'sharepoint') {
         await syncResumesFromSharePointDrive({});
       } else {
         await syncResumesFromSharePoint({});
       }
-      
+
       toast.success(`Successfully synced from ${source}`);
       await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes()]);
     } catch (error) {
@@ -559,7 +558,7 @@ const ResumeBankTab = () => {
           <h1 className="text-3xl font-bold text-[#1A1A2E] dark:text-white font-syne text-left">
             Resume Bank
           </h1>
-          <p className="text-[#9B9BAD] text-sm mt-1 font-medium tracking-wide text-left">Historical archive of {stats?.total || 0} vetted candidate profiles</p>
+
         </div>
         <div className="flex gap-3">
           <button
@@ -578,14 +577,14 @@ const ResumeBankTab = () => {
             initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
             className={`mb-8 p-1 rounded-[22px] flex gap-1 border shadow-xl ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-[#F4F3EF]'}`}
           >
-            <button 
+            <button
               onClick={() => handleSync('s3')}
               className={`flex-1 p-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-[#FAFAF8] text-[#5B5B7E]'}`}
             >
               <Database size={18} className="text-orange-500" /> Sync from AWS S3
             </button>
             <div className={`w-px h-8 self-center ${isDarkMode ? 'bg-slate-700' : 'bg-[#F4F3EF]'}`} />
-            <button 
+            <button
               onClick={() => handleSync('sharepoint')}
               className={`flex-1 p-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-[#FAFAF8] text-[#5B5B7E]'}`}
             >
@@ -600,18 +599,18 @@ const ResumeBankTab = () => {
         {/* Search Bar */}
         <div className="relative flex-1 group min-w-[200px]">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
-          <input 
-            type="text" 
-            value={filters.search} 
+          <input
+            type="text"
+            value={filters.search}
             onChange={(e) => handleFilterChange('search', e.target.value)}
-            placeholder="Search by name, expertise, or tech stack..." 
-            className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white" 
+            placeholder="Search by name, expertise, or tech stack..."
+            className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white"
           />
         </div>
 
         {/* Global Roles Filter */}
         <div className="relative">
-          <select 
+          <select
             value={filters.roleType}
             onChange={(e) => handleFilterChange('roleType', e.target.value)}
             className="bg-[#F4F3EF] dark:bg-slate-900 text-xs font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
@@ -625,7 +624,7 @@ const ResumeBankTab = () => {
         </div>
 
         {/* Refresh button */}
-        <button 
+        <button
           onClick={async () => {
             setLoading(true);
             await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes(), fetchClients(), fetchPositions()]);
@@ -640,7 +639,7 @@ const ResumeBankTab = () => {
 
         {/* Reset Button */}
         {(filters.search || filters.roleType) && (
-          <button 
+          <button
             onClick={handleResetFilters}
             className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
           >
@@ -668,29 +667,29 @@ const ResumeBankTab = () => {
         </div>
 
         {loading ? (
-           <div className="flex flex-col items-center justify-center py-40 gap-4">
-              <div className="w-16 h-16 rounded-full border-4 border-[#1B4DA0] border-t-transparent animate-spin" />
-              <p className="text-xs font-bold uppercase tracking-widest text-[#9B9BAD]">Fetching Talent...</p>
-           </div>
+          <div className="flex flex-col items-center justify-center py-40 gap-4">
+            <div className="w-16 h-16 rounded-full border-4 border-[#1B4DA0] border-t-transparent animate-spin" />
+            <p className="text-xs font-bold uppercase tracking-widest text-[#9B9BAD]">Fetching Talent...</p>
+          </div>
         ) : resumes.length === 0 ? (
-           <div className="flex flex-col items-center justify-center py-32 text-center text-[#9B9BAD]">
-              <Database size={40} className="mx-auto mb-4 opacity-20" />
-              <h3 className="text-xl font-bold mb-2 font-syne">No Profiles Found</h3>
-           </div>
+          <div className="flex flex-col items-center justify-center py-32 text-center text-[#9B9BAD]">
+            <Database size={40} className="mx-auto mb-4 opacity-20" />
+            <h3 className="text-xl font-bold mb-2 font-syne">No Profiles Found</h3>
+          </div>
         ) : (
-           <div className="divide-y divide-[#F4F3EF] dark:divide-slate-700">
-             {resumes.map(resume => (
-               <ResumeCard 
-                 key={resume.id} 
-                 resume={resume} 
-                 isDarkMode={isDarkMode}
-                 onPreviewResume={handlePreviewResume}
-                 onViewProfile={handleViewDetails}
-                 isSelected={selectedRowIds.includes(resume.id)}
-                 onToggleSelect={toggleSelectRow}
-               />
-             ))}
-           </div>
+          <div className="divide-y divide-[#F4F3EF] dark:divide-slate-700">
+            {resumes.map(resume => (
+              <ResumeCard
+                key={resume.id}
+                resume={resume}
+                isDarkMode={isDarkMode}
+                onPreviewResume={handlePreviewResume}
+                onViewProfile={handleViewDetails}
+                isSelected={selectedRowIds.includes(resume.id)}
+                onToggleSelect={toggleSelectRow}
+              />
+            ))}
+          </div>
         )}
       </div>
 
@@ -719,13 +718,13 @@ const ResumeBankTab = () => {
 
       {/* Bottom Info */}
       <div className="mt-6 py-10 border-t border-[#F4F3EF] dark:border-slate-700 text-center">
-         <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[4px]">Verified Talent Ecosystem • Managed by Human Intelligence</p>
+        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[4px]">Verified Talent Ecosystem • Managed by Human Intelligence</p>
       </div>
 
       {/* Overlays */}
       <AnimatePresence>
         {showDetailDrawer && selectedResume && (
-          <ResumeDetailDrawer 
+          <ResumeDetailDrawer
             resume={selectedResume}
             isDarkMode={isDarkMode}
             onClose={() => setShowDetailDrawer(false)}
@@ -736,7 +735,7 @@ const ResumeBankTab = () => {
 
       <AnimatePresence>
         {showAssignModal && (
-          <AssignPositionModal 
+          <AssignPositionModal
             isOpen={showAssignModal}
             isDarkMode={isDarkMode}
             onClose={() => setShowAssignModal(false)}
@@ -831,11 +830,10 @@ const ResumeBankTab = () => {
               <div>
                 <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Upload Resume *</label>
                 <label className="cursor-pointer block">
-                  <div className={`w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${
-                    pendingUploadFiles.length
+                  <div className={`w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${pendingUploadFiles.length
                       ? 'border-[#1B4DA0] bg-blue-50/50 dark:bg-blue-900/20'
                       : 'border-[#F4F3EF] dark:border-slate-700 hover:border-[#1B4DA0]'
-                  }`}>
+                    }`}>
                     {pendingUploadFiles.length ? (
                       <>
                         <FileText size={20} className="text-[#1B4DA0]" />
@@ -870,9 +868,8 @@ const ResumeBankTab = () => {
               initial={{ y: 100, opacity: 0, scale: 0.9 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 100, opacity: 0, scale: 0.9 }}
-              className={`rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl border border-white/20 p-4 flex items-center justify-between gap-4 ${
-                isDarkMode ? 'bg-slate-900/95' : 'bg-[#1A1A2E]/95'
-              } text-white`}
+              className={`rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl border border-white/20 p-4 flex items-center justify-between gap-4 ${isDarkMode ? 'bg-slate-900/95' : 'bg-[#1A1A2E]/95'
+                } text-white`}
             >
               <div className="flex items-center gap-4 pl-2">
                 <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">

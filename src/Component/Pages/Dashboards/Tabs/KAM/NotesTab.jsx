@@ -133,7 +133,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                   <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">
                     Notes Hub <span className="text-[#1B4DA0] text-sm ml-2 font-medium bg-[#EEF2FB] px-3 py-1 rounded-lg">[{department}]</span>
                   </h1>
-                  <p className="text-sm font-medium text-[#9B9BAD] mt-1">Strategic knowledge & team archives</p>
+
                 </div>
 
                 <div className="flex items-center gap-3">

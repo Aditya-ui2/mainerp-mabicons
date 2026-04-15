@@ -68,8 +68,8 @@ const SettingsTab = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-20 pt-4" style={{ fontFamily: "'Calibri', sans-serif" }}>
-      <div className="max-w-5xl mx-auto px-4 space-y-8">
+    <div className="min-h-screen pb-20" style={{ fontFamily: "'Calibri', sans-serif" }}>
+      <div className="w-full px-2 lg:px-6 space-y-8">
         
         {/* Modern Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-[#F4F3EF] pb-8">
@@ -77,7 +77,7 @@ const SettingsTab = () => {
             <motion.h1 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-4xl font-black text-[#1A1A2E] tracking-tight"
+              className="text-3xl font-bold text-[#1A1A2E] tracking-tight"
               style={{ fontFamily: "'Syne', sans-serif" }}
             >
               Account Center
@@ -132,7 +132,7 @@ const SettingsTab = () => {
                 </div>
 
                 <div className="mt-8 text-center space-y-1">
-                  <h2 className="text-2xl font-black text-[#1A1A2E] font-syne uppercase leading-tight">{profileData.fullName}</h2>
+                  <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne uppercase leading-tight">{profileData.fullName}</h2>
                   <div className="flex items-center justify-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{profileData.status} Account</span>
@@ -177,7 +177,7 @@ const SettingsTab = () => {
                       <FiUser size={24} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-[#1A1A2E] font-syne uppercase">Profile Details</h3>
+                      <h3 className="text-2xl font-bold text-[#1A1A2E] font-syne uppercase">Profile Details</h3>
                       <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Identity & Global Contact Information</p>
                     </div>
                   </div>
@@ -277,7 +277,7 @@ const SettingsTab = () => {
                         <FiLock size={24} />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-black text-[#1A1A2E] font-syne uppercase">Security Protocol</h3>
+                        <h3 className="text-2xl font-bold text-[#1A1A2E] font-syne uppercase">Security Protocol</h3>
                         <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Manage Credentials & Authentication Tiers</p>
                       </div>
                     </div>
@@ -330,7 +330,7 @@ const SettingsTab = () => {
                       <FiBell size={24} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-[#1A1A2E] font-syne uppercase">System Preferences</h3>
+                      <h3 className="text-2xl font-bold text-[#1A1A2E] font-syne uppercase">System Preferences</h3>
                       <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Alert Matrix & Interaction Protocols</p>
                     </div>
                   </div>

@@ -18,6 +18,18 @@ export default function InterviewsPage() {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedInterview, setSelectedInterview] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editableInterview, setEditableInterview] = useState({
+    date: "",
+    time: "",
+    type: "Video",
+    meetingLink: "",
+    interviewer: "",
+    interviewerId: "",
+    status: "",
+    duration: "60"
+  });
   const [editMode, setEditMode] = useState(false);
   const [editInterview, setEditInterview] = useState(null);
   const [filter, setFilter] = useState("All");
@@ -72,6 +84,68 @@ export default function InterviewsPage() {
     fetchInterviews();
     fetchSupportData();
   }, []);
+
+  useEffect(() => {
+    if (!selectedInterview) {
+      setIsEditing(false);
+      return;
+    }
+    setEditableInterview({
+      date: selectedInterview.date || "",
+      time: selectedInterview.time || "",
+      type: selectedInterview.type || "Video",
+      meetingLink: selectedInterview.meetingLink || "",
+      interviewer: selectedInterview.interviewer || "",
+      interviewerId: selectedInterview.interviewerId || "",
+      status: selectedInterview.status || "Scheduled",
+      duration: String(selectedInterview.duration || "60")
+    });
+  }, [selectedInterview]);
+
+  const hasChanges = JSON.stringify(editableInterview) !== JSON.stringify({
+    date: selectedInterview?.date || "",
+    time: selectedInterview?.time || "",
+    type: selectedInterview?.type || "Video",
+    meetingLink: selectedInterview?.meetingLink || "",
+    interviewer: selectedInterview?.interviewer || "",
+    interviewerId: selectedInterview?.interviewerId || "",
+    status: selectedInterview?.status || "Scheduled",
+    duration: String(selectedInterview?.duration || "60")
+  });
+
+  const handleSaveInterviewChanges = async () => {
+    if (!selectedInterview) return;
+    try {
+      setIsSaving(true);
+      const response = await updateInterview(selectedInterview.id, {
+        interviewDate: editableInterview.date,
+        startTime: editableInterview.time,
+        meetingType: editableInterview.type,
+        meetingLink: editableInterview.meetingLink,
+        interviewerName: editableInterview.interviewer,
+        interviewerId: editableInterview.interviewerId,
+        status: editableInterview.status,
+        duration: parseInt(editableInterview.duration)
+      });
+
+      if (response.success) {
+        toast.success("Interview updated successfully");
+        fetchInterviews();
+        setIsEditing(false);
+        // We update selectedInterview to match the new data so hasChanges becomes false
+        setSelectedInterview(prev => ({
+          ...prev,
+          ...editableInterview,
+          date: editableInterview.date,
+          time: editableInterview.time
+        }));
+      }
+    } catch (error) {
+      toast.error("Failed to update interview");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const fetchSupportData = async () => {
     try {
@@ -467,9 +541,7 @@ export default function InterviewsPage() {
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
             Interview Schedule
           </h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">
-            <span className="text-[#0D47A1] font-bold">{filteredInterviews.length}</span> Scheduled Sessions in Coordination
-          </p>
+
         </div>
         <div className="flex gap-2">
           <button
@@ -700,337 +772,250 @@ export default function InterviewsPage() {
             className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden animate-in slide-in-from-right duration-300"
           >
             {/* Drawer Header */}
-            <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-10">
-              <div className="flex-1 mr-4">
+            <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+              <div className="flex-1 mr-4 text-left">
                 <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
                   {selectedInterview?.candidateName || 'Unknown Candidate'}
                 </h2>
-                <div className="flex items-center gap-2 mt-1.5 ml-1">
+                <div className="flex items-center gap-2 mt-1.5">
                   <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedInterview?.role || 'Unknown Position'}</span>
                   <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
                   <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{selectedInterview?.type}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => { setEditInterview({ ...selectedInterview }); setEditMode(true); }}
-                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#0D47A1] transition-all active:scale-90"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  onClick={() => { setSelectedInterview(null); setEditMode(false); }}
-                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm"
-                >
-                  <X size={20} />
-                </button>
+              <div className="flex items-center gap-3">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={isSaving}
+                      onClick={() => {
+                        setIsEditing(false);
+                        // Reset editable fields to original selectedInterview values
+                        setEditableInterview({
+                          date: selectedInterview.date || "",
+                          time: selectedInterview.time || "",
+                          type: selectedInterview.type || "Video",
+                          meetingLink: selectedInterview.meetingLink || "",
+                          interviewer: selectedInterview.interviewer || "",
+                          interviewerId: selectedInterview.interviewerId || "",
+                          status: selectedInterview.status || "Scheduled",
+                          duration: String(selectedInterview.duration || "60")
+                        });
+                      }}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      disabled={isSaving}
+                      onClick={handleSaveInterviewChanges}
+                      className="w-[145.83px] h-[32px] rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                    >
+                      {isSaving ? (
+                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Check size={14} />
+                      )}
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedInterview(null);
+                        setIsEditing(false);
+                      }}
+                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                    >
+                      <X size={20} />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
-            <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
-              {editMode && editInterview ? (
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Candidate</label>
-                    <input
-                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-xl px-3 py-2 text-sm outline-none font-bold cursor-not-allowed text-[#9B9BAD]"
-                      value={editInterview.candidateName}
-                      readOnly
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Date</label>
-                      <input
-                        type="date"
-                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-xl px-3 py-2 text-xs outline-none"
-                        value={editInterview.date}
-                        onChange={(e) => setEditInterview({ ...editInterview, date: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Time</label>
-                      <input
-                        type="time"
-                        className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-xl px-3 py-2 text-xs outline-none"
-                        value={editInterview.time}
-                        onChange={(e) => setEditInterview({ ...editInterview, time: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Platform</label>
-                    <select
-                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-xl px-3 py-2 text-xs outline-none"
-                      value={editInterview.type}
-                      onChange={(e) => setEditInterview({ ...editInterview, type: e.target.value })}
-                    >
-                      <option value="Video">Video Conference</option>
-                      <option value="In-Person">In-Person Meeting</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Link</label>
-                    <input
-                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-xl px-3 py-2 text-xs outline-none"
-                      placeholder="Meeting link..."
-                      value={editInterview.meetingLink || ""}
-                      onChange={(e) => setEditInterview({ ...editInterview, meetingLink: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1 relative">
-                    <label className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Assignee (Host)</label>
-                    <input
-                      className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-xl px-3 py-2 text-xs outline-none"
-                      placeholder="Search host..."
-                      value={editInterview.interviewer || ""}
-                      onChange={(e) => {
-                        setEditInterview({ ...editInterview, interviewer: e.target.value });
-                        setShowEditInterviewerSuggestions(true);
-                      }}
-                      onFocus={() => setShowEditInterviewerSuggestions(true)}
-                    />
-                    {showEditInterviewerSuggestions && (
-                      <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-[#F4F3EF] rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
-                        {availableInterviewers
-                          .filter(s => s.name?.toLowerCase().includes((editInterview.interviewer || "").toLowerCase()))
-                          .map(s => (
-                            <div
-                              key={s.id}
-                              className="px-4 py-3 hover:bg-[#FAFAF8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3"
-                              onClick={() => {
-                                setEditInterview({
-                                  ...editInterview,
-                                  interviewer: s.name,
-                                  interviewerId: s.id
-                                });
-                                setShowEditInterviewerSuggestions(false);
-                              }}
-                            >
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${getAvatarColor(s.name, s.name.charAt(0))}`}>
-                                {s.name.charAt(0)}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-xs font-bold text-[#1A1A2E]">{s.name}</span>
-                                <span className="text-[9px] font-medium text-[#9B9BAD] uppercase tracking-widest">{s.role}</span>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="pt-4 space-y-3">
-                    <button
-                      onClick={handleSaveEdit}
-                      className="w-full h-12 bg-[#1B4DA0] text-white rounded-2xl flex items-center justify-center gap-2 text-xs font-bold shadow-lg shadow-blue-500/10 hover:scale-[1.02] transition-all"
-                    >
-                      <Check size={14} /> Save Changes
-                    </button>
-                    <button onClick={() => setEditMode(false)} className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-[#9B9BAD] hover:text-rose-500 transition-colors">Discard Changes</button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Interview Info Grid */}
-                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
-                    <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Schedule</span>
+            <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
+              <div className="bg-[#FAFAF8] rounded-[24px] p-8 border border-[#F4F3EF] space-y-8">
+                {/* Schedule Summary Grid */}
+                <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                  {/* Date & Time Group */}
+                  <div className="space-y-4">
+                    <div className="space-y-1.5 text-left">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Schedule</label>
+                      <div className="relative group">
                         <input
                           type="date"
-                          className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
-                          value={selectedInterview.date || ''}
-                          onChange={(e) => setSelectedInterview(prev => ({ ...prev, date: e.target.value }))}
-                          onBlur={(e) => handleInlineEdit('date', e.target.value, 'interviewDate')}
+                          readOnly={!isEditing}
+                          className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
+                          value={editableInterview.date}
+                          onChange={e => setEditableInterview(p => ({ ...p, date: e.target.value }))}
                         />
+                        {!isEditing && <Calendar size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />}
                       </div>
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Time</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5 text-left">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Time</label>
+                      <div className="relative group">
                         <input
                           type="time"
-                          className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
-                          value={selectedInterview.time || ''}
-                          onChange={(e) => setSelectedInterview(prev => ({ ...prev, time: e.target.value }))}
-                          onBlur={(e) => handleInlineEdit('time', e.target.value, 'startTime')}
+                          readOnly={!isEditing}
+                          className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
+                          value={editableInterview.time}
+                          onChange={e => setEditableInterview(p => ({ ...p, time: e.target.value }))}
                         />
+                        {!isEditing && <Clock size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />}
                       </div>
-                      <div className="space-y-1.5 relative">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Interviewer</span>
-                        <input
-                          type="text"
-                          className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
-                          value={selectedInterview.interviewer || ''}
-                          onChange={(e) => {
-                            setSelectedInterview(prev => ({ ...prev, interviewer: e.target.value }));
-                            setShowEditInterviewerSuggestions(true);
-                          }}
-                          onFocus={() => setShowEditInterviewerSuggestions(true)}
-                          onBlur={(e) => {
-                            setTimeout(() => setShowEditInterviewerSuggestions(false), 200);
-                            handleInlineEdit('interviewer', e.target.value, 'interviewerName');
-                          }}
-                        />
-                        {showEditInterviewerSuggestions && (
-                          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-[#F4F3EF] rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
-                            {availableInterviewers
-                              .filter(s => s.name?.toLowerCase().includes((selectedInterview.interviewer || "").toLowerCase()))
-                              .map(s => (
-                                <div
-                                  key={s.id}
-                                  className="px-4 py-3 hover:bg-[#FAFAF8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3"
-                                  onClick={() => {
-                                    setSelectedInterview(prev => ({
-                                      ...prev,
-                                      interviewer: s.name,
-                                      interviewerId: s.id
-                                    }));
-                                    handleInlineEdit('interviewerId', s.id);
-                                    handleInlineEdit('interviewer', s.name, 'interviewerName');
-                                    setShowEditInterviewerSuggestions(false);
-                                  }}
-                                >
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${getAvatarColor(s.name, s.name.charAt(0))}`}>
-                                    {s.name.charAt(0)}
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-[#1A1A2E]">{s.name}</span>
-                                    <span className="text-[9px] font-medium text-[#9B9BAD] uppercase tracking-widest">{s.role}</span>
-                                  </div>
+                    </div>
+                  </div>
+
+                  {/* Interviewer Row */}
+                  <div className="space-y-4 col-span-2">
+                    <div className="space-y-1.5 text-left relative">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Interviewer</label>
+                      <input
+                        type="text"
+                        readOnly={!isEditing}
+                        className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
+                        value={editableInterview.interviewer}
+                        onChange={e => {
+                          setEditableInterview(p => ({ ...p, interviewer: e.target.value }));
+                          if (isEditing) setShowEditInterviewerSuggestions(true);
+                        }}
+                        onFocus={() => isEditing && setShowEditInterviewerSuggestions(true)}
+                        placeholder="Assign host..."
+                      />
+                      {showEditInterviewerSuggestions && isEditing && (
+                        <div className="absolute z-50 left-0 right-0 mt-2 bg-white border border-[#F4F3EF] rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                          {availableInterviewers
+                            .filter(s => s.name?.toLowerCase().includes((editableInterview.interviewer || "").toLowerCase()))
+                            .map(s => (
+                              <div
+                                key={s.id}
+                                className="px-4 py-3 hover:bg-[#FAFAF8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3 transition-colors text-left"
+                                onClick={() => {
+                                  setEditableInterview(p => ({ ...p, interviewer: s.name, interviewerId: s.id }));
+                                  setShowEditInterviewerSuggestions(false);
+                                }}
+                              >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${getAvatarColor(s.name, s.name.charAt(0))}`}>
+                                  {s.name?.charAt(0)}
                                 </div>
-                              ))}
+                                <div>
+                                  <p className="text-xs font-bold text-[#1A1A2E]">{s.name}</p>
+                                  <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider">{s.role} • {s.department}</p>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Platform & Duration */}
+                  <div className="space-y-4">
+                    <div className="space-y-1.5 text-left">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Platform</label>
+                      <div className="relative group">
+                        {isEditing ? (
+                          <select
+                            className="w-full bg-white border border-black rounded-xl px-3 py-2 text-sm font-bold text-[#0D47A1] outline-none shadow-sm"
+                            value={editableInterview.type}
+                            onChange={e => setEditableInterview(p => ({ ...p, type: e.target.value }))}
+                          >
+                            <option value="Video">Video Conference</option>
+                            <option value="In-Person">In-Person Meeting</option>
+                          </select>
+                        ) : (
+                          <div className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-[#0D47A1] rounded-lg text-[10px] font-black uppercase tracking-widest">
+                            {editableInterview.type}
                           </div>
                         )}
                       </div>
-                      <div className="space-y-1.5 flex flex-col justify-center">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Platform</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5 text-left">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Duration (Minutes)</label>
+                      <input
+                        type="number"
+                        readOnly={!isEditing}
+                        className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
+                        value={editableInterview.duration}
+                        onChange={e => setEditableInterview(p => ({ ...p, duration: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 col-span-2">
+                    <div className="space-y-1.5 text-left">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Status</label>
+                      {isEditing ? (
                         <select
-                          className={`inline-flex items-center w-fit px-2.5 py-1 outline-none rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${selectedInterview.type === 'Video' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-amber-50 text-amber-600 border-amber-100'} cursor-pointer focus:ring-2 focus:ring-[#0D47A1]`}
-                          value={selectedInterview.type || 'Video'}
-                          onChange={(e) => {
-                            setSelectedInterview(prev => ({ ...prev, type: e.target.value }));
-                            handleInlineEdit('type', e.target.value, 'meetingType');
-                          }}
-                        >
-                          <option value="Video">Video</option>
-                          <option value="In-Person">In-Person</option>
-                          <option value="Phone">Phone</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1.5 flex flex-col justify-center">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Status</span>
-                        <select
-                          className={`inline-flex items-center w-fit px-2.5 py-1 outline-none rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${STATUS_COLORS[selectedInterview.status] || 'bg-slate-50 text-slate-600 border-slate-100'} cursor-pointer focus:ring-2 focus:ring-[#0D47A1]`}
-                          value={selectedInterview.status || 'Scheduled'}
-                          onChange={(e) => {
-                            setSelectedInterview(prev => ({ ...prev, status: e.target.value }));
-                            updateInterviewStatus(selectedInterview.id, { status: e.target.value }).then(() => fetchInterviews());
-                          }}
+                          className="w-full bg-white border border-black rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] outline-none shadow-sm"
+                          value={editableInterview.status}
+                          onChange={e => setEditableInterview(p => ({ ...p, status: e.target.value }))}
                         >
                           <option value="Scheduled">Scheduled</option>
                           <option value="In-Progress">In Progress</option>
                           <option value="Completed">Completed</option>
                           <option value="Cancelled">Cancelled</option>
                         </select>
-                      </div>
-                      <div className="space-y-1.5 leading-[1.3]">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Duration (Minutes)</span>
-                        <input
-                          type="number"
-                          className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all"
-                          value={selectedInterview.duration || ''}
-                          onChange={(e) => setSelectedInterview(prev => ({ ...prev, duration: e.target.value }))}
-                          onBlur={(e) => handleInlineEdit('duration', e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Meeting Link */}
-                    <div className="pt-6 border-t border-[#F4F3EF] text-left">
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4 text-left">Meeting Link</span>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]">
-                          <Video size={14} />
+                      ) : (
+                        <div className="mt-1">
+                          <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${STATUS_COLORS[editableInterview.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
+                            {editableInterview.status}
+                          </span>
                         </div>
-                        <input
-                          type="text"
-                          className="flex-1 bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl px-2 py-1 -ml-2 text-sm font-bold text-[#1B4DA0] outline-none transition-all"
-                          value={selectedInterview.meetingLink || ''}
-                          onChange={(e) => setSelectedInterview(prev => ({ ...prev, meetingLink: e.target.value }))}
-                          onBlur={(e) => handleInlineEdit('meetingLink', e.target.value)}
-                          placeholder="Add link..."
-                        />
-                      </div>
+                      )}
                     </div>
+                  </div>
+                </div>
 
-                    {/* Briefing Notes */}
-                    <div className="pt-6 border-t border-[#F4F3EF] text-left">
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2 text-left">Briefing Notes</span>
-                      <textarea
-                        className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-white focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm text-[#4B4B5E] leading-relaxed font-medium transition-all outline-none resize-none"
-                        value={selectedInterview.notes || ''}
-                        onChange={(e) => setSelectedInterview(prev => ({ ...prev, notes: e.target.value }))}
-                        onBlur={(e) => handleInlineEdit('notes', e.target.value)}
-                        placeholder="Add briefing notes for the interviewer..."
-                        rows={3}
+                <div className="h-px bg-[#F4F3EF]" />
+
+                {/* Meeting Link Section */}
+                <div className="space-y-4">
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Meeting Link</label>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
+                        <Video size={20} />
+                      </div>
+                      <input
+                        type="text"
+                        readOnly={!isEditing}
+                        className={`flex-1 bg-transparent rounded-xl px-3 py-2 text-sm font-medium text-blue-600 transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent hover:underline cursor-pointer'}`}
+                        value={editableInterview.meetingLink}
+                        onChange={e => setEditableInterview(p => ({ ...p, meetingLink: e.target.value }))}
+                        onClick={() => !isEditing && editableInterview.meetingLink && window.open(editableInterview.meetingLink, '_blank')}
                       />
                     </div>
                   </div>
+                </div>
 
-                  {/* Actions Section */}
-                  <div className="space-y-4 py-6 border-y border-[#F4F3EF]">
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Management Actions</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => {
-                          setEditInterview({
-                            id: selectedInterview.id,
-                            date: selectedInterview.date,
-                            time: selectedInterview.time,
-                            type: selectedInterview.type,
-                            meetingLink: selectedInterview.meetingLink,
-                            interviewer: selectedInterview.interviewer,
-                            interviewerId: selectedInterview.interviewerId
-                          });
-                          setEditMode(true);
-                        }}
-                        className="flex items-center justify-center gap-2 py-3 bg-white border border-[#E5E5EA] text-[#1A1A2E] rounded-2xl text-xs font-bold hover:bg-[#F4F3EF] transition-all"
-                      >
-                        <Pencil size={14} /> Reschedule
-                      </button>
-                      <button
-                        onClick={() => handleScheduleAgain(selectedInterview)}
-                        className="flex items-center justify-center gap-2 py-3 bg-white border border-[#E5E5EA] text-[#1A1A2E] rounded-2xl text-xs font-bold hover:bg-[#F4F3EF] transition-all"
-                      >
-                        <Plus size={14} /> Schedule Again
-                      </button>
+                {/* Briefing Notes */}
+                {selectedInterview.notes && (
+                  <div className="space-y-4">
+                    <div className="space-y-1.5 text-left">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Briefing Notes</label>
+                      <p className="text-sm text-[#6B6B7E] leading-relaxed italic ml-1">
+                        {selectedInterview.notes}
+                      </p>
                     </div>
-                    <button
-                      onClick={() => handleCancelInterview(selectedInterview.id)}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 rounded-2xl text-xs font-bold hover:bg-red-100 transition-all"
-                    >
-                      <X size={14} /> Cancel Interview
-                    </button>
                   </div>
-
-                  {/* Footer Actions */}
-                  <div className="flex gap-4 pt-6">
-                    <button
-                      onClick={() => { setSelectedInterview(null); setEditMode(false); }}
-                      className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-[24px] font-bold text-sm hover:bg-[#E8E7E2] transition-all active:scale-[0.98]"
-                    >
-                      Close
-                    </button>
-                    {selectedInterview.meetingLink && (
-                      <button
-                        onClick={() => window.open(selectedInterview.meetingLink, '_blank', 'noopener,noreferrer')}
-                        className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-[24px] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#153a7a] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
-                      >
-                        <Video size={18} /> Join Meeting
-                      </button>
-                    )}
-                  </div>
-                </>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </>,

@@ -204,7 +204,7 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] tracking-tight leading-none mb-1">Work Handover</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">Asset Migration & Duty Delegation</p>
+
         </div>
 
         <div className="flex items-center gap-3">

@@ -1089,9 +1089,9 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
               <h2 className="text-2xl font-bold leading-tight text-left" style={{ background: 'linear-gradient(90deg, #3FA9F5, #1E88E5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 Interview Schedule
               </h2>
-              <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              {/* <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                 Manage and track all scheduled interviews
-              </p>
+              </p> */}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1222,10 +1222,10 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                                   whileTap={{ scale: 0.95 }}
                                   title="Fill Interview Feedback"
                                   className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl transition-colors ${interview.status === 'Completed'
-                                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                      : isDarkMode
-                                        ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'
-                                        : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                    : isDarkMode
+                                      ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'
+                                      : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
                                     }`}
                                 >
                                   <FiClipboard className="w-4 h-4" />
@@ -1328,10 +1328,10 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                     key={i}
                     whileHover={{ scale: 1.1 }}
                     className={`py-3 rounded-xl cursor-pointer transition-all ${isToday
-                        ? 'text-white shadow-lg'
-                        : hasInterview
-                          ? isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
-                          : isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                      ? 'text-white shadow-lg'
+                      : hasInterview
+                        ? isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
+                        : isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
                       }`}
                     style={isToday ? { background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)' } : {}}
                   >
@@ -1448,7 +1448,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
             </motion.div>
           </motion.div>
         )}
-       </AnimatePresence>
+      </AnimatePresence>
 
       {/* ── Selection Action Bar ── */}
       <AnimatePresence>

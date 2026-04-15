@@ -387,10 +387,30 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
 const RADAR_COLORS = { stroke: '#a5b4fc', fill: '#a5b4fc' };
 const DONUT_COLORS = ['#3B82F6', '#6366F1', '#22D3EE'];
 
-const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob, canAssignJobs, onJobUpdated }) => {
+const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob, canAssignJobs, teamMembers, onJobUpdated }) => {
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [tempSelectedMembers, setTempSelectedMembers] = useState([]);
+
+  // Initialize temp selection when dropdown opens
+  useEffect(() => {
+    if (showAssignDropdown) {
+      const current = (jobAssignments[job.id] || '').split(',').map(n => n.trim()).filter(Boolean);
+      setTempSelectedMembers(current);
+    }
+  }, [showAssignDropdown, jobAssignments, job.id]);
+
+  const handleCommitAssignments = async () => {
+    await handleAssignJob(job.id, tempSelectedMembers);
+    setShowAssignDropdown(false);
+  };
+
+  const toggleTempMember = (name) => {
+    setTempSelectedMembers(prev =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    );
+  };
 
   const [editableJob, setEditableJob] = useState({
     description: job.description || '',
@@ -433,7 +453,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
 
       await updateRecruitmentPosition(job.id, payload);
       toast.success('Position updated successfully');
-      
+
       if (onJobUpdated) {
         onJobUpdated(payload);
       }
@@ -462,11 +482,10 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
     setIsEditing(false);
   };
 
-  const fieldClasses = `w-full bg-transparent rounded-xl px-2 py-1 transition-all outline-none border ${
-    isEditing 
-      ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white' 
+  const fieldClasses = `w-full bg-transparent rounded-xl px-2 py-1 transition-all outline-none border ${isEditing
+      ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white'
       : 'border-transparent cursor-default'
-  }`;
+    }`;
 
   return (
     <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right duration-500">
@@ -493,7 +512,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
               <button
                 disabled={isSaving}
                 onClick={handleSave}
-                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                className="w-[145.83px] h-[32px] rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 {isSaving ? (
                   <RefreshCw size={14} className="animate-spin" />
@@ -531,26 +550,26 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
             {/* Location */}
             <div className="space-y-1.5 group text-left">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Location</span>
-              <input 
-                  type="text"
-                  readOnly={!isEditing}
-                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
-                  value={editableJob.location}
-                  onChange={(e) => setEditableJob(p => ({ ...p, location: e.target.value }))}
-                  placeholder="e.g. Remote, City"
+              <input
+                type="text"
+                readOnly={!isEditing}
+                className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
+                value={editableJob.location}
+                onChange={(e) => setEditableJob(p => ({ ...p, location: e.target.value }))}
+                placeholder="e.g. Remote, City"
               />
             </div>
-            
+
             {/* Salary */}
             <div className="space-y-1.5 group text-left">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Salary Range</span>
-              <input 
-                  type="text"
-                  readOnly={!isEditing}
-                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
-                  value={editableJob.salary}
-                  onChange={(e) => setEditableJob(p => ({ ...p, salary: e.target.value }))}
-                  placeholder="e.g. 5-8 LPA"
+              <input
+                type="text"
+                readOnly={!isEditing}
+                className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
+                value={editableJob.salary}
+                onChange={(e) => setEditableJob(p => ({ ...p, salary: e.target.value }))}
+                placeholder="e.g. 5-8 LPA"
               />
             </div>
 
@@ -558,12 +577,12 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
             <div className="space-y-1.5 group text-left">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience Required</span>
               <input
-                  type="text"
-                  readOnly={!isEditing}
-                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
-                  value={editableJob.experience}
-                  onChange={(e) => setEditableJob(p => ({ ...p, experience: e.target.value }))}
-                  placeholder="e.g. 2-3 Years"
+                type="text"
+                readOnly={!isEditing}
+                className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
+                value={editableJob.experience}
+                onChange={(e) => setEditableJob(p => ({ ...p, experience: e.target.value }))}
+                placeholder="e.g. 2-3 Years"
               />
             </div>
 
@@ -571,26 +590,26 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
             <div className="space-y-1.5 group text-left">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Openings</span>
               <div className="flex items-center gap-2">
-                  <input 
-                      type="number"
-                      readOnly={!isEditing}
-                      className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] max-w-[80px] text-left`}
-                      value={editableJob.openings}
-                      onChange={(e) => setEditableJob(p => ({ ...p, openings: e.target.value }))}
-                  />
-                  {!isEditing && <span className="text-sm font-bold text-[#1A1A2E]">Position(s)</span>}
+                <input
+                  type="number"
+                  readOnly={!isEditing}
+                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] max-w-[80px] text-left`}
+                  value={editableJob.openings}
+                  onChange={(e) => setEditableJob(p => ({ ...p, openings: e.target.value }))}
+                />
+                {!isEditing && <span className="text-sm font-bold text-[#1A1A2E]">Position(s)</span>}
               </div>
             </div>
 
             {/* Deadline */}
             <div className="space-y-1.5 group text-left">
               <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Deadline</span>
-              <input 
-                  type="date"
-                  readOnly={!isEditing}
-                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left ${isEditing ? 'cursor-pointer' : ''}`}
-                  value={editableJob.deadline}
-                  onChange={(e) => setEditableJob(p => ({ ...p, deadline: e.target.value }))}
+              <input
+                type="date"
+                readOnly={!isEditing}
+                className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left ${isEditing ? 'cursor-pointer' : ''}`}
+                value={editableJob.deadline}
+                onChange={(e) => setEditableJob(p => ({ ...p, deadline: e.target.value }))}
               />
             </div>
 
@@ -612,10 +631,9 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#9B9BAD] w-3 h-3" />
                 </div>
               ) : (
-                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
-                  editableJob.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : 
-                  editableJob.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
-                }`}>
+                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${editableJob.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' :
+                    editableJob.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
+                  }`}>
                   {editableJob.priority}
                 </span>
               )}
@@ -708,52 +726,89 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                   <>
                     <div className="fixed inset-0 z-[9998]" onClick={() => setShowAssignDropdown(false)} />
                     <div
-                      className="fixed z-[9999] w-52 bg-white rounded-xl shadow-2xl border border-[#E5E5EA] py-2"
+                      className="fixed z-[9999] w-64 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] py-3 flex flex-col"
                       style={(() => {
                         const btn = document.getElementById('detail-assign-btn');
                         if (!btn) return { top: 0, left: 0 };
                         const rect = btn.getBoundingClientRect();
-                        return { bottom: window.innerHeight - rect.top + 8, left: rect.left + rect.width / 2 - 104 };
+                        return { bottom: window.innerHeight - rect.top + 12, left: rect.left + rect.width / 2 - 128 };
                       })()}
                     >
-                      <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Members</p>
-                      <button
-                        onClick={() => { handleAssignJob(job.id, 'Me'); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${(jobAssignments[job.id] || '').includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                          }`}
-                      >
-                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${(jobAssignments[job.id] || '').includes('Me') ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                          }`}><User size={13} /></span>
-                        Assign to me
-                        {(jobAssignments[job.id] || '').includes('Me') && <span className="ml-auto text-[#0D47A1] font-black text-lg">✓</span>}
-                      </button>
-                      <div className="border-t border-[#F4F3EF] my-1" />
-                      {['Jyoti', 'Manju', 'Priyanshi'].map(name => {
-                        return (
-                          <button key={name}
-                            onClick={() => { handleAssignJob(job.id, name); }}
-                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${(jobAssignments[job.id] || '').includes(name) ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                              }`}
-                          >
-                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${(jobAssignments[job.id] || '').includes(name) ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                              }`}>{name.charAt(0)}</span>
-                            {name}
-                            {(jobAssignments[job.id] || '').includes(name) && <span className="ml-auto text-[#0D47A1] font-black text-lg">✓</span>}
-                          </button>
-                        );
-                      })}
-                      {jobAssignments[job.id] && (
-                        <>
-                          <div className="border-t border-[#F4F3EF] my-1" />
+                      <div className="px-5 py-2 border-b border-[#F4F3EF] mb-2 flex items-center justify-between">
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Members</p>
+                        <span className="text-[10px] font-bold text-[#0D47A1] bg-[#0D47A1]/5 px-2 py-0.5 rounded-full">{tempSelectedMembers.length} Selected</span>
+                      </div>
+
+                      <div className="max-h-[280px] overflow-y-auto custom-scrollbar px-1">
+                        {/* Assign to Me Option */}
+                        <button
+                          onClick={() => toggleTempMember('Me')}
+                          className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${tempSelectedMembers.includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
+                            }`}
+                        >
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${tempSelectedMembers.includes('Me') ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                            }`}><User size={14} /></div>
+                          Assign to me
+                          {tempSelectedMembers.includes('Me') && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                        </button>
+
+                        <div className="h-px bg-[#F4F3EF] my-2 mx-4" />
+
+                        {/* Hardcoded Requested Members */}
+                        {['Jyoti', 'Manju', 'Priyanshi'].map((name, idx) => {
+                          const isSelected = tempSelectedMembers.includes(name);
+                          return (
+                            <button key={`fixed-${idx}`}
+                              onClick={() => toggleTempMember(name)}
+                              className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
+                                }`}
+                            >
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white transition-all shadow-md' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                                }`}>{name.charAt(0)}</div>
+                              <span className="truncate flex-1">{name}</span>
+                              {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                            </button>
+                          );
+                        })}
+
+                        {teamMembers.length > 0 && <div className="h-px bg-[#F4F3EF] my-2 mx-4" />}
+
+                        {/* Additional Team Members from API */}
+                        {teamMembers.filter(m => !['Jyoti', 'Manju', 'Priyanshi', 'Me'].includes(m.name)).map(member => {
+                          const name = member.name;
+                          const isSelected = tempSelectedMembers.includes(name);
+                          return (
+                            <button key={member.id}
+                              onClick={() => toggleTempMember(name)}
+                              className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
+                                }`}
+                            >
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white shadow-md' : 'text-white shadow-sm'
+                                }`} style={!isSelected ? { background: member.color || '#1E88E5' } : {}}>{member.avatar}</div>
+                              <span className="truncate flex-1">{name}</span>
+                              {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="p-3 border-t border-[#F4F3EF] mt-2 space-y-2">
+                        <button
+                          onClick={handleCommitAssignments}
+                          className="w-full py-3.5 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#0a3a82] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-[0.98]"
+                        >
+                          {tempSelectedMembers.length > 0 ? <Check size={16} /> : <FiCalendar size={16} />}
+                          Confirm Assign {tempSelectedMembers.length > 0 ? `(${tempSelectedMembers.length})` : ''}
+                        </button>
+                        {tempSelectedMembers.length > 0 && (
                           <button
-                            onClick={() => { handleAssignJob(job.id, null); setShowAssignDropdown(false); }}
-                            className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                            onClick={() => setTempSelectedMembers([])}
+                            className="w-full py-2 text-[10px] font-bold text-rose-500 hover:bg-rose-50 rounded-xl transition-all flex items-center justify-center gap-2"
                           >
-                            <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
-                            Clear All Assignments
+                            <X size={12} /> Clear Selection
                           </button>
-                        </>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </>,
                   document.body
@@ -804,6 +859,25 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [jobTasks, setJobTasks] = useState({});
   const [assignDropdownJobId, setAssignDropdownJobId] = useState(null);
   const [jobAssignments, setJobAssignments] = useState({});
+  const [tempListAssignments, setTempListAssignments] = useState([]);
+
+  useEffect(() => {
+    if (assignDropdownJobId) {
+      const current = (jobAssignments[assignDropdownJobId] || '').split(',').map(n => n.trim()).filter(Boolean);
+      setTempListAssignments(current);
+    }
+  }, [assignDropdownJobId, jobAssignments]);
+
+  const handleCommitListAssignments = async (jobId) => {
+    await handleAssignJob(jobId, tempListAssignments);
+    setAssignDropdownJobId(null);
+  };
+
+  const toggleTempListMember = (name) => {
+    setTempListAssignments(prev =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    );
+  };
   const [selectedJobs, setSelectedJobs] = useState([]);
   const normalizeUserType = (type = '') => {
     const value = type.toString().trim().toLowerCase();
@@ -890,52 +964,52 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     setBulkProgress(0);
     const total = bulkPreviewData.length;
     let successCount = 0;
-    
+
     const toastId = toast.loading(`Importing 0 / ${total} positions...`);
 
     for (let i = 0; i < total; i++) {
-        const item = bulkPreviewData[i];
-        try {
-            const clientMatch = clients.find(c => 
-                (c.displayName || '').toLowerCase() === (item.clientName || '').toLowerCase() ||
-                (c.companyName || '').toLowerCase() === (item.clientName || '').toLowerCase()
-            );
+      const item = bulkPreviewData[i];
+      try {
+        const clientMatch = clients.find(c =>
+          (c.displayName || '').toLowerCase() === (item.clientName || '').toLowerCase() ||
+          (c.companyName || '').toLowerCase() === (item.clientName || '').toLowerCase()
+        );
 
-            const payload = {
-                title: item.title,
-                clientId: clientMatch?.id || (clients[0]?.id),
-                description: `Imported via bulk upload. Priority: ${item.priority}`,
-                location: item.location,
-                type: item.type,
-                salary: item.salary,
-                status: 'Open',
-                priority: item.priority || 'Medium',
-                openings: item.openings || 1,
-                experience: item.experience,
-                roleType: item.roleType || 'General'
-            };
+        const payload = {
+          title: item.title,
+          clientId: clientMatch?.id || (clients[0]?.id),
+          description: `Imported via bulk upload. Priority: ${item.priority}`,
+          location: item.location,
+          type: item.type,
+          salary: item.salary,
+          status: 'Open',
+          priority: item.priority || 'Medium',
+          openings: item.openings || 1,
+          experience: item.experience,
+          roleType: item.roleType || 'General'
+        };
 
-            await createRecruitmentPosition(payload);
-            successCount++;
-            
-            setBulkPreviewData(prev => prev.map((p, idx) => 
-                idx === i ? { ...p, status: 'Success' } : p
-            ));
-        } catch (error) {
-            console.error(`Failed to import ${item.title}:`, error);
-            setBulkPreviewData(prev => prev.map((p, idx) => 
-                idx === i ? { ...p, status: 'Failed' } : p
-            ));
-        }
-        
-        const progress = Math.round(((i + 1) / total) * 100);
-        setBulkProgress(progress);
-        toast.loading(`Importing ${progress}% complete...`, { id: toastId });
+        await createRecruitmentPosition(payload);
+        successCount++;
+
+        setBulkPreviewData(prev => prev.map((p, idx) =>
+          idx === i ? { ...p, status: 'Success' } : p
+        ));
+      } catch (error) {
+        console.error(`Failed to import ${item.title}:`, error);
+        setBulkPreviewData(prev => prev.map((p, idx) =>
+          idx === i ? { ...p, status: 'Failed' } : p
+        ));
+      }
+
+      const progress = Math.round(((i + 1) / total) * 100);
+      setBulkProgress(progress);
+      toast.loading(`Importing ${progress}% complete...`, { id: toastId });
     }
 
     toast.success(`Imported ${successCount} positions successfully!`, { id: toastId });
     setIsUploadingBulk(false);
-    
+
     // Refresh jobs
     const response = await getAllRecruitmentPositions();
     if (response) {
@@ -979,17 +1053,24 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       return;
     }
 
-    if (isSelfAssignment(name)) {
-      toast.error('You cannot assign a job to yourself.');
-      return;
-    }
-
-    const prev = { ...jobAssignments };
+    const prevAssignments = { ...jobAssignments };
     let newAssignmentString = null;
 
-    if (name) {
-      const currentList = (prev[jobId] || '').split(',').map(n => n.trim()).filter(Boolean);
-      
+    if (Array.isArray(name)) {
+      // Bulk assignment (array of names)
+      const validNames = name.filter(n => n && !isSelfAssignment(n));
+      newAssignmentString = validNames.length > 0 ? validNames.join(', ') : null;
+
+      if (name.length > validNames.length) {
+        toast.error('Some assignments were skipped (e.g. self-assignment).');
+      }
+    } else if (name) {
+      // Single toggle logic (kept for compatibility)
+      if (isSelfAssignment(name)) {
+        toast.error('You cannot assign a job to yourself.');
+        return;
+      }
+      const currentList = (prevAssignments[jobId] || '').split(',').map(n => n.trim()).filter(Boolean);
       if (currentList.includes(name)) {
         const updatedList = currentList.filter(n => n !== name);
         newAssignmentString = updatedList.length > 0 ? updatedList.join(', ') : null;
@@ -997,6 +1078,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         currentList.push(name);
         newAssignmentString = currentList.join(', ');
       }
+    } else {
+      // Clear all
+      newAssignmentString = null;
     }
 
     setJobAssignments(p => {
@@ -1016,7 +1100,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       });
     } catch (err) {
       console.error('Failed to update assignment:', err);
-      setJobAssignments(prev); // rollback on error
+      setJobAssignments(prevAssignments); // rollback on error
+      toast.error('Failed to sync assignment with database.');
     }
   };
   const [filterClient, setFilterClient] = useState('all');
@@ -1725,8 +1810,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       </label>
                       <div className="space-y-3">
                         <div className="relative group">
-                          <select 
-                            value={newJobForm.roleType} 
+                          <select
+                            value={newJobForm.roleType}
                             onChange={e => setNewJobForm(f => ({ ...f, roleType: e.target.value }))}
                             className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
                           >
@@ -1738,9 +1823,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           </select>
                           <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50" />
                         </div>
-                        
+
                         {newJobForm.roleType === 'other' && (
-                          <motion.div 
+                          <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="relative"
@@ -2048,9 +2133,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
               Job Openings
             </h1>
-            <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left">
-              <span className="text-[#0D47A1] font-bold">{filteredJobs.length}</span> Active Positions {filterClient !== 'all' ? `for ${filterClient}` : 'in Recruitment'}
-            </p>
+
           </div>
           <div className="flex gap-2">
             <input
@@ -2060,19 +2143,19 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               accept=".csv, .xlsx, .xls"
               className="hidden"
             />
-            <button 
+            <button
               onClick={handleDownloadTemplate}
               className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95"
             >
-              <Download size={14} className="transition-colors duration-300" /> 
+              <Download size={14} className="transition-colors duration-300" />
               Template
             </button>
-            <button 
+            <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingBulk}
               className={`group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 ${isUploadingBulk ? 'opacity-50' : ''}`}
             >
-              <FileUp size={14} className={`${isUploadingBulk ? 'animate-bounce' : ''} transition-colors duration-300`} /> 
+              <FileUp size={14} className={`${isUploadingBulk ? 'animate-bounce' : ''} transition-colors duration-300`} />
               {isUploadingBulk ? 'Uploading...' : 'Bulk Upload'}
             </button>
             <button
@@ -2192,9 +2275,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-start py-1">
-                   <span className="text-xs font-bold text-[#94a3b8]">
+                  <span className="text-xs font-bold text-[#94a3b8]">
                     {new Date(job.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                   </span>
+                  </span>
                 </div>
                 <div className="flex items-center justify-start gap-2 py-1">
                   <div className="w-7 h-7 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
@@ -2232,50 +2315,89 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     <>
                       <div className="fixed inset-0 z-[9998]" onClick={() => setAssignDropdownJobId(null)} />
                       <div
-                        className="fixed z-[9999] w-52 bg-white rounded-xl shadow-2xl border border-[#E5E5EA] py-2"
+                        className="fixed z-[9999] w-64 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] py-3 flex flex-col"
                         style={(() => {
                           const btn = document.getElementById(`assign-btn-${job.id}`);
                           if (!btn) return { top: 0, left: 0 };
                           const rect = btn.getBoundingClientRect();
+                          const spaceBelow = window.innerHeight - rect.bottom;
+                          if (spaceBelow < 300) {
+                            return { bottom: window.innerHeight - rect.top + 8, left: rect.left };
+                          }
                           return { top: rect.bottom + 8, left: rect.left };
                         })()}
                       >
-                        <p className="px-4 py-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Members</p>
-                        <button
-                          onClick={() => { handleAssignJob(job.id, 'Me'); }}
-                          className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${(jobAssignments[job.id] || '').includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
-                            }`}
-                        >
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${(jobAssignments[job.id] || '').includes('Me') ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                            }`}><User size={13} /></span>
-                          Assign to me
-                          {(jobAssignments[job.id] || '').includes('Me') && <span className="ml-auto text-[#0D47A1] font-black text-lg">✓</span>}
-                        </button>
-                        <div className="border-t border-[#F4F3EF] my-1" />
-                        {['Jyoti', 'Manju', 'Priyanshi'].map(name => (
-                          <button key={name}
-                            onClick={() => { handleAssignJob(job.id, name); }}
-                            className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 transition-all ${(jobAssignments[job.id] || '').includes(name) ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#F8FAFF]'
+                        <div className="px-5 py-2 border-b border-[#F4F3EF] mb-2 flex items-center justify-between">
+                          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Members</p>
+                          <span className="text-[10px] font-bold text-[#0D47A1] bg-[#0D47A1]/5 px-2 py-0.5 rounded-full">{tempListAssignments.length} Selected</span>
+                        </div>
+
+                        <div className="max-h-[250px] overflow-y-auto custom-scrollbar px-1">
+                          <button
+                            onClick={() => toggleTempListMember('Me')}
+                            className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${tempListAssignments.includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
                               }`}
                           >
-                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${(jobAssignments[job.id] || '').includes(name) ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                              }`}>{name.charAt(0)}</span>
-                            {name}
-                            {(jobAssignments[job.id] || '').includes(name) && <span className="ml-auto text-[#0D47A1] font-black text-lg">✓</span>}
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${tempListAssignments.includes('Me') ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                              }`}><User size={14} /></div>
+                            Assign to me
+                            {tempListAssignments.includes('Me') && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
                           </button>
-                        ))}
-                        {jobAssignments[job.id] && (
-                          <>
-                            <div className="border-t border-[#F4F3EF] my-1" />
+
+                          {/* Hardcoded Requested Members */}
+                          {['Jyoti', 'Manju', 'Priyanshi'].map((name, idx) => {
+                            const isSelected = tempListAssignments.includes(name);
+                            return (
+                              <button key={`fixed-list-${idx}`}
+                                onClick={() => toggleTempListMember(name)}
+                                className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
+                                  }`}
+                              >
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white transition-all shadow-md' : 'bg-[#F4F3EF] text-[#6B6B7E]'
+                                  }`}>{name.charAt(0)}</div>
+                                <span className="truncate flex-1">{name}</span>
+                                {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                              </button>
+                            );
+                          })}
+
+                          {teamMembers.length > 0 && <div className="h-px bg-[#F4F3EF] my-2 mx-4" />}
+
+                          {teamMembers.filter(m => !['Jyoti', 'Manju', 'Priyanshi', 'Me'].includes(m.name)).map(member => {
+                            const name = member.name;
+                            const isSelected = tempListAssignments.includes(name);
+                            if (name === 'Me') return null;
+                            return (
+                              <button key={member.id}
+                                onClick={() => toggleTempListMember(name)}
+                                className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
+                                  }`}
+                              >
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white shadow-md' : 'text-white shadow-sm'
+                                  }`} style={!isSelected ? { background: member.color || '#1E88E5' } : {}}>{member.avatar}</div>
+                                <span className="truncate flex-1">{name}</span>
+                                {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="p-3 border-t border-[#F4F3EF] mt-2 space-y-2">
+                          <button
+                            onClick={() => handleCommitListAssignments(job.id)}
+                            className="w-full py-3.5 bg-[#0D47A1] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#0a3a82] transition-all shadow-xl shadow-blue-500/10 flex items-center justify-center gap-2 active:scale-[0.98]"
+                          >
+                            <Check size={16} /> Confirm Assign {tempListAssignments.length > 0 ? `(${tempListAssignments.length})` : ''}
+                          </button>
+                          {tempListAssignments.length > 0 && (
                             <button
-                              onClick={() => { handleAssignJob(job.id, null); setAssignDropdownJobId(null); }}
-                              className="w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                              onClick={() => setTempListAssignments([])}
+                              className="w-full py-2 text-[10px] font-bold text-rose-500 hover:bg-rose-50 rounded-xl transition-all flex items-center justify-center gap-2"
                             >
-                              <span className="w-7 h-7 rounded-full flex items-center justify-center bg-red-50 text-red-500"><X size={13} /></span>
-                              Clear All Assignments
+                              <X size={12} /> Clear Selection
                             </button>
-                          </>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </>,
                     document.body
@@ -2377,6 +2499,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     setJobAssignments={setJobAssignments}
                     handleAssignJob={handleAssignJob}
                     canAssignJobs={canAssignJobs}
+                    teamMembers={teamMembers}
                     onJobUpdated={(updatedFields) => {
                       const updatedJob = { ...selectedJob, ...updatedFields };
                       setSelectedJob(updatedJob);
@@ -2428,7 +2551,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         </AnimatePresence>,
         document.body
       )}
-      <BulkJobPreviewModal 
+      <BulkJobPreviewModal
         show={showBulkPreview}
         data={bulkPreviewData}
         progress={bulkProgress}
@@ -2446,7 +2569,7 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
 
   return createPortal(
     <div className="fixed inset-0 z-[2001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-300">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="bg-white rounded-[32px] w-full max-w-5xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
@@ -2471,7 +2594,7 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
         {/* Progress Bar (Visible during import) */}
         {isImporting && (
           <div className="bg-[#F4F3EF] h-1.5 w-full relative overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               className="absolute left-0 top-0 bottom-0 bg-[#0D47A1] shadow-[0_0_10px_rgba(13,71,161,0.5)]"
@@ -2485,11 +2608,11 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
             <table className="w-full text-left border-collapse">
               <thead className="bg-[#F8FAFF]">
                 <tr>
-                   {["Position", "Client", "Location", "Role Type", "Salary", "Priority", "Status"].map((h, i) => (
-                      <th key={i} className="px-6 py-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest border-b border-[#F4F3EF]">
-                        {h}
-                      </th>
-                   ))}
+                  {["Position", "Client", "Location", "Role Type", "Salary", "Priority", "Status"].map((h, i) => (
+                    <th key={i} className="px-6 py-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest border-b border-[#F4F3EF]">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F4F3EF]">
@@ -2501,10 +2624,9 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
                     <td className="px-6 py-4 text-[13px] font-medium text-[#64748b]">{row.roleType}</td>
                     <td className="px-6 py-4 text-[13px] font-bold text-[#1A1A2E]">{row.salary}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
-                        row.priority === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' : 
-                        row.priority === 'High' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${row.priority === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' :
+                          row.priority === 'High' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
+                        }`}>
                         {row.priority}
                       </span>
                     </td>
@@ -2519,10 +2641,9 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
                         ) : (
                           <div className="w-2 h-2 rounded-full bg-slate-300" />
                         )}
-                        <span className={`text-[11px] font-bold ${
-                          row.status === 'Success' ? 'text-emerald-600' : 
-                          row.status === 'Failed' ? 'text-red-600' : 'text-slate-500'
-                        }`}>
+                        <span className={`text-[11px] font-bold ${row.status === 'Success' ? 'text-emerald-600' :
+                            row.status === 'Failed' ? 'text-red-600' : 'text-slate-500'
+                          }`}>
                           {row.status}
                         </span>
                       </div>
@@ -2536,28 +2657,28 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
 
         {/* Footer */}
         <div className="px-8 py-6 border-t border-[#F4F3EF] flex items-center justify-between bg-[#FAFAF8]">
-           <div className="text-sm font-medium text-[#9B9BAD]">
-              {data.filter(r => r.status === 'Success').length} items imported successfully
-           </div>
-           <div className="flex gap-4">
-              <button 
-                onClick={onClose} 
+          <div className="text-sm font-medium text-[#9B9BAD]">
+            {data.filter(r => r.status === 'Success').length} items imported successfully
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={onClose}
+              disabled={isImporting}
+              className="px-6 py-2.5 bg-white border border-[#E5E5EA] text-[#6B6B7E] rounded-xl text-sm font-bold hover:bg-[#F4F3EF] transition-all disabled:opacity-50"
+            >
+              {progress === 100 ? 'Close' : 'Cancel'}
+            </button>
+            {progress < 100 && (
+              <button
+                onClick={onConfirm}
                 disabled={isImporting}
-                className="px-6 py-2.5 bg-white border border-[#E5E5EA] text-[#6B6B7E] rounded-xl text-sm font-bold hover:bg-[#F4F3EF] transition-all disabled:opacity-50"
+                className="px-8 py-2.5 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 disabled:opacity-50 flex items-center gap-2"
               >
-                {progress === 100 ? 'Close' : 'Cancel'}
+                {isImporting ? <RefreshCw size={14} className="animate-spin" /> : <Check size={16} />}
+                {isImporting ? `Importing... ${progress}%` : 'Confirm Import'}
               </button>
-              {progress < 100 && (
-                <button 
-                  onClick={onConfirm}
-                  disabled={isImporting}
-                  className="px-8 py-2.5 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isImporting ? <RefreshCw size={14} className="animate-spin" /> : <Check size={16} />}
-                  {isImporting ? `Importing... ${progress}%` : 'Confirm Import'}
-                </button>
-              )}
-           </div>
+            )}
+          </div>
         </div>
       </motion.div>
     </div>,
