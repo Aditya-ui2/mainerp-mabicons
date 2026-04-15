@@ -389,6 +389,7 @@ const DONUT_COLORS = ['#3B82F6', '#6366F1', '#22D3EE'];
 
 const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssignments, setJobAssignments, handleAssignJob, canAssignJobs, onJobUpdated }) => {
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [editableJob, setEditableJob] = useState({
     description: job.description || '',
@@ -454,12 +455,30 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => onEdit(job)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#0D47A1] transition-all active:scale-90">
-            <Pencil size={16} />
+
+          {isEditing && (
+            <button
+              onClick={() => setIsEditing(false)}
+              className="text-xs font-semibold text-green-600"
+            >
+              Save
+            </button>
+          )}
+
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-1 rounded-md hover:bg-gray-100 transition"
+          >
+            <Pencil size={18} className="text-gray-600 hover:text-blue" />
           </button>
-          <button onClick={onBack} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm">
-            <X size={20} />
+
+          <button
+            onClick={onBack}
+            className="p-1 rounded-md hover:bg-gray-100 transition"
+          >
+            <X size={18} />
           </button>
+
         </div>
       </div>
 
@@ -468,40 +487,45 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
         <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
           <div className="grid grid-cols-2 gap-x-12 gap-y-8">
             <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Location</span>
-              <input type="text"
-                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none"
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Location</span>
+              <input 
+                  type="text"
+                  readOnly={!isEditing}
+                  className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
                   value={editableJob.location}
                   onChange={(e) => setEditableJob(p => ({ ...p, location: e.target.value }))}
                   onBlur={(e) => handleBlur('location', e.target.value)}
-                  placeholder="Not Specified"
               />
             </div>
             <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Salary Range</span>
-              <input type="text"
-                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none"
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Salary Range</span>
+              <input 
+                  type="text"
+                  readOnly={!isEditing}
+                  className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
                   value={editableJob.salary}
                   onChange={(e) => setEditableJob(p => ({ ...p, salary: e.target.value }))}
                   onBlur={(e) => handleBlur('salary', e.target.value)}
-                  placeholder="Competitive"
               />
             </div>
             <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Experience</span>
-              <input type="text"
-                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none"
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Experience</span>
+              <input
+                  type="text"
+                  readOnly={!isEditing}
+                  className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
                   value={editableJob.experience}
                   onChange={(e) => setEditableJob(p => ({ ...p, experience: e.target.value }))}
                   onBlur={(e) => handleBlur('experience', e.target.value)}
-                  placeholder="Not Mentioned"
               />
             </div>
             <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Openings</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Openings</span>
               <div className="flex items-center">
-                  <input type="number"
-                      className="w-16 bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none"
+                  <input 
+                      type="number"
+                      readOnly={!isEditing}
+                      className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
                       value={editableJob.openings}
                       onChange={(e) => setEditableJob(p => ({ ...p, openings: e.target.value }))}
                       onBlur={(e) => handleBlur('openings', e.target.value)}
@@ -510,18 +534,21 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
               </div>
             </div>
             <div className="space-y-1.5 group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Deadline</span>
-              <input type="date"
-                  className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none cursor-pointer"
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Deadline</span>
+              <input 
+                  type="date"
+                  readOnly={!isEditing}
+                  className="w-full bg-transparent focus:bg-[#FAFAF8] rounded-xl px-1 transition-all"
                   value={editableJob.deadline}
                   onChange={(e) => setEditableJob(p => ({ ...p, deadline: e.target.value }))}
                   onBlur={(e) => handleBlur('deadline', e.target.value)}
               />
             </div>
             <div className="space-y-1.5 group relative">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block group-hover:text-[#0D47A1] transition-colors">Priority</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block transition-colors">Priority</span>
               <select
-                  className={`w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-[10px] font-black uppercase tracking-widest transition-all outline-none cursor-pointer appearance-none ${editableJob.priority === 'Critical' ? 'text-rose-500' : editableJob.priority === 'High' ? 'text-amber-500' : 'text-[#0D47A1]'}`}
+                  readOnly={!isEditing}
+                  className={`w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-[10px] font-black uppercase tracking-widest transition-all outline-none cursor-pointer appearance-none ${editableJob.priority === 'Critical' ? 'text-rose-500' : editableJob.priority === 'High' ? 'text-amber-500' : 'text-[#0D47A1]'}`}
                   value={editableJob.priority}
                   onChange={(e) => {
                       setEditableJob(p => ({ ...p, priority: e.target.value }));
@@ -538,11 +565,12 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
 
           <div className="pt-6 border-t border-[#F4F3EF] text-left group">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Required Skills</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left  transition-colors">Required Skills</span>
               <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Comma separated</span>
             </div>
             <textarea
-              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-[13px] font-bold text-[#1A1A2E] leading-relaxed resize-none transition-all outline-none"
+              readOnly={!isEditing}
+              className="w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-[13px] font-bold text-[#1A1A2E] leading-relaxed resize-none transition-all outline-none"
               rows={Math.max(2, editableJob.skills.split('\n').length)}
               value={editableJob.skills}
               onChange={(e) => setEditableJob(p => ({ ...p, skills: e.target.value }))}
@@ -551,14 +579,15 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
             />
           </div>
 
-          {/* Short Description Section */}
+          {/* Job Description Section */}
           <div className="pt-6 border-t border-[#F4F3EF] text-left group">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Job Description</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left transition-colors">Job Description</span>
               <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Click to edit</span>
             </div>
             <textarea
-              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none"
+              readOnly={!isEditing}
+              className="w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none"
               rows={Math.max(3, editableJob.description.split('\n').length)}
               value={editableJob.description}
               onChange={(e) => setEditableJob(p => ({ ...p, description: e.target.value }))}
@@ -570,11 +599,12 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
           {/* Requirements Section */}
           <div className="pt-6 border-t border-[#F4F3EF] text-left group">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Requirements</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left transition-colors">Requirements</span>
               <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">One per line</span>
             </div>
             <textarea
-              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none whitespace-pre-wrap"
+              readOnly={!isEditing}
+              className="w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none whitespace-pre-wrap"
               rows={Math.max(3, editableJob.requirements.split('\n').length)}
               value={editableJob.requirements}
               onChange={(e) => setEditableJob(p => ({ ...p, requirements: e.target.value }))}
@@ -586,11 +616,12 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
           {/* Responsibilities Section */}
           <div className="pt-6 border-t border-[#F4F3EF] text-left group">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Responsibilities</span>
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left transition-colors">Responsibilities</span>
               <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">One per line</span>
             </div>
             <textarea
-              className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none whitespace-pre-wrap"
+              readOnly={!isEditing}
+              className="w-full bg-transparent border border-transparent focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none transition-all outline-none whitespace-pre-wrap"
               rows={Math.max(3, editableJob.responsibilities.split('\n').length)}
               value={editableJob.responsibilities}
               onChange={(e) => setEditableJob(p => ({ ...p, responsibilities: e.target.value }))}
@@ -2089,7 +2120,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   />
                 </div>
                 <div className="flex flex-col justify-center items-start min-w-0 py-1">
-                  <p className="text-[14px] font-bold text-[#0f172a] group-hover:text-[#0D47A1] transition-colors truncate text-left">
+                  <p className="text-[14px] font-bold text-[#0f172a] transition-colors truncate text-left">
                     {job.title}
                   </p>
                   <div className="flex items-center justify-start gap-1.5 mt-0.5">
@@ -2197,7 +2228,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 </div>
                 <div className="flex justify-end">
                   <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
-                    <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                    <ChevronRight size={18} className="text-[#C5C5D2] transition-all" />
                   </div>
                 </div>
               </div>
