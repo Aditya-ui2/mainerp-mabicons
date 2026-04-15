@@ -27,7 +27,8 @@ import {
   FilePlus,
   FilePlus2,
   ChevronDown,
-  ArrowUpRight
+  ArrowUpRight,
+  Zap
 } from "lucide-react";
 import {
   FiUsers,
@@ -99,6 +100,18 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
     const expiry = new Date(expiryDate);
     return Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
   };
+
+  const [showDocs, setShowDocs] = useState(true);
+  const preHiringDocs = [
+    { label: "Pan card", important: true },
+    { label: "Aadhar card" },
+    { label: "Pay slips" },
+    { label: "Bank statement" },
+    { label: "Degree" },
+    { label: "Marksheet" },
+    { label: "Previous Company Appointment Letter" },
+    { label: "Qualification Certs" }
+  ];
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end" onClick={onClose}>
@@ -179,6 +192,51 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
 
           <div className={`border-t ${isDarkMode ? 'border-slate-800' : 'border-[#F4F3EF]'}`} />
 
+          {/* Pre-hiring Documents Checklist */}
+          <section className="text-left px-2">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDarkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
+                   <FiFile size={16} />
+                </div>
+                <h3 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em]">Pre-hiring Documents</h3>
+              </div>
+              <button 
+                onClick={() => setShowDocs(!showDocs)}
+                className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-100 text-slate-500 hover:bg-slate-50'}`}
+              >
+                {showDocs ? 'Hide Protocol Documents' : 'Show Protocol Documents'}
+              </button>
+            </div>
+            
+            <AnimatePresence>
+              {showDocs && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden"
+                >
+                  {preHiringDocs.map((doc, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all hover:bg-emerald-50/10 group ${isDarkMode ? 'border-slate-800 hover:border-emerald-500/30' : 'border-[#F4F3EF] hover:border-emerald-200'}`}
+                    >
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isDarkMode ? 'bg-slate-800 text-slate-600 group-hover:bg-emerald-500 group-hover:text-white' : 'bg-slate-50 text-slate-300 group-hover:bg-emerald-500 group-hover:text-white'}`}>
+                        <BadgeCheck size={14} />
+                      </div>
+                      <span className={`text-[12px] font-bold transition-colors ${isDarkMode ? 'text-slate-400 group-hover:text-white' : 'text-[#64748b] group-hover:text-slate-900'}`}>
+                        {doc.label} {doc.important && <span className="text-rose-500 ml-0.5">*</span>}
+                      </span>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+
+          <div className={`border-t ${isDarkMode ? 'border-slate-800' : 'border-[#F4F3EF]'}`} />
+
           {/* Negotiation Notes Section */}
           <section className="text-left px-2">
             <h3 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-5">Negotiation Notes</h3>
@@ -239,7 +297,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
       status: 'Sent',
       offerDate: new Date().toISOString().split('T')[0],
       joiningDate: '2026-05-10',
-      hikePercent: 33
+      hikePercent: 33,
+      isVerified: true,
+      bgvStatus: 'Verified'
     }
   ]);
   const [loading, setLoading] = useState(true);
@@ -507,7 +567,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
         status: 'Sent',
         offerDate: new Date().toISOString().split('T')[0],
         joiningDate: '2026-05-10',
-        hikePercent: 33
+        hikePercent: 33,
+        bgvStatus: 'Verified'
       },
       {
         id: 'mock-2',
@@ -519,7 +580,9 @@ const OfferManagementTab = ({ isDarkMode }) => {
         status: 'Accepted',
         offerDate: new Date().toISOString().split('T')[0],
         joiningDate: '2026-05-15',
-        hikePercent: 27
+        hikePercent: 27,
+        isVerified: false,
+        bgvStatus: 'Not Started'
       }
     ];
 
@@ -530,6 +593,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
         id: c.id,
         status: c.status === 'Draft' ? 'Sent' : c.status,
         hikePercent: calculateHike(c.currentCTC, c.offeredCTC),
+        bgvStatus: c.bgvStatus || 'Not Started'
       }));
 
       if (candidatesData.length === 0) {
@@ -956,10 +1020,11 @@ const OfferManagementTab = ({ isDarkMode }) => {
                   className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
                 />
               </div>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-10 flex-shrink-0 text-left">Icon</span>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest lg:w-[320px] flex-shrink-0 text-left">Candidate</span>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 px-8 border-x border-[#F4F3EF] dark:border-slate-800 text-left">Client / Status</span>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[140px] text-left">Actions</span>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest lg:w-[280px] flex-shrink-0 text-left">Candidate</span>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 px-8 border-l border-[#F4F3EF] dark:border-slate-800 text-left">Client</span>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[180px] text-center border-x border-[#F4F3EF] dark:border-slate-800">BGV</span>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[140px] text-center border-r border-[#F4F3EF] dark:border-slate-800 font-syne">Verify</span>
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[120px] text-left ml-6">Actions</span>
             </div>
 
             {filteredOffers.length === 0 ? (
@@ -991,32 +1056,78 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       />
                     </div>
                     {/* Candidate Info */}
-                    <div className="lg:w-[320px] flex-shrink-0 flex items-start gap-4">
-                      <div className={`w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 flex items-center justify-center text-[#1B4DA0] font-bold text-xs flex-shrink-0 mt-0.5`}>
-                        {getInitials(offer.candidateName)}
-                      </div>
+                    <div className="lg:w-[280px] flex-shrink-0 flex items-start gap-4">
                       <div className="min-w-0">
-                        <h3 className="text-[14px] font-bold text-[#1A1A2E] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
+                        <h3 className="text-[15px] font-bold text-[#1A1A2E] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
                           {offer.candidateName}
                         </h3>
-                        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5 text-left">
+                        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.1em] mt-1 text-left">
                           {offer.position}
                         </p>
+                        <div className="flex items-center gap-1.5 mt-2">
+                           <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${isDarkMode ? 'border-slate-800 bg-slate-950/20' : 'border-[#F4F3EF] bg-slate-50'}`}>
+                              <FiFile size={10} className="text-[#9B9BAD]" />
+                              <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-tighter">PRE-HIRING DOCS: 0/8</span>
+                           </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className={`flex-1 grid grid-cols-2 gap-8 px-0 lg:px-8 lg:border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
-                      <div>
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-1 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Client</p>
-                        <p className={`text-[13px] font-medium ${isDarkMode ? 'text-white' : 'text-[#64748b]'}`}>{offer.client || '—'}</p>
-                      </div>
-                      <div>
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] mb-1 leading-none ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Hiring Stage</p>
-                        <StatusBadge status={offer.status} />
-                      </div>
+                    <div className={`flex-1 flex items-center px-8 border-l ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
+                      <p className={`text-[14px] font-bold ${isDarkMode ? 'text-white' : 'text-[#64748b]'}`}>{offer.client || '—'}</p>
                     </div>
 
-                    <div className="flex items-center justify-start gap-6 flex-shrink-0 w-[140px]">
+                    {/* BGV Column */}
+                    <div className={`flex-shrink-0 w-[180px] flex items-center justify-center border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
+                      {offer.bgvStatus === 'Not Started' ? (
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            const mockPass = 'mab@' + Math.random().toString(36).substr(2, 4);
+                            setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, bgvStatus: 'Sent', tempUsername: 'user_' + offer.id.split('-').pop(), tempPassword: mockPass } : o));
+                            toast.success(`Protocol Initiated: BGV Credentials dispatched.`);
+                          }}
+                          className="bg-black text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
+                        >
+                          <Zap size={12} />
+                          Generate Credentials
+                        </button>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center w-full max-w-[140px]">
+                           <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-2 w-full">
+                             <div className="flex items-center justify-between gap-2 mb-1">
+                               <span className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-tighter">ID:</span>
+                               <span className="text-[9px] font-bold text-[#1A1A2E] dark:text-white">{offer.tempUsername}</span>
+                             </div>
+                             <div className="flex items-center justify-between gap-2">
+                               <span className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-tighter">PW:</span>
+                               <span className="text-[9px] font-bold text-[#1A1A2E] dark:text-white">{offer.tempPassword}</span>
+                             </div>
+                           </div>
+                           <p className="text-[8px] font-black text-emerald-500/80 uppercase tracking-widest mt-1.5 flex items-center gap-1">
+                             <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                             Access Live
+                           </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Verify Status Column */}
+                    <div className={`flex-shrink-0 w-[140px] flex items-center justify-center border-r ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
+                      {offer.bgvStatus === 'Verified' ? (
+                        <div className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 transition-all hover:scale-105">
+                          <BadgeCheck size={12} />
+                          Verified
+                        </div>
+                      ) : (
+                        <div className="bg-black text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all">
+                          <AlertCircle size={12} />
+                          Unverified
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-start gap-6 flex-shrink-0 w-[120px] ml-6">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] group-hover:text-[#1B4DA0] group-hover:bg-[#F8FAFF] shadow-sm`}>
                         <ChevronRight size={16} />
                       </div>

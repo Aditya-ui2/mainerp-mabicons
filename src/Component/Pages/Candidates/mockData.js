@@ -1,4 +1,4 @@
-export const PIPELINE_STAGES = ["Applied", "Screening", "Interview", "Offer", "Hired"];
+export const PIPELINE_STAGES = ["Screening", "Interview", "Shortlisted", "Offer", "Hired"];
 
 export const AVATAR_COLORS = {
   AR: "bg-blue-100 text-blue-700",
@@ -41,14 +41,14 @@ export const mockCandidates = [
     id: "c1",
     name: "Alex Rivera",
     role: "Senior Frontend Engineer",
-    stage: "Applied",
+    stage: "Screening",
     avatar: "AR",
     email: "alex.r@example.com",
     phone: "+1 (555) 234-5678",
     appliedDate: "2024-11-14",
     jobId: "j1",
     skills: ["React", "TypeScript", "CSS", "Performance"],
-    stageHistory: [{ stage: "Applied", date: "2024-11-14" }],
+    stageHistory: [{ stage: "Screening", date: "2024-11-14" }],
     lastMovedDate: "2024-11-14",
   },
   {
@@ -173,14 +173,14 @@ export const mockCandidates = [
     id: "c9",
     name: "Avery Martinez",
     role: "Sales Development Rep",
-    stage: "Applied",
+    stage: "Screening",
     avatar: "AM",
     email: "avery.m@example.com",
     phone: "+1 (555) 012-3456",
     appliedDate: "2024-11-15",
     jobId: "j7",
     skills: ["Cold outreach", "CRM", "Lead gen", "Communication"],
-    stageHistory: [{ stage: "Applied", date: "2024-11-15" }],
+    stageHistory: [{ stage: "Screening", date: "2024-11-15" }],
   },
   {
     id: "c10",

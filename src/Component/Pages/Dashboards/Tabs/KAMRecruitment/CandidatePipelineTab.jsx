@@ -79,9 +79,9 @@ const StageBadge = ({ stage }) => {
 
 /* ── Stage Icon Config for Filters ── */
 const stageConfig = {
-  Applied: { color: '#64748b', icon: FiFileText, bgColor: 'bg-[#F8FAFF]', borderColor: 'border-blue-100', dotColor: 'bg-blue-400' },
-  Screening: { color: '#3b82f6', icon: FiPhone, bgColor: 'bg-blue-50/50', borderColor: 'border-blue-200/50', dotColor: 'bg-blue-500' },
-  Interview: { color: '#f59e0b', icon: FiUsers, bgColor: 'bg-amber-50/50', borderColor: 'border-amber-200/50', dotColor: 'bg-amber-500' },
+  Screening: { color: '#64748b', icon: FiFileText, bgColor: 'bg-[#F8FAFF]', borderColor: 'border-blue-100', dotColor: 'bg-blue-400' },
+  Interview: { color: '#3b82f6', icon: FiPhone, bgColor: 'bg-blue-50/50', borderColor: 'border-blue-200/50', dotColor: 'bg-blue-500' },
+  Shortlisted: { color: '#f59e0b', icon: FiStar, bgColor: 'bg-amber-50/50', borderColor: 'border-amber-200/50', dotColor: 'bg-amber-500' },
   Offer: { color: '#ec4899', icon: FiMail, bgColor: 'bg-purple-50/50', borderColor: 'border-purple-200/50', dotColor: 'bg-purple-500' },
   Hired: { color: '#22c55e', icon: FiCheckCircle, bgColor: 'bg-emerald-50/50', borderColor: 'border-emerald-200/50', dotColor: 'bg-emerald-500' },
 };
@@ -131,7 +131,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           expectedCTC: '24 LPA',
           noticePeriod: '30 Days',
           skills: ['React', 'Node.js', 'Redux', 'TypeScript', 'AWS'],
-          stage: 'Applied',
+          stage: 'Screening',
           source: 'LinkedIn',
           rating: 4.5,
           appliedDate: new Date().toISOString().split('T')[0],
@@ -429,7 +429,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         const mapped = res.data.map(c => ({
           id: c.id || c._id, name: c.name, email: c.email, phone: c.phone || '', location: c.location || '',
           jobTitle: c.position?.title || '', client: c.client?.companyName || c.client?.name || '',
-          stage: c.stage || 'Screening', rating: c.rating || 0, experience: c.experience || '',
+          stage: c.stage === 'Applied' ? 'Screening' : (c.stage || 'Screening'), rating: c.rating || 0, experience: c.experience || '',
           currentCTC: c.currentSalary || '', expectedCTC: c.expectedSalary || '', noticePeriod: c.noticePeriod || '30 days',
           skills: c.skills || [], appliedDate: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
           lastActivity: c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : '',
@@ -448,8 +448,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
   useEffect(() => { fetchCandidates(); }, [fetchCandidates]);
 
-  const stageOrder = ['Applied', 'Screening', 'Interview', 'Offer', 'Hired'];
-  const fullStageOrder = ['Screening', 'Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Offer Sent', 'Joined'];
+  const stageOrder = ['Screening', 'Interview', 'Shortlisted', 'Offer', 'Hired'];
+  const fullStageOrder = ['Screening', 'Phone Interview', 'Interview', 'Technical Round', 'HR Round', 'Shortlisted', 'Offer Sent', 'Offer', 'Joined', 'Hired'];
 
   const stats = {
     total: candidates.length,
@@ -851,13 +851,13 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
             <div className="flex gap-6 overflow-x-auto pb-10 custom-scrollbar items-start" style={{ minHeight: '600px' }}>
               {stageOrder.map(stage => {
                 const stageCandidates = filteredCandidates.filter(c => {
-                  if (stage === 'Interview') return ['Phone Interview', 'Technical Round', 'HR Round', 'Client Interview'].includes(c.stage) || c.stage === 'Interview';
-                  if (stage === 'Applied') return c.stage === 'Screening' || c.stage === 'Applied' || !c.stage;
+                  if (stage === 'Interview') return ['Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Interview'].includes(c.stage);
+                  if (stage === 'Screening') return c.stage === 'Screening' || c.stage === 'Applied' || !c.stage;
                   if (stage === 'Offer') return c.stage === 'Offer Sent' || c.stage === 'Offer';
                   if (stage === 'Hired') return c.stage === 'Joined' || c.stage === 'Hired';
                   return c.stage === stage;
                 });
-                const config = stageConfig[stage] || stageConfig.Applied;
+                const config = stageConfig[stage] || stageConfig.Screening;
                 return (
                   <Droppable key={stage} droppableId={stage}>
                     {(provided, snapshot) => (
