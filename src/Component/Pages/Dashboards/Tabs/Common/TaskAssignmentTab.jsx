@@ -364,19 +364,8 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
 };
 
 const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
-  const [tasks, setTasks] = useState([
-    { id: 't1', title: 'Process March Payroll', description: 'Review and approve payroll for all department staff for March 2024.', status: 'Pending', priority: 'High', category: 'Admin', assignedToName: 'Manju', dueDate: new Date().toISOString() },
-    { id: 't2', title: 'Employee Onboarding - John Doe', description: 'Complete onboarding documentation and hardware setup for the new Senior KAM.', status: 'Pending', priority: 'Urgent', category: 'Onboarding', assignedToName: 'Priyanshi', dueDate: new Date().toISOString() },
-    { id: 't3', title: 'Review Q1 Performance', description: 'Compile team performance metrics and prepare individual feedback sessions.', status: 'Completed', priority: 'Medium', category: 'Internal', assignedToName: 'Jyoti', dueDate: '2024-03-31T10:00:00Z' },
-    { id: 't4', title: 'Update Leave Policy', description: 'Review current leave policy and draft updates for special medical leaves.', status: 'Pending', priority: 'Low', category: 'Internal', assignedToName: 'Sachin', dueDate: '2024-03-20T10:00:00Z' },
-    { id: 't5', title: 'Client Meeting - TechNexus', description: 'Monthly project status update and requirements gathering for April.', status: 'Pending', priority: 'High', category: 'Client', assignedToName: 'Manju', dueDate: new Date().toISOString() },
-  ]);
-  const [teamMembers, setTeamMembers] = useState([
-    { id: 'mock-1', name: 'Manju' },
-    { id: 'mock-2', name: 'Priyanshi' },
-    { id: 'mock-3', name: 'Jyoti' },
-    { id: 'mock-4', name: 'Sachin' },
-  ]);
+  const [tasks, setTasks] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');

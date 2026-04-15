@@ -15,7 +15,8 @@ import {
   FiXCircle,
   FiAlertCircle
 } from 'react-icons/fi';
-import { BadgeCheck, Send, ShieldCheck, FileSearch, Fingerprint } from 'lucide-react';
+import { BadgeCheck, Send, ShieldCheck, FileSearch, Fingerprint, User, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getAllCandidates, verifyCandidateKYC, attachFinalOfferLetter, generateCandidateCredentials, BASE_URL } from '../../../service/api';
 import { toast } from 'sonner';
 
@@ -148,8 +149,8 @@ Mabicons Recruitment Team`);
             <ShieldCheck size={28} />
           </div>
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white font-['Syne']">Handover Verification</h1>
-            <p className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[0.3em] mt-1">Audit & Assets Management Gateway</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-syne">Handover Verification</h1>
+            <p className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[0.2em] mt-0.5">Audit & Assets Management Gateway</p>
           </div>
         </div>
 
@@ -169,7 +170,7 @@ Mabicons Recruitment Team`);
           {selectedCandidate && (
             <label className="cursor-pointer">
               <input type="file" className="hidden" onChange={(e) => handleAttachOffer(e, selectedCandidate.id)} />
-              <div className="px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-blue-500/10 hover:bg-[#15418a] hover:scale-105 active:scale-95 transition-all">
+              <div className="px-8 py-3.5 bg-[#1B4DA0] text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-blue-500/10 hover:bg-[#15418a] hover:scale-105 active:scale-95 transition-all">
                 <FiUpload size={16} /> New Asset Handover
               </div>
             </label>
@@ -179,15 +180,14 @@ Mabicons Recruitment Team`);
 
       {/* LIST PANEL */}
       <div className="flex-1 flex gap-8 overflow-hidden min-h-0">
-        <div className="w-[380px] flex flex-col gap-4 overflow-y-auto pr-4 custom-scrollbar pb-10">
+        <div className="w-[380px] flex flex-col gap-5 overflow-y-auto pr-4 custom-scrollbar pb-12 h-full">
           {filteredCandidates.map(c => (
             <motion.div
-              layout
               key={c.id}
               onClick={() => setSelectedCandidateId(c.id)}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              className={`p-5 rounded-[2.5rem] cursor-pointer transition-all duration-300 border relative overflow-hidden group ${
+              whileHover={{ scale: 1.01, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className={`p-5 rounded-[2rem] cursor-pointer transition-all duration-300 border relative overflow-hidden flex-shrink-0 min-h-[90px] flex items-center group ${
                 selectedCandidateId === c.id
                   ? (isDarkMode ? 'bg-[#1B4DA0]/10 border-[#1B4DA0] shadow-2xl shadow-[#1B4DA0]/20' : 'bg-white border-[#1B4DA0] shadow-xl shadow-[#1B4DA0]/10 ring-1 ring-[#1B4DA0]/5')
                   : (isDarkMode ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-lg')
@@ -198,18 +198,21 @@ Mabicons Recruitment Team`);
               )}
               
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg transition-colors ${
-                  selectedCandidateId === c.id ? 'bg-[#1B4DA0] text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'
+                <div className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center transition-colors ${
+                  selectedCandidateId === c.id ? 'bg-[#1B4DA0] text-white shadow-xl shadow-blue-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-800'
                 }`}>
-                  {(c.name || 'U')[0]}
+                  <User size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className={`text-[15px] font-bold tracking-tight truncate font-['Syne'] ${
+                  <h4 className={`text-[15px] font-bold tracking-tight truncate font-syne ${
                     selectedCandidateId === c.id ? 'text-[#1B4DA0]' : (isDarkMode ? 'text-white' : 'text-slate-900')
                   }`}>{c.name}</h4>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                    {c.position?.title || 'System Verification'}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <FileText size={10} className="text-[#1B4DA0]/40 dark:text-slate-500" />
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                      {c.position?.title || 'System Audit'}
+                    </p>
+                  </div>
                 </div>
                 <FiChevronRight className={`transition-transform ${selectedCandidateId === c.id ? 'text-[#1B4DA0] rotate-90' : 'text-slate-300'}`} />
               </div>
@@ -233,11 +236,11 @@ Mabicons Recruitment Team`);
                     {selectedCandidate?.name?.[0] || '?'}
                   </div>
                   <div>
-                    <h2 className={`text-2xl font-bold font-['Syne'] ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    <h2 className={`text-2xl font-bold font-syne ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                       {selectedCandidate?.name || 'Unknown Candidate'}
                     </h2>
                     <div className="flex items-center gap-3 mt-1.5">
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">
                         {selectedCandidate?.email || 'OFFLINE ASSET'}
                       </p>
                       <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
@@ -264,7 +267,7 @@ Mabicons Recruitment Team`);
                       <button
                         key={doc.id}
                         onClick={() => setSelectedDocType(doc.id)}
-                        className={`px-4 py-2.5 rounded-xl text-[9px] uppercase font-black tracking-widest transition-all whitespace-nowrap ${
+                        className={`px-4 py-2.5 rounded-xl text-[9px] uppercase font-bold tracking-widest transition-all whitespace-nowrap ${
                           selectedDocType === doc.id
                             ? (isDarkMode ? 'bg-[#1B4DA0] text-white shadow-lg' : 'bg-white shadow-md text-[#1B4DA0] ring-1 ring-[#1B4DA0]/5')
                             : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
@@ -293,9 +296,9 @@ Mabicons Recruitment Team`);
                            <FileSearch size={40} className="text-[#1B4DA0]" />
                         </div>
                         <div className="text-center">
-                          <p className="text-[11px] font-black uppercase tracking-[6px] text-[#1B4DA0] mb-4">Secured Transmission</p>
+                          <p className="text-[11px] font-bold uppercase tracking-[6px] text-[#1B4DA0] mb-4">Secured Transmission</p>
                           <a href={`${BASE_URL}${selectedCandidate.kycDocuments[selectedDocType].url}`} target="_blank" rel="noreferrer" 
-                             className="px-10 py-5 bg-[#1B4DA0] rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-[#15418a] transition-all shadow-2xl shadow-blue-500/20 inline-flex items-center gap-3">
+                             className="px-10 py-5 bg-[#1B4DA0] rounded-2xl font-bold uppercase text-[11px] tracking-widest hover:bg-[#15418a] transition-all shadow-2xl shadow-blue-500/20 inline-flex items-center gap-3">
                              <FiDownload /> Download Core Asset
                           </a>
                         </div>
@@ -313,7 +316,7 @@ Mabicons Recruitment Team`);
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleVerify(selectedCandidate.id, selectedDocType, 'verified')} 
-                        className="py-5 bg-[#10b981] text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"
+                        className="py-5 bg-[#10b981] text-white rounded-[1.5rem] font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"
                       >
                         <FiCheckCircle size={18} /> Approve Coordinate
                       </motion.button>
@@ -321,7 +324,7 @@ Mabicons Recruitment Team`);
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleVerify(selectedCandidate.id, selectedDocType, 'rejected')} 
-                        className={`py-5 border-2 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${
+                        className={`py-5 border-2 rounded-[1.5rem] font-bold text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${
                           isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20' : 'border-rose-100 bg-white text-rose-500 hover:border-rose-200 hover:bg-rose-50'
                         }`}
                       >
@@ -338,9 +341,9 @@ Mabicons Recruitment Team`);
                        </div>
                     </div>
                     <div className="text-center max-w-sm">
-                      <p className="text-xs font-black uppercase tracking-[8px] text-slate-400 dark:text-slate-600">Encrypted Pending</p>
+                      <p className="text-xs font-bold uppercase tracking-[8px] text-slate-400 dark:text-slate-600">Encrypted Pending</p>
                       <p className={`text-[11px] font-bold mt-4 leading-relaxed ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Digital transmission not received from source. The candidate has not yet initiated the document verification handshake.
+                        Digital transmission not received from source.
                       </p>
                     </div>
                   </div>

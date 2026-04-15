@@ -28,7 +28,8 @@ import {
   FilePlus2,
   ChevronDown,
   ArrowUpRight,
-  Zap
+  Zap,
+  ShieldCheck
 } from "lucide-react";
 import {
   FiUsers,
@@ -52,7 +53,7 @@ import {
 import { toast } from "sonner";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import * as pdfjsLib from 'pdfjs-dist';
-import { BASE_URL, getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer, saveOfferTemplate, getOfferTemplate } from '../../../service/api';
+import { BASE_URL, getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer, saveOfferTemplate, getOfferTemplate, generateCandidateCredentials } from '../../../service/api';
 import {
   OFFER_STATUS_COLORS,
   STATUS_ICONS,
@@ -100,18 +101,6 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
     const expiry = new Date(expiryDate);
     return Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
   };
-
-  const [showDocs, setShowDocs] = useState(true);
-  const preHiringDocs = [
-    { label: "Pan card", important: true },
-    { label: "Aadhar card" },
-    { label: "Pay slips" },
-    { label: "Bank statement" },
-    { label: "Degree" },
-    { label: "Marksheet" },
-    { label: "Previous Company Appointment Letter" },
-    { label: "Qualification Certs" }
-  ];
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end" onClick={onClose}>
@@ -192,48 +181,33 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
 
           <div className={`border-t ${isDarkMode ? 'border-slate-800' : 'border-[#F4F3EF]'}`} />
 
-          {/* Pre-hiring Documents Checklist */}
-          <section className="text-left px-2">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDarkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
-                   <FiFile size={16} />
-                </div>
-                <h3 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em]">Pre-hiring Documents</h3>
+          {/* BGV Protocol Gateway */}
+          {offer.bgvStatus !== 'Not Started' && (
+            <section className="text-left px-2">
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck size={14} className="text-[#1B4DA0]" />
+                <h3 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em]">BGV Protocol Asset</h3>
               </div>
-              <button 
-                onClick={() => setShowDocs(!showDocs)}
-                className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg border transition-all ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-100 text-slate-500 hover:bg-slate-50'}`}
-              >
-                {showDocs ? 'Hide Protocol Documents' : 'Show Protocol Documents'}
-              </button>
-            </div>
-            
-            <AnimatePresence>
-              {showDocs && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden"
-                >
-                  {preHiringDocs.map((doc, idx) => (
-                    <div 
-                      key={idx} 
-                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all hover:bg-emerald-50/10 group ${isDarkMode ? 'border-slate-800 hover:border-emerald-500/30' : 'border-[#F4F3EF] hover:border-emerald-200'}`}
-                    >
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isDarkMode ? 'bg-slate-800 text-slate-600 group-hover:bg-emerald-500 group-hover:text-white' : 'bg-slate-50 text-slate-300 group-hover:bg-emerald-500 group-hover:text-white'}`}>
-                        <BadgeCheck size={14} />
-                      </div>
-                      <span className={`text-[12px] font-bold transition-colors ${isDarkMode ? 'text-slate-400 group-hover:text-white' : 'text-[#64748b] group-hover:text-slate-900'}`}>
-                        {doc.label} {doc.important && <span className="text-rose-500 ml-0.5">*</span>}
-                      </span>
-                    </div>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </section>
+              <div className={`p-6 rounded-[2rem] border-2 border-dashed relative overflow-hidden flex items-center justify-between ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="flex-1 space-y-4">
+                   <div className="flex items-center justify-between max-w-[200px]">
+                      <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-tighter">Gateway ID:</span>
+                      <span className={`text-[12px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.tempUsername}</span>
+                   </div>
+                   <div className="flex items-center justify-between max-w-[200px]">
+                      <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-tighter">Secret Key:</span>
+                      <span className={`text-[12px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.tempPassword}</span>
+                   </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                   <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${offer.bgvStatus === 'Verified' ? 'bg-emerald-500 text-white' : 'bg-[#1B4DA0] text-white'}`}>
+                      {offer.bgvStatus}
+                   </div>
+                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status Sync: Live</p>
+                </div>
+              </div>
+            </section>
+          )}
 
           <div className={`border-t ${isDarkMode ? 'border-slate-800' : 'border-[#F4F3EF]'}`} />
 
@@ -556,54 +530,27 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
   const fetchOffers = async () => {
     setLoading(true);
-    const mockData = [
-      {
-        id: 'mock-1',
-        candidateName: 'Emily Watson',
-        position: 'Product Designer',
-        client: 'Adobe',
-        offeredCTC: '₹24,00,000',
-        currentCTC: '₹18,00,000',
-        status: 'Sent',
-        offerDate: new Date().toISOString().split('T')[0],
-        joiningDate: '2026-05-10',
-        hikePercent: 33,
-        bgvStatus: 'Verified'
-      },
-      {
-        id: 'mock-2',
-        candidateName: 'Alex Rivera',
-        position: 'Senior Software Engineer',
-        client: 'TechSolutions Inc.',
-        offeredCTC: '₹28,00,000',
-        currentCTC: '₹22,00,000',
-        status: 'Accepted',
-        offerDate: new Date().toISOString().split('T')[0],
-        joiningDate: '2026-05-15',
-        hikePercent: 27,
-        isVerified: false,
-        bgvStatus: 'Not Started'
-      }
-    ];
+
 
     try {
       const response = await getAllOffers();
       let candidatesData = (response.data || []).map(c => ({
         ...c,
-        id: c.id,
+        id: c._id || c.id,
+        candidateId: c.candidateId || c._id || c.id,
         status: c.status === 'Draft' ? 'Sent' : c.status,
         hikePercent: calculateHike(c.currentCTC, c.offeredCTC),
         bgvStatus: c.bgvStatus || 'Not Started'
       }));
 
       if (candidatesData.length === 0) {
-        setOffers(mockData);
+        setOffers([]);
       } else {
         setOffers(candidatesData);
       }
     } catch (error) {
-      console.warn('API Offline - Using Mock Data for Offer Management');
-      setOffers(mockData);
+      console.warn('API sync failed for Offer Management');
+      setOffers([]);
     } finally {
       setLoading(false);
     }
@@ -1038,10 +985,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
               <div className="divide-y divide-[#F4F3EF] dark:divide-slate-800">
                 {filteredOffers.map((offer) => (
                   <div
-                    key={offer.id}
+                    key={offer._id || offer.id}
                     onClick={() => handleViewOffer(offer)}
                     className={`group px-8 py-3 transition-all duration-300 cursor-pointer relative z-10 flex flex-col lg:flex-row lg:items-center gap-8 overflow-hidden ${
-                      selectedRowIds.includes(offer.id) 
+                      selectedRowIds.includes(offer._id || offer.id) 
                         ? (isDarkMode ? 'bg-blue-500/10' : 'bg-[#F0F7FF]') 
                         : (isDarkMode ? 'bg-slate-900 hover:bg-slate-800/50' : 'bg-white hover:bg-[#F8FAFF]')
                     }`}
@@ -1049,8 +996,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
                     <div className="w-6 flex-shrink-0 flex items-center justify-center">
                       <input
                         type="checkbox"
-                        checked={selectedRowIds.includes(offer.id)}
-                        onChange={(e) => toggleSelectRow(offer.id, e)}
+                        checked={selectedRowIds.includes(offer._id || offer.id)}
+                        onChange={(e) => toggleSelectRow(offer._id || offer.id, e)}
                         onClick={(e) => e.stopPropagation()}
                         className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
                       />
@@ -1064,12 +1011,6 @@ const OfferManagementTab = ({ isDarkMode }) => {
                         <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.1em] mt-1 text-left">
                           {offer.position}
                         </p>
-                        <div className="flex items-center gap-1.5 mt-2">
-                           <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${isDarkMode ? 'border-slate-800 bg-slate-950/20' : 'border-[#F4F3EF] bg-slate-50'}`}>
-                              <FiFile size={10} className="text-[#9B9BAD]" />
-                              <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-tighter">PRE-HIRING DOCS: 0/8</span>
-                           </div>
-                        </div>
                       </div>
                     </div>
 
@@ -1080,33 +1021,86 @@ const OfferManagementTab = ({ isDarkMode }) => {
                     {/* BGV Column */}
                     <div className={`flex-shrink-0 w-[180px] flex items-center justify-center border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
                       {offer.bgvStatus === 'Not Started' ? (
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            const mockPass = 'mab@' + Math.random().toString(36).substr(2, 4);
-                            setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, bgvStatus: 'Sent', tempUsername: 'user_' + offer.id.split('-').pop(), tempPassword: mockPass } : o));
-                            toast.success(`Protocol Initiated: BGV Credentials dispatched.`);
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={async (e) => { 
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toast.info("📡 Initiating Protocol Handshake...");
+                            const targetId = offer.candidateId || offer.id;
+                            try {
+                              if (!targetId) {
+                                toast.error("System Error: Reference missing.");
+                                return;
+                              }
+
+                              const loadingId = toast.loading("📡 Connecting to mabicons console...");
+                              
+                              const response = await generateCandidateCredentials(targetId);
+                              
+                              // Correctly map the backend response structure { success, data: { email, password } }
+                              if (response && response.success && response.data) {
+                                const finalUser = response.data.email;
+                                const finalPass = response.data.password;
+
+                                setOffers(prev => prev.map(o => (o._id === offer._id || o.id === offer.id) ? { 
+                                  ...o, 
+                                  bgvStatus: 'Sent', 
+                                  tempUsername: finalUser, 
+                                  tempPassword: finalPass 
+                                } : o));
+
+                                toast.success(`Firebase Console: User Provisioned`, { id: loadingId });
+                                
+                                // Auto-Dispatch Mail via Firebase Style Link
+                                const mailSubject = "Action Required: Mabicons ERP Access Credentials";
+                                const mailBody = `Dear ${offer.candidateName},\n\nYour ERP access for the mabicons project has been activated.\n\nIdentifier: ${finalUser}\nSecret Key: ${finalPass}\n\nLogin URL: https://erp.mabicons.com/candidate-login\n\nPlease use these credentials to complete your document verification.\n\nProject: mabicons-1307f\nEnvironment: Production`;
+                                window.open(`mailto:${offer.email || ''}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`);
+                              } else if (targetId.toString().startsWith('mock-')) {
+                                // Manual Fallback for Mock
+                                const mockPass = 'mab@' + Math.random().toString(36).substr(2, 4);
+                                setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, bgvStatus: 'Sent', tempUsername: offer.email || 'candidate@mabicons.com', tempPassword: mockPass } : o));
+                                toast.success("Mock Gateway Activated", { id: loadingId });
+                              } else {
+                                toast.error("Authentication Error: Failed to provision user.", { id: loadingId });
+                              }
+                            } catch (err) {
+                              console.error(err);
+                              toast.error("Console Error: Protocol failed to reach gateway.");
+                            }
                           }}
-                          className="bg-black text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
+                          className={`${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#1967D2] hover:bg-[#185ABC]'} text-white px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-blue-500/10`}
                         >
-                          <Zap size={12} />
-                          Generate Credentials
-                        </button>
+                          <Zap size={14} fill="currentColor" />
+                          GENERATE CREDENTIALS
+                        </motion.button>
                       ) : (
-                        <div className="flex flex-col items-center justify-center w-full max-w-[140px]">
-                           <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-2 w-full">
-                             <div className="flex items-center justify-between gap-2 mb-1">
-                               <span className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-tighter">ID:</span>
-                               <span className="text-[9px] font-bold text-[#1A1A2E] dark:text-white">{offer.tempUsername}</span>
+                        <div className="flex flex-col items-center justify-center w-full max-w-[140px] group/bgv relative">
+                           <div className={`${isDarkMode ? 'bg-[#1A1C1E]' : 'bg-[#F8F9FA]'} border ${isDarkMode ? 'border-slate-800' : 'border-[#DADCE0]'} rounded-lg px-4 py-2.5 w-full shadow-sm`}>
+                             <div className="flex items-center justify-between gap-2 mb-1.5 overflow-hidden">
+                               <span className="text-[9px] font-bold text-[#5F6368] dark:text-[#9AA0A6] uppercase tracking-tighter">ID:</span>
+                               <span className="text-[10px] font-medium text-[#1A73E8] dark:text-[#8AB4F8] truncate">{offer.tempUsername}</span>
                              </div>
-                             <div className="flex items-center justify-between gap-2">
-                               <span className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-tighter">PW:</span>
-                               <span className="text-[9px] font-bold text-[#1A1A2E] dark:text-white">{offer.tempPassword}</span>
+                             <div className="flex items-center justify-between gap-2 overflow-hidden">
+                               <span className="text-[9px] font-bold text-[#5F6368] dark:text-[#9AA0A6] uppercase tracking-tighter">PW:</span>
+                               <span className="text-[10px] font-mono font-bold text-[#202124] dark:text-white">{offer.tempPassword}</span>
                              </div>
                            </div>
-                           <p className="text-[8px] font-black text-emerald-500/80 uppercase tracking-widest mt-1.5 flex items-center gap-1">
-                             <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                             Access Live
+                           <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, bgvStatus: 'Not Started' } : o));
+                                toast.info("Console: User record cleared.");
+                              }}
+                              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-white dark:bg-[#202124] border border-[#DADCE0] dark:border-slate-700 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-500 transition-all shadow-md opacity-0 group-hover/bgv:opacity-100 z-10"
+                              title="Reset User"
+                            >
+                              <RotateCcw size={11} />
+                            </button>
+                           <p className="text-[9px] font-bold text-[#1E8E3E] uppercase tracking-widest mt-2 flex items-center gap-1.5">
+                             <div className="w-1.5 h-1.5 rounded-full bg-[#1E8E3E] animate-pulse" />
+                             Verified / Active
                            </p>
                         </div>
                       )}

@@ -63,6 +63,7 @@ const Edit2 = (props) => (
 export default function CandidatesPage({ setActiveTab }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
   const [positions, setPositions] = useState([
     { id: 'pos-101', title: 'Senior Software Engineer', clientName: 'TechSolutions Inc.' },
     { id: 'pos-102', title: 'Frontend Developer', clientName: 'Microsoft' },
@@ -412,58 +413,42 @@ export default function CandidatesPage({ setActiveTab }) {
     }
 
     try {
+      setIsCreating(true);
       const formData = new FormData();
       Object.keys(candidateForm).forEach(key => {
         if (key === 'resume') {
           if (candidateForm.resume) formData.append("resume", candidateForm.resume);
         } else if (key === 'skills') {
           // Send as comma-separated string that the backend now parses robustly
-          const skillsArray = candidateForm.skills ? candidateForm.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
+          const skillsArray = candidateForm.skills ? (typeof candidateForm.skills === 'string' ? candidateForm.skills.split(',').map(s => s.trim()).filter(Boolean) : []) : [];
           formData.append("skills", skillsArray.join(', '));
         } else {
-          formData.append(key, candidateForm[key]);
+          formData.append(key, candidateForm[key] || "");
         }
       });
 
       // Default metadata
       formData.append("stage", "Screening");
-      formData.append("status", "Submitted");
-
-      // FOR UI FIX/TESTING: Add locally even if API fails
-      const newMockCandidate = {
-        id: Date.now().toString(),
-        name: candidateForm.name,
-        email: candidateForm.email,
-        phone: candidateForm.phone || '',
-        location: candidateForm.location || '',
-        role: positions.find(p => p.id === candidateForm.positionId)?.title || candidateForm.displayJobTitle || 'Candidate',
-        clientName: positions.find(p => p.id === candidateForm.positionId)?.clientName || candidateForm.clientName || '',
-        stage: "Screening",
-        status: "Submitted",
-        experience: candidateForm.experience || '',
-        skills: candidateForm.skills ? candidateForm.skills.split(',').map(s => s.trim()) : [],
-        appliedDate: new Date().toISOString().split('T')[0],
-        lastActivity: new Date().toISOString().split('T')[0]
-      };
-
-      setCandidates(prev => [newMockCandidate, ...prev]);
-      toast.success(`${candidateForm.name} added successfully (Local Mode)!`);
-      setIsCreateModalOpen(false);
-      setCandidateForm({
-        name: "", email: "", phone: "", location: "",
-        positionId: "", roleType: "", displayJobTitle: "",
-        clientId: "", clientName: "", experience: "", noticePeriod: "",
-        currentSalary: "", expectedSalary: "", skills: "", source: "",
-        resume: null
-      });
-
-      // Original API logic preserved below
       const response = await addCandidate(formData);
       if (response && response.success) {
+        toast.success(`${candidateForm.name} added successfully!`);
+        setIsCreateModalOpen(false);
+        setCandidateForm({
+          name: "", email: "", phone: "", location: "",
+          positionId: "", roleType: "", displayJobTitle: "",
+          clientId: "", clientName: "", experience: "", noticePeriod: "",
+          currentSalary: "", expectedSalary: "", skills: "", source: "",
+          resume: null
+        });
         fetchCandidates();
+      } else {
+        toast.error(response?.message || "Failed to add candidate");
       }
     } catch (error) {
-      console.warn("API Offline - Running in Local Mode");
+      console.error('Add candidate error:', error);
+      toast.error(error?.message || "Network synchronization failure");
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -1250,15 +1235,33 @@ Mabicons Recruitment Team`);
                         </span>
                       </div>
                       {selectedCandidate.cvUrl && (
-                        <button
-                          onClick={() => {
-                            const url = selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`;
-                            window.open(url, '_blank');
-                          }}
-                          className="mt-2 flex items-center gap-1.5 px-4 py-2 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
-                        >
-                          <Eye size={13} /> View CV
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const url = selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`;
+                              window.open(url, '_blank');
+                            }}
+                            className="mt-2 flex items-center gap-1.5 px-4 py-2 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                          >
+                            <Eye size={13} /> View CV
+                          </button>
+                          
+                          {(selectedCandidate.stage === 'Selected' || selectedCandidate.stage === 'Hired' || selectedCandidate.stage === 'Joined') && (
+                            <button
+                              onClick={() => {
+                                setCredsCandidate({
+                                  id: selectedCandidate.id,
+                                  name: selectedCandidate.name,
+                                  email: selectedCandidate.email
+                                });
+                                setIsCredsModalOpen(true);
+                              }}
+                              className="mt-2 flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/20 active:scale-95 whitespace-nowrap"
+                            >
+                              <Zap size={13} /> Gen Credentials
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1720,9 +1723,14 @@ Mabicons Recruitment Team`);
                 </button>
                 <button
                   type="submit"
-                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+                  disabled={isCreating}
+                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:translate-y-0"
                 >
-                  <Plus size={18} /> Add Candidate
+                  {isCreating ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <><Plus size={18} /> Add Candidate</>
+                  )}
                 </button>
               </div>
             </form>

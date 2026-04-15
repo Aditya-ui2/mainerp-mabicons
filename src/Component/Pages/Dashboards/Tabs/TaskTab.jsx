@@ -487,17 +487,17 @@ Format:
 
       // Map tasks to a common format
       const mappedTasks = tasksArray.map(task => ({
-        id: task._id,
+        id: task.id || task._id,
         content: task.title,
         description: task.description,
-        priority: task.priority.toLowerCase(),
-        assignedTo: task.assignedTo.userId?.name || 'Unassigned',
-        assignedUserType: task.assignedTo.userType,
-        assignedUserId: task.assignedTo.userId?._id,
+        priority: (task.priority || 'Medium').toLowerCase(),
+        assignedTo: task.assignedTo?.userId?.name || task.assignedToName || 'Assigned',
+        assignedUserType: task.assignedToType || task.assignedTo?.userType,
+        assignedUserId: task.assignedToId || task.assignedTo?.userId?._id || task.assignedTo?.userId,
         deadline: task.dueDate,
-        status: task.status || 'active',
-        client: task.client?.name || 'No Client',
-        clientId: task.client?._id,
+        status: task.status || 'Active',
+        client: task.client?.name || task.client?.companyName || 'No Client',
+        clientId: task.clientId || task.client?.id || task.client?._id,
         category: task.category,
         frequency: task.frequency,
         createdAt: task.createdAt,
@@ -776,17 +776,17 @@ Format:
 
         // Map tasks to a common format regardless of user role
         const mappedTasks = tasksArray.map(task => ({
-          id: task._id,
+          id: task.id || task._id,
           content: task.title,
           description: task.description,
-          priority: task.priority.toLowerCase(),
-          assignedTo: task.assignedTo.userId?.name || 'Unassigned',
-          assignedUserType: task.assignedTo.userType,
-          assignedUserId: task.assignedTo.userId?._id,
+          priority: (task.priority || 'Medium').toLowerCase(),
+          assignedTo: task.assignedTo?.userId?.name || task.assignedToName || 'Assigned',
+          assignedUserType: task.assignedToType || task.assignedTo?.userType,
+          assignedUserId: task.assignedToId || task.assignedTo?.userId?._id || task.assignedTo?.userId,
           deadline: task.dueDate,
-          status: task.status || 'active',
-          client: task.client?.name || 'No Client',
-          clientId: task.client?._id,
+          status: task.status || 'Active',
+          client: task.client?.name || task.client?.companyName || 'No Client',
+          clientId: task.clientId || task.client?.id || task.client?._id,
           category: task.category,
           frequency: task.frequency,
           createdAt: task.createdAt,
@@ -1477,7 +1477,7 @@ Format:
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {recurringTasks.map(task => (
                     <div 
-                      key={task._id} 
+                      key={task.id || task._id} 
                       className={`p-4 rounded-lg ${
                         isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
                       } border ${
@@ -1568,7 +1568,7 @@ Format:
                       {/* Add Action Buttons */}
                       <div className="mt-4 flex justify-end space-x-2">
                         <button
-                          onClick={() => handleTaskAction(task._id, 'deactivate')}
+                          onClick={() => handleTaskAction(task.id || task._id, 'deactivate')}
                           disabled={isActionLoading || !task.active}
                           className={`px-3 py-1 rounded text-sm font-medium ${
                             isDarkMode 
@@ -1581,7 +1581,7 @@ Format:
                         <button
                           onClick={() => {
                             if (window.confirm('Are you sure you want to delete this recurring task? This action cannot be undone.')) {
-                              handleTaskAction(task._id, 'delete');
+                              handleTaskAction(task.id || task._id, 'delete');
                             }
                           }}
                           disabled={isActionLoading}

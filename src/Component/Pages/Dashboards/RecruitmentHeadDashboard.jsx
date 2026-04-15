@@ -1348,12 +1348,7 @@ const RecruitmentHeadDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: 'Sachin', role: 'Recruitment Head' });
-  const [upcomingInterviews, setUpcomingInterviews] = useState([
-    { id: 1, candidate: 'Rahul Sharma', position: 'Backend Developer', time: '10:30 AM', status: 'Upcoming', type: 'Technical' },
-    { id: 2, candidate: 'Priya Singh', position: 'UI/UX Designer', time: '02:00 PM', status: 'In Progress', type: 'Portfolio Review' },
-    { id: 3, candidate: 'Amit Verma', position: 'Project Manager', time: '04:30 PM', status: 'Scheduled', type: 'Final Round' },
-    { id: 4, candidate: 'Sneha Patel', position: 'HR Specialist', time: 'Tomorrow', status: 'Scheduled', type: 'Initial Screening' },
-  ]);
+  const [upcomingInterviews, setUpcomingInterviews] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [selectedKAM, setSelectedKAM] = useState(null);
   const [showKAMModal, setShowKAMModal] = useState(false);
@@ -1409,6 +1404,31 @@ const RecruitmentHeadDashboard = () => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const fetchUpcomingInterviews = async () => {
+    try {
+      const response = await getAllInterviews();
+      if (response && response.success) {
+        // Map to simpler format for dashboard widget
+        const mapped = (response.data || [])
+          .filter(i => i.status === 'Scheduled' || i.status === 'In-Progress')
+          .sort((a, b) => new Date(`${a.interviewDate}T${a.startTime}`) - new Date(`${b.interviewDate}T${b.startTime}`))
+          .slice(0, 5)
+          .map(i => ({
+            id: i.id || i._id,
+            candidate: i.candidate?.name || 'Unknown',
+            position: i.position?.title || 'Untitled',
+            time: i.startTime,
+            date: i.interviewDate,
+            status: i.status,
+            type: i.meetingType
+          }));
+        setUpcomingInterviews(mapped);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard interviews:', error);
+    }
+  };
 
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-IN', {
@@ -1763,6 +1783,7 @@ const RecruitmentHeadDashboard = () => {
         fetchKAMTeam();
         fetchClientList();
         fetchRecentNotes();
+        fetchUpcomingInterviews();
       } catch (e) {
         console.log('Token decode error');
         setUserInfo({ name: localStorage.getItem('userName') || 'Sachin', role: 'Recruitment Head' });
