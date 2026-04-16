@@ -2644,8 +2644,8 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Interactive Sections Row */}
-                  <div className="flex flex-col gap-10 mb-8 w-full">
+                  {/* Interactive Sections Grid (2x2 Structure) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 w-full">
                     {/* Upcoming Interviews Section */}
                     <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-[#3FA9F5]/5">
                       <div className="flex items-center justify-between mb-8">
@@ -2794,54 +2794,56 @@ const RecruitmentHeadDashboard = () => {
                         })}
                       </div>
                     </div>
-                  </div>
 
-
-                  {/* Live Notes */}
-                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
-                    <div className="p-6 flex items-center justify-between bg-gradient-to-r from-slate-50/50 to-transparent">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm">
-                          <FiEdit3 className="w-5 h-5" />
+                    {/* Live Notes Section */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
+                      <div className="p-8 flex items-center justify-between border-b border-slate-50">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm">
+                            <FiEdit3 className="w-5 h-5" />
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-bold text-xl text-[#1A1A2E] tracking-tight font-syne leading-none text-left">Notes</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5 text-left">Directives and guidelines</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <h3 className="font-bold text-lg text-[#1A1A2E] tracking-tight font-syne leading-none text-left">Notes</h3>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5 text-left">Directives and guidelines</p>
-                        </div>
+                        <button className="p-2 rounded-xl bg-[#FAFAF8] text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm">
+                          <FiPlus className="w-5 h-5" strokeWidth={2.5} />
+                        </button>
                       </div>
-                    </div>
-                    <div className="max-h-[450px] overflow-y-auto flex-1 bg-white p-4 space-y-4 no-scrollbar">
-                      {notesLoading ? (
-                        <div className="flex flex-col items-center justify-center py-12 gap-4">
-                          <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin" />
-                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Synchronizing records...</p>
-                        </div>
-                      ) : recentNotes.length > 0 ? (
-                        recentNotes.map((note) => (
-                          <div key={note.id} className="p-4 rounded-xl bg-[#FAFAF8] border border-[#F4F3EF] hover:bg-white hover:border-indigo-100 transition-all duration-300 group relative">
-                            <div className="flex items-center justify-between mb-0.5">
-                              <h4 className="font-bold text-[14px] text-slate-800 tracking-tight transition-colors font-syne">{note.title}</h4>
-                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                                {new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                              </span>
-                            </div>
-                            <p className="text-[12px] text-slate-600 leading-relaxed font-medium mb-2">{note.content}</p>
-                            <div className="flex items-center justify-end">
-                              <button className="text-slate-300 hover:text-indigo-500 transition-all opacity-0 group-hover:opacity-100">
-                                <FiArrowRight className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                      <div className="max-h-[350px] overflow-y-auto flex-1 bg-white p-6 space-y-4 no-scrollbar">
+                        {notesLoading ? (
+                          <div className="flex flex-col items-center justify-center py-12 gap-4">
+                            <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin" />
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Syncing records...</p>
                           </div>
-                        ))
-                      ) : (
-                        <div className="py-12 flex flex-col items-center text-center">
-                          <div className="w-16 h-16 rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-center mb-4 text-slate-200">
-                            <FiEdit3 size={24} />
+                        ) : recentNotes.length > 0 ? (
+                          recentNotes.map((note) => (
+                            <div key={note.id} className="p-4 rounded-2xl bg-[#FAFAF8] border border-[#F4F3EF] hover:bg-white hover:border-[#1B4DA0]/20 hover:shadow-md transition-all duration-300 group relative text-left">
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="font-bold text-[14px] text-slate-800 tracking-tight transition-colors font-syne">{note.title}</h4>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                  {new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                </span>
+                              </div>
+                              <p className="text-[12px] text-slate-600 leading-relaxed font-medium mb-2 line-clamp-2">{note.content}</p>
+                              <div className="flex items-center justify-end">
+                                <button className="text-[#1B4DA0] hover:scale-110 transition-all opacity-0 group-hover:opacity-100">
+                                  <FiArrowRight className="w-4 h-4" strokeWidth={2.5} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="py-12 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-center mb-4 text-slate-200">
+                              <FiEdit3 size={24} />
+                            </div>
+                            <h4 className="text-sm font-bold text-slate-800 mb-1">No Notes Found</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team directives will appear here</p>
                           </div>
-                          <h4 className="text-sm font-bold text-slate-800 mb-1">No Notes Found</h4>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team directives will appear here</p>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </>

@@ -520,26 +520,37 @@ export default function CandidatesPage({ setActiveTab }) {
     try {
       setCredsLoading(true);
       const res = await generateCandidateCredentials(credsCandidate.id);
-      if (res && res.success) {
-        toast.success(`Credentials generated for ${credsCandidate.email}`);
+      if (res && res.success && res.data) {
+        const { email: finalEmail, username: finalUsername, password: finalPass } = res.data;
+        
+        toast.success(`Credentials generated for ${finalUsername || finalEmail}`);
         
         // Construct mailto link for manual sending
-        const subject = encodeURIComponent("Your Mabicons ERP Login Credentials");
+        const subject = encodeURIComponent("Your Mabicons ERP Access Credentials");
         const body = encodeURIComponent(`Dear ${credsCandidate.name},
 
-Welcome to Mabicons! Your ERP login credentials have been generated.
+Your ERP access for the Mabicons project has been activated.
 
-Login URL: https://erp.mabicons.com
-Email: ${credsCandidate.email}
-Password: ${res.data.password}
+Username: ${finalUsername}
+Email: ${finalEmail}
+Secret Key: ${finalPass}
+
+Login URL: https://erp.mabicons.com/candidate-login
+
+Please use these credentials to complete your document verification.
 
 Best Regards,
 Mabicons Recruitment Team`);
 
-        window.location.href = `mailto:${credsCandidate.email}?subject=${subject}&body=${body}`;
+        window.location.href = `mailto:${finalEmail}?subject=${subject}&body=${body}`;
         
         setIsCredsModalOpen(false);
         setCredsCandidate(null);
+        
+        // Optionally refresh candidates to show updated status/tags
+        fetchCandidates();
+      } else {
+        toast.error(res?.message || "Failed to generate credentials");
       }
     } catch (error) {
       toast.error(error.message || "Failed to generate credentials");

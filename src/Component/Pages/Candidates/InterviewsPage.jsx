@@ -12,6 +12,7 @@ import {
   getAllCandidates,
   updateCandidateStatus,
   rejectPipelineCandidate,
+  submitInterviewFeedback,
   getDepartmentTeamMembers,
   getAllAdmins,
   getAllKAMMembers,
@@ -325,7 +326,14 @@ export default function InterviewsPage() {
 
       let allMerged = [];
 
+      const feedbackMap = { ...feedbackData };
       if (erpRes.success) {
+        erpRes.data.forEach(i => {
+           if (i.evaluation && Object.keys(i.evaluation).length > 0) {
+             feedbackMap[i.id || i._id] = true;
+           }
+        });
+
         const mappedERP = erpRes.data.map(i => ({
           id: i.id || i._id,
           candidateId: i.candidateId,
@@ -343,13 +351,13 @@ export default function InterviewsPage() {
           notes: i.notes,
           clientName: i.clientName || i.client?.companyName || i.client?.name || "Internal Team",
           status: i.status || "Scheduled",
-          feedbackStatus: i.feedback ? "Submitted" : "Pending",
+          feedbackStatus: (i.evaluation && Object.keys(i.evaluation).length > 0) ? "Submitted" : "Pending",
           source: 'erp',
           raw: i
         }));
         allMerged = [...allMerged, ...mappedERP];
       }
-
+      
       if (spRes.success && spRes.data) {
         const mappedSP = spRes.data.map(i => ({
           id: i.sharePointId,
@@ -375,6 +383,9 @@ export default function InterviewsPage() {
         allMerged = [...allMerged, ...mappedSP];
       }
 
+      if (feedbackMap) {
+        setFeedbackData(feedbackMap);
+      }
       setInterviews(allMerged);
     } catch (error) {
       toast.error("Failed to load interviews");
@@ -1579,17 +1590,37 @@ export default function InterviewsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     if (!feedbackForm.rating) {
                       toast.error('Please provide a star rating');
                       return;
                     }
-                    const entry = { ...feedbackForm, candidateName: feedbackInterview.candidateName };
-                    const updated = { ...feedbackData, [feedbackInterview.id]: entry };
-                    setFeedbackData(updated);
-                    try { localStorage.setItem('interviewFeedback', JSON.stringify(updated)); } catch (e) { }
-                    toast.success('Feedback submitted successfully');
-                    setShowFeedbackModal(false);
+                    
+                    try {
+                      const payload = {
+                        overallRating: feedbackForm.rating,
+                        notes: feedbackForm.note,
+                        recommendation: feedbackForm.rating >= 4 ? 'Recommend' : 
+                                       feedbackForm.rating === 3 ? 'Maybe' : 'Not Recommend'
+                      };
+                      
+                      const res = await submitInterviewFeedback(feedbackInterview.id, payload);
+                      
+                      if (res.success) {
+                        const entry = { ...feedbackForm, candidateName: feedbackInterview.candidateName };
+                        const updated = { ...feedbackData, [feedbackInterview.id]: entry };
+                        setFeedbackData(updated);
+                        
+                        toast.success('Feedback submitted and synced');
+                        setShowFeedbackModal(false);
+                        fetchInterviews(); // Refresh to show decision buttons
+                      } else {
+                        toast.error(res.message || 'Failed to submit feedback');
+                      }
+                    } catch (err) {
+                      console.error('Feedback Error:', err);
+                      toast.error('Error connecting to feedback gateway');
+                    }
                   }}
                   className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
                   Submit Feedback

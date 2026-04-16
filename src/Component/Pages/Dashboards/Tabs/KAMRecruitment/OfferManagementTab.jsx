@@ -1027,49 +1027,58 @@ const OfferManagementTab = ({ isDarkMode }) => {
                           onClick={async (e) => { 
                             e.preventDefault();
                             e.stopPropagation();
-                            toast.info("📡 Initiating Protocol Handshake...");
+                            const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
                             const targetId = offer.candidateId || offer.id;
                             try {
                               if (!targetId) {
-                                toast.error("System Error: Reference missing.");
+                                toast.error("System Error: Reference missing.", { id: loadingId });
                                 return;
                               }
-
-                              const loadingId = toast.loading("📡 Connecting to mabicons console...");
                               
                               const response = await generateCandidateCredentials(targetId);
+                              console.log('📡 Provisioning Response:', response);
                               
-                              // Correctly map the backend response structure { success, data: { email, password } }
                               if (response && response.success && response.data) {
-                                const finalUser = response.data.email;
+                                const finalEmail = response.data.email;
+                                const finalUsername = response.data.username || finalEmail;
                                 const finalPass = response.data.password;
 
-                                setOffers(prev => prev.map(o => (o._id === offer._id || o.id === offer.id) ? { 
-                                  ...o, 
-                                  bgvStatus: 'Sent', 
-                                  tempUsername: finalUser, 
-                                  tempPassword: finalPass 
-                                } : o));
+                                setOffers(prev => prev.map(o => {
+                                  // Safe ID comparison to prevent "undefined === undefined" matching all rows
+                                  const oId = String(o.id || o._id || '');
+                                  const tId = String(offer.id || offer._id || '');
+                                  if (oId === tId && oId !== '') {
+                                    return { 
+                                      ...o, 
+                                      bgvStatus: 'Sent', 
+                                      tempUsername: finalUsername, 
+                                      tempPassword: finalPass 
+                                    };
+                                  }
+                                  return o;
+                                }));
 
                                 toast.success(`Firebase Console: User Provisioned`, { id: loadingId });
                                 
                                 // Auto-Dispatch Mail via Firebase Style Link
                                 const mailSubject = "Action Required: Mabicons ERP Access Credentials";
-                                const mailBody = `Dear ${offer.candidateName},\n\nYour ERP access for the mabicons project has been activated.\n\nIdentifier: ${finalUser}\nSecret Key: ${finalPass}\n\nLogin URL: https://erp.mabicons.com/candidate-login\n\nPlease use these credentials to complete your document verification.\n\nProject: mabicons-1307f\nEnvironment: Production`;
+                                const mailBody = `Dear ${offer.candidateName},\n\nYour ERP access for the mabicons project has been activated.\n\nUsername: ${finalUsername}\nEmail: ${finalEmail}\nSecret Key: ${finalPass}\n\nLogin URL: https://erp.mabicons.com/candidate-login\n\nPlease use these credentials to complete your document verification.\n\nProject: mabicons-1307f\nEnvironment: Production`;
                                 window.open(`mailto:${offer.email || ''}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`);
                               } else if (targetId.toString().startsWith('mock-')) {
                                 // Manual Fallback for Mock
+                                console.log('🧪 Using mock fallback for:', targetId);
                                 const mockPass = 'mab@' + Math.random().toString(36).substr(2, 4);
-                                setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, bgvStatus: 'Sent', tempUsername: offer.email || 'candidate@mabicons.com', tempPassword: mockPass } : o));
+                                setOffers(prev => prev.map(o => String(o.id) === String(offer.id) ? { ...o, bgvStatus: 'Sent', tempUsername: offer.email || 'candidate@mabicons.com', tempPassword: mockPass } : o));
                                 toast.success("Mock Gateway Activated", { id: loadingId });
                               } else {
+                                console.warn('⚠️ Provisioning failed:', response);
                                 toast.error("Authentication Error: Failed to provision user.", { id: loadingId });
                               }
                             } catch (err) {
-                              console.error(err);
-                              toast.error("Console Error: Protocol failed to reach gateway.");
+                              console.error('❌ Console Protocol Error:', err);
+                              toast.error("Console Error: Protocol failed to reach gateway.", { id: loadingId });
                             }
-                          }}
+                           }}
                           className={`${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#1967D2] hover:bg-[#185ABC]'} text-white px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-blue-500/10`}
                         >
                           <Zap size={14} fill="currentColor" />

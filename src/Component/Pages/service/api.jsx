@@ -348,7 +348,7 @@ export const attachFinalOfferLetter = async (formData) => {
 
 export const generateCandidateCredentials = async (candidateId) => {
   try {
-    const response = await axiosInstance.post('/recruitment/candidate/generate-credentials', { candidateId });
+    const response = await axiosInstance.post('/recruitment/gen-creds', { candidateId });
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
@@ -4075,7 +4075,6 @@ const api = {
   getInterviewById,
   getInterviewByToken,
   getInterviewFeedbackForm,
-  submitInterviewFeedback,
   updateInterviewStatus,
   updateInterview,
   sendInterviewReminder,
@@ -4151,14 +4150,12 @@ const api = {
   getSharePointSyncLogs,
   syncSharePointAll,
   syncResumesFromSharePointDrive,
+  submitInterviewFeedback,
+  generateCandidateCredentials,
+  candidateLogin
 };
 
 export default api;
-
-
-
-
-
 
 
 

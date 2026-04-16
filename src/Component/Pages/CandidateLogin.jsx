@@ -41,7 +41,7 @@ const BackgroundAnimation = () => (
 );
 
 const CandidateLogin = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,9 +51,19 @@ const CandidateLogin = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await candidateLogin({ email, password });
+      // Pass the identifier as both email and username to the backend
+      const res = await candidateLogin({ 
+        email: identifier, 
+        username: identifier, 
+        password 
+      });
       if (res.success) {
         toast.success(`Welcome back, ${res.data.name}!`);
+        // Store user info if needed (already handled by common layout usually but good to be sure)
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('userType', 'candidate');
+        localStorage.setItem('userName', res.data.name);
+        
         navigate('/candidate-dashboard');
       }
     } catch (err) {
@@ -83,22 +93,22 @@ const CandidateLogin = () => {
                 <FiLock className="text-white text-2xl" />
               </div>
               <h1 className="text-4xl font-bold text-white tracking-tight mb-3">Portal Login</h1>
-              <p className="text-slate-400 font-medium">Please enter your credentials sent via email</p>
+              <p className="text-slate-400 font-medium">Enter your email or username</p>
             </motion.div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-300 ml-4 pointer-events-none uppercase tracking-widest opacity-60">Email Address</label>
+              <label className="text-sm font-bold text-slate-300 ml-4 pointer-events-none uppercase tracking-widest opacity-60">Email or Username</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-500 transition-colors">
                   <FiMail size={18} />
                 </div>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@email.com"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Email or Username"
                   className="w-full bg-slate-800/50 border border-white/5 text-white pl-12 pr-5 py-4 rounded-3xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-600"
                   required
                 />
