@@ -180,6 +180,17 @@ export default function InterviewsPage() {
 
       if (response.success) {
         toast.success(`${selectedInterview.candidateName} has been shortlisted!`);
+        // Update local state for immediate feedback
+        const updateState = prev => prev.map(i => 
+          i.id === selectedInterview.id 
+            ? { ...i, raw: { ...i.raw, candidate: { ...i.raw?.candidate, status: 'Shortlisted' } } }
+            : i
+        );
+        setInterviews(updateState);
+        setSelectedInterview(prev => ({
+          ...prev,
+          raw: { ...prev.raw, candidate: { ...prev.raw?.candidate, status: 'Shortlisted' } }
+        }));
       } else {
         toast.error(response.message || "Failed to shortlist candidate");
       }
@@ -205,7 +216,17 @@ export default function InterviewsPage() {
 
       if (response.success) {
         toast.success(`${selectedInterview.candidateName} has been rejected from pipeline.`);
-        // Candidate remains in resume bank by default in the backend
+        // Update local state for immediate feedback
+        const updateState = prev => prev.map(i => 
+          i.id === selectedInterview.id 
+            ? { ...i, raw: { ...i.raw, candidate: { ...i.raw?.candidate, status: 'Rejected' } } }
+            : i
+        );
+        setInterviews(updateState);
+        setSelectedInterview(prev => ({
+          ...prev,
+          raw: { ...prev.raw, candidate: { ...prev.raw?.candidate, status: 'Rejected' } }
+        }));
       } else {
         toast.error(response.message || "Failed to reject candidate");
       }
@@ -984,38 +1005,80 @@ export default function InterviewsPage() {
             <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
               {/* Shortlist Action Bar */}
               <div className="bg-[#F8FAFF] rounded-[24px] p-5 border border-[#1B4DA0]/10 flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 text-left">
                   <div className="w-10 h-10 rounded-xl bg-[#1B4DA0]/10 flex items-center justify-center text-[#1B4DA0]">
                     <CheckSquare size={20} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-[#1A1A2E]">Candidate Shortlisted</h4>
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Move to pipeline shortlisted stage</p>
+                    <h4 className="text-sm font-bold text-[#1A1A2E]">
+                      {isShortlisting ? 'Shortlisting...' : isRejecting ? 'Rejecting...' : 
+                       selectedInterview?.raw?.candidate?.status === 'Shortlisted' ? 'Candidate Shortlisted' :
+                       selectedInterview?.raw?.candidate?.status === 'Rejected' ? 'Candidate Rejected' : 'Shortlist Candidate?'}
+                    </h4>
+                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">
+                      {selectedInterview?.raw?.candidate?.status === 'Shortlisted' || selectedInterview?.raw?.candidate?.status === 'Rejected' ? 
+                       'Action completed in pipeline' : 'Move to pipeline shortlisted stage'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleRejectCandidate}
-                    disabled={isRejecting || isShortlisting}
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-red-500 hover:bg-red-500 hover:text-white border border-red-100 active:scale-90"
-                  >
-                    {isRejecting ? (
-                      <div className="w-5 h-5 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />
-                    ) : (
-                      <X size={24} />
-                    )}
-                  </button>
-                  <button
-                    onClick={handleShortlistCandidate}
-                    disabled={isShortlisting || isRejecting}
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white border border-[#1B4DA0]/10 active:scale-90"
-                  >
-                    {isShortlisting ? (
-                      <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-                    ) : (
-                      <Check size={24} />
-                    )}
-                  </button>
+                  {feedbackData[selectedInterview.id] ? (
+                    <>
+                      {selectedInterview?.raw?.candidate?.status === 'Shortlisted' || selectedInterview?.raw?.candidate?.status === 'Rejected' ? (
+                        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest ${
+                          selectedInterview?.raw?.candidate?.status === 'Shortlisted' 
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                            : 'bg-rose-50 text-rose-600 border border-rose-100'
+                        }`}>
+                          {selectedInterview?.raw?.candidate?.status === 'Shortlisted' ? (
+                            <>
+                              <Check size={14} className="stroke-[3px]" />
+                              <span>Shortlisted</span>
+                            </>
+                          ) : (
+                            <>
+                              <X size={14} className="stroke-[3px]" />
+                              <span>Rejected</span>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <button
+                            id="btn-reject"
+                            onClick={handleRejectCandidate}
+                            disabled={isRejecting || isShortlisting}
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-red-500 hover:bg-red-500 hover:text-white border border-red-100 active:scale-90"
+                            title="Reject Candidate"
+                          >
+                            {isRejecting ? (
+                              <div className="w-5 h-5 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />
+                            ) : (
+                              <X size={24} />
+                            )}
+                          </button>
+                          <button
+                            id="btn-shortlist"
+                            onClick={handleShortlistCandidate}
+                            disabled={isShortlisting || isRejecting}
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white border border-[#1B4DA0]/10 active:scale-90"
+                            title="Shortlist Candidate"
+                          >
+                            {isShortlisting ? (
+                              <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                            ) : (
+                              <Check size={24} />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="px-5 py-2.5 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-2.5">
+                      <AlertCircle size={16} className="text-amber-600" />
+                      <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Submit feedback first</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
