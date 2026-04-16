@@ -3,7 +3,20 @@ import ReactDOM from "react-dom";
 import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, Plus, AlertCircle, Calendar, Search, Star } from "lucide-react";
 import { toast } from "sonner";
 import { AVATAR_COLORS, getAvatarColor } from "./mockData";
-import { getAllInterviews, updateInterview, updateInterviewStatus, cancelInterview, scheduleNewInterview, getAllCandidates, getDepartmentTeamMembers, getAllAdmins, getAllKAMMembers } from "../service/api";
+import {
+  getAllInterviews,
+  updateInterview,
+  updateInterviewStatus,
+  cancelInterview,
+  scheduleNewInterview,
+  getAllCandidates,
+  getDepartmentTeamMembers,
+  getAllAdmins,
+  getAllKAMMembers,
+  getSharePointInterviews,
+  syncSharePointAll
+} from "../service/api";
+import { FiDatabase, FiRefreshCw } from 'react-icons/fi';
 import { motion, AnimatePresence } from "framer-motion";
 import InterviewFeedbackModal from "../Dashboards/Tabs/KAMRecruitment/InterviewFeedbackModal";
 
@@ -207,12 +220,35 @@ export default function InterviewsPage() {
     }
   };
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSharePointSync = async () => {
+    try {
+      setIsSyncing(true);
+      const res = await syncSharePointAll();
+      if (res.success) {
+        toast.success("SharePoint data synced!");
+        fetchInterviews();
+      }
+    } catch (error) {
+      toast.error("Sync failed");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const fetchInterviews = async () => {
     try {
       setLoading(true);
-      const response = await getAllInterviews();
-      if (response.success) {
-        const mapped = response.data.map(i => ({
+      const [erpRes, spRes] = await Promise.all([
+        getAllInterviews(),
+        getSharePointInterviews().catch(() => ({ success: true, data: [] }))
+      ]);
+
+      let allMerged = [];
+
+      if (erpRes.success) {
+        const mappedERP = erpRes.data.map(i => ({
           id: i.id || i._id,
           candidateId: i.candidateId,
           candidateName: i.candidate?.name || "Unknown Candidate",
@@ -230,10 +266,38 @@ export default function InterviewsPage() {
           clientName: i.clientName || i.client?.companyName || i.client?.name || "Internal Team",
           status: i.status || "Scheduled",
           feedbackStatus: i.feedback ? "Submitted" : "Pending",
+          source: 'erp',
           raw: i
         }));
-        setInterviews(mapped);
+        allMerged = [...allMerged, ...mappedERP];
       }
+
+      if (spRes.success && spRes.data) {
+        const mappedSP = spRes.data.map(i => ({
+          id: i.sharePointId,
+          candidateId: null,
+          candidateName: i.candidateName,
+          candidateAvatar: (i.candidateName || "C").charAt(0).toUpperCase(),
+          role: i.position || "Unknown Role",
+          interviewer: i.interviewer || "SP Sync",
+          interviewerId: null,
+          interviewerAvatar: (i.interviewer || "S").charAt(0).toUpperCase(),
+          date: i.interviewDate ? i.interviewDate.split('T')[0] : null,
+          time: i.interviewTime,
+          duration: 30,
+          type: i.interviewType || "Video",
+          meetingLink: i.meetLink,
+          notes: i.notes,
+          clientName: i.client || "SharePoint Client",
+          status: i.status || "Scheduled",
+          feedbackStatus: "Pending",
+          source: 'sharepoint',
+          raw: i
+        }));
+        allMerged = [...allMerged, ...mappedSP];
+      }
+
+      setInterviews(allMerged);
     } catch (error) {
       toast.error("Failed to load interviews");
       console.error(error);
@@ -545,6 +609,14 @@ export default function InterviewsPage() {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={handleSharePointSync}
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+          >
+            {isSyncing ? <FiRefreshCw className="animate-spin" /> : <FiDatabase />}
+            {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
+          </button>
+          <button
             onClick={() => setIsScheduleModalOpen(true)}
             className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
           >
@@ -690,7 +762,12 @@ export default function InterviewsPage() {
                     {interview.candidateAvatar}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left">{interview.candidateName}</p>
+                    <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left flex items-center gap-2">
+                      {interview.candidateName}
+                      {interview.source === 'sharepoint' && (
+                        <FiDatabase size={10} className="text-emerald-500" title="Source: SharePoint" />
+                      )}
+                    </p>
                   </div>
                 </div>
 

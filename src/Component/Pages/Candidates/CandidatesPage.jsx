@@ -18,8 +18,12 @@ import {
   getAllClients,
   scheduleNewInterview,
   generateCandidateCredentials,
+  getSharePointCandidates,
+  updateSharePointCandidate,
+  syncSharePointAll,
   BASE_URL
 } from "../service/api";
+import { FiDatabase, FiRefreshCw } from 'react-icons/fi';
 
 const STAGE_COLORS = {
   Screening: {
@@ -127,6 +131,23 @@ export default function CandidatesPage({ setActiveTab }) {
     fetchSupportData();
   }, []);
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSharePointSync = async () => {
+    try {
+      setIsSyncing(true);
+      const res = await syncSharePointAll();
+      if (res.success) {
+        toast.success("SharePoint data synced successfully!");
+        fetchCandidates();
+      }
+    } catch (error) {
+      toast.error("Failed to sync with SharePoint");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const fetchSupportData = async () => {
     // 1. Fetch Positions
     try {
@@ -164,10 +185,17 @@ export default function CandidatesPage({ setActiveTab }) {
   const fetchCandidates = async () => {
     try {
       setLoading(true);
-      const response = await getAllCandidates();
-      if (response.success) {
-        // Map backend candidates to frontend structure
-        const mapped = response.data.map(c => ({
+      
+      // Fetch both sources in parallel
+      const [erpRes, spRes] = await Promise.all([
+        getAllCandidates(),
+        getSharePointCandidates().catch(() => ({ success: true, data: [] }))
+      ]);
+
+      let allMerged = [];
+
+      if (erpRes.success) {
+        const mappedERP = erpRes.data.map(c => ({
           id: c.id,
           name: c.name,
           email: c.email,
@@ -189,10 +217,36 @@ export default function CandidatesPage({ setActiveTab }) {
           cvUrl: c.cvUrl || null,
           cvFileName: c.cvFileName || null,
           stageHistory: c.stageHistory || [{ stage: mapBackendToFrontendStage(c.stage, c.status), date: c.createdAt }],
-          raw: c // Keep raw data for debugging/advanced use
+          source: 'erp',
+          raw: c
         }));
-        setCandidates(mapped);
+        allMerged = [...allMerged, ...mappedERP];
       }
+
+      if (spRes.success && spRes.data) {
+        const mappedSP = spRes.data.map(c => ({
+          id: c.sharePointId, // Use SharePoint ID
+          name: c.name,
+          email: c.email,
+          phone: c.phone || "N/A",
+          role: c.position || "Unknown Role",
+          positionId: null, // SharePoint candidates don't have ERP position IDs initially
+          clientId: null,
+          clientName: c.client || "SharePoint Client",
+          stage: c.stage || "Screening",
+          appliedDate: c.sharePointCreatedAt,
+          location: "Sync from SP",
+          experience: "N/A",
+          skills: ["SharePoint Sync"],
+          avatar: (c.name || 'SP').split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
+          lastMovedDate: c.updatedAt,
+          source: 'sharepoint',
+          raw: c
+        }));
+        allMerged = [...allMerged, ...mappedSP];
+      }
+
+      setCandidates(allMerged);
     } catch (error) {
       toast.error("Failed to load candidates");
       console.error(error);
@@ -243,11 +297,20 @@ export default function CandidatesPage({ setActiveTab }) {
 
     try {
       const backendMapping = mapFrontendToBackendStage(stage);
-      await updateCandidateStatus(dragId, {
-        status: backendMapping.status,
-        stage: backendMapping.stage,
-        notes: `Moved to ${stage} via Pipeline View`
-      });
+      
+      if (candidate.source === 'sharepoint') {
+        await updateSharePointCandidate(dragId, {
+          stage: backendMapping.stage,
+          status: backendMapping.status,
+          notes: `Moved to ${stage} via Pipeline View`
+        });
+      } else {
+        await updateCandidateStatus(dragId, {
+          status: backendMapping.status,
+          stage: backendMapping.stage,
+          notes: `Moved to ${stage} via Pipeline View`
+        });
+      }
 
       setCandidates((prev) =>
         prev.map((c) => {
@@ -627,6 +690,15 @@ Mabicons Recruitment Team`);
           </div>
 
           <button
+            onClick={handleSharePointSync}
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+          >
+            {isSyncing ? <FiRefreshCw className="animate-spin" /> : <FiDatabase />}
+            {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
+          </button>
+
+          <button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg active:scale-95 text-center"
           >
@@ -646,26 +718,6 @@ Mabicons Recruitment Team`);
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </div>
-
-        <div className="relative">
-          <select
-            value={dateFilter}
-            onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
-          >
-            <option value="all">All Time</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="prev-week">Previous Week</option>
-            <option value="month">This Month</option>
-            <option value="prev-month">Previous Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="prev-quarter">Previous Quarter</option>
-            <option value="year">This Year</option>
-            <option value="custom">Custom Range</option>
-          </select>
-          <ChevronDown size={14} className="absolute right-7 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
         </div>
 
         {dateFilter === 'custom' && (
@@ -782,6 +834,11 @@ Mabicons Recruitment Team`);
                                   {candidate.name}
                                 </p>
                                 <CheckSquare size={12} className="text-emerald-500 flex-shrink-0" />
+                                {candidate.source === 'sharepoint' && (
+                                  <div className="flex items-center justify-center p-1 rounded-md bg-emerald-50 text-emerald-600" title="Source: SharePoint">
+                                    <FiDatabase size={10} />
+                                  </div>
+                                )}
                               </div>
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleSelect(candidate.id); }}
@@ -1314,18 +1371,6 @@ Mabicons Recruitment Team`);
                           <MapPin size={10} /> {selectedCandidate.location}
                         </p>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Skills Grid */}
-                  <div className="space-y-4 pt-2">
-                    <h4 className="text-[10px] font-bold text-[#1A1A2E] uppercase tracking-[3px] border-b border-[#F4F3EF] pb-3">Core Competencies</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {(selectedCandidate.skills || []).map((skill) => (
-                        <span key={skill} className="px-4 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-xs font-bold transition-all hover:bg-[#EEF2FB] hover:text-[#1B4DA0]">
-                          {skill}
-                        </span>
-                      ))}
                     </div>
                   </div>
 

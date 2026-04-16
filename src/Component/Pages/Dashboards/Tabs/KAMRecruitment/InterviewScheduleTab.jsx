@@ -41,7 +41,9 @@ import {
   getAllCandidates,
   getAllRecruitmentPositions,
   getAllClients,
-  getDepartmentTeamMembers
+  getDepartmentTeamMembers,
+  getSharePointInterviews,
+  syncSharePointAll
 } from '../../../service/api';
 
 /* ── Generate unique Google Meet link ── */
@@ -324,33 +326,65 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
     try {
       const filters = {};
       if (filterStatus !== 'all') filters.status = filterStatus;
-      const response = await getAllInterviews(filters);
-      const data = response.data || response.interviews || [];
-      const mapped = data.map(iv => {
-        const meetingLink = iv.meetingLink || iv.meetLink || null;
-        return {
-          id: iv._id || iv.id,
-          candidateName: iv.candidateName || iv.candidate?.name || '',
-          candidateEmail: iv.candidateEmail || iv.candidate?.email || '',
-          position: iv.positionTitle || iv.position?.title || iv.position || '',
-          client: iv.clientName || iv.client?.companyName || iv.client || '',
-          round: iv.interviewType || iv.round || '',
-          type: meetingLink ? 'Video' : (iv.meetingType || iv.type || 'Video'),
-          date: iv.interviewDate ? toLocalISODate(iv.interviewDate) : iv.date || '',
-          time: iv.startTime || iv.time || '',
-          duration: iv.duration ? `${iv.duration} mins` : '60 mins',
-          interviewer: iv.interviewerName || iv.interviewer || '',
-          interviewerRole: iv.interviewerRole || '',
+      
+      const [erpRes, spRes] = await Promise.all([
+        getAllInterviews(filters),
+        getSharePointInterviews(filters).catch(e => ({ success: false, data: [] }))
+      ]);
+
+      let erpMapped = [];
+      if (erpRes?.success || Array.isArray(erpRes.data) || Array.isArray(erpRes.interviews)) {
+        const data = erpRes.data || erpRes.interviews || [];
+        erpMapped = data.map(iv => {
+          const meetingLink = iv.meetingLink || iv.meetLink || null;
+          return {
+            id: iv._id || iv.id,
+            candidateName: iv.candidateName || iv.candidate?.name || 'Unknown',
+            candidateEmail: iv.candidateEmail || iv.candidate?.email || '',
+            position: iv.positionTitle || iv.position?.title || iv.position || '',
+            client: iv.clientName || iv.client?.companyName || iv.client || '',
+            round: iv.interviewType || iv.round || '',
+            type: meetingLink ? 'Video' : (iv.meetingType || iv.type || 'Video'),
+            date: iv.interviewDate ? toLocalISODate(iv.interviewDate) : iv.date || '',
+            time: iv.startTime || iv.time || '',
+            duration: iv.duration ? `${iv.duration} mins` : '60 mins',
+            interviewer: iv.interviewerName || iv.interviewer || '',
+            interviewerRole: iv.interviewerRole || '',
+            status: iv.status || 'Scheduled',
+            meetLink: meetingLink,
+            photo: null,
+            feedback: iv.feedback || null,
+            isSharePoint: false
+          };
+        });
+      }
+
+      let spMapped = [];
+      if (spRes?.success && spRes.data) {
+        spMapped = spRes.data.map(iv => ({
+          id: `sp-${iv.id}`,
+          sharePointId: iv.id,
+          candidateName: iv.candidateName || 'Unknown',
+          candidateEmail: iv.candidateEmail || '',
+          position: iv.jobTitle || '',
+          client: iv.clientName || 'SharePoint',
+          round: iv.interviewRound || 'Round',
+          type: iv.interviewType || 'Video',
+          date: iv.interviewDate ? toLocalISODate(iv.interviewDate) : '',
+          time: iv.startTime || '',
+          duration: '60 mins',
+          interviewer: iv.interviewerName || '',
           status: iv.status || 'Scheduled',
-          meetLink: meetingLink,
-          photo: null,
-          feedback: iv.feedback || null,
-        };
-      });
-      setInterviews(mapped);
-      try { localStorage.setItem(CACHE_KEY_INTERVIEWS, JSON.stringify(mapped)); } catch { }
+          meetLink: iv.meetingLink || null,
+          isSharePoint: true
+        }));
+      }
+
+      const combined = [...erpMapped, ...spMapped];
+      setInterviews(combined);
+      try { localStorage.setItem(CACHE_KEY_INTERVIEWS, JSON.stringify(combined)); } catch { }
     } catch (error) {
-      console.error('Failed to fetch interviews from backend:', error);
+      console.error('Failed to fetch interviews:', error);
       if (interviews.length === 0) {
         setError('Failed to load interviews. Click refresh to try again.');
       }
@@ -1114,6 +1148,30 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
               <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
             </motion.button>
 
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  await syncSharePointAll();
+                  await fetchInterviews();
+                  setToast('SharePoint data synced successfully!');
+                  setTimeout(() => setToast(null), 3000);
+                } catch (e) {
+                  console.error('Sync failed', e);
+                  setToast('Sync failed. Please try again.');
+                  setTimeout(() => setToast(null), 3000);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 text-[11px] font-bold uppercase tracking-widest transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-blue-100 text-[#1B4DA0] hover:bg-blue-50'}`}
+              disabled={loading}
+            >
+              <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Sync SharePoint
+            </motion.button>
             <button
               onClick={() => setShowFullPageForm(true)}
               className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
@@ -1203,7 +1261,10 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                               )}
                               <div className="flex flex-col items-start text-left">
                                 <div className="flex items-center gap-2 flex-wrap justify-start">
-                                  <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{interview.candidateName}</h4>
+                                  <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'} flex items-center gap-2`}>
+                                    {interview.candidateName}
+                                    {interview.isSharePoint && <FiDatabase className="text-blue-500 w-3.5 h-3.5" title="Synced from SharePoint" />}
+                                  </h4>
                                   <TypeBadge type={interview.type} />
                                   <StatusBadge status={interview.status} />
                                 </div>

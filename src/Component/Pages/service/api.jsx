@@ -2521,6 +2521,107 @@ export const getSharePointFolders = async () => {
   }
 };
 
+// SharePoint Drive functions
+export const browseSharePointDrive = async (path = '') => {
+  try {
+    const response = await axiosInstance.get(`/sharepoint/drive/browse?path=${encodeURIComponent(path)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to browse SharePoint:', error);
+    throw error.response?.data || { message: 'Failed to browse drive' };
+  }
+};
+
+export const listSharePointExcelFiles = async () => {
+  try {
+    const response = await axiosInstance.get('/sharepoint/drive/excel-files');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to list Excel files:', error);
+    throw error.response?.data || { message: 'Failed to list Excel files' };
+  }
+};
+
+export const testSharePointConnection = async () => {
+  try {
+    const response = await axiosInstance.get('/sharepoint/test');
+    return response.data;
+  } catch (error) {
+    console.error('SharePoint connection test failed:', error);
+    throw error.response?.data || { message: 'Connection failed' };
+  }
+};
+
+export const syncSharePointCandidates = async (listName = 'Candidates') => {
+  try {
+    const response = await axiosInstance.get(`/sharepoint/sync/candidates?listName=${listName}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to sync candidates:', error);
+    throw error.response?.data || { message: 'Sync failed' };
+  }
+};
+
+export const getSharePointCandidates = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/sharepoint/data/candidates', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get candidates:', error);
+    throw error.response?.data || { message: 'Failed to fetch candidates' };
+  }
+};
+
+export const updateSharePointCandidate = async (sharePointId, data) => {
+  try {
+    const response = await axiosInstance.put(`/sharepoint/candidates/${sharePointId}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update SharePoint candidate:', error);
+    throw error.response?.data || { message: 'Update failed' };
+  }
+};
+
+export const getSharePointInterviews = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/sharepoint/data/interviews', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch SharePoint interviews:', error);
+    throw error.response?.data || { message: 'Failed to fetch interviews' };
+  }
+};
+
+export const getSharePointClients = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get('/sharepoint/data/clients', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch SharePoint clients:', error);
+    throw error.response?.data || { message: 'Failed to fetch clients' };
+  }
+};
+
+export const syncSharePointAll = async () => {
+  try {
+    const response = await axiosInstance.post('/sharepoint/sync/all');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to sync all SharePoint data:', error);
+    throw error.response?.data || { message: 'Sync failed' };
+  }
+};
+
+export const getSharePointSyncLogs = async () => {
+  try {
+    const response = await axiosInstance.get('/sharepoint/sync-logs');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get sync logs:', error);
+    throw error.response?.data || { message: 'Failed to fetch logs' };
+  }
+};
+
 // Get SharePoint Excel workbook sheet names
 export const getSharePointExcelSheets = async (fileName) => {
   try {
@@ -4039,6 +4140,17 @@ const api = {
   createNote,
   updateNote,
   deleteNote,
+  browseSharePointDrive,
+  listSharePointExcelFiles,
+  testSharePointConnection,
+  syncSharePointCandidates,
+  getSharePointCandidates,
+  updateSharePointCandidate,
+  getSharePointInterviews,
+  getSharePointClients,
+  getSharePointSyncLogs,
+  syncSharePointAll,
+  syncResumesFromSharePointDrive,
 };
 
 export default api;

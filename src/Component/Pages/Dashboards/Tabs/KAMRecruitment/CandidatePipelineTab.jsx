@@ -49,7 +49,7 @@ import {
   FiActivity,
   FiZap,
 } from 'react-icons/fi';
-import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions, uploadResumes } from '../../../service/api';
+import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions, uploadResumes, getSharePointCandidates, syncSharePointAll } from '../../../service/api';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 
 /* ── Stage Badge ── */
@@ -424,9 +424,15 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       if (filterStage !== 'all') filters.stage = filterStage;
       if (filterPipelineStatus !== 'all') filters.pipelineStatus = filterPipelineStatus;
       if (searchTerm) filters.search = searchTerm;
-      const res = await getAllCandidates(filters);
-      if (res?.success && res.data) {
-        const mapped = res.data.map(c => ({
+      
+      const [erpRes, spRes] = await Promise.all([
+        getAllCandidates(filters),
+        getSharePointCandidates(filters).catch(e => ({ success: false, data: [] }))
+      ]);
+
+      let erpMapped = [];
+      if (erpRes?.success && erpRes.data) {
+        erpMapped = erpRes.data.map(c => ({
           id: c.id || c._id, name: c.name, email: c.email, phone: c.phone || '', location: c.location || '',
           jobTitle: c.position?.title || '', client: c.client?.companyName || c.client?.name || '',
           stage: c.stage === 'Applied' ? 'Screening' : (c.stage || 'Screening'), rating: c.rating || 0, experience: c.experience || '',
@@ -434,14 +440,40 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           skills: c.skills || [], appliedDate: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
           lastActivity: c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : '',
           photo: null, pipelineStatus: c.pipelineStatus || 'pending', rejectionReason: c.rejectionReason || '',
-          source: c.source || '', positionId: c.position?.id || c.position?._id, clientId: c.client?.id || c.client?._id,
+          source: c.source || 'ERP', positionId: c.position?.id || c.position?._id, clientId: c.client?.id || c.client?._id,
           shortDescription: c.shortDescription || '',
           requirements: c.requirements || [],
-          responsibilities: c.responsibilities || []
+          responsibilities: c.responsibilities || [],
+          isSharePoint: false
         }));
-        setCandidates(mapped);
-        try { localStorage.setItem(CACHE_KEY_CANDIDATES, JSON.stringify(mapped)); } catch { }
       }
+
+      let spMapped = [];
+      if (spRes?.success && spRes.data) { 
+        spMapped = spRes.data.map(c => ({
+          id: `sp-${c.id}`,
+          sharePointId: c.id,
+          name: c.candidateName || 'Unknown',
+          email: c.email || '',
+          phone: c.phone || '',
+          location: c.location || '',
+          jobTitle: c.jobTitle || '',
+          client: c.clientName || 'SharePoint',
+          stage: c.stage || 'Screening',
+          rating: 0,
+          experience: c.experience || '',
+          appliedDate: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
+          lastActivity: c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : '',
+          source: 'SharePoint',
+          isSharePoint: true,
+          pipelineStatus: 'pending',
+          skills: []
+        }));
+      }
+
+      const combined = [...erpMapped, ...spMapped];
+      setCandidates(combined);
+      try { localStorage.setItem(CACHE_KEY_CANDIDATES, JSON.stringify(combined)); } catch { }
     } catch (error) { console.error('Failed to fetch candidates:', error); }
     finally { setRefreshing(false); }
   }, [filterStage, filterPipelineStatus, searchTerm]);
@@ -747,6 +779,21 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               <button onClick={() => setIsKanbanView(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}><FiGrid /> Kanban</button>
               <button onClick={() => setIsKanbanView(false)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${!isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}><FiList /> List</button>
             </div>
+            <button 
+              onClick={async () => {
+                try {
+                  setRefreshing(true);
+                  await syncSharePointAll();
+                  await fetchCandidates();
+                } catch (e) { console.error('Sync failed', e); }
+                finally { setRefreshing(false); }
+              }}
+              className="flex items-center gap-2 px-5 py-3 bg-white text-[#1B4DA0] border border-[#1B4DA0] rounded-xl text-sm font-bold hover:bg-blue-50 transition-all shadow-sm active:scale-95"
+              disabled={refreshing}
+            >
+              <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Sync SharePoint
+            </button>
             <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg active:scale-95 text-center">
               <FiPlus size={18} />
               Add Candidate
@@ -896,7 +943,10 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                                       </div>
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <h4 className="text-[14px] font-black text-[#1A1A2E] truncate font-syne uppercase tracking-tight group-hover:text-blue-600 transition-colors">{candidate.name}</h4>
+                                      <h4 className="text-[14px] font-black text-[#1A1A2E] truncate font-syne uppercase tracking-tight group-hover:text-blue-600 transition-colors flex items-center gap-2">
+                                        {candidate.name}
+                                        {candidate.isSharePoint && <FiDatabase className="text-blue-500 w-3 h-3" title="Synced from SharePoint" />}
+                                      </h4>
                                       <p className="text-[10px] font-bold text-[#9B9BAD] truncate uppercase tracking-widest mt-0.5">{candidate.jobTitle}</p>
                                     </div>
                                   </div>
@@ -915,7 +965,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                                     </div>
                                   </div>
                                 </motion.div>
-                              )}
+                              )}  
                             </Draggable>
                           ))}
                           {provided.placeholder}
@@ -933,7 +983,10 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               <motion.div key={candidate.id} onClick={() => openDetail(candidate)} className="flex items-center gap-6 px-8 py-5 bg-white rounded-[24px] border border-[#F4F3EF] hover:shadow-xl transition-all cursor-pointer">
                 <div className="w-12 h-12 rounded-[18px] text-white flex items-center justify-center text-sm font-black shadow-lg" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
                 <div className="flex-1">
-                  <h4 className="text-[15px] font-black text-[#1A1A2E] uppercase font-syne tracking-tight">{candidate.name}</h4>
+                  <h4 className="text-[15px] font-black text-[#1A1A2E] uppercase font-syne tracking-tight flex items-center gap-2">
+                    {candidate.name}
+                    {candidate.isSharePoint && <FiDatabase className="text-blue-500 w-3.5 h-3.5" title="Synced from SharePoint" />}
+                  </h4>
                   <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{candidate.jobTitle} • {candidate.client}</p>
                 </div>
                 <StageBadge stage={candidate.stage} />

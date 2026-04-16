@@ -81,11 +81,14 @@ const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSele
     </div>
 
     {/* Candidate Info */}
-    <div className="flex-1 min-w-[200px] flex items-start gap-3">
+    <div className="flex-1 min-w-[200px] flex items-center gap-3">
       <h3 className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
         {resume.candidateName || resume.fileName.split('.')[0]}
       </h3>
-      <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+      {resume.driveId !== 's3' && (
+        <Database size={13} className="text-emerald-500 flex-shrink-0" title="Synced from SharePoint" />
+      )}
+      <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
     </div>
 
     {/* Role Info */}
@@ -560,7 +563,19 @@ const ResumeBankTab = () => {
           </h1>
 
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowSyncMenu(!showSyncMenu)}
+            disabled={syncing}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95 ${
+              syncing
+                ? 'bg-slate-100 text-slate-400'
+                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+            }`}
+          >
+            <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? 'Syncing...' : 'Sync Source'}
+          </button>
           <button
             onClick={handleOpenAddCandidate}
             className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95"

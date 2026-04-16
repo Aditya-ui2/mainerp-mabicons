@@ -7,13 +7,30 @@ import {
 import * as XLSX from 'xlsx';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { toast } from "sonner";
-import { getResumeBankResumes, getResumeRoleTypes, getAllRecruitmentPositions, createRecruitmentPosition, updateRecruitmentPosition, deleteRecruitmentPosition, getAllClients, getDepartmentTeamMembers, createDepartmentTask, getAllCandidates, assignResumesToPosition, distributeJobToPlatforms } from '../../../service/api';
+import {
+  getResumeBankResumes,
+  getResumeRoleTypes,
+  getAllRecruitmentPositions,
+  createRecruitmentPosition,
+  updateRecruitmentPosition,
+  deleteRecruitmentPosition,
+  getAllClients,
+  getDepartmentTeamMembers,
+  createDepartmentTask,
+  getAllCandidates,
+  assignResumesToPosition,
+  distributeJobToPlatforms,
+  getSharePointClients,
+  syncSharePointAll
+} from '../../../service/api';
 
 const STATUS_STYLES = {
   Open: "bg-emerald-50 text-emerald-600 border-emerald-100",
   Urgent: "bg-rose-50 text-rose-600 border-rose-100",
   "Hold": "bg-amber-50 text-amber-600 border-amber-100",
   "In Progress": "bg-blue-50 text-[#0D47A1] border-blue-100",
+  "Complete": "bg-emerald-100 text-emerald-700 border-emerald-200",
+  "Medium": "bg-slate-100 text-slate-600 border-slate-200",
 };
 
 const DEPARTMENTS = ["Engineering", "Product", "Design", "Marketing", "Sales", "Operations", "HR"];
@@ -69,9 +86,10 @@ const StatusBadge = ({ status }) => {
 /* ── Priority Badge ── */
 const PriorityBadge = ({ priority }) => {
   const config = {
-    High: "bg-rose-50 text-rose-700 border border-rose-200",
-    Medium: "bg-blue-50 text-blue-700 border border-blue-200",
-    Low: "bg-slate-100 text-slate-500 border border-slate-200",
+    Urgent: "bg-rose-500 text-white border-rose-600 shadow-sm shadow-rose-500/10",
+    High: "bg-rose-50 text-rose-700 border-rose-200",
+    Medium: "bg-blue-50 text-blue-700 border-blue-200",
+    Low: "bg-slate-100 text-slate-500 border-slate-200",
   };
   return (
     <span className={`text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-widest ${config[priority] || config.Medium}`}>
@@ -256,20 +274,15 @@ const AssignTaskModal = ({ isDarkMode, job, onClose, onAssign, teamMembers = [] 
         {/* ── Body ── */}
         <div className="px-4 sm:px-6 pb-6 space-y-5">
           {/* Selected Candidate Badge (Bulk Info) */}
-          <div className={`flex items-center gap-2 p-3 rounded-xl mb-6 border-2 ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-100 shadow-sm') : (isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-100')}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ${selectedCandidate.id === 'MEGA_BULK' ? 'bg-indigo-500 shadow-indigo-500/20' : 'bg-blue-500 shadow-[#0D47A1]/20'}`}>
-              {selectedCandidate.id === 'MEGA_BULK' ? <Users /> : (selectedCandidate.name || 'C').substring(0, 1)}
-            </div>
-            <div className="flex-1">
-              <span className={`text-[12px] font-bold block ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-700')}`}>
-                {selectedCandidate.id === 'MEGA_BULK' ? 'Target: All Matching Candidates (Automatic)' : `Task for: ${selectedCandidate.name}`}
+          <div className={`flex flex-col gap-1 p-4 rounded-xl mb-6 border ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'bg-indigo-900/10 border-indigo-700/30' : 'bg-indigo-50/50 border-indigo-100') : (isDarkMode ? 'bg-blue-900/10 border-blue-700/30' : 'bg-[#FAFAFA] border-[#F4F3EF]')}`}>
+            <span className={`text-[11px] font-black uppercase tracking-widest ${selectedCandidate.id === 'MEGA_BULK' ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-600') : (isDarkMode ? 'text-[#0D47A1]' : 'text-[#0D47A1]')}`}>
+              {selectedCandidate.id === 'MEGA_BULK' ? 'Target: All Matching Candidates' : `Assigning Task for: ${selectedCandidate.name}`}
+            </span>
+            {selectedCandidate.id === 'MEGA_BULK' && (
+              <span className={`text-[10px] font-medium ${isDarkMode ? 'text-indigo-300/70' : 'text-[#9B9BAD]'}`}>
+                Includes pipeline candidates & matching profiles from Resume Bank
               </span>
-              {selectedCandidate.id === 'MEGA_BULK' && (
-                <span className={`text-[10px] opacity-70 block ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
-                  Includes pipeline candidates & matching profiles from Resume Bank
-                </span>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Quick Task Type Chips */}
@@ -492,11 +505,29 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
       {/* Header */}
       <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
         <div className="text-left">
-          <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{job.title}</h2>
+          <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+            {job.title}
+            {job.clientSource === 'sharepoint' && (
+              <span className="ml-3 inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100 align-middle">
+                <Database size={10} /> SharePoint
+              </span>
+            )}
+          </h2>
           <div className="flex items-center gap-2 mt-1.5 justify-start">
             <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{job.department || job.client || 'Engineering'}</span>
             <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
             <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.type || 'Full-time'}</span>
+            {job.clientSource === 'sharepoint' && (
+              <>
+                <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                <button 
+                  onClick={() => window.open('https://mabicons.sharepoint.com/:f:/s/Recruitment', '_blank')}
+                  className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-[2px] transition-colors"
+                >
+                  View Folder
+                </button>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -743,13 +774,10 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                         {/* Assign to Me Option */}
                         <button
                           onClick={() => toggleTempMember('Me')}
-                          className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${tempSelectedMembers.includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
-                            }`}
+                          className={`w-full text-left px-4 py-2.5 text-xs font-bold flex items-center gap-2 rounded-xl transition-all ${tempSelectedMembers.includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'}`}
                         >
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${tempSelectedMembers.includes('Me') ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                            }`}><User size={14} /></div>
-                          Assign to me
-                          {tempSelectedMembers.includes('Me') && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                          Me
+                          {tempSelectedMembers.includes('Me') && <Check size={12} className="ml-auto" />}
                         </button>
 
                         <div className="h-px bg-[#F4F3EF] my-2 mx-4" />
@@ -758,15 +786,12 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                         {['Jyoti', 'Manju', 'Priyanshi'].map((name, idx) => {
                           const isSelected = tempSelectedMembers.includes(name);
                           return (
-                            <button key={`fixed-${idx}`}
+                            <button key={`detail-fixed-${idx}`}
                               onClick={() => toggleTempMember(name)}
-                              className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
-                                }`}
+                              className={`w-full text-left px-4 py-2.5 text-xs font-bold flex items-center gap-2 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'}`}
                             >
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white transition-all shadow-md' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                                }`}>{name.charAt(0)}</div>
-                              <span className="truncate flex-1">{name}</span>
-                              {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                              {name}
+                              {isSelected && <Check size={12} className="ml-auto" />}
                             </button>
                           );
                         })}
@@ -778,15 +803,12 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                           const name = member.name;
                           const isSelected = tempSelectedMembers.includes(name);
                           return (
-                            <button key={member.id}
+                            <button key={`detail-${member.id}`}
                               onClick={() => toggleTempMember(name)}
-                              className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
-                                }`}
+                              className={`w-full text-left px-4 py-2.5 text-xs font-bold flex items-center gap-2 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'}`}
                             >
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white shadow-md' : 'text-white shadow-sm'
-                                }`} style={!isSelected ? { background: member.color || '#1E88E5' } : {}}>{member.avatar}</div>
-                              <span className="truncate flex-1">{name}</span>
-                              {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                              {name}
+                              {isSelected && <Check size={12} className="ml-auto" />}
                             </button>
                           );
                         })}
@@ -797,7 +819,6 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                           onClick={handleCommitAssignments}
                           className="w-full py-3.5 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#0a3a82] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-[0.98]"
                         >
-                          {tempSelectedMembers.length > 0 ? <Check size={16} /> : <FiCalendar size={16} />}
                           Confirm Assign {tempSelectedMembers.length > 0 ? `(${tempSelectedMembers.length})` : ''}
                         </button>
                         {tempSelectedMembers.length > 0 && (
@@ -1137,6 +1158,25 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   const [skillInput, setSkillInput] = useState('');
   const [reqInput, setReqInput] = useState('');
   const [respInput, setRespInput] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSharePointSync = async () => {
+    try {
+      setIsSyncing(true);
+      const res = await syncSharePointAll();
+      if (res.success) {
+        toast.success('SharePoint data synced successfully!');
+        fetchClients();
+      } else {
+        toast.error(res.message || 'Sync failed');
+      }
+    } catch (error) {
+      console.error('SharePoint sync error:', error);
+      toast.error('Failed to sync SharePoint data');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // ── Fetch clients from backend ──
   const fetchClients = async () => {
@@ -1171,8 +1211,19 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         };
       });
 
-      setClients(clientsData);
-      try { localStorage.setItem(CACHE_KEY_CLIENTS, JSON.stringify(clientsData)); } catch { }
+      const spRes = await getSharePointClients().catch(() => ({ success: true, data: [] }));
+      const spClients = (spRes.data || []).map(c => ({
+        id: c.sharePointId,
+        clientName: c.name,
+        companyName: c.name,
+        name: `SP: ${c.name}`,
+        displayName: `[SP] ${c.name}`,
+        source: 'sharepoint'
+      }));
+
+      const merged = [...clientsData, ...spClients];
+      setClients(merged);
+      try { localStorage.setItem(CACHE_KEY_CLIENTS, JSON.stringify(merged)); } catch { }
     } catch (error) {
       console.error('Failed to fetch clients:', error);
       // Fallback on error too
@@ -1211,34 +1262,41 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       if (filterClient !== 'all') filters.client = filterClient;
       if (searchTerm) filters.search = searchTerm;
       const response = await getAllRecruitmentPositions(filters);
-      const positions = (response.data || []).map(p => ({
-        id: p.id || p._id,
-        title: p.title,
-        client: p.clientName || p.client?.companyName || p.client?.name || 'Unknown',
-        clientLogo: p.clientLogo || 'NA',
-        location: p.location || '',
-        type: p.type || 'Full-time',
-        salary: p.salary || '',
-        openings: p.openings || 1,
-        filled: p.filled || 0,
-        status: p.status === 'Closed' ? 'Hold' : (p.status || 'Open'),
-        priority: p.priority || 'Medium',
-        postedDate: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : '',
-        deadline: p.deadline ? new Date(p.deadline).toISOString().split('T')[0] : '',
-        experience: p.experience || '',
-        skills: p.skills || [],
-        description: p.description || '',
-        requirements: normalizeListFromApi(p.requirements),
-        responsibilities: normalizeListFromApi(p.responsibilities),
-        roleType: p.roleType || '',
-        candidateCount: p.candidateCount || 0,
-        tasks: p.tasks || [],
-        clientId: p.clientId,
-        postedByName: p.postedByName || p.postedBy?.name || '',
-        postedByEmail: p.postedByEmail || p.postedBy?.email || '',
-        assignedToId: p.assignedToId || null,
-        assignedToName: p.assignedToName || null,
-      }));
+      const positions = (response.data || []).map(p => {
+        // Find if this client is from SharePoint
+        const clientObj = clients.find(c => c.id === p.clientId);
+        const isSharePointClient = clientObj?.source === 'sharepoint';
+
+        return {
+          id: p.id || p._id,
+          title: p.title,
+          client: p.clientName || p.client?.companyName || p.client?.name || 'Unknown',
+          clientLogo: p.clientLogo || 'NA',
+          location: p.location || '',
+          type: p.type || 'Full-time',
+          salary: p.salary || '',
+          openings: p.openings || 1,
+          filled: p.filled || 0,
+          status: p.status === 'Closed' ? 'Hold' : (p.status || 'Open'),
+          priority: p.priority || 'Medium',
+          postedDate: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : '',
+          deadline: p.deadline ? new Date(p.deadline).toISOString().split('T')[0] : '',
+          experience: p.experience || '',
+          skills: p.skills || [],
+          description: p.description || '',
+          requirements: normalizeListFromApi(p.requirements),
+          responsibilities: normalizeListFromApi(p.responsibilities),
+          roleType: p.roleType || '',
+          candidateCount: p.candidateCount || 0,
+          tasks: p.tasks || [],
+          clientId: p.clientId,
+          postedByName: p.postedByName || p.postedBy?.name || '',
+          postedByEmail: p.postedByEmail || p.postedBy?.email || '',
+          assignedToId: p.assignedToId || null,
+          assignedToName: p.assignedToName || null,
+          clientSource: isSharePointClient ? 'sharepoint' : 'erp'
+        };
+      });
 
       // Build assignment map from fetched data
       const assignMap = {};
@@ -1674,32 +1732,6 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     setConfirmDelete(null);
   };
 
-  const handleBulkStatusUpdate = async (targetStatus) => {
-    const actionLabel = targetStatus === 'Hold' ? 'put on hold' : 'opened again';
-    const confirmMsg = targetStatus === 'Hold'
-      ? `Put ${selectedJobs.length} positions on hold?`
-      : `Open ${selectedJobs.length} positions again?`;
-
-    if (window.confirm(confirmMsg)) {
-      const originalJobs = [...jobs];
-      try {
-        // Optimistic UI Update
-        setJobs(prev => prev.map(j =>
-          selectedJobs.includes(j.id) ? { ...j, status: targetStatus } : j
-        ));
-
-        await Promise.all(selectedJobs.map(id => updateRecruitmentPosition(id, { status: targetStatus })));
-        setSelectedJobs([]);
-        toast.success(`${selectedJobs.length} positions ${actionLabel}`);
-        fetchPositions(); // Sync with server
-      } catch (err) {
-        console.error(`Bulk ${targetStatus} failed:`, err);
-        toast.error('Failed to update some positions');
-        setJobs(originalJobs); // Rollback on failure
-      }
-    }
-  };
-
   const stats = {
     total: jobs.length,
     open: jobs.filter(j => j.status === 'Open' || j.status === 'Urgent').length,
@@ -1707,6 +1739,34 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     onHold: jobs.filter(j => j.status === 'Hold' || j.status === 'Closed').length,
     totalOpenings: jobs.reduce((sum, j) => sum + j.openings, 0),
     totalFilled: jobs.reduce((sum, j) => sum + j.filled, 0),
+  };
+
+  const handleBulkStatusUpdate = async (newStatus) => {
+    if (selectedJobs.length === 0) return;
+    const priorityValues = ['Urgent', 'Medium', 'High', 'Low'];
+    const toastId = toast.loading(`Updating ${selectedJobs.length} positions...`);
+    try {
+      const updatePromises = selectedJobs.map(id => {
+        const payload = priorityValues.includes(newStatus)
+          ? { priority: newStatus }
+          : { status: newStatus };
+        return updateRecruitmentPosition(id, payload);
+      });
+
+      await Promise.all(updatePromises);
+      
+      setJobs(prev => prev.map(job => 
+        selectedJobs.includes(job.id) 
+          ? { ...job, ...(priorityValues.includes(newStatus) ? { priority: newStatus } : { status: newStatus }) }
+          : job
+      ));
+      
+      toast.success('Batch update successful', { id: toastId });
+      setSelectedJobs([]);
+    } catch (err) {
+      console.error('Bulk update failed:', err);
+      toast.error('Failed to update some positions', { id: toastId });
+    }
   };
 
   const filteredJobs = useMemo(() => {
@@ -2159,6 +2219,23 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               {isUploadingBulk ? 'Uploading...' : 'Bulk Upload'}
             </button>
             <button
+              onClick={handleSharePointSync}
+              disabled={isSyncing}
+              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+            >
+              {isSyncing ? <Plus size={18} className="animate-spin" /> : <Database size={18} />}
+              {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
+            </button>
+
+            <button
+              onClick={() => window.open('https://mabicons.sharepoint.com/:f:/s/Recruitment/EkM_mabicons_recruitment', '_blank')}
+              className="flex items-center gap-2 px-6 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-sm font-bold hover:bg-[#E8E7E2] transition-all shadow-sm active:scale-95"
+            >
+              <FileText size={18} className="text-blue-500" />
+              Recruitment Folders
+            </button>
+
+            <button
               onClick={() => { setShowFullPageForm(true); setEditingJob(null); resetModal(); }}
               className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
             >
@@ -2240,7 +2317,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <div
                 key={job.id}
                 onClick={() => setSelectedJob(job)}
-                className="grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+                className={`grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative ${selectedJob?.id === job.id ? 'bg-blue-50/50' : ''}`}
               >
                 <div className="flex items-center" onClick={e => e.stopPropagation()}>
                   <input
@@ -2258,9 +2335,26 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   />
                 </div>
                 <div className="flex flex-col justify-center items-start min-w-0 py-1">
-                  <p className="text-[14px] font-bold text-[#0f172a] transition-colors truncate text-left">
-                    {job.title}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[14px] font-bold text-[#0f172a] transition-colors truncate text-left">
+                      {job.title}
+                    </p>
+                    {job.clientSource === 'sharepoint' && (
+                      <div className="flex items-center gap-1">
+                        <Database size={12} className="text-emerald-500 shrink-0" title="Synced from SharePoint Client" />
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open('https://mabicons.sharepoint.com/:f:/s/Recruitment', '_blank');
+                          }}
+                          className="p-1 hover:bg-emerald-100 rounded-md transition-colors"
+                          title="Open SharePoint Folder"
+                        >
+                          <FileText size={12} className="text-blue-500" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center justify-start gap-1.5 mt-0.5">
                     <MapPin size={11} className="text-[#9B9BAD]" />
                     <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest truncate text-left">{job.location}</span>
@@ -2279,11 +2373,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     {new Date(job.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </span>
                 </div>
-                <div className="flex items-center justify-start gap-2 py-1">
-                  <div className="w-7 h-7 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
-                    <Users size={12} />
-                  </div>
+                <div className="flex items-center justify-start gap-1 py-1">
                   <span className="text-[13px] font-black text-[#1A1A2E]">{job.candidateCount}</span>
+                  <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[1px] ml-0.5">Applicants</span>
                 </div>
                 <div className="relative" onClick={e => e.stopPropagation()}>
                   {canAssignJobs ? (
@@ -2370,13 +2462,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                             return (
                               <button key={member.id}
                                 onClick={() => toggleTempListMember(name)}
-                                className={`w-full text-left px-4 py-2.5 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
-                                  }`}
+                                className={`w-full text-left px-4 py-2 text-xs font-bold flex items-center gap-2 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'}`}
                               >
-                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white shadow-md' : 'text-white shadow-sm'
-                                  }`} style={!isSelected ? { background: member.color || '#1E88E5' } : {}}>{member.avatar}</div>
-                                <span className="truncate flex-1">{name}</span>
-                                {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                                {name}
+                                {isSelected && <Check size={12} className="ml-auto" />}
                               </button>
                             );
                           })}
@@ -2418,43 +2507,106 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       </div>
 
       {/* Selection Action Bar (Snackbar) */}
-      <AnimatePresence>
-        {selectedJobs.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[1000] px-8 py-4 bg-[#1A1A2E] rounded-2xl shadow-2xl flex items-center gap-8 border border-white/10"
-          >
-            <div className="flex items-center gap-3 pr-8 border-r border-white/10">
-              <span className="px-2 py-1 bg-[#1B4DA0] rounded-lg text-white text-xs font-black">{selectedJobs.length}</span>
-              <span className="text-sm font-bold text-white">positions selected</span>
-            </div>
-            <div className="flex items-center gap-6">
-              {(() => {
-                const selectedData = jobs.filter(j => selectedJobs.includes(j.id));
-                const allHold = selectedData.length > 0 && selectedData.every(j => j.status === 'Hold');
-
-                return (
-                  <button
-                    onClick={() => handleBulkStatusUpdate(allHold ? 'Open' : 'Hold')}
-                    className="flex items-center gap-2 text-sm font-bold text-[#1B4DA0] hover:text-[#0D47A1] transition-colors"
-                  >
-                    <RefreshCw size={18} className={allHold ? "rotate-180" : ""} />
-                    {allHold ? 'Open Again' : 'Hold Selected'}
-                  </button>
-                );
-              })()}
-            </div>
-            <button
-              onClick={() => setSelectedJobs([])}
-              className="ml-4 p-1 text-gray-400 hover:text-white transition-colors"
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedJobs.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-6 py-4 bg-[#1A1A2E]/95 backdrop-blur-md rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-6 border border-white/10"
             >
-              <X size={18} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <div className="flex items-center gap-4 pr-6 border-r border-white/10 shrink-0">
+                <span className="w-6 h-6 flex items-center justify-center bg-[#1B4DA0] rounded-lg text-white text-[10px] font-black shadow-lg shadow-[#1B4DA0]/20">
+                  {selectedJobs.length}
+                </span>
+                <span className="text-xs font-bold text-white uppercase tracking-widest whitespace-nowrap">Positions Selected</span>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                {(() => {
+                  const selectedData = jobs.filter(j => selectedJobs.includes(j.id));
+                  const hasOpen = selectedData.some(j => j.status === 'Open' || j.status === 'Urgent');
+                  const hasHold = selectedData.some(j => j.status === 'Hold');
+                  const hasNotUrgent = selectedData.some(j => j.priority !== 'Urgent');
+                  const hasUrgent = selectedData.some(j => j.priority === 'Urgent');
+                  const hasNotComplete = selectedData.some(j => j.status !== 'Complete');
+
+                  return (
+                    <>
+                      {hasOpen && (
+                        <button
+                          onClick={() => handleBulkStatusUpdate('Hold')}
+                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-white/5 hover:bg-white/10 transition-all border border-white/10 active:scale-95"
+                        >
+                          Mark As Hold
+                        </button>
+                      )}
+                      {hasHold && (
+                        <button
+                          onClick={() => handleBulkStatusUpdate('Open')}
+                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-blue-600/20 hover:bg-blue-600/30 transition-all border border-blue-500/30 active:scale-95"
+                        >
+                          Mark As Open
+                        </button>
+                      )}
+                      {hasNotUrgent && (
+                        <button
+                          onClick={() => handleBulkStatusUpdate('Urgent')}
+                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-amber-900 bg-amber-400 hover:bg-amber-500 transition-all shadow-lg shadow-amber-500/20 active:scale-95"
+                        >
+                          Mark As Urgent
+                        </button>
+                      )}
+                      {hasUrgent && (
+                        <button
+                          onClick={() => handleBulkStatusUpdate('Medium')}
+                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-slate-600 hover:bg-slate-700 transition-all active:scale-95"
+                        >
+                          Mark As Normal
+                        </button>
+                      )}
+                      {hasNotComplete && (
+                        <button
+                          onClick={() => handleBulkStatusUpdate('Complete')}
+                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-emerald-900 bg-emerald-400 hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+                        >
+                          Mark As Complete
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
+                
+                 <button
+                  onClick={async () => {
+                    if (window.confirm(`Delete ${selectedJobs.length} positions?`)) {
+                      const toastId = toast.loading('Deleting...');
+                      try {
+                        await Promise.all(selectedJobs.map(id => deleteRecruitmentPosition(id)));
+                        setJobs(prev => prev.filter(j => !selectedJobs.includes(j.id)));
+                        setSelectedJobs([]);
+                        toast.success('Deleted successfully', { id: toastId });
+                      } catch (e) {
+                        toast.error('Delete failed', { id: toastId });
+                      }
+                    }
+                  }}
+                  className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-rose-100 bg-rose-600/20 hover:bg-rose-600 hover:text-white transition-all border border-rose-500/30 active:scale-95"
+                >
+                  Delete Selected
+                </button>
+              </div>
+              <button
+                onClick={() => setSelectedJobs([])}
+                className="ml-4 p-1 text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Right Side Drawer for Job Details & Tasks */}
       <AnimatePresence>
