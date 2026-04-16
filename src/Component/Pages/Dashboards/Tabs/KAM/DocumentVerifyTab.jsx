@@ -333,17 +333,11 @@ Mabicons Recruitment Team`);
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center gap-10 py-32">
-                    <div className="relative">
-                       <div className="w-32 h-32 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-800 animate-[spin_15s_linear_infinite]" />
-                       <div className="absolute inset-0 flex items-center justify-center">
-                          <Fingerprint size={48} className="text-slate-100 dark:text-slate-800" />
-                       </div>
-                    </div>
+                  <div className="flex-1 flex flex-col items-center justify-center py-32">
                     <div className="text-center max-w-sm">
-                      <p className="text-xs font-bold uppercase tracking-[8px] text-slate-400 dark:text-slate-600">Encrypted Pending</p>
-                      <p className={`text-[11px] font-bold mt-4 leading-relaxed ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Digital transmission not received from source.
+                      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#1B4DA0]">Pending Audit Analysis</p>
+                      <p className={`text-[11px] font-medium mt-4 leading-relaxed opacity-40 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Document coordinates awaiting digital transmission.
                       </p>
                     </div>
                   </div>

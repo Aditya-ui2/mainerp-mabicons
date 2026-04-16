@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import ReactDOM from "react-dom";
-import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, Plus, AlertCircle, Calendar, Search, Star } from "lucide-react";
+import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, CheckSquare, Plus, AlertCircle, Calendar, Search, Star } from "lucide-react";
 import { toast } from "sonner";
 import { AVATAR_COLORS, getAvatarColor } from "./mockData";
 import {
@@ -10,6 +10,8 @@ import {
   cancelInterview,
   scheduleNewInterview,
   getAllCandidates,
+  updateCandidateStatus,
+  rejectPipelineCandidate,
   getDepartmentTeamMembers,
   getAllAdmins,
   getAllKAMMembers,
@@ -33,6 +35,8 @@ export default function InterviewsPage() {
   const [selectedInterview, setSelectedInterview] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isShortlisting, setIsShortlisting] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [editableInterview, setEditableInterview] = useState({
     date: "",
     time: "",
@@ -157,6 +161,59 @@ export default function InterviewsPage() {
       toast.error("Failed to update interview");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleShortlistCandidate = async () => {
+    if (!selectedInterview || !selectedInterview.candidateId) {
+      toast.error("Candidate information missing");
+      return;
+    }
+
+    try {
+      setIsShortlisting(true);
+      const response = await updateCandidateStatus(selectedInterview.candidateId, {
+        status: "Shortlisted",
+        stage: "Technical Round",
+        notes: "Shortlisted from Interview Schedule page"
+      });
+
+      if (response.success) {
+        toast.success(`${selectedInterview.candidateName} has been shortlisted!`);
+      } else {
+        toast.error(response.message || "Failed to shortlist candidate");
+      }
+    } catch (error) {
+      console.error("Shortlist error:", error);
+      toast.error("Network error while shortlisting");
+    } finally {
+      setIsShortlisting(false);
+    }
+  };
+
+  const handleRejectCandidate = async () => {
+    if (!selectedInterview || !selectedInterview.candidateId) {
+      toast.error("Candidate information missing");
+      return;
+    }
+
+    try {
+      setIsRejecting(true);
+      const response = await rejectPipelineCandidate(selectedInterview.candidateId, {
+        notes: "Rejected from Interview Schedule page"
+      });
+
+      if (response.success) {
+        toast.success(`${selectedInterview.candidateName} has been rejected from pipeline.`);
+        // Candidate remains in resume bank by default in the backend
+      } else {
+        toast.error(response.message || "Failed to reject candidate");
+      }
+    } catch (error) {
+      console.error("Reject error:", error);
+      toast.error("Network error while rejecting");
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -611,9 +668,13 @@ export default function InterviewsPage() {
           <button
             onClick={handleSharePointSync}
             disabled={isSyncing}
-            className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
+            className="group flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[170px]"
           >
-            {isSyncing ? <FiRefreshCw className="animate-spin" /> : <FiDatabase className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />}
+            {isSyncing ? (
+              <div className="w-4 h-4 border-2 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <FiDatabase className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />
+            )}
             {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
           </button>
           <button
@@ -757,18 +818,13 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Candidate */}
-                <div className="flex items-start gap-3 min-w-0 py-1">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-bold flex-shrink-0 shadow-sm mt-0.5 ${candidateColor}`}>
-                    {interview.candidateAvatar}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left flex items-center gap-2">
-                      {interview.candidateName}
-                      {interview.source === 'sharepoint' && (
-                        <FiDatabase size={10} className="text-emerald-500" title="Source: SharePoint" />
-                      )}
-                    </p>
-                  </div>
+                <div className="flex items-center min-w-0 py-1">
+                  <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left flex items-center gap-2">
+                    {interview.candidateName}
+                    {interview.source === 'sharepoint' && (
+                      <FiDatabase size={10} className="text-emerald-500" title="Source: SharePoint" />
+                    )}
+                  </p>
                 </div>
 
                 {/* Client */}
@@ -786,11 +842,8 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Host */}
-                <div className="flex items-center gap-2 py-1">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-black ${getAvatarColor(interview.interviewer, interview.interviewerAvatar)}`}>
-                    {interview.interviewerAvatar}
-                  </div>
-                  <span className="text-xs font-bold text-[#1A1A2E] truncate">{interview.interviewer.split(' ')[0]}</span>
+                <div className="flex items-center py-1">
+                  <span className="text-xs font-bold text-[#1A1A2E] truncate">{interview.interviewer}</span>
                 </div>
 
                 {/* Status */}
@@ -818,9 +871,19 @@ export default function InterviewsPage() {
                           setFeedbackForm(existing || { rating: 0, note: '' });
                           setShowFeedbackModal(true);
                         }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isReviewed ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-[#0D47A1] text-white hover:bg-[#0a3a82] shadow-md shadow-[#0D47A1]/20'}`}
+                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all border ${isReviewed ? 'bg-amber-50 text-amber-600 border-amber-100/50 shadow-sm' : 'bg-[#0D47A1] text-white hover:bg-[#0a3a82] shadow-md shadow-[#0D47A1]/20 border-transparent'}`}
                       >
-                        <Pencil size={13} /> {isReviewed ? 'Reviewed' : 'Feedback'}
+                        {isReviewed ? (
+                          <>
+                            <Star size={12} className="fill-amber-500 text-amber-500" />
+                            <span>{isReviewed.rating}/5</span>
+                          </>
+                        ) : (
+                          <>
+                            <Pencil size={12} />
+                            <span>Feedback</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   ) : null}
@@ -919,6 +982,43 @@ export default function InterviewsPage() {
             </div>
 
             <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
+              {/* Shortlist Action Bar */}
+              <div className="bg-[#F8FAFF] rounded-[24px] p-5 border border-[#1B4DA0]/10 flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#1B4DA0]/10 flex items-center justify-center text-[#1B4DA0]">
+                    <CheckSquare size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[#1A1A2E]">Candidate Shortlisted</h4>
+                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Move to pipeline shortlisted stage</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleRejectCandidate}
+                    disabled={isRejecting || isShortlisting}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-red-500 hover:bg-red-500 hover:text-white border border-red-100 active:scale-90"
+                  >
+                    {isRejecting ? (
+                      <div className="w-5 h-5 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />
+                    ) : (
+                      <X size={24} />
+                    )}
+                  </button>
+                  <button
+                    onClick={handleShortlistCandidate}
+                    disabled={isShortlisting || isRejecting}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white border border-[#1B4DA0]/10 active:scale-90"
+                  >
+                    {isShortlisting ? (
+                      <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                    ) : (
+                      <Check size={24} />
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <div className="bg-[#FAFAF8] rounded-[24px] p-8 border border-[#F4F3EF] space-y-8">
                 {/* Schedule Summary Grid */}
                 <div className="grid grid-cols-2 gap-x-12 gap-y-8">
