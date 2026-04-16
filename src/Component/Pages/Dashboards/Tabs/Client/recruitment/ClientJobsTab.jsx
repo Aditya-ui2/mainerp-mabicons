@@ -184,6 +184,7 @@ export default function ClientJobsTab() {
     deadline: '', requirements: '', responsibilities: '', roleType: '',
   });
   const [clientSkillInput, setClientSkillInput] = useState('');
+  const [currentClientName, setCurrentClientName] = useState('Client');
 
   const fetchData = async () => {
     setLoading(true);
@@ -192,13 +193,18 @@ export default function ClientJobsTab() {
       if (!token) return;
       const decoded = jwtDecode(token);
       setClientId(decoded.id);
+      
+      // Fetch fresh client details to get the company name
       const res = await getClientDashboardOverview(decoded.id);
 
-      if (res?.success && res.data?.recruitment) {
-        setPositions(res.data.recruitment.positions || []);
-        setCandidates(res.data.recruitment.candidates || []);
-      } else {
-        setPositions([]);
+      if (res?.success) {
+        if (res.data?.client?.companyName) {
+          setCurrentClientName(res.data.client.companyName);
+        }
+        if (res.data?.recruitment) {
+          setPositions(res.data.recruitment.positions || []);
+          setCandidates(res.data.recruitment.candidates || []);
+        }
       }
     } catch (err) {
       console.error('Failed to load jobs:', err);
@@ -235,6 +241,7 @@ export default function ClientJobsTab() {
       const positionData = {
         title: newJob.title,
         clientId,
+        client: currentClientName, // Linking current client name
         description: newJob.description,
         location: newJob.location || 'Remote',
         type: newJob.type,
@@ -247,6 +254,9 @@ export default function ClientJobsTab() {
         deadline: newJob.deadline || undefined,
         requirements: newJob.requirements ? newJob.requirements.split('\n').filter(Boolean) : [],
         responsibilities: newJob.responsibilities ? newJob.responsibilities.split('\n').filter(Boolean) : [],
+        roleType: newJob.roleType,
+        postedByClient: true, // Internal flag for Admin visibility
+        departmentTeamId: '60de4380-0140-49ff-b26d-a8d06333af11', // Explicitly linking to Admin Sachin (Recruitment Head)
       };
       await createRecruitmentPosition(positionData);
       setShowAddJob(false);
@@ -278,7 +288,6 @@ export default function ClientJobsTab() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex flex-col items-start text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Job Positions</h1>
-          <p className="text-base font-medium text-[#94A3B8] mt-1">Manage and track all your active recruitment requirements</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -389,7 +398,7 @@ export default function ClientJobsTab() {
                       Create New Position
                     </h2>
                     <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[4px] mt-2">
-                      JOB POSTING & RECRUITMENT
+                      LINKED TO RECRUITMENT HEAD: SACHIN
                     </p>
 
                     <button
@@ -437,15 +446,14 @@ export default function ClientJobsTab() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Client/Company *</label>
-                        <div className="relative">
-                          <select
-                            disabled={true} // As this is Client Portal, client is fixed
-                            className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all opacity-60 cursor-not-allowed appearance-none pr-10"
-                          >
-                            <option>Select Company</option>
-                          </select>
-                          <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 mb-2">Client/Company</label>
+                        <div className="relative group">
+                          <div className="w-full bg-[#FAFAF8] border border-[#F4F3EF] rounded-[20px] px-6 py-4 text-sm font-bold text-[#1B4DA0] outline-none transition-all flex items-center justify-between shadow-inner">
+                            <span>{currentClientName}</span>
+                            <div className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-500 text-[8px] font-black uppercase tracking-widest border border-blue-100">
+                              Auto-Linked
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -624,8 +632,8 @@ export default function ClientJobsTab() {
       {/* Positions Table */}
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
         {/* Table Header */}
-        <div className="grid grid-cols-[2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
-          {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => (
+        <div className="grid grid-cols-[2fr_130px_130px_110px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+          {["Position", "Status", "Posted", "Applicants", ""].map((h, i) => (
             <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start justify-start">
               {h}
             </div>
@@ -642,23 +650,23 @@ export default function ClientJobsTab() {
               <div
                 key={pos.id}
                 onClick={() => setSelectedJob(pos)}
-                className="grid grid-cols-[2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 items-center px-8 py-3 last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+                className="grid grid-cols-[2fr_130px_130px_110px_40px] gap-4 items-center px-8 py-4 last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
               >
 
                 {/* Position Info */}
-                <div className="flex flex-col justify-center items-start min-w-0 py-1">
-                  <p className="text-[14px] font-bold text-[#0f172a] group-hover:text-[#0D47A1] transition-colors truncate text-left">
-                    {pos.title}
-                  </p>
-                  <div className="flex items-center justify-start gap-1.5 mt-0.5">
-                    <MapPin size={11} className="text-[#9B9BAD]" />
-                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest truncate text-left">{pos.location || 'Remote'}</span>
+                <div className="flex items-center justify-start gap-4 min-w-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-xs font-black group-hover:bg-[#EEF2FB] transition-colors">
+                    {pos.title.slice(0, 2).toUpperCase()}
                   </div>
-                </div>
-
-                {/* Client */}
-                <div className="flex items-center justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
-                  {pos.client || 'Internal'}
+                  <div className="flex flex-col items-start min-w-0">
+                    <p className="text-[14px] font-bold text-[#0f172a] group-hover:text-[#0D47A1] transition-colors truncate text-left">
+                      {pos.title}
+                    </p>
+                    <div className="flex items-center justify-start gap-1.5 mt-0.5">
+                      <MapPin size={11} className="text-[#9B9BAD]" />
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest truncate text-left">{pos.location || 'Remote'}</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Status */}
@@ -675,17 +683,10 @@ export default function ClientJobsTab() {
 
                 {/* Applicants */}
                 <div className="flex items-center justify-start gap-2 py-1">
-                  <div className="w-7 h-7 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
+                  <div className="w-8 h-8 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
                     <Users size={12} />
                   </div>
-                  <span className="text-[13px] font-black text-[#1A1A2E]">{pos.candidateCount || 0}</span>
-                </div>
-
-                {/* Assign To */}
-                <div className="flex items-center justify-start py-1">
-                  <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-wider">
-                    {pos.assignedToName || 'Not assignable'}
-                  </span>
+                  <span className="text-sm font-black text-[#1A1A2E]">{pos.candidateCount || 0}</span>
                 </div>
 
                 {/* Chevron */}

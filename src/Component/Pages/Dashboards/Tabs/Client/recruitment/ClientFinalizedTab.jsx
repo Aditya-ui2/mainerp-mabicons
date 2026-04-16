@@ -8,7 +8,9 @@ import {
 import { FaRupeeSign } from 'react-icons/fa';
 import { UserCheck } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
-import { getClientDashboardOverview } from '../../../../service/api';
+import { getClientDashboardOverview, generateCandidateCredentials } from '../../../../service/api';
+import toast from 'react-hot-toast';
+import { Zap, RotateCcw } from 'lucide-react';
 
 export default function ClientFinalizedTab() {
   const [candidates, setCandidates] = useState([]);
@@ -74,8 +76,7 @@ export default function ClientFinalizedTab() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div className="flex flex-col items-start text-left">
-          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Finalized & Wins</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Celebrating success: Offers delivered and talent onboarded</p>
+          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Finalized & Offers</h1>
         </div>
       </div>
 
@@ -299,6 +300,98 @@ export default function ClientFinalizedTab() {
 
                 {/* Footer */}
                 <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF9]">
+                  {/* BGV Onboarding Credentials - Same as HR Dashboard */}
+                  {(selectedCandidate.stage === 'Joined' || selectedCandidate.stage === 'Offer Sent') && (
+                    <div className="pt-8 border-t border-[#F4F3EF]">
+                      <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] block mb-4">Onboarding Protocol</span>
+                      
+                      {!selectedCandidate.onboardingUsername ? (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
+                            const targetId = selectedCandidate.id || selectedCandidate._id;
+                            try {
+                              if (!targetId) {
+                                toast.error("System Error: Reference missing.", { id: loadingId });
+                                return;
+                              }
+                              
+                              const response = await generateCandidateCredentials(targetId);
+                              if (response && response.success && response.data) {
+                                   const finalUsername = response.data.username || response.data.email;
+                                   const finalPass = response.data.password;
+
+                                   // Update local list
+                                   setCandidates(prev => prev.map(c => 
+                                     (c.id === targetId || c._id === targetId) 
+                                       ? { ...c, onboardingUsername: finalUsername, onboardingPassword: finalPass } 
+                                       : c
+                                   ));
+                                   // Update selected candidate for sidebar
+                                   setSelectedCandidate(prev => ({ 
+                                     ...prev, 
+                                     onboardingUsername: finalUsername, 
+                                     onboardingPassword: finalPass 
+                                   }));
+                                   
+                                   toast.success(`Success: Records Secured`, { id: loadingId });
+                                 } else {
+                                   toast.error(`Control Error: ${response?.message || 'Gateway rejection'}`, { id: loadingId });
+                                 }
+                            } catch (err) {
+                               toast.error("Console Error: Protocol failed to reach gateway.", { id: loadingId });
+                            }
+                          }}
+                          className="bg-[#1B4DA0] text-white px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-500/10 w-full"
+                        >
+                          <Zap size={16} fill="currentColor" />
+                          GENERATE ONBOARDING CREDENTIALS
+                        </motion.button>
+                      ) : (
+                        <div className="flex flex-col gap-3 group/bgv relative scale-in-center">
+                           <div className="bg-[#F8F9FA] border border-[#DADCE0] rounded-2xl p-6 shadow-sm">
+                             <div className="flex items-center justify-between gap-4 mb-4 border-b border-slate-100 pb-3">
+                               <div className="flex flex-col">
+                                 <span className="text-[9px] font-black text-[#5F6368] uppercase tracking-[2px]">Onboarding ID</span>
+                                 <span className="text-sm font-bold text-[#1B4DA0] font-jakarta">{selectedCandidate.onboardingUsername}</span>
+                                </div>
+                                <FiUserCheck className="text-[#1B4DA0] opacity-20" size={24} />
+                             </div>
+                             <div className="flex items-center justify-between gap-4">
+                               <div className="flex flex-col">
+                                 <span className="text-[9px] font-black text-[#5F6368] uppercase tracking-[2px]">Onboarding Pass</span>
+                                 <span className="text-sm font-mono font-black text-[#202124] tracking-widest uppercase">{selectedCandidate.onboardingPassword}</span>
+                               </div>
+                               <FiActivity className="text-emerald-500 animate-pulse" size={18} />
+                             </div>
+                           </div>
+                           
+                           <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const targetId = selectedCandidate.id || selectedCandidate._id;
+                                setCandidates(prev => prev.map(c => 
+                                  (c.id === targetId || c._id === targetId) 
+                                    ? { ...c, onboardingUsername: null, onboardingPassword: null } 
+                                    : c
+                                ));
+                                setSelectedCandidate(prev => ({ ...prev, onboardingUsername: null, onboardingPassword: null }));
+                                toast.info("Console: Security record cleared locally.");
+                              }}
+                              className="w-full py-2.5 text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-all flex items-center justify-center gap-2"
+                            >
+                              <RotateCcw size={12} />
+                              Reset Security Credentials
+                            </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <button 
                     onClick={() => setSelectedCandidate(null)}
                     className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl shadow-gray-200"

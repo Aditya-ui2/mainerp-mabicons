@@ -60,6 +60,8 @@ import {
   updateKAMMember,
   deleteKAMMember,
   getDeptNotes,
+  createNote,
+  updateNote,
   getRecruitmentClients,
   getAllOffers,
 } from '../service/api';
@@ -81,6 +83,7 @@ const TeamMISReportsTab = lazy(() => import('./Tabs/Common/TeamMISReportsTab'));
 const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 const SettingsTab = lazy(() => import('./Tabs/SettingsTab'));
 const SelectionMISTab = lazy(() => import('./Tabs/KAMRecruitment/SelectionMISTab'));
+const MyProfileTab = lazy(() => import('./Tabs/Common/MyProfileTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -1326,6 +1329,13 @@ const RecruitmentHeadDashboard = () => {
   const [recentNotes, setRecentNotes] = useState([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
+  const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [newNote, setNewNote] = useState({ title: '', content: '' });
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [noteEditForm, setNoteEditForm] = useState({ title: '', content: '' });
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   const showToast = (message, type = 'success') => setToast({ message, type });
   const hideToast = () => setToast(null);
@@ -1433,7 +1443,68 @@ const RecruitmentHeadDashboard = () => {
   const compactDateInputRef = useRef(null);
   const dashboardDateInputRef = useRef(null);
 
-  // New Team and Client Filter States
+  const handleCreateQuickNote = async (e) => {
+    e.preventDefault();
+    if (!newNote.title.trim() || !newNote.content.trim()) {
+      showToast('Please enter both title and content', 'error');
+      return;
+    }
+
+    try {
+      setNoteSaving(true);
+      const response = await createNote({
+        title: newNote.title,
+        content: newNote.content,
+        department: 'HR Recruitment'
+      });
+
+      if (response.success || response.id) {
+        showToast('Note added successfully!', 'success');
+        setNewNote({ title: '', content: '' });
+        setShowAddNoteModal(false);
+        fetchRecentNotes();
+      } else {
+        throw new Error(response.message || 'Failed to add note');
+      }
+    } catch (error) {
+      console.error('Error creating note:', error);
+      showToast(error.message || 'Could not save note', 'error');
+    } finally {
+      setNoteSaving(false);
+    }
+  };
+
+  const handleUpdateSelectedNote = async () => {
+    if (!noteEditForm.title.trim()) {
+      showToast('Title is required', 'error');
+      return;
+    }
+
+    try {
+      setIsSavingNote(true);
+      const noteId = selectedNote._id || selectedNote.id;
+      const response = await updateNote(noteId, {
+        title: noteEditForm.title,
+        content: noteEditForm.content,
+        department: 'HR Recruitment'
+      });
+
+      if (response && (response.success || response.note)) {
+        const updated = response.note || response.data;
+        setSelectedNote(updated);
+        setIsEditingNote(false);
+        showToast('Note updated successfully', 'success');
+        fetchRecentNotes(); // Refresh the list in overview
+      }
+    } catch (error) {
+      console.error('Error updating note:', error);
+      showToast('Failed to update note', 'error');
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  // New Team and Client Filter States content...
   const [teamFilter, setTeamFilter] = useState('All Team');
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
   const teamDropdownRef = useRef(null);
@@ -1545,7 +1616,7 @@ const RecruitmentHeadDashboard = () => {
   // Fetch KAM Team data from API
   const fetchKAMTeam = async (filter = dateFilter, client = clientFilter) => {
     try {
-      setTeamLoading(true);
+      if (kamTeam.length === 0) setTeamLoading(true);
       const filterParams = buildDateFilterParams(filter);
 
       // Inject client filter if selected
@@ -1589,130 +1660,38 @@ const RecruitmentHeadDashboard = () => {
 
   const fetchClientJobDistribution = async (clientList) => {
     try {
-      // 3 PREMIUM MOCK CLIENTS as requested - ALWAYS SHOW even if API fails
-      const premiumMocks = [
-        {
-          id: 'mock-Google',
-          name: 'Google Inc.',
-          jobCount: 24,
-          industry: 'Technology',
-          priority: 'High',
-          lastActive: 'Today',
-          hiringManager: 'Sundar P.',
-          topRoles: ['Staff Software Engineer', 'Cloud Architect', 'ML Researcher'],
-          description: 'Global leader in search and cloud computing, expanding their AI division in India.',
-          location: 'Bangalore / Remote',
-          founded: '1998',
-          totalHired: 452
-        },
-        {
-          id: 'mock-Microsoft',
-          name: 'Microsoft',
-          jobCount: 18,
-          industry: 'Technology',
-          priority: 'High',
-          lastActive: 'Yesterday',
-          hiringManager: 'Satya Nadella',
-          topRoles: ['Azure Lead', 'Principal Consultant', 'Security Analyst'],
-          description: 'Dominating enterprise software and cloud services, looking for senior leadership roles.',
-          location: 'Hyderabad',
-          founded: '1975',
-          totalHired: 320
-        },
-        {
-          id: 'mock-Amazon',
-          name: 'Amazon',
-          jobCount: 12,
-          industry: 'E-commerce',
-          priority: 'Medium',
-          lastActive: '2 days ago',
-          hiringManager: 'Jeff Bezos',
-          topRoles: ['SDE-III', 'Logistics Manager', 'UX Researcher'],
-          description: 'Scaling logistics and retail operations globally with focus on sustainability.',
-          location: 'Gurgaon',
-          founded: '1994',
-          totalHired: 285
-        }
-      ];
-
       const res = await getAllRecruitmentPositions();
-      let distribution = [...premiumMocks];
+      let distribution = [];
 
       if (res.success) {
         const jobs = res.data || [];
-        const mockIndustries = ['Technology', 'Healthcare', 'Fintech', 'EduTech', 'E-commerce', 'Manufacturing'];
-        const mockPriorities = ['High', 'Medium', 'Medium', 'Standard'];
-
         const apiClients = clientList.map((client, idx) => {
           const clientName = (client.companyName || client.name || '').toLowerCase();
-          const jobCount = jobs.filter(job =>
-            (job.client || job.companyName || '').toLowerCase() === clientName
-          ).length;
+          const jobCount = jobs.filter(job => {
+            const jClient = job?.client?.companyName || job?.client?.name || (typeof job?.client === 'string' ? job.client : '') || '';
+            return String(jClient).toLowerCase() === clientName;
+          }).length;
 
           return {
             id: client.id || client._id,
             name: client.companyName || client.name,
             jobCount: jobCount,
-            industry: mockIndustries[idx % mockIndustries.length],
-            priority: mockPriorities[idx % mockPriorities.length],
-            lastActive: new Date(Date.now() - (idx * 24 * 60 * 60 * 1000)).toLocaleDateString(),
-            hiringManager: ['Sarah Chen', 'Robert Fox', 'Jane Cooper', 'Cody Fisher'][idx % 4],
-            topRoles: ['Senior Frontend Dev', 'Backend Lead', 'Product Designer'].slice(0, (idx % 3) + 1),
-            totalHired: Math.floor(Math.random() * 50) + 10
+            industry: client.industry || 'Technology',
+            priority: 'Standard',
+            lastActive: client.updatedAt ? new Date(client.updatedAt).toLocaleDateString() : 'N/A',
+            hiringManager: client.contactPerson || 'N/A',
+            topRoles: [],
+            totalHired: 0
           };
         });
 
-        distribution = [...premiumMocks, ...apiClients].sort((a, b) => b.jobCount - a.jobCount);
+        distribution = apiClients.sort((a, b) => b.jobCount - a.jobCount);
       }
 
       setClientJobDistribution(distribution);
     } catch (e) {
       console.error('Failed to fetch job distribution:', e);
-      // Fallback to just mocks on error
-      setClientJobDistribution([
-        {
-          id: 'mock-Google',
-          name: 'Google Inc.',
-          jobCount: 24,
-          industry: 'Technology',
-          priority: 'High',
-          lastActive: 'Today',
-          hiringManager: 'Sundar P.',
-          topRoles: ['Staff Software Engineer', 'Cloud Architect', 'ML Researcher'],
-          description: 'Global leader in search and cloud computing, expanding their AI division in India.',
-          location: 'Bangalore / Remote',
-          founded: '1998',
-          totalHired: 452
-        },
-        {
-          id: 'mock-Microsoft',
-          name: 'Microsoft',
-          jobCount: 18,
-          industry: 'Technology',
-          priority: 'High',
-          lastActive: 'Yesterday',
-          hiringManager: 'Satya Nadella',
-          topRoles: ['Azure Lead', 'Principal Consultant', 'Security Analyst'],
-          description: 'Dominating enterprise software and cloud services, looking for senior leadership roles.',
-          location: 'Hyderabad',
-          founded: '1975',
-          totalHired: 320
-        },
-        {
-          id: 'mock-Amazon',
-          name: 'Amazon',
-          jobCount: 12,
-          industry: 'E-commerce',
-          priority: 'Medium',
-          lastActive: '2 days ago',
-          hiringManager: 'Jeff Bezos',
-          topRoles: ['SDE-III', 'Logistics Manager', 'UX Researcher'],
-          description: 'Scaling logistics and retail operations globally with focus on sustainability.',
-          location: 'Gurgaon',
-          founded: '1994',
-          totalHired: 285
-        }
-      ]);
+      setClientJobDistribution([]);
     }
   };
 
@@ -1762,11 +1741,11 @@ const RecruitmentHeadDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (activeTab !== 'Dashboard') return;
-    const timer = setInterval(() => {
+    // Refresh core dashboard data strictly on mount or when tab changes back to Dashboard
+    if (activeTab === 'Dashboard') {
+      fetchDashboardData(dateFilter, teamFilter, clientFilter);
       fetchRecentNotes();
-    }, 30000);
-    return () => clearInterval(timer);
+    }
   }, [activeTab]);
 
   // Apply filter and refresh data
@@ -1778,7 +1757,7 @@ const RecruitmentHeadDashboard = () => {
 
   const fetchDashboardData = async (filter = dateFilter, team = teamFilter, client = clientFilter, activity = activityFilter) => {
     try {
-      setLoading(true);
+      if (Object.keys(stats || {}).length === 0 || (stats.activePositions === 0 && stats.totalCandidates === 0)) setLoading(true);
 
       // Build filter params for API
       const filterParams = buildDateFilterParams(filter);
@@ -2219,6 +2198,8 @@ const RecruitmentHeadDashboard = () => {
               return <NotesTab isDarkMode={false} department="HR Recruitment" />;
             case 'Settings':
               return <SettingsTab />;
+            case 'My Profile':
+              return <MyProfileTab />;
             case 'Document Verification':
             case 'document-verification':
               return <DocumentVerifyTab isDarkMode={false} />;
@@ -2655,17 +2636,16 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                           <div className="text-left">
                             <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne text-left">Upcoming Interviews</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 text-left">Today's breakdown</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex gap-6 overflow-x-auto no-scrollbar pb-6 -mx-2 px-2">
-                        {upcomingInterviews.slice(0, 4).map((interview) => (
+                      <div className="flex flex-col gap-4 overflow-y-auto max-h-[450px] custom-scrollbar pr-3 -mr-2">
+                        {upcomingInterviews.map((interview) => (
                           <div
                             key={interview.id}
                             onClick={() => setSelectedInterview(interview)}
-                            className="min-w-[320px] bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-[#3FA9F5]/50 hover:shadow-2xl hover:shadow-[#3FA9F5]/5 transition-all duration-500 cursor-pointer relative text-left flex flex-col justify-between"
+                            className="w-full bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-[#3FA9F5]/40 hover:shadow-xl hover:shadow-[#3FA9F5]/5 transition-all duration-300 cursor-pointer relative text-left flex flex-col justify-between"
                           >
                             <div>
                               <div className="flex justify-between items-start mb-5">
@@ -2676,9 +2656,8 @@ const RecruitmentHeadDashboard = () => {
                                 <span className="text-[9px] font-bold text-slate-500 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-50">{interview.time}</span>
                               </div>
 
-                              <div className="mb-6">
+                              <div className="mb-4">
                                 <h4 className="text-sm font-bold text-[#1A1A2E] tracking-tight group-hover:text-[#3FA9F5] transition-colors uppercase leading-tight">{interview.candidate}</h4>
-                                <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1 leading-none">{interview.position}</p>
                               </div>
                             </div>
 
@@ -2702,16 +2681,15 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                           <div className="text-left">
                             <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne text-left">Upcoming Joinings</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 text-left">Onboarding pipeline</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex gap-6 overflow-x-auto no-scrollbar pb-6 -mx-2 px-2">
+                      <div className="flex flex-col gap-4 overflow-y-auto max-h-[450px] custom-scrollbar pr-3 -mr-2">
                         {upcomingJoinings.length > 0 ? upcomingJoinings.map((joining) => (
                           <div
                             key={joining.id}
-                            className="min-w-[320px] bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-emerald-400/50 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-500 cursor-pointer relative text-left flex flex-col justify-between"
+                            className="w-full bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-emerald-400/40 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 cursor-pointer relative text-left flex flex-col justify-between"
                           >
                             <div>
                               <div className="flex justify-between items-start mb-5">
@@ -2723,9 +2701,8 @@ const RecruitmentHeadDashboard = () => {
                                 </span>
                               </div>
 
-                              <div className="mb-6">
+                              <div className="mb-4">
                                 <h4 className="text-sm font-bold text-[#1A1A2E] tracking-tight group-hover:text-emerald-600 transition-colors uppercase leading-tight">{joining.candidate}</h4>
-                                <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1 leading-none">{joining.position}</p>
                               </div>
                             </div>
 
@@ -2753,40 +2730,31 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                           <div className="text-left">
                             <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">Active Team</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Live performance tracking</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex gap-6 overflow-x-auto no-scrollbar pb-6 -mx-2 px-2">
-                        {kamTeam.slice(0, 4).map((kam) => {
+                      <div className="flex flex-col gap-3 overflow-y-auto max-h-[450px] custom-scrollbar pr-3 -mr-2">
+                        {kamTeam.map((kam) => {
                           const initials = (kam.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 1).toUpperCase();
                           const isActive = teamFilter === kam.name;
                           return (
                             <div
                               key={kam.id}
                               onClick={() => handleViewKAM(kam)}
-                              className={`min-w-[220px] p-2 rounded-[24px] flex items-center gap-3 transition-all duration-300 cursor-pointer border-2 ${
-                                isActive 
-                                  ? 'bg-[#E3F2FD] border-blue-400 shadow-lg shadow-blue-500/10' 
-                                  : 'bg-white border-transparent hover:bg-[#F8FAFF] hover:border-slate-100 shadow-sm'
-                              }`}
+                              className={`w-full p-2.5 rounded-[24px] flex items-center gap-4 transition-all duration-300 cursor-pointer border-2 ${isActive
+                                  ? 'bg-[#E3F2FD] border-blue-400 shadow-lg shadow-blue-500/10'
+                                  : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-100 shadow-sm'
+                                }`}
                             >
-                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-colors ${
-                                isActive ? 'bg-white text-blue-600' : 'bg-[#E3F2FD80] text-[#1B4DA0]'
-                              }`}>
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-colors ${isActive ? 'bg-white text-blue-600' : 'bg-[#E3F2FD80] text-[#1B4DA0]'
+                                }`}>
                                 {initials}
                               </div>
                               <div className="flex flex-col text-left overflow-hidden">
-                                <p className={`text-sm font-bold tracking-tight transition-colors truncate ${
-                                  isActive ? 'text-blue-700' : 'text-[#1A1A2E]'
-                                }`}>
+                                <p className={`text-sm font-bold tracking-tight transition-colors truncate ${isActive ? 'text-blue-700' : 'text-[#1A1A2E]'
+                                  }`}>
                                   {kam.name}
-                                </p>
-                                <p className={`text-[9px] font-bold uppercase tracking-wider ${
-                                  isActive ? 'text-blue-500' : 'text-[#9B9BAD]'
-                                }`}>
-                                  {kam.role?.split(' ')[0] || 'KAM'}
                                 </p>
                               </div>
                             </div>
@@ -2804,14 +2772,16 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                           <div className="text-left">
                             <h3 className="font-bold text-xl text-[#1A1A2E] tracking-tight font-syne leading-none text-left">Notes</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5 text-left">Directives and guidelines</p>
                           </div>
                         </div>
-                        <button className="p-2 rounded-xl bg-[#FAFAF8] text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm">
+                        <button
+                          onClick={() => setShowAddNoteModal(true)}
+                          className="p-2 rounded-xl bg-[#FAFAF8] text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+                        >
                           <FiPlus className="w-5 h-5" strokeWidth={2.5} />
                         </button>
                       </div>
-                      <div className="max-h-[350px] overflow-y-auto flex-1 bg-white p-6 space-y-4 no-scrollbar">
+                      <div className="max-h-[350px] overflow-y-auto flex-1 bg-white p-6 space-y-4 custom-scrollbar">
                         {notesLoading ? (
                           <div className="flex flex-col items-center justify-center py-12 gap-4">
                             <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin" />
@@ -2819,14 +2789,14 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                         ) : recentNotes.length > 0 ? (
                           recentNotes.map((note) => (
-                            <div key={note.id} className="p-4 rounded-2xl bg-[#FAFAF8] border border-[#F4F3EF] hover:bg-white hover:border-[#1B4DA0]/20 hover:shadow-md transition-all duration-300 group relative text-left">
+                            <div
+                              key={note.id}
+                              onClick={() => setSelectedNote(note)}
+                              className="p-4 rounded-2xl bg-[#FAFAF8] border border-[#F4F3EF] hover:bg-white hover:border-[#1B4DA0]/20 hover:shadow-md transition-all duration-300 group relative text-left cursor-pointer"
+                            >
                               <div className="flex items-center justify-between mb-1">
                                 <h4 className="font-bold text-[14px] text-slate-800 tracking-tight transition-colors font-syne">{note.title}</h4>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                                  {new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                </span>
                               </div>
-                              <p className="text-[12px] text-slate-600 leading-relaxed font-medium mb-2 line-clamp-2">{note.content}</p>
                               <div className="flex items-center justify-end">
                                 <button className="text-[#1B4DA0] hover:scale-110 transition-all opacity-0 group-hover:opacity-100">
                                   <FiArrowRight className="w-4 h-4" strokeWidth={2.5} />
@@ -2854,8 +2824,33 @@ const RecruitmentHeadDashboard = () => {
     );
   };
 
+  // Removed auto-refresh interval to prevent flickering. Data refreshes on tab change.
+
+  const dashboardStyles = `
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #cbd5e1;
+    }
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: #e2e8f0 transparent;
+    }
+  `;
+
   return (
     <>
+      <style>{dashboardStyles}</style>
       {/* Toast Notification */}
       <AnimatePresence>
         {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
@@ -2872,6 +2867,7 @@ const RecruitmentHeadDashboard = () => {
         notifications={notifications}
         onNotificationClick={handleNotificationClick}
         isLoading={loading}
+        bottomTabName="My Profile"
       >
         {renderContent()}
 
@@ -2886,12 +2882,96 @@ const RecruitmentHeadDashboard = () => {
         </AnimatePresence>
       </AdminLayout>
 
+      {/* Create Note Modal */}
+      <AnimatePresence>
+        {showAddNoteModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm z-[200]"
+              onClick={() => setShowAddNoteModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed left-1/2 top-[5vh] -translate-x-1/2 w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] flex flex-col max-h-[90vh] overflow-hidden"
+            >
+              <div className="p-10 border-b border-slate-50 flex flex-col items-center justify-center relative flex-shrink-0">
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-slate-900 font-syne tracking-tight">Create Note</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[4px] mt-1.5">Strategy Protocol Entry</p>
+                </div>
+                <button
+                  onClick={() => setShowAddNoteModal(false)}
+                  className="absolute right-8 top-10 w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
+                <form onSubmit={handleCreateQuickNote} className="space-y-10">
+                  <div className="space-y-4 text-center">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] block">Title *</label>
+                    <input
+                      autoFocus
+                      type="text"
+                      required
+                      value={newNote.title}
+                      onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                      className="w-full p-6 rounded-[24px] bg-[#F8F9FA] border border-slate-100 text-slate-900 font-bold text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none placeholder:text-slate-300 text-center"
+                      placeholder="Enter note title..."
+                    />
+                  </div>
+
+                  <div className="space-y-4 text-center">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] block">Content *</label>
+                    <textarea
+                      required
+                      rows={6}
+                      value={newNote.content}
+                      onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                      className="w-full p-6 rounded-[24px] bg-[#F8F9FA] border border-slate-100 text-slate-900 font-medium text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none placeholder:text-slate-300 resize-none text-center"
+                      placeholder="Write your note content here..."
+                    />
+                  </div>
+
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddNoteModal(false)}
+                      className="flex-1 py-5 bg-white border-2 border-slate-100 text-slate-500 rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={noteSaving}
+                      className="flex-[2] py-5 bg-[#1B4DA0] text-white rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-[#153e82] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 group disabled:opacity-70"
+                    >
+                      {noteSaving ? (
+                        <FiRefreshCw className="animate-spin w-4 h-4" />
+                      ) : (
+                        <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                      )}
+                      {noteSaving ? 'Processing...' : 'Create Note'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* KAM Detail Drawer */}
       <AnimatePresence>
         {showKAMModal && selectedKAM && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-[#1A1A2E]/20 backdrop-blur-[1px] z-[110]"
@@ -2911,7 +2991,7 @@ const RecruitmentHeadDashboard = () => {
                 <div className="flex items-center gap-3">
                   {isEditingInDetail ? (
                     <div className="flex items-center gap-2">
-                       <button
+                      <button
                         onClick={() => setIsEditingInDetail(false)}
                         className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
                       >
@@ -3027,7 +3107,7 @@ const RecruitmentHeadDashboard = () => {
                         </select>
                       ) : (
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${selectedKAM.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                        }`}>{selectedKAM.status}</span>
+                          }`}>{selectedKAM.status}</span>
                       )}
                     </div>
                     <div className="flex justify-between items-center">
@@ -3088,7 +3168,7 @@ const RecruitmentHeadDashboard = () => {
                       {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
                       {isSavingDetail ? 'Saving...' : 'Save Changes'}
                     </button>
-                    <button 
+                    <button
                       onClick={() => setIsEditingInDetail(false)}
                       className="flex-1 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
                     >
@@ -3771,6 +3851,114 @@ const RecruitmentHeadDashboard = () => {
                   className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
                 >
                   Cancel
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {selectedNote && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedNote(null)}
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm z-[200]"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[201] flex flex-col"
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
+                <div className="text-left">
+                   {isEditingNote ? (
+                     <input
+                       type="text"
+                       value={noteEditForm.title}
+                       onChange={(e) => setNoteEditForm({ ...noteEditForm, title: e.target.value })}
+                       className="w-full text-2xl font-bold text-[#1A1A2E] font-syne bg-transparent border-none focus:ring-0 p-0 placeholder:text-slate-300"
+                       placeholder="Note Title..."
+                       autoFocus
+                     />
+                   ) : (
+                     <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">{selectedNote.title}</h2>
+                   )}
+                  <div className="flex items-center gap-2 mt-1.5 justify-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">
+                      {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+                 <div className="flex items-center gap-3">
+                   {!isEditingNote && (
+                     <button
+                       onClick={() => {
+                         setNoteEditForm({ title: selectedNote.title, content: selectedNote.content });
+                         setIsEditingNote(true);
+                       }}
+                       className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center shadow-sm"
+                       title="Edit Note"
+                     >
+                       <FiEdit2 size={16} />
+                     </button>
+                   )}
+                   <button
+                     onClick={() => {
+                       setSelectedNote(null);
+                       setIsEditingNote(false);
+                     }}
+                     className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
+                   >
+                     <FiX size={18} />
+                   </button>
+                 </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-8">
+                <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-10 min-h-[300px]">
+                   {isEditingNote ? (
+                     <textarea
+                       value={noteEditForm.content}
+                       onChange={(e) => setNoteEditForm({ ...noteEditForm, content: e.target.value })}
+                       className="w-full min-h-[250px] text-[15px] text-[#4B4B5E] font-medium leading-[1.8] bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
+                       placeholder="Type note content here..."
+                     />
+                   ) : (
+                     <div className="text-[15px] text-[#4B4B5E] font-medium leading-[1.8] text-left whitespace-pre-wrap">
+                       {selectedNote.content}
+                     </div>
+                   )}
+                </div>
+
+                {/* Meta Info */}
+
+              </div>
+
+              {/* Footer */}
+              <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
+                <button
+                  onClick={() => setSelectedNote(null)}
+                  className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('Notes');
+                    setSelectedNote(null);
+                  }}
+                  className="flex-1 py-5 bg-[#0D47A1] text-white rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-[#0a3a82] transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                >
+                  <FiEdit2 size={14} />
+                  Go to Notes Tab
                 </button>
               </div>
             </motion.div>

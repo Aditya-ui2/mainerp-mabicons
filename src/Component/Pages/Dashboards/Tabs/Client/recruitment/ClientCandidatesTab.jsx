@@ -75,8 +75,7 @@ export default function ClientCandidatesTab() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div className="flex flex-col items-start text-left">
-          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Talent Pool</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Review and manage candidates across all hiring stages</p>
+          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Shortlisted Candidates</h1>
         </div>
       </div>
 
@@ -92,32 +91,6 @@ export default function ClientCandidatesTab() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold"
             />
-          </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-1 invisible-scrollbar">
-            <button
-              onClick={() => setStageFilter('all')}
-              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                stageFilter === 'all'
-                  ? 'bg-[#1A1A2E] text-white shadow-xl shadow-gray-400/20'
-                  : 'bg-white text-[#9B9BAD] border border-[#F4F3EF] hover:bg-[#F4F3EF]'
-              }`}
-            >
-              All ({candidates?.length || 0})
-            </button>
-            {stageKeys.filter(k => k !== 'rejected' && k !== 'joined').map(key => (
-              <button
-                key={key}
-                onClick={() => setStageFilter(key)}
-                className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                  stageFilter === key
-                    ? 'bg-[#1B4DA0] text-white shadow-xl shadow-blue-500/20'
-                    : 'bg-white text-[#9B9BAD] border border-[#F4F3EF] hover:bg-[#F4F3EF]'
-                }`}
-              >
-                {STAGE_CONFIG[key].label} ({stageCounts[key] || 0})
-              </button>
-            ))}
           </div>
         </div>
       </div>

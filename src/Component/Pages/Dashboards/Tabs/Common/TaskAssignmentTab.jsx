@@ -363,6 +363,20 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
   );
 };
 
+const normalizeUserType = (type = '') => {
+  const value = type.toString().trim().toLowerCase();
+  if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
+  if (['admin'].includes(value)) return 'admin';
+  if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmenthead';
+  if (['hrrecruitment', 'hr_recruitment', 'hr recruitment', 'recruitmenthr', 'recruitment_hr', 'recruitment hr'].includes(value)) return 'hrrecruitment';
+  if (['hroperations', 'hr_operations', 'hr operations', 'operations', 'hroperations'].includes(value)) return 'hroperations';
+  if (['department head', 'departmenthead', 'department_head'].includes(value)) return 'departmenthead';
+  if (['hr executive', 'hrexecutive', 'hr_executive'].includes(value)) return 'kamrecruitment';
+  if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam'].includes(value)) return 'kamrecruitment';
+  if (['hr', 'hrdepartment', 'hr department'].includes(value)) return 'hr';
+  return value;
+};
+
 const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
   const [tasks, setTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
@@ -390,28 +404,31 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
   const [viewingTask, setViewingTask] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
 
-  const normalizeUserType = (type = '') => {
-    const value = type.toString().trim().toLowerCase();
-    if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
-    if (['admin'].includes(value)) return 'admin';
-    if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmenthead';
-    if (['hrrecruitment', 'hr_recruitment', 'hr recruitment', 'recruitmenthr', 'recruitment_hr', 'recruitment hr'].includes(value)) return 'hrrecruitment';
-    if (['hroperations', 'hr_operations', 'hr operations', 'operations', 'hroperations'].includes(value)) return 'hroperations';
-    if (['department head', 'departmenthead', 'department_head'].includes(value)) return 'departmenthead';
-    if (['hr executive', 'hrexecutive', 'hr_executive'].includes(value)) return 'kamrecruitment';
-    if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam'].includes(value)) return 'kamrecruitment';
-    if (['hr', 'hrdepartment', 'hr department'].includes(value)) return 'hr';
-    return value;
-  };
-  const currentUserRole = normalizeUserType(localStorage.getItem('userType') || userRole || '');
-  const canAssignTasks = ['admin', 'superadmin', 'super_admin', 'recruitmenthead', 'departmenthead', 'hroperations', 'hrrecruitment', 'hr'].includes(currentUserRole);
+  const currentUserRole = useMemo(() => {
+    const type = localStorage.getItem('userType') || userRole || '';
+    const role = localStorage.getItem('userRole') || '';
+    
+    // Check both userType and userRole from localStorage
+    const normalizedType = normalizeUserType(type);
+    const normalizedRole = normalizeUserType(role);
+    
+    if (['recruitmenthead', 'admin', 'superadmin'].includes(normalizedType)) return normalizedType;
+    if (['recruitmenthead', 'admin', 'superadmin'].includes(normalizedRole)) return normalizedRole;
+    
+    return normalizedType;
+  }, [userRole]);
+
+  const canAssignTasks = useMemo(() => {
+    const roles = ['admin', 'superadmin', 'super_admin', 'recruitmenthead', 'departmenthead', 'hroperations', 'hrrecruitment', 'hr'];
+    return roles.includes(currentUserRole);
+  }, [currentUserRole]);
 
   const getCurrentUserIdFromToken = () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload?.id?.toString();
+      return payload?.id?.toString() || payload?.userId?.toString();
     } catch {
       return null;
     }

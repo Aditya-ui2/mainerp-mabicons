@@ -348,7 +348,7 @@ export const attachFinalOfferLetter = async (formData) => {
 
 export const generateCandidateCredentials = async (candidateId) => {
   try {
-    const response = await axiosInstance.post('/recruitment/gen-creds', { candidateId });
+    const response = await axiosInstance.post('/recruitment/onboarding-gen-creds', { candidateId });
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;

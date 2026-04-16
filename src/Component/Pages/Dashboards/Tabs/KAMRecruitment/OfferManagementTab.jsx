@@ -29,7 +29,9 @@ import {
   ChevronDown,
   ArrowUpRight,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw,
+  Eye
 } from "lucide-react";
 import {
   FiUsers,
@@ -49,6 +51,7 @@ import {
   FiMaximize,
   FiFile,
   FiUser,
+  FiShield
 } from "react-icons/fi";
 import { toast } from "sonner";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
@@ -529,7 +532,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
   }, [templatePdf, templateViewports]);
 
   const fetchOffers = async () => {
-    setLoading(true);
+    if (offers.length === 0) setLoading(true);
 
 
     try {
@@ -885,12 +888,21 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 {offers.length} Total Compensation Packages In Lifecycle
               </p>
             </div>
-            <button
-              onClick={handleCreateOffer}
-              className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/10 hover:bg-[#153e82] transition-all active:scale-95 text-center"
-            >
-              <Plus size={18} /> Generate Offer
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={fetchOffers}
+                className={`flex items-center gap-2 px-5 py-3 ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-[#F4F3EF] text-[#6B6B7E]'} rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-100 flex-shrink-0`}
+              >
+                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                Sync Data
+              </button>
+              <button
+                onClick={handleCreateOffer}
+                className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/10 hover:bg-[#153e82] transition-all active:scale-95 text-center flex-shrink-0 whitespace-nowrap"
+              >
+                <Plus size={18} /> Generate Offer
+              </button>
+            </div>
           </div>
 
           {/* Search Bar Container - Matching Candidate/Job tabs */}
@@ -1014,12 +1026,12 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       </div>
                     </div>
 
-                    <div className={`flex-1 flex items-center px-8 border-l ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
-                      <p className={`text-[14px] font-bold ${isDarkMode ? 'text-white' : 'text-[#64748b]'}`}>{offer.client || '—'}</p>
+                    <div className={`flex-1 flex items-center px-4 border-l ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
+                      <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-[#64748b]'} truncate`}>{offer.client || '—'}</p>
                     </div>
 
                     {/* BGV Column */}
-                    <div className={`flex-shrink-0 w-[180px] flex items-center justify-center border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
+                    <div className={`flex-shrink-0 w-[160px] flex items-center justify-center border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
                       {offer.bgvStatus === 'Not Started' ? (
                         <motion.button 
                           whileHover={{ scale: 1.05 }}
@@ -1036,44 +1048,24 @@ const OfferManagementTab = ({ isDarkMode }) => {
                               }
                               
                               const response = await generateCandidateCredentials(targetId);
-                              console.log('📡 Provisioning Response:', response);
-                              
                               if (response && response.success && response.data) {
-                                const finalEmail = response.data.email;
-                                const finalUsername = response.data.username || finalEmail;
-                                const finalPass = response.data.password;
-
-                                setOffers(prev => prev.map(o => {
-                                  // Safe ID comparison to prevent "undefined === undefined" matching all rows
-                                  const oId = String(o.id || o._id || '');
-                                  const tId = String(offer.id || offer._id || '');
-                                  if (oId === tId && oId !== '') {
-                                    return { 
-                                      ...o, 
-                                      bgvStatus: 'Sent', 
-                                      tempUsername: finalUsername, 
-                                      tempPassword: finalPass 
-                                    };
-                                  }
-                                  return o;
-                                }));
-
-                                toast.success(`Firebase Console: User Provisioned`, { id: loadingId });
-                                
-                                // Auto-Dispatch Mail via Firebase Style Link
-                                const mailSubject = "Action Required: Mabicons ERP Access Credentials";
-                                const mailBody = `Dear ${offer.candidateName},\n\nYour ERP access for the mabicons project has been activated.\n\nUsername: ${finalUsername}\nEmail: ${finalEmail}\nSecret Key: ${finalPass}\n\nLogin URL: https://erp.mabicons.com/candidate-login\n\nPlease use these credentials to complete your document verification.\n\nProject: mabicons-1307f\nEnvironment: Production`;
-                                window.open(`mailto:${offer.email || ''}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`);
-                              } else if (targetId.toString().startsWith('mock-')) {
-                                // Manual Fallback for Mock
-                                console.log('🧪 Using mock fallback for:', targetId);
-                                const mockPass = 'mab@' + Math.random().toString(36).substr(2, 4);
-                                setOffers(prev => prev.map(o => String(o.id) === String(offer.id) ? { ...o, bgvStatus: 'Sent', tempUsername: offer.email || 'candidate@mabicons.com', tempPassword: mockPass } : o));
-                                toast.success("Mock Gateway Activated", { id: loadingId });
-                              } else {
-                                console.warn('⚠️ Provisioning failed:', response);
-                                toast.error("Authentication Error: Failed to provision user.", { id: loadingId });
-                              }
+                                   const finalEmail = response.data.email;
+                                   const finalUsername = response.data.username || finalEmail;
+                                   const finalPass = response.data.password;
+ 
+                                   setOffers(prev => prev.map(o => {
+                                     const oId = String(o.id || o._id || '');
+                                     const tId = String(offer.id || offer._id || '');
+                                     if (oId === tId && oId !== '') {
+                                       return { ...o, bgvStatus: 'Sent', tempUsername: finalUsername, tempPassword: finalPass };
+                                     }
+                                     return o;
+                                   }));
+                                   toast.success(`Success: Records Secured`, { id: loadingId });
+                                 } else {
+                                   console.error('❌ Server logic failed:', response);
+                                   toast.error(`Control Error: ${response?.message || 'Gateway rejection'}`, { id: loadingId });
+                                 }
                             } catch (err) {
                               console.error('❌ Console Protocol Error:', err);
                               toast.error("Console Error: Protocol failed to reach gateway.", { id: loadingId });
@@ -1130,8 +1122,18 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-start gap-6 flex-shrink-0 w-[120px] ml-6">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] group-hover:text-[#1B4DA0] group-hover:bg-[#F8FAFF] shadow-sm`}>
+                    <div className="flex items-center justify-start gap-3 flex-shrink-0 w-[120px] ml-6">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditOffer(offer);
+                        }}
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50/50 hover:border-blue-200 shadow-sm`}
+                        title="Edit Offer"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] group-hover:text-[#1B4DA0] group-hover:bg-[#F8FAFF] shadow-sm`}>
                         <ChevronRight size={16} />
                       </div>
                     </div>

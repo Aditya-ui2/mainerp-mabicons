@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  ChevronRight, 
-  ChevronLeft, 
-  LogOut, 
-  Bell, 
-  Menu, 
+import {
+  LayoutDashboard,
+  ChevronRight,
+  ChevronLeft,
+  LogOut,
+  Bell,
+  Menu,
   Search,
   Settings,
   X,
@@ -47,6 +47,8 @@ const AdminLayout = ({
   headerActions = null,
   showSearch = true,
   isLoading = false,
+  bottomTabName = 'Settings',
+  dashboardTabName = 'Dashboard'
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -101,10 +103,7 @@ const AdminLayout = ({
   const unreadNotifications = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="flex h-screen bg-[#FDFDFD] dark:bg-gray-950 overflow-hidden font-['Plus_Jakarta_Sans']">
-      <AnimatePresence>
-        {isLoading && <Loader key="loader" />}
-      </AnimatePresence>
+    <div className="flex h-screen bg-[#FDFDFD] overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {mobileSidebarOpen && (
@@ -112,54 +111,49 @@ const AdminLayout = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[999] lg:hidden"
             onClick={() => setMobileSidebarOpen(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Sidebar - Consolidated Unified Component */}
+      {/* Modern Sidebar Container */}
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-50 flex flex-col h-full bg-white dark:bg-gray-900 border-r border-[#E8E7E2] dark:border-gray-800 transition-all duration-300 ease-in-out
-          ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          ${sidebarCollapsed ? "w-[72px]" : "w-[240px]"}
+          fixed lg:static inset-y-0 left-0 z-[1000]
+          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${sidebarCollapsed ? 'w-24' : 'w-72'}
+          bg-white dark:bg-gray-900 border-r border-[#F4F3EF] dark:border-gray-800
+          flex flex-col transition-all duration-300 ease-in-out
         `}
-        style={{ boxShadow: "2px 0 12px rgba(0,0,0,0.02)" }}
       >
-        {/* Logo & Toggle */}
-        <div className={`h-16 flex items-center flex-shrink-0 border-b border-[#F4F3EF] dark:border-gray-800 ${
-          sidebarCollapsed ? "justify-center px-0" : "px-5 justify-between"
-        }`}>
-          {!sidebarCollapsed && (
+        {/* Superior Logo Header */}
+        <div className={`h-20 flex items-center px-6 ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+          {!sidebarCollapsed ? (
             <div className="flex items-center gap-3">
-              <img src={logo} alt="mabicons" className="h-8 w-auto object-contain" />
+              <img src={logo} alt="Mabicons" className="h-10 w-auto object-contain" />
+            </div>
+          ) : (
+            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#F8FAFF] dark:bg-gray-800">
+              <img src={logo} alt="M" className="h-6 w-auto" />
             </div>
           )}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`w-8 h-8 rounded-xl flex items-center justify-center text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#EEF2FB] transition-all duration-200 ${
-              sidebarCollapsed ? "mx-auto" : ""
-            }`}
-          >
-            {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
         </div>
 
-        {/* Scrollable Navigation */}
-        <nav className="flex-1 py-4 overflow-y-auto scrollbar-none flex flex-col gap-1">
+        {/* Sidebar Nav Hub */}
+        <nav className="flex-1 overflow-y-auto pt-6 custom-scrollbar pr-1">
           {/* Dashboard Item (Always First) */}
           <button
-            onClick={() => { setActiveTab && setActiveTab('Dashboard'); setMobileSidebarOpen(false); }}
-            title={sidebarCollapsed ? 'Dashboard' : undefined}
+            onClick={() => { setActiveTab && setActiveTab(dashboardTabName); setMobileSidebarOpen(false); }}
+            title={sidebarCollapsed ? dashboardTabName : undefined}
             className={`
               w-[calc(100%-16px)] flex items-center gap-3 px-3.5 py-3 mx-2 rounded-2xl transition-all duration-200 text-left relative group
-              ${activeTab === 'Dashboard' ? "bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
+              ${activeTab === dashboardTabName ? "bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
             `}
           >
             <LayoutDashboard size={20} className="flex-shrink-0" />
-            {!sidebarCollapsed && <span className="text-sm font-semibold">Dashboard</span>}
-            {activeTab === 'Dashboard' && sidebarCollapsed && (
+            {!sidebarCollapsed && <span className="text-sm font-semibold">{dashboardTabName}</span>}
+            {activeTab === dashboardTabName && sidebarCollapsed && (
               <div className="absolute left-[-8px] w-1.5 h-6 bg-[#1B4DA0] rounded-r-full" />
             )}
           </button>
@@ -175,7 +169,7 @@ const AdminLayout = ({
               {section.heading && sidebarCollapsed && (
                 <div className="my-3 mx-4 h-[1px] bg-[#F4F3EF] dark:bg-gray-800" />
               )}
-              
+
               <div className="flex flex-col gap-1 px-2">
                 {section.items?.map((item) => {
                   const Icon = item.icon || Grid;
@@ -249,18 +243,18 @@ const AdminLayout = ({
             </div>
           ))}
 
-          {/* Bottom Settings Link */}
+          {/* Bottom Contextual Link (Settings/Profile) */}
           <div className="mt-auto pt-4 border-t border-[#F4F3EF] dark:border-gray-800 mx-2 mb-2">
             <button
-              onClick={() => { setActiveTab && setActiveTab('Settings'); setMobileSidebarOpen(false); }}
-              title={sidebarCollapsed ? 'Settings' : undefined}
+              onClick={() => { setActiveTab && setActiveTab(bottomTabName); setMobileSidebarOpen(false); }}
+              title={sidebarCollapsed ? bottomTabName : undefined}
               className={`
                 w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200 text-left relative
-                ${activeTab === 'Settings' ? "bg-[#1B4DA0]/10 text-[#1B4DA0]" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
+                ${activeTab === bottomTabName ? "bg-[#1B4DA0]/10 text-[#1B4DA0]" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
               `}
             >
-              <Settings size={20} className="flex-shrink-0" />
-              {!sidebarCollapsed && <span className="text-sm font-semibold">Settings</span>}
+              {bottomTabName === 'My Profile' ? <User size={20} className="flex-shrink-0" /> : <Settings size={20} className="flex-shrink-0" />}
+              {!sidebarCollapsed && <span className="text-sm font-semibold">{bottomTabName}</span>}
             </button>
           </div>
         </nav>
@@ -278,8 +272,8 @@ const AdminLayout = ({
               </div>
             )}
             {!sidebarCollapsed && (
-              <button 
-                onClick={handleLogout} 
+              <button
+                onClick={handleLogout}
                 className="p-1.5 rounded-xl hover:bg-rose-50 text-[#9B9BAD] hover:text-rose-500 transition-colors"
                 title="Logout"
               >
@@ -294,9 +288,9 @@ const AdminLayout = ({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Modern Top Header */}
         {showGlobalHeader && (
-           <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6 border-b border-[#F4F3EF] dark:border-gray-800">
+          <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6 border-b border-[#F4F3EF] dark:border-gray-800">
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={() => setMobileSidebarOpen(true)}
                 className="lg:hidden p-2 -ml-2 text-[#6B6B7E] hover:text-[#1A1A2E]"
               >
@@ -309,13 +303,13 @@ const AdminLayout = ({
 
             <div className="flex items-center gap-3">
               {headerActions}
-               {/* Search - Subtle */}
-               {showSearch && (
-                 <div className="hidden sm:flex items-center gap-2 bg-[#F4F3EF] dark:bg-gray-800 px-3 py-2 rounded-xl border border-transparent focus-within:border-[#1B4DA0]/20 transition-all">
-                    <Search size={14} className="text-[#9B9BAD]" />
-                    <input type="text" placeholder="Search..." className="bg-transparent border-0 outline-none text-xs text-[#1A1A2E] dark:text-white w-32 focus:w-48 transition-all placeholder-[#9B9BAD]" />
-                 </div>
-               )}
+              {/* Search - Subtle */}
+              {showSearch && (
+                <div className="hidden sm:flex items-center gap-2 bg-[#F4F3EF] dark:bg-gray-800 px-3 py-2 rounded-xl border border-transparent focus-within:border-[#1B4DA0]/20 transition-all">
+                  <Search size={14} className="text-[#9B9BAD]" />
+                  <input type="text" placeholder="Search..." className="bg-transparent border-0 outline-none text-xs text-[#1A1A2E] dark:text-white w-32 focus:w-48 transition-all placeholder-[#9B9BAD]" />
+                </div>
+              )}
 
               {/* Notification Hub */}
               <div className="relative" ref={notificationRef}>

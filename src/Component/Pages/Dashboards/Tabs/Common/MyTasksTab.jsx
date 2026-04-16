@@ -264,78 +264,27 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
   const [selectedTask, setSelectedTask] = useState(null);
 
 
-  const MOCK_TASKS = [
-    {
-      id: 'task-1',
-      title: 'Screen 15 candidates for Frontend role',
-      description: 'Review resumes for the React Developer position and shortlist the top 5 candidates for technical rounds.',
-      status: 'In Progress',
-      priority: 'High',
-      dueDate: new Date(Date.now() + 86400000 * 2).toISOString(),
-      assignedByName: 'Sachin Singh',
-      comments: [
-        { text: 'Already reviewed 10 profiles, 3 look promising.', byName: 'Priyanshi', byType: 'KAM', createdAt: new Date(Date.now() - 3600000).toISOString() },
-        { text: 'Great, please finish the rest by EOD.', byName: 'Sachin', byType: 'TeamLeader', createdAt: new Date(Date.now() - 1800000).toISOString() }
-      ]
-    },
-    {
-      id: 'task-2',
-      title: "Follow up on Aman Sharma's Offer",
-      description: "The candidate hasn't signed the offer letter yet. Check if they have any concerns or need more time.",
-      status: 'Overdue',
-      priority: 'Urgent',
-      dueDate: new Date(Date.now() - 86400000).toISOString(),
-      assignedByName: 'Sachin Singh',
-      comments: []
-    },
-    {
-      id: 'task-3',
-      title: 'Update Interview Schedule',
-      description: 'Coordinate with the technical team to find slots for the 3 candidates scheduled for final rounds.',
-      status: 'Pending',
-      priority: 'Medium',
-      dueDate: new Date(Date.now() + 86400000 * 3).toISOString(),
-      assignedByName: 'Vipul Kumar',
-      comments: []
-    },
-    {
-      id: 'task-4',
-      title: 'Review Technical Feedback',
-      description: "Consolidate feedback from yesterday's technical rounds and update the pipeline status.",
-      status: 'Completed',
-      priority: 'Low',
-      dueDate: new Date(Date.now() - 86400000 * 2).toISOString(),
-      completedAt: new Date(Date.now() - 3600000).toISOString(),
-      assignedByName: 'Sachin Singh',
-      comments: [
-        { text: 'All feedback updated in the portal.', byName: 'Priyanshi', byType: 'KAM', createdAt: new Date(Date.now() - 3600000).toISOString() }
-      ]
-    },
-    {
-      id: 'task-5',
-      title: 'Draft Job Description: Sr. Backend Dev',
-      description: 'Create a detailed JD for the upcoming Senior Node.js Developer requirement for the FinTech project.',
-      status: 'Pending',
-      priority: 'Medium',
-      dueDate: new Date(Date.now() + 86400000 * 5).toISOString(),
-      assignedByName: 'Pooja Rani',
-      comments: []
-    }
-  ];
+
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [initialFilter]); // Refetch when filter changes
 
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      // Simulating API delay for UI testing
-      await new Promise(resolve => setTimeout(resolve, 600));
-      setTasks(MOCK_TASKS);
+      const response = await getMyDepartmentTasks();
+      if (response.success) {
+        // Map tasks and handle both id and _id fields
+        const taskData = (response.tasks || []).map(t => ({
+          ...t,
+          id: t.id || t._id
+        }));
+        setTasks(taskData);
+      }
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      setTasks(MOCK_TASKS);
+      showToast('Failed to fetch tasks from server', 'error');
     } finally {
       setLoading(false);
     }

@@ -34,7 +34,9 @@ import {
   Minus,
   Filter,
   Download,
+  Grid as LuGrid,
 } from 'lucide-react';
+import AdminLayout from './AdminLayout';
 import {
   BarChart,
   Bar,
@@ -64,6 +66,7 @@ const ClientJobsTab = lazy(() => import('./Tabs/Client/recruitment/ClientJobsTab
 const ClientCandidatesTab = lazy(() => import('./Tabs/Client/recruitment/ClientCandidatesTab'));
 const ClientInterviewsTab = lazy(() => import('./Tabs/Client/recruitment/ClientInterviewsTab'));
 const ClientFinalizedTab = lazy(() => import('./Tabs/Client/recruitment/ClientFinalizedTab'));
+const MyProfileTab = lazy(() => import('./Tabs/Common/MyProfileTab'));
 
 /* ── Mock dashboard data ─────────────────────────────── */
 const MOCK_DASHBOARD = {
@@ -133,7 +136,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
 
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [filterStatus, setFilterStatus] = useState('All');
-  const [staffDateFilter, setStaffDateFilter] = useState('all');
+  const [staffDateFilter, setStaffDateFilter] = useState('today');
   const filterPanelRef = useRef(null);
 
   // Close dropdowns on outside click
@@ -355,11 +358,16 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
         <div className="flex items-center gap-3">
           {/* Main Actions */}
           <div className="flex items-center gap-3">
-
-            
+            <button
+              onClick={() => setActiveTab('Job Positions')}
+              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-2xl text-xs font-bold hover:bg-[#0a3a82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+            >
+              <FiPlus className="w-5 h-5" strokeWidth="3" />
+              <span>Post New Job</span>
+            </button>
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-2xl text-xs font-bold hover:bg-[#0a3a82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+              className="flex items-center gap-2 px-6 py-3 bg-white text-[#475569] border border-[#E2E8F0] rounded-2xl text-xs font-bold hover:bg-[#F8FAFC] transition-all active:scale-95 shadow-sm"
             >
               <Download size={16} /> Export Data
             </button>
@@ -523,42 +531,66 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
           </div>
         </div>
 
-        {/* Table - Recent Applicants */}
-        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col">
+        {/* Table - Upcoming Interviews */}
+        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col min-h-[500px]">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Recent Applicants</h2>
+            <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Upcoming Interviews</h2>
             <button 
-              onClick={() => setActiveTab('Candidates')}
+              onClick={() => setActiveTab('Interviews')}
               className="text-sm font-bold text-[#3FA9F5] hover:text-[#2d8cd3] transition-colors flex items-center gap-1"
             >
-              View All <FiExternalLink size={14} />
+              Manage Interviews <FiExternalLink size={14} />
             </button>
           </div>
-          <div className="space-y-1 flex-1">
-            <div className="grid grid-cols-4 gap-4 px-2 mb-2">
-              <p className="col-span-2 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Candidate</p>
-              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Date</p>
-              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider text-right">Status</p>
-            </div>
-            {filteredApplicants.length > 0 ? (
-              filteredApplicants.map((app, idx) => (
-                <TableItem key={idx} {...app} />
-              ))
-            ) : (
-              <div className="py-12 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                  <FiUsers className="text-slate-300" size={24} />
-                </div>
-                <p className="text-sm font-medium text-slate-400">No recent applicants found</p>
-              </div>
-            )}
+          <div className="flex-1 overflow-x-auto custom-scrollbar">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Candidate</th>
+                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Date & Time</th>
+                  <th className="pb-4 text-right text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F4F3EF]">
+                {dashData._real?.upcomingInterviews?.length > 0 ? (
+                  dashData._real.upcomingInterviews.map((int, idx) => (
+                    <tr key={idx} className="group cursor-pointer hover:bg-[#FAFAF8] transition-colors">
+                      <td className="py-4">
+                        <div className="flex flex-col">
+                          <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{int.candidate}</p>
+                          <p className="text-[10px] font-medium text-slate-400 mt-0.5">{int.position}</p>
+                        </div>
+                      </td>
+                      <td className="py-4">
+                        <div className="flex flex-col">
+                          <p className="text-xs font-bold text-[#1A1A2E]">{int.date}</p>
+                          <p className="text-[10px] text-[#9B9BAD]">{int.time}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 text-right">
+                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-[9px] font-bold uppercase tracking-wider border border-blue-100">
+                          Scheduled
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="py-20 text-center opacity-40">
+                      <FiCalendar className="mx-auto text-slate-300 mb-4" size={40} />
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No scheduled sessions</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Table - Job Progress History */}
-        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col">
+        {/* Table - Active Positions */}
+        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col min-h-[500px]">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Job Progress History</h2>
+            <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Open Positions</h2>
             <button 
               onClick={() => setActiveTab('Job Positions')}
               className="text-sm font-bold text-[#3FA9F5] hover:text-[#2d8cd3] transition-colors flex items-center gap-1"
@@ -566,24 +598,54 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
               View All <FiExternalLink size={14} />
             </button>
           </div>
-          <div className="space-y-1 flex-1">
-            <div className="grid grid-cols-4 gap-4 px-2 mb-2">
-              <p className="col-span-2 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Position</p>
-              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Applicants</p>
-              <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider text-right">Status</p>
-            </div>
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job, idx) => (
-                <TableItem key={idx} {...job} />
-              ))
-            ) : (
-              <div className="py-12 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                  <FiBriefcase className="text-slate-300" size={24} />
-                </div>
-                <p className="text-sm font-medium text-slate-400">No job progress recorded</p>
-              </div>
-            )}
+          <div className="flex-1 overflow-x-auto custom-scrollbar">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Position</th>
+                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Pipeline</th>
+                  <th className="pb-4 text-right text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F4F3EF]">
+                {filteredJobs.length > 0 ? (
+                  filteredJobs.map((job, idx) => (
+                    <tr key={idx} className="group cursor-pointer hover:bg-[#FAFAF8] transition-colors">
+                      <td className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-all">
+                            <FiBriefcase size={16} />
+                          </div>
+                          <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{job.name}</p>
+                        </div>
+                      </td>
+                      <td className="py-4">
+                        <div className="flex flex-col">
+                          <p className="text-sm font-bold text-[#1A1A2E]">{job.date}</p>
+                          <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Active Candidates</p>
+                        </div>
+                      </td>
+                      <td className="py-4 text-right">
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${
+                          job.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                          job.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                          'bg-rose-50 text-rose-600 border border-rose-100'
+                        }`}>
+                          {job.status === 'Approved' ? 'ACTIVE' : job.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="py-20 text-center opacity-40">
+                      <FiBriefcase className="mx-auto text-slate-300 mb-4" size={40} />
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No active vacancies</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -627,8 +689,8 @@ const allSidebarConfig = [
     items: [
       { id: 7, title: 'Recruitment Overview', short: 'Overview', icon: FiTarget, service: 'recruitment' },
       { id: 8, title: 'Job Positions', short: 'Jobs', icon: FiBriefcase, service: 'recruitment' },
-      { id: 9, title: 'Candidates', short: 'Candidates', icon: FiUsers, service: 'recruitment' },
       { id: 10, title: 'Interviews', short: 'Interviews', icon: FiCalendar, service: 'recruitment' },
+      { id: 12, title: 'Shortlisted Candidates', short: 'Shortlisted', icon: FiUserCheck, service: 'recruitment' },
       { id: 11, title: 'Finalized & Offers', short: 'Finalized', icon: FiCheckCircle, service: 'recruitment' },
     ],
   },
@@ -732,32 +794,6 @@ const ClientModularDashboard = () => {
     window.location.href = '/login';
   };
 
-  // Filter sidebar sections based on client's allowed services
-  const sidebarConfig = allSidebarConfig
-    .map(section => ({
-      ...section,
-      items: section.items.filter(item =>
-        item.service === 'both' || allowedServices.includes(item.service)
-      ),
-    }))
-    .filter(section => section.items.length > 0);
-
-  const switchTab = (title) => {
-    setActiveTab(title);
-    setMobileSidebarOpen(false);
-    // Auto-expand the section containing this tab
-    const parentSection = sidebarConfig.find(s => s.items.some(i => i.title === title));
-    if (parentSection?.collapsible && !expandedSections.includes(parentSection.heading)) {
-      setExpandedSections(prev => [...prev, parentSection.heading]);
-    }
-  };
-
-  const toggleSection = (heading) => {
-    setExpandedSections(prev =>
-      prev.includes(heading) ? prev.filter(h => h !== heading) : [...prev, heading]
-    );
-  };
-
   const renderTabContent = () => {
     const tabProps = { isDarkMode, clientData };
     switch (activeTab) {
@@ -768,335 +804,65 @@ const ClientModularDashboard = () => {
       case 'Master Data':               return <ClientMasterDataTab {...tabProps} />;
       case 'Assign Task to KAM':        return <ClientTaskTab {...tabProps} />;
 
-      case 'Recruitment Overview':      return <ClientRecruitmentProgressTab {...tabProps} />;
+      case 'Recruitment Overview':      return <ClientRecruitmentProgressTab {...tabProps} setActiveTab={setActiveTab} />;
       case 'Job Positions':              return <ClientJobsTab {...tabProps} />;
-      case 'Candidates':                 return <ClientCandidatesTab {...tabProps} />;
+      case 'Shortlisted Candidates':      return <ClientCandidatesTab {...tabProps} shortlistedOnly={true} />;
       case 'Interviews':                 return <ClientInterviewsTab {...tabProps} />;
       case 'Finalized & Offers':         return <ClientFinalizedTab {...tabProps} />;
+      case 'My Profile':                return <MyProfileTab isDarkMode={isDarkMode} />;
       default: return <p className="text-xl text-slate-500 font-medium">{activeTab}</p>;
     }
   };
 
   const clientName = clientData?.companyName || clientData?.name || 'Client';
-  const clientInitial = clientName.charAt(0).toUpperCase();
+
+  const sidebarConfig = [
+    {
+      items: allSidebarConfig
+        .filter(section => section.heading !== 'MAIN')
+        .map(section => {
+          const filteredItems = section.items.filter(item =>
+            item.service === 'both' || allowedServices.includes(item.service)
+          );
+          if (filteredItems.length === 0) return null;
+
+          return {
+            id: section.heading,
+            title: section.label || section.heading,
+            icon: section.icon || LuGrid,
+            submenu: filteredItems.map(i => ({
+              id: i.id,
+              title: i.title,
+              icon: i.icon
+            }))
+          };
+        })
+        .filter(Boolean)
+    }
+  ];
+
+  const userInfo = {
+    name: clientName,
+    role: 'Client',
+    avatar: clientName.charAt(0).toUpperCase()
+  };
 
   return (
-    <div className="flex h-screen bg-[#FDFDFD] overflow-hidden">
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {mobileSidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setMobileSidebarOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* ═══════ SIDEBAR (AdminLayout Clean Style) ═══════ */}
-      <motion.aside
-        animate={{ width: sidebarCollapsed ? 80 : 260 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className={`
-          fixed lg:static inset-y-0 left-0 z-50
-          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          bg-white border-r border-slate-200 flex flex-col
-          transition-transform duration-300
-        `}
-      >
-        {/* Logo & Toggle */}
-        <div className={`flex items-center h-20 px-6 ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
-          {!sidebarCollapsed ? (
-            <div className="flex items-center justify-between w-full h-10">
-              <img src={logo} alt="Mabicons" className="h-[44px] w-auto object-contain" />
-              <button
-                onClick={() => setSidebarCollapsed(true)}
-                className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-50 text-slate-400"
-              >
-                <FiMenu className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setMobileSidebarOpen(false)}
-                className="lg:hidden h-8 w-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500"
-              >
-                <FiX className="w-5 h-5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setSidebarCollapsed(false)}
-              className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-[#3FA9F5] transition-all"
-              title="Expand Menu"
-            >
-              <FiMenu className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-
-        <div className="h-[1px] bg-slate-100 mx-6 mb-4 opacity-50" />
-
-        {/* Dashboard Link */}
-        <div className="px-4 py-2">
-          <button
-            onClick={() => switchTab('Dashboard Overview')}
-            title={sidebarCollapsed ? 'Dashboard' : undefined}
-            className={`
-              w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 group relative
-              ${activeTab === 'Dashboard Overview'
-                ? 'bg-[#3FA9F5]/10 text-[#3FA9F5] ring-1 ring-[#3FA9F5]/20'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-              }
-            `}
-          >
-            {activeTab === 'Dashboard Overview' && (
-              <motion.div
-                layoutId="active-pill"
-                className="absolute left-0 w-1 h-6 bg-[#3FA9F5] rounded-r-full"
-              />
-            )}
-            <div className="flex items-center gap-3 min-w-0">
-              <FiGrid className={`w-5 h-5 flex-shrink-0 transition-colors ${activeTab === 'Dashboard Overview' ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-500'}`} />
-              {!sidebarCollapsed && <span className={`text-sm font-semibold truncate ${activeTab === 'Dashboard Overview' ? 'text-slate-800' : 'text-slate-600'}`}>Dashboard</span>}
-            </div>
-            {!sidebarCollapsed && activeTab === 'Dashboard Overview' && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#3FA9F5]" />}
-          </button>
-        </div>
-
-        {/* Scrollable Menu */}
-        <nav className="flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin">
-          {sidebarConfig.map((section, sectionIdx) => {
-            const items = section.items.filter(item => item.title !== 'Dashboard Overview');
-            if (items.length === 0) return null;
-
-            // Collapsible folder-style section
-            if (section.collapsible) {
-              const SectionIcon = section.icon;
-              const isExpanded = expandedSections.includes(section.heading);
-              const hasActiveChild = items.some(i => activeTab === i.title);
-
-              return (
-                <div key={section.heading} className="mb-2">
-                  {/* Section toggle button — full blue pill when expanded/active */}
-                  <div className="px-2">
-                    <button
-                      onClick={() => toggleSection(section.heading)}
-                      title={sidebarCollapsed ? section.label : undefined}
-                      className={`
-                        w-full flex items-center justify-between px-4 py-3 rounded-xl
-                        transition-all duration-200 group mt-1
-                        ${isExpanded || hasActiveChild
-                          ? 'bg-[#3FA9F5] text-white shadow-md shadow-[#3FA9F5]/25'
-                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                        }
-                      `}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <SectionIcon
-                          className={`w-[20px] h-[20px] flex-shrink-0 stroke-[1.8]
-                            ${isExpanded || hasActiveChild ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}
-                          `}
-                        />
-                        {!sidebarCollapsed && (
-                          <span className={`text-[13.5px] font-bold uppercase tracking-wider truncate
-                            ${isExpanded || hasActiveChild ? 'text-white' : 'text-slate-600'}
-                          `}>
-                            {section.label}
-                          </span>
-                        )}
-                      </div>
-                      {!sidebarCollapsed && (
-                        <FiChevronDown
-                          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${
-                            isExpanded ? 'rotate-180' : ''
-                          } ${isExpanded || hasActiveChild ? 'text-white' : 'text-slate-400'}`}
-                        />
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Sub-items with bullet dot for active */}
-                  {!sidebarCollapsed && (
-                    <div
-                      className={`overflow-hidden transition-all duration-200 ${
-                        isExpanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
-                      }`}
-                    >
-                      <div className="ml-8 py-1">
-                        {items.map((item) => {
-                          const isActive = activeTab === item.title;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => switchTab(item.title)}
-                              className={`
-                                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                                transition-all duration-200 text-left
-                                ${isActive
-                                  ? ''
-                                  : 'hover:bg-slate-50'
-                                }
-                              `}
-                            >
-                              {/* Bullet dot */}
-                              <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors duration-200 ${
-                                isActive ? 'bg-[#3FA9F5]' : 'bg-transparent'
-                              }`} />
-                              <span className={`text-[14px] truncate transition-colors duration-200
-                                ${isActive ? 'text-[#3FA9F5] font-semibold' : 'text-slate-600 font-medium'}
-                              `}>
-                                {item.short || item.title}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Collapsed: show icon-only */}
-                  {sidebarCollapsed && isExpanded && (
-                    <div className="flex flex-col items-center gap-1 mt-1">
-                      {items.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = activeTab === item.title;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => switchTab(item.title)}
-                            title={item.title}
-                            className={`
-                              w-9 h-9 flex items-center justify-center rounded-lg transition-all
-                              ${isActive ? 'bg-[#3FA9F5]/10 text-[#3FA9F5]' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}
-                            `}
-                          >
-                            <Icon className="w-4 h-4" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            // Non-collapsible (flat) sections
-            return (
-              <div key={section.heading || sectionIdx} className="mb-2">
-                {section.heading && !sidebarCollapsed && (
-                  <p className="px-3 pt-4 pb-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase select-none">
-                    {section.heading}
-                  </p>
-                )}
-                {section.heading && sidebarCollapsed && (
-                  <div className="my-2 mx-3 h-[1px] bg-slate-100" />
-                )}
-
-                <div className="flex flex-col gap-0.5">
-                  {items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.title;
-                    return (
-                      <div key={item.id} className="px-2">
-                        <button
-                          onClick={() => switchTab(item.title)}
-                          title={sidebarCollapsed ? item.title : undefined}
-                          className={`
-                            w-full flex items-center justify-between px-4 py-2.5 rounded-xl
-                            transition-all duration-300 group mb-1
-                            ${isActive
-                              ? 'bg-[#3FA9F5]/10 text-[#3FA9F5]'
-                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                            }
-                          `}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <Icon
-                              className={`w-[20px] h-[20px] flex-shrink-0 transition-colors duration-300 stroke-[1.8]
-                                ${isActive ? 'text-[#3FA9F5]' : 'text-slate-400 group-hover:text-slate-600'}
-                              `}
-                            />
-                            {!sidebarCollapsed && (
-                              <span className={`text-[13.5px] font-medium truncate transition-colors duration-300
-                                ${isActive ? 'text-slate-800' : 'text-slate-600'}
-                              `}>
-                                {item.title}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* User Profile Footer */}
-        <div className="p-4 mt-auto border-t border-slate-100">
-          {!sidebarCollapsed ? (
-            <div className="flex items-center gap-3 px-2 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group relative">
-              <div className="relative">
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm font-bold text-blue-600">
-                  {clientInitial}
-                </div>
-                <div className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-bold text-slate-800 truncate">{clientName}</span>
-                </div>
-                <span className="text-[10px] text-slate-400 truncate leading-none">Client</span>
-              </div>
-              <FiChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-all" />
-              <button
-                onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-50 text-red-500 shadow-sm transition-all"
-                title="Logout"
-              >
-                <FiLogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <button
-                onClick={() => setSidebarCollapsed(false)}
-                className="relative group h-10 w-10"
-              >
-                <div className="h-full w-full rounded-xl bg-gradient-to-br from-[#3FA9F5] to-blue-700 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-blue-100">
-                  {clientInitial}
-                </div>
-                <div className="absolute -right-1 -bottom-1 h-3.5 w-3.5 bg-green-500 border-2 border-white rounded-full" />
-              </button>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all duration-200"
-                title="Logout"
-              >
-                <FiLogOut style={{ width: '18px', height: '18px' }} />
-              </button>
-            </div>
-          )}
-        </div>
-      </motion.aside>
-
-      {/* ═══════ MAIN CONTENT AREA ═══════ */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-[#FDFDFD] p-4 lg:p-6">
-          <Suspense fallback={<TabLoader />}>
-            <PageTransition tabKey={activeTab}>
-              {renderTabContent()}
-            </PageTransition>
-          </Suspense>
-        </main>
-      </div>
-    </div>
+    <AdminLayout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      sidebarItems={sidebarConfig}
+      userInfo={userInfo}
+      dashboardTitle="Client Dashboard"
+      bottomTabName="My Profile"
+      dashboardTabName="Dashboard Overview"
+    >
+      <Suspense fallback={<TabLoader />}>
+        <PageTransition tabKey={activeTab}>
+          {renderTabContent()}
+        </PageTransition>
+      </Suspense>
+    </AdminLayout>
   );
 };
 

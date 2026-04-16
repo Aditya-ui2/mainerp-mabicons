@@ -1134,10 +1134,41 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     });
 
     try {
+      // Find the member ID(s)
+      let resolvedId = null;
+      if (Array.isArray(name)) {
+        // Find the first valid member ID for single-field assignment (or simplify to first if multiple)
+        const member = teamMembers.find(m => name.includes(m.name));
+        resolvedId = member?.id || null;
+      } else if (name) {
+        const member = teamMembers.find(m => m.name === name);
+        resolvedId = member?.id || null;
+      }
+
       await updateRecruitmentPosition(jobId, {
         assignedToName: newAssignmentString,
-        assignedToId: null,
+        assignedToId: resolvedId,
       });
+
+      // If resolving to a KAM, we can also create a task for them automatically
+      if (resolvedId && newAssignmentString) {
+        try {
+          const taskPayload = {
+            title: `Job Assignment: ${jobs.find(j => j.id === jobId)?.title || 'New Position'}`,
+            description: `You have been assigned to handle recruitment for position ${jobId}. Please start sourcing candidates.`,
+            department: 'HR Recruitment',
+            assignedTo: resolvedId,
+            priority: 'High',
+            dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days deadline
+            positionId: jobId
+          };
+          await createDepartmentTask(taskPayload);
+          toast.success(`Task created for ${newAssignmentString}`);
+        } catch (taskErr) {
+          console.error("Auto-task creation failed:", taskErr);
+        }
+      }
+
     } catch (err) {
       console.error('Failed to update assignment:', err);
       setJobAssignments(prevAssignments); // rollback on error
@@ -2444,50 +2475,27 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                         </div>
 
                         <div className="max-h-[250px] overflow-y-auto custom-scrollbar px-1">
-                          <button
-                            onClick={() => toggleTempListMember('Me')}
-                            className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${tempListAssignments.includes('Me') ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
-                              }`}
-                          >
-                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${tempListAssignments.includes('Me') ? 'bg-[#0D47A1] text-white' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                              }`}><User size={14} /></div>
-                            Assign to me
-                            {tempListAssignments.includes('Me') && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
-                          </button>
-
-                          {/* Hardcoded Requested Members */}
-                          {['Jyoti', 'Manju', 'Priyanshi'].map((name, idx) => {
+                          {teamMembers.map(member => {
+                            const name = member.name;
                             const isSelected = tempListAssignments.includes(name);
                             return (
-                              <button key={`fixed-list-${idx}`}
+                              <button key={member.id}
                                 onClick={() => toggleTempListMember(name)}
-                                className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'
-                                  }`}
+                                className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'}`}
                               >
-                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white transition-all shadow-md' : 'bg-[#F4F3EF] text-[#6B6B7E]'
-                                  }`}>{name.charAt(0)}</div>
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white shadow-md' : 'bg-[#F4F3EF] text-[#6B6B7E]'}`}>
+                                  {member.avatar || name.charAt(0)}
+                                </div>
                                 <span className="truncate flex-1">{name}</span>
                                 {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
                               </button>
                             );
                           })}
-
-                          {teamMembers.length > 0 && <div className="h-px bg-[#F4F3EF] my-2 mx-4" />}
-
-                          {teamMembers.filter(m => !['Jyoti', 'Manju', 'Priyanshi', 'Me'].includes(m.name)).map(member => {
-                            const name = member.name;
-                            const isSelected = tempListAssignments.includes(name);
-                            if (name === 'Me') return null;
-                            return (
-                              <button key={member.id}
-                                onClick={() => toggleTempListMember(name)}
-                                className={`w-full text-left px-4 py-2 text-xs font-bold flex items-center gap-2 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'}`}
-                              >
-                                {name}
-                                {isSelected && <Check size={12} className="ml-auto" />}
-                              </button>
-                            );
-                          })}
+                          {teamMembers.length === 0 && (
+                            <div className="px-5 py-4 text-center">
+                              <p className="text-[10px] font-bold text-[#9B9BAD]">No members found</p>
+                            </div>
+                          )}
                         </div>
 
                         <div className="p-3 border-t border-[#F4F3EF] mt-2 space-y-2">

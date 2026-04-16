@@ -1,46 +1,83 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCalendar, FiClock, FiUsers, FiMapPin, FiMail, FiChevronRight, FiVideo, FiUser } from 'react-icons/fi';
+import { 
+  FiCalendar, 
+  FiClock, 
+  FiUsers, 
+  FiMapPin, 
+  FiMail, 
+  FiChevronRight, 
+  FiVideo, 
+  FiUser, 
+  FiSearch, 
+  FiFilter,
+  FiExternalLink
+} from 'react-icons/fi';
+import { Video, Clock, User, ChevronRight, Calendar, Search, AlertCircle } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { getClientDashboardOverview } from '../../../../service/api';
+
+const STATUS_COLORS = {
+  "Scheduled": "bg-blue-50 text-blue-600 border-blue-100",
+  "In-Progress": "bg-amber-50 text-amber-600 border-amber-100 animate-pulse",
+  "Completed": "bg-emerald-50 text-emerald-600 border-emerald-100",
+  "Cancelled": "bg-rose-50 text-rose-600 border-rose-100",
+};
 
 export default function ClientInterviewsTab() {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   useEffect(() => {
-    (async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        const decoded = jwtDecode(token);
-        const res = await getClientDashboardOverview(decoded.id);
-        if (res?.success && res.data?.recruitment) setInterviews(res.data.recruitment.upcomingInterviews || []);
-      } catch (err) {
-        console.error('Failed to load interviews:', err);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    fetchData();
   }, []);
 
-  const list = interviews;
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const decoded = jwtDecode(token);
+      const res = await getClientDashboardOverview(decoded.id);
+      if (res?.success && res.data?.recruitment) {
+        setInterviews(res.data.recruitment.upcomingInterviews || []);
+      }
+    } catch (err) {
+      console.error('Failed to load interviews:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Group by date
-  const grouped = list.reduce((acc, iv) => {
-    const d = iv.interviewDate ? new Date(iv.interviewDate).toLocaleDateString('en-GB', { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long' 
-    }) : 'Unscheduled / Pipeline';
-    if (!acc[d]) acc[d] = [];
-    acc[d].push(iv);
-    return acc;
-  }, {});
+  const filteredInterviews = useMemo(() => {
+    return interviews.filter(i => {
+      const matchesSearch = !searchTerm || 
+        i.candidateName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        i.positionTitle?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'All' || i.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [interviews, searchTerm, statusFilter]);
 
-  const today = new Date();
-  const todayStr = today.toDateString();
-  const tomorrowStr = new Date(Date.now() + 86400000).toDateString();
+  const formatTime = (time) => {
+    if (!time) return "TBA";
+    if (time.includes("AM") || time.includes("PM")) return time;
+    try {
+      const [h, m] = time.split(":").map(Number);
+      const period = h >= 12 ? "PM" : "AM";
+      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      return `${displayH}:${m.toString().padStart(2, "0")} ${period}`;
+    } catch (e) { return time; }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "TBA";
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
   if (loading) {
     return (
@@ -49,129 +86,146 @@ export default function ClientInterviewsTab() {
           <div className="w-16 h-16 border-4 border-slate-100 rounded-full" />
           <div className="absolute inset-0 w-16 h-16 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
         </div>
-        <p className="text-sm font-bold text-slate-400 font-syne tracking-widest uppercase">Syncing Schedule...</p>
+        <p className="text-sm font-bold text-slate-400 tracking-widest uppercase">Syncing Schedule...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-0 min-h-screen bg-[#FDFDFD] text-left" style={{ fontFamily: 'Calibri, sans-serif' }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
-        .font-syne { font-family: 'Syne', sans-serif !important; }
-        .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
-      `}</style>
-
+    <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-        <div className="flex flex-col items-start text-left">
-          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Interview Tracker</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Live schedule and interview performance monitoring</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+            Interview Schedule
+          </h1>
+          <p className="text-sm text-[#9B9BAD] mt-1">Track and manage upcoming candidate interviews</p>
+        </div>
+        <div className="flex gap-2">
+            <button 
+              onClick={fetchData}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+            >
+              <FiUsers size={16} className="text-[#1B4DA0]" />
+              Refresh List
+            </button>
         </div>
       </div>
 
-      {/* Highlight Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        {[
-          { label: 'Total Scheduled', count: list.length, color: 'text-blue-600', bg: 'bg-blue-50', icon: FiCalendar },
-          { label: 'Scheduled Today', count: list.filter(iv => new Date(iv.interviewDate).toDateString() === todayStr).length, color: 'text-amber-500', bg: 'bg-amber-50', icon: FiClock },
-          { label: 'Active Pipeline', count: list.length + 5, color: 'text-purple-500', bg: 'bg-purple-50', icon: FiUsers },
-        ].map((s, i) => (
-          <div key={i} className="bg-white p-6 rounded-[28px] border border-[#F4F3EF] shadow-sm hover:shadow-md transition-all duration-300 group">
-            <div className={`w-12 h-12 rounded-2xl ${s.bg} ${s.color} flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110`}>
-              <s.icon size={22} />
-            </div>
-            <p className="text-3xl font-extrabold text-[#1A1A2E] mb-1">{s.count}</p>
-            <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{s.label}</p>
-          </div>
-        ))}
+      {/* Filter Bar */}
+      <div className="bg-white rounded-2xl p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by candidate or role..."
+            className="w-full bg-[#F4F3EF] border-none rounded-xl py-2.5 pl-12 pr-4 text-sm font-medium focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD]"
+          />
+        </div>
+
+        <div className="relative">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="All">All Status</option>
+            <option value="Scheduled">Scheduled</option>
+            <option value="In-Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
+        </div>
       </div>
 
-      {/* Timeline List */}
-      <div className="space-y-10">
-        {list.length === 0 ? (
-          <div className="bg-white rounded-[32px] border border-[#F4F3EF] p-24 text-center shadow-sm flex flex-col items-center gap-4">
-             <div className="w-20 h-20 rounded-3xl bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
-              <FiCalendar size={32} />
-            </div>
-            <p className="text-sm font-bold text-[#9B9BAD]">No interviews scheduled in the current window</p>
-          </div>
-        ) : (
-          Object.entries(grouped).map(([dateLabel, items]) => {
-            const firstDate = items[0]?.interviewDate ? new Date(items[0].interviewDate) : null;
-            const isToday = firstDate && firstDate.toDateString() === todayStr;
-            const isTomorrow = firstDate && firstDate.toDateString() === tomorrowStr;
-            const dayTag = isToday ? 'Current Day' : isTomorrow ? 'Next Day' : null;
-
-            return (
-              <div key={dateLabel} className="relative">
-                <div className="flex items-center gap-4 mb-6">
-                  <h3 className="text-lg font-bold text-[#1A1A2E] font-syne">{dateLabel}</h3>
-                  {dayTag && (
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${isToday ? 'bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
-                      {dayTag}
+      {/* Table Interface */}
+      <div className="bg-white rounded-[24px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Time & Date</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Candidate</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Role / Job</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F4F3EF]">
+              {filteredInterviews.length > 0 ? filteredInterviews.map((iv, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-[#1A1A2E]">{formatTime(iv.startTime)}</span>
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight flex items-center gap-1 mt-0.5">
+                        <Calendar size={10} /> {formatDate(iv.interviewDate)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xs font-bold">
+                        {iv.candidateName?.charAt(0).toUpperCase() || <User size={14} />}
+                      </div>
+                      <span className="text-sm font-semibold text-[#1A1A2E]">{iv.candidateName}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-[#1A1A2E]">{iv.positionTitle || 'Requirement mapping'}</span>
+                      <span className="text-[10px] font-semibold text-[#9B9BAD] flex items-center gap-1 mt-0.5">
+                         {iv.interviewType === 'Video' ? <Video size={10} /> : <FiMapPin size={10} />} {iv.interviewType || 'Video'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-xs font-medium text-[#6B6B7E]">{iv.round || 'Technical Round'}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${STATUS_COLORS[iv.status] || 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                      {iv.status || 'Scheduled'}
                     </span>
-                  )}
-                  <div className="h-[1px] bg-[#F4F3EF] flex-1" />
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {items.map((iv, i) => (
-                    <motion.div
-                      whileHover={{ x: 4, backgroundColor: '#FAFAFA' }}
-                      key={i}
-                      className="bg-white rounded-[20px] border border-[#F4F3EF] p-4 shadow-sm transition-all relative overflow-hidden group flex items-center justify-between gap-6"
-                    >
-                      {/* Left: Candidate Info */}
-                      <div className="flex items-center gap-5 flex-1 min-w-0">
-                        <div className="w-12 h-12 rounded-xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] font-black text-sm shadow-inner transition-transform group-hover:scale-105">
-                          {iv.candidateName ? iv.candidateName.split(' ').map(n=>n[0]).join('').slice(0, 2) : <FiUser />}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="text-base font-bold text-[#1A1A2E] truncate font-jakarta group-hover:text-[#1B4DA0] transition-colors">{iv.candidateName}</h4>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <p className="text-[11px] font-semibold text-[#9B9BAD] truncate uppercase tracking-wider">{iv.positionTitle || 'Requirement Mapping'}</p>
-                          </div>
-                        </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {iv.meetingLink && (
+                        <a 
+                          href={iv.meetingLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 bg-[#1B4DA0] hover:bg-[#153e82] text-white rounded-lg transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+                          title="Join Meeting"
+                        >
+                          <Video size={16} />
+                        </a>
+                      )}
+                      {!iv.meetingLink && (
+                        <button className="p-2 bg-slate-100 text-slate-400 rounded-lg cursor-not-allowed">
+                          <FiExternalLink size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
+                        <AlertCircle size={24} />
                       </div>
-
-                      {/* Middle: Stats / Type */}
-                      <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Interview Type</span>
-                          <div className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-blue-50 text-[#1B4DA0] whitespace-nowrap">
-                            {iv.interviewType || 'Video Call'}
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-start gap-1">
-                          <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Scheduled Time</span>
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                             <FiClock size={14} className="text-blue-500" /> {iv.startTime || 'TBA'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Actions */}
-                      <div className="flex items-center gap-3 shrink-0">
-                         {iv.meetingLink && (
-                          <a 
-                            href={iv.meetingLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-12 h-12 bg-[#1B4DA0] hover:bg-[#153e82] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-500/10 transition-all active:scale-95 group/btn"
-                            title="Join Meeting"
-                          >
-                             <FiVideo size={20} className="group-hover/btn:scale-110 transition-transform" />
-                          </a>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            );
-          })
-        )}
+                      <p className="text-sm font-medium text-slate-400">No interviews found matching your criteria</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

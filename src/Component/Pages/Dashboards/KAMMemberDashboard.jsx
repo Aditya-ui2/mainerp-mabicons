@@ -73,9 +73,9 @@ const TabLoader = () => (
 
 // Sidebar Configuration for KAM Member
 const getSidebarConfig = (name = '') => {
-  const isSpecialKAM = name.toLowerCase().includes('manju') || 
-                       name.toLowerCase().includes('jyoti') || 
-                       name.toLowerCase().includes('priyanshi');
+  const isSpecialKAM = name.toLowerCase().includes('manju') ||
+    name.toLowerCase().includes('jyoti') ||
+    name.toLowerCase().includes('priyanshi');
 
   const items = [
     { id: 1, title: 'My Tasks', icon: FiCheckSquare },
@@ -86,7 +86,6 @@ const getSidebarConfig = (name = '') => {
     { id: 8, title: 'Offer Management', icon: FiAward },
     { id: 9, title: 'Resume Bank', icon: FiDatabase },
     { id: 10, title: 'Activity Feed', icon: FiActivity },
-    { id: 11, title: 'My Profile', icon: FiUsers },
     { id: 12, title: 'Document Verification', icon: FiShield },
   ];
 
@@ -149,7 +148,7 @@ const KAMMemberDashboard = () => {
     const token = localStorage.getItem('token');
     const userName = localStorage.getItem('userName');
     const userEmail = localStorage.getItem('userEmail');
-    
+
     if (token) {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
@@ -182,12 +181,12 @@ const KAMMemberDashboard = () => {
   const fetchDashboardData = async (userId) => {
     try {
       setLoading(true);
-      
+
       // Fetch recruitment stats
       const [statsRes, positionsRes, candidatesRes] = await Promise.allSettled([
         getRecruitmentStats(),
-        getAllRecruitmentPositions(),
-        getAllCandidates()
+        getAllRecruitmentPositions(userId ? { assignedToId: userId } : {}),
+        getAllCandidates(userId ? { assignedToId: userId } : {})
       ]);
 
       let activePositions = 0;
@@ -274,7 +273,7 @@ const KAMMemberDashboard = () => {
             title: task.title,
             priority: task.priority || 'Medium',
             status: task.status === 'Completed' ? 'completed' : 'pending',
-            dueTime: task.deadline 
+            dueTime: task.deadline
               ? new Date(task.deadline).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
               : 'Today'
           }));
@@ -302,7 +301,7 @@ const KAMMemberDashboard = () => {
             let timeStr = intDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
             if (isTomorrow) timeStr = `Tomorrow ${timeStr}`;
             else if (!isToday) timeStr = intDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' ' + timeStr;
-            
+
             return {
               id: int._id || int.id,
               candidate: int.candidateName || int.candidate?.name || 'Candidate',
@@ -311,7 +310,7 @@ const KAMMemberDashboard = () => {
               type: int.interviewType || int.type || 'Interview'
             };
           });
-        
+
         setUpcomingInterviews(interviews);
         setStats(prev => ({ ...prev, interviewsScheduled: interviews.length }));
       }
@@ -361,7 +360,7 @@ const KAMMemberDashboard = () => {
     if (!currentTask) return;
 
     const newStatus = currentTask.status === 'completed' ? 'Pending' : 'Completed';
-    
+
     setTodayTasks((prev) =>
       prev.map((task) =>
         task.id === taskId
@@ -534,11 +533,10 @@ const KAMMemberDashboard = () => {
                             >
                               <button
                                 onClick={() => toggleTaskStatus(task.id)}
-                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                  task.status === 'completed'
+                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${task.status === 'completed'
                                     ? 'bg-emerald-500 border-emerald-500 text-white'
                                     : 'border-gray-300 hover:border-emerald-500'
-                                }`}
+                                  }`}
                               >
                                 {task.status === 'completed' && <FiCheckCircle className="w-4 h-4" />}
                               </button>
@@ -548,11 +546,10 @@ const KAMMemberDashboard = () => {
                                 </p>
                                 <p className="text-sm text-gray-500">{task.dueTime}</p>
                               </div>
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                task.priority === 'High' || task.priority === 'Urgent' ? 'bg-red-100 text-red-700' :
-                                task.priority === 'Medium' ? 'bg-amber-100 text-amber-700' :
-                                'bg-blue-100 text-blue-700'
-                              }`}>
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${task.priority === 'High' || task.priority === 'Urgent' ? 'bg-red-100 text-red-700' :
+                                  task.priority === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                                    'bg-blue-100 text-blue-700'
+                                }`}>
                                 {task.priority}
                               </span>
                             </div>
@@ -704,6 +701,7 @@ const KAMMemberDashboard = () => {
       onNotificationClick={handleNotificationClick}
       showGlobalHeader={false}
       isLoading={loading}
+      bottomTabName="My Profile"
     >
       {renderContent()}
     </AdminLayout>

@@ -68,11 +68,7 @@ export default function CandidatesPage({ setActiveTab }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
-  const [positions, setPositions] = useState([
-    { id: 'pos-101', title: 'Senior Software Engineer', clientName: 'TechSolutions Inc.' },
-    { id: 'pos-102', title: 'Frontend Developer', clientName: 'Microsoft' },
-    { id: 'pos-103', title: 'UI/UX Designer', clientName: 'Google' }
-  ]);
+  const [positions, setPositions] = useState([]);
   const [clients, setClients] = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [editMode, setEditMode] = useState(false);
@@ -184,7 +180,7 @@ export default function CandidatesPage({ setActiveTab }) {
 
   const fetchCandidates = async () => {
     try {
-      setLoading(true);
+      if (candidates.length === 0) setLoading(true);
       
       // Fetch both sources in parallel
       const [erpRes, spRes] = await Promise.all([
@@ -763,10 +759,7 @@ Mabicons Recruitment Team`);
             className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
           >
             <option value="All Clients">All Clients</option>
-            <option value="Google">Google</option>
-            <option value="Microsoft">Microsoft</option>
-            <option value="Amazon">Amazon</option>
-            {activeClientNames.filter(name => !["Google", "Microsoft", "Amazon"].includes(name)).map(name => (
+            {activeClientNames.map(name => (
               <option key={name} value={name}>{name}</option>
             ))}
           </select>
@@ -889,7 +882,7 @@ Mabicons Recruitment Team`);
                               {skill}
                             </span>
                           ))}
-                          <div className="flex items-center gap-3 ml-auto">
+                          <div className="flex items-center gap-2 mt-2.5 w-full">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -900,10 +893,28 @@ Mabicons Recruitment Team`);
                                   toast.error('No CV uploaded for this candidate');
                                 }
                               }}
-                              className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1B4DA0] text-white rounded-lg text-[9px] font-bold hover:bg-[#153e82] transition-all shadow-sm active:scale-95"
+                              className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[#1B4DA0]/10 text-[#1B4DA0] rounded-lg text-[9px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all active:scale-95"
                             >
                               <Eye size={10} /> View CV
                             </button>
+                            
+                            {candidate.stage === 'Hired' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCredsCandidate({
+                                    id: candidate.id,
+                                    name: candidate.name,
+                                    email: candidate.email,
+                                    role: candidate.role
+                                  });
+                                  setIsCredsModalOpen(true);
+                                }}
+                                className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-[9px] font-bold hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/10 active:scale-95 whitespace-nowrap"
+                              >
+                                <Zap size={10} fill="currentColor" /> Gen Credentials
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1005,19 +1016,38 @@ Mabicons Recruitment Team`);
                       </div>
                     </td>
                     <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => {
-                          if (candidate.cvUrl) {
-                            const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
-                            window.open(url, '_blank');
-                          } else {
-                            toast.error('No CV uploaded for this candidate');
-                          }
-                        }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#0D47A1] text-white rounded-xl text-[10px] font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95 ml-auto"
-                      >
-                        <Eye size={12} /> View CV
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {candidate.stage === 'Hired' && (
+                          <button
+                            onClick={() => {
+                              setCredsCandidate({
+                                id: candidate.id,
+                                name: candidate.name,
+                                email: candidate.email,
+                                role: candidate.role
+                              });
+                              setIsCredsModalOpen(true);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-bold hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/20 active:scale-95"
+                            title="Generate Credentials"
+                          >
+                            <Zap size={12} fill="currentColor" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (candidate.cvUrl) {
+                              const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
+                              window.open(url, '_blank');
+                            } else {
+                              toast.error('No CV uploaded for this candidate');
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-3.5 py-2 bg-[#0D47A1] text-white rounded-xl text-[10px] font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                        >
+                          <Eye size={12} /> View CV
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

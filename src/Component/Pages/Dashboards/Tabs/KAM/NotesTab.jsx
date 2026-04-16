@@ -8,22 +8,12 @@ import {
 } from 'lucide-react';
 import { getNotes, createNote, updateNote, deleteNote } from '../../../service/api';
 
-const MOCK_NOTES_RECRUITMENT = [
-  { id: 'nr1', title: 'Sourcing Strategy - Tech', content: 'Focused on LinkedIn Boolean strings and referral loops for high-priority React developer roles.', createdAt: new Date(Date.now() - 86400000).toISOString(), updatedAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: 'nr2', title: 'Interview Feedback Loop', content: 'Reminder to follow up with internal stakeholders within 24 hours of technical evaluation.', createdAt: new Date(Date.now() - 172800000).toISOString(), updatedAt: new Date(Date.now() - 172800000).toISOString() },
-  { id: 'nr3', title: 'Client Requirements - TechNexus', description: 'Monthly project status update and requirements gathering for April.', status: 'Pending', priority: 'High', category: 'Client', assignedToName: 'Manju', dueDate: new Date().toISOString() },
-];
-
-const MOCK_NOTES_OPERATIONS = [
-  { id: 'no1', title: 'New Remote Policy', content: 'Details on the hybrid model (3 days office, 2 days home) for the FY24 cycle.', createdAt: new Date(Date.now() - 43200000).toISOString(), updatedAt: new Date(Date.now() - 43200000).toISOString() },
-  { id: 'no2', title: 'Payroll Compliance Check', content: 'Mandatory review of PF and ESI contributions for the newly onboarded batch.', createdAt: new Date(Date.now() - 129600000).toISOString(), updatedAt: new Date(Date.now() - 129600000).toISOString() },
-];
 
 const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) => {
   // Use prop if provided, otherwise fallback to localStorage, finally default to Operations
   const department = propDepartment || localStorage.getItem('department') || 'HR Operations';
   
-  const [notes, setNotes] = useState(department === 'HR Recruitment' ? MOCK_NOTES_RECRUITMENT : MOCK_NOTES_OPERATIONS);
+  const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,32 +25,36 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
   const [isEditingDetail, setIsEditingDetail] = useState(false);
   const [detailEditForm, setDetailEditForm] = useState({ title: '', content: '' });
 
-  const fetchNotes = useCallback(async () => {
-    setLoading(true);
+  const fetchNotes = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      // Pass department to the API to fetch only relevant notes
       const res = await getNotes({ department });
-      const apiNotes = res.notes || [];
+      const apiNotes = res.notes || res.data || [];
       
-      // Secondary filter to ensure strict isolation in the UI
       const filteredApiNotes = apiNotes.filter(n => 
         n.department && 
         n.department.trim().toLowerCase() === department.trim().toLowerCase()
       );
       
-      const mockNotes = department === 'HR Recruitment' ? MOCK_NOTES_RECRUITMENT : MOCK_NOTES_OPERATIONS;
-      setNotes([...mockNotes, ...filteredApiNotes]);
+      setNotes(filteredApiNotes);
     } catch (err) {
       console.error('Failed to load notes:', err);
-      const mockNotes = department === 'HR Recruitment' ? MOCK_NOTES_RECRUITMENT : MOCK_NOTES_OPERATIONS;
-      setNotes(mockNotes);
+      if (!silent) setNotes([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [department]);
 
   useEffect(() => {
     fetchNotes();
+  }, [fetchNotes]);
+
+  // Implement 3-second auto-refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchNotes(true);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [fetchNotes]);
 
   const handleSaveNote = async (e) => {
@@ -74,12 +68,15 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
       };
 
       if (view === 'edit' && editNote) {
-        const res = await updateNote(editNote.id, payload);
-        setNotes(prev => prev.map(n => n.id === editNote.id ? res.note : n));
+        const noteId = editNote._id || editNote.id;
+        const res = await updateNote(noteId, payload);
+        const updated = res.note || res.data;
+        setNotes(prev => prev.map(n => (n._id || n.id) === noteId ? updated : n));
         toast.success('Note updated successfully');
       } else {
         const res = await createNote(payload);
-        setNotes(prev => [res.note, ...prev]);
+        const created = res.note || res.data;
+        setNotes(prev => [created, ...prev]);
         toast.success('Note created successfully');
       }
 
@@ -96,7 +93,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
   const handleDelete = async (id) => {
     try {
       await deleteNote(id);
-      setNotes(prev => prev.filter(n => n.id !== id));
+      setNotes(prev => prev.filter(n => (n._id || n.id) !== id));
       toast.success('Note deleted');
     } catch (err) {
       toast.error(err.message || 'Failed to delete note');
@@ -112,15 +109,16 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
     }
     setSaving(true);
     try {
-      const res = await updateNote(selectedNote.id, {
+      const noteId = selectedNote._id || selectedNote.id;
+      const res = await updateNote(noteId, {
         title: detailEditForm.title,
         content: detailEditForm.content,
         department: department
       });
       
-      // Update local states
-      setNotes(prev => prev.map(n => n.id === selectedNote.id ? res.note : n));
-      setSelectedNote(res.note);
+      const updatedNote = res.note || res.data;
+      setNotes(prev => prev.map(n => (n._id || n.id) === noteId ? updatedNote : n));
+      setSelectedNote(updatedNote);
       setIsEditingDetail(false);
       toast.success('Note updated successfully');
     } catch (err) {
@@ -186,11 +184,6 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                           {selectedNote.title}
                         </h2>
                       )}
-                      <div className="flex items-center gap-2 mt-1.5 justify-start text-left">
-                        <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">Protocol Entry</span>
-                        <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{department}</span>
-                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       {isEditingDetail ? (
@@ -236,48 +229,14 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                   </div>
 
                   {/* Drawer Content */}
-                  <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10 custom-scrollbar text-left scroll-smooth">
-                    {/* Note Snapshot */}
-                    <div className="bg-[#FAFAF8] dark:bg-slate-900/50 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 p-8 space-y-8">
-                       <div className="space-y-6">
-                          <div className="grid grid-cols-2 gap-8 border-b border-[#F4F3EF] dark:border-slate-800 pb-8">
-                            <div className="space-y-1 text-left">
-                              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Created On</span>
-                              <div className="flex items-center gap-2 text-[#1A1A2E] dark:text-white font-bold text-sm justify-start">
-                                <Calendar size={14} className="text-[#1B4DA0]" />
-                                {new Date(selectedNote.createdAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
-                              </div>
-                            </div>
-                            <div className="space-y-1 text-left">
-                              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Last Activity</span>
-                              <div className="flex items-center gap-2 text-[#1A1A2E] dark:text-white font-bold text-sm justify-start">
-                                <Clock size={14} className="text-[#1B4DA0]" />
-                                {new Date(selectedNote.updatedAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-4 text-left">
-                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Security Header</span>
-                            <div className="flex flex-wrap gap-2 justify-start">
-                               <span className="px-3 py-1 bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 rounded-lg text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest shadow-sm">
-                                  {department.split(' ')[1] || department}
-                               </span>
-                               <span className="px-3 py-1 bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 rounded-lg text-[10px] font-bold text-emerald-600 uppercase tracking-widest shadow-sm">
-                                  Active Record
-                               </span>
-                            </div>
-                          </div>
-                       </div>
-                    </div>
-
+                  <div className="flex-1 p-10 pt-6 space-y-6 overflow-y-auto pb-10 custom-scrollbar text-left scroll-smooth">
                     {/* Full Description */}
                     <div className="space-y-4 text-left">
                       <div className="flex items-center gap-3 mb-2 justify-start text-left">
                          <div className="w-8 h-8 rounded-lg bg-[#0D47A1]/5 flex items-center justify-center text-[#0D47A1]">
                             <FileText size={16} />
                          </div>
-                         <h4 className="text-sm font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest text-left">Note Intelligence</h4>
+                         <h4 className="text-sm font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest text-left">DESCRIPTION</h4>
                       </div>
                       <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm text-left">
                         {isEditingDetail ? (
@@ -288,7 +247,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                             placeholder="Type your findings here..."
                           />
                         ) : (
-                          <p className="text-[#475569] dark:text-slate-300 text-[15px] leading-[1.8] font-medium whitespace-pre-wrap text-left">
+                          <p className="text-[#475569] dark:text-slate-300 text-[13.5px] leading-[1.6] font-medium whitespace-pre-wrap text-left opacity-90">
                             {selectedNote.content}
                           </p>
                         )}
@@ -405,7 +364,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
 
                         return (
                           <motion.div
-                            key={note.id}
+                            key={note._id || note.id}
                             layout
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -433,19 +392,25 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                                 className="bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative cursor-pointer group-hover:-translate-y-1 text-left"
                                 onClick={() => setSelectedNote(note)}
                               >
-                                <div className="flex justify-between items-start">
-                                  <div className="space-y-3 flex-1">
-                                    <div>
-                                      <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2 group-hover:text-[#1B4DA0] transition-colors">
-                                        {note.title}
-                                      </h4>
-                                      <p className="text-[#64748B] dark:text-slate-400 text-[13px] font-medium leading-relaxed opacity-80 mt-2 line-clamp-2">
-                                        {note.content}
-                                      </p>
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2 group-hover:text-[#1B4DA0] transition-colors">
+                                          {note.title}
+                                        </h4>
+                                        <p className="text-[#64748B] dark:text-slate-400 text-[13px] font-medium leading-relaxed opacity-80 mt-2 line-clamp-2">
+                                          {note.content}
+                                        </p>
+                                      </div>
+                                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleEdit(note); }}
+                                          className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#1B4DA0] flex items-center justify-center hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+                                          title="Quick Edit"
+                                        >
+                                          <Pencil size={18} />
+                                        </button>
+                                      </div>
                                     </div>
-                                  </div>
-
-                                </div>
 
                                 {/* Design Glow */}
                                 <div className="absolute -right-2 -bottom-2 w-24 h-24 bg-[#1B4DA0]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -574,4 +539,4 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
   );
 };
 
-export default NotesTab;
+export default NotesTab;

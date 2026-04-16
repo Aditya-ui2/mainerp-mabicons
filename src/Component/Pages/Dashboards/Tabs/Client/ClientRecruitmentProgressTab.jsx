@@ -15,6 +15,7 @@ import {
   FiDownload,
   FiMail,
   FiPhone,
+  FiChevronRight,
 } from 'react-icons/fi';
 import { FaRupeeSign } from 'react-icons/fa';
 import {
@@ -35,7 +36,9 @@ import {
   Legend,
 } from 'recharts';
 import { jwtDecode } from 'jwt-decode';
-import { getClientDashboardOverview } from '../../../service/api';
+import { getClientDashboardOverview, generateCandidateCredentials } from '../../../service/api';
+import toast from 'react-hot-toast';
+import { Zap, RotateCcw } from 'lucide-react';
 
 /* ── Stage color config ── */
 const STAGE_CONFIG = {
@@ -76,28 +79,145 @@ const PriorityBadge = ({ priority }) => {
   return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${config[priority] || config.Medium}`}>{priority}</span>;
 };
 
+/* ── Job Detail Sidebar ── */
+const JobDetailSidebar = ({ job, onClose }) => {
+  if (!job) return null;
+
+  const skillsArr = (Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean);
+  const reqsArr = (Array.isArray(job.requirements) ? job.requirements : (job.requirements || '').split('\n')).filter(Boolean);
+  const respArr = (Array.isArray(job.responsibilities) ? job.responsibilities : (job.responsibilities || '').split('\n')).filter(Boolean);
+
+  return (
+    <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right duration-500">
+      {/* Header */}
+      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+        <div>
+          <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{job.title}</h2>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">{job.client || 'Engineering'}</span>
+            <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.type || 'Full-time'}</span>
+          </div>
+        </div>
+        <button onClick={onClose} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90 shadow-sm">
+          <FiX size={20} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Job Snapshot Info Grid */}
+        <div className="px-8 py-8 space-y-8">
+          <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Location</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.location || 'Not Specified'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Salary Range</span>
+              <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-1.5">
+                <span className="text-[#9B9BAD]">₹</span>
+                {job.salary ? (job.salary.toString().toLowerCase().includes('lpa') ? job.salary : `${job.salary} LPA`) : 'Competitive'}
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.experience ? (job.experience.toString().toLowerCase().includes('year') ? job.experience : `${job.experience} Years`) : 'Not Mentioned'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Openings</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.openings || 1} Position(s)</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Deadline</span>
+              <p className="text-sm font-bold text-[#1A1A2E]">{job.deadline ? new Date(job.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Deadline'}</p>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Priority</span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${job.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : job.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#1B4DA0] border-blue-100'}`}>
+                {job.priority || 'Medium'}
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-[#F4F3EF]">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4">Required Skills</span>
+            <div className="flex flex-wrap gap-2">
+              {skillsArr.length > 0 ? skillsArr.map((skill, i) => (
+                <span key={i} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">
+                  {skill.trim()}
+                </span>
+              )) : <span className="text-sm text-[#9B9BAD] italic">No specific skills listed</span>}
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-[#F4F3EF]">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2">Job Description</span>
+            <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
+              {job.description || <span className="italic text-[#9B9BAD]">No description provided</span>}
+            </p>
+          </div>
+
+          <div className="pt-6 border-t border-[#F4F3EF]">
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3">Requirements</span>
+            {reqsArr.length > 0 ? (
+              <ul className="space-y-2.5">
+                {reqsArr.map((req, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#1B4DA0] mt-1.5 flex-shrink-0" />
+                    {req.trim()}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm italic text-[#9B9BAD]">No specific requirements listed</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-6 flex items-center gap-4 z-20">
+        <button
+          onClick={onClose}
+          className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-bold text-sm hover:bg-[#E8E7E2] transition-all"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+};
+
 /* ══════════════════ CLIENT RECRUITMENT PROGRESS ═══════════════════ */
-export default function ClientRecruitmentProgressTab({ isDarkMode, clientData }) {
+export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, setActiveTab }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedPosition, setExpandedPosition] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [datePreset, setDatePreset] = useState('all');
+  const [datePreset, setDatePreset] = useState('today');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [isPositionsModalOpen, setIsPositionsModalOpen] = useState(false);
+  const [isCandidatesModalOpen, setIsCandidatesModalOpen] = useState(false);
+  const [isInterviewsModalOpen, setIsInterviewsModalOpen] = useState(false);
+  const [isHiredModalOpen, setIsHiredModalOpen] = useState(false);
   const datePickerRef = useRef(null);
 
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const offsetPos = el.getBoundingClientRect().top + window.pageYOffset - 120;
+      window.scrollTo({
+        top: offsetPos,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   // Close date picker on outside click
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) setShowDatePicker(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
 
   // Date range helper
   const getDateRange = () => {
@@ -236,7 +356,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
     : funnel;
 
   // Recompute KPI summary from filtered data
-  const computedSummary = isDateFiltered
+   const computedSummary = isDateFiltered
     ? {
         openPositions: dateFilteredPositions.filter(p => p.status === 'Open' || p.status === 'Urgent').length,
         totalPositions: dateFilteredPositions.length,
@@ -252,6 +372,8 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
   const filteredPositions = filterStatus === 'all'
     ? dateFilteredPositions
     : dateFilteredPositions.filter(p => p.status === filterStatus);
+
+  const activeExpId = expandedPosition;
 
   // Funnel stages in order
   const funnelStages = ['screening', 'phoneInterview', 'technical', 'hrRound', 'clientInterview', 'offerSent', 'joined'];
@@ -270,7 +392,6 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex flex-col items-start text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Recruitment Overview</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Track your hiring pipeline and candidate progress</p>
         </div>
         <div className="flex items-center gap-3">
           {/* Date Filter */}
@@ -373,25 +494,32 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpiCards.map((kpi, i) => {
           const Icon = kpi.icon;
+          const handleClick = () => {
+            if (kpi.label === 'Open Positions') {
+              if (computedSummary.openPositions > 0) setIsPositionsModalOpen(true);
+              else scrollToSection('positions-section');
+            }
+            else if (kpi.label === 'Candidates') setIsCandidatesModalOpen(true);
+            else if (kpi.label === 'Interviews') setIsInterviewsModalOpen(true);
+            else if (kpi.label === 'Hired') setIsHiredModalOpen(true);
+          };
+
           return (
-            <div key={i} className="bg-white p-6 rounded-[24px] border border-[#E8E7E2] shadow-sm hover:shadow-md transition-all duration-300 group">
+            <div 
+              key={i} 
+              onClick={handleClick}
+              className="bg-white p-6 rounded-[24px] border border-[#E8E7E2] shadow-sm hover:shadow-xl hover:border-[#1B4DA0]/30 hover:-translate-y-1 transition-all duration-300 group cursor-pointer active:scale-[0.98] relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                <FiChevronRight className="text-[#1B4DA0]/30" size={24} />
+              </div>
               <div className="flex items-center justify-between mb-4">
-                <div className="text-black group-hover:text-[#5B9DF0] transition-colors duration-300">
+                <div className="text-black group-hover:text-[#1B4DA0] transition-colors duration-300 group-hover:scale-110">
                   <Icon size={24} strokeWidth={2.5} />
                 </div>
               </div>
-              <p className="text-4xl font-extrabold text-[#1A1A2E] mb-1">{kpi.value}</p>
+              <p className="text-4xl font-extrabold text-[#1A1A2E] mb-1 tracking-tighter">{kpi.value}</p>
               <p className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest mb-3">{kpi.label}</p>
-              <div className="flex items-center gap-1.5 mt-auto">
-                {kpi.up === true ? (
-                  <ArrowUpRight size={14} className="text-[#1B4DA0]" />
-                ) : kpi.up === false ? (
-                  <ArrowDownRight size={14} className="text-slate-400" />
-                ) : (
-                  <Minus size={14} className="text-[#C5C5D2]" />
-                )}
-                <span className={`text-[10px] font-bold ${kpi.up === null ? 'text-[#9B9BAD]' : 'text-[#1B4DA0]'}`}>{kpi.change}</span>
-              </div>
             </div>
           );
         })}
@@ -423,7 +551,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
         const totalCandidates = chartData.reduce((sum, d) => sum + d.value, 0);
 
         return (
-          <div className="bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col items-start">
+          <div id="candidates-chart-section" className="bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col items-start scroll-mt-24">
             <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3 mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
               <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                 <FiUsers className="w-5 h-5 text-[#1B4DA0]" />
@@ -483,202 +611,379 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
       {/* Positions & Upcoming Interviews Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Positions List */}
-        <div className="lg:col-span-8 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+        <div id="positions-section" className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col min-h-[500px] scroll-mt-24">
+          <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3" style={{ fontFamily: "'Syne', sans-serif" }}>
-              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-amber-50 rounded-2xl">
                 <FiBriefcase className="w-5 h-5 text-amber-500" />
               </div>
-              <span>Positions ({filteredPositions.length})</span>
+              <span>Open Positions</span>
             </h2>
-            <select
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#E8E7E2] bg-[#F4F3EF] text-[#1A1A2E] outline-none cursor-pointer focus:ring-2 focus:ring-blue-200"
-            >
-              <option value="all">All Statuses</option>
-              <option value="Open">Open</option>
-              <option value="Closed">Closed</option>
-            </select>
           </div>
 
-          {filteredPositions.length === 0 ? (
-            <p className="text-sm text-center py-8 text-[#9B9BAD]">No positions found</p>
-          ) : (
-            <div className="space-y-3">
-              {filteredPositions.map(pos => {
-                const isExpanded = expandedPosition === pos.id;
-                const progress = pos.openings ? Math.round((pos.filled / pos.openings) * 100) : 0;
-                const posCandidates = dateFilteredCandidates.filter(c => c.position === pos.title);
-
-                return (
-                  <div key={pos.id} className="rounded-2xl border border-[#E8E7E2] bg-[#FAFAF8] overflow-hidden hover:shadow-sm transition-all">
-                    <button
-                      onClick={() => setExpandedPosition(isExpanded ? null : pos.id)}
-                      className="w-full flex items-center justify-between p-4 text-left hover:bg-[#F4F3EF] transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-[#1A1A2E] truncate">{pos.title}</span>
-                          <StatusBadge status={pos.status} />
-                          <PriorityBadge priority={pos.priority} />
-                        </div>
-                        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-[#9B9BAD] font-medium">
-                          {pos.location && <span className="flex items-center gap-1"><FiMapPin className="w-3 h-3" />{pos.location}</span>}
-                          <span>{pos.type}</span>
-                          <span>{pos.candidateCount} candidate{pos.candidateCount !== 1 ? 's' : ''}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {/* Progress ring */}
-                        <div className="relative w-10 h-10">
-                          <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
-                            <path d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E8E7E2" strokeWidth="3" />
-                            <path d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1B4DA0" strokeWidth="3" strokeDasharray={`${progress}, 100`} strokeLinecap="round" />
-                          </svg>
-                          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-[#1A1A2E]">{pos.filled}/{pos.openings}</span>
-                        </div>
-                        {isExpanded ? <FiChevronUp className="w-4 h-4 text-[#9B9BAD]" /> : <FiChevronDown className="w-4 h-4 text-[#9B9BAD]" />}
-                      </div>
-                    </button>
-
-                    {isExpanded && posCandidates.length > 0 && (
-                      <div className="border-t border-[#E8E7E2] p-4">
-                        <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-3">Candidates in Pipeline</p>
-                        <div className="space-y-2">
-                          {posCandidates.map(c => (
-                            <div 
-                              key={c.id} 
-                              onClick={(e) => { e.stopPropagation(); setSelectedCandidate(c); }}
-                              className="flex items-center justify-between py-2 px-3 rounded-xl bg-white border border-[#E8E7E2] cursor-pointer hover:border-[#1B4DA0] transition-all"
-                            >
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-full bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-[10px] font-bold">
-                                  {c.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                </div>
-                                <span className="text-xs font-semibold text-[#1A1A2E]">{c.name}</span>
-                              </div>
-                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${STAGE_CONFIG[Object.keys(STAGE_CONFIG).find(k => STAGE_CONFIG[k].label === c.stage)]?.bg || 'bg-slate-100 text-slate-600'}`}>
-                                {c.stage}
-                              </span>
+          <div className="flex-1 overflow-x-auto custom-scrollbar">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Position</th>
+                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Openings</th>
+                  <th className="pb-4 text-right text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F4F3EF]">
+                {filteredPositions.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" className="py-20 text-center opacity-40">
+                      <FiBriefcase className="mx-auto text-slate-300 mb-4" size={40} />
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No active vacancies</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPositions.map(pos => (
+                    <tr key={pos._id || pos.id} className="group hover:bg-[#FAFAF9] transition-all cursor-pointer" onClick={() => setSelectedJob(pos)}>
+                      <td className="py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-[18px] bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-sm font-black group-hover:bg-[#EEF2FB] transition-colors flex-shrink-0 shadow-inner">
+                            {pos.title.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="flex flex-col text-left">
+                            <h3 className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{pos.title}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{pos.location || 'Remote'}</span>
                             </div>
-                          ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-
-                    {isExpanded && posCandidates.length === 0 && (
-                      <div className="border-t border-[#E8E7E2] p-4">
-                        <p className="text-xs text-center text-[#9B9BAD]">No candidates yet for this position</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                      </td>
+                      <td className="py-6">
+                        <span className="text-lg font-black text-[#1A1A2E]">{pos.openings || 1}</span>
+                      </td>
+                      <td className="py-6 text-right">
+                        <StatusBadge status={pos.status} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Upcoming Interviews */}
-        <div className="lg:col-span-4 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
-          <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3 mb-6" style={{ fontFamily: "'Syne', sans-serif" }}>
-            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-              <FiCalendar className="w-5 h-5 text-[#1B4DA0]" />
-            </div>
-            Upcoming Interviews
-          </h2>
-          {(!dateFilteredInterviews || dateFilteredInterviews.length === 0) ? (
-            <div className="text-center py-12">
-              <FiCalendar className="w-10 h-10 mx-auto mb-3 text-[#E8E7E2]" />
-              <p className="text-sm text-[#9B9BAD]">No upcoming interviews</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {dateFilteredInterviews.map((iv, i) => {
-                const date = new Date(iv.interviewDate);
-                const isToday = date.toDateString() === new Date().toDateString();
-                const isTomorrow = date.toDateString() === new Date(Date.now() + 86400000).toDateString();
-                const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        <div id="interviews-section" className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col min-h-[500px] scroll-mt-24">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3" style={{ fontFamily: "'Syne', sans-serif" }}>
+              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-blue-50 rounded-2xl">
+                <FiCalendar className="w-5 h-5 text-blue-500" />
+              </div>
+              <span>Upcoming Interviews</span>
+            </h2>
+          </div>
 
-                return (
-                  <div key={i} className="flex items-center gap-4 p-3.5 rounded-2xl border border-[#E8E7E2] bg-[#FAFAF8] hover:shadow-sm transition-all group">
-                    <div
-                      className={`flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center ${isToday ? 'text-white shadow-lg shadow-blue-500/20' : 'bg-[#F4F3EF] text-[#1A1A2E]'}`}
-                      style={isToday ? { background: '#1B4DA0' } : {}}
-                    >
-                      <span className="text-[10px] font-bold leading-none">{dateLabel}</span>
-                      {!isToday && !isTomorrow && <span className="text-[8px] text-[#9B9BAD]">{date.getFullYear()}</span>}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-[#1A1A2E] truncate">{iv.candidateName}</p>
-                      <p className="text-[10px] text-[#9B9BAD] truncate font-medium">{iv.positionTitle}</p>
-                      <div className="flex items-center gap-2 mt-1.5 text-[10px] text-[#9B9BAD]">
-                        <FiClock className="w-3 h-3" />
-                        <span className="font-medium">{iv.startTime || 'TBD'}</span>
-                        <span className="px-1.5 py-0.5 rounded-md bg-[#F4F3EF] text-[#1A1A2E] font-bold text-[9px]">
-                          {iv.interviewType || 'Video'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="flex-1 overflow-x-auto custom-scrollbar">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Candidate</th>
+                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Schedule</th>
+                  <th className="pb-4 text-right text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Type</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F4F3EF]">
+                {(!dateFilteredInterviews || dateFilteredInterviews.length === 0) ? (
+                  <tr>
+                    <td colSpan="3" className="py-20 text-center opacity-40">
+                      <FiCalendar className="mx-auto text-slate-300 mb-4" size={40} />
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No scheduled sessions</p>
+                    </td>
+                  </tr>
+                ) : (
+                  dateFilteredInterviews.map((iv, i) => {
+                    const date = new Date(iv.interviewDate);
+                    const isToday = date.toDateString() === new Date().toDateString();
+                    const dateLabel = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                    
+                    return (
+                      <tr key={i} className="group hover:bg-[#FAFAF9] transition-all cursor-pointer">
+                        <td className="py-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#1B4DA0] text-xs font-black group-hover:bg-blue-600 group-hover:text-white transition-all">
+                              {iv.candidateName?.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col text-left">
+                              <p className="text-sm font-bold text-[#1A1A2E] truncate">{iv.candidateName}</p>
+                              <p className="text-[10px] text-[#9B9BAD] truncate font-medium">{iv.positionTitle}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-6">
+                          <div className="flex flex-col">
+                            <p className="text-xs font-bold text-[#1A1A2E]">{dateLabel}</p>
+                            <p className="text-[10px] text-[#9B9BAD]">{iv.startTime || 'TBD'}</p>
+                          </div>
+                        </td>
+                        <td className="py-6 text-right">
+                          <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-[9px] font-bold uppercase tracking-wider border border-blue-100">
+                            {iv.interviewType || 'Video'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* All Candidates Table */}
-      {dateFilteredCandidates.length > 0 && (
-        <div className="bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm">
-          <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3 mb-6" style={{ fontFamily: "'Syne', sans-serif" }}>
-            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-              <FiUsers className="w-5 h-5 text-[#1B4DA0]" />
-            </div>
-            All Candidates ({dateFilteredCandidates.length})
-          </h2>
-          <div className="overflow-x-auto">
-            <div className="space-y-1">
-              <div 
-                className="grid gap-4 pb-4 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] border-b border-[#F4F3EF]"
-                style={{ gridTemplateColumns: '240px 180px 160px 1fr' }}
-              >
-                <div style={{ paddingLeft: '44px' }}>Candidate</div>
-                <div>Position</div>
-                <div>Stage</div>
-                <div>Last Updated</div>
+      {/* Positions Modal */}
+      {isPositionsModalOpen && createPortal(
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsPositionsModalOpen(false)}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF]"
+          >
+            <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Open Positions</h3>
+                <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Live Vacancy Status</p>
               </div>
-              {dateFilteredCandidates.slice(0, 20).map(c => (
+              <button 
+                onClick={() => setIsPositionsModalOpen(false)}
+                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
+              >
+                <FiX size={24} />
+              </button>
+            </div>
+            
+            <div className="max-h-[60vh] overflow-y-auto p-8 space-y-4 custom-scrollbar">
+              {filteredPositions.filter(p => p.status === 'Open' || p.status === 'Urgent').map(p => (
                 <div 
-                  key={c.id} 
-                  onClick={() => setSelectedCandidate(c)}
-                  className="grid gap-4 py-3.5 border-b border-[#F4F3EF] last:border-0 hover:bg-[#FAFAF8] transition-colors px-2 rounded-lg cursor-pointer"
-                  style={{ gridTemplateColumns: '240px 180px 160px 1fr' }}
+                  key={p._id || p.id}
+                  onClick={() => { setSelectedJob(p); setIsPositionsModalOpen(false); }}
+                  className="p-6 rounded-[32px] bg-[#FAFAF8] border border-[#E8E7E2] hover:border-[#1B4DA0] hover:bg-white transition-all cursor-pointer group flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xs font-bold">
-                      {c.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-[#E8E7E2] flex items-center justify-center text-[#1B4DA0] text-lg font-black group-hover:bg-blue-50 transition-colors">
+                      {p.title.slice(0, 2).toUpperCase()}
                     </div>
-                    <span className="text-sm font-semibold text-[#1A1A2E]">{c.name}</span>
+                    <div>
+                      <p className="text-base font-bold text-[#1A1A2E]">{p.title}</p>
+                      <p className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">{p.location || 'Remote'} • {p.openings || 1} Openings</p>
+                    </div>
                   </div>
-                  <div className="text-sm text-[#9B9BAD] flex items-center">{c.position || '—'}</div>
-                  <div className="flex items-center">
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${STAGE_CONFIG[Object.keys(STAGE_CONFIG).find(k => STAGE_CONFIG[k].label === c.stage)]?.bg || 'bg-slate-100 text-slate-600'}`}>
-                      {c.stage}
-                    </span>
+                  <FiChevronRight className="text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors" size={20} />
+                </div>
+              ))}
+            </div>
+            
+            <div className="p-8 bg-[#F4F3EF]/50 border-t border-[#F4F3EF]">
+              <button 
+                onClick={() => setIsPositionsModalOpen(false)}
+                className="w-full py-4 bg-white border border-[#E8E7E2] rounded-2xl text-[#1A1A2E] font-bold hover:bg-[#F4F3EF] transition-all"
+              >
+                Close Breakdown
+              </button>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
+      {/* Candidates Modal */}
+      {isCandidatesModalOpen && createPortal(
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setIsCandidatesModalOpen(false)}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+            className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF]"
+          >
+            <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Active Candidates</h3>
+                <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Hiring Pipeline Status</p>
+              </div>
+              <button onClick={() => setIsCandidatesModalOpen(false)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
+                <FiX size={24} />
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-8 space-y-4 custom-scrollbar">
+              {dateFilteredCandidates.filter(c => c.stage !== 'Rejected' && c.stage !== 'Joined').map(c => (
+                <div 
+                  key={c.id}
+                  onClick={() => { setSelectedCandidate(c); setIsCandidatesModalOpen(false); }}
+                  className="p-6 rounded-[32px] bg-[#FAFAF8] border border-[#E8E7E2] hover:border-[#1B4DA0] hover:bg-white transition-all cursor-pointer group flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-[#E8E7E2] flex items-center justify-center text-[#1B4DA0] text-lg font-black group-hover:bg-blue-50 transition-colors">
+                      {c.name?.split(' ').map(n=>n[0]).join('').slice(0, 2)}
+                    </div>
+                    <div>
+                      <p className="text-base font-bold text-[#1A1A2E]">{c.name}</p>
+                      <p className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">{c.stage} • Applied for {c.position || 'Unknown'}</p>
+                    </div>
                   </div>
-                  <div className="text-sm text-[#9B9BAD] flex items-center">
-                    {c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}
+                  <FiChevronRight className="text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors" size={20} />
+                </div>
+              ))}
+            </div>
+            <div className="p-8 bg-[#F4F3EF]/50 border-t border-[#F4F3EF]">
+              <button onClick={() => setIsCandidatesModalOpen(false)} className="w-full py-4 bg-white border border-[#E8E7E2] rounded-2xl text-[#1A1A2E] font-bold hover:bg-[#F4F3EF] transition-all">Close</button>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
+      {/* Interviews Modal */}
+      {isInterviewsModalOpen && createPortal(
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setIsInterviewsModalOpen(false)}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+            className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF]"
+          >
+            <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Today's Interviews</h3>
+                <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Scheduled Slots</p>
+              </div>
+              <button onClick={() => setIsInterviewsModalOpen(false)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
+                <FiX size={24} />
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-8 space-y-4 custom-scrollbar">
+              {dateFilteredInterviews.map((iv, i) => (
+                <div 
+                  key={i}
+                  className="p-6 rounded-[32px] bg-[#FAFAF8] border border-[#E8E7E2] group flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-[#E8E7E2] flex flex-col items-center justify-center text-[#1B4DA0] font-black group-hover:bg-blue-50 transition-colors">
+                      <FiClock size={16} className="mb-1" />
+                      <span className="text-[10px]">{iv.startTime?.split(' ')[0]}</span>
+                    </div>
+                    <div>
+                      <p className="text-base font-bold text-[#1A1A2E]">{iv.candidateName}</p>
+                      <p className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">{iv.interviewType} • {iv.positionTitle}</p>
+                    </div>
+                  </div>
+                  <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest">Confirmed</span>
+                </div>
+              ))}
+            </div>
+            <div className="p-8 bg-[#F4F3EF]/50 border-t border-[#F4F3EF]">
+              <button onClick={() => setIsInterviewsModalOpen(false)} className="w-full py-4 bg-white border border-[#E8E7E2] rounded-2xl text-[#1A1A2E] font-bold hover:bg-[#F4F3EF] transition-all">Close</button>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
+      {/* Hired Modal */}
+      {isHiredModalOpen && createPortal(
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setIsHiredModalOpen(false)}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+            className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF]"
+          >
+            <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Successful Hires</h3>
+                <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Growth Milestones</p>
+              </div>
+              <button onClick={() => setIsHiredModalOpen(false)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
+                <FiX size={24} />
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-8 space-y-4 custom-scrollbar">
+              {dateFilteredCandidates.filter(c => c.stage === 'Joined').map(c => (
+                <div 
+                  key={c.id}
+                  onClick={() => { setSelectedCandidate(c); setIsHiredModalOpen(false); }}
+                  className="p-6 rounded-[32px] bg-emerald-50/30 border border-emerald-100 hover:border-emerald-500 hover:bg-white transition-all cursor-pointer group flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-emerald-100 flex items-center justify-center text-emerald-600 text-lg font-black group-hover:bg-emerald-50 transition-colors">
+                      {c.name?.split(' ').map(n=>n[0]).join('').slice(0, 2)}
+                    </div>
+                    <div>
+                      <p className="text-base font-bold text-[#1A1A2E]">{c.name}</p>
+                      <p className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">New Hire • {c.position || 'Engineering'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <span className="text-[10px] font-black uppercase tracking-widest">Joined</span>
+                    <FiCheckCircle size={18} />
                   </div>
                 </div>
               ))}
             </div>
-            {dateFilteredCandidates.length > 20 && (
-              <p className="text-xs text-center pt-4 text-[#9B9BAD] font-medium">Showing 20 of {dateFilteredCandidates.length} candidates</p>
-            )}
-          </div>
-        </div>
+            <div className="p-8 bg-emerald-50/20 border-t border-[#F4F3EF]">
+              <button 
+                onClick={() => { setIsHiredModalOpen(false); setActiveTab?.('Finalized & Offers'); }} 
+                className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl text-xs font-bold hover:bg-black transition-all shadow-lg shadow-gray-200"
+              >
+                View Hired Tab
+              </button>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
       )}
+
+      {/* Job Detail Drawer */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedJob && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedJob(null)}
+                className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[5000]"
+              />
+              <motion.div
+                initial={{ x: '100%', opacity: 0.5 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: '100%', opacity: 0.5 }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed inset-y-0 right-0 w-[698px] bg-white shadow-2xl z-[5001] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+              >
+                <JobDetailSidebar
+                  job={selectedJob}
+                  onClose={() => setSelectedJob(null)}
+                />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
       {/* Candidate Detail Sidebar */}
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
@@ -690,16 +995,15 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedCandidate(null)}
-                className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[2000]"
+                className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[5000]"
               />
-
               {/* Sidebar */}
               <motion.div
                 initial={{ x: '100%', opacity: 0.5 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: '100%', opacity: 0.5 }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="fixed inset-y-0 right-0 w-full max-w-[580px] bg-white shadow-2xl z-[2001] flex flex-col overflow-hidden text-left"
+                className="fixed inset-y-0 right-0 w-full max-w-[580px] bg-white shadow-2xl z-[5001] flex flex-col overflow-hidden text-left"
               >
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
@@ -777,6 +1081,104 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData })
 
                 {/* Footer */}
                 <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF9]">
+                  {/* BGV Onboarding Credentials - Same as HR Dashboard */}
+                  {(selectedCandidate.stage === 'Joined' || selectedCandidate.stage === 'Offer Sent') && (
+                    <div className="pt-8 mb-8 border-t border-[#F4F3EF]">
+                      <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] block mb-4">Onboarding Protocol</span>
+                      
+                      {!selectedCandidate.onboardingUsername ? (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
+                            const targetId = selectedCandidate.id || selectedCandidate._id;
+                            try {
+                              if (!targetId) {
+                                toast.error("System Error: Reference missing.", { id: loadingId });
+                                return;
+                              }
+                              
+                              const response = await generateCandidateCredentials(targetId);
+                              if (response && response.success && response.data) {
+                                   const finalUsername = response.data.username || response.data.email;
+                                   const finalPass = response.data.password;
+
+                                   // Update local data state
+                                   setData(prev => ({
+                                     ...prev,
+                                     candidates: prev.candidates.map(c => 
+                                       (c.id === targetId || c._id === targetId) 
+                                         ? { ...c, onboardingUsername: finalUsername, onboardingPassword: finalPass } 
+                                         : c
+                                     )
+                                   }));
+                                   // Update selected candidate
+                                   setSelectedCandidate(prev => ({ 
+                                     ...prev, 
+                                     onboardingUsername: finalUsername, 
+                                     onboardingPassword: finalPass 
+                                   }));
+                                   
+                                   toast.success(`Success: Records Secured`, { id: loadingId });
+                                 } else {
+                                   toast.error(`Control Error: ${response?.message || 'Gateway rejection'}`, { id: loadingId });
+                                 }
+                            } catch (err) {
+                               toast.error("Console Error: Protocol failed to reach gateway.", { id: loadingId });
+                            }
+                          }}
+                          className="bg-[#1B4DA0] text-white px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-500/10 w-full"
+                        >
+                          <Zap size={16} fill="currentColor" />
+                          GENERATE ONBOARDING CREDENTIALS
+                        </motion.button>
+                      ) : (
+                        <div className="flex flex-col gap-3 group/bgv relative bg-white rounded-2xl">
+                           <div className="bg-[#F8F9FA] border border-[#DADCE0] rounded-2xl p-6 shadow-sm">
+                             <div className="flex items-center justify-between gap-4 mb-4 border-b border-slate-100 pb-3">
+                               <div className="flex flex-col">
+                                 <span className="text-[9px] font-black text-[#5F6368] uppercase tracking-[2px]">Onboarding ID</span>
+                                 <span className="text-sm font-bold text-[#1B4DA0] font-jakarta">{selectedCandidate.onboardingUsername}</span>
+                                </div>
+                                <UserCheck className="text-[#1B4DA0] opacity-20" size={24} />
+                             </div>
+                             <div className="flex items-center justify-between gap-4">
+                               <div className="flex flex-col">
+                                 <span className="text-[9px] font-black text-[#5F6368] uppercase tracking-[2px]">Onboarding Pass</span>
+                                 <span className="text-sm font-mono font-black text-[#202124] tracking-widest uppercase">{selectedCandidate.onboardingPassword}</span>
+                               </div>
+                               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                             </div>
+                           </div>
+                           
+                           <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const targetId = selectedCandidate.id || selectedCandidate._id;
+                                setData(prev => ({
+                                  ...prev,
+                                  candidates: prev.candidates.map(c => 
+                                    (c.id === targetId || c._id === targetId) 
+                                      ? { ...c, onboardingUsername: null, onboardingPassword: null } 
+                                      : c
+                                  )
+                                }));
+                                setSelectedCandidate(prev => ({ ...prev, onboardingUsername: null, onboardingPassword: null }));
+                                toast.info("Console: Security record cleared locally.");
+                              }}
+                              className="w-full py-2 text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-all flex items-center justify-center gap-2"
+                            >
+                              <RotateCcw size={12} />
+                              Reset Security Credentials
+                            </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <button 
                     onClick={() => setSelectedCandidate(null)}
                     className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl shadow-gray-200"
