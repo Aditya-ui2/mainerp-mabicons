@@ -900,6 +900,25 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     );
   };
   const [selectedJobs, setSelectedJobs] = useState([]);
+  const selectionBarRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // If we have selections and the click is NOT on the bar itself
+      if (selectedJobs.length > 0 && selectionBarRef.current && !selectionBarRef.current.contains(event.target)) {
+        // Also ensure we're not clicking a checkbox or a job row that might be part of selection
+        const isCheckbox = event.target.closest('input[type="checkbox"]');
+        const isJobRow = event.target.closest('.job-selection-row');
+        
+        if (!isCheckbox && !isJobRow) {
+          setSelectedJobs([]);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [selectedJobs]);
   const normalizeUserType = (type = '') => {
     const value = type.toString().trim().toLowerCase();
     if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
@@ -2221,17 +2240,17 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             <button
               onClick={handleSharePointSync}
               disabled={isSyncing}
-              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+              className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
             >
-              {isSyncing ? <Plus size={18} className="animate-spin" /> : <Database size={18} />}
+              {isSyncing ? <Plus size={18} className="animate-spin" /> : <Database size={18} className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />}
               {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
             </button>
 
             <button
               onClick={() => window.open('https://mabicons.sharepoint.com/:f:/s/Recruitment/EkM_mabicons_recruitment', '_blank')}
-              className="flex items-center gap-2 px-6 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-sm font-bold hover:bg-[#E8E7E2] transition-all shadow-sm active:scale-95"
+              className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95"
             >
-              <FileText size={18} className="text-blue-500" />
+              <FileText size={18} className="text-blue-500 group-hover:text-[#0D47A1] transition-colors" />
               Recruitment Folders
             </button>
 
@@ -2317,7 +2336,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <div
                 key={job.id}
                 onClick={() => setSelectedJob(job)}
-                className={`grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative ${selectedJob?.id === job.id ? 'bg-blue-50/50' : ''}`}
+                className={`grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative job-selection-row ${selectedJob?.id === job.id ? 'bg-blue-50/50' : ''}`}
               >
                 <div className="flex items-center" onClick={e => e.stopPropagation()}>
                   <input
@@ -2511,10 +2530,11 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         <AnimatePresence>
           {selectedJobs.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 100 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
-              className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-6 py-4 bg-[#1A1A2E]/95 backdrop-blur-md rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-6 border border-white/10"
+              ref={selectionBarRef}
+              initial={{ opacity: 0, y: 100, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, y: 100, x: "-50%" }}
+              className="fixed bottom-10 left-1/2 z-[9999] px-6 py-4 bg-[#1A1A2E]/95 backdrop-blur-md rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-6 border border-white/10"
             >
               <div className="flex items-center gap-4 pr-6 border-r border-white/10 shrink-0">
                 <span className="w-6 h-6 flex items-center justify-center bg-[#1B4DA0] rounded-lg text-white text-[10px] font-black shadow-lg shadow-[#1B4DA0]/20">
@@ -2536,7 +2556,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasOpen && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Hold')}
-                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-white/5 hover:bg-white/10 transition-all border border-white/10 active:scale-95"
+                          className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white bg-white/10 hover:bg-white/20 transition-all border border-white/10 active:scale-95 whitespace-nowrap"
                         >
                           Mark As Hold
                         </button>
@@ -2544,7 +2564,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasHold && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Open')}
-                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-blue-600/20 hover:bg-blue-600/30 transition-all border border-blue-500/30 active:scale-95"
+                          className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-100 bg-blue-600 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
                         >
                           Mark As Open
                         </button>
@@ -2552,7 +2572,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasNotUrgent && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Urgent')}
-                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-amber-900 bg-amber-400 hover:bg-amber-500 transition-all shadow-lg shadow-amber-500/20 active:scale-95"
+                          className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-black bg-amber-400 hover:bg-amber-500 transition-all shadow-lg shadow-amber-500/20 active:scale-95 whitespace-nowrap"
                         >
                           Mark As Urgent
                         </button>
@@ -2560,7 +2580,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasUrgent && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Medium')}
-                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-slate-600 hover:bg-slate-700 transition-all active:scale-95"
+                          className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white bg-slate-600 hover:bg-slate-700 transition-all active:scale-95 whitespace-nowrap"
                         >
                           Mark As Normal
                         </button>
@@ -2568,7 +2588,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasNotComplete && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Complete')}
-                          className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-emerald-900 bg-emerald-400 hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+                          className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 whitespace-nowrap"
                         >
                           Mark As Complete
                         </button>
@@ -2576,8 +2596,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     </>
                   );
                 })()}
-                
-                 <button
+
+                <button
                   onClick={async () => {
                     if (window.confirm(`Delete ${selectedJobs.length} positions?`)) {
                       const toastId = toast.loading('Deleting...');
@@ -2591,7 +2611,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       }
                     }
                   }}
-                  className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-rose-100 bg-rose-600/20 hover:bg-rose-600 hover:text-white transition-all border border-rose-500/30 active:scale-95"
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-rose-600 hover:bg-rose-700 transition-all shadow-lg shadow-rose-500/20 active:scale-95 whitespace-nowrap"
                 >
                   Delete Selected
                 </button>

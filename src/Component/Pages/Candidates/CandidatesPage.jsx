@@ -692,9 +692,9 @@ Mabicons Recruitment Team`);
           <button
             onClick={handleSharePointSync}
             disabled={isSyncing}
-            className="flex items-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+            className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
           >
-            {isSyncing ? <FiRefreshCw className="animate-spin" /> : <FiDatabase />}
+            {isSyncing ? <FiRefreshCw className="animate-spin" /> : <FiDatabase className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />}
             {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
           </button>
 

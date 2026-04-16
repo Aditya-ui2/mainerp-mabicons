@@ -776,8 +776,18 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="bg-white rounded-2xl p-1 border border-[#F4F3EF] shadow-sm flex items-center">
-              <button onClick={() => setIsKanbanView(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}><FiGrid /> Kanban</button>
-              <button onClick={() => setIsKanbanView(false)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${!isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}><FiList /> List</button>
+              <button 
+                onClick={() => setIsKanbanView(true)} 
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#6B6B7E] hover:text-[#1B4DA0]'}`}
+              >
+                <FiGrid /> Kanban
+              </button>
+              <button 
+                onClick={() => setIsKanbanView(false)} 
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${!isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#6B6B7E] hover:text-[#1B4DA0]'}`}
+              >
+                <FiList /> List
+              </button>
             </div>
             <button 
               onClick={async () => {
@@ -788,13 +798,16 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                 } catch (e) { console.error('Sync failed', e); }
                 finally { setRefreshing(false); }
               }}
-              className="flex items-center gap-2 px-5 py-3 bg-white text-[#1B4DA0] border border-[#1B4DA0] rounded-xl text-sm font-bold hover:bg-blue-50 transition-all shadow-sm active:scale-95"
+              className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
               disabled={refreshing}
             >
-              <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : 'text-blue-500 group-hover:text-[#0D47A1]'}`} />
               Sync SharePoint
             </button>
-            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg active:scale-95 text-center">
+            <button 
+              onClick={() => setShowAddModal(true)} 
+              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg active:scale-95 text-center"
+            >
               <FiPlus size={18} />
               Add Candidate
             </button>

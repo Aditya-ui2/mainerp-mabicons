@@ -60,6 +60,7 @@ import {
   deleteKAMMember,
   getDeptNotes,
   getRecruitmentClients,
+  getAllOffers,
 } from '../service/api';
 
 // Lazy load Tab Components
@@ -1114,10 +1115,12 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
           {/* Table Content */}
           <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
             {/* Table Header */}
-            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm px-12 py-5 border-b border-[#F1F5F9] grid grid-cols-[1.8fr_1.2fr_0.8fr] gap-6 text-[11px] font-bold uppercase tracking-[2px] text-[#94A3B8]">
-              <div>Client Partner</div>
-              <div>Priority Status</div>
-              <div className="text-right">Openings</div>
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm px-12 py-5 border-b border-[#F1F5F9] grid grid-cols-[2fr_1fr] gap-6 text-[11px] font-bold uppercase tracking-[2px] text-[#94A3B8]">
+              <div className="flex items-center gap-5">
+                <div className="w-12 h-12 flex-shrink-0" /> {/* Spacer for avatar */}
+                <span className="text-left">Client</span>
+              </div>
+              <div className="flex items-center justify-end pr-[58px]">Openings</div>
             </div>
 
             {/* Table Rows */}
@@ -1126,36 +1129,18 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
                 <div
                   key={item.id}
                   onClick={() => setSelectedClient(item)}
-                  className="group grid grid-cols-[1.8fr_1.2fr_0.8fr] items-center gap-6 px-6 py-6 border-b border-[#F8FAFC] hover:bg-[#FBFDFF] transition-all cursor-pointer relative"
+                  className="group grid grid-cols-[2fr_1fr] items-center gap-6 px-6 py-6 border-b border-[#F8FAFC] hover:bg-[#FBFDFF] transition-all cursor-pointer relative"
                 >
-                  {/* Client Partner Column */}
+                  {/* Client Column */}
                   <div className="flex items-center gap-5">
                     <div className="w-12 h-12 rounded-[14px] bg-[#F8FAFC] text-[#475569] flex items-center justify-center font-bold text-sm border border-[#F1F5F9] group-hover:border-blue-200 group-hover:bg-blue-50 transition-all duration-300">
                       {item.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <h4 className="text-[15px] font-bold text-[#1e293b] group-hover:text-blue-600 transition-colors leading-tight mb-1">
+                      <h4 className="text-[15px] font-bold text-[#1e293b] group-hover:text-blue-600 transition-colors leading-tight">
                         {item.name}
                       </h4>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                          {item.lastActive}
-                        </div>
-                        <span className="text-[#E2E8F0]">|</span>
-                        <span className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">{item.location || 'India'}</span>
-                      </div>
                     </div>
-                  </div>
-
-                  {/* Priority Status Column */}
-                  <div>
-                    <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-widest border ${item.priority === 'High'
-                      ? 'bg-red-50 text-red-600 border-red-100'
-                      : 'bg-amber-50 text-amber-600 border-amber-100'
-                      }`}>
-                      {item.priority}
-                    </span>
                   </div>
 
                   {/* Openings Column */}
@@ -1188,12 +1173,7 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
               <div className="p-10 border-b border-[#F4F3EF] bg-white relative flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="text-left">
-                    <h4 className="text-[28px] font-bold text-[#1e293b] tracking-tight leading-tight mb-1 text-left">{selectedClient.name}</h4>
-                    <div className="flex items-center gap-2 justify-start">
-                      <span className="text-[11px] font-bold text-blue-600 uppercase tracking-[2px] text-left">{selectedClient.name.toUpperCase()}</span>
-                      <span className="text-slate-300">|</span>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[2px] text-left">Strategic Partner</span>
-                    </div>
+                    <h4 className="text-[28px] font-bold text-[#1e293b] tracking-tight leading-tight text-left">{selectedClient.name}</h4>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -1212,23 +1192,12 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
                     <p className="text-lg font-bold text-[#334155]">{selectedClient.industry}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Scale of Operations</p>
-                    <p className="text-lg font-bold text-[#334155] uppercase">{selectedClient.industry.slice(0, 3)}</p>
-                  </div>
-                  <div>
                     <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Total Openings</p>
                     <p className="text-lg font-bold text-[#334155]">{selectedClient.jobCount} Positions</p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Partnership Status</p>
-                    <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${selectedClient.priority === 'High' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                      }`}>
-                      {selectedClient.priority} Priority
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Established</p>
-                    <p className="text-lg font-bold text-[#334155]">{selectedClient.founded || '2012'}</p>
+                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Total Hires</p>
+                    <p className="text-lg font-bold text-[#334155]">{selectedClient.totalHired || '0'} Hires</p>
                   </div>
                   <div>
                     <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Location HQ</p>
@@ -1238,7 +1207,7 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
 
                 {/* Account Manager Card */}
                 <div className="space-y-4">
-                  <h5 className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[3px] ml-1">Primary Stakeholder</h5>
+                  <h5 className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[3px] ml-1">SPOC</h5>
                   <div className="p-8 rounded-[32px] bg-[#F8FAFC] border border-[#F1F5F9] flex items-center justify-between">
                     <div className="flex items-center gap-6">
                       <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-[#1e293b] text-lg font-bold border border-[#e2e8f0] shadow-sm">
@@ -1260,42 +1229,7 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
                   </div>
                 </div>
 
-                {/* Company Context */}
-                <div className="space-y-4">
-                  <h5 className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[3px] ml-1">Market Intelligence</h5>
-                  <div className="p-8 rounded-[32px] bg-white border border-[#F1F5F9]">
-                    <p className="text-[15px] font-medium text-[#475569] leading-relaxed italic">"{selectedClient.description}"</p>
-                    <div className="mt-8 flex flex-wrap gap-2 text-left">
-                      {['Global Leader', 'Tech Unicorn', 'Scaling Now', 'Remote First'].map(tag => (
-                        <span key={tag} className="px-4 py-2 bg-[#F8FAFC] border border-[#F1F5F9] rounded-xl text-[9px] font-bold text-[#64748b] uppercase tracking-widest">{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
 
-                {/* Mandate List */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between ml-1">
-                    <h5 className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[3px]">Active Mandates</h5>
-                    <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[9px] font-bold uppercase tracking-wider">{selectedClient.topRoles.length} ACTIVE POSITIONS</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    {selectedClient.topRoles.map((role, idx) => (
-                      <div key={idx} className="p-6 rounded-[24px] bg-white border border-[#F1F5F9] hover:border-blue-200 group transition-all flex items-center justify-between shadow-sm hover:shadow-md">
-                        <div className="flex items-center gap-5 text-left">
-                          <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] flex items-center justify-center text-[#94a3b8] group-hover:bg-blue-50 group-hover:text-blue-500 transition-all border border-[#F1F5F9]">
-                            <FiBriefcase size={16} />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-bold text-[#1e293b] group-hover:text-blue-600 transition-all text-left">{role}</p>
-                            <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest mt-1 text-left">Urgent Fill · Full Time</p>
-                          </div>
-                        </div>
-                        <FiChevronRight size={18} className="text-[#CBD5E1] group-hover:translate-x-1 group-hover:text-blue-500 transition-all" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               {/* Detail Footer */}
@@ -1349,6 +1283,7 @@ const RecruitmentHeadDashboard = () => {
   const [teamLoading, setTeamLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: 'Sachin', role: 'Recruitment Head' });
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
+  const [upcomingJoinings, setUpcomingJoinings] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [selectedKAM, setSelectedKAM] = useState(null);
   const [showKAMModal, setShowKAMModal] = useState(false);
@@ -1404,6 +1339,29 @@ const RecruitmentHeadDashboard = () => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const fetchUpcomingJoinings = async () => {
+    try {
+      const response = await getAllOffers();
+      if (response && response.success) {
+        const mapped = (response.data || [])
+          .filter(o => o.status === 'Accepted' || o.status === 'Joined')
+          .sort((a, b) => new Date(a.joiningDate) - new Date(b.joiningDate))
+          .slice(0, 5)
+          .map(o => ({
+            id: o.id || o._id,
+            candidate: o.candidateName || 'Unknown',
+            position: o.position || 'Untitled',
+            date: o.joiningDate,
+            client: o.client || 'Internal',
+            status: o.status
+          }));
+        setUpcomingJoinings(mapped);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard joinings:', error);
+    }
+  };
 
   const fetchUpcomingInterviews = async () => {
     try {
@@ -1521,7 +1479,6 @@ const RecruitmentHeadDashboard = () => {
     return [
       { name: 'PENDING', value: pending, color: '#8B5CF6' },
       { name: 'APPROVED', value: selected, color: '#F59E0B' },
-      { name: 'REJECTED', value: rejected, color: '#EE4266' },
     ];
   };
 
@@ -1647,7 +1604,8 @@ const RecruitmentHeadDashboard = () => {
           topRoles: ['Staff Software Engineer', 'Cloud Architect', 'ML Researcher'],
           description: 'Global leader in search and cloud computing, expanding their AI division in India.',
           location: 'Bangalore / Remote',
-          founded: '1998'
+          founded: '1998',
+          totalHired: 452
         },
         {
           id: 'mock-Microsoft',
@@ -1660,7 +1618,8 @@ const RecruitmentHeadDashboard = () => {
           topRoles: ['Azure Lead', 'Principal Consultant', 'Security Analyst'],
           description: 'Dominating enterprise software and cloud services, looking for senior leadership roles.',
           location: 'Hyderabad',
-          founded: '1975'
+          founded: '1975',
+          totalHired: 320
         },
         {
           id: 'mock-Amazon',
@@ -1673,7 +1632,8 @@ const RecruitmentHeadDashboard = () => {
           topRoles: ['SDE-III', 'Logistics Manager', 'UX Researcher'],
           description: 'Scaling logistics and retail operations globally with focus on sustainability.',
           location: 'Gurgaon',
-          founded: '1994'
+          founded: '1994',
+          totalHired: 285
         }
       ];
 
@@ -1699,7 +1659,8 @@ const RecruitmentHeadDashboard = () => {
             priority: mockPriorities[idx % mockPriorities.length],
             lastActive: new Date(Date.now() - (idx * 24 * 60 * 60 * 1000)).toLocaleDateString(),
             hiringManager: ['Sarah Chen', 'Robert Fox', 'Jane Cooper', 'Cody Fisher'][idx % 4],
-            topRoles: ['Senior Frontend Dev', 'Backend Lead', 'Product Designer'].slice(0, (idx % 3) + 1)
+            topRoles: ['Senior Frontend Dev', 'Backend Lead', 'Product Designer'].slice(0, (idx % 3) + 1),
+            totalHired: Math.floor(Math.random() * 50) + 10
           };
         });
 
@@ -1722,7 +1683,8 @@ const RecruitmentHeadDashboard = () => {
           topRoles: ['Staff Software Engineer', 'Cloud Architect', 'ML Researcher'],
           description: 'Global leader in search and cloud computing, expanding their AI division in India.',
           location: 'Bangalore / Remote',
-          founded: '1998'
+          founded: '1998',
+          totalHired: 452
         },
         {
           id: 'mock-Microsoft',
@@ -1735,7 +1697,8 @@ const RecruitmentHeadDashboard = () => {
           topRoles: ['Azure Lead', 'Principal Consultant', 'Security Analyst'],
           description: 'Dominating enterprise software and cloud services, looking for senior leadership roles.',
           location: 'Hyderabad',
-          founded: '1975'
+          founded: '1975',
+          totalHired: 320
         },
         {
           id: 'mock-Amazon',
@@ -1748,7 +1711,8 @@ const RecruitmentHeadDashboard = () => {
           topRoles: ['SDE-III', 'Logistics Manager', 'UX Researcher'],
           description: 'Scaling logistics and retail operations globally with focus on sustainability.',
           location: 'Gurgaon',
-          founded: '1994'
+          founded: '1994',
+          totalHired: 285
         }
       ]);
     }
@@ -1784,6 +1748,7 @@ const RecruitmentHeadDashboard = () => {
         fetchClientList();
         fetchRecentNotes();
         fetchUpcomingInterviews();
+        fetchUpcomingJoinings();
       } catch (e) {
         console.log('Token decode error');
         setUserInfo({ name: localStorage.getItem('userName') || 'Sachin', role: 'Recruitment Head' });
@@ -2560,7 +2525,7 @@ const RecruitmentHeadDashboard = () => {
                             </PieChart>
                           </ResponsiveContainer>
                           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-4xl font-extrabold text-[#1A1A2E] tracking-tighter font-syne">
+                            <span className="text-4xl font-bold text-[#1A1A2E] font-sans">
                               {getPipelineChartData().reduce((acc, curr) => acc + curr.value, 0)}
                             </span>
                             <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em] mt-1 font-syne">IN PIPELINE</span>
@@ -2571,11 +2536,11 @@ const RecruitmentHeadDashboard = () => {
                         </div>
 
                         {/* Legend below chart - Styled like the requested image */}
-                        <div className="w-full grid grid-cols-3 gap-2 mt-4">
+                        <div className="w-full flex justify-center gap-16 mt-4">
                           {getPipelineChartData().map((entry) => (
                             <div key={entry.name} className="flex flex-col items-center group">
                               <div className="w-6 h-1.5 rounded-full mb-3 transition-transform group-hover:scale-x-125 shadow-sm" style={{ backgroundColor: entry.color }} />
-                              <span className="text-xl font-bold text-[#1A1A2E] leading-none tracking-tight mb-1 font-syne">{entry.value}</span>
+                              <span className="text-xl font-bold text-[#1A1A2E] leading-none mb-1 font-sans">{entry.value}</span>
                               <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.1em] font-syne">{entry.name}</span>
                             </div>
                           ))}
@@ -2679,62 +2644,7 @@ const RecruitmentHeadDashboard = () => {
                   </div>
 
                   {/* Interactive Sections Row */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* Active Team Section */}
-                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-blue-500/5">
-                      <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-3">
-                          <div className="p-3 rounded-2xl bg-blue-50/50 border border-blue-100/50 text-[#1B4DA0] shadow-sm">
-                            <FiUsers className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">Active Team</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Live performance tracking</p>
-                          </div>
-                        </div>
-                        <button className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-500 transition-all">
-                          <FiMoreHorizontal size={18} />
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
-                        {kamTeam.slice(0, 4).map((kam, idx) => {
-                          const initials = kam.avatar || (kam.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-                          return (
-                            <div
-                              key={kam.id}
-                              onClick={() => handleViewKAM(kam)}
-                              className="bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 flex flex-col items-center text-center group hover:bg-white hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 cursor-pointer relative overflow-hidden"
-                            >
-                              <div className="w-16 h-16 rounded-[24px] bg-white border border-slate-100 flex items-center justify-center font-bold text-[#1B4DA0] text-lg shadow-sm group-hover:scale-110 transition-transform duration-500 mb-5 relative z-10">
-                                {String(initials).includes('data:image') || String(initials).includes('http') ? (
-                                  <img src={initials} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  initials
-                                )}
-                              </div>
-
-                              <div className="space-y-1">
-                                <p className="text-base font-bold text-[#1A1A2E] tracking-tight group-hover:text-blue-600 transition-colors uppercase font-syne leading-tight">{kam.name}</p>
-                                <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[1px]">{kam.role?.split(' ')[0] || 'KAM'}</p>
-                              </div>
-
-                              <div className="mt-6 pt-6 border-t border-slate-100/80 w-full grid grid-cols-2 gap-3">
-                                <div className="text-center">
-                                  <p className="text-lg font-black text-[#1A1A2E] leading-none mb-1">{kam.stats?.thisWeekHires}</p>
-                                  <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest leading-none">Hires</p>
-                                </div>
-                                <div className="text-center border-l border-slate-100/80">
-                                  <p className="text-lg font-black text-[#1A1A2E] leading-none mb-1">{kam.stats?.activePositions}</p>
-                                  <p className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest leading-none">Roles</p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
+                  <div className="flex flex-col gap-10 mb-8 w-full">
                     {/* Upcoming Interviews Section */}
                     <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-[#3FA9F5]/5">
                       <div className="flex items-center justify-between mb-8">
@@ -2747,20 +2657,14 @@ const RecruitmentHeadDashboard = () => {
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 text-left">Today's breakdown</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => setActiveTab('Interview Schedule')}
-                          className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors"
-                        >
-                          View All
-                        </button>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
+                      <div className="flex gap-6 overflow-x-auto no-scrollbar pb-6 -mx-2 px-2">
                         {upcomingInterviews.slice(0, 4).map((interview) => (
                           <div
                             key={interview.id}
                             onClick={() => setSelectedInterview(interview)}
-                            className="bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-[#3FA9F5]/50 hover:shadow-2xl hover:shadow-[#3FA9F5]/5 transition-all duration-500 cursor-pointer relative text-left flex flex-col justify-between"
+                            className="min-w-[320px] bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-[#3FA9F5]/50 hover:shadow-2xl hover:shadow-[#3FA9F5]/5 transition-all duration-500 cursor-pointer relative text-left flex flex-col justify-between"
                           >
                             <div>
                               <div className="flex justify-between items-start mb-5">
@@ -2787,56 +2691,121 @@ const RecruitmentHeadDashboard = () => {
                         ))}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Quick Actions Section - Full Width Carousel */}
-                  <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 p-8 mb-8">
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex flex-col text-left">
+                    {/* Upcoming Joining Section */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-emerald-500/5">
+                      <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-3">
-                          <div className="p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-100/50 text-indigo-500">
-                            <FiActivity className="w-5 h-5" />
+                          <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm">
+                            <FiUserPlus className="w-5 h-5" />
                           </div>
-                          <h3 className="text-xl font-bold text-slate-800 tracking-tight">Quick Actions</h3>
+                          <div className="text-left">
+                            <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne text-left">Upcoming Joinings</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 text-left">Onboarding pipeline</p>
+                          </div>
                         </div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 ml-1">COMMON RECRUITMENT TASKS</p>
+                      </div>
+
+                      <div className="flex gap-6 overflow-x-auto no-scrollbar pb-6 -mx-2 px-2">
+                        {upcomingJoinings.length > 0 ? upcomingJoinings.map((joining) => (
+                          <div
+                            key={joining.id}
+                            className="min-w-[320px] bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-emerald-400/50 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-500 cursor-pointer relative text-left flex flex-col justify-between"
+                          >
+                            <div>
+                              <div className="flex justify-between items-start mb-5">
+                                <div className="px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-600">
+                                  Confirmed
+                                </div>
+                                <span className="text-[9px] font-bold text-slate-500 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-50">
+                                  {new Date(joining.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                </span>
+                              </div>
+
+                              <div className="mb-6">
+                                <h4 className="text-sm font-bold text-[#1A1A2E] tracking-tight group-hover:text-emerald-600 transition-colors uppercase leading-tight">{joining.candidate}</h4>
+                                <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-1 leading-none">{joining.position}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 pt-5 border-t border-slate-100/80">
+                              <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400">
+                                <FiBriefcase size={10} />
+                              </div>
+                              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{joining.client}</span>
+                            </div>
+                          </div>
+                        )) : (
+                          <div className="w-full py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No upcoming joiners this week</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 scroll-smooth">
-                      {[
-                        { title: 'JOB OPENINGS', desc: `${stats.activePositions} OPEN POSITIONS`, icon: FiBriefcase, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Job Openings' },
-                        { title: 'CANDIDATE PIPELINE', desc: `${stats.totalCandidates} TOTAL`, icon: FiTarget, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Candidate Pipeline' },
-                        { title: 'TASKS', desc: `${stats.pendingTasks} PENDING`, icon: FiCheckSquare, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Task Assignment' },
-                        { title: 'SHARED NOTES', desc: `${stats.totalNotes} ACTIVE NOTES`, icon: FiEdit3, color: 'bg-white text-slate-800 border-slate-100 group-hover:text-[#0D47A1]', tab: 'Notes' }
-                      ].map((action, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => setActiveTab(action.tab)}
-                          className="min-w-[280px] bg-white border border-slate-100 rounded-[24px] p-6 flex items-center gap-5 group hover:border-[#0D47A1]/30 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 cursor-pointer"
-                        >
-                          <div className={`w-14 h-14 rounded-[18px] ${action.color} border flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
-                            <action.icon className="w-6 h-6" />
+                    {/* Active Team Section */}
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 rounded-2xl bg-blue-50/50 border border-blue-100/50 text-[#1B4DA0] shadow-sm">
+                            <FiUsers className="w-5 h-5" />
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-black text-slate-800 tracking-wide group-hover:text-indigo-600 transition-colors uppercase">{action.title}</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{action.desc}</span>
+                          <div className="text-left">
+                            <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">Active Team</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Live performance tracking</p>
                           </div>
                         </div>
-                      ))}
+                      </div>
+
+                      <div className="flex gap-6 overflow-x-auto no-scrollbar pb-6 -mx-2 px-2">
+                        {kamTeam.slice(0, 4).map((kam) => {
+                          const initials = (kam.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 1).toUpperCase();
+                          const isActive = teamFilter === kam.name;
+                          return (
+                            <div
+                              key={kam.id}
+                              onClick={() => handleViewKAM(kam)}
+                              className={`min-w-[220px] p-2 rounded-[24px] flex items-center gap-3 transition-all duration-300 cursor-pointer border-2 ${
+                                isActive 
+                                  ? 'bg-[#E3F2FD] border-blue-400 shadow-lg shadow-blue-500/10' 
+                                  : 'bg-white border-transparent hover:bg-[#F8FAFF] hover:border-slate-100 shadow-sm'
+                              }`}
+                            >
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-colors ${
+                                isActive ? 'bg-white text-blue-600' : 'bg-[#E3F2FD80] text-[#1B4DA0]'
+                              }`}>
+                                {initials}
+                              </div>
+                              <div className="flex flex-col text-left overflow-hidden">
+                                <p className={`text-sm font-bold tracking-tight transition-colors truncate ${
+                                  isActive ? 'text-blue-700' : 'text-[#1A1A2E]'
+                                }`}>
+                                  {kam.name}
+                                </p>
+                                <p className={`text-[9px] font-bold uppercase tracking-wider ${
+                                  isActive ? 'text-blue-500' : 'text-[#9B9BAD]'
+                                }`}>
+                                  {kam.role?.split(' ')[0] || 'KAM'}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
+
 
                   {/* Live Notes */}
                   <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
                     <div className="p-6 flex items-center justify-between bg-gradient-to-r from-slate-50/50 to-transparent">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-white border border-slate-100 text-indigo-500 shadow-sm">
+                        <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm">
                           <FiEdit3 className="w-5 h-5" />
                         </div>
-                        <div>
-                          <h3 className="font-bold text-lg text-[#1A1A2E] tracking-tight font-syne leading-none">Notes</h3>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Directives and guidelines</p>
+                        <div className="text-left">
+                          <h3 className="font-bold text-lg text-[#1A1A2E] tracking-tight font-syne leading-none text-left">Notes</h3>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5 text-left">Directives and guidelines</p>
                         </div>
                       </div>
                     </div>
