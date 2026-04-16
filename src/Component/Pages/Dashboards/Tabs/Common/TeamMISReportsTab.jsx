@@ -382,22 +382,6 @@ const TeamMISReportsTab = () => {
               </div>
             </div>
             <button
-              onClick={downloadMISCSV}
-              disabled={loading || reports.length === 0}
-              className="w-11 h-11 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
-              title="Download CSV"
-            >
-              <Download size={16} />
-            </button>
-            <button
-              onClick={fetchReports}
-              disabled={loading}
-              className="w-11 h-11 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
-              title="Refresh"
-            >
-              <RefreshCw size={16} className={loading ? 'animate-spin text-[#1B4DA0]' : ''} />
-            </button>
-            <button
               type="button"
               onClick={openDatePicker}
               className="relative flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95 h-[42px]"
@@ -427,15 +411,6 @@ const TeamMISReportsTab = () => {
               <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Performance Timeline</h3>
             </div>
             <div className="flex items-center gap-4">
-              {!loading && (
-                <span className="inline-flex px-3 py-1.5 bg-[#ECFDF5] text-[#10B981] rounded-lg text-[9px] font-bold tracking-[0.15em] uppercase">
-                  {filteredReports.length} Active Logs
-                </span>
-              )}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 rounded-full shadow-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981]" />
-                <span className="text-[10px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-widest">Live Feed</span>
-              </div>
             </div>
           </div>
 

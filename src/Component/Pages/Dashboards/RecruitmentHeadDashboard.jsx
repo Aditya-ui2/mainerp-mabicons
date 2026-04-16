@@ -25,6 +25,7 @@ import {
   FiEye,
   FiShare2,
   FiRefreshCw,
+  FiSave,
   FiX,
   FiTrash2,
   FiPlus,
@@ -465,12 +466,6 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
                       </div>
                     </td>
                     <td className="py-4 pr-6 text-right">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onEditKAM && onEditKAM(kam); }}
-                        className="px-3 py-1.5 text-[11px] font-bold text-[#1B4DA0] bg-[#F0F7FF] hover:bg-[#E0EDFF] border border-[#E0E7FF] rounded-lg opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1.5"
-                      >
-                        <FiEdit2 className="w-3 h-3" /> Edit
-                      </button>
                     </td>
                   </tr>
                 ))
@@ -1294,6 +1289,9 @@ const RecruitmentHeadDashboard = () => {
   const [clientJobDistribution, setClientJobDistribution] = useState([]);
   const [statsInsightType, setStatsInsightType] = useState(null);
   const [showKAMFormModal, setShowKAMFormModal] = useState(false);
+  const [isEditingInDetail, setIsEditingInDetail] = useState(false);
+  const [isSavingDetail, setIsSavingDetail] = useState(false);
+  const [editableMember, setEditableMember] = useState(null);
   const [kamFormMode, setKamFormMode] = useState('add'); // 'add' or 'edit'
   const [kamFormData, setKamFormData] = useState({
     name: '',
@@ -1904,11 +1902,14 @@ const RecruitmentHeadDashboard = () => {
   };
 
   const handleViewKAM = (kam) => {
-    setSelectedKAM({
+    const memberData = {
       ...kam,
       stats: getEffectiveKamStats(kam),
       recentActivity: kam.recentActivity || []
-    });
+    };
+    setSelectedKAM(memberData);
+    setEditableMember({ ...kam });
+    setIsEditingInDetail(false);
     setShowKAMModal(true);
   };
 
@@ -2905,12 +2906,52 @@ const RecruitmentHeadDashboard = () => {
               {/* Drawer Header */}
               <div className="p-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white">
                 <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Member Details</h3>
-                <button
-                  onClick={() => setShowKAMModal(false)}
-                  className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
-                >
-                  <FiX className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-3">
+                  {isEditingInDetail ? (
+                    <div className="flex items-center gap-2">
+                       <button
+                        onClick={() => setIsEditingInDetail(false)}
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        disabled={isSavingDetail}
+                        onClick={async () => {
+                          try {
+                            setIsSavingDetail(true);
+                            await updateKAMMember(editableMember.id, editableMember);
+                            setKamTeam(prev => prev.map(m => m.id === editableMember.id ? { ...m, ...editableMember } : m));
+                            setSelectedKAM({ ...selectedKAM, ...editableMember });
+                            setIsEditingInDetail(false);
+                          } catch (error) {
+                            showToast(error.message || 'Failed to update member', 'error');
+                          } finally {
+                            setIsSavingDetail(false);
+                          }
+                        }}
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center gap-2 shadow-md shadow-blue-500/10"
+                      >
+                        {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
+                        {isSavingDetail ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setIsEditingInDetail(true)}
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300"
+                      title="Edit Member"
+                    >
+                      <FiEdit2 size={18} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowKAMModal(false)}
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Drawer Content */}
@@ -2926,57 +2967,96 @@ const RecruitmentHeadDashboard = () => {
                     )}
                   </div>
                   <div>
-                    <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedKAM.name}</h4>
-                    <p className="text-sm font-semibold text-[#1B4DA0] mt-1">{selectedKAM.role}</p>
+                    {isEditingInDetail ? (
+                      <input
+                        type="text"
+                        className="w-full text-2xl font-bold text-[#1A1A2E] bg-[#F4F3EF] border-none rounded-xl py-2 px-4 text-center focus:ring-2 focus:ring-[#0D47A1]/20 outline-none"
+                        value={editableMember.name}
+                        onChange={(e) => setEditableMember({ ...editableMember, name: e.target.value })}
+                        placeholder="Full Name"
+                      />
+                    ) : (
+                      <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedKAM.name}</h4>
+                    )}
+                    {isEditingInDetail ? (
+                      <input
+                        type="text"
+                        className="w-full text-sm font-semibold text-[#1B4DA0] bg-[#F4F3EF] border-none rounded-lg py-1 px-3 text-center focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none mt-2"
+                        value={editableMember.role}
+                        onChange={(e) => setEditableMember({ ...editableMember, role: e.target.value })}
+                        placeholder="Role"
+                      />
+                    ) : (
+                      <p className="text-sm font-semibold text-[#1B4DA0] mt-1">{selectedKAM.role}</p>
+                    )}
                   </div>
                 </div>
 
                 {/* Unified Info Container */}
-                <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-6 space-y-8">
-                  {/* Professional Info */}
-                  <div>
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-4 text-center">Professional Info</p>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
+                <div className="bg-[#FAFAF8] rounded-[24px] border border-[#F4F3EF] p-5 space-y-5">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
+                      {isEditingInDetail ? (
+                        <select
+                          className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none"
+                          value={editableMember.department}
+                          onChange={(e) => setEditableMember({ ...editableMember, department: e.target.value })}
+                        >
+                          {['HR Recruitment', 'HR Operations', 'IT', 'Sales', 'Marketing', 'BD', 'Finance', 'Management'].map(dept => (
+                            <option key={dept} value={dept}>{dept}</option>
+                          ))}
+                        </select>
+                      ) : (
                         <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.department || 'HR Recruitment'}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-[#6B6B7E] font-medium">Status</span>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#6B6B7E] font-medium">Status</span>
+                      {isEditingInDetail ? (
+                        <select
+                          className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none"
+                          value={editableMember.status}
+                          onChange={(e) => setEditableMember({ ...editableMember, status: e.target.value })}
+                        >
+                          {['Active', 'Inactive', 'On Leave'].map(status => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
+                      ) : (
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${selectedKAM.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                          }`}>{selectedKAM.status}</span>
-                      </div>
+                        }`}>{selectedKAM.status}</span>
+                      )}
                     </div>
-                  </div>
-
-                  <div className="h-px bg-[#F4F3EF]" />
-
-                  {/* Contact Details */}
-                  <div>
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-4 text-center">Contact Details</p>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-[#6B6B7E] font-medium">Email</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#6B6B7E] font-medium">Email</span>
+                      {isEditingInDetail ? (
+                        <input
+                          type="email"
+                          className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none text-right"
+                          value={editableMember.email}
+                          onChange={(e) => setEditableMember({ ...editableMember, email: e.target.value })}
+                        />
+                      ) : (
                         <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.email}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-[#6B6B7E] font-medium">Contact</span>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#6B6B7E] font-medium">Contact</span>
+                      {isEditingInDetail ? (
+                        <input
+                          type="tel"
+                          className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none text-right"
+                          value={editableMember.phone}
+                          onChange={(e) => setEditableMember({ ...editableMember, phone: e.target.value })}
+                        />
+                      ) : (
                         <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.phone}</span>
-                      </div>
+                      )}
                     </div>
-                  </div>
-
-                  <div className="h-px bg-[#F4F3EF]" />
-
-                  {/* Performance Section */}
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1">Total Hires</p>
-                      <p className="text-2xl font-bold text-[#1A1A2E]">{selectedKAM.stats?.thisWeekHires || 0}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1">Interviews</p>
-                      <p className="text-2xl font-bold text-[#1A1A2E]">{selectedKAM.stats?.interviewsScheduled || 0}</p>
+                    <div className="flex justify-between items-center pt-3 border-t border-[#F4F3EF]">
+                      <p className="text-sm text-[#6B6B7E] font-medium">Total Hires</p>
+                      <p className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.stats?.thisWeekHires || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -2984,21 +3064,43 @@ const RecruitmentHeadDashboard = () => {
 
               {/* Drawer Footer */}
               <div className="p-6 border-t border-[#F4F3EF] flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowKAMModal(false);
-                    handleAssignTask(selectedKAM);
-                  }}
-                  className="flex-1 py-3 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold hover:bg-[#153e82] transition-all"
-                >
-                  Assign Task
-                </button>
-                <button
-                  onClick={() => handleMessage(selectedKAM)}
-                  className="w-12 h-12 flex items-center justify-center bg-[#F4F3EF] text-[#1B4DA0] rounded-xl hover:bg-[#EEF2FB] transition-all"
-                >
-                  <FiMail className="w-5 h-5" />
-                </button>
+                {isEditingInDetail ? (
+                  <>
+                    <button
+                      disabled={isSavingDetail}
+                      onClick={async () => {
+                        try {
+                          setIsSavingDetail(true);
+                          await updateKAMMember(editableMember.id, editableMember);
+                          setKamTeam(prev => prev.map(m => m.id === editableMember.id ? { ...m, ...editableMember } : m));
+                          setSelectedKAM({ ...selectedKAM, ...editableMember });
+                          setIsEditingInDetail(false);
+                        } catch (error) {
+                          showToast(error.message || 'Failed to update member', 'error');
+                        } finally {
+                          setIsSavingDetail(false);
+                        }
+                      }}
+                      className="flex-1 py-3 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-500/10"
+                    >
+                      {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
+                      {isSavingDetail ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button 
+                      onClick={() => setIsEditingInDetail(false)}
+                      className="flex-1 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setShowKAMModal(false)}
+                    className="flex-1 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
+                  >
+                    Close
+                  </button>
+                )}
               </div>
             </motion.div>
           </>

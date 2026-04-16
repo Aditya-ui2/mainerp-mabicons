@@ -85,10 +85,6 @@ const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSele
       <h3 className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
         {resume.candidateName || resume.fileName.split('.')[0]}
       </h3>
-      {resume.driveId !== 's3' && (
-        <Database size={13} className="text-emerald-500 flex-shrink-0" title="Synced from SharePoint" />
-      )}
-      <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
     </div>
 
     {/* Role Info */}
@@ -144,43 +140,43 @@ const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onUpdatePosition }) =
         </div>
         <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
           <div className="grid grid-cols-2 gap-6">
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><User size={13} /> Email Address</p>
               <p className="text-sm font-bold truncate">{resume.email || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><Briefcase size={13} /> Contact Number</p>
               <p className="text-sm font-bold">{resume.phone || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Target Role</p>
               <p className="text-sm font-bold">{resume.roleType || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Company</p>
               <p className="text-sm font-bold">{resume.currentCompany || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Experience</p>
               <p className="text-sm font-bold">{resume.experience || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Location</p>
               <p className="text-sm font-bold">{resume.currentLocation || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Salary</p>
               <p className="text-sm font-bold">{resume.currentSalary || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Expected Salary</p>
               <p className="text-sm font-bold">{resume.expectedSalary || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Notice Period</p>
               <p className="text-sm font-bold">{resume.noticePeriod || 'N/A'}</p>
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FAFAF8] border-[#F4F3EF]'}`}>
+            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Preferred Location</p>
               <p className="text-sm font-bold">{resume.preferredLocation || 'N/A'}</p>
             </div>
@@ -547,7 +543,7 @@ const ResumeBankTab = () => {
   };
 
   return (
-    <div className={`p-0 max-w-full min-h-screen transition-colors duration-500 text-left ${isDarkMode ? 'bg-[#0F172A]' : 'bg-[#FAFAF8]'}`} style={{ fontFamily: "'Calibri', sans-serif" }}>
+    <div className={`p-0 max-w-full min-h-screen transition-colors duration-500 text-left ${isDarkMode ? 'bg-[#0F172A]' : 'bg-[#FDFDFD]'}`} style={{ fontFamily: "'Calibri', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif; }
@@ -594,14 +590,14 @@ const ResumeBankTab = () => {
           >
             <button
               onClick={() => handleSync('s3')}
-              className={`flex-1 p-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-[#FAFAF8] text-[#5B5B7E]'}`}
+              className={`flex-1 p-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-[#FDFDFD] text-[#5B5B7E]'}`}
             >
               <Database size={18} className="text-orange-500" /> Sync from AWS S3
             </button>
             <div className={`w-px h-8 self-center ${isDarkMode ? 'bg-slate-700' : 'bg-[#F4F3EF]'}`} />
             <button
               onClick={() => handleSync('sharepoint')}
-              className={`flex-1 p-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-[#FAFAF8] text-[#5B5B7E]'}`}
+              className={`flex-1 p-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-[#FDFDFD] text-[#5B5B7E]'}`}
             >
               <Share size={18} className="text-blue-500" /> Sync from SharePoint
             </button>

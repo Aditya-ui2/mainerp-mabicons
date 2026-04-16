@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Activity, Briefcase, UserPlus, CheckCircle2, MoreVertical, 
+import {
+  Activity, Briefcase, UserPlus, CheckCircle2, MoreVertical,
   ShieldCheck, RefreshCw, Search, ChevronDown, Calendar, X
 } from 'lucide-react';
 import { toast } from "sonner";
@@ -73,17 +73,17 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   }, [department]);
 
   const filteredActivities = activities.filter(activity => {
-    const matchesSearch = 
+    const matchesSearch =
       (activity.action || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (activity.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (activity.performedByName || '').toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     let matchesDate = true;
     if (dateFilter !== 'all') {
       const activityDate = new Date(activity.createdAt);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (dateFilter === 'today') {
         matchesDate = activityDate >= today;
       } else if (dateFilter === 'yesterday') {
@@ -96,7 +96,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
         matchesDate = activityDate >= lastWeek;
       }
     }
-    
+
     return matchesSearch && matchesDate;
   });
 
@@ -146,18 +146,18 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
           {/* Search Bar */}
           <div className="relative flex-1 group min-w-[200px]">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
-            <input 
-              type="text" 
-              value={searchTerm} 
+            <input
+              type="text"
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by action, description, or team member..." 
-              className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white" 
+              placeholder="Search by action, description, or team member..."
+              className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white"
             />
           </div>
 
           {/* Date Filter */}
           <div className="relative">
-            <select 
+            <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
               className="bg-[#F4F3EF] dark:bg-slate-900 text-xs font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
@@ -170,18 +170,10 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
           </div>
 
-          {/* Refresh button */}
-          <button 
-            onClick={fetchActivities}
-            className="w-[48px] h-[48px] flex items-center justify-center bg-[#F4F3EF] dark:bg-slate-900 rounded-xl text-[#9B9BAD] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm active:scale-95"
-            title="Refresh Data"
-          >
-            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-          </button>
 
           {/* Reset Button */}
           {(searchTerm !== '' || dateFilter !== 'all') && (
-            <button 
+            <button
               onClick={() => { setSearchTerm(''); setDateFilter('all'); }}
               className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
             >
@@ -192,7 +184,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
 
         {/* Main Feed Container */}
         <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
-          
+
           {/* Timeline Header Area */}
           <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50">
             <div className="flex items-center gap-3">
@@ -201,12 +193,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
               </div>
               <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Operation Timeline</h3>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 rounded-full shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981]" />
-              <span className="text-[10px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-widest">Active Monitoring</span>
-            </div>
           </div>
-
           {/* Vertical Bridge Line */}
           <div className="absolute left-[88px] lg:left-[108px] top-[140px] bottom-[40px] w-px bg-[#F4F3EF] dark:bg-slate-800 pointer-events-none hidden sm:block" />
 
@@ -214,7 +201,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
           <div className="px-8 py-12 space-y-12 relative z-10">
             <AnimatePresence>
               {filteredActivities.map((activity, index) => (
-                <motion.div 
+                <motion.div
                   key={activity._id || index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -250,28 +237,13 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
                           {/* Text Content */}
                           <div>
                             <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2">
-                               {formatActionName(activity.action)}
+                              {formatActionName(activity.action)}
                             </h4>
                             <p className="text-[#64748B] dark:text-slate-400 text-[13px] font-medium leading-relaxed opacity-80 mt-2">
                               {activity.description}
                             </p>
                           </div>
-
-                          {/* Card Footer: Logged By */}
-                          <div className="flex items-center gap-2 pt-2 border-t border-[#F4F3EF] dark:border-slate-800 mt-4">
-                             <div className="w-6 h-6 rounded-lg bg-[#F8FAFC] dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-[#1B4DA0] dark:text-blue-400 border border-[#F1F5F9] dark:border-slate-700 mt-2">
-                               {activity.performedByName?.charAt(0) || 'U'}
-                             </div>
-                             <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mt-2">
-                               Logged by <span className="text-[#1A1A2E] dark:text-white ml-0.5 font-bold">{activity.performedByName || 'System Process'}</span>
-                             </span>
-                          </div>
                         </div>
-
-                        {/* Side Action */}
-                        <button className="text-[#94A3B8] hover:text-[#1A1A2E] dark:hover:text-white transition-colors relative z-10">
-                          <MoreVertical size={16} />
-                        </button>
                       </div>
 
                       {/* Design Glow */}
@@ -281,10 +253,10 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
                 </motion.div>
               ))}
             </AnimatePresence>
-            
+
             {filteredActivities.length === 0 && (
               <div className="text-center py-20">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No matching activities found...</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No matching activities found...</p>
               </div>
             )}
           </div>
@@ -292,7 +264,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
 
         {/* Neural Branding Footer */}
         <div className="mt-16 py-10 opacity-30 text-center">
-           <p className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-[6px]">Neural Intelligence Feed • Managed Architecture</p>
+          <p className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-[6px]">Neural Intelligence Feed • Managed Architecture</p>
         </div>
       </div>
     </div>

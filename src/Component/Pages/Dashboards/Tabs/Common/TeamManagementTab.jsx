@@ -21,6 +21,8 @@ import {
   FiUser,
   FiFileText,
   FiLayers,
+  FiSave,
+  FiRefreshCw,
 } from 'react-icons/fi';
 import {
   getDepartmentTeamMembers,
@@ -163,6 +165,9 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
   const [editingMember, setEditingMember] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [stats, setStats] = useState({ total: 0, active: 0, onLeave: 0 });
+  const [isEditingInDetail, setIsEditingInDetail] = useState(false);
+  const [isSavingDetail, setIsSavingDetail] = useState(false);
+  const [editableMember, setEditableMember] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -189,6 +194,13 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
       }));
     }
   };
+
+  useEffect(() => {
+    if (selectedMemberForDetail) {
+      setEditableMember({ ...selectedMemberForDetail });
+      setIsEditingInDetail(false);
+    }
+  }, [selectedMemberForDetail]);
 
   useEffect(() => {
     fetchMembers();
@@ -284,6 +296,25 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
     } catch (error) {
       console.error('Error deleting member:', error);
       alert(error.message || 'Failed to delete team member');
+    }
+  };
+
+  const handleSaveInline = async () => {
+    try {
+      setIsSavingDetail(true);
+      await updateDepartmentTeamMember(editableMember._id, editableMember);
+      
+      // Update local state
+      setMembers(prev => prev.map(m => m._id === editableMember._id ? editableMember : m));
+      setSelectedMemberForDetail(editableMember);
+      setIsEditingInDetail(false);
+      
+      fetchStats();
+    } catch (error) {
+      console.error('Error updating member:', error);
+      toast?.error ? toast.error(error.message || 'Failed to update member') : alert(error.message || 'Failed to update member');
+    } finally {
+      setIsSavingDetail(false);
     }
   };
 
@@ -459,12 +490,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                     </td>
                     <td className="py-4 pr-6 text-right">
                       <div className="flex items-center gap-2 justify-end">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
-                          className="p-2 text-[#94a3b8] hover:text-[#0D47A1] hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          <FiEdit2 className="w-4 h-4" />
-                        </button>
+
                         <button
                           onClick={(e) => { e.stopPropagation(); setConfirmDelete(member._id); }}
                           className="p-2 text-[#94a3b8] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
@@ -550,86 +576,175 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                   <div className="text-left">
                     <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">Member Detail</h2>
                   </div>
-                  <button 
-                    onClick={() => setSelectedMemberForDetail(null)}
-                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border-2 border-transparent hover:border-red-100 shadow-sm"
-                  >
-                    <FiX size={18} />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {isEditingInDetail ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setIsEditingInDetail(false)}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          disabled={isSavingDetail}
+                          onClick={handleSaveInline}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center gap-2 shadow-md shadow-blue-500/10"
+                        >
+                          {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
+                          {isSavingDetail ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setIsEditingInDetail(true)}
+                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#0D47A1] transition-all border-2 border-transparent hover:border-blue-100 shadow-sm"
+                        title="Edit Member"
+                      >
+                        <FiEdit2 size={18} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setSelectedMemberForDetail(null)}
+                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border-2 border-transparent hover:border-red-100 shadow-sm"
+                      title="Close"
+                    >
+                      <FiX size={18} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Scrollable Content */}                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
                   {/* Profile Header */}
                   <div className="flex flex-col items-center text-center space-y-4">
                     <div className="w-20 h-20 rounded-[28px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-blue-500/20 overflow-hidden">
-                      {selectedMemberForDetail.profilePhoto ? (
-                        <img src={selectedMemberForDetail.profilePhoto} alt="" className="w-full h-full object-cover" />
+                      {editableMember?.profilePhoto ? (
+                        <img src={editableMember.profilePhoto} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span>{(selectedMemberForDetail.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                        <span>{(editableMember?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
                       )}
                     </div>
                     <div>
-                      <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedMemberForDetail.name}</h4>
-                      <p className="text-sm font-semibold text-[#1B4DA0] mt-1">{selectedMemberForDetail.role || selectedMemberForDetail.department}</p>
+                      {isEditingInDetail ? (
+                        <input
+                          type="text"
+                          className="w-full text-2xl font-bold text-[#1A1A2E] bg-[#F4F3EF] border-none rounded-xl py-2 px-4 text-center focus:ring-2 focus:ring-[#0D47A1]/20 outline-none"
+                          value={editableMember.name}
+                          onChange={(e) => setEditableMember({ ...editableMember, name: e.target.value })}
+                          placeholder="Full Name"
+                        />
+                      ) : (
+                        <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedMemberForDetail.name}</h4>
+                      )}
+                      {isEditingInDetail ? (
+                        <input
+                          type="text"
+                          className="w-full text-sm font-semibold text-[#1B4DA0] bg-[#F4F3EF] border-none rounded-lg py-1 px-3 text-center focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none mt-2"
+                          value={editableMember.role}
+                          onChange={(e) => setEditableMember({ ...editableMember, role: e.target.value })}
+                          placeholder="Role e.g. Lead Recruiter"
+                        />
+                      ) : (
+                        <p className="text-sm font-semibold text-[#1B4DA0] mt-1">{selectedMemberForDetail.role || selectedMemberForDetail.department}</p>
+                      )}
                     </div>
                   </div>
 
                   {/* Unified Info Container */}
-                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-6 space-y-8">
-                    {/* Professional Info */}
-                    <div>
-                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-4 text-center">Professional Info</p>
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
+                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-6">
+                    {/* Professional & Contact Info */}
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
+                        {isEditingInDetail ? (
+                          <select 
+                            className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none"
+                            value={editableMember.department}
+                            onChange={(e) => setEditableMember({ ...editableMember, department: e.target.value })}
+                          >
+                            {['HR Recruitment', 'HR Operations', 'IT', 'Sales', 'Marketing', 'BD', 'Finance', 'Management'].map(dept => (
+                              <option key={dept} value={dept}>{dept}</option>
+                            ))}
+                          </select>
+                        ) : (
                           <span className="text-sm text-[#1A1A2E] font-bold">{selectedMemberForDetail.department || 'HR Recruitment'}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-[#6B6B7E] font-medium">Status</span>
+                        )}
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#6B6B7E] font-medium">Status</span>
+                        {isEditingInDetail ? (
+                          <select 
+                            className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none"
+                            value={editableMember.status}
+                            onChange={(e) => setEditableMember({ ...editableMember, status: e.target.value })}
+                          >
+                            {['Active', 'Inactive', 'On Leave'].map(status => (
+                              <option key={status} value={status}>{status}</option>
+                            ))}
+                          </select>
+                        ) : (
                           <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${selectedMemberForDetail.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                             {selectedMemberForDetail.status}
                           </span>
-                        </div>
+                        )}
                       </div>
-                    </div>
-
-                    <div className="h-px bg-[#F4F3EF]" />
-
-                    {/* Contact Details */}
-                    <div>
-                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-4 text-center">Contact Details</p>
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-[#6B6B7E] font-medium">Email</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#6B6B7E] font-medium">Email</span>
+                        {isEditingInDetail ? (
+                          <input
+                            type="email"
+                            className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none text-right"
+                            value={editableMember.email}
+                            onChange={(e) => setEditableMember({ ...editableMember, email: e.target.value })}
+                          />
+                        ) : (
                           <span className="text-sm text-[#1A1A2E] font-bold truncate max-w-[250px]">{selectedMemberForDetail.email}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-[#6B6B7E] font-medium">Contact</span>
-                          <span className="text-sm text-[#1A1A2E] font-bold">{selectedMemberForDetail.phone}</span>
-                        </div>
+                        )}
                       </div>
-                    </div>
-
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#6B6B7E] font-medium">Contact</span>
+                        {isEditingInDetail ? (
+                          <input
+                            type="tel"
+                            className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none text-right"
+                            value={editableMember.phone}
+                            onChange={(e) => setEditableMember({ ...editableMember, phone: e.target.value })}
+                          />
+                        ) : (
+                          <span className="text-sm text-[#1A1A2E] font-bold">{selectedMemberForDetail.phone}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                </div>
 
                 {/* Footer Actions */}
                 <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
-                  <button 
-                    onClick={() => {
-                      handleEdit(selectedMemberForDetail);
-                      setSelectedMemberForDetail(null);
-                    }}
-                    className="flex-1 py-4 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold hover:bg-[#153e82] transition-all"
-                  >
-                    Edit Profile
-                  </button>
-                  <button 
-                    onClick={() => setSelectedMemberForDetail(null)}
-                    className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
-                  >
-                    Close
-                  </button>
+                  {isEditingInDetail ? (
+                    <>
+                      <button 
+                        disabled={isSavingDetail}
+                        onClick={handleSaveInline}
+                        className="flex-1 py-4 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2"
+                      >
+                        {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
+                        Save Changes
+                      </button>
+                      <button 
+                        onClick={() => setIsEditingInDetail(false)}
+                        className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={() => setSelectedMemberForDetail(null)}
+                      className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
+                    >
+                      Close
+                    </button>
+                  )}
                 </div>
 
 
