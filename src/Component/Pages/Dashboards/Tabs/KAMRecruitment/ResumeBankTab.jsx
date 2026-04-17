@@ -23,7 +23,15 @@ import {
 // --- Helper Functions ---
 const getInitials = (name) => {
   if (!name) return '??';
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  // Clean name before getting initials
+  const clean = name.replace(/^Naukri_/, '').replace(/\[.*\]/, '').trim();
+  return clean.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
+const cleanCandidateName = (name) => {
+  if (!name) return '';
+  // Remove "Naukri_" prefix and experience brackets like [3y_0m]
+  return name.replace(/^Naukri_/, '').replace(/\[.*?\]/, '').trim();
 };
 
 const formatDate = (dateString) => {
@@ -59,46 +67,24 @@ const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSele
   <div
     onClick={() => onViewProfile(resume.id)}
     className={`group px-8 py-3 border-b transition-all duration-300 cursor-pointer overflow-hidden relative flex items-center gap-6 ${isSelected
-        ? (isDarkMode ? 'bg-blue-500/10 border-blue-500/20' : 'bg-[#F0F7FF] border-[#D0E5FF]')
-        : (isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700/50' : 'bg-white border-[#F4F3EF] hover:bg-[#FAFAF8]')
+      ? (isDarkMode ? 'bg-blue-500/10 border-blue-500/20' : 'bg-[#F0F7FF] border-[#D0E5FF]')
+      : (isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700/50' : 'bg-white border-[#F4F3EF] hover:bg-[#FAFAF8]')
       }`}
   >
-    {/* Selection Checkbox */}
-    <div className="w-6 flex-shrink-0 flex items-center justify-center">
-      <input
-        type="checkbox"
-        checked={isSelected}
-        onChange={(e) => onToggleSelect(resume.id, e)}
-        onClick={(e) => e.stopPropagation()}
-        className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
-      />
-    </div>
 
-    {/* Avatar / Initials */}
-    {/* Avatar / Initials */}
-    <div className="w-[42px] h-[42px] rounded-[14px] bg-[#EEF2FB] dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0] dark:text-blue-400 font-bold text-[13px] border border-[#EEF2FB] dark:border-slate-700 flex-shrink-0">
-      {getInitials(resume.candidateName || resume.fileName)}
-    </div>
 
     {/* Candidate Info */}
-    <div className="flex-1 min-w-[200px] flex items-center gap-3">
+    <div className="flex-1 min-w-[200px] flex flex-col justify-center">
       <h3 className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
-        {resume.candidateName || resume.fileName.split('.')[0]}
+        {cleanCandidateName(resume.candidateName || resume.fileName.split('.')[0])}
       </h3>
     </div>
 
     {/* Role Info */}
     <div className="w-[200px] flex-shrink-0">
-      <p className="text-[13px] font-medium text-[#64748b] dark:text-slate-400 truncate">
+      <p className="text-[13px] font-medium text-[#64748b] dark:text-slate-400 truncate text-left">
         {resume.roleType || 'General Profile'}
       </p>
-    </div>
-
-    {/* Primary Skills */}
-    <div className="flex-1 flex flex-wrap gap-1.5 min-w-[150px]">
-      {(resume.skills || ['React', 'TypeScript', 'Node.js']).slice(0, 2).map((skill, i) => (
-        <span key={i} className="px-2 py-0.5 bg-[#FAFAF8] dark:bg-slate-900 text-[#1A1A2E]/60 dark:text-slate-400 text-[9px] font-black rounded-lg border border-[#F4F3EF] dark:border-slate-700 uppercase tracking-widest">{skill}</span>
-      ))}
     </div>
 
     {/* Actions */}
@@ -563,11 +549,10 @@ const ResumeBankTab = () => {
           <button
             onClick={() => setShowSyncMenu(!showSyncMenu)}
             disabled={syncing}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95 ${
-              syncing
-                ? 'bg-slate-100 text-slate-400'
-                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
-            }`}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95 ${syncing
+              ? 'bg-slate-100 text-slate-400'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+              }`}
           >
             <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
             {syncing ? 'Syncing...' : 'Sync Source'}
@@ -634,19 +619,6 @@ const ResumeBankTab = () => {
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
-        {/* Refresh button */}
-        <button
-          onClick={async () => {
-            setLoading(true);
-            await Promise.all([fetchStats(), fetchRoleTypes(), fetchResumes(), fetchClients(), fetchPositions()]);
-            setLoading(false);
-            toast.success("Data refreshed!");
-          }}
-          className="w-[48px] h-[48px] flex items-center justify-center bg-[#F4F3EF] dark:bg-slate-900 rounded-xl text-[#9B9BAD] dark:text-slate-400 hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm active:scale-95"
-          title="Refresh Data"
-        >
-          <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-        </button>
 
         {/* Reset Button */}
         {(filters.search || filters.roleType) && (
@@ -661,19 +633,10 @@ const ResumeBankTab = () => {
 
       {/* Profile Deck - Table Interface */}
       <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-20">
-        <div className="flex items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
-          <div className="w-6 flex-shrink-0 flex items-center justify-center">
-            <input
-              type="checkbox"
-              checked={resumes.length > 0 && selectedRowIds.length === resumes.length}
-              onChange={() => toggleSelectAll(resumes)}
-              className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
-            />
-          </div>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[42px] flex-shrink-0 text-left">Icon</span>
+        <div className="flex items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-[#FAFAFA] dark:bg-slate-800/50">
+
           <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 min-w-[200px] text-left">Candidate</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[200px] flex-shrink-0 text-left">Target Role</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 text-left">Skills</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[200px] flex-shrink-0 text-left">Roles</span>
           <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[140px] flex-shrink-0 text-left">Actions</span>
         </div>
 
@@ -842,8 +805,8 @@ const ResumeBankTab = () => {
                 <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Upload Resume *</label>
                 <label className="cursor-pointer block">
                   <div className={`w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${pendingUploadFiles.length
-                      ? 'border-[#1B4DA0] bg-blue-50/50 dark:bg-blue-900/20'
-                      : 'border-[#F4F3EF] dark:border-slate-700 hover:border-[#1B4DA0]'
+                    ? 'border-[#1B4DA0] bg-blue-50/50 dark:bg-blue-900/20'
+                    : 'border-[#F4F3EF] dark:border-slate-700 hover:border-[#1B4DA0]'
                     }`}>
                     {pendingUploadFiles.length ? (
                       <>

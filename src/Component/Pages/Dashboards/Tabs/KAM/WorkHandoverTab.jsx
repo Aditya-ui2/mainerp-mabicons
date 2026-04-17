@@ -212,7 +212,7 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-semibold hover:bg-[#0a3a82] transition-all shadow-md hover:shadow-lg"
           >
-            <FiPlus size={16} /> New Delegation
+            <FiPlus size={16} /> New Work
           </button>
         </div>
       </div>

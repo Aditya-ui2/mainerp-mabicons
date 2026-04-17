@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   FiBriefcase,
@@ -41,6 +42,7 @@ import {
   FiExternalLink,
   FiArrowRight,
   FiShield,
+  FiCheck,
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import AdminLayout, { StatCard } from './AdminLayout';
@@ -1492,8 +1494,7 @@ const RecruitmentHeadDashboard = () => {
       if (response && (response.success || response.note)) {
         const updated = response.note || response.data;
         setSelectedNote(updated);
-        setIsEditingNote(false);
-        showToast('Note updated successfully', 'success');
+        // showToast('Note updated successfully', 'success'); // Removed toast for auto-save experience
         fetchRecentNotes(); // Refresh the list in overview
       }
     } catch (error) {
@@ -2195,6 +2196,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Team MIS Reports':
               return <TeamMISReportsTab />;
             case 'Notes':
+            case 'notes':
               return <NotesTab isDarkMode={false} department="HR Recruitment" />;
             case 'Settings':
               return <SettingsTab />;
@@ -2743,8 +2745,8 @@ const RecruitmentHeadDashboard = () => {
                               key={kam.id}
                               onClick={() => handleViewKAM(kam)}
                               className={`w-full p-2.5 rounded-[24px] flex items-center gap-4 transition-all duration-300 cursor-pointer border-2 ${isActive
-                                  ? 'bg-[#E3F2FD] border-blue-400 shadow-lg shadow-blue-500/10'
-                                  : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-100 shadow-sm'
+                                ? 'bg-[#E3F2FD] border-blue-400 shadow-lg shadow-blue-500/10'
+                                : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-100 shadow-sm'
                                 }`}
                             >
                               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-colors ${isActive ? 'bg-white text-blue-600' : 'bg-[#E3F2FD80] text-[#1B4DA0]'
@@ -2766,12 +2768,15 @@ const RecruitmentHeadDashboard = () => {
                     {/* Live Notes Section */}
                     <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
                       <div className="p-8 flex items-center justify-between border-b border-slate-50">
-                        <div className="flex items-center gap-3">
-                          <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm">
+                        <div
+                          className="flex items-center gap-3 cursor-pointer group"
+                          onClick={() => setActiveTab('Notes')}
+                        >
+                          <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm group-hover:bg-[#1B4DA0] group-hover:text-white transition-all">
                             <FiEdit3 className="w-5 h-5" />
                           </div>
                           <div className="text-left">
-                            <h3 className="font-bold text-xl text-[#1A1A2E] tracking-tight font-syne leading-none text-left">Notes</h3>
+                            <h3 className="font-bold text-xl text-[#1A1A2E] tracking-tight font-syne leading-none text-left group-hover:text-[#1B4DA0] transition-colors">Notes</h3>
                           </div>
                         </div>
                         <button
@@ -2881,6 +2886,138 @@ const RecruitmentHeadDashboard = () => {
           )}
         </AnimatePresence>
       </AdminLayout>
+
+      {/* Note Detail Drawer Portal (Move outside to ensure document.body level) */}
+      <AnimatePresence>
+        {selectedNote && createPortal(
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (isEditingNote) handleUpdateSelectedNote();
+                setSelectedNote(null);
+                setIsEditingNote(false);
+              }}
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm z-[10001]"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-[650px] bg-white z-[10002] shadow-2xl flex flex-col overflow-hidden"
+              style={{ boxShadow: '-20px 0 50px rgba(0,0,0,0.15)' }}
+            >
+              {/* Header */}
+              <div className="p-10 border-b border-[#F4F3EF] bg-white flex items-center justify-between z-10">
+                <div className="text-left flex-1 mr-4">
+                  {isEditingNote ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={noteEditForm.title}
+                      onChange={(e) => setNoteEditForm({ ...noteEditForm, title: e.target.value })}
+                      className="text-2xl font-bold text-[#1A1A2E] font-syne bg-transparent border-none focus:ring-0 p-0 w-full"
+                      placeholder="Note Title"
+                    />
+                  ) : (
+                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">{selectedNote.title}</h2>
+                  )}
+                  <div className="flex items-center gap-2 mt-1.5 justify-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">
+                      {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {!isEditingNote ? (
+                    <button
+                      onClick={() => {
+                        setNoteEditForm({ title: selectedNote.title, content: selectedNote.content });
+                        setIsEditingNote(true);
+                      }}
+                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center shadow-sm"
+                      title="Edit Note"
+                    >
+                      <FiEdit2 size={16} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        handleUpdateSelectedNote();
+                        setIsEditingNote(false);
+                      }}
+                      className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all flex items-center justify-center shadow-sm"
+                      title="Save Note"
+                    >
+                      <FiCheck size={18} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (isEditingNote) handleUpdateSelectedNote();
+                      setSelectedNote(null);
+                      setIsEditingNote(false);
+                    }}
+                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-8">
+                <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-10 min-h-[300px]">
+                  {isEditingNote ? (
+                    <textarea
+                      value={noteEditForm.content}
+                      onChange={(e) => setNoteEditForm({ ...noteEditForm, content: e.target.value })}
+                      onBlur={handleUpdateSelectedNote}
+                      className="w-full min-h-[250px] text-[15px] text-[#4B4B5E] font-medium leading-[1.8] bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
+                      placeholder="Type note content here..."
+                    />
+                  ) : (
+                    <div className="text-[15px] text-[#4B4B5E] font-medium leading-[1.8] text-left whitespace-pre-wrap">
+                      {selectedNote.content}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
+                <button
+                  onClick={() => {
+                    if (isEditingNote) handleUpdateSelectedNote();
+                    setSelectedNote(null);
+                    setIsEditingNote(false);
+                  }}
+                  className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  Close
+                </button>
+                {!isEditingNote && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('Notes');
+                      setSelectedNote(null);
+                    }}
+                    className="flex-1 py-5 bg-[#0D47A1] text-white rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-[#0a3a82] transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                  >
+                    <FiEdit2 size={14} />
+                    Go to Notes Tab
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </>,
+          document.body
+        )}
+      </AnimatePresence>
 
       {/* Create Note Modal */}
       <AnimatePresence>
@@ -3857,114 +3994,7 @@ const RecruitmentHeadDashboard = () => {
           </>
         )}
       </AnimatePresence>
-      <AnimatePresence>
-        {selectedNote && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedNote(null)}
-              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm z-[200]"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[201] flex flex-col"
-            >
-              {/* Header */}
-              <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
-                <div className="text-left">
-                   {isEditingNote ? (
-                     <input
-                       type="text"
-                       value={noteEditForm.title}
-                       onChange={(e) => setNoteEditForm({ ...noteEditForm, title: e.target.value })}
-                       className="w-full text-2xl font-bold text-[#1A1A2E] font-syne bg-transparent border-none focus:ring-0 p-0 placeholder:text-slate-300"
-                       placeholder="Note Title..."
-                       autoFocus
-                     />
-                   ) : (
-                     <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">{selectedNote.title}</h2>
-                   )}
-                  <div className="flex items-center gap-2 mt-1.5 justify-start">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
-                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">
-                      {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                  </div>
-                </div>
-                 <div className="flex items-center gap-3">
-                   {!isEditingNote && (
-                     <button
-                       onClick={() => {
-                         setNoteEditForm({ title: selectedNote.title, content: selectedNote.content });
-                         setIsEditingNote(true);
-                       }}
-                       className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center shadow-sm"
-                       title="Edit Note"
-                     >
-                       <FiEdit2 size={16} />
-                     </button>
-                   )}
-                   <button
-                     onClick={() => {
-                       setSelectedNote(null);
-                       setIsEditingNote(false);
-                     }}
-                     className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
-                   >
-                     <FiX size={18} />
-                   </button>
-                 </div>
-              </div>
 
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-8">
-                <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-10 min-h-[300px]">
-                   {isEditingNote ? (
-                     <textarea
-                       value={noteEditForm.content}
-                       onChange={(e) => setNoteEditForm({ ...noteEditForm, content: e.target.value })}
-                       className="w-full min-h-[250px] text-[15px] text-[#4B4B5E] font-medium leading-[1.8] bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
-                       placeholder="Type note content here..."
-                     />
-                   ) : (
-                     <div className="text-[15px] text-[#4B4B5E] font-medium leading-[1.8] text-left whitespace-pre-wrap">
-                       {selectedNote.content}
-                     </div>
-                   )}
-                </div>
-
-                {/* Meta Info */}
-
-              </div>
-
-              {/* Footer */}
-              <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
-                <button
-                  onClick={() => setSelectedNote(null)}
-                  className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab('Notes');
-                    setSelectedNote(null);
-                  }}
-                  className="flex-1 py-5 bg-[#0D47A1] text-white rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-[#0a3a82] transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
-                >
-                  <FiEdit2 size={14} />
-                  Go to Notes Tab
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </>
   );
 };

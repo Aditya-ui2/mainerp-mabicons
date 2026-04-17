@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUser, FiMail, FiPhone, FiBriefcase, FiEdit3, FiSave, FiX, FiMapPin, FiCalendar, FiShield } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiBriefcase, FiEdit3, FiSave, FiX, FiMapPin, FiCalendar, FiShield, FiImage } from 'react-icons/fi';
 import { getMyProfile, updateMyProfile } from '../../../service/api';
 
 const MyProfileTab = () => {
@@ -23,8 +23,9 @@ const MyProfileTab = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      
+
       // Get fallback data from localStorage
+      const localPicture = localStorage.getItem('userPicture');
       const localName = localStorage.getItem('userName');
       const localEmail = localStorage.getItem('userEmail');
       const localRole = localStorage.getItem('userType');
@@ -36,6 +37,7 @@ const MyProfileTab = () => {
           const mergedProfile = {
             ...res.member,
             name: res.member.name || localName,
+            picture: res.member.picture || localPicture,
             email: res.member.email || localEmail,
             role: res.member.role || localRole,
             department: res.member.department || localDept
@@ -43,6 +45,7 @@ const MyProfileTab = () => {
           setProfile(mergedProfile);
           setForm({
             name: mergedProfile.name || '',
+            picture: mergedProfile.picture || localPicture,
             email: mergedProfile.email || '',
             role: mergedProfile.role || '',
             department: mergedProfile.department || '',
@@ -59,6 +62,7 @@ const MyProfileTab = () => {
       // If API fails or returns no data, use local fallback
       const fallbackProfile = {
         name: localName || 'User',
+        picture: localPicture || '',
         email: localEmail || 'Email not set',
         role: localRole || 'Member',
         department: localDept || 'Department not set',
@@ -69,6 +73,7 @@ const MyProfileTab = () => {
       setProfile(fallbackProfile);
       setForm({
         name: localName || 'User',
+        picture: localPicture || '',
         email: localEmail || 'Email not set',
         role: localRole || 'Member',
         department: localDept || 'Department not set',
@@ -110,6 +115,7 @@ const MyProfileTab = () => {
   }
 
   const infoItems = [
+    { icon: FiImage, label: 'Picture', value: profile?.picture },
     { icon: FiMail, label: 'Email', value: profile?.email },
     { icon: FiPhone, label: 'Phone', value: profile?.phone || 'Not set' },
     { icon: FiBriefcase, label: 'Department', value: profile?.department },
@@ -207,18 +213,19 @@ const MyProfileTab = () => {
             transition={{ delay: idx * 0.05 }}
             className="group bg-white rounded-[32px] p-8 border border-[#F4F3EF] hover:border-[#0D47A1]/20 hover:shadow-2xl hover:shadow-slate-100 transition-all duration-500"
           >
-            <item.icon className="w-5 h-5 text-[#0D47A1] mb-6 opactity-60 group-hover:opacity-100 transition-opacity" />
+            <item.icon className="w-5 h-5 text-[#0D47A1] mb-6 opacity-60 group-hover:opacity-100 transition-opacity" />
             <div className="space-y-1">
               <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{item.label}</p>
               {editing && item.label !== 'Joined' ? (
                 <input
                   type="text"
                   value={
-                    item.label === 'Email' ? form.email :
-                    item.label === 'Phone' ? form.phone :
-                    item.label === 'Department' ? form.department :
-                    item.label === 'Role' ? form.role :
-                    item.label === 'Address' ? form.address : item.value
+                    item.label === 'Change Picture' ? form.profilePicture :
+                      item.label === 'Email' ? form.email :
+                        item.label === 'Phone' ? form.phone :
+                          item.label === 'Department' ? form.department :
+                            item.label === 'Role' ? form.role :
+                              item.label === 'Address' ? form.address : item.value
                   }
                   onChange={(e) => setForm(prev => ({
                     ...prev,

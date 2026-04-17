@@ -181,7 +181,7 @@ export default function CandidatesPage({ setActiveTab }) {
   const fetchCandidates = async () => {
     try {
       if (candidates.length === 0) setLoading(true);
-      
+
       // Fetch both sources in parallel
       const [erpRes, spRes] = await Promise.all([
         getAllCandidates(),
@@ -258,7 +258,7 @@ export default function CandidatesPage({ setActiveTab }) {
     if (['Technical Round', 'HR Round', 'Client Interview'].includes(stage) || status === 'Interview') return "Interview";
     return "Screening";
   };
-  
+
   const mapFrontendToBackendStage = (uiStage) => {
     switch (uiStage) {
       case "Hired": return { stage: "Joined", status: "Selected" };
@@ -293,7 +293,7 @@ export default function CandidatesPage({ setActiveTab }) {
 
     try {
       const backendMapping = mapFrontendToBackendStage(stage);
-      
+
       if (candidate.source === 'sharepoint') {
         await updateSharePointCandidate(dragId, {
           stage: backendMapping.stage,
@@ -518,9 +518,9 @@ export default function CandidatesPage({ setActiveTab }) {
       const res = await generateCandidateCredentials(credsCandidate.id);
       if (res && res.success && res.data) {
         const { email: finalEmail, username: finalUsername, password: finalPass } = res.data;
-        
+
         toast.success(`Credentials generated for ${finalUsername || finalEmail}`);
-        
+
         // Construct mailto link for manual sending
         const subject = encodeURIComponent("Your Mabicons ERP Access Credentials");
         const body = encodeURIComponent(`Dear ${credsCandidate.name},
@@ -539,10 +539,10 @@ Best Regards,
 Mabicons Recruitment Team`);
 
         window.location.href = `mailto:${finalEmail}?subject=${subject}&body=${body}`;
-        
+
         setIsCredsModalOpen(false);
         setCredsCandidate(null);
-        
+
         // Optionally refresh candidates to show updated status/tags
         fetchCandidates();
       } else {
@@ -897,7 +897,7 @@ Mabicons Recruitment Team`);
                             >
                               <Eye size={10} /> View CV
                             </button>
-                            
+
                             {candidate.stage === 'Hired' && (
                               <button
                                 onClick={(e) => {
@@ -1343,7 +1343,7 @@ Mabicons Recruitment Team`);
                           >
                             <Eye size={13} /> View CV
                           </button>
-                          
+
                           {(selectedCandidate.stage === 'Selected' || selectedCandidate.stage === 'Hired' || selectedCandidate.stage === 'Joined') && (
                             <button
                               onClick={() => {
@@ -2126,7 +2126,7 @@ Mabicons Recruitment Team`);
               <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-2 shadow-inner border border-emerald-100/50">
                 <Award size={40} className="animate-bounce" />
               </div>
-              
+
               <div className="space-y-1">
                 <h4 className="text-lg font-bold text-[#1A1A2E]">{credsCandidate.name}</h4>
                 <p className="text-sm text-[#9B9BAD] font-medium">{credsCandidate.email}</p>
@@ -2142,14 +2142,14 @@ Mabicons Recruitment Team`);
               </div>
 
               <div className="flex gap-4 pt-2">
-                <button 
+                <button
                   onClick={() => setIsCredsModalOpen(false)}
                   disabled={credsLoading}
                   className="flex-1 py-4 rounded-2xl border-2 border-[#F4F3EF] text-[11px] font-bold text-[#6B6B7E] uppercase tracking-wider hover:bg-[#F4F3EF] transition-all disabled:opacity-50"
                 >
                   Skip for now
                 </button>
-                <button 
+                <button
                   onClick={handleGenerateCredentials}
                   disabled={credsLoading}
                   className="flex-[2] bg-[#1B4DA0] text-white py-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-[#1B4DA0]/20 hover:shadow-[#1B4DA0]/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-70 text-center"

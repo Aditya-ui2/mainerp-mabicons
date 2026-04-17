@@ -326,7 +326,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
     try {
       const filters = {};
       if (filterStatus !== 'all') filters.status = filterStatus;
-      
+
       const [erpRes, spRes] = await Promise.all([
         getAllInterviews(filters),
         getSharePointInterviews(filters).catch(e => ({ success: false, data: [] }))

@@ -496,8 +496,8 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
   };
 
   const fieldClasses = `w-full bg-transparent rounded-xl px-2 py-1 transition-all outline-none border ${isEditing
-      ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white'
-      : 'border-transparent cursor-default'
+    ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white'
+    : 'border-transparent cursor-default'
     }`;
 
   return (
@@ -520,7 +520,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
             {job.clientSource === 'sharepoint' && (
               <>
                 <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                <button 
+                <button
                   onClick={() => window.open('https://mabicons.sharepoint.com/:f:/s/Recruitment', '_blank')}
                   className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-[2px] transition-colors"
                 >
@@ -663,7 +663,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                 </div>
               ) : (
                 <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${editableJob.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' :
-                    editableJob.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
+                  editableJob.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
                   }`}>
                   {editableJob.priority}
                 </span>
@@ -909,7 +909,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         // Also ensure we're not clicking a checkbox or a job row that might be part of selection
         const isCheckbox = event.target.closest('input[type="checkbox"]');
         const isJobRow = event.target.closest('.job-selection-row');
-        
+
         if (!isCheckbox && !isJobRow) {
           setSelectedJobs([]);
         }
@@ -1804,13 +1804,13 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       });
 
       await Promise.all(updatePromises);
-      
-      setJobs(prev => prev.map(job => 
-        selectedJobs.includes(job.id) 
+
+      setJobs(prev => prev.map(job =>
+        selectedJobs.includes(job.id)
           ? { ...job, ...(priorityValues.includes(newStatus) ? { priority: newStatus } : { status: newStatus }) }
           : job
       ));
-      
+
       toast.success('Batch update successful', { id: toastId });
       setSelectedJobs([]);
     } catch (err) {
@@ -2392,7 +2392,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     {job.clientSource === 'sharepoint' && (
                       <div className="flex items-center gap-1">
                         <Database size={12} className="text-emerald-500 shrink-0" title="Synced from SharePoint Client" />
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             window.open('https://mabicons.sharepoint.com/:f:/s/Recruitment', '_blank');
@@ -2805,7 +2805,7 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
                     <td className="px-6 py-4 text-[13px] font-bold text-[#1A1A2E]">{row.salary}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${row.priority === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' :
-                          row.priority === 'High' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
+                        row.priority === 'High' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
                         }`}>
                         {row.priority}
                       </span>
@@ -2822,7 +2822,7 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
                           <div className="w-2 h-2 rounded-full bg-slate-300" />
                         )}
                         <span className={`text-[11px] font-bold ${row.status === 'Success' ? 'text-emerald-600' :
-                            row.status === 'Failed' ? 'text-red-600' : 'text-slate-500'
+                          row.status === 'Failed' ? 'text-red-600' : 'text-slate-500'
                           }`}>
                           {row.status}
                         </span>

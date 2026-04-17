@@ -258,9 +258,9 @@ const KAMMemberDashboard = () => {
   const fetchTodayTasks = async (userId) => {
     try {
       const res = await getMyDepartmentTasks();
-      if (res.success && res.data) {
+      if (res.success && res.tasks) {
         const today = new Date().toDateString();
-        const tasks = (res.data || [])
+        const tasks = (res.tasks || [])
           .filter(task => {
             if (task.deadline) {
               return new Date(task.deadline).toDateString() === today;

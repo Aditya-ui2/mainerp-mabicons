@@ -12,7 +12,7 @@ import { getNotes, createNote, updateNote, deleteNote } from '../../../service/a
 const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) => {
   // Use prop if provided, otherwise fallback to localStorage, finally default to Operations
   const department = propDepartment || localStorage.getItem('department') || 'HR Operations';
-  
+
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,12 +30,12 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
     try {
       const res = await getNotes({ department });
       const apiNotes = res.notes || res.data || [];
-      
-      const filteredApiNotes = apiNotes.filter(n => 
-        n.department && 
+
+      const filteredApiNotes = apiNotes.filter(n =>
+        n.department &&
         n.department.trim().toLowerCase() === department.trim().toLowerCase()
       );
-      
+
       setNotes(filteredApiNotes);
     } catch (err) {
       console.error('Failed to load notes:', err);
@@ -115,7 +115,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
         content: detailEditForm.content,
         department: department
       });
-      
+
       const updatedNote = res.note || res.data;
       setNotes(prev => prev.map(n => (n._id || n.id) === noteId ? updatedNote : n));
       setSelectedNote(updatedNote);
@@ -188,41 +188,41 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                     <div className="flex items-center gap-3">
                       {isEditingDetail ? (
                         <>
-                           <button
-                             onClick={handleDetailSave}
-                             disabled={saving}
-                             className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-all active:scale-90 shadow-md shadow-blue-500/20 disabled:opacity-50"
-                             title="Save Changes"
-                           >
-                             {saving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={20} className="rotate-45 scale-125" style={{ transform: 'rotate(0deg)' }} />}
-                           </button>
-                           <button
-                             onClick={() => setIsEditingDetail(false)}
-                             className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-800 transition-all active:scale-90"
-                             title="Cancel"
-                           >
-                             <X size={20} />
-                           </button>
+                          <button
+                            onClick={handleDetailSave}
+                            disabled={saving}
+                            className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-all active:scale-90 shadow-md shadow-blue-500/20 disabled:opacity-50"
+                            title="Save Changes"
+                          >
+                            {saving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={20} className="rotate-45 scale-125" style={{ transform: 'rotate(0deg)' }} />}
+                          </button>
+                          <button
+                            onClick={() => setIsEditingDetail(false)}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-800 transition-all active:scale-90"
+                            title="Cancel"
+                          >
+                            <X size={20} />
+                          </button>
                         </>
                       ) : (
                         <>
-                           <button
-                             onClick={() => { 
-                               setIsEditingDetail(true); 
-                               setDetailEditForm({ title: selectedNote.title, content: selectedNote.content });
-                             }}
-                             className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-[#1B4DA0] transition-all active:scale-90 shadow-sm"
-                             title="Edit Note"
-                           >
-                             <Pencil size={18} />
-                           </button>
-                           <button
-                             onClick={() => setSelectedNote(null)}
-                             className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 transition-all active:scale-90 shadow-sm"
-                             title="Close"
-                           >
-                             <X size={20} />
-                           </button>
+                          <button
+                            onClick={() => {
+                              setIsEditingDetail(true);
+                              setDetailEditForm({ title: selectedNote.title, content: selectedNote.content });
+                            }}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-[#1B4DA0] transition-all active:scale-90 shadow-sm"
+                            title="Edit Note"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                          <button
+                            onClick={() => setSelectedNote(null)}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                            title="Close"
+                          >
+                            <X size={20} />
+                          </button>
                         </>
                       )}
                     </div>
@@ -233,10 +233,10 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                     {/* Full Description */}
                     <div className="space-y-4 text-left">
                       <div className="flex items-center gap-3 mb-2 justify-start text-left">
-                         <div className="w-8 h-8 rounded-lg bg-[#0D47A1]/5 flex items-center justify-center text-[#0D47A1]">
-                            <FileText size={16} />
-                         </div>
-                         <h4 className="text-sm font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest text-left">DESCRIPTION</h4>
+                        <div className="w-8 h-8 rounded-lg bg-[#0D47A1]/5 flex items-center justify-center text-[#0D47A1]">
+                          <FileText size={16} />
+                        </div>
+                        <h4 className="text-sm font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest text-left">DESCRIPTION</h4>
                       </div>
                       <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm text-left">
                         {isEditingDetail ? (
@@ -256,30 +256,30 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
 
                     {/* Actions Area */}
                     <div className="pt-8 border-t border-[#F4F3EF] dark:border-slate-800 flex flex-col gap-4">
-                        {isEditingDetail ? (
-                           <div className="flex gap-4">
-                              <button
-                                onClick={handleDetailSave}
-                                disabled={saving}
-                                className="flex-[2] py-4 rounded-2xl bg-blue-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50"
-                              >
-                                {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} style={{ transform: 'rotate(0deg)' }} />} Save Note
-                              </button>
-                              <button
-                                onClick={() => setIsEditingDetail(false)}
-                                className="flex-1 py-4 rounded-2xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] text-xs font-bold uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
-                              >
-                                Cancel
-                              </button>
-                           </div>
-                        ) : (
+                      {isEditingDetail ? (
+                        <div className="flex gap-4">
                           <button
-                            onClick={() => { setDeleteConfirmId(selectedNote.id); setSelectedNote(null); }}
-                            className="w-full py-4 rounded-2xl bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-2 border border-rose-100 dark:border-rose-900/30"
+                            onClick={handleDetailSave}
+                            disabled={saving}
+                            className="flex-[2] py-4 rounded-2xl bg-blue-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50"
                           >
-                            <Trash2 size={16} /> Delete Intelligence Note
+                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} style={{ transform: 'rotate(0deg)' }} />} Save Note
                           </button>
-                        )}
+                          <button
+                            onClick={() => setIsEditingDetail(false)}
+                            className="flex-1 py-4 rounded-2xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] text-xs font-bold uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setDeleteConfirmId(selectedNote.id); setSelectedNote(null); }}
+                          className="w-full py-4 rounded-2xl bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-2 border border-rose-100 dark:border-rose-900/30"
+                        >
+                          <Trash2 size={16} /> Delete Intelligence Note
+                        </button>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -287,142 +287,142 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
             )}
           </AnimatePresence>
           <div className="space-y-6">
-              {/* Header */}
-              <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
-                <div>
-                  <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">
-                    Notes Hub
-                  </h1>
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
+              <div>
+                <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">
+                  Notes Hub
+                </h1>
 
-                </div>
+              </div>
 
+              <div className="flex items-center gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => setView('add')}
+                  className="flex items-center center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-medium shadow-sm hover:bg-[#0a3a85] transition-colors w-fit"
+                >
+                  <Plus size={16} /> Add Note
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="bg-white dark:bg-slate-900 rounded-[24px] p-2 border border-[#F4F3EF] dark:border-slate-800 shadow-sm">
+              <div className="flex items-center gap-3 bg-[#F4F3EF] dark:bg-slate-800 rounded-2xl px-5 py-3">
+                <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
+                <input type="text" placeholder="Search notes..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
+              </div>
+            </div>
+
+            {/* Main Timeline Container */}
+            <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
+
+              {/* Timeline Header */}
+              <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50">
                 <div className="flex items-center gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    onClick={() => setView('add')}
-                    className="flex items-center center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-medium shadow-sm hover:bg-[#0a3a85] transition-colors w-fit"
-                  >
-                    <Plus size={16} /> Add Note
-                  </motion.button>
-                </div>
-              </div>
-
-              {/* Search */}
-              <div className="bg-white dark:bg-slate-900 rounded-[24px] p-2 border border-[#F4F3EF] dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 bg-[#F4F3EF] dark:bg-slate-800 rounded-2xl px-5 py-3">
-                  <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
-                  <input type="text" placeholder="Search notes..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
-                </div>
-              </div>
-
-              {/* Main Timeline Container */}
-              <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
-                
-                {/* Timeline Header */}
-                <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
-                      <FileText size={20} strokeWidth={2} />
-                    </div>
-                    <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Notes Timeline</h3>
+                  <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
+                    <FileText size={20} strokeWidth={2} />
                   </div>
-                </div>
-
-                {/* Vertical Bridge Line */}
-                <div className="absolute left-[88px] lg:left-[108px] top-[100px] bottom-[40px] w-px bg-[#F4F3EF] dark:bg-slate-800 pointer-events-none hidden sm:block" />
-
-                {/* Timeline Content */}
-                <div className="px-8 py-12 space-y-10 relative z-10">
-                  {loading ? (
-                    Array(3).fill(0).map((_, i) => (
-                      <div key={i} className="flex items-start">
-                        <div className="w-20 lg:w-28 flex-shrink-0 hidden sm:block" />
-                        <div className="w-10 h-10 rounded-xl bg-[#FAFAFA] dark:bg-slate-800 flex-shrink-0 animate-pulse hidden sm:block" />
-                        <div className="ml-0 sm:ml-6 lg:ml-8 flex-1 h-32 rounded-[24px] bg-[#FAFAFA] dark:bg-slate-900 animate-pulse" />
-                      </div>
-                    ))
-                  ) : filteredNotes.length === 0 ? (
-                    <div className="text-center py-32">
-                      <div className="w-24 h-24 bg-[#FAFAFA] dark:bg-slate-800 rounded-[32px] mx-auto flex items-center justify-center text-[#9B9BAD] mb-8 rotate-3">
-                        <FileText size={40} strokeWidth={1.5} />
-                      </div>
-                      <p className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white capitalize mb-2">No Records Found</p>
-                      <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">Silence across the intelligence repository.</p>
-                      <button
-                        onClick={() => setView('add')}
-                        className="mt-8 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
-                      >
-                        Create First Note
-                      </button>
-                    </div>
-                  ) : (
-                    <AnimatePresence mode="popLayout">
-                      {filteredNotes.map((note, index) => {
-                        const noteDate = new Date(note.updatedAt || note.createdAt);
-                        const dateStr = noteDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
-
-                        return (
-                          <motion.div
-                            key={note._id || note.id}
-                            layout
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ delay: index * 0.04 }}
-                            className="flex items-start group relative text-left"
-                          >
-                            {/* Time Column */}
-                            <div className="w-20 lg:w-28 flex-shrink-0 pt-5 text-right pr-6 lg:pr-8 hidden sm:block">
-                              <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
-                                {dateStr}
-                              </span>
-                            </div>
-
-                            {/* Marker */}
-                            <div className="relative z-10 flex-shrink-0 hidden sm:block">
-                              <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] flex items-center justify-center text-[#3B82F6] group-hover:scale-110 transition-transform duration-500">
-                                <FileText size={18} strokeWidth={1.5} />
-                              </div>
-                            </div>
-
-                            {/* Card */}
-                            <div className="ml-0 sm:ml-6 lg:ml-8 flex-1">
-                              <div
-                                className="bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative cursor-pointer group-hover:-translate-y-1 text-left"
-                                onClick={() => setSelectedNote(note)}
-                              >
-                                    <div className="flex justify-between items-start">
-                                      <div className="flex-1">
-                                        <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2 group-hover:text-[#1B4DA0] transition-colors">
-                                          {note.title}
-                                        </h4>
-                                        <p className="text-[#64748B] dark:text-slate-400 text-[13px] font-medium leading-relaxed opacity-80 mt-2 line-clamp-2">
-                                          {note.content}
-                                        </p>
-                                      </div>
-                                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); handleEdit(note); }}
-                                          className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#1B4DA0] flex items-center justify-center hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
-                                          title="Quick Edit"
-                                        >
-                                          <Pencil size={18} />
-                                        </button>
-                                      </div>
-                                    </div>
-
-                                {/* Design Glow */}
-                                <div className="absolute -right-2 -bottom-2 w-24 h-24 bg-[#1B4DA0]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                              </div>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </AnimatePresence>
-                  )}
+                  <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Notes Timeline</h3>
                 </div>
               </div>
+
+              {/* Vertical Bridge Line */}
+              <div className="absolute left-[88px] lg:left-[108px] top-[100px] bottom-[40px] w-px bg-[#F4F3EF] dark:bg-slate-800 pointer-events-none hidden sm:block" />
+
+              {/* Timeline Content */}
+              <div className="px-8 py-12 space-y-10 relative z-10">
+                {loading ? (
+                  Array(3).fill(0).map((_, i) => (
+                    <div key={i} className="flex items-start">
+                      <div className="w-20 lg:w-28 flex-shrink-0 hidden sm:block" />
+                      <div className="w-10 h-10 rounded-xl bg-[#FAFAFA] dark:bg-slate-800 flex-shrink-0 animate-pulse hidden sm:block" />
+                      <div className="ml-0 sm:ml-6 lg:ml-8 flex-1 h-32 rounded-[24px] bg-[#FAFAFA] dark:bg-slate-900 animate-pulse" />
+                    </div>
+                  ))
+                ) : filteredNotes.length === 0 ? (
+                  <div className="text-center py-32">
+                    <div className="w-24 h-24 bg-[#FAFAFA] dark:bg-slate-800 rounded-[32px] mx-auto flex items-center justify-center text-[#9B9BAD] mb-8 rotate-3">
+                      <FileText size={40} strokeWidth={1.5} />
+                    </div>
+                    <p className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white capitalize mb-2">No Records Found</p>
+                    <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-[0.2em]">Silence across the intelligence repository.</p>
+                    <button
+                      onClick={() => setView('add')}
+                      className="mt-8 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
+                    >
+                      Create First Note
+                    </button>
+                  </div>
+                ) : (
+                  <AnimatePresence mode="popLayout">
+                    {filteredNotes.map((note, index) => {
+                      const noteDate = new Date(note.updatedAt || note.createdAt);
+                      const dateStr = noteDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
+
+                      return (
+                        <motion.div
+                          key={note._id || note.id}
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ delay: index * 0.04 }}
+                          className="flex items-start group relative text-left"
+                        >
+                          {/* Time Column */}
+                          <div className="w-20 lg:w-28 flex-shrink-0 pt-5 text-right pr-6 lg:pr-8 hidden sm:block">
+                            <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
+                              {dateStr}
+                            </span>
+                          </div>
+
+                          {/* Marker */}
+                          <div className="relative z-10 flex-shrink-0 hidden sm:block">
+                            <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] flex items-center justify-center text-[#3B82F6] group-hover:scale-110 transition-transform duration-500">
+                              <FileText size={18} strokeWidth={1.5} />
+                            </div>
+                          </div>
+
+                          {/* Card */}
+                          <div className="ml-0 sm:ml-6 lg:ml-8 flex-1">
+                            <div
+                              className="bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative cursor-pointer group-hover:-translate-y-1 text-left"
+                              onClick={() => setSelectedNote(note)}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2 group-hover:text-[#1B4DA0] transition-colors">
+                                    {note.title}
+                                  </h4>
+                                  <p className="text-[#64748B] dark:text-slate-400 text-[13px] font-medium leading-relaxed opacity-80 mt-2 line-clamp-2">
+                                    {note.content}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleEdit(note); }}
+                                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#1B4DA0] flex items-center justify-center hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+                                    title="Quick Edit"
+                                  >
+                                    <Pencil size={18} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Design Glow */}
+                              <div className="absolute -right-2 -bottom-2 w-24 h-24 bg-[#1B4DA0]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Dialog for Add/Edit Note */}
@@ -532,7 +532,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
               </div>
             )}
           </AnimatePresence>
-          
+
         </>
       </div>
     </div>

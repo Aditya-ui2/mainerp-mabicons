@@ -156,23 +156,11 @@ Mabicons Recruitment Team`);
 
         <div className="flex items-center gap-4">
           <div className="relative group">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4DA0] transition-colors" />
-            <input
-              type="text"
-              placeholder="Search delegation node..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`pl-12 pr-6 py-4 rounded-2xl border shadow-sm text-sm font-bold w-[300px] outline-none transition-all ${
-                isDarkMode ? 'bg-slate-900 border-slate-800 text-white focus:border-[#1B4DA0]' : 'bg-white border-slate-100 focus:border-[#1B4DA0]'
-              }`}
-            />
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4DA0] transition-colors" />             
           </div>
           {selectedCandidate && (
             <label className="cursor-pointer">
-              <input type="file" className="hidden" onChange={(e) => handleAttachOffer(e, selectedCandidate.id)} />
-              <div className="px-8 py-3.5 bg-[#1B4DA0] text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-blue-500/10 hover:bg-[#15418a] hover:scale-105 active:scale-95 transition-all">
-                <FiUpload size={16} /> New Asset Handover
-              </div>
+              <input type="file" className="hidden" onChange={(e) => handleAttachOffer(e, selectedCandidate.id)} />   
             </label>
           )}
         </div>
