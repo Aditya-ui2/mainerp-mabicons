@@ -64,6 +64,7 @@ import {
   getDeptNotes,
   createNote,
   updateNote,
+  deleteNote,
   getRecruitmentClients,
   getAllOffers,
 } from '../service/api';
@@ -1065,13 +1066,13 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
       {/* Root Modal Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+        className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md"
         onClick={onClose}
       />
 
@@ -1499,7 +1500,22 @@ const RecruitmentHeadDashboard = () => {
       }
     } catch (error) {
       console.error('Error updating note:', error);
-      showToast('Failed to update note', 'error');
+      showToast(error.message || 'Could not update note', 'error');
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this intelligence note?')) return;
+    try {
+      setIsSavingNote(true);
+      await deleteNote(id);
+      showToast('Note deleted successfully', 'success');
+      setSelectedNote(null);
+      fetchRecentNotes();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete note', 'error');
     } finally {
       setIsSavingNote(false);
     }
@@ -2885,139 +2901,147 @@ const RecruitmentHeadDashboard = () => {
             />
           )}
         </AnimatePresence>
-      </AdminLayout>
-
-      {/* Note Detail Drawer Portal (Move outside to ensure document.body level) */}
-      <AnimatePresence>
-        {selectedNote && createPortal(
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                if (isEditingNote) handleUpdateSelectedNote();
-                setSelectedNote(null);
-                setIsEditingNote(false);
-              }}
-              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm z-[10001]"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-[650px] bg-white z-[10002] shadow-2xl flex flex-col overflow-hidden"
-              style={{ boxShadow: '-20px 0 50px rgba(0,0,0,0.15)' }}
-            >
-              {/* Header */}
-              <div className="p-10 border-b border-[#F4F3EF] bg-white flex items-center justify-between z-10">
-                <div className="text-left flex-1 mr-4">
-                  {isEditingNote ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      value={noteEditForm.title}
-                      onChange={(e) => setNoteEditForm({ ...noteEditForm, title: e.target.value })}
-                      className="text-2xl font-bold text-[#1A1A2E] font-syne bg-transparent border-none focus:ring-0 p-0 w-full"
-                      placeholder="Note Title"
-                    />
-                  ) : (
-                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">{selectedNote.title}</h2>
-                  )}
-                  <div className="flex items-center gap-2 mt-1.5 justify-start">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
-                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">
-                      {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {!isEditingNote ? (
-                    <button
-                      onClick={() => {
-                        setNoteEditForm({ title: selectedNote.title, content: selectedNote.content });
-                        setIsEditingNote(true);
-                      }}
-                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center shadow-sm"
-                      title="Edit Note"
-                    >
-                      <FiEdit2 size={16} />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        handleUpdateSelectedNote();
-                        setIsEditingNote(false);
-                      }}
-                      className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all flex items-center justify-center shadow-sm"
-                      title="Save Note"
-                    >
-                      <FiCheck size={18} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      if (isEditingNote) handleUpdateSelectedNote();
-                      setSelectedNote(null);
-                      setIsEditingNote(false);
-                    }}
-                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
-                  >
-                    <FiX size={18} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-8">
-                <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-10 min-h-[300px]">
-                  {isEditingNote ? (
-                    <textarea
-                      value={noteEditForm.content}
-                      onChange={(e) => setNoteEditForm({ ...noteEditForm, content: e.target.value })}
-                      onBlur={handleUpdateSelectedNote}
-                      className="w-full min-h-[250px] text-[15px] text-[#4B4B5E] font-medium leading-[1.8] bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
-                      placeholder="Type note content here..."
-                    />
-                  ) : (
-                    <div className="text-[15px] text-[#4B4B5E] font-medium leading-[1.8] text-left whitespace-pre-wrap">
-                      {selectedNote.content}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
-                <button
+        
+        {/* Note Detail Drawer Portal (Moved inside AdminLayout for reliable rendering) */}
+        {createPortal(
+          <AnimatePresence>
+            {selectedNote && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   onClick={() => {
                     if (isEditingNote) handleUpdateSelectedNote();
                     setSelectedNote(null);
                     setIsEditingNote(false);
                   }}
-                  className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
+                  className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
+                />
+                <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%', opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="fixed right-0 top-0 h-full w-full max-w-[650px] bg-white dark:bg-slate-950 z-[1101] shadow-2xl flex flex-col overflow-hidden"
+                  style={{ boxShadow: '-20px 0 50px rgba(0,0,0,0.15)' }}
                 >
-                  Close
-                </button>
-                {!isEditingNote && (
-                  <button
-                    onClick={() => {
-                      setActiveTab('Notes');
-                      setSelectedNote(null);
-                    }}
-                    className="flex-1 py-5 bg-[#0D47A1] text-white rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-[#0a3a82] transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
-                  >
-                    <FiEdit2 size={14} />
-                    Go to Notes Tab
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          </>,
+                  {/* Header */}
+                  <div className="p-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-between z-10">
+                    <div className="text-left flex-1 mr-4">
+                      {isEditingNote ? (
+                        <input
+                          autoFocus
+                          type="text"
+                          value={noteEditForm.title}
+                          onChange={(e) => setNoteEditForm({ ...noteEditForm, title: e.target.value })}
+                          className="text-2xl font-bold text-[#1A1A2E] dark:text-white font-syne bg-transparent border-none focus:ring-0 p-0 w-full"
+                          placeholder="Note Title"
+                        />
+                      ) : (
+                        <h2 className="text-2xl font-bold text-[#1A1A2E] dark:text-white font-syne text-left">{selectedNote.title}</h2>
+                      )}
+                      <div className="flex items-center gap-2 mt-1.5 justify-start">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">
+                          {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {!isEditingNote ? (
+                        <button
+                          onClick={() => {
+                            setNoteEditForm({ title: selectedNote.title, content: selectedNote.content });
+                            setIsEditingNote(true);
+                          }}
+                          className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#1B4DA0] hover:bg-blue-50 dark:hover:bg-slate-700 transition-all flex items-center justify-center shadow-sm"
+                          title="Edit Note"
+                        >
+                          <FiEdit2 size={16} />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            handleUpdateSelectedNote();
+                            setIsEditingNote(false);
+                          }}
+                          className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all flex items-center justify-center shadow-sm"
+                          title="Save Note"
+                        >
+                          <FiCheck size={18} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (isEditingNote) handleUpdateSelectedNote();
+                          setSelectedNote(null);
+                          setIsEditingNote(false);
+                        }}
+                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
+                      >
+                        <FiX size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-8 text-left">
+                    <div className="flex flex-col gap-5">
+                      <div className="flex items-center gap-2 px-2">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0]">
+                          <FiFileText size={16} />
+                        </div>
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Description</span>
+                      </div>
+
+                      <div className="bg-[#FAFAFA] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 p-10 min-h-[300px] transition-all duration-300">
+                        {isEditingNote ? (
+                          <textarea
+                            value={noteEditForm.content}
+                            onChange={(e) => setNoteEditForm({ ...noteEditForm, content: e.target.value })}
+                            onBlur={handleUpdateSelectedNote}
+                            className="w-full min-h-[250px] text-[15px] text-[#4B4B5E] dark:text-slate-300 font-medium leading-[1.8] bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
+                            placeholder="Type note content here..."
+                          />
+                        ) : (
+                          <div className="text-[15px] text-[#4B4B5E] dark:text-slate-300 font-medium leading-[1.8] whitespace-pre-wrap">
+                            {selectedNote.content}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-10 border-t border-[#F4F3EF] dark:border-slate-800 bg-[#FBFBFF] dark:bg-slate-950 flex gap-4">
+                    <button
+                      onClick={() => {
+                        if (isEditingNote) handleUpdateSelectedNote();
+                        setSelectedNote(null);
+                        setIsEditingNote(false);
+                      }}
+                      className="flex-[1] py-5 bg-white dark:bg-slate-900 border-2 border-[#F4F3EF] dark:border-slate-800 text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => handleDeleteNote(selectedNote?._id || selectedNote?.id)}
+                      disabled={isSavingNote}
+                      className="flex-[2] py-5 bg-white dark:bg-slate-900 border-2 border-red-50 text-red-500 rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-red-50 dark:hover:bg-red-900/20 transition-all shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <FiTrash2 size={14} />
+                      Delete Intelligence Note
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>,
           document.body
         )}
-      </AnimatePresence>
+      </AdminLayout>
+
 
       {/* Create Note Modal */}
       <AnimatePresence>
@@ -3027,14 +3051,14 @@ const RecruitmentHeadDashboard = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm z-[200]"
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
               onClick={() => setShowAddNoteModal(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-[5vh] -translate-x-1/2 w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] flex flex-col max-h-[90vh] overflow-hidden"
+              className="fixed left-1/2 top-[5vh] -translate-x-1/2 w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[1101] flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-10 border-b border-slate-50 flex flex-col items-center justify-center relative flex-shrink-0">
                 <div className="text-center">
@@ -3111,7 +3135,7 @@ const RecruitmentHeadDashboard = () => {
             <motion.div
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[#1A1A2E]/20 backdrop-blur-[1px] z-[110]"
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
               onClick={() => setShowKAMModal(false)}
             />
             <motion.div
@@ -3119,7 +3143,7 @@ const RecruitmentHeadDashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-[698px] bg-white z-[120] shadow-2xl flex flex-col"
+              className="fixed right-0 top-0 h-full w-full max-w-[698px] bg-white z-[1101] shadow-2xl flex flex-col"
               style={{ boxShadow: "-12px 0 40px rgba(0,0,0,0.12)" }}
             >
               {/* Drawer Header */}
@@ -3333,14 +3357,14 @@ const RecruitmentHeadDashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100] flex items-center justify-center p-4"
             onClick={() => setShowCallsBreakdownModal(false)}
           >
             <motion.div
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden z-[1101]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-10 py-8 border-b border-[#F4F3EF] bg-gradient-to-r from-white to-[#F8FAFF]">
@@ -3882,14 +3906,14 @@ const RecruitmentHeadDashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedInterview(null)}
-              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm z-[200]"
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[201] flex flex-col"
+              className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[1101] flex flex-col"
             >
               {/* Header - Sticky Style */}
               <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">

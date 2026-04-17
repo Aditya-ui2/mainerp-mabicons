@@ -106,19 +106,19 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex justify-end" onClick={onClose}>
+    <div className="fixed inset-0 z-[1100] flex justify-end" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md transition-opacity"
       />
       <motion.div
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className={`w-full max-w-[520px] h-full flex flex-col relative z-[101] shadow-[-12px_0_40px_rgba(0,0,0,0.15)] overflow-hidden ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}
+        className={`w-full max-w-[520px] h-full flex flex-col relative z-[1101] shadow-[-12px_0_40px_rgba(0,0,0,0.15)] overflow-hidden ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -1146,13 +1146,13 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
         <AnimatePresence>
           {showFullPageForm && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={handleBackToOffers}
-                className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+                className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md"
               />
 
               <motion.div

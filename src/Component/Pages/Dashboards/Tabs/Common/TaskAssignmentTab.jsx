@@ -1016,7 +1016,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => { setShowDrawer(false); setViewingTask(null); }}
-                className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
+                className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
               />
 
               {/* Sliding Panel */}
@@ -1025,7 +1025,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: '100%', opacity: 0.5 }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="fixed inset-y-0 right-0 w-full sm:w-[698px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+                className="fixed inset-y-0 right-0 w-full sm:w-[698px] bg-white shadow-2xl z-[1101] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
               >
                 <TaskDetailView
                   task={viewingTask}
@@ -1051,12 +1051,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       {/* Delete Confirmation */}
       <AnimatePresence>
         {confirmDelete && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 text-center">
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 text-center">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-md"
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md"
               onClick={() => setConfirmDelete(null)}
             />
             <motion.div

@@ -755,9 +755,9 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                 </button>
                 {showAssignDropdown && createPortal(
                   <>
-                    <div className="fixed inset-0 z-[9998]" onClick={() => setShowAssignDropdown(false)} />
+                    <div className="fixed inset-0 z-[1100] bg-[#1A1A2E]/10 backdrop-blur-[2px]" onClick={() => setShowAssignDropdown(false)} />
                     <div
-                      className="fixed z-[9999] w-64 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] py-3 flex flex-col"
+                      className="fixed z-[1101] w-64 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] py-3 flex flex-col"
                       style={(() => {
                         const btn = document.getElementById('detail-assign-btn');
                         if (!btn) return { top: 0, left: 0 };
@@ -1879,7 +1879,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     <>
       <AnimatePresence>
         {showFullPageForm && (
-          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-md transition-all duration-300">
             <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500">
               {/* Header */}
               <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
@@ -2455,9 +2455,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   )}
                   {canAssignJobs && assignDropdownJobId === job.id && createPortal(
                     <>
-                      <div className="fixed inset-0 z-[9998]" onClick={() => setAssignDropdownJobId(null)} />
+                      <div className="fixed inset-0 z-[1100] bg-[#1A1A2E]/10 backdrop-blur-[2px]" onClick={() => setAssignDropdownJobId(null)} />
                       <div
-                        className="fixed z-[9999] w-64 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] py-3 flex flex-col"
+                        className="fixed z-[1101] w-64 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] py-3 flex flex-col"
                         style={(() => {
                           const btn = document.getElementById(`assign-btn-${job.id}`);
                           if (!btn) return { top: 0, left: 0 };
@@ -2646,7 +2646,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => { setSelectedJob(null); setAssignTaskJob(null); }}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]"
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
             />
 
             {/* Sliding Panel */}
@@ -2655,7 +2655,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0.5 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white shadow-2xl z-[110] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+              className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white shadow-2xl z-[1101] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
             >
               {assignTaskJob ? (
                 <div className="flex-1 overflow-y-auto">
@@ -2697,7 +2697,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {confirmDelete && (
-            <motion.div key="delete-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+            <motion.div key="delete-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-md"
               onClick={() => setConfirmDelete(null)}>
               <motion.div initial={{ scale: 0.8, y: 30, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.8, y: 30, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl p-8 bg-white border border-[#F4F3EF] shadow-2xl overflow-hidden relative">
@@ -2748,7 +2748,7 @@ const BulkJobPreviewModal = ({ data, show, onClose, onConfirm, progress, isImpor
   if (!show) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[2001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-300">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-md transition-all duration-300">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}

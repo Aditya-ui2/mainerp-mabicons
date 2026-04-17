@@ -561,7 +561,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-[4px] z-[10000]"
+                className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
                 onClick={() => setSelectedMemberForDetail(null)}
               />
               <motion.div
@@ -569,7 +569,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[10001] flex flex-col"
+                className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[1101] flex flex-col"
               >
                 {/* Header - Sticky Style */}
                 <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
@@ -763,7 +763,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+              className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
@@ -929,12 +929,12 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
       {createPortal(
         <AnimatePresence>
           {confirmDelete && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md"
                 onClick={() => setConfirmDelete(null)}
               />
               <motion.div

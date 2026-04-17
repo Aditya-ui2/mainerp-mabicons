@@ -157,7 +157,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
             {selectedNote && (
               <>
                 <div
-                  className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998] transition-opacity"
+                  className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100] transition-opacity"
                   onClick={() => setSelectedNote(null)}
                 />
                 <motion.div
@@ -165,7 +165,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                   animate={{ x: 0 }}
                   exit={{ x: "100%" }}
                   transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                  className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white dark:bg-slate-950 shadow-2xl z-[9999] border-l border-[#F4F3EF] dark:border-slate-800 flex flex-col overflow-hidden text-left"
+                  className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white dark:bg-slate-950 shadow-2xl z-[1101] border-l border-[#F4F3EF] dark:border-slate-800 flex flex-col overflow-hidden text-left"
                 >
                   {/* Drawer Header */}
                   <div className="sticky top-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-[#F4F3EF] dark:border-slate-800 px-8 py-6 flex items-center justify-between z-20">
