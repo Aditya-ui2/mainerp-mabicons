@@ -12,14 +12,8 @@ import { submitDailyReport, getMyReports } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const SHIFT_START = '09:00';
-const SHIFT_END   = '18:30';
+const SHIFT_END = '18:30';
 
-const moodConfig = {
-  Great: { icon: FiStar,   color: '#10b981', bg: '#d1fae5', label: 'Great' },
-  Good:  { icon: FiSmile,  color: '#3b82f6', bg: '#dbeafe', label: 'Good' },
-  Okay:  { icon: FiMeh,    color: '#f59e0b', bg: '#fef3c7', label: 'Okay' },
-  Tough: { icon: FiFrown,  color: '#ef4444', bg: '#fee2e2', label: 'Tough' },
-};
 
 const EMPTY_FORM = {
   checkInTime: '',
@@ -33,14 +27,12 @@ const EMPTY_FORM = {
   tasksCompleted: '',
   tasksPlanned: '',
   blockers: '',
-  mood: 'Good',
 };
 
 const MOCK_REPORTS = [
   {
     id: 'mock-0',
     date: new Date().toISOString().split('T')[0], // Today
-    mood: 'Good',
     checkInTime: '09:00',
     checkOutTime: '11:58',
     workHours: 2.9,
@@ -58,7 +50,6 @@ const MOCK_REPORTS = [
   {
     id: 'mock-1',
     date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
-    mood: 'Great',
     checkInTime: '09:05',
     checkOutTime: '18:45',
     workHours: 9.6,
@@ -77,7 +68,6 @@ const MOCK_REPORTS = [
   {
     id: 'mock-2',
     date: new Date(Date.now() - 172800000).toISOString().split('T')[0], // 2 days ago
-    mood: 'Good',
     checkInTime: '09:15',
     checkOutTime: '18:15',
     workHours: 9.0,
@@ -110,11 +100,11 @@ const ShiftBar = ({ checkIn, checkOut }) => {
     return h * 60 + m;
   };
   const shiftStartMins = toMins(SHIFT_START);
-  const shiftEndMins   = toMins(SHIFT_END);
-  const shiftDuration  = shiftEndMins - shiftStartMins;
-  const inMins  = toMins(checkIn);
+  const shiftEndMins = toMins(SHIFT_END);
+  const shiftDuration = shiftEndMins - shiftStartMins;
+  const inMins = toMins(checkIn);
   const outMins = toMins(checkOut);
-  const inPct  = inMins  ? Math.min(Math.max(((inMins  - shiftStartMins) / shiftDuration) * 100, 0), 100) : null;
+  const inPct = inMins ? Math.min(Math.max(((inMins - shiftStartMins) / shiftDuration) * 100, 0), 100) : null;
   const outPct = outMins ? Math.min(Math.max(((outMins - shiftStartMins) / shiftDuration) * 100, 0), 100) : null;
   const fillPct = (inPct !== null && outPct !== null) ? outPct - inPct : 0;
   const workHours = calcWorkHours(checkIn, checkOut);
@@ -189,20 +179,16 @@ const Toast = ({ message, type }) => (
 );
 
 const ReportCard = ({ report, index, onClick }) => {
-  const mc = moodConfig[report.mood] || moodConfig.Good;
   const metrics = [
-    { label: 'Calls',      value: report.callsCount,          icon: FiPhone,    color: '#3b82f6', bg: '#dbeafe' },
-    { label: 'Visited',    value: report.profilesVisited,     icon: FiEye,      color: '#8b5cf6', bg: '#ede9fe' },
-    { label: 'Shared',     value: report.profilesShared,      icon: FiShare2,   color: '#0891b2', bg: '#ecfeff' },
-    { label: 'Contacted',  value: report.candidatesContacted, icon: FiUsers,    color: '#10b981', bg: '#d1fae5' },
-    { label: 'Interviews', value: report.interviewsArranged,  icon: FiCalendar, color: '#f59e0b', bg: '#fef3c7' },
+    { label: 'Calls', value: report.callsCount, icon: FiPhone, color: '#3b82f6', bg: '#dbeafe' },
+    { label: 'Visited', value: report.profilesVisited, icon: FiEye, color: '#8b5cf6', bg: '#ede9fe' },
+    { label: 'Shared', value: report.profilesShared, icon: FiShare2, color: '#0891b2', bg: '#ecfeff' },
+    { label: 'Contacted', value: report.candidatesContacted, icon: FiUsers, color: '#10b981', bg: '#d1fae5' },
+    { label: 'Interviews', value: report.interviewsArranged, icon: FiCalendar, color: '#f59e0b', bg: '#fef3c7' },
   ];
   const formattedDate = new Date(report.date + 'T00:00:00').toLocaleDateString('en-IN', {
     weekday: 'long', day: '2-digit', month: 'short', year: 'numeric',
   });
-  const workHrs = report.workHours
-    ? `${report.workHours}h`
-    : (report.checkInTime && report.checkOutTime ? `${calcWorkHours(report.checkInTime, report.checkOutTime)}h` : null);
 
   return (
     <motion.div
@@ -219,19 +205,12 @@ const ReportCard = ({ report, index, onClick }) => {
               {report.checkInTime ? `Timing: ${report.checkInTime} – ${report.checkOutTime || 'Present'}` : 'MIS Report Summary'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span 
-              className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all group-hover:shadow-sm bg-white border border-gray-100 text-[#0f172a]" 
-            >
-              {mc.label}
-            </span>
-          </div>
         </div>
-        
+
         <div className="flex flex-wrap gap-3">
           {metrics.map((m) => (
-            <div 
-              key={m.label} 
+            <div
+              key={m.label}
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold shadow-sm bg-white border border-gray-100 text-[#0f172a] transition-all group-hover:scale-105 group-hover:border-blue-100"
             >
               <m.icon className="w-3.5 h-3.5 text-gray-900" />
@@ -246,13 +225,13 @@ const ReportCard = ({ report, index, onClick }) => {
 };
 
 const DailyReportTab = () => {
-  const [reports, setReports]     = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [showForm, setShowForm]   = useState(false);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast]         = useState(null);
-  const [form, setForm]           = useState(EMPTY_FORM);
+  const [toast, setToast] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [currentTime, setCurrentTime] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('All Dates');
@@ -287,7 +266,7 @@ const DailyReportTab = () => {
         console.warn('API Fetch failed, falling back to mock data:', e.message);
         // Silently ignore session expired for UI development as requested
       }
-      
+
       const combined = [...apiReports];
       MOCK_REPORTS.forEach(mock => {
         if (!combined.some(r => r.date === mock.date)) {
@@ -328,17 +307,16 @@ const DailyReportTab = () => {
       const payload = {
         summary: form.summary,
         tasksCompleted: form.tasksCompleted.split('\n').map(t => t.trim()).filter(Boolean),
-        tasksPlanned:   form.tasksPlanned.split('\n').map(t => t.trim()).filter(Boolean),
-        blockers:       form.blockers,
-        mood:           form.mood,
-        checkInTime:    form.checkInTime || null,
-        checkOutTime:   form.checkOutTime || null,
+        tasksPlanned: form.tasksPlanned.split('\n').map(t => t.trim()).filter(Boolean),
+        blockers: form.blockers,
+        checkInTime: form.checkInTime || null,
+        checkOutTime: form.checkOutTime || null,
         workHours,
-        callsCount:          parseInt(form.callsCount)          || 0,
-        profilesVisited:     parseInt(form.profilesVisited)     || 0,
-        profilesShared:      parseInt(form.profilesShared)      || 0,
+        callsCount: parseInt(form.callsCount) || 0,
+        profilesVisited: parseInt(form.profilesVisited) || 0,
+        profilesShared: parseInt(form.profilesShared) || 0,
         candidatesContacted: parseInt(form.candidatesContacted) || 0,
-        interviewsArranged:  parseInt(form.interviewsArranged)  || 0,
+        interviewsArranged: parseInt(form.interviewsArranged) || 0,
       };
       await submitDailyReport(payload);
       showToast('MIS Report submitted successfully ✓');
@@ -352,23 +330,23 @@ const DailyReportTab = () => {
     }
   };
 
-  const todayStr    = getLocalISODate();
+  const todayStr = getLocalISODate();
   const yesterdayStr = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
   const todayReport = reports.find(r => r.date === todayStr);
 
   const filteredReports = useMemo(() => {
     return reports.filter(r => {
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         (r.summary && r.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (r.date && r.date.includes(searchQuery));
-        
+
       let matchesDate = dateFilter === 'All Dates';
       if (dateFilter === 'Today') matchesDate = r.date === todayStr;
       else if (dateFilter === 'Yesterday') matchesDate = r.date === yesterdayStr;
       else if (dateFilter !== 'All Dates') matchesDate = r.date === dateFilter;
 
       const matchesKAM = kamFilter === 'All KAMs' || r.headCommentBy === kamFilter;
-      
+
       return matchesSearch && matchesDate && matchesKAM;
     });
   }, [reports, searchQuery, dateFilter, kamFilter, todayStr, yesterdayStr]);
@@ -397,12 +375,12 @@ const DailyReportTab = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          
-          
+
+
           {todayReport ? (
             <div className="flex items-center gap-3">
-              <button 
-                onClick={openForm} 
+              <button
+                onClick={openForm}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-lg hover:shadow-xl hover:translate-y-[-1px] transition-all active:scale-95"
                 style={{ background: '#0D47A1', fontFamily: '"Plus Jakarta Sans", sans-serif' }}
               >
@@ -411,12 +389,12 @@ const DailyReportTab = () => {
               </button>
             </div>
           ) : (
-            <button 
-              onClick={openForm} 
+            <button
+              onClick={openForm}
               className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-[0_10px_20px_rgba(13,71,161,0.2)] hover:shadow-[0_12px_24px_rgba(13,71,161,0.3)] hover:translate-y-[-1px] active:translate-y-[0] transition-all"
               style={{ background: '#0D47A1', fontFamily: '"Plus Jakarta Sans", sans-serif' }}
             >
-              <FiPlus className="w-4 h-4" /> 
+              <FiPlus className="w-4 h-4" />
               Submit Today's Report
             </button>
           )}
@@ -439,54 +417,54 @@ const DailyReportTab = () => {
           </div>
 
           <div className="flex gap-2">
-          {/* Date Filter */}
-          <div className="relative">
-            <input 
-              type="date"
-              ref={dateInputRef}
-              className="absolute opacity-0 pointer-events-none"
-              onChange={(e) => {
-                if (e.target.value) {
-                  setDateFilter(e.target.value);
-                  setShowDateDropdown(false);
-                }
-              }}
-            />
-            <button
-              onClick={() => { setShowDateDropdown(!showDateDropdown); setShowKamDropdown(false); }}
-              className="h-[52px] px-5 bg-[#F9F9F8] rounded-2xl flex items-center gap-3 text-[11px] font-bold text-[#0f172a] uppercase tracking-wider hover:bg-[#F2F2F1] transition-all min-w-[140px]"
-            >
-              {dateFilter === 'All Dates' || dateFilter === 'Today' || dateFilter === 'Yesterday' 
-                ? dateFilter 
-                : new Date(dateFilter).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-              <FiChevronDown className={`w-4 h-4 text-[#94a3b8] transition-transform duration-300 ${showDateDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            <AnimatePresence>
-              {showDateDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[100]"
-                >
-                  {['All Dates', 'Today', 'Yesterday', 'Custom Date'].map(opt => (
-                    <button
-                      key={opt}
-                      onClick={() => {
-                        if (opt === 'Custom Date') {
-                          dateInputRef.current.showPicker();
-                        } else {
-                          setDateFilter(opt);
-                          setShowDateDropdown(false);
-                        }
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm font-bold transition-all ${dateFilter === opt ? 'bg-[#1B4DA0]/5 text-[#1B4DA0]' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+            {/* Date Filter */}
+            <div className="relative">
+              <input
+                type="date"
+                ref={dateInputRef}
+                className="absolute opacity-0 pointer-events-none"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setDateFilter(e.target.value);
+                    setShowDateDropdown(false);
+                  }
+                }}
+              />
+              <button
+                onClick={() => { setShowDateDropdown(!showDateDropdown); setShowKamDropdown(false); }}
+                className="h-[52px] px-5 bg-[#F9F9F8] rounded-2xl flex items-center gap-3 text-[11px] font-bold text-[#0f172a] uppercase tracking-wider hover:bg-[#F2F2F1] transition-all min-w-[140px]"
+              >
+                {dateFilter === 'All Dates' || dateFilter === 'Today' || dateFilter === 'Yesterday'
+                  ? dateFilter
+                  : new Date(dateFilter).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                <FiChevronDown className={`w-4 h-4 text-[#94a3b8] transition-transform duration-300 ${showDateDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              <AnimatePresence>
+                {showDateDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[100]"
+                  >
+                    {['All Dates', 'Today', 'Yesterday', 'Custom Date'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => {
+                          if (opt === 'Custom Date') {
+                            dateInputRef.current.showPicker();
+                          } else {
+                            setDateFilter(opt);
+                            setShowDateDropdown(false);
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm font-bold transition-all ${dateFilter === opt ? 'bg-[#1B4DA0]/5 text-[#1B4DA0]' : 'text-gray-600 hover:bg-gray-50'}`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* KAM Filter */}
             <div className="relative">
@@ -521,94 +499,84 @@ const DailyReportTab = () => {
       </div>
 
       <div>
-      <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm overflow-hidden mb-8">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-[#F4F3EF]">
-                <th className="px-8 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em]">Position / Date</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em]">Mood</th>
-                <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Calls</th>
-                <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Visited</th>
-                <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Shared</th>
-                <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Candidates</th>
-                <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Interviews</th>
-                <th className="px-8 py-5 text-right"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F4F3EF]">
-              {loading ? (
-                <tr>
-                  <td colSpan="8" className="p-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <FiRefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-                      <p className="text-sm font-bold text-gray-400">Loading your history...</p>
-                    </div>
-                  </td>
+        <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm overflow-hidden mb-8">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="px-8 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em]">Position / Date</th>
+                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Calls</th>
+                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Visited</th>
+                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Shared</th>
+                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Candidates</th>
+                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Interviews</th>
+                  <th className="px-8 py-5 text-right"></th>
                 </tr>
-              ) : filteredReports.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="p-16 text-center">
-                    <FiFileText className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                    <p className="text-gray-400 font-bold">No matching reports found</p>
-                    <p className="text-xs text-gray-300 mt-1">Try adjusting your filters or search terms.</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredReports.map((report) => {
-                  const mc = moodConfig[report.mood] || moodConfig.Good;
-                  const formattedDate = new Date(report.date + 'T00:00:00').toLocaleDateString('en-IN', {
-                    weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
-                  });
-                  return (
-                    <tr 
-                      key={report.id} 
-                      onClick={() => setSelectedReport(report)}
-                      className="group cursor-pointer hover:bg-[#F8FAFF] transition-all active:bg-blue-100/40"
-                    >
-                      <td className="px-8 py-5">
-                        <div className="flex flex-col text-left">
-                          <span className="text-[15px] font-bold text-[#0F172A] group-hover:text-[#1B4DA0] transition-colors">
-                            {formattedDate}
-                          </span>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
-                            {report.checkInTime ? `${report.checkInTime} – ${report.checkOutTime || 'Present'}` : 'MIS Summary'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span 
-                          className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-100 bg-white shadow-sm"
-                          style={{ color: mc.color }}
-                        >
-                          {mc.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 text-center">
-                        <span className="text-sm font-bold text-slate-700">{report.callsCount ?? 0}</span>
-                      </td>
-                      <td className="px-4 py-5 text-center">
-                        <span className="text-sm font-bold text-slate-700">{report.profilesVisited ?? 0}</span>
-                      </td>
-                      <td className="px-4 py-5 text-center">
-                        <span className="text-sm font-bold text-slate-700">{report.profilesShared ?? 0}</span>
-                      </td>
-                      <td className="px-4 py-5 text-center">
-                        <span className="text-sm font-bold text-slate-700">{report.candidatesContacted ?? 0}</span>
-                      </td>
-                      <td className="px-4 py-5 text-center">
-                        <span className="text-sm font-bold text-slate-700">{report.interviewsArranged ?? 0}</span>
-                      </td>
-                       <td className="px-8 py-5 text-right">
-                         <div className="flex items-center justify-end">
-                            <label 
+              </thead>
+              <tbody className="divide-y divide-[#F4F3EF]">
+                {loading ? (
+                  <tr>
+                    <td colSpan="8" className="p-12 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <FiRefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                        <p className="text-sm font-bold text-gray-400">Loading your history...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredReports.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="p-16 text-center">
+                      <FiFileText className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                      <p className="text-gray-400 font-bold">No matching reports found</p>
+                      <p className="text-xs text-gray-300 mt-1">Try adjusting your filters or search terms.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredReports.map((report) => {
+                    const formattedDate = new Date(report.date + 'T00:00:00').toLocaleDateString('en-IN', {
+                      weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
+                    });
+                    return (
+                      <tr
+                        key={report.id}
+                        onClick={() => setSelectedReport(report)}
+                        className="group cursor-pointer hover:bg-[#F8FAFF] transition-all active:bg-blue-100/40"
+                      >
+                        <td className="px-8 py-5">
+                          <div className="flex flex-col text-left">
+                            <span className="text-[15px] font-bold text-[#0F172A] group-hover:text-[#1B4DA0] transition-colors">
+                              {formattedDate}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
+                              {report.checkInTime ? `${report.checkInTime} – ${report.checkOutTime || 'Present'}` : 'MIS Summary'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-5 text-center">
+                          <span className="text-sm font-bold text-slate-700">{report.callsCount ?? 0}</span>
+                        </td>
+                        <td className="px-4 py-5 text-center">
+                          <span className="text-sm font-bold text-slate-700">{report.profilesVisited ?? 0}</span>
+                        </td>
+                        <td className="px-4 py-5 text-center">
+                          <span className="text-sm font-bold text-slate-700">{report.profilesShared ?? 0}</span>
+                        </td>
+                        <td className="px-4 py-5 text-center">
+                          <span className="text-sm font-bold text-slate-700">{report.candidatesContacted ?? 0}</span>
+                        </td>
+                        <td className="px-4 py-5 text-center">
+                          <span className="text-sm font-bold text-slate-700">{report.interviewsArranged ?? 0}</span>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                          <div className="flex items-center justify-end">
+                            <label
                               onClick={(e) => e.stopPropagation()}
                               className="w-10 h-10 rounded-xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm cursor-pointer group/btn"
                             >
                               <FiPaperclip className="w-5 h-5" />
-                              <input 
-                                type="file" 
-                                className="hidden" 
+                              <input
+                                type="file"
+                                className="hidden"
                                 accept=".xlsx, .xls"
                                 onChange={(e) => {
                                   const file = e.target.files[0];
@@ -619,16 +587,16 @@ const DailyReportTab = () => {
                                 }}
                               />
                             </label>
-                         </div>
-                       </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
       </div>
 
       {createPortal(
@@ -643,7 +611,7 @@ const DailyReportTab = () => {
                 className="absolute inset-0 bg-[#00000033] backdrop-blur-[6px]"
                 onClick={() => setSelectedReport(null)}
               />
-              
+
               {/* Sidebar Container */}
               <motion.div
                 initial={{ x: '100%', opacity: 0.5 }}
@@ -661,15 +629,8 @@ const DailyReportTab = () => {
                         weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
                       })}
                     </h2>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span 
-                        className="px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-slate-200 bg-slate-50 text-slate-600"
-                      >
-                       Mood: {selectedReport.mood}
-                      </span>
-                    </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setSelectedReport(null)}
                     className="p-3 rounded-2xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all active:scale-95"
                   >
@@ -684,12 +645,12 @@ const DailyReportTab = () => {
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Performance Metrics</p>
                     <div className="grid grid-cols-2 gap-4">
                       {[
-                        { label: 'Phone Calls',      value: selectedReport.callsCount,          icon: FiPhone },
-                        { label: 'Profiles Visited', value: selectedReport.profilesVisited,     icon: FiEye },
-                        { label: 'Profiles Shared',  value: selectedReport.profilesShared,      icon: FiShare2 },
-                        { label: 'Candidates',       value: selectedReport.candidatesContacted, icon: FiUsers },
-                        { label: 'Interviews Set',   value: selectedReport.interviewsArranged,  icon: FiCalendar },
-                        { label: 'Work Hours',       value: `${selectedReport.workHours || 0}h`, icon: FiClock },
+                        { label: 'Phone Calls', value: selectedReport.callsCount, icon: FiPhone },
+                        { label: 'Profiles Visited', value: selectedReport.profilesVisited, icon: FiEye },
+                        { label: 'Profiles Shared', value: selectedReport.profilesShared, icon: FiShare2 },
+                        { label: 'Candidates', value: selectedReport.candidatesContacted, icon: FiUsers },
+                        { label: 'Interviews Set', value: selectedReport.interviewsArranged, icon: FiCalendar },
+                        { label: 'Work Hours', value: `${selectedReport.workHours || 0}h`, icon: FiClock },
                       ].map((stat) => {
                         const StatIcon = stat.icon;
                         return (
@@ -711,7 +672,7 @@ const DailyReportTab = () => {
                   {selectedReport.summary && (
                     <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
-                         <FiFileText className="w-3.5 h-3.5" /> Daily Summary
+                        <FiFileText className="w-3.5 h-3.5" /> Daily Summary
                       </p>
                       <p className="text-sm text-[#0f172a] leading-relaxed font-medium">
                         {selectedReport.summary}
@@ -802,84 +763,70 @@ const DailyReportTab = () => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="max-h-[92vh] overflow-y-auto custom-scrollbar">
-                  <div className="sticky top-0 z-10 bg-white px-6 pt-6 pb-4 border-b border-gray-100 flex items-center justify-between rounded-t-3xl">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">{todayReport ? 'Update' : 'Submit'} Daily MIS Report</h3>
-                      <p className="text-sm text-gray-500 mt-0.5">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    <div className="sticky top-0 z-10 bg-white px-6 pt-6 pb-4 border-b border-gray-100 flex items-center justify-between rounded-t-3xl">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">{todayReport ? 'Update' : 'Submit'} Daily MIS Report</h3>
+                        <p className="text-sm text-gray-500 mt-0.5">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                      </div>
+                      <button onClick={() => setShowForm(false)} className="p-2 rounded-xl hover:bg-red-50 hover:text-red-500 transition-colors">
+                        <FiX className="w-5 h-5" />
+                      </button>
                     </div>
-                    <button onClick={() => setShowForm(false)} className="p-2 rounded-xl hover:bg-red-50 hover:text-red-500 transition-colors">
-                      <FiX className="w-5 h-5" />
-                    </button>
+
+                    <form onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
+
+                      <div>
+                        <p className="text-sm font-bold text-gray-700 mb-3">
+                          Today's KPI Numbers
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          <MetricInput icon={FiPhone} label="Phone Calls" sublabel="Total calls made" color="#3b82f6" bg="#dbeafe" name="callsCount" value={form.callsCount} onChange={handleFieldChange} />
+                          <MetricInput icon={FiEye} label="Profiles Visited" sublabel="Sourced / reviewed" color="#8b5cf6" bg="#ede9fe" name="profilesVisited" value={form.profilesVisited} onChange={handleFieldChange} />
+                          <MetricInput icon={FiShare2} label="Profiles Shared" sublabel="Shared with client" color="#0891b2" bg="#ecfeff" name="profilesShared" value={form.profilesShared} onChange={handleFieldChange} />
+                          <MetricInput icon={FiUsers} label="Candidates" sublabel="Contacted today" color="#10b981" bg="#d1fae5" name="candidatesContacted" value={form.candidatesContacted} onChange={handleFieldChange} />
+                          <MetricInput icon={FiCalendar} label="Interviews Set" sublabel="Arranged today" color="#f59e0b" bg="#fef3c7" name="interviewsArranged" value={form.interviewsArranged} onChange={handleFieldChange} />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <p className="text-sm font-bold text-gray-700">
+                          Daily Summary
+                        </p>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Summary / Notes <span className="text-red-500">*</span></label>
+                          <textarea value={form.summary} onChange={(e) => handleFieldChange('summary', e.target.value)} rows={2}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0] resize-none"
+                            placeholder="Brief overview of what you did today..." />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Tasks Completed <span className="text-[10px] text-gray-400">(one per line)</span></label>
+                          <textarea value={form.tasksCompleted} onChange={(e) => handleFieldChange('tasksCompleted', e.target.value)} rows={3}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0] resize-none"
+                            placeholder={"Called Ravi for Sr. Developer role\nShared 3 profiles to TechCorp"} />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Plans for Tomorrow</label>
+                          <textarea value={form.tasksPlanned} onChange={(e) => handleFieldChange('tasksPlanned', e.target.value)} rows={2}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0] resize-none"
+                            placeholder={"Follow up on TechCorp shortlist\nSource 5 profiles for Finance role"} />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Blockers / Issues</label>
+                          <input type="text" value={form.blockers} onChange={(e) => handleFieldChange('blockers', e.target.value)}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]"
+                            placeholder="Any issues? e.g. Client not responding, JD unclear..." />
+                        </div>
+                      </div>
+
+                      <button type="submit" disabled={submitting}
+                        className="w-full py-3.5 rounded-xl text-white font-bold flex items-center justify-center gap-2 shadow-lg transition-all hover:opacity-90 disabled:opacity-70 bg-[#1B4DA0]"
+                      >
+                        <FiSend className="w-4 h-4" />
+                        {submitting ? 'Submitting...' : todayReport ? 'Update MIS Report' : 'Submit MIS Report'}
+                      </button>
+                    </form>
                   </div>
-
-                  <form onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
-
-                    <div>
-                      <p className="text-sm font-bold text-gray-700 mb-3">
-                        Today's KPI Numbers
-                      </p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <MetricInput icon={FiPhone}    label="Phone Calls"      sublabel="Total calls made"   color="#3b82f6" bg="#dbeafe" name="callsCount"           value={form.callsCount}           onChange={handleFieldChange} />
-                        <MetricInput icon={FiEye}      label="Profiles Visited" sublabel="Sourced / reviewed" color="#8b5cf6" bg="#ede9fe" name="profilesVisited"     value={form.profilesVisited}     onChange={handleFieldChange} />
-                        <MetricInput icon={FiShare2}   label="Profiles Shared"  sublabel="Shared with client" color="#0891b2" bg="#ecfeff" name="profilesShared"      value={form.profilesShared}      onChange={handleFieldChange} />
-                        <MetricInput icon={FiUsers}    label="Candidates"       sublabel="Contacted today"    color="#10b981" bg="#d1fae5" name="candidatesContacted" value={form.candidatesContacted} onChange={handleFieldChange} />
-                        <MetricInput icon={FiCalendar} label="Interviews Set"   sublabel="Arranged today"     color="#f59e0b" bg="#fef3c7" name="interviewsArranged"  value={form.interviewsArranged}  onChange={handleFieldChange} />
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <p className="text-sm font-bold text-gray-700">
-                        Daily Summary
-                      </p>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Summary / Notes <span className="text-red-500">*</span></label>
-                        <textarea value={form.summary} onChange={(e) => handleFieldChange('summary', e.target.value)} rows={2}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0] resize-none"
-                          placeholder="Brief overview of what you did today..." />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Tasks Completed <span className="text-[10px] text-gray-400">(one per line)</span></label>
-                        <textarea value={form.tasksCompleted} onChange={(e) => handleFieldChange('tasksCompleted', e.target.value)} rows={3}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0] resize-none"
-                          placeholder={"Called Ravi for Sr. Developer role\nShared 3 profiles to TechCorp"} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Plans for Tomorrow</label>
-                        <textarea value={form.tasksPlanned} onChange={(e) => handleFieldChange('tasksPlanned', e.target.value)} rows={2}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0] resize-none"
-                          placeholder={"Follow up on TechCorp shortlist\nSource 5 profiles for Finance role"} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Blockers / Issues</label>
-                        <input type="text" value={form.blockers} onChange={(e) => handleFieldChange('blockers', e.target.value)}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]"
-                          placeholder="Any issues? e.g. Client not responding, JD unclear..." />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Day Mood</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {Object.entries(moodConfig).map(([key, mc]) => (
-                          <button key={key} type="button" onClick={() => handleFieldChange('mood', key)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border-2 transition-all"
-                            style={form.mood === key ? { borderColor: mc.color, background: mc.bg, color: mc.color } : { borderColor: '#e5e7eb', color: '#6b7280' }}>
-                            <mc.icon className="w-4 h-4" />
-                            {mc.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <button type="submit" disabled={submitting}
-                      className="w-full py-3.5 rounded-xl text-white font-bold flex items-center justify-center gap-2 shadow-lg transition-all hover:opacity-90 disabled:opacity-70 bg-[#1B4DA0]"
-                    >
-                      <FiSend className="w-4 h-4" />
-                      {submitting ? 'Submitting...' : todayReport ? 'Update MIS Report' : 'Submit MIS Report'}
-                    </button>
-                  </form>
-                </div>
-              </motion.div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>

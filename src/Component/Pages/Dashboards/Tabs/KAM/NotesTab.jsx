@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -402,13 +403,6 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleEdit(note); }}
-                                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#1B4DA0] flex items-center justify-center hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
-                                    title="Quick Edit"
-                                  >
-                                    <Pencil size={18} />
-                                  </button>
                                 </div>
                               </div>
 
@@ -426,12 +420,14 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
           </div>
 
           {/* Dialog for Add/Edit Note */}
-          <AnimatePresence>
-            {(view === 'add' || view === 'edit') && (
-              <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
-                onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}>
-                <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500"
-                  onClick={(e) => e.stopPropagation()}>
+          {createPortal(
+            <AnimatePresence>
+              {(view === 'add' || view === 'edit') && (
+              <motion.div key="add-edit-note" className="fixed inset-0 z-[10001] pointer-events-none">
+                <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 pointer-events-auto"
+                  onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}>
+                  <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500"
+                    onClick={(e) => e.stopPropagation()}>
                   {/* Header */}
                   <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
                     <div>
@@ -489,22 +485,26 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                     </div>
                   </form>
                 </div>
-              </div>
-            )}
-          </AnimatePresence>
+                </motion.div>
+              </motion.div>
+              )}
+            </AnimatePresence>, document.body
+          )}
 
           {/* Delete Confirmation Modal */}
-          <AnimatePresence>
-            {deleteConfirmId && (
-              <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
-                onClick={() => setDeleteConfirmId(null)}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
-                  onClick={(e) => e.stopPropagation()}
-                >
+          {createPortal(
+            <AnimatePresence>
+              {deleteConfirmId && (
+              <motion.div key="delete-note-modal" className="fixed inset-0 z-[10001] pointer-events-none">
+                <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 pointer-events-auto"
+                  onClick={() => setDeleteConfirmId(null)}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                   <div className="p-10 text-center space-y-6">
                     <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto">
                       <Trash2 size={28} className="text-rose-500" />
@@ -527,11 +527,13 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                         Delete
                       </button>
                     </div>
-                  </div>
+                    </div>
+                  </motion.div>
                 </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
+              </motion.div>
+              )}
+            </AnimatePresence>, document.body
+          )}
 
         </>
       </div>

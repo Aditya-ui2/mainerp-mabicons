@@ -56,7 +56,7 @@ import {
 import { toast } from "sonner";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import * as pdfjsLib from 'pdfjs-dist';
-import { BASE_URL, getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer, saveOfferTemplate, getOfferTemplate, generateCandidateCredentials } from '../../../service/api';
+import { BASE_URL, getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer, saveOfferTemplate, getOfferTemplate, generateCandidateCredentials, updateCandidateStatus } from '../../../service/api';
 import {
   OFFER_STATUS_COLORS,
   STATUS_ICONS,
@@ -767,6 +767,30 @@ const OfferManagementTab = ({ isDarkMode }) => {
     }
   };
 
+  const handleManualVerify = async (candidateId) => {
+    try {
+      const loadingId = toast.loading("📡 Updating Verification Core...");
+      await updateCandidateStatus(candidateId, { bgvStatus: 'Verified' });
+      setOffers(prev => prev.map(o => (o.id === candidateId || o._id === candidateId) ? { ...o, bgvStatus: 'Verified' } : o));
+      toast.success("Success: Verification Protocol SECURED", { id: loadingId });
+    } catch (error) {
+      console.error('Failed to verify candidate:', error);
+      toast.error("Error: Verification override failed");
+    }
+  };
+
+  const handleResetBGV = async (candidateId) => {
+    try {
+      const loadingId = toast.loading("📡 Resetting Protocol Handshake...");
+      await updateCandidateStatus(candidateId, { bgvStatus: 'Not Started' });
+      setOffers(prev => prev.map(o => (o.id === candidateId || o._id === candidateId) ? { ...o, bgvStatus: 'Not Started' } : o));
+      toast.success("Console: User record cleared.", { id: loadingId });
+    } catch (error) {
+      console.error('Failed to reset BGV:', error);
+      toast.error("Error: Record wipe failed");
+    }
+  };
+
   // Selection handlers
   const toggleSelectRow = (id, e) => {
     if (e) e.stopPropagation();
@@ -979,11 +1003,11 @@ const OfferManagementTab = ({ isDarkMode }) => {
                   className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
                 />
               </div>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest lg:w-[280px] flex-shrink-0 text-left">Candidate</span>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 px-8 border-l border-[#F4F3EF] dark:border-slate-800 text-left">Client</span>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[180px] text-center border-x border-[#F4F3EF] dark:border-slate-800">BGV</span>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[140px] text-center border-r border-[#F4F3EF] dark:border-slate-800 font-syne">Verify</span>
-              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[120px] text-left ml-6">Actions</span>
+              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest lg:w-[280px] flex-shrink-0 text-left">Candidate</span>
+              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest flex-1 px-8 border-l border-[#F4F3EF] dark:border-slate-800 text-left">Client</span>
+              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[180px] text-center border-x border-[#F4F3EF] dark:border-slate-800">BGV</span>
+              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[140px] text-center border-r border-[#F4F3EF] dark:border-slate-800">Verify</span>
+              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[120px] text-left ml-6">Actions</span>
             </div>
 
             {filteredOffers.length === 0 ? (
@@ -1017,10 +1041,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
                     {/* Candidate Info */}
                     <div className="lg:w-[280px] flex-shrink-0 flex items-start gap-4">
                       <div className="min-w-0">
-                        <h3 className="text-[15px] font-bold text-[#1A1A2E] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
+                        <h3 className="text-[15px] font-semibold text-[#1A1A2E] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
                           {offer.candidateName}
                         </h3>
-                        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.1em] mt-1 text-left">
+                        <p className="text-[10px] font-semibold text-[#9B9BAD] uppercase tracking-[0.1em] mt-1 text-left">
                           {offer.position}
                         </p>
                       </div>
@@ -1091,8 +1115,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                            <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, bgvStatus: 'Not Started' } : o));
-                                toast.info("Console: User record cleared.");
+                                handleResetBGV(offer.id || offer._id);
                               }}
                               className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-white dark:bg-[#202124] border border-[#DADCE0] dark:border-slate-700 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-500 transition-all shadow-md opacity-0 group-hover/bgv:opacity-100 z-10"
                               title="Reset User"
@@ -1115,10 +1138,18 @@ const OfferManagementTab = ({ isDarkMode }) => {
                           Verified
                         </div>
                       ) : (
-                        <div className="bg-black text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all">
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleManualVerify(offer.id || offer._id);
+                          }}
+                          className="bg-black text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all hover:bg-slate-800"
+                        >
                           <AlertCircle size={12} />
                           Unverified
-                        </div>
+                        </motion.button>
                       )}
                     </div>
 

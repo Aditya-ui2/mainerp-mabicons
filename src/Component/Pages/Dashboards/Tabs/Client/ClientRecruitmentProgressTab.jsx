@@ -200,6 +200,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [selectedInterview, setSelectedInterview] = useState(null);
   const [isPositionsModalOpen, setIsPositionsModalOpen] = useState(false);
   const [isCandidatesModalOpen, setIsCandidatesModalOpen] = useState(false);
   const [isInterviewsModalOpen, setIsInterviewsModalOpen] = useState(false);
@@ -633,40 +634,32 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
           <div className="flex-1 overflow-x-auto custom-scrollbar">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#F4F3EF]">
-                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Position</th>
-                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Openings</th>
-                  <th className="pb-4 text-right text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Status</th>
+                <tr className="border-b border-slate-100 pb-2">
+                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Position</th>
+                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Openings</th>
+                  <th className="py-4 px-4 text-right text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F4F3EF]">
+              <tbody className="divide-y divide-slate-50">
                 {filteredPositions.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="py-20 text-center opacity-40">
-                      <FiBriefcase className="mx-auto text-slate-300 mb-4" size={40} />
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No active vacancies</p>
+                    <td colSpan="3" className="py-12 text-center text-sm font-medium text-slate-400">
+                      No active vacancies
                     </td>
                   </tr>
                 ) : (
                   filteredPositions.map(pos => (
-                    <tr key={pos._id || pos.id} className="group hover:bg-[#FAFAF9] transition-all cursor-pointer" onClick={() => setSelectedJob(pos)}>
-                      <td className="py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-[18px] bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-sm font-black group-hover:bg-[#EEF2FB] transition-colors flex-shrink-0 shadow-inner">
-                            {pos.title.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div className="flex flex-col text-left">
-                            <h3 className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{pos.title}</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{pos.location || 'Remote'}</span>
-                            </div>
-                          </div>
+                    <tr key={pos._id || pos.id} className="group hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => setSelectedJob(pos)}>
+                      <td className="py-4 px-4">
+                        <div className="flex flex-col">
+                          <h3 className="text-sm font-semibold text-slate-700">{pos.title}</h3>
+                          <p className="text-[11px] text-slate-400 font-medium">{pos.location || 'Remote'}</p>
                         </div>
                       </td>
-                      <td className="py-6">
-                        <span className="text-lg font-black text-[#1A1A2E]">{pos.openings || 1}</span>
+                      <td className="py-4 px-4">
+                        <span className="text-sm font-semibold text-slate-600">{pos.openings || 1}</span>
                       </td>
-                      <td className="py-6 text-right">
+                      <td className="py-4 px-4 text-right">
                         <StatusBadge status={pos.status} />
                       </td>
                     </tr>
@@ -691,49 +684,41 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
           <div className="flex-1 overflow-x-auto custom-scrollbar">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#F4F3EF]">
-                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Candidate</th>
-                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Schedule</th>
-                  <th className="pb-4 text-right text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">Type</th>
+                <tr className="border-b border-slate-100 pb-2">
+                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Candidate</th>
+                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Position</th>
+                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Date & Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F4F3EF]">
+              <tbody className="divide-y divide-slate-50">
                 {(!dateFilteredInterviews || dateFilteredInterviews.length === 0) ? (
                   <tr>
-                    <td colSpan="3" className="py-20 text-center opacity-40">
-                      <FiCalendar className="mx-auto text-slate-300 mb-4" size={40} />
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No scheduled sessions</p>
+                    <td colSpan="3" className="py-12 text-center text-sm font-medium text-slate-400">
+                      No scheduled sessions
                     </td>
                   </tr>
                 ) : (
                   dateFilteredInterviews.map((iv, i) => {
                     const date = new Date(iv.interviewDate);
-                    const isToday = date.toDateString() === new Date().toDateString();
-                    const dateLabel = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                    const formattedDate = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                     
                     return (
-                      <tr key={i} className="group hover:bg-[#FAFAF9] transition-all cursor-pointer">
-                        <td className="py-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#1B4DA0] text-xs font-black group-hover:bg-blue-600 group-hover:text-white transition-all">
-                              {iv.candidateName?.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex flex-col text-left">
-                              <p className="text-sm font-bold text-[#1A1A2E] truncate">{iv.candidateName}</p>
-                              <p className="text-[10px] text-[#9B9BAD] truncate font-medium">{iv.positionTitle}</p>
-                            </div>
-                          </div>
+                      <tr 
+                        key={i} 
+                        onClick={() => setSelectedInterview(iv)}
+                        className="group hover:bg-slate-50/50 transition-colors cursor-pointer"
+                      >
+                        <td className="py-4 px-4">
+                          <p className="text-sm font-semibold text-slate-700">{iv.candidateName}</p>
                         </td>
-                        <td className="py-6">
-                          <div className="flex flex-col">
-                            <p className="text-xs font-bold text-[#1A1A2E]">{dateLabel}</p>
-                            <p className="text-[10px] text-[#9B9BAD]">{iv.startTime || 'TBD'}</p>
-                          </div>
+                        <td className="py-4 px-4">
+                          <p className="text-sm font-semibold text-slate-600">{iv.positionTitle}</p>
                         </td>
-                        <td className="py-6 text-right">
-                          <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-[9px] font-bold uppercase tracking-wider border border-blue-100">
-                            {iv.interviewType || 'Video'}
-                          </span>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-600">{formattedDate}</p>
+                            <p className="text-sm font-semibold text-[#1B4DA0]">{iv.startTime}</p>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1201,6 +1186,74 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
         </AnimatePresence>,
         document.body
       )}
+      {/* Interview Detail Modal */}
+      <AnimatePresence>
+        {selectedInterview && (
+          <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedInterview(null)}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF]"
+            >
+              <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedInterview.candidateName}</h3>
+                  <p className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest mt-1">
+                    {selectedInterview.positionTitle || 'PROPOSED POSITION'}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setSelectedInterview(null)}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
+                >
+                   <FiX size={24} />
+                </button>
+              </div>
+              
+              <div className="p-8 space-y-6 text-left">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Schedule Date</span>
+                    <p className="text-sm font-bold text-[#1A1A2E]">
+                      {new Date(selectedInterview.interviewDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Session Time</span>
+                    <p className="text-sm font-bold text-[#1A1A2E]">
+                      {selectedInterview.startTime}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-[#F4F3EF]">
+                   <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3">Meeting Details</span>
+                   <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
+                      Technical evaluation session with the candidate. Please ensure all required interviewers are briefed on the candidate's profile and current hiring requirements.
+                   </p>
+                </div>
+              </div>
+
+              <div className="p-8 bg-[#F4F3EF]/50">
+                <button 
+                  onClick={() => setSelectedInterview(null)}
+                  className="w-full py-4 bg-[#1B4DA0] text-white rounded-2xl font-bold text-sm hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/10"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

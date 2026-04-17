@@ -1390,7 +1390,9 @@ const RecruitmentHeadDashboard = () => {
             time: i.startTime,
             date: i.interviewDate,
             status: i.status,
-            type: i.meetingType
+            type: i.meetingType,
+            interviewer: i.interviewerName || i.interviewer?.name || 'To be assigned',
+            meetingLink: i.meetingLink || i.link
           }));
         setUpcomingInterviews(mapped);
       }
@@ -2658,35 +2660,48 @@ const RecruitmentHeadDashboard = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-4 overflow-y-auto max-h-[450px] custom-scrollbar pr-3 -mr-2">
-                        {upcomingInterviews.map((interview) => (
-                          <div
-                            key={interview.id}
-                            onClick={() => setSelectedInterview(interview)}
-                            className="w-full bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-[#3FA9F5]/40 hover:shadow-xl hover:shadow-[#3FA9F5]/5 transition-all duration-300 cursor-pointer relative text-left flex flex-col justify-between"
-                          >
-                            <div>
-                              <div className="flex justify-between items-start mb-5">
-                                <div className={`px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${interview.status === 'In Progress' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
-                                  }`}>
-                                  {interview.status}
-                                </div>
-                                <span className="text-[9px] font-bold text-slate-500 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-50">{interview.time}</span>
-                              </div>
+                      <div className="flex-1 overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="border-b border-[#F4F3EF]">
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Position</th>
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Schedule</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#F4F3EF]">
+                            {upcomingInterviews.map((interview) => {
+                              const dateStr = (interview.date?.includes('T') ? interview.date.split('T')[0] : interview.date) || '2026-04-30';
+                              const formattedDate = new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 
-                              <div className="mb-4">
-                                <h4 className="text-sm font-bold text-[#1A1A2E] tracking-tight group-hover:text-[#3FA9F5] transition-colors uppercase leading-tight">{interview.candidate}</h4>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 pt-5 border-t border-slate-100/80">
-                              <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400">
-                                <FiTarget size={10} />
-                              </div>
-                              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{interview.type}</span>
-                            </div>
-                          </div>
-                        ))}
+                              return (
+                                <motion.tr
+                                  key={interview.id}
+                                  whileHover={{ backgroundColor: '#F8FAFF' }}
+                                  onClick={() => setSelectedInterview(interview)}
+                                  className="group cursor-pointer transition-all"
+                                >
+                                  <td className="px-6 py-5">
+                                    <p className="text-sm font-semibold text-slate-700 group-hover:text-[#1B4DA0] transition-colors">{interview.candidate}</p>
+                                  </td>
+                                  <td className="px-6 py-5">
+                                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{interview.position || 'Mabicons'}</p>
+                                  </td>
+                                  <td className="px-6 py-5">
+                                    <div className="flex flex-col items-start gap-0.5">
+                                      <span className="text-sm font-semibold text-slate-600">
+                                        {formattedDate}
+                                      </span>
+                                      <span className="text-[11px] font-semibold text-[#1B4DA0] uppercase">
+                                        {interview.time}
+                                      </span>
+                                    </div>
+                                  </td>
+                                </motion.tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
@@ -2702,40 +2717,52 @@ const RecruitmentHeadDashboard = () => {
                           </div>
                         </div>
                       </div>
+                      <div className="flex-1 overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="border-b border-[#F4F3EF]">
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Client</th>
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Joining Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#F4F3EF]">
+                            {upcomingJoinings.length > 0 ? (
+                              upcomingJoinings.map((joining) => {
+                                const formattedDate = new Date(joining.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 
-                      <div className="flex flex-col gap-4 overflow-y-auto max-h-[450px] custom-scrollbar pr-3 -mr-2">
-                        {upcomingJoinings.length > 0 ? upcomingJoinings.map((joining) => (
-                          <div
-                            key={joining.id}
-                            className="w-full bg-[#FAFAFA]/70 border border-slate-100 rounded-[32px] p-6 group hover:bg-white hover:border-emerald-400/40 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 cursor-pointer relative text-left flex flex-col justify-between"
-                          >
-                            <div>
-                              <div className="flex justify-between items-start mb-5">
-                                <div className="px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-600">
-                                  Confirmed
-                                </div>
-                                <span className="text-[9px] font-bold text-slate-500 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-50">
-                                  {new Date(joining.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                </span>
-                              </div>
-
-                              <div className="mb-4">
-                                <h4 className="text-sm font-bold text-[#1A1A2E] tracking-tight group-hover:text-emerald-600 transition-colors uppercase leading-tight">{joining.candidate}</h4>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 pt-5 border-t border-slate-100/80">
-                              <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400">
-                                <FiBriefcase size={10} />
-                              </div>
-                              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{joining.client}</span>
-                            </div>
-                          </div>
-                        )) : (
-                          <div className="w-full py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No upcoming joiners this week</p>
-                          </div>
-                        )}
+                                return (
+                                  <motion.tr
+                                    key={joining.id}
+                                    whileHover={{ backgroundColor: '#F8FAFF' }}
+                                    className="group cursor-pointer transition-all"
+                                  >
+                                    <td className="px-6 py-5">
+                                      <p className="text-sm font-semibold text-slate-700">{joining.candidate}</p>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{joining.client || 'Mabicons'}</p>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{formattedDate}</span>
+                                        <div className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                          Confirmed
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </motion.tr>
+                                );
+                              })
+                            ) : (
+                              <tr>
+                                <td colSpan="3" className="py-12 text-center text-slate-400 text-[10px] uppercase font-medium">
+                                  No joinings this week
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
@@ -2783,48 +2810,64 @@ const RecruitmentHeadDashboard = () => {
 
                     {/* Live Notes Section */}
                     <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
-                      <div className="p-8 flex items-center justify-between border-b border-slate-50">
+                      <div className="p-8 flex items-center justify-between border-b border-slate-50 group/notes-header">
                         <div
-                          className="flex items-center gap-3 cursor-pointer group"
+                          className="flex items-center gap-3 cursor-pointer"
                           onClick={() => setActiveTab('Notes')}
                         >
-                          <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm group-hover:bg-[#1B4DA0] group-hover:text-white transition-all">
+                          <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm hover:bg-[#1B4DA0] hover:text-white transition-all">
                             <FiEdit3 className="w-5 h-5" />
                           </div>
                           <div className="text-left">
-                            <h3 className="font-bold text-xl text-[#1A1A2E] tracking-tight font-syne leading-none text-left group-hover:text-[#1B4DA0] transition-colors">Notes</h3>
+                            <h3 className="font-bold text-xl text-[#1A1A2E] tracking-tight font-syne leading-none text-left">Notes</h3>
                           </div>
                         </div>
                         <button
                           onClick={() => setShowAddNoteModal(true)}
-                          className="p-2 rounded-xl bg-[#FAFAF8] text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+                          className="flex items-center gap-2 p-1.5 px-3 rounded-xl bg-[#FAFAF8] text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm opacity-0 group-hover/notes-header:opacity-100"
                         >
                           <FiPlus className="w-5 h-5" strokeWidth={2.5} />
+                          <span className="text-[10px] font-semibold uppercase tracking-widest whitespace-nowrap">
+                            Create Note
+                          </span>
                         </button>
                       </div>
-                      <div className="max-h-[350px] overflow-y-auto flex-1 bg-white p-6 space-y-4 custom-scrollbar">
+                      <div className="max-h-[350px] overflow-y-auto flex-1 bg-white p-6 space-y-3 custom-scrollbar">
                         {notesLoading ? (
                           <div className="flex flex-col items-center justify-center py-12 gap-4">
                             <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin" />
                             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Syncing records...</p>
                           </div>
                         ) : recentNotes.length > 0 ? (
-                          recentNotes.map((note) => (
-                            <div
-                              key={note.id}
-                              onClick={() => setSelectedNote(note)}
-                              className="p-4 rounded-2xl bg-[#FAFAF8] border border-[#F4F3EF] hover:bg-white hover:border-[#1B4DA0]/20 hover:shadow-md transition-all duration-300 group relative text-left cursor-pointer"
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="font-bold text-[14px] text-slate-800 tracking-tight transition-colors font-syne">{note.title}</h4>
+                          recentNotes.map((note) => {
+                            const dateObj = note.createdAt ? new Date(note.createdAt) : new Date();
+                            const formattedDate = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                            const formattedTime = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+                            return (
+                              <div
+                                key={note.id}
+                                onClick={() => setSelectedNote(note)}
+                                className="w-full p-2.5 rounded-[24px] flex items-center gap-4 transition-all duration-300 cursor-pointer border-2 bg-white border-transparent hover:bg-slate-50 hover:border-slate-100 shadow-sm group relative overflow-hidden"
+                              >
+                                <div className="flex flex-col text-left overflow-hidden flex-1">
+                                  <p className="text-sm font-semibold tracking-tight text-[#1A1A2E] truncate group-hover:text-blue-600 transition-colors uppercase font-syne">
+                                    {note.title}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">
+                                      {formattedDate}
+                                    </span>
+                                    <span className="w-1 h-1 rounded-full bg-slate-200" />
+                                    <span className="text-[9px] font-semibold text-[#3FA9F5] uppercase tracking-widest">
+                                      {formattedTime}
+                                    </span>
+                                  </div>
+                                </div>
+                                <FiArrowRight className="w-4 h-4 text-[#1B4DA0] opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0 mr-2" strokeWidth={2.5} />
                               </div>
-                              <div className="flex items-center justify-end">
-                                <button className="text-[#1B4DA0] hover:scale-110 transition-all opacity-0 group-hover:opacity-100">
-                                  <FiArrowRight className="w-4 h-4" strokeWidth={2.5} />
-                                </button>
-                              </div>
-                            </div>
-                          ))
+                            );
+                          })
                         ) : (
                           <div className="py-12 flex flex-col items-center text-center">
                             <div className="w-16 h-16 rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-center mb-4 text-slate-200">
@@ -3037,28 +3080,28 @@ const RecruitmentHeadDashboard = () => {
                 </motion.div>
               </>
             )}
-          </AnimatePresence>,
-          document.body
+          </AnimatePresence>, document.body
         )}
       </AdminLayout>
 
 
       {/* Create Note Modal */}
-      <AnimatePresence>
-        {showAddNoteModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
+      {createPortal(
+        <AnimatePresence>
+          {showAddNoteModal && (
+            <motion.div key="add-note-modal" className="fixed inset-0 z-[10001] pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md pointer-events-auto"
               onClick={() => setShowAddNoteModal(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-[5vh] -translate-x-1/2 w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[1101] flex flex-col max-h-[90vh] overflow-hidden"
+              className="fixed left-1/2 top-[5vh] -translate-x-1/2 w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[10002] flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-10 border-b border-slate-50 flex flex-col items-center justify-center relative flex-shrink-0">
                 <div className="text-center">
@@ -3124,14 +3167,15 @@ const RecruitmentHeadDashboard = () => {
                 </form>
               </div>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          </motion.div>
+          )}
+        </AnimatePresence>, document.body
+      )}
 
       {/* KAM Detail Drawer */}
       <AnimatePresence>
         {showKAMModal && selectedKAM && (
-          <>
+          <React.Fragment>
             <motion.div
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -3346,7 +3390,7 @@ const RecruitmentHeadDashboard = () => {
                 )}
               </div>
             </motion.div>
-          </>
+          </React.Fragment>
         )}
       </AnimatePresence>
 
@@ -3432,7 +3476,7 @@ const RecruitmentHeadDashboard = () => {
                                 <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-medium">#{index + 1}</span>
                               </div>
                               <p className="text-sm text-slate-500 truncate">{kam.role}</p>
-                              <p className="text-xs text-slate-400 mt-1">{kam.activePositions} jobs Â· {kam.candidatesPipeline} candidates</p>
+                              <p className="text-xs text-slate-400 mt-1">{kam.activePositions} jobs · {kam.candidatesPipeline} candidates</p>
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
@@ -3550,13 +3594,15 @@ const RecruitmentHeadDashboard = () => {
       </AnimatePresence>
 
       {/* Invite/Edit Modal Overlay */}
-      <AnimatePresence>
-        {showKAMFormModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+      {createPortal(
+        <AnimatePresence>
+          {showKAMFormModal && (
+            <motion.div key="kam-form-modal" className="fixed inset-0 z-[10001] pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -3744,10 +3790,12 @@ const RecruitmentHeadDashboard = () => {
                   </button>
                 </div>
               </form>
+              </motion.div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>, document.body
+      )}
 
       {/* Performance Detail Drawer (Global Scope for Full Coverage) */}
       <AnimatePresence>
@@ -3898,22 +3946,23 @@ const RecruitmentHeadDashboard = () => {
           </>
         )}
       </AnimatePresence>
-      <AnimatePresence>
-        {selectedInterview && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedInterview(null)}
-              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
+      {createPortal(
+        <AnimatePresence>
+          {selectedInterview && (
+            <motion.div key="selected-interview" className="fixed inset-0 z-[10001] pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedInterview(null)}
+                className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md pointer-events-auto"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[1101] flex flex-col"
+              className="fixed inset-y-0 right-0 w-full sm:w-[500px] md:w-[600px] bg-white shadow-2xl z-[10002] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
             >
               {/* Header - Sticky Style */}
               <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
@@ -4015,9 +4064,10 @@ const RecruitmentHeadDashboard = () => {
                 </button>
               </div>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          </motion.div>
+          )}
+        </AnimatePresence>, document.body
+      )}
 
     </>
   );

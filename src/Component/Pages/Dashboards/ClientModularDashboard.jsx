@@ -262,6 +262,19 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
             { name: 'Resolved', value: resolvedTasks },
           ];
 
+          // ── Upcoming joinings ──
+          const upcomingJ = candidatesList
+            .filter(c => c.stage === 'Joined' || c.joinDate || c.joiningDate)
+            .sort((a, b) => new Date(a.joiningDate || a.joinDate) - new Date(b.joiningDate || b.joinDate))
+            .slice(0, 5)
+            .map(c => ({
+              id: c.id,
+              candidate: c.name || 'Unknown',
+              position: c.position || 'Untitled',
+              date: c.joiningDate || c.joinDate,
+              status: c.stage || 'Joined'
+            }));
+
           setDashData({
             kpis: {
               activeRoles: activeRoles,
@@ -293,6 +306,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
               overdue: taskSummary.overdue || 0,
               recentTasks,
               upcomingInterviews,
+              upcomingJoinings: upcomingJ,
             },
           });
         } else {
@@ -531,54 +545,157 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
           </div>
         </div>
 
-        {/* Table - Upcoming Interviews */}
-        <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col min-h-[500px]">
+        {/* Upcoming Interviews cards */}
+        <div className="lg:col-span-6 bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm flex flex-col min-h-[500px]">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Upcoming Interviews</h2>
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-blue-50/50 text-blue-600 shadow-sm border border-blue-50">
+                <FiCalendar className="w-5 h-5" />
+              </div>
+              <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Upcoming Interviews</h2>
+            </div>
             <button 
               onClick={() => setActiveTab('Interviews')}
-              className="text-sm font-bold text-[#3FA9F5] hover:text-[#2d8cd3] transition-colors flex items-center gap-1"
+              className="text-xs font-black text-[#3FA9F5] uppercase tracking-widest hover:underline flex items-center gap-1"
             >
-              Manage Interviews <FiExternalLink size={14} />
+              Manage <FiExternalLink size={12} />
             </button>
           </div>
           <div className="flex-1 overflow-x-auto custom-scrollbar">
-            <table className="w-full">
+            <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-[#F4F3EF]">
-                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Candidate</th>
-                  <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Date & Time</th>
-                  <th className="pb-4 text-right text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Position</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Date & Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F4F3EF]">
                 {dashData._real?.upcomingInterviews?.length > 0 ? (
-                  dashData._real.upcomingInterviews.map((int, idx) => (
-                    <tr key={idx} className="group cursor-pointer hover:bg-[#FAFAF8] transition-colors">
-                      <td className="py-4">
-                        <div className="flex flex-col">
-                          <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{int.candidate}</p>
-                          <p className="text-[10px] font-medium text-slate-400 mt-0.5">{int.position}</p>
-                        </div>
-                      </td>
-                      <td className="py-4">
-                        <div className="flex flex-col">
-                          <p className="text-xs font-bold text-[#1A1A2E]">{int.date}</p>
-                          <p className="text-[10px] text-[#9B9BAD]">{int.time}</p>
-                        </div>
-                      </td>
-                      <td className="py-4 text-right">
-                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-[9px] font-bold uppercase tracking-wider border border-blue-100">
-                          Scheduled
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                  dashData._real.upcomingInterviews.map((int, idx) => {
+                    const dateStr = (int.date?.includes('T') ? int.date.split('T')[0] : int.date) || '2026-04-30';
+                    const formattedDate = new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+
+                    return (
+                      <motion.tr
+                        key={idx}
+                        whileHover={{ backgroundColor: '#F8FAFF' }}
+                        onClick={() => setActiveTab('Interviews')}
+                        className="group cursor-pointer transition-colors"
+                      >
+                        <td className="px-6 py-6">
+                          <span className="text-[15px] font-semibold text-[#1A1A2E] group-hover:text-blue-600 transition-colors uppercase tracking-tight font-syne">
+                            {int.candidate}
+                          </span>
+                        </td>
+                        <td className="px-6 py-6">
+                          <span className="text-[11px] font-medium text-slate-400 uppercase tracking-widest leading-relaxed">
+                            {int.position}
+                          </span>
+                        </td>
+                        <td className="px-6 py-6">
+                          <div className="flex flex-col gap-1.5 font-syne">
+                            <span className="text-sm font-semibold text-blue-600">{int.time}</span>
+                            <div className="flex items-center gap-1.5 text-[#9B9BAD]">
+                              <FiCalendar size={12} className="opacity-70" />
+                               <span className="text-[10px] font-semibold uppercase tracking-widest">{formattedDate}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan="3" className="py-20 text-center opacity-40">
-                      <FiCalendar className="mx-auto text-slate-300 mb-4" size={40} />
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No scheduled sessions</p>
+                    <td colSpan="3" className="py-20 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-[24px] bg-slate-50 flex items-center justify-center text-slate-200">
+                           <FiCalendar size={24} />
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">No Scheduled Sessions</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Upcoming Joinings Section */}
+        <div className="lg:col-span-12 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col mt-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                  <FiCheckCircle size={20} />
+                </div>
+                <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Upcoming Joinings</h2>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-10">Candidates Onboarding Schedule</p>
+            </div>
+            <button
+               onClick={() => setActiveTab('Finalized')}
+               className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1"
+            >
+              View All <FiExternalLink size={14} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Position</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Joining Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F4F3EF]">
+                {dashData._real?.upcomingJoinings?.length > 0 ? (
+                  dashData._real.upcomingJoinings.map((join, idx) => {
+                    const formattedDate = join.date ? new Date(join.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'TBD';
+
+                    return (
+                      <motion.tr
+                        key={idx}
+                        whileHover={{ backgroundColor: '#F8FFF9' }}
+                        onClick={() => setActiveTab('Finalized')}
+                        className="group cursor-pointer transition-colors"
+                      >
+                        <td className="px-6 py-6">
+                          <span className="text-[15px] font-semibold text-[#1A1A2E] group-hover:text-emerald-600 transition-colors uppercase tracking-tight font-syne">
+                            {join.candidate}
+                          </span>
+                        </td>
+                        <td className="px-6 py-6">
+                          <span className="text-[11px] font-medium text-slate-400 uppercase tracking-widest leading-relaxed">
+                            {join.position}
+                          </span>
+                        </td>
+                        <td className="px-6 py-6">
+                          <div className="flex flex-col gap-1.5 font-syne">
+                            <div className="flex items-center gap-1.5 text-emerald-600">
+                              <FiCalendar size={12} className="opacity-70" />
+                               <span className="text-sm font-semibold uppercase tracking-widest">{formattedDate}</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-tighter bg-blue-50 px-2 py-0.5 rounded-lg w-fit">
+                              {join.status}
+                            </span>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="py-20 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-[24px] bg-emerald-50 flex items-center justify-center text-emerald-200">
+                           <FiCheckCircle size={24} />
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">No Joinings Scheduled</p>
+                      </div>
                     </td>
                   </tr>
                 )}

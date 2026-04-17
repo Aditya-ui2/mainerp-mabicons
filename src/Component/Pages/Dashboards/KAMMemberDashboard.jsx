@@ -1,4 +1,5 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   FiBriefcase,
@@ -22,6 +23,7 @@ import {
   FiEdit3,
   FiRefreshCw,
   FiShield,
+  FiX,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +37,8 @@ import {
   getKAMTasks,
   getMyDepartmentTasks,
   getMyRecruitmentPerformance,
+  getRecruitmentClients,
+  getAllOffers,
 } from '../service/api';
 
 // Lazy load Tab Components
@@ -104,6 +108,7 @@ const getSidebarConfig = (name = '') => {
 // Main KAM Member Dashboard Component
 const KAMMemberDashboard = () => {
   const navigate = useNavigate();
+  const [selectedInterview, setSelectedInterview] = useState(null);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [loading, setLoading] = useState(true);
   const [userInfo, setUserInfo] = useState({ name: 'KAM', role: 'Key Account Manager', id: null });
@@ -117,6 +122,7 @@ const KAMMemberDashboard = () => {
   });
   const [todayTasks, setTodayTasks] = useState([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
+  const [upcomingJoinings, setUpcomingJoinings] = useState([]);
   const [personalStats, setPersonalStats] = useState({
     activePositions: 0,
     candidatesPipeline: 0,
@@ -164,6 +170,7 @@ const KAMMemberDashboard = () => {
         fetchPersonalStats('This Month');
         fetchTodayTasks(userId);
         fetchUpcomingInterviews();
+        fetchUpcomingJoinings();
       } catch (e) {
         setUserInfo({
           name: userName || 'KAM',
@@ -174,6 +181,7 @@ const KAMMemberDashboard = () => {
         // Still try to fetch data
         fetchDashboardData(null);
         fetchUpcomingInterviews();
+        fetchUpcomingJoinings();
       }
     }
   }, []);
@@ -285,6 +293,30 @@ const KAMMemberDashboard = () => {
     }
   };
 
+  const fetchUpcomingJoinings = async () => {
+    try {
+      const response = await getAllOffers();
+      if (response && response.success) {
+        // Map and filter for this KAM if possible, or just show last 5 joinings
+        const mapped = (response.data || [])
+          .filter(o => o.status === 'Accepted' || o.status === 'Joined')
+          .sort((a, b) => new Date(a.joiningDate) - new Date(b.joiningDate))
+          .slice(0, 5)
+          .map(o => ({
+            id: o.id || o._id,
+            candidate: o.candidateName || 'Unknown',
+            position: o.position || 'Untitled',
+            date: o.joiningDate,
+            client: o.client || 'Internal',
+            status: o.status
+          }));
+        setUpcomingJoinings(mapped);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard joinings:', error);
+    }
+  };
+
   const fetchUpcomingInterviews = async () => {
     try {
       const res = await getAllInterviews({ status: 'scheduled' });
@@ -307,7 +339,11 @@ const KAMMemberDashboard = () => {
               candidate: int.candidateName || int.candidate?.name || 'Candidate',
               position: int.positionTitle || int.position?.title || 'Position',
               time: timeStr,
-              type: int.interviewType || int.type || 'Interview'
+              date: intDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+              dateTime: `${intDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} | ${timeStr}`,
+              type: int.interviewType || int.type || 'Interview',
+              interviewer: int.interviewerName || int.interviewer?.name || 'Host',
+              meetingLink: int.meetingLink || int.link
             };
           });
 
@@ -564,48 +600,167 @@ const KAMMemberDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Upcoming Interviews */}
-                    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                        <h3 className="font-bold text-lg text-gray-900">Upcoming Interviews</h3>
+                    {/* Upcoming Interviews Section */}
+                      <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                        
+                        <div className="flex items-center justify-between mb-8">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-2xl bg-blue-50/50 text-blue-600 shadow-sm border border-blue-50">
+                              <FiCalendar className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">
+                              Upcoming Interviews
+                            </h3>
+                          </div>
+
+                          <button
+                            onClick={() => setActiveTab('Interview Schedule')}
+                            className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline"
+                          >
+                            View All
+                          </button>
+                        </div>
+
+                        <div className="flex-1 overflow-x-auto custom-scrollbar">
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="border-b border-[#F4F3EF]">
+                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Position</th>
+                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Date & Time</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#F4F3EF]">
+                              {upcomingInterviews.length > 0 ? (
+                                upcomingInterviews.map((interview) => {
+                                  let formattedDate = 'TBD';
+                                  let timePart = 'TBD';
+
+                                  if (interview.dateTime && interview.dateTime.includes(' | ')) {
+                                    [formattedDate, timePart] = interview.dateTime.split(' | ');
+                                  } else {
+                                    const rawDate = interview.date || interview.dateTime;
+                                    if (rawDate) {
+                                      const d = new Date(rawDate);
+                                      if (!isNaN(d)) {
+                                        formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                                        timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                                      }
+                                    }
+                                  }
+
+                                  return (
+                                    <tr 
+                                      key={interview.id} 
+                                      onClick={() => setSelectedInterview(interview)} 
+                                      className="group cursor-pointer transition-all hover:bg-[#F8FAFF]"
+                                    >
+                                      <td className="px-6 py-5">
+                                        <p className="text-sm font-semibold text-slate-700 group-hover:text-[#1B4DA0] transition-colors">{interview.candidate}</p>
+                                      </td>
+                                      <td className="px-6 py-5">
+                                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{interview.position || 'Recruitment Drive'}</p>
+                                      </td>
+                                      <td className="px-6 py-5">
+                                        <div className="flex flex-col items-start gap-0.5">
+                                          <span className="text-sm font-semibold text-slate-600">
+                                            {formattedDate}
+                                          </span>
+                                          <span className="text-[11px] font-semibold text-[#1B4DA0] uppercase">
+                                            {timePart}
+                                          </span>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              ) : (
+                                <tr>
+                                  <td colSpan="3" className="py-12 text-center text-slate-400 text-[10px] uppercase font-medium">
+                                    No upcoming sessions
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                    {/* Upcoming Joinings */}
+                    <div className="bg-white rounded-[32px] shadow-sm overflow-hidden flex flex-col border border-[#F4F3EF]">
+                      <div className="p-8 pb-0 flex items-center justify-between">
+                        <div className="flex flex-col items-start">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                              <FiCheckCircle size={18} />
+                            </div>
+                            <h3 className="font-semibold text-[#1A1A2E] text-lg tracking-tight">Upcoming Joinings</h3>
+                          </div>
+                          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em] ml-1">Onboarding Pipeline</p>
+                        </div>
                         <button
-                          onClick={() => setActiveTab('Interview Schedule')}
-                          className="text-blue-600 hover:text-blue-700 font-semibold text-sm"
+                          onClick={() => setActiveTab('Offer Management')}
+                          className="text-xs font-black text-emerald-600 uppercase tracking-widest hover:underline"
                         >
                           View All
                         </button>
                       </div>
-                      <div className="divide-y divide-gray-50">
-                        {upcomingInterviews.length > 0 ? (
-                          upcomingInterviews.map((interview, idx) => (
-                            <div key={interview.id || idx} className="p-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer" onClick={() => setActiveTab('Interview Schedule')}>
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                                {interview.candidate.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-semibold text-gray-900">{interview.candidate}</p>
-                                <p className="text-sm text-gray-500">{interview.position}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-semibold text-gray-900">{interview.time}</p>
-                                <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
-                                  {interview.type}
-                                </span>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-8 text-center">
-                            <FiCalendar className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                            <p className="text-gray-500 font-medium">No upcoming interviews</p>
-                            <button
-                              onClick={() => setActiveTab('Interview Schedule')}
-                              className="text-sm text-blue-600 hover:text-blue-700 mt-2 font-medium"
-                            >
-                              Schedule one now
-                            </button>
-                          </div>
-                        )}
+
+                      <div className="flex-1 overflow-x-auto custom-scrollbar p-0">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="border-b border-[#F4F3EF]">
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Client / Position</th>
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Joining Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#F4F3EF]">
+                            {upcomingJoinings.length > 0 ? (
+                              upcomingJoinings.map((joining) => {
+                                const formattedDate = joining.date ? new Date(joining.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'TBD';
+
+                                return (
+                                   <tr 
+                                     key={joining.id} 
+                                     onClick={() => setActiveTab('Offer Management')} 
+                                     className="group cursor-pointer transition-all hover:bg-emerald-50/20"
+                                   >
+                                     <td className="px-6 py-5">
+                                       <p className="text-sm font-semibold text-slate-700">{joining.candidate}</p>
+                                     </td>
+                                     <td className="px-6 py-5">
+                                       <div className="flex flex-col">
+                                         <span className="text-[11px] font-semibold text-[#1B4DA0] uppercase tracking-wider mb-0.5">
+                                           {joining.client}
+                                         </span>
+                                         <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest leading-relaxed">
+                                           {joining.position}
+                                         </span>
+                                       </div>
+                                     </td>
+                                     <td className="px-6 py-5">
+                                       <div className="flex items-center gap-2">
+                                         <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{formattedDate}</span>
+                                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${
+                                           joining.status === 'Joined' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100'
+                                         }`}>
+                                           {joining.status}
+                                         </span>
+                                       </div>
+                                     </td>
+                                   </tr>
+                                 );
+                               })
+                            ) : (
+                              <tr>
+                                <td colSpan="4" className="py-12 text-center text-slate-400 font-semibold uppercase tracking-widest text-[10px]">
+                                  No upcoming joinings
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
@@ -704,6 +859,90 @@ const KAMMemberDashboard = () => {
       bottomTabName="My Profile"
     >
       {renderContent()}
+
+      {/* Standard Detail Modal */}
+      <AnimatePresence>
+        {selectedInterview && createPortal(
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedInterview(null)}
+              className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF]"
+            >
+              <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                <div>
+                  <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedInterview.candidate}</h3>
+                  <p className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest mt-1">
+                    {selectedInterview.position || 'RECRUITMENT DRIVE'}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setSelectedInterview(null)}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+              
+              <div className="p-8 space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-1.5 p-4 rounded-2xl bg-blue-50/30 border border-blue-100/30">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Date</span>
+                    <p className="text-sm font-bold text-[#1A1A2E]">
+                      {selectedInterview.dateTime?.split(' | ')[0] || selectedInterview.date}
+                    </p>
+                  </div>
+                  <div className="space-y-1.5 p-4 rounded-2xl bg-emerald-50/30 border border-emerald-100/30">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Time</span>
+                    <p className="text-sm font-bold text-[#1A1A2E]">
+                      {selectedInterview.dateTime?.split(' | ')[1] || selectedInterview.time}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-[#F4F3EF] text-left">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3">Interview Details</span>
+                    <div className="space-y-3">
+                      <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
+                        <span className="text-[#9B9BAD]">Host:</span> {String(selectedInterview.interviewer || 'Host')}
+                      </p>
+                      <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
+                        Standard technical evaluation session scheduled for the proposed position. Please ensure the candidate is notified of the connection details.
+                      </p>
+                    </div>
+                </div>
+              </div>
+
+              <div className="p-8 bg-[#F4F3EF]/30 flex gap-4">
+                <button 
+                  onClick={() => setSelectedInterview(null)}
+                  className="flex-1 py-4 bg-white border border-[#E8E7E2] text-[#1A1A2E] rounded-[20px] font-bold text-sm hover:bg-[#F4F3EF] transition-all shadow-sm"
+                >
+                  Close
+                </button>
+                <button 
+                  onClick={() => {
+                    setSelectedInterview(null);
+                    setActiveTab('Interview Schedule');
+                  }}
+                  className="flex-1 py-4 bg-[#1B4DA0] text-white rounded-[20px] font-bold text-sm hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/10"
+                >
+                  Full Schedule
+                </button>
+              </div>
+            </motion.div>
+          </div>,
+          document.body
+        )}
+      </AnimatePresence>
     </AdminLayout>
   );
 };

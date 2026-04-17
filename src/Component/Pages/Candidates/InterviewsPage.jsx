@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import ReactDOM from "react-dom";
+import { createPortal } from "react-dom";
 import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, CheckSquare, Plus, AlertCircle, Calendar, Search, Star } from "lucide-react";
 import { toast } from "sonner";
 import { AVATAR_COLORS, getAvatarColor } from "./mockData";
@@ -182,8 +182,8 @@ export default function InterviewsPage() {
       if (response.success) {
         toast.success(`${selectedInterview.candidateName} has been shortlisted!`);
         // Update local state for immediate feedback
-        const updateState = prev => prev.map(i => 
-          i.id === selectedInterview.id 
+        const updateState = prev => prev.map(i =>
+          i.id === selectedInterview.id
             ? { ...i, raw: { ...i.raw, candidate: { ...i.raw?.candidate, status: 'Shortlisted' } } }
             : i
         );
@@ -218,8 +218,8 @@ export default function InterviewsPage() {
       if (response.success) {
         toast.success(`${selectedInterview.candidateName} has been rejected from pipeline.`);
         // Update local state for immediate feedback
-        const updateState = prev => prev.map(i => 
-          i.id === selectedInterview.id 
+        const updateState = prev => prev.map(i =>
+          i.id === selectedInterview.id
             ? { ...i, raw: { ...i.raw, candidate: { ...i.raw?.candidate, status: 'Rejected' } } }
             : i
         );
@@ -329,20 +329,20 @@ export default function InterviewsPage() {
       const feedbackMap = { ...feedbackData };
       if (erpRes.success) {
         erpRes.data.forEach(i => {
-           if (i.evaluation && Object.keys(i.evaluation).length > 0) {
-             feedbackMap[i.id || i._id] = true;
-           }
+          if (i.evaluation && Object.keys(i.evaluation).length > 0) {
+            feedbackMap[i.id || i._id] = true;
+          }
         });
 
         const mappedERP = erpRes.data.map(i => ({
           id: i.id || i._id,
           candidateId: i.candidateId,
-          candidateName: i.candidate?.name || "Unknown Candidate",
-          candidateAvatar: i.candidate?.name?.charAt(0).toUpperCase() || "C",
+          candidateName: i.candidate?.name || i.candidateName || "Unknown Candidate",
+          candidateAvatar: (i.candidate?.name || i.candidateName || "C").charAt(0).toUpperCase(),
           role: i.position?.title || i.positionTitle || "Unknown Position",
-          interviewer: i.interviewerName || "To be assigned",
-          interviewerId: i.interviewerId,
-          interviewerAvatar: i.interviewerName?.charAt(0).toUpperCase() || "I",
+          interviewer: i.interviewerName || i.interviewer?.name || "To be assigned",
+          interviewerId: i.interviewerId || i.interviewer?.id,
+          interviewerAvatar: (i.interviewerName || i.interviewer?.name || "I").charAt(0).toUpperCase(),
           date: i.interviewDate,
           time: i.startTime,
           duration: i.duration || 45,
@@ -357,7 +357,7 @@ export default function InterviewsPage() {
         }));
         allMerged = [...allMerged, ...mappedERP];
       }
-      
+
       if (spRes.success && spRes.data) {
         const mappedSP = spRes.data.map(i => ({
           id: i.sharePointId,
@@ -487,10 +487,11 @@ export default function InterviewsPage() {
     }
   };
 
-  const handleInlineEdit = async (field, value, backendField) => {
+  const handleInlineEdit = async (id, field, value, backendField) => {
+    if (!id) return;
     try {
       const payload = { [backendField || field]: value };
-      const response = await updateInterview(selectedInterview.id, payload);
+      const response = await updateInterview(id, payload);
       if (response.success) {
         toast.success("Updated successfully");
         fetchInterviews();
@@ -798,11 +799,11 @@ export default function InterviewsPage() {
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
         <div className="grid grid-cols-[40px_120px_2fr_1.5fr_1.5fr_120px_110px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
           <div className="flex items-center">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               checked={selectedRowIds.length > 0 && selectedRowIds.length === filteredInterviews.length}
               onChange={toggleSelectAll}
-              className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm" 
+              className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
             />
           </div>
           {["Time & Date", "Candidate", "Client", "Role / Job", "Host", "Status", "Actions", ""].map((h, i) => (
@@ -830,14 +831,14 @@ export default function InterviewsPage() {
                 className={`grid grid-cols-[40px_120px_2fr_1.5fr_1.5fr_120px_110px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative ${isLive ? 'bg-amber-50/30' : ''}`}
               >
                 <div className="flex items-center" onClick={e => e.stopPropagation()}>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={selectedRowIds.includes(interview.id)}
                     onChange={(e) => toggleSelectRow(interview.id, e)}
-                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm" 
+                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
                   />
                 </div>
-                
+
                 {/* Time & Date */}
                 <div className="flex flex-col justify-center items-start py-1">
                   <p className="text-[13px] font-bold text-[#1A1A2E] text-left">{formatTime(interview.time)}</p>
@@ -874,15 +875,33 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Host */}
-                <div className="flex items-center py-1">
-                  <span className="text-xs font-bold text-[#1A1A2E] truncate">{interview.interviewer}</span>
+                <div className="flex items-center py-1" onClick={e => e.stopPropagation()}>
+                  <select
+                    className="bg-transparent text-xs font-bold text-[#1A1A2E] outline-none border-0 cursor-pointer hover:text-[#1B4DA0] transition-colors"
+                    value={interview.interviewer}
+                    onChange={(e) => handleInlineEdit(interview.id, 'interviewer', e.target.value, 'interviewerName')}
+                  >
+                    <option value={interview.interviewer}>{interview.interviewer}</option>
+                    {availableInterviewers.slice(0, 10).map(s => (
+                      <option key={s.id || s.name} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Status */}
-                <div className="flex items-center py-1">
-                  <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${STATUS_COLORS[interview.status]?.replace('bg-white', 'bg-slate-50') || "bg-slate-50 text-slate-400 border-slate-100"}`}>
-                    {isLive ? 'Live' : interview.status}
-                  </span>
+                <div className="flex items-center py-1" onClick={e => e.stopPropagation()}>
+                  <select
+                    className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border bg-slate-50 outline-none cursor-pointer hover:border-slate-300 transition-all ${(STATUS_COLORS[interview.status] || STATUS_COLORS[Object.keys(STATUS_COLORS).find(k => k.toLowerCase() === interview.status?.toLowerCase())] || "")
+                        .split(' ').filter(c => !c.startsWith('bg-')).join(' ') || "text-slate-400 border-slate-100"
+                      }`}
+                    value={interview.status}
+                    onChange={(e) => handleInlineEdit(interview.id, 'status', e.target.value, 'status')}
+                  >
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="In-Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
                 </div>
 
                 {/* Actions */}
@@ -934,702 +953,711 @@ export default function InterviewsPage() {
       </div>
 
       {/* Refined Detail Drawer */}
-      {selectedInterview && ReactDOM.createPortal(
-        <>
-          <div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998] transition-opacity"
-            onClick={() => { setSelectedInterview(null); setEditMode(false); }}
-          />
-          <div
-            className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden animate-in slide-in-from-right duration-300"
-          >
-            {/* Drawer Header */}
-            <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
-              <div className="flex-1 mr-4 text-left">
-                <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  {selectedInterview?.candidateName || 'Unknown Candidate'}
-                </h2>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedInterview?.role || 'Unknown Position'}</span>
-                  <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                  <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{selectedInterview?.type}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {isEditing ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      disabled={isSaving}
-                      onClick={() => {
-                        setIsEditing(false);
-                        // Reset editable fields to original selectedInterview values
-                        setEditableInterview({
-                          date: selectedInterview.date || "",
-                          time: selectedInterview.time || "",
-                          type: selectedInterview.type || "Video",
-                          meetingLink: selectedInterview.meetingLink || "",
-                          interviewer: selectedInterview.interviewer || "",
-                          interviewerId: selectedInterview.interviewerId || "",
-                          status: selectedInterview.status || "Scheduled",
-                          duration: String(selectedInterview.duration || "60")
-                        });
-                      }}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      disabled={isSaving}
-                      onClick={handleSaveInterviewChanges}
-                      className="w-[145.83px] h-[32px] rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
-                    >
-                      {isSaving ? (
-                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <Check size={14} />
-                      )}
-                      {isSaving ? "Saving..." : "Save Changes"}
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
-                    >
-                      <Pencil size={18} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedInterview(null);
-                        setIsEditing(false);
-                      }}
-                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-all active:scale-90 shadow-sm"
-                    >
-                      <X size={20} />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
-              {/* Shortlist Action Bar */}
-              <div className="bg-[#F8FAFF] rounded-[24px] p-5 border border-[#1B4DA0]/10 flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3 text-left">
-                  <div className="w-10 h-10 rounded-xl bg-[#1B4DA0]/10 flex items-center justify-center text-[#1B4DA0]">
-                    <CheckSquare size={20} />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-[#1A1A2E]">
-                      {isShortlisting ? 'Shortlisting...' : isRejecting ? 'Rejecting...' : 
-                       selectedInterview?.raw?.candidate?.status === 'Shortlisted' ? 'Candidate Shortlisted' :
-                       selectedInterview?.raw?.candidate?.status === 'Rejected' ? 'Candidate Rejected' : 'Shortlist Candidate?'}
-                    </h4>
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">
-                      {selectedInterview?.raw?.candidate?.status === 'Shortlisted' || selectedInterview?.raw?.candidate?.status === 'Rejected' ? 
-                       'Action completed in pipeline' : 'Move to pipeline shortlisted stage'}
-                    </p>
+      <AnimatePresence>
+        {selectedInterview && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-md z-[9998]"
+              onClick={() => { setSelectedInterview(null); setEditMode(false); }}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+            >
+              {/* Drawer Header */}
+              <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+                <div className="flex-1 mr-4 text-left">
+                  <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    {selectedInterview?.candidateName || 'Unknown Candidate'}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedInterview?.role || 'Unknown Position'}</span>
+                    <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{selectedInterview?.type}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {feedbackData[selectedInterview.id] ? (
-                    <>
-                      {selectedInterview?.raw?.candidate?.status === 'Shortlisted' || selectedInterview?.raw?.candidate?.status === 'Rejected' ? (
-                        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest ${
-                          selectedInterview?.raw?.candidate?.status === 'Shortlisted' 
-                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-                            : 'bg-rose-50 text-rose-600 border border-rose-100'
-                        }`}>
-                          {selectedInterview?.raw?.candidate?.status === 'Shortlisted' ? (
-                            <>
-                              <Check size={14} className="stroke-[3px]" />
-                              <span>Shortlisted</span>
-                            </>
-                          ) : (
-                            <>
-                              <X size={14} className="stroke-[3px]" />
-                              <span>Rejected</span>
-                            </>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <button
-                            id="btn-reject"
-                            onClick={handleRejectCandidate}
-                            disabled={isRejecting || isShortlisting}
-                            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-red-500 hover:bg-red-500 hover:text-white border border-red-100 active:scale-90"
-                            title="Reject Candidate"
-                          >
-                            {isRejecting ? (
-                              <div className="w-5 h-5 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />
-                            ) : (
-                              <X size={24} />
-                            )}
-                          </button>
-                          <button
-                            id="btn-shortlist"
-                            onClick={handleShortlistCandidate}
-                            disabled={isShortlisting || isRejecting}
-                            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white border border-[#1B4DA0]/10 active:scale-90"
-                            title="Shortlist Candidate"
-                          >
-                            {isShortlisting ? (
-                              <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-                            ) : (
-                              <Check size={24} />
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="px-5 py-2.5 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-2.5">
-                      <AlertCircle size={16} className="text-amber-600" />
-                      <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Submit feedback first</span>
+                  {isEditing ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        disabled={isSaving}
+                        onClick={() => {
+                          setIsEditing(false);
+                          // Reset editable fields to original selectedInterview values
+                          setEditableInterview({
+                            date: selectedInterview.date || "",
+                            time: selectedInterview.time || "",
+                            type: selectedInterview.type || "Video",
+                            meetingLink: selectedInterview.meetingLink || "",
+                            interviewer: selectedInterview.interviewer || "",
+                            interviewerId: selectedInterview.interviewerId || "",
+                            status: selectedInterview.status || "Scheduled",
+                            duration: String(selectedInterview.duration || "60")
+                          });
+                        }}
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        disabled={isSaving}
+                        onClick={handleSaveInterviewChanges}
+                        className="w-[145.83px] h-[32px] rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                      >
+                        {isSaving ? (
+                          <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <Check size={14} />
+                        )}
+                        {isSaving ? "Saving..." : "Save Changes"}
+                      </button>
                     </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedInterview(null);
+                          setIsEditing(false);
+                        }}
+                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                      >
+                        <X size={20} />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
 
-              <div className="bg-[#FAFAF8] rounded-[24px] p-8 border border-[#F4F3EF] space-y-8">
-                {/* Schedule Summary Grid */}
-                <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-                  {/* Date & Time Group */}
-                  <div className="space-y-4">
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Schedule</label>
-                      <div className="relative group">
-                        <input
-                          type="date"
-                          readOnly={!isEditing}
-                          className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
-                          value={editableInterview.date}
-                          onChange={e => setEditableInterview(p => ({ ...p, date: e.target.value }))}
-                        />
-                        {!isEditing && <Calendar size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />}
-                      </div>
+              <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
+                {/* Shortlist Action Bar */}
+                <div className="bg-[#F8FAFF] rounded-[24px] p-5 border border-[#1B4DA0]/10 flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="w-10 h-10 rounded-xl bg-[#1B4DA0]/10 flex items-center justify-center text-[#1B4DA0]">
+                      <CheckSquare size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[#1A1A2E]">
+                        {isShortlisting ? 'Shortlisting...' : isRejecting ? 'Rejecting...' :
+                          selectedInterview?.raw?.candidate?.status === 'Shortlisted' ? 'Candidate Shortlisted' :
+                            selectedInterview?.raw?.candidate?.status === 'Rejected' ? 'Candidate Rejected' : 'Shortlist Candidate?'}
+                      </h4>
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">
+                        {selectedInterview?.raw?.candidate?.status === 'Shortlisted' || selectedInterview?.raw?.candidate?.status === 'Rejected' ?
+                          'Action completed in pipeline' : 'Move to pipeline shortlisted stage'}
+                      </p>
                     </div>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Time</label>
-                      <div className="relative group">
-                        <input
-                          type="time"
-                          readOnly={!isEditing}
-                          className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
-                          value={editableInterview.time}
-                          onChange={e => setEditableInterview(p => ({ ...p, time: e.target.value }))}
-                        />
-                        {!isEditing && <Clock size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />}
+                  <div className="flex items-center gap-3">
+                    {feedbackData[selectedInterview.id] ? (
+                      <>
+                        {selectedInterview?.raw?.candidate?.status === 'Shortlisted' || selectedInterview?.raw?.candidate?.status === 'Rejected' ? (
+                          <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest ${selectedInterview?.raw?.candidate?.status === 'Shortlisted'
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                              : 'bg-rose-50 text-rose-600 border border-rose-100'
+                            }`}>
+                            {selectedInterview?.raw?.candidate?.status === 'Shortlisted' ? (
+                              <>
+                                <Check size={14} className="stroke-[3px]" />
+                                <span>Shortlisted</span>
+                              </>
+                            ) : (
+                              <>
+                                <X size={14} className="stroke-[3px]" />
+                                <span>Rejected</span>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <button
+                              id="btn-reject"
+                              onClick={handleRejectCandidate}
+                              disabled={isRejecting || isShortlisting}
+                              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-red-500 hover:bg-red-500 hover:text-white border border-red-100 active:scale-90"
+                              title="Reject Candidate"
+                            >
+                              {isRejecting ? (
+                                <div className="w-5 h-5 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />
+                              ) : (
+                                <X size={24} />
+                              )}
+                            </button>
+                            <button
+                              id="btn-shortlist"
+                              onClick={handleShortlistCandidate}
+                              disabled={isShortlisting || isRejecting}
+                              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm bg-white text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white border border-[#1B4DA0]/10 active:scale-90"
+                              title="Shortlist Candidate"
+                            >
+                              {isShortlisting ? (
+                                <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                              ) : (
+                                <Check size={24} />
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="px-5 py-2.5 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-2.5">
+                        <AlertCircle size={16} className="text-amber-600" />
+                        <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Submit feedback first</span>
                       </div>
-                    </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* Interviewer Row */}
-                  <div className="space-y-4 col-span-2">
-                    <div className="space-y-1.5 text-left relative">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Interviewer</label>
-                      <input
-                        type="text"
-                        readOnly={!isEditing}
-                        className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
-                        value={editableInterview.interviewer}
-                        onChange={e => {
-                          setEditableInterview(p => ({ ...p, interviewer: e.target.value }));
-                          if (isEditing) setShowEditInterviewerSuggestions(true);
-                        }}
-                        onFocus={() => isEditing && setShowEditInterviewerSuggestions(true)}
-                        placeholder="Assign host..."
-                      />
-                      {showEditInterviewerSuggestions && isEditing && (
-                        <div className="absolute z-50 left-0 right-0 mt-2 bg-white border border-[#F4F3EF] rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
-                          {availableInterviewers
-                            .filter(s => s.name?.toLowerCase().includes((editableInterview.interviewer || "").toLowerCase()))
-                            .map(s => (
-                              <div
-                                key={s.id}
-                                className="px-4 py-3 hover:bg-[#FAFAF8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3 transition-colors text-left"
-                                onClick={() => {
-                                  setEditableInterview(p => ({ ...p, interviewer: s.name, interviewerId: s.id }));
-                                  setShowEditInterviewerSuggestions(false);
-                                }}
-                              >
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${getAvatarColor(s.name, s.name.charAt(0))}`}>
-                                  {s.name?.charAt(0)}
-                                </div>
-                                <div>
-                                  <p className="text-xs font-bold text-[#1A1A2E]">{s.name}</p>
-                                  <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider">{s.role} • {s.department}</p>
-                                </div>
-                              </div>
-                            ))}
+                <div className="bg-[#FAFAF8] rounded-[24px] p-8 border border-[#F4F3EF] space-y-8">
+                  {/* Schedule Summary Grid */}
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                    {/* Date & Time Group */}
+                    <div className="space-y-4">
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Schedule</label>
+                        <div className="relative group">
+                          <input
+                            type="date"
+                            readOnly={!isEditing}
+                            className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
+                            value={editableInterview.date}
+                            onChange={e => setEditableInterview(p => ({ ...p, date: e.target.value }))}
+                          />
+                          {!isEditing && <Calendar size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />}
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Platform & Duration */}
-                  <div className="space-y-4">
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Platform</label>
-                      <div className="relative group">
+                    <div className="space-y-4">
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Time</label>
+                        <div className="relative group">
+                          <input
+                            type="time"
+                            readOnly={!isEditing}
+                            className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
+                            value={editableInterview.time}
+                            onChange={e => setEditableInterview(p => ({ ...p, time: e.target.value }))}
+                          />
+                          {!isEditing && <Clock size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Interviewer Row */}
+                    <div className="space-y-4 col-span-2">
+                      <div className="space-y-1.5 text-left relative">
+                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Interviewer</label>
+                        <input
+                          type="text"
+                          readOnly={!isEditing}
+                          className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
+                          value={editableInterview.interviewer}
+                          onChange={e => {
+                            setEditableInterview(p => ({ ...p, interviewer: e.target.value }));
+                            if (isEditing) setShowEditInterviewerSuggestions(true);
+                          }}
+                          onFocus={() => isEditing && setShowEditInterviewerSuggestions(true)}
+                          placeholder="Assign host..."
+                        />
+                        {showEditInterviewerSuggestions && isEditing && (
+                          <div className="absolute z-50 left-0 right-0 mt-2 bg-white border border-[#F4F3EF] rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                            {availableInterviewers
+                              .filter(s => s.name?.toLowerCase().includes((editableInterview.interviewer || "").toLowerCase()))
+                              .map(s => (
+                                <div
+                                  key={s.id}
+                                  className="px-4 py-3 hover:bg-[#FAFAF8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3 transition-colors text-left"
+                                  onClick={() => {
+                                    setEditableInterview(p => ({ ...p, interviewer: s.name, interviewerId: s.id }));
+                                    setShowEditInterviewerSuggestions(false);
+                                  }}
+                                >
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${getAvatarColor(s.name, s.name.charAt(0))}`}>
+                                    {s.name?.charAt(0)}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-[#1A1A2E]">{s.name}</p>
+                                    <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider">{s.role} • {s.department}</p>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Platform & Duration */}
+                    <div className="space-y-4">
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Platform</label>
+                        <div className="relative group">
+                          {isEditing ? (
+                            <select
+                              className="w-full bg-white border border-black rounded-xl px-3 py-2 text-sm font-bold text-[#0D47A1] outline-none shadow-sm"
+                              value={editableInterview.type}
+                              onChange={e => setEditableInterview(p => ({ ...p, type: e.target.value }))}
+                            >
+                              <option value="Video">Video Conference</option>
+                              <option value="In-Person">In-Person Meeting</option>
+                            </select>
+                          ) : (
+                            <div className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-[#0D47A1] rounded-lg text-[10px] font-black uppercase tracking-widest">
+                              {editableInterview.type}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Duration (Minutes)</label>
+                        <input
+                          type="number"
+                          readOnly={!isEditing}
+                          className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
+                          value={editableInterview.duration}
+                          onChange={e => setEditableInterview(p => ({ ...p, duration: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 col-span-2">
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Status</label>
                         {isEditing ? (
                           <select
-                            className="w-full bg-white border border-black rounded-xl px-3 py-2 text-sm font-bold text-[#0D47A1] outline-none shadow-sm"
-                            value={editableInterview.type}
-                            onChange={e => setEditableInterview(p => ({ ...p, type: e.target.value }))}
+                            className="w-full bg-white border border-black rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] outline-none shadow-sm"
+                            value={editableInterview.status}
+                            onChange={e => setEditableInterview(p => ({ ...p, status: e.target.value }))}
                           >
-                            <option value="Video">Video Conference</option>
-                            <option value="In-Person">In-Person Meeting</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="In-Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
                           </select>
                         ) : (
-                          <div className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-[#0D47A1] rounded-lg text-[10px] font-black uppercase tracking-widest">
-                            {editableInterview.type}
+                          <div className="mt-1">
+                            <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${STATUS_COLORS[editableInterview.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
+                              {editableInterview.status}
+                            </span>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
 
+                  <div className="h-px bg-[#F4F3EF]" />
+
+                  {/* Meeting Link Section */}
                   <div className="space-y-4">
                     <div className="space-y-1.5 text-left">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Duration (Minutes)</label>
-                      <input
-                        type="number"
-                        readOnly={!isEditing}
-                        className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
-                        value={editableInterview.duration}
-                        onChange={e => setEditableInterview(p => ({ ...p, duration: e.target.value }))}
-                      />
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Meeting Link</label>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
+                          <Video size={20} />
+                        </div>
+                        <input
+                          type="text"
+                          readOnly={!isEditing}
+                          className={`flex-1 bg-transparent rounded-xl px-3 py-2 text-sm font-medium text-blue-600 transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent hover:underline cursor-pointer'}`}
+                          value={editableInterview.meetingLink}
+                          onChange={e => setEditableInterview(p => ({ ...p, meetingLink: e.target.value }))}
+                          onClick={() => !isEditing && editableInterview.meetingLink && window.open(editableInterview.meetingLink, '_blank')}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-4 col-span-2">
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Status</label>
-                      {isEditing ? (
-                        <select
-                          className="w-full bg-white border border-black rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] outline-none shadow-sm"
-                          value={editableInterview.status}
-                          onChange={e => setEditableInterview(p => ({ ...p, status: e.target.value }))}
+                  {/* Briefing Notes */}
+                  {selectedInterview.notes && (
+                    <div className="space-y-4">
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Briefing Notes</label>
+                        <p className="text-sm text-[#6B6B7E] leading-relaxed italic ml-1">
+                          {selectedInterview.notes}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* New Schedule Interview Modal */}
+      <AnimatePresence>
+        {isScheduleModalOpen && (
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsScheduleModalOpen(false)}
+              className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden"
+            >
+              {/* Header */}
+              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                <div>
+                  <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Schedule New Interview</h3>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Appointment Slot</p>
+                </div>
+                <button onClick={() => setIsScheduleModalOpen(false)}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleScheduleSubmit} className="p-10 max-h-[75vh] overflow-y-auto dialog-scrollbar space-y-7 text-left">
+
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name *</label>
+                  <input
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                    placeholder="Enter candidate name"
+                    value={interviewForm.candidateName}
+                    onChange={(e) => { setInterviewForm({ ...interviewForm, candidateName: e.target.value }); setShowCandidateSuggestions(true); }}
+                    onFocus={() => setShowCandidateSuggestions(true)}
+                    required
+                  />
+                  <AnimatePresence>
+                    {showCandidateSuggestions && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-[130] w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        {(() => {
+                          const filtered = candidates.filter(c => (c.name || "").toLowerCase().includes((interviewForm.candidateName || "").toLowerCase().trim()));
+                          if (filtered.length === 0) return <div className="px-4 py-6 text-center text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest">No candidates found</div>;
+                          return filtered.map((c) => (
+                            <button key={c.id} type="button"
+                              onClick={() => { setInterviewForm({ ...interviewForm, candidateId: c.id, candidateName: c.name, candidateEmail: c.email, positionTitle: c.positionTitle, clientName: c.clientName }); setShowCandidateSuggestions(false); }}
+                              className="w-full text-left px-4 py-3 hover:bg-[#F8FAFF] transition-colors border-b border-[#F4F3EF] last:border-0">
+                              <p className="text-sm font-bold text-[#1A1A2E]">{c.name}</p>
+                              <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{c.email} • {c.positionTitle}</p>
+                            </button>
+                          ));
+                        })()}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Email</label>
+                  <input type="email"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                    placeholder="Enter candidate email"
+                    value={interviewForm.candidateEmail}
+                    onChange={(e) => setInterviewForm({ ...interviewForm, candidateEmail: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
+                  <input
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                    placeholder="e.g., Senior Software Engineer"
+                    value={interviewForm.positionTitle}
+                    onChange={(e) => setInterviewForm({ ...interviewForm, positionTitle: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
+                  <input
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                    placeholder="e.g., TechCorp India"
+                    value={interviewForm.clientName}
+                    onChange={(e) => setInterviewForm({ ...interviewForm, clientName: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
+                  <div className="relative">
+                    <select
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                      value={interviewForm.round}
+                      onChange={(e) => setInterviewForm({ ...interviewForm, round: e.target.value })}
+                    >
+                      <option value="Screening">Select Round</option>
+                      <option value="Phone Screening">Phone Screening</option>
+                      <option value="Technical Round">Technical Round</option>
+                      <option value="Client Interview">Client Interview</option>
+                      <option value="HR Round">HR Round</option>
+                      <option value="Final Round">Final Round</option>
+                    </select>
+                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Date *</label>
+                  <input type="date"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                    value={interviewForm.date}
+                    onChange={(e) => setInterviewForm({ ...interviewForm, date: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Time *</label>
+                  <input type="time"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
+                    value={interviewForm.time}
+                    onChange={(e) => setInterviewForm({ ...interviewForm, time: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
+                  <div className="relative">
+                    <select
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                      value={interviewForm.duration}
+                      onChange={(e) => setInterviewForm({ ...interviewForm, duration: e.target.value })}
+                    >
+                      <option value="30">30 mins</option>
+                      <option value="45">45 mins</option>
+                      <option value="60">60 mins</option>
+                      <option value="90">90 mins</option>
+                    </select>
+                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
+                  <div className="relative">
+                    <select
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                      value={interviewForm.meetingType}
+                      onChange={(e) => setInterviewForm({ ...interviewForm, meetingType: e.target.value })}
+                    >
+                      <option value="Video">Video Call</option>
+                      <option value="In-Person">In-Person</option>
+                      <option value="Phone">Phone Call</option>
+                    </select>
+                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Google Meet Link</label>
+                  <div className="flex gap-2">
+                    <input
+                      className="flex-1 bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                      placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                      value={interviewForm.meetingLink}
+                      onChange={(e) => setInterviewForm({ ...interviewForm, meetingLink: e.target.value })}
+                    />
+                    <button type="button"
+                      onClick={() => setInterviewForm({ ...interviewForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}` })}
+                      className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
+                      style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
+                      Generate
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name *</label>
+                  <input
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                    placeholder="Assign member"
+                    value={interviewForm.interviewerName}
+                    onChange={(e) => { setInterviewForm({ ...interviewForm, interviewerName: e.target.value }); setShowInterviewerSuggestions(true); }}
+                    onFocus={() => setShowInterviewerSuggestions(true)}
+                    required
+                  />
+                  <AnimatePresence>
+                    {showInterviewerSuggestions && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-[130] w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        {(() => {
+                          const filtered = availableInterviewers.filter(s => (s.name || "").toLowerCase().includes((interviewForm.interviewerName || "").toLowerCase().trim()));
+                          if (filtered.length === 0) return <div className="px-4 py-6 text-center text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest">No members found</div>;
+                          return filtered.map((s) => (
+                            <button key={s.id || s.name} type="button"
+                              onClick={() => { setInterviewForm({ ...interviewForm, interviewerId: s.id, interviewerName: s.name, interviewerRole: s.role }); setShowInterviewerSuggestions(false); }}
+                              className="w-full text-left px-4 py-3 hover:bg-[#F8FAFF] transition-colors border-b border-[#F4F3EF] last:border-0">
+                              <p className="text-sm font-bold text-[#1A1A2E]">{s.name}</p>
+                              <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{s.role} • {s.department}</p>
+                            </button>
+                          ));
+                        })()}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
+                  <input
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                    placeholder="e.g., Tech Lead"
+                    value={interviewForm.interviewerRole}
+                    onChange={(e) => setInterviewForm({ ...interviewForm, interviewerRole: e.target.value })}
+                  />
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="pt-4 flex gap-4">
+                  <button type="button" onClick={() => setIsScheduleModalOpen(false)}
+                    className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
+                    Cancel
+                  </button>
+                  <button type="submit"
+                    className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                    Schedule Interview
+                  </button>
+                </div>
+              </form>
+              {/* Feedback Modal Integration - Handled by standalone modal below */}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Candidate Feedback Modal */}
+      <AnimatePresence>
+        {showFeedbackModal && feedbackInterview && (
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFeedbackModal(false)}
+              className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden"
+            >
+              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                <div>
+                  <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Feedback</h3>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">{feedbackInterview.candidateName} · {feedbackInterview.role}</p>
+                </div>
+                <button onClick={() => setShowFeedbackModal(false)}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-10 space-y-7 text-left">
+                <div className="space-y-6">
+                  <div>
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block mb-3">Overall Rating</label>
+                    <div className="flex items-center gap-3">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setFeedbackForm({ ...feedbackForm, rating: star })}
+                          className="transition-all duration-300 transform hover:scale-110 active:scale-95"
                         >
-                          <option value="Scheduled">Scheduled</option>
-                          <option value="In-Progress">In Progress</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      ) : (
-                        <div className="mt-1">
-                          <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${STATUS_COLORS[editableInterview.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
-                            {editableInterview.status}
-                          </span>
-                        </div>
+                          <Star
+                            size={36}
+                            className={`transition-colors duration-300 ${star <= feedbackForm.rating
+                              ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                              : "text-[#E8E7E2] hover:text-amber-200"
+                              }`}
+                          />
+                        </button>
+                      ))}
+                      {feedbackForm.rating > 0 && (
+                        <span className="ml-4 text-lg font-bold text-[#1A1A2E] animate-in fade-in zoom-in duration-300">
+                          {feedbackForm.rating} / 5
+                        </span>
                       )}
                     </div>
                   </div>
-                </div>
 
-                <div className="h-px bg-[#F4F3EF]" />
-
-                {/* Meeting Link Section */}
-                <div className="space-y-4">
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Meeting Link</label>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
-                        <Video size={20} />
-                      </div>
-                      <input
-                        type="text"
-                        readOnly={!isEditing}
-                        className={`flex-1 bg-transparent rounded-xl px-3 py-2 text-sm font-medium text-blue-600 transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent hover:underline cursor-pointer'}`}
-                        value={editableInterview.meetingLink}
-                        onChange={e => setEditableInterview(p => ({ ...p, meetingLink: e.target.value }))}
-                        onClick={() => !isEditing && editableInterview.meetingLink && window.open(editableInterview.meetingLink, '_blank')}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block">Feedback Notes</label>
+                    <textarea
+                      rows={5}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-[24px] px-6 py-5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50 resize-none leading-relaxed"
+                      placeholder="Write a short summary of the candidate's performance..."
+                      value={feedbackForm.note}
+                      onChange={(e) => setFeedbackForm({ ...feedbackForm, note: e.target.value })}
+                    />
                   </div>
                 </div>
 
-                {/* Briefing Notes */}
-                {selectedInterview.notes && (
-                  <div className="space-y-4">
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Briefing Notes</label>
-                      <p className="text-sm text-[#6B6B7E] leading-relaxed italic ml-1">
-                        {selectedInterview.notes}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </>,
-        document.body
-      )}
+                {/* Footer Buttons */}
+                <div className="pt-4 flex gap-4">
+                  <button type="button" onClick={() => setShowFeedbackModal(false)}
+                    className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!feedbackForm.rating) {
+                        toast.error('Please provide a star rating');
+                        return;
+                      }
 
-      {/* New Schedule Interview Modal */}
-      {isScheduleModalOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
-          onClick={() => setIsScheduleModalOpen(false)}>
-          <style>{`
-            .dialog-scrollbar::-webkit-scrollbar { width: 6px; }
-            .dialog-scrollbar::-webkit-scrollbar-track { background: transparent; }
-            .dialog-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
-            .dialog-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-          `}</style>
-          <div
-            className="bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-              <div>
-                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Schedule New Interview</h3>
-                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Appointment Slot</p>
-              </div>
-              <button onClick={() => setIsScheduleModalOpen(false)}
-                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
-                <X size={20} />
-              </button>
-            </div>
+                      try {
+                        const payload = {
+                          overallRating: feedbackForm.rating,
+                          notes: feedbackForm.note,
+                          recommendation: feedbackForm.rating >= 4 ? 'Recommend' :
+                            feedbackForm.rating === 3 ? 'Maybe' : 'Not Recommend'
+                        };
 
-            <form onSubmit={handleScheduleSubmit} className="p-10 max-h-[75vh] overflow-y-auto dialog-scrollbar space-y-7 text-left">
+                        const res = await submitInterviewFeedback(feedbackInterview.id, payload);
 
-              <div className="space-y-1.5 relative">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name *</label>
-                <input
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                  placeholder="Enter candidate name"
-                  value={interviewForm.candidateName}
-                  onChange={(e) => { setInterviewForm({ ...interviewForm, candidateName: e.target.value }); setShowCandidateSuggestions(true); }}
-                  onFocus={() => setShowCandidateSuggestions(true)}
-                  required
-                />
-                <AnimatePresence>
-                  {showCandidateSuggestions && (
-                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                      className="absolute z-[130] w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                      {(() => {
-                        const filtered = candidates.filter(c => (c.name || "").toLowerCase().includes((interviewForm.candidateName || "").toLowerCase().trim()));
-                        if (filtered.length === 0) return <div className="px-4 py-6 text-center text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest">No candidates found</div>;
-                        return filtered.map((c) => (
-                          <button key={c.id} type="button"
-                            onClick={() => { setInterviewForm({ ...interviewForm, candidateId: c.id, candidateName: c.name, candidateEmail: c.email, positionTitle: c.positionTitle, clientName: c.clientName }); setShowCandidateSuggestions(false); }}
-                            className="w-full text-left px-4 py-3 hover:bg-[#F8FAFF] transition-colors border-b border-[#F4F3EF] last:border-0">
-                            <p className="text-sm font-bold text-[#1A1A2E]">{c.name}</p>
-                            <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{c.email} • {c.positionTitle}</p>
-                          </button>
-                        ));
-                      })()}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                        if (res.success) {
+                          const entry = { ...feedbackForm, candidateName: feedbackInterview.candidateName };
+                          const updated = { ...feedbackData, [feedbackInterview.id]: entry };
+                          setFeedbackData(updated);
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Email</label>
-                <input type="email"
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                  placeholder="Enter candidate email"
-                  value={interviewForm.candidateEmail}
-                  onChange={(e) => setInterviewForm({ ...interviewForm, candidateEmail: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
-                <input
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                  placeholder="e.g., Senior Software Engineer"
-                  value={interviewForm.positionTitle}
-                  onChange={(e) => setInterviewForm({ ...interviewForm, positionTitle: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
-                <input
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                  placeholder="e.g., TechCorp India"
-                  value={interviewForm.clientName}
-                  onChange={(e) => setInterviewForm({ ...interviewForm, clientName: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
-                <div className="relative">
-                  <select
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                    value={interviewForm.round}
-                    onChange={(e) => setInterviewForm({ ...interviewForm, round: e.target.value })}
-                  >
-                    <option value="Screening">Select Round</option>
-                    <option value="Phone Screening">Phone Screening</option>
-                    <option value="Technical Round">Technical Round</option>
-                    <option value="Client Interview">Client Interview</option>
-                    <option value="HR Round">HR Round</option>
-                    <option value="Final Round">Final Round</option>
-                  </select>
-                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Date *</label>
-                <input type="date"
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
-                  value={interviewForm.date}
-                  onChange={(e) => setInterviewForm({ ...interviewForm, date: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Time *</label>
-                <input type="time"
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
-                  value={interviewForm.time}
-                  onChange={(e) => setInterviewForm({ ...interviewForm, time: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
-                <div className="relative">
-                  <select
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                    value={interviewForm.duration}
-                    onChange={(e) => setInterviewForm({ ...interviewForm, duration: e.target.value })}
-                  >
-                    <option value="30">30 mins</option>
-                    <option value="45">45 mins</option>
-                    <option value="60">60 mins</option>
-                    <option value="90">90 mins</option>
-                  </select>
-                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
-                <div className="relative">
-                  <select
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                    value={interviewForm.meetingType}
-                    onChange={(e) => setInterviewForm({ ...interviewForm, meetingType: e.target.value })}
-                  >
-                    <option value="Video">Video Call</option>
-                    <option value="In-Person">In-Person</option>
-                    <option value="Phone">Phone Call</option>
-                  </select>
-                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Google Meet Link</label>
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                    value={interviewForm.meetingLink}
-                    onChange={(e) => setInterviewForm({ ...interviewForm, meetingLink: e.target.value })}
-                  />
-                  <button type="button"
-                    onClick={() => setInterviewForm({ ...interviewForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}` })}
-                    className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
-                    style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
-                    Generate
+                          toast.success('Feedback submitted and synced');
+                          setShowFeedbackModal(false);
+                          fetchInterviews(); // Refresh to show decision buttons
+                        } else {
+                          toast.error(res.message || 'Failed to submit feedback');
+                        }
+                      } catch (err) {
+                        console.error('Feedback Error:', err);
+                        toast.error('Error connecting to feedback gateway');
+                      }
+                    }}
+                    className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                    Submit Feedback
                   </button>
                 </div>
               </div>
-
-              <div className="space-y-1.5 relative">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name *</label>
-                <input
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                  placeholder="Assign member"
-                  value={interviewForm.interviewerName}
-                  onChange={(e) => { setInterviewForm({ ...interviewForm, interviewerName: e.target.value }); setShowInterviewerSuggestions(true); }}
-                  onFocus={() => setShowInterviewerSuggestions(true)}
-                  required
-                />
-                <AnimatePresence>
-                  {showInterviewerSuggestions && (
-                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                      className="absolute z-[130] w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                      {(() => {
-                        const filtered = availableInterviewers.filter(s => (s.name || "").toLowerCase().includes((interviewForm.interviewerName || "").toLowerCase().trim()));
-                        if (filtered.length === 0) return <div className="px-4 py-6 text-center text-[#9B9BAD] text-[10px] font-bold uppercase tracking-widest">No members found</div>;
-                        return filtered.map((s) => (
-                          <button key={s.id || s.name} type="button"
-                            onClick={() => { setInterviewForm({ ...interviewForm, interviewerId: s.id, interviewerName: s.name, interviewerRole: s.role }); setShowInterviewerSuggestions(false); }}
-                            className="w-full text-left px-4 py-3 hover:bg-[#F8FAFF] transition-colors border-b border-[#F4F3EF] last:border-0">
-                            <p className="text-sm font-bold text-[#1A1A2E]">{s.name}</p>
-                            <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{s.role} • {s.department}</p>
-                          </button>
-                        ));
-                      })()}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
-                <input
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                  placeholder="e.g., Tech Lead"
-                  value={interviewForm.interviewerRole}
-                  onChange={(e) => setInterviewForm({ ...interviewForm, interviewerRole: e.target.value })}
-                />
-              </div>
-
-              {/* Footer Buttons */}
-              <div className="pt-4 flex gap-4">
-                <button type="button" onClick={() => setIsScheduleModalOpen(false)}
-                  className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
-                  Cancel
-                </button>
-                <button type="submit"
-                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-                  Schedule Interview
-                </button>
-              </div>
-            </form>
-            {/* Feedback Modal Integration */}
-            {showFeedbackModal && (
-              <InterviewFeedbackModal
-                isOpen={showFeedbackModal}
-                onClose={() => setShowFeedbackModal(false)}
-                interview={selectedInterview}
-                onFeedbackSubmitted={() => {
-                  fetchInterviews();
-                  setShowFeedbackModal(false);
-                }}
-              />
-            )}
+            </motion.div>
           </div>
-        </div>
-      )}
-
-      {/* Candidate Feedback Modal */}
-      {showFeedbackModal && feedbackInterview && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
-          onClick={() => setShowFeedbackModal(false)}>
-          <div
-            className="bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-              <div>
-                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Feedback</h3>
-                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">{feedbackInterview.candidateName} · {feedbackInterview.role}</p>
-              </div>
-              <button onClick={() => setShowFeedbackModal(false)}
-                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-10 space-y-7 text-left">
-              <div className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block mb-3">Overall Rating</label>
-                  <div className="flex items-center gap-3">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setFeedbackForm({ ...feedbackForm, rating: star })}
-                        className="transition-all duration-300 transform hover:scale-110 active:scale-95"
-                      >
-                        <Star
-                          size={36}
-                          className={`transition-colors duration-300 ${star <= feedbackForm.rating
-                              ? "fill-amber-400 text-amber-400 drop-shadow-sm"
-                              : "text-[#E8E7E2] hover:text-amber-200"
-                            }`}
-                        />
-                      </button>
-                    ))}
-                    {feedbackForm.rating > 0 && (
-                      <span className="ml-4 text-lg font-bold text-[#1A1A2E] animate-in fade-in zoom-in duration-300">
-                        {feedbackForm.rating} / 5
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block">Feedback Notes</label>
-                  <textarea
-                    rows={5}
-                    className="w-full bg-[#F4F3EF] border-0 rounded-[24px] px-6 py-5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50 resize-none leading-relaxed"
-                    placeholder="Write a short summary of the candidate's performance..."
-                    value={feedbackForm.note}
-                    onChange={(e) => setFeedbackForm({ ...feedbackForm, note: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Footer Buttons */}
-              <div className="pt-4 flex gap-4">
-                <button type="button" onClick={() => setShowFeedbackModal(false)}
-                  className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!feedbackForm.rating) {
-                      toast.error('Please provide a star rating');
-                      return;
-                    }
-                    
-                    try {
-                      const payload = {
-                        overallRating: feedbackForm.rating,
-                        notes: feedbackForm.note,
-                        recommendation: feedbackForm.rating >= 4 ? 'Recommend' : 
-                                       feedbackForm.rating === 3 ? 'Maybe' : 'Not Recommend'
-                      };
-                      
-                      const res = await submitInterviewFeedback(feedbackInterview.id, payload);
-                      
-                      if (res.success) {
-                        const entry = { ...feedbackForm, candidateName: feedbackInterview.candidateName };
-                        const updated = { ...feedbackData, [feedbackInterview.id]: entry };
-                        setFeedbackData(updated);
-                        
-                        toast.success('Feedback submitted and synced');
-                        setShowFeedbackModal(false);
-                        fetchInterviews(); // Refresh to show decision buttons
-                      } else {
-                        toast.error(res.message || 'Failed to submit feedback');
-                      }
-                    } catch (err) {
-                      console.error('Feedback Error:', err);
-                      toast.error('Error connecting to feedback gateway');
-                    }
-                  }}
-                  className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-                  Submit Feedback
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Floating Bottom Action Bar */}
       <AnimatePresence>
