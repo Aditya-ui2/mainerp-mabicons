@@ -1085,14 +1085,27 @@ const OfferManagementTab = ({ isDarkMode }) => {
                                      }
                                      return o;
                                    }));
-                                   toast.success(`Success: Records Secured`, { id: loadingId });
+                                   toast.success(`Success: Credentials sent to ${finalEmail}`, { id: loadingId });
                                  } else {
                                    console.error('❌ Server logic failed:', response);
-                                   toast.error(`Control Error: ${response?.message || 'Gateway rejection'}`, { id: loadingId });
+                                   toast.error(`Error: ${response?.message || 'Gateway rejection'}`, { id: loadingId });
                                  }
                             } catch (err) {
                               console.error('❌ Console Protocol Error:', err);
-                              toast.error("Console Error: Protocol failed to reach gateway.", { id: loadingId });
+                              // Handle "already generated" case
+                              if (err?.data?.alreadyGenerated) {
+                                setOffers(prev => prev.map(o => {
+                                  const oId = String(o.id || o._id || '');
+                                  const tId = String(offer.id || offer._id || '');
+                                  if (oId === tId && oId !== '') {
+                                    return { ...o, bgvStatus: 'Sent', tempUsername: err.data.username };
+                                  }
+                                  return o;
+                                }));
+                                toast.info("Credentials already generated for this candidate", { id: loadingId });
+                              } else {
+                                toast.error(err?.message || "Console Error: Protocol failed to reach gateway.", { id: loadingId });
+                              }
                             }
                            }}
                           className={`${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#1967D2] hover:bg-[#185ABC]'} text-white px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-blue-500/10`}

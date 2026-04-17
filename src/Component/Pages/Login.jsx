@@ -392,7 +392,26 @@ const Login = () => {
       } else if (emailLower.includes('priyanshi') || emailLower.includes('manju') || emailLower.includes('jyoti')) {
         response = await departmentTeamLogin({ email: emailLower, password });
       } else {
-        // Default to admin login if pattern doesn't match
+        // Try candidate login first (for usernames without @), then fall back to admin
+        const { candidateLogin } = await import('./service/api');
+        try {
+          response = await candidateLogin({ email: emailLower, username: emailLower, password });
+          if (response && response.success) {
+            // Candidate login successful
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('userType', 'candidate');
+            localStorage.setItem('userName', response.data.name);
+            localStorage.setItem('userEmail', response.data.email || emailLower);
+            setToastMessage(`Welcome, ${response.data.name}!`);
+            setShowToast(true);
+            setIsError(false);
+            setTimeout(() => navigate('/candidate-dashboard'), 800);
+            return;
+          }
+        } catch (candidateErr) {
+          // Candidate login failed, try admin login
+          console.log('Candidate login failed, trying admin login...');
+        }
         response = await adminLogin({ email: emailLower, password });
       }
 
@@ -494,7 +513,7 @@ const Login = () => {
               <label className={`block text-sm font-medium mb-2 ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                Email Address
+                Email or Username
               </label>
               <div className="relative">
                 <input
@@ -503,8 +522,8 @@ const Login = () => {
                       ? 'bg-gray-700 text-white border-gray-600' 
                       : 'bg-gray-50 text-gray-900 border-gray-200'
                   } border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
-                  type="email"
-                  placeholder="you@example.com"
+                  type="text"
+                  placeholder="Email or Username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

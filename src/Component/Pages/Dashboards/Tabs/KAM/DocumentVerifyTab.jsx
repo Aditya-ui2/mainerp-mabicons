@@ -243,25 +243,27 @@ Mabicons Recruitment Team`);
                 <div className={`flex items-center gap-1.5 p-1.5 rounded-[1.25rem] border ${
                   isDarkMode ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-100/50 border-slate-100'
                 }`}>
-                  <div className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-[450px]">
+                  <div className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-[600px]">
                     {[
-                      { id: 'pan', label: 'PAN' },
-                      { id: 'aadhar', label: 'AADHAR' },
-                      { id: 'payslips', label: 'PAYSLIPS' },
-                      { id: 'bank_statement', label: 'BANK' },
-                      { id: 'degree', label: 'DEGREE' },
-                      { id: 'marksheet', label: 'MARKSHEET' },
+                      { id: 'pan', label: 'PAN', required: true },
+                      { id: 'aadhar', label: 'AADHAR', required: true },
+                      { id: 'payslips', label: 'PAYSLIPS', required: true },
+                      { id: 'bank_statement', label: 'BANK', required: true },
+                      { id: 'degree', label: 'DEGREE', required: true },
+                      { id: 'marksheet', label: 'MARKSHEET', required: true },
+                      { id: 'appointment_letter', label: 'APPT', required: false },
+                      { id: 'relieving_letter', label: 'RELIEVE', required: false },
                     ].map(doc => (
                       <button
                         key={doc.id}
                         onClick={() => setSelectedDocType(doc.id)}
-                        className={`px-4 py-2.5 rounded-xl text-[9px] uppercase font-bold tracking-widest transition-all whitespace-nowrap ${
+                        className={`px-3 py-2.5 rounded-xl text-[9px] uppercase font-bold tracking-widest transition-all whitespace-nowrap ${
                           selectedDocType === doc.id
                             ? (isDarkMode ? 'bg-[#1B4DA0] text-white shadow-lg' : 'bg-white shadow-md text-[#1B4DA0] ring-1 ring-[#1B4DA0]/5')
                             : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                         }`}
                       >
-                        {doc.label} {doc.id === 'pan' && <span className="text-rose-500">*</span>}
+                        {doc.label} {doc.required && <span className="text-rose-500">*</span>}
                       </button>
                     ))}
                   </div>
