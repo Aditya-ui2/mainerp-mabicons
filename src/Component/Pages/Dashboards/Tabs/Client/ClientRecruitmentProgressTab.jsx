@@ -497,11 +497,20 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
           const handleClick = () => {
             if (kpi.label === 'Open Positions') {
               if (computedSummary.openPositions > 0) setIsPositionsModalOpen(true);
-              else scrollToSection('positions-section');
+              else toast.error('No open positions found');
             }
-            else if (kpi.label === 'Candidates') setIsCandidatesModalOpen(true);
-            else if (kpi.label === 'Interviews') setIsInterviewsModalOpen(true);
-            else if (kpi.label === 'Hired') setIsHiredModalOpen(true);
+            else if (kpi.label === 'Candidates') {
+              if (computedSummary.inPipeline > 0) setIsCandidatesModalOpen(true);
+              else toast.error('No candidates in pipeline');
+            }
+            else if (kpi.label === 'Interviews') {
+              if (computedSummary.scheduledInterviews > 0) setIsInterviewsModalOpen(true);
+              else toast.error('No interviews scheduled');
+            }
+            else if (kpi.label === 'Hired') {
+              if (computedSummary.hired > 0) setIsHiredModalOpen(true);
+              else toast.error('No hired candidates found');
+            }
           };
 
           return (

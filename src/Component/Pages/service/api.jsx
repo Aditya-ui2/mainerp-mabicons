@@ -793,6 +793,30 @@ export const uploadAdminProfileImage = async (imageFile, adminId) => {
   }
 };
 
+// Function to upload client profile image
+export const uploadClientProfileImage = async (imageFile, clientId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('clientId', clientId);
+
+    const response = await axiosInstance.post('/client/uploadDP', formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Client image upload error:', error);
+    throw error.response?.data || {
+      message: 'Failed to upload logo'
+    };
+  }
+};
+
 // Add this to your api.jsx file
 export const createTaskByTL = async (taskData) => {
   try {

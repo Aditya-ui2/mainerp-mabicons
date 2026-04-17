@@ -66,7 +66,7 @@ const ClientJobsTab = lazy(() => import('./Tabs/Client/recruitment/ClientJobsTab
 const ClientCandidatesTab = lazy(() => import('./Tabs/Client/recruitment/ClientCandidatesTab'));
 const ClientInterviewsTab = lazy(() => import('./Tabs/Client/recruitment/ClientInterviewsTab'));
 const ClientFinalizedTab = lazy(() => import('./Tabs/Client/recruitment/ClientFinalizedTab'));
-const MyProfileTab = lazy(() => import('./Tabs/Common/MyProfileTab'));
+const ClientProfileTab = lazy(() => import('./Tabs/Client/ClientProfileTab'));
 
 /* ── Mock dashboard data ─────────────────────────────── */
 const MOCK_DASHBOARD = {
@@ -809,7 +809,7 @@ const ClientModularDashboard = () => {
       case 'Shortlisted Candidates':      return <ClientCandidatesTab {...tabProps} shortlistedOnly={true} />;
       case 'Interviews':                 return <ClientInterviewsTab {...tabProps} />;
       case 'Finalized & Offers':         return <ClientFinalizedTab {...tabProps} />;
-      case 'My Profile':                return <MyProfileTab isDarkMode={isDarkMode} />;
+      case 'My Profile':                return <ClientProfileTab isDarkMode={isDarkMode} />;
       default: return <p className="text-xl text-slate-500 font-medium">{activeTab}</p>;
     }
   };
@@ -844,7 +844,7 @@ const ClientModularDashboard = () => {
   const userInfo = {
     name: clientName,
     role: 'Client',
-    avatar: clientName.charAt(0).toUpperCase()
+    avatar: clientData?.profilePicture || clientData?.logo || clientName.charAt(0).toUpperCase()
   };
 
   return (
