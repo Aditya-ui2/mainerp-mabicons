@@ -37,7 +37,7 @@ const PerformanceTab = lazy(() => import('./Tabs/KAM/PerformanceTab'));
 const OffboardingTab = lazy(() => import('./Tabs/KAM/OffboardingTab'));
 const FnFTab = lazy(() => import('./Tabs/KAM/FnFTab'));
 const DocumentVerifyTab = lazy(() => import('./Tabs/KAM/DocumentVerifyTab'));
-const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
+const OperationsNotesTab = lazy(() => import('./Tabs/Common/OperationsNotesTab'));
 const EmployeeEngagementTab = lazy(() => import('./Tabs/KAM/EmployeeEngagementTab'));
 const TaskByClientTab = lazy(() => import('./Tabs/KAM/TaskByClientTab'));
 const LeaveManagementTab = lazy(() => import('./Tabs/KAM/LeaveManagementTab'));
@@ -49,8 +49,8 @@ const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
 
 // Team Management Tabs
 const TeamManagementTab = lazy(() => import('./Tabs/Common/TeamManagementTab'));
-const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
-const TaskAssignmentTab = lazy(() => import('./Tabs/Common/TaskAssignmentTab'));
+const ActivityFeedTab = lazy(() => import('./Tabs/Common/OperationsActivityFeedTab'));
+const TaskAssignmentTab = lazy(() => import('./Tabs/Common/OperationsTaskAssignmentTab'));
 
 // Tab Loader Skeleton
 const TabLoader = () => (
@@ -272,7 +272,7 @@ const HROperationsDashboard = () => {
             case 'Compliance':
               return <ComplianceTab />;
             case 'Notes':
-              return <NotesTab department="HR Operations" />;
+              return <OperationsNotesTab />;
             case 'Task Assignment':
               return <TaskAssignmentTab department="HR Operations" />;
             case 'Team Member':

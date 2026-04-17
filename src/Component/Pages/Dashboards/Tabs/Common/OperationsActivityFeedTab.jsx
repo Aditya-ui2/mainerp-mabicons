@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, Briefcase, UserPlus, CheckCircle2, MoreVertical,
@@ -20,13 +20,12 @@ const formatTimeAgo = (date) => {
 
 const formatActionName = (text) => {
   if (!text) return 'Registry Activity';
-  // Humanize common backend strings
   const map = {
-    'job_opening_created': 'Job Opening Created',
-    'new_candidate_applied': 'New Candidate Applied',
-    'interview_scheduled': 'Interview Scheduled',
+    'payroll_processed': 'Payroll Processed',
+    'compliance_updated': 'Compliance Updated',
+    'policy_updated': 'Policy Updated',
     'task_assigned': 'Task Assigned',
-    'offer_letter_generated': 'Offer Letter Generated'
+    'attendance_regularized': 'Attendance Regularized'
   };
   const key = text.toLowerCase();
   if (map[key]) return map[key];
@@ -36,9 +35,9 @@ const formatActionName = (text) => {
 
 const ActivityIcon = ({ type }) => {
   const map = {
-    job: { icon: Briefcase, bg: 'bg-[#EFF6FF]', color: 'text-[#3B82F6]' },
-    candidate: { icon: UserPlus, bg: 'bg-[#F5F3FF]', color: 'text-[#8B5CF6]' },
-    task: { icon: CheckCircle2, bg: 'bg-[#ECFDF5]', color: 'text-[#10B981]' },
+    payroll: { icon: CheckCircle2, bg: 'bg-[#EFF6FF]', color: 'text-[#3B82F6]' },
+    compliance: { icon: ShieldCheck, bg: 'bg-[#F5F3FF]', color: 'text-[#8B5CF6]' },
+    policy: { icon: Briefcase, bg: 'bg-[#ECFDF5]', color: 'text-[#10B981]' },
     default: { icon: Activity, bg: 'bg-[#F8FAFC]', color: 'text-[#64748B]' }
   };
   const config = map[type.toLowerCase()] || map.default;
@@ -50,27 +49,36 @@ const ActivityIcon = ({ type }) => {
   );
 };
 
-const MOCK_ACTIVITIES_RECRUITMENT = [
-  { _id: 'a1', action: 'job_opening_created', description: 'New position opened for Senior React Developer (TechNexus)', performedByName: 'Aravind Swamy', actionType: 'job', createdAt: new Date(Date.now() - 3600000).toISOString() },
-  { _id: 'a2', action: 'interview_scheduled', description: 'Technical interview scheduled for candidate "Aarti Singh"', performedByName: 'Rahul Kapoor', actionType: 'candidate', createdAt: new Date(Date.now() - 7200000).toISOString() },
-  { _id: 'a3', action: 'task_assigned', description: 'Screening task assigned to junior recruiter', performedByName: 'Aravind Swamy', actionType: 'task', createdAt: new Date(Date.now() - 10800000).toISOString() },
-];
-
 const MOCK_ACTIVITIES_OPERATIONS = [
-  { _id: 'a4', action: 'Payroll Processed', description: 'March 2024 payroll has been successfully processed for 50 employees.', performedByName: 'Priya Sharma', actionType: 'task', createdAt: new Date(Date.now() - 1800000).toISOString() },
-  { _id: 'a5', action: 'Compliance Update', description: 'PF and ESI contribution reports generated for Q1.', performedByName: 'Sameer Khan', actionType: 'job', createdAt: new Date(Date.now() - 5400000).toISOString() },
-  { _id: 'a6', action: 'Policy Updated', description: 'New Remote Work Policy has been published to all staff.', performedByName: 'Priya Sharma', actionType: 'default', createdAt: new Date(Date.now() - 14400000).toISOString() },
+  { _id: 'a4', action: 'Payroll Processed', description: 'March 2024 payroll has been successfully processed for 50 employees.', performedByName: 'Priya Sharma', actionType: 'payroll', createdAt: new Date(Date.now() - 1800000).toISOString() },
+  { _id: 'a5', action: 'Compliance Update', description: 'PF and ESI contribution reports generated for Q1.', performedByName: 'Sameer Khan', actionType: 'compliance', createdAt: new Date(Date.now() - 5400000).toISOString() },
+  { _id: 'a6', action: 'Policy Updated', description: 'New Remote Work Policy has been published to all staff.', performedByName: 'Priya Sharma', actionType: 'policy', createdAt: new Date(Date.now() - 14400000).toISOString() },
 ];
 
-const ActivityFeedTab = ({ department = 'HR Operations' }) => {
-  const [activities, setActivities] = useState(department === 'HR Recruitment' ? MOCK_ACTIVITIES_RECRUITMENT : MOCK_ACTIVITIES_OPERATIONS);
+const OperationsActivityFeedTab = () => {
+  const department = 'HR Operations';
+  const [activities, setActivities] = useState(MOCK_ACTIVITIES_OPERATIONS);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
 
+  const fetchActivities = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getDepartmentActivityLogs(department, 50);
+      const apiActivities = response.activities || [];
+      setActivities([...MOCK_ACTIVITIES_OPERATIONS, ...apiActivities]);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      setActivities(MOCK_ACTIVITIES_OPERATIONS);
+    } finally {
+      setLoading(false);
+    }
+  }, [department]);
+
   useEffect(() => {
     fetchActivities();
-  }, [department]);
+  }, [fetchActivities]);
 
   const filteredActivities = activities.filter(activity => {
     const matchesSearch =
@@ -100,22 +108,6 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
     return matchesSearch && matchesDate;
   });
 
-  const fetchActivities = async () => {
-    try {
-      setLoading(true);
-      const response = await getDepartmentActivityLogs(department, 50);
-      const apiActivities = response.activities || [];
-      const mockActivities = department === 'HR Recruitment' ? MOCK_ACTIVITIES_RECRUITMENT : MOCK_ACTIVITIES_OPERATIONS;
-      setActivities([...mockActivities, ...apiActivities]);
-    } catch (error) {
-      console.error('Error fetching activities:', error);
-      const mockActivities = department === 'HR Recruitment' ? MOCK_ACTIVITIES_RECRUITMENT : MOCK_ACTIVITIES_OPERATIONS;
-      setActivities(mockActivities);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-3 font-sans">
@@ -126,24 +118,22 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   }
 
   return (
-    <div className="p-0 min-h-screen bg-[#FDFDFD] dark:bg-slate-950 text-left">
+    <div className="p-0 min-h-screen bg-[#FDFDFD] text-left">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif !important; }
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
       `}</style>
       <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
-        {/* Structural Header (Match Screenshot exactly) */}
         <div className="mb-10 flex justify-between items-center text-left">
           <div>
-            <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Activity Feed</h1>
+            <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] tracking-tight">Activity Feed</h1>
 
           </div>
+
         </div>
 
-        {/* Unified Filter Bar */}
-        <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-3 flex-wrap">
-          {/* Search Bar */}
+        <div className="bg-white rounded-[24px] p-2 mb-8 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 group min-w-[200px]">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
             <input
@@ -151,16 +141,15 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by action, description, or team member..."
-              className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white"
+              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-[#9B9BAD]"
             />
           </div>
 
-          {/* Date Filter */}
-          <div className="relative">
+          <div className="relative group">
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="bg-[#F4F3EF] dark:bg-slate-900 text-xs font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
             >
               <option value="all">All Registry</option>
               <option value="today">Today</option>
@@ -169,27 +158,20 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
           </div>
-
-
-
         </div>
 
-        {/* Main Feed Container */}
-        <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
-
-          {/* Timeline Header Area */}
-          <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50">
+        <div className="bg-[#FFFFFF] rounded-[32px] border border-[#F4F3EF] shadow-sm relative overflow-hidden text-left">
+          <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] bg-[#FAFAFA]/50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
                 <Activity size={20} strokeWidth={2} />
               </div>
-              <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Operation Timeline</h3>
+              <h3 className="text-xl font-bold font-syne text-[#1A1A2E] tracking-tight">Operation Timeline</h3>
             </div>
           </div>
-          {/* Vertical Bridge Line */}
-          <div className="absolute left-[88px] lg:left-[108px] top-[140px] bottom-[40px] w-px bg-[#F4F3EF] dark:bg-slate-800 pointer-events-none hidden sm:block" />
 
-          {/* Timeline List */}
+          <div className="absolute left-[88px] lg:left-[108px] top-[140px] bottom-[40px] w-px bg-[#F4F3EF] pointer-events-none hidden sm:block" />
+
           <div className="px-8 py-12 space-y-12 relative z-10">
             <AnimatePresence>
               {filteredActivities.map((activity, index) => (
@@ -200,45 +182,38 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
                   transition={{ delay: index * 0.02 }}
                   className="flex items-start group relative text-left"
                 >
-                  {/* 1. Time Column */}
                   <div className="w-20 lg:w-28 flex-shrink-0 pt-3 text-right pr-6 lg:pr-8 hidden sm:block">
                     <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
                       {formatTimeAgo(activity.createdAt)}
                     </span>
                   </div>
 
-                  {/* 2. Marker Column */}
                   <div className="relative z-10 flex-shrink-0 hidden sm:block">
                     <div className="group-hover:scale-110 transition-transform duration-500">
                       <ActivityIcon type={activity.actionType || 'default'} />
                     </div>
                   </div>
 
-                  {/* 3. Card Column */}
                   <div className="ml-0 sm:ml-6 lg:ml-8 flex-1">
-                    <div className="bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative group-hover:-translate-y-1 text-left">
+                    <div className="bg-white p-6 lg:p-8 rounded-[32px] border border-[#F4F3EF] shadow-sm hover:shadow-2xl transition-all duration-500 relative group-hover:-translate-y-1 text-left">
                       <div className="flex justify-between items-start">
                         <div className="space-y-4 flex-1">
-                          {/* Type Chip */}
-                          <div className="inline-flex px-3 py-1 bg-[#EEF2FB] dark:bg-slate-800 border border-[#DBEAFE] dark:border-slate-700 rounded-lg">
-                            <span className="text-[9px] font-bold text-[#1B4DA0] dark:text-blue-400 uppercase tracking-widest">
+                          <div className="inline-flex px-3 py-1 bg-[#EEF2FB] border border-[#DBEAFE] rounded-lg">
+                            <span className="text-[9px] font-bold text-[#1B4DA0] uppercase tracking-widest">
                               {activity.actionType || 'GENERIC'}
                             </span>
                           </div>
 
-                          {/* Text Content */}
                           <div>
-                            <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2">
+                            <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] tracking-tight leading-none mb-2">
                               {formatActionName(activity.action)}
                             </h4>
-                            <p className="text-[#64748B] dark:text-slate-400 text-[13px] font-medium leading-relaxed opacity-80 mt-2">
+                            <p className="text-[#64748B] text-[13px] font-medium leading-relaxed opacity-80 mt-2">
                               {activity.description}
                             </p>
                           </div>
                         </div>
                       </div>
-
-                      {/* Design Glow */}
                       <div className="absolute -right-2 -bottom-2 w-24 h-24 bg-[#1B4DA0]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     </div>
                   </div>
@@ -254,7 +229,6 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
           </div>
         </div>
 
-        {/* Neural Branding Footer */}
         <div className="mt-16 py-10 opacity-30 text-center">
           <p className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-[6px]">Neural Intelligence Feed • Managed Architecture</p>
         </div>
@@ -263,4 +237,4 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   );
 };
 
-export default ActivityFeedTab;
+export default OperationsActivityFeedTab;
