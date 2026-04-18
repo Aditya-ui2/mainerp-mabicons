@@ -151,7 +151,7 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
             className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
           >
             <FiPlus size={14} />
-            Invite Member
+             Add Team
           </button>
         </div>
       </div>
@@ -453,7 +453,7 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
                     <FiPlus size={20} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">Invite Member</h3>
+                    <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">Add Team </h3>
                     <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] mt-0.5">New Team Addition</p>
                   </div>
                 </div>

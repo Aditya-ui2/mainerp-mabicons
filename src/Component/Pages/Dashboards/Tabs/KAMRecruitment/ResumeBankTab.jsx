@@ -66,29 +66,27 @@ const StatusBadge = ({ status }) => {
 const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSelected, onToggleSelect }) => (
   <div
     onClick={() => onViewProfile(resume.id)}
-    className={`group px-8 py-3 border-b transition-all duration-300 cursor-pointer overflow-hidden relative flex items-center gap-6 ${isSelected
+    className={`group px-8 py-3 border-b border-[#F4F3EF] last:border-0 transition-all duration-300 cursor-pointer overflow-hidden relative grid grid-cols-[1.5fr_1fr_100px] items-center gap-6 hover:bg-[#F8FAFF] ${isSelected
       ? (isDarkMode ? 'bg-blue-500/10 border-blue-500/20' : 'bg-[#F0F7FF] border-[#D0E5FF]')
-      : (isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700/50' : 'bg-white border-[#F4F3EF] hover:bg-[#FAFAF8]')
+      : (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white')
       }`}
   >
-
-
     {/* Candidate Info */}
-    <div className="flex-1 min-w-[200px] flex flex-col justify-center">
+    <div className="flex flex-col justify-center">
       <h3 className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
         {cleanCandidateName(resume.candidateName || resume.fileName.split('.')[0])}
       </h3>
     </div>
 
     {/* Role Info */}
-    <div className="w-[200px] flex-shrink-0">
-      <p className="text-[13px] font-medium text-[#64748b] dark:text-slate-400 truncate text-left">
+    <div className="flex justify-center">
+      <p className="text-[13px] font-medium text-[#64748b] dark:text-slate-400 truncate text-center">
         {resume.roleType || 'General Profile'}
       </p>
     </div>
 
     {/* Actions */}
-    <div className="flex items-center gap-3 w-[140px] flex-shrink-0">
+    <div className="flex items-center justify-center">
       <button
         onClick={(e) => { e.stopPropagation(); onPreviewResume(resume.id, resume.fileName); }}
         className="flex items-center gap-2 px-3 py-1.5 bg-[#F4F3EF] dark:bg-slate-700 text-[#6B6B7E] dark:text-slate-300 rounded-lg text-[11px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
@@ -633,11 +631,10 @@ const ResumeBankTab = () => {
 
       {/* Profile Deck - Table Interface */}
       <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-20">
-        <div className="flex items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-[#FAFAFA] dark:bg-slate-800/50">
-
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest flex-1 min-w-[200px] text-left">Candidate</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[200px] flex-shrink-0 text-left">Roles</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-[140px] flex-shrink-0 text-left">Actions</span>
+        <div className="grid grid-cols-[1.5fr_1fr_100px] items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Candidate</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Roles</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Actions</span>
         </div>
 
         {loading ? (
@@ -651,7 +648,7 @@ const ResumeBankTab = () => {
             <h3 className="text-xl font-bold mb-2 font-syne">No Profiles Found</h3>
           </div>
         ) : (
-          <div className="divide-y divide-[#F4F3EF] dark:divide-slate-700">
+          <div>
             {resumes.map(resume => (
               <ResumeCard
                 key={resume.id}

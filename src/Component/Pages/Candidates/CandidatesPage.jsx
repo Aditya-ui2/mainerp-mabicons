@@ -953,7 +953,7 @@ Mabicons Recruitment Team`);
                       {selectedIds.length === candidates.length ? <CheckSquare size={16} /> : <Square size={16} />}
                     </button>
                   </th>
-                  {["Candidate Info", "Department / Role", "Applied Date", "Pipeline Stage", "Quick Actions", ""].map((h) => (
+                  {["Candidate Info", "Position", "Applied Date", "Pipeline Stage", "Quick Actions", ""].map((h) => (
                     <th key={h} className={`py-[25px] px-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${h === "" ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>

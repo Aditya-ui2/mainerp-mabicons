@@ -43,6 +43,7 @@ import {
   FiArrowRight,
   FiShield,
   FiCheck,
+  FiLoader,
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import AdminLayout, { StatCard } from './AdminLayout';
@@ -386,15 +387,15 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
               className="flex items-center gap-2 px-4 py-2 bg-[#1B4DA0] hover:bg-[#153b7a] text-white rounded-xl text-sm font-semibold transition-all shadow-sm whitespace-nowrap"
             >
               <FiPlus className="w-4 h-4" strokeWidth="3" />
-              <span>Invite Member</span>
+              <span>Add Team Member</span>
             </button>
           )}
         </div>
       </div>
 
       {/* Team Directory Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100/60 overflow-hidden relative">
-        <div className="px-6 py-4 border-b border-gray-100">
+      <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden relative">
+        <div className="px-6 py-4 border-b border-[#F4F3EF]">
           <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
             <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
               <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
@@ -406,77 +407,67 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
         </div>
 
         <div className="overflow-x-auto min-h-[300px]">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-100 text-left bg-transparent">
-                <th className="py-4 pl-6 pr-4 w-12">
+          {/* Grid Header */}
+          <div className="grid grid-cols-[40px_1.5fr_1fr_1.5fr_100px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={selectedKAMs.length > 0 && selectedKAMs.length === filteredTeamData.length}
+                onChange={toggleAll}
+                style={{ accentColor: '#2563eb' }}
+                className="w-4 h-4 rounded text-[#2563eb] cursor-pointer"
+              />
+            </div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Member</div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Role</div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Email</div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Contact</div>
+          </div>
+
+          {/* Grid Rows */}
+          {loading ? (
+            <div className="py-12 text-center text-[#94a3b8] font-medium">Loading members...</div>
+          ) : filteredTeamData.length === 0 ? (
+            <div className="py-12 text-center text-[#94a3b8] font-medium">No members found matching your filters.</div>
+          ) : (
+            filteredTeamData.map((kam) => (
+              <div
+                key={kam.id}
+                onClick={() => onViewKAM(kam)}
+                className="grid grid-cols-[40px_1.5fr_1fr_1.5fr_100px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
+              >
+                <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
-                    checked={selectedKAMs.length > 0 && selectedKAMs.length === filteredTeamData.length}
-                    onChange={toggleAll}
+                    checked={selectedKAMs.includes(kam.id)}
+                    onChange={() => toggleSelection(kam.id)}
                     style={{ accentColor: '#2563eb' }}
                     className="w-4 h-4 rounded text-[#2563eb] cursor-pointer"
                   />
-                </th>
-                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Member</th>
-                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Role</th>
-                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Email Address</th>
-                <th className="py-4 pl-4 pr-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-24">Contact</th>
-                <th className="py-4 pr-6 w-12"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 text-left">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="py-12 text-center text-[#94a3b8] font-medium">Loading members...</td>
-                </tr>
-              ) : filteredTeamData.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-12 text-center text-[#94a3b8] font-medium">No members found matching your filters.</td>
-                </tr>
-              ) : (
-                filteredTeamData.map((kam) => (
-                  <tr key={kam.id} onClick={() => onViewKAM(kam)} className="hover:bg-gray-50/50 transition-colors group cursor-pointer">
-                    <td className="py-4 pl-6 pr-4" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedKAMs.includes(kam.id)}
-                        onChange={() => toggleSelection(kam.id)}
-                        style={{ accentColor: '#2563eb' }}
-                        className="w-4 h-4 rounded text-[#2563eb] cursor-pointer"
-                      />
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-4">
-                        {kam.profilePhoto ? (
-                          <img src={kam.profilePhoto} alt={kam.name} className="w-[42px] h-[42px] rounded-[14px] object-cover border border-[#E0E7FF] flex-shrink-0" />
-                        ) : (
-                          <div className="w-[42px] h-[42px] rounded-[14px] bg-[#F0F7FF] flex items-center justify-center text-[13px] font-bold text-[#1B4DA0] border border-[#E0E7FF] flex-shrink-0">
-                            {kam.avatar}
-                          </div>
-                        )}
-                        <span className="text-[14px] font-bold text-[#0f172a]">{kam.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="text-[13px] font-medium text-[#64748b]">{kam.role}</span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="text-[13px] font-medium text-[#64748b]">{kam.email}</span>
-                    </td>
-                    <td className="py-4 pl-4 pr-6">
-                      <div className="flex items-center gap-3">
-                        <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiMail className="w-[15px] h-[15px] stroke-[2.5]" /></button>
-                        <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiPhone className="w-[15px] h-[15px] stroke-[2.5]" /></button>
-                      </div>
-                    </td>
-                    <td className="py-4 pr-6 text-right">
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </div>
+                <div className="flex items-center gap-4">
+                  {kam.profilePhoto ? (
+                    <img src={kam.profilePhoto} alt={kam.name} className="w-[42px] h-[42px] rounded-[14px] object-cover border border-[#E0E7FF] flex-shrink-0" />
+                  ) : (
+                    <div className="w-[42px] h-[42px] rounded-[14px] bg-[#F0F7FF] flex items-center justify-center text-[13px] font-bold text-[#1B4DA0] border border-[#E0E7FF] flex-shrink-0">
+                      {kam.avatar}
+                    </div>
+                  )}
+                  <span className="text-[14px] font-bold text-[#0f172a]">{kam.name}</span>
+                </div>
+                <div>
+                  <span className="text-[13px] font-medium text-[#64748b]">{kam.role}</span>
+                </div>
+                <div>
+                  <span className="text-[13px] font-medium text-[#64748b]">{kam.email}</span>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiMail className="w-[15px] h-[15px] stroke-[2.5]" /></button>
+                  <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiPhone className="w-[15px] h-[15px] stroke-[2.5]" /></button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Floating Action Bar */}
@@ -3039,38 +3030,46 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       {!isEditingNote ? (
-                        <button
-                          onClick={() => {
-                            setNoteEditForm({ title: selectedNote.title, content: selectedNote.content });
-                            setIsEditingNote(true);
-                          }}
-                          className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#1B4DA0] hover:bg-blue-50 dark:hover:bg-slate-700 transition-all flex items-center justify-center shadow-sm"
-                          title="Edit Note"
-                        >
-                          <FiEdit2 size={16} />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleDeleteNote(selectedNote?._id || selectedNote?.id)}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:text-rose-500 transition-all flex items-center justify-center shadow-sm"
+                            title="Delete Note"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setNoteEditForm({ title: selectedNote.title, content: selectedNote.content });
+                              setIsEditingNote(true);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-[#1B4DA0] transition-all flex items-center justify-center shadow-sm"
+                            title="Edit Note"
+                          >
+                            <FiEdit2 size={16} />
+                          </button>
+                        </>
                       ) : (
-                        <button
-                          onClick={() => {
-                            handleUpdateSelectedNote();
-                            setIsEditingNote(false);
-                          }}
-                          className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all flex items-center justify-center shadow-sm"
-                          title="Save Note"
-                        >
-                          <FiCheck size={18} />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => setIsEditingNote(false)}
+                            className="px-5 py-2.5 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleUpdateSelectedNote();
+                              setIsEditingNote(false);
+                            }}
+                            disabled={isSavingNote}
+                            className="px-5 py-2.5 rounded-xl bg-[#0D47A1] text-white text-sm font-medium hover:bg-[#0a3a85] transition-all flex items-center gap-2 shadow-md shadow-blue-500/20 disabled:opacity-50"
+                          >
+                            {isSavingNote ? <FiLoader size={14} className="animate-spin" /> : <FiCheck size={14} />}
+                            Save Changes
+                          </button>
+                        </>
                       )}
-                      <button
-                        onClick={() => {
-                          if (isEditingNote) handleUpdateSelectedNote();
-                          setSelectedNote(null);
-                          setIsEditingNote(false);
-                        }}
-                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
-                      >
-                        <FiX size={18} />
-                      </button>
                     </div>
                   </div>
 
@@ -3100,28 +3099,6 @@ const RecruitmentHeadDashboard = () => {
                         )}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="p-10 border-t border-[#F4F3EF] dark:border-slate-800 bg-[#FBFBFF] dark:bg-slate-950 flex gap-4">
-                    <button
-                      onClick={() => {
-                        if (isEditingNote) handleUpdateSelectedNote();
-                        setSelectedNote(null);
-                        setIsEditingNote(false);
-                      }}
-                      className="flex-[1] py-5 bg-white dark:bg-slate-900 border-2 border-[#F4F3EF] dark:border-slate-800 text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
-                    >
-                      Close
-                    </button>
-                    <button
-                      onClick={() => handleDeleteNote(selectedNote?._id || selectedNote?.id)}
-                      disabled={isSavingNote}
-                      className="flex-[2] py-5 bg-white dark:bg-slate-900 border-2 border-red-50 text-red-500 rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-red-50 dark:hover:bg-red-900/20 transition-all shadow-sm flex items-center justify-center gap-2"
-                    >
-                      <FiTrash2 size={14} />
-                      Delete Intelligence Note
-                    </button>
                   </div>
                 </motion.div>
               </>
@@ -3244,7 +3221,7 @@ const RecruitmentHeadDashboard = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setIsEditingInDetail(false)}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+                        className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
                       >
                         Cancel
                       </button>
@@ -3263,27 +3240,36 @@ const RecruitmentHeadDashboard = () => {
                             setIsSavingDetail(false);
                           }
                         }}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center gap-2 shadow-md shadow-blue-500/10"
+                        className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center gap-2 shadow-md shadow-blue-500/10"
                       >
-                        {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
-                        {isSavingDetail ? 'Saving...' : 'Save'}
+                        {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiCheck className="w-3.5 h-3.5" />}
+                        {isSavingDetail ? 'Saving...' : 'Save Changes'}
                       </button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setIsEditingInDetail(true)}
-                      className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300"
-                      title="Edit Member"
-                    >
-                      <FiEdit2 size={18} />
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setShowHandoverModal(true)}
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300"
+                        title="Work Handover"
+                      >
+                        <FiRefreshCw size={18} />
+                      </button>
+                      <button
+                        onClick={() => setIsEditingInDetail(true)}
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300"
+                        title="Edit Member"
+                      >
+                        <FiEdit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => setShowKAMModal(false)}
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+                      >
+                        <FiX className="w-5 h-5" />
+                      </button>
+                    </>
                   )}
-                  <button
-                    onClick={() => setShowKAMModal(false)}
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
-                  >
-                    <FiX className="w-5 h-5" />
-                  </button>
                 </div>
               </div>
 
@@ -3395,55 +3381,7 @@ const RecruitmentHeadDashboard = () => {
                 </div>
               </div>
 
-              {/* Drawer Footer */}
-              <div className="p-6 border-t border-[#F4F3EF] flex gap-3">
-                {isEditingInDetail ? (
-                  <>
-                    <button
-                      disabled={isSavingDetail}
-                      onClick={async () => {
-                        try {
-                          setIsSavingDetail(true);
-                          await updateKAMMember(editableMember.id, editableMember);
-                          setKamTeam(prev => prev.map(m => m.id === editableMember.id ? { ...m, ...editableMember } : m));
-                          setSelectedKAM({ ...selectedKAM, ...editableMember });
-                          setIsEditingInDetail(false);
-                        } catch (error) {
-                          showToast(error.message || 'Failed to update member', 'error');
-                        } finally {
-                          setIsSavingDetail(false);
-                        }
-                      }}
-                      className="flex-1 py-3 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-500/10"
-                    >
-                      {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
-                      {isSavingDetail ? 'Saving...' : 'Save Changes'}
-                    </button>
-                    <button
-                      onClick={() => setIsEditingInDetail(false)}
-                      className="flex-1 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setShowHandoverModal(true)}
-                      className="flex-1 py-3 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-500/10"
-                    >
-                      <FiRefreshCw className="w-3.5 h-3.5" />
-                      Work Handover
-                    </button>
-                    <button
-                      onClick={() => setShowKAMModal(false)}
-                      className="flex-1 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
-                    >
-                      Close
-                    </button>
-                  </>
-                )}
-              </div>
+
             </motion.div>
           </React.Fragment>
         )}

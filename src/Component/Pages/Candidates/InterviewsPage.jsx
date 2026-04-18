@@ -806,7 +806,7 @@ export default function InterviewsPage() {
               className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
             />
           </div>
-          {["Time & Date", "Candidate", "Client", "Role / Job", "Host", "Status", "Actions", ""].map((h, i) => (
+          {["Time & Date", "Candidate", "Client", "Postion", "Host", "Status", "Actions", ""].map((h, i) => (
             <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start">
               {h}
             </div>
@@ -865,7 +865,7 @@ export default function InterviewsPage() {
                   {interview.clientName}
                 </div>
 
-                {/* Role / Job */}
+                {/* Position */}
                 <div className="flex flex-col justify-center items-start min-w-0 py-1">
                   <p className="text-[13px] font-bold text-[#1A1A2E] truncate text-left">{interview.role}</p>
                   <div className="flex items-center justify-start gap-1 mt-0.5 opacity-50">

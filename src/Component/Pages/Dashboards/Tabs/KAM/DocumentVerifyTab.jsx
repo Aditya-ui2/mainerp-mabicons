@@ -316,14 +316,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
           </h1>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={handleSync}
-            disabled={isSyncing}
-            className="flex items-center gap-2 px-6 py-3 bg-white border border-[#F4F3EF] rounded-2xl text-[11px] font-bold text-[#1B4DA0] uppercase tracking-[2px] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
-            {isSyncing ? 'Syncing...' : 'Sync Data'}
-          </button>
+          
         </div>
       </div>
 
@@ -361,10 +354,10 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
       {/* Table Interface */}
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
         {/* Table Header */}
-        <div className="grid grid-cols-[1.5fr_1.5fr_2fr_100px_120px_40px] gap-6 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
-          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Candidate</div>
-          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Position</div>
-          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Email</div>
+        <div className="grid grid-cols-[minmax(200px,1.5fr)_1.5fr_1.5fr_120px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest pl-4">Candidate</div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Position</div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Client</div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Documents</div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Actions</div>
           <div></div>
@@ -383,23 +376,29 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
               <div
                 key={candidate.id}
                 onClick={() => { setSelectedCandidate(candidate); setSelectedDocType('pan_front'); setOpenDropdown(null); }}
-                className={`grid grid-cols-[1.5fr_1.5fr_2fr_100px_120px_40px] gap-6 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative`}
+                className={`grid grid-cols-[minmax(200px,1.5fr)_1.5fr_1.5fr_120px_140px_40px] gap-4 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative`}
               >
                 {/* Candidate Name */}
-                <div className="flex items-center">
+                <div className="flex items-center pl-4">
                   <p className="text-[14px] font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">
                     {candidate.name || 'Unknown'}
                   </p>
                 </div>
 
                 {/* Position */}
-                <div>
-                  <p className="text-[13px] font-semibold text-[#1A1A2E]">{candidate.position?.title || candidate.jobTitle || 'Not Assigned'}</p>
+                <div className="text-center">
+                  <p className="text-[13px] font-semibold text-[#1A1A2E]">{
+                    (() => {
+                      const posTitle = candidate.position?.title || candidate.jobTitle || candidate.positionTitle || 'Not Assigned';
+                      // Remove trailing " - N" pattern (where N is a number)
+                      return posTitle.replace(/\s*-\s*\d+$/, '');
+                    })()
+                  }</p>
                 </div>
 
-                {/* Email */}
-                <div className="min-w-0">
-                  <p className="text-[13px] font-medium text-[#64748b] truncate">{candidate.email || 'No email'}</p>
+                {/* Client */}
+                <div className="min-w-0 text-center">
+                  <p className="text-[13px] font-semibold text-[#1A1A2E] truncate">{candidate.clientName || candidate.client?.companyName || candidate.client?.name || candidate.position?.clientName || 'Not Assigned'}</p>
                 </div>
 
                 {/* Documents Status */}

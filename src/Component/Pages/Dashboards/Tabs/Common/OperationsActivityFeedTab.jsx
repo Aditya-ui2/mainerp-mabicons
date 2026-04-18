@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, Briefcase, UserPlus, CheckCircle2, MoreVertical,
-  ShieldCheck, RefreshCw, Search, ChevronDown, Calendar, X
+  ShieldCheck, RefreshCw, Search, ChevronDown, Calendar, X, Clock,
+  FileText, User
 } from 'lucide-react';
 import { toast } from "sonner";
 import { getDepartmentActivityLogs } from '../../../service/api';
@@ -43,8 +45,8 @@ const ActivityIcon = ({ type }) => {
   const config = map[type.toLowerCase()] || map.default;
   const Icon = config.icon;
   return (
-    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${config.bg} ${config.color}`}>
-      <Icon size={18} strokeWidth={1.5} />
+    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center ${config.bg} ${config.color} shadow-sm`}>
+      <Icon size={20} strokeWidth={1.5} />
     </div>
   );
 };
@@ -61,6 +63,7 @@ const OperationsActivityFeedTab = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
+  const [selectedActivity, setSelectedActivity] = useState(null);
 
   const fetchActivities = useCallback(async () => {
     try {
@@ -123,7 +126,106 @@ const OperationsActivityFeedTab = () => {
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif !important; }
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 100px; }
       `}</style>
+
+      {/* Activity Detail Drawer */}
+      {createPortal(
+        <AnimatePresence>
+          {selectedActivity && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/30 z-[9999]"
+                onClick={() => setSelectedActivity(null)}
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="fixed right-0 top-0 bottom-0 w-full max-w-[520px] bg-white z-[10000] shadow-2xl flex flex-col border-l border-[#F4F3EF]"
+              >
+                {/* Drawer Header */}
+                <div className="p-10 pb-6 border-b border-[#F4F3EF] bg-[#FAFAFA]">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne truncate">
+                        {formatActionName(selectedActivity.action)}
+                      </h2>
+                      <p className="text-xs font-medium text-[#9B9BAD] mt-1 flex items-center gap-1.5">
+                        <Clock size={12} />
+                        {formatTimeAgo(selectedActivity.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSelectedActivity(null)}
+                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                        title="Close"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Drawer Content */}
+                <div className="flex-1 p-10 pt-6 space-y-6 overflow-y-auto pb-10 custom-scrollbar text-left scroll-smooth">
+                  {/* Type Badge */}
+                  <div className="flex items-center gap-3">
+                    <div className="inline-flex px-4 py-2 bg-[#EEF2FB] border border-[#DBEAFE] rounded-xl">
+                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest">
+                        {selectedActivity.actionType || 'GENERIC'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-4 text-left">
+                    <div className="flex items-center gap-3 mb-2 justify-start text-left">
+                      <div className="w-8 h-8 rounded-lg bg-[#0D47A1]/5 flex items-center justify-center text-[#0D47A1]">
+                        <FileText size={16} />
+                      </div>
+                      <h4 className="text-sm font-bold text-[#1A1A2E] uppercase tracking-widest text-left">DESCRIPTION</h4>
+                    </div>
+
+                    <div className="bg-[#FAFAFA] rounded-[24px] border border-[#F4F3EF] p-8 transition-all duration-300">
+                      <p className="text-[#475569] text-[13.5px] leading-[1.6] font-medium whitespace-pre-wrap text-left opacity-90">
+                        {selectedActivity.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Performed By */}
+                  {selectedActivity.performedByName && (
+                    <div className="space-y-4 text-left">
+                      <div className="flex items-center gap-3 mb-2 justify-start text-left">
+                        <div className="w-8 h-8 rounded-lg bg-[#10B981]/5 flex items-center justify-center text-[#10B981]">
+                          <User size={16} />
+                        </div>
+                        <h4 className="text-sm font-bold text-[#1A1A2E] uppercase tracking-widest text-left">PERFORMED BY</h4>
+                      </div>
+
+                      <div className="bg-[#FAFAFA] rounded-[24px] border border-[#F4F3EF] p-8 transition-all duration-300">
+                        <p className="text-[#475569] text-[13.5px] leading-[1.6] font-medium text-left">
+                          {selectedActivity.performedByName}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
       <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
         <div className="mb-10 flex justify-between items-center text-left">
           <div>
@@ -170,55 +272,62 @@ const OperationsActivityFeedTab = () => {
             </div>
           </div>
 
-          <div className="absolute left-[88px] lg:left-[108px] top-[140px] bottom-[40px] w-px bg-[#F4F3EF] pointer-events-none hidden sm:block" />
+          <div className="absolute left-[116px] sm:left-[128px] top-[100px] bottom-[40px] w-px bg-[#F4F3EF] pointer-events-none hidden sm:block" />
 
-          <div className="px-8 py-12 space-y-12 relative z-10">
+          <div className="px-8 py-12 space-y-8 relative z-10">
             <AnimatePresence>
-              {filteredActivities.map((activity, index) => (
-                <motion.div
-                  key={activity._id || index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.02 }}
-                  className="flex items-start group relative text-left"
-                >
-                  <div className="w-20 lg:w-28 flex-shrink-0 pt-3 text-right pr-6 lg:pr-8 hidden sm:block">
-                    <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
-                      {formatTimeAgo(activity.createdAt)}
-                    </span>
-                  </div>
+              {filteredActivities.map((activity, index) => {
+                const activityDate = new Date(activity.createdAt);
+                const dateStr = activityDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
 
-                  <div className="relative z-10 flex-shrink-0 hidden sm:block">
-                    <div className="group-hover:scale-110 transition-transform duration-500">
+                return (
+                  <motion.div
+                    key={activity._id || index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="flex items-center gap-4 sm:gap-6 group relative text-left"
+                  >
+                    {/* Time Column */}
+                    <div className="w-16 sm:w-20 flex-shrink-0 text-right hidden sm:block">
+                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
+                        {dateStr}
+                      </span>
+                    </div>
+
+                    {/* Marker */}
+                    <div className="relative z-10 flex-shrink-0 group-hover:scale-110 transition-transform duration-500">
                       <ActivityIcon type={activity.actionType || 'default'} />
                     </div>
-                  </div>
 
-                  <div className="ml-0 sm:ml-6 lg:ml-8 flex-1">
-                    <div className="bg-white p-6 lg:p-8 rounded-[32px] border border-[#F4F3EF] shadow-sm hover:shadow-2xl transition-all duration-500 relative group-hover:-translate-y-1 text-left">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-4 flex-1">
-                          <div className="inline-flex px-3 py-1 bg-[#EEF2FB] border border-[#DBEAFE] rounded-lg">
-                            <span className="text-[9px] font-bold text-[#1B4DA0] uppercase tracking-widest">
-                              {activity.actionType || 'GENERIC'}
+                    {/* Card */}
+                    <div className="flex-1">
+                      <div 
+                        onClick={() => setSelectedActivity(activity)}
+                        className="bg-white p-6 rounded-[24px] border border-[#F4F3EF] shadow-sm hover:shadow-2xl transition-all duration-500 relative cursor-pointer group-hover:-translate-y-1 text-left"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            {/* Mobile date */}
+                            <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] sm:hidden mb-2 block">
+                              {dateStr}
                             </span>
-                          </div>
-
-                          <div>
-                            <h4 className="text-[20px] font-bold font-syne text-[#1A1A2E] tracking-tight leading-none mb-2">
+                            <h4 className="text-[18px] font-bold font-syne text-[#1A1A2E] tracking-tight leading-tight mb-2 group-hover:text-[#1B4DA0] transition-colors">
                               {formatActionName(activity.action)}
                             </h4>
-                            <p className="text-[#64748B] text-[13px] font-medium leading-relaxed opacity-80 mt-2">
+                            <p className="text-[#64748B] text-[13px] font-medium leading-relaxed opacity-80 line-clamp-2">
                               {activity.description}
                             </p>
                           </div>
                         </div>
+
+                        {/* Design Glow */}
+                        <div className="absolute -right-2 -bottom-2 w-24 h-24 bg-[#1B4DA0]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                       </div>
-                      <div className="absolute -right-2 -bottom-2 w-24 h-24 bg-[#1B4DA0]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
 
             {filteredActivities.length === 0 && (
