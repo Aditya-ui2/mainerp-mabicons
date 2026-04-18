@@ -1,63 +1,77 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 // import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin, departmentTeamLogin } from './service/api';
 import { FiMail, FiEye, FiEyeOff, FiSun, FiMoon } from 'react-icons/fi';
 
-const BackgroundAnimation = () => (
-  <div className="relative w-full h-full">
-    {/* Gradient Background */}
-    <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700" />
-    
-    {/* Animated Grid */}
-    <div className="absolute inset-0" 
-      style={{
-        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), 
-                         linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)`,
-        backgroundSize: '50px 50px',
-        animation: 'moveGrid 20s linear infinite',
-      }}
-    />
+const BackgroundAnimation = () => {
+  // Memoize bubble data so it doesn't change on every render
+  const bubbles = useMemo(() => 
+    [...Array(15)].map((_, i) => ({
+      id: i,
+      width: Math.random() * 100 + 50,
+      height: Math.random() * 100 + 50,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      duration: 5 + Math.random() * 5,
+    })), []
+  );
 
-    {/* Floating Elements */}
-    {[...Array(15)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute rounded-full bg-white bg-opacity-20"
+  return (
+    <div className="relative w-full h-full">
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700" />
+      
+      {/* Animated Grid */}
+      <div className="absolute inset-0" 
         style={{
-          width: Math.random() * 100 + 50,
-          height: Math.random() * 100 + 50,
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-        }}
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.2, 0.5, 0.2],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 5 + Math.random() * 5,
-          repeat: Infinity,
-          ease: "easeInOut",
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), 
+                           linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px',
+          animation: 'moveGrid 20s linear infinite',
         }}
       />
-    ))}
 
-    {/* Content Overlay */}
-    <div className="relative z-10 h-full flex flex-col items-center justify-center text-white">
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-5xl font-bold mb-6"
-      >
-        Mabicons-ERP 
-      </motion.h1>
-  
+      {/* Floating Elements */}
+      {bubbles.map((bubble) => (
+        <motion.div
+          key={bubble.id}
+          className="absolute rounded-full bg-white bg-opacity-20"
+          style={{
+            width: bubble.width,
+            height: bubble.height,
+            left: bubble.left,
+            top: bubble.top,
+          }}
+          animate={{
+            y: [0, -20, 0],
+            opacity: [0.2, 0.5, 0.2],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: bubble.duration,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+
+      {/* Content Overlay */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-center text-white">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-5xl font-bold mb-6"
+        >
+          Mabicons-ERP 
+        </motion.h1>
+    
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-const Star = ({ x, y, size }) => (
+const Star = ({ x, y, size, duration }) => (
   <motion.div
     className={`absolute rounded-full bg-white ${size}`}
     style={{ x, y }}
@@ -66,7 +80,7 @@ const Star = ({ x, y, size }) => (
       scale: [0, 1, 0],
     }}
     transition={{
-      duration: 2 + Math.random() * 3,
+      duration: duration,
       repeat: Infinity,
       repeatType: "reverse",
     }}
@@ -81,6 +95,7 @@ const Starfield = () => {
       x: Math.random() * 100 + '%',
       y: Math.random() * 100 + '%',
       size: Math.random() > 0.9 ? 'w-1 h-1' : 'w-0.5 h-0.5',
+      duration: 2 + Math.random() * 3,
     }));
     setStars(newStars);
   }, []);
