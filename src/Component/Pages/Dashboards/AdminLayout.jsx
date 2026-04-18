@@ -48,7 +48,9 @@ const AdminLayout = ({
   showSearch = true,
   isLoading = false,
   bottomTabName = 'Settings',
-  dashboardTabName = 'Dashboard'
+  dashboardTabName = 'Dashboard',
+  showNotifications = true,
+  showBottomTab = true
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,7 +58,7 @@ const AdminLayout = ({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const profileMenuRef = useRef(null);
@@ -244,19 +246,21 @@ const AdminLayout = ({
           ))}
 
           {/* Bottom Contextual Link (Settings/Profile) */}
-          <div className="mt-auto pt-4 border-t border-[#F4F3EF] dark:border-gray-800 mx-2 mb-2">
-            <button
-              onClick={() => { setActiveTab && setActiveTab(bottomTabName); setMobileSidebarOpen(false); }}
-              title={sidebarCollapsed ? bottomTabName : undefined}
-              className={`
-                w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200 text-left relative
-                ${activeTab === bottomTabName ? "bg-[#1B4DA0]/10 text-[#1B4DA0]" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
-              `}
-            >
-              {bottomTabName === 'My Profile' ? <User size={20} className="flex-shrink-0" /> : <Settings size={20} className="flex-shrink-0" />}
-              {!sidebarCollapsed && <span className="text-sm font-semibold">{bottomTabName}</span>}
-            </button>
-          </div>
+          {showBottomTab && (
+            <div className="mt-auto pt-4 border-t border-[#F4F3EF] dark:border-gray-800 mx-2 mb-2">
+              <button
+                onClick={() => { setActiveTab && setActiveTab(bottomTabName); setMobileSidebarOpen(false); }}
+                title={sidebarCollapsed ? bottomTabName : undefined}
+                className={`
+                  w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200 text-left relative
+                  ${activeTab === bottomTabName ? "bg-[#1B4DA0]/10 text-[#1B4DA0]" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
+                `}
+              >
+                {bottomTabName === 'My Profile' ? <User size={20} className="flex-shrink-0" /> : <Settings size={20} className="flex-shrink-0" />}
+                {!sidebarCollapsed && <span className="text-sm font-semibold">{bottomTabName}</span>}
+              </button>
+            </div>
+          )}
         </nav>
 
         {/* User Footer Profile */}
@@ -312,25 +316,26 @@ const AdminLayout = ({
               )}
 
               {/* Notification Hub */}
-              <div className="relative" ref={notificationRef}>
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F8FAFF] dark:bg-gray-800 text-[#6B6B7E] hover:text-[#1B4DA0] transition-all relative"
-                >
-                  <Bell size={18} />
-                  {unreadNotifications > 0 && (
-                    <span className="absolute top-3 right-3 w-2 h-2 bg-rose-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
-                  )}
-                </button>
+              {showNotifications && (
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    onClick={() => setNotificationsOpen(!notificationsOpen)}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F8FAFF] dark:bg-gray-800 text-[#6B6B7E] hover:text-[#1B4DA0] transition-all relative"
+                  >
+                    <Bell size={18} />
+                    {unreadNotifications > 0 && (
+                      <span className="absolute top-3 right-3 w-2 h-2 bg-rose-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
+                    )}
+                  </button>
 
-                <AnimatePresence>
-                  {showNotifications && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 12, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 12, scale: 0.95 }}
-                      className="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-[#F4F3EF] dark:border-gray-700 overflow-hidden z-50"
-                    >
+                  <AnimatePresence>
+                    {notificationsOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 12, scale: 0.95 }}
+                        className="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-[#F4F3EF] dark:border-gray-700 overflow-hidden z-50"
+                      >
                       <div className="p-4 border-b border-[#F4F3EF] dark:border-gray-700 bg-[#FAFAFA] dark:bg-gray-900/50 flex items-center justify-between">
                         <h3 className="text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest">Notifications</h3>
                         <button className="text-[10px] font-bold text-[#1B4DA0] hover:underline">Mark all read</button>
@@ -360,7 +365,8 @@ const AdminLayout = ({
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+                </div>
+              )}
             </div>
           </header>
         )}

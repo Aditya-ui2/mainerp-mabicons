@@ -326,6 +326,24 @@ export const uploadCandidateKYC = async (formData) => {
   }
 };
 
+export const submitCandidateKYC = async () => {
+  try {
+    const response = await axiosInstance.post('/recruitment/candidate/submit-kyc');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+export const getCandidateProfile = async () => {
+  try {
+    const response = await axiosInstance.get('/recruitment/candidate/profile');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 export const verifyCandidateKYC = async (data) => {
   try {
     const response = await axiosInstance.post('/recruitment/candidate/verify-kyc', data);

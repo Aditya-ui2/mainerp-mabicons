@@ -1,392 +1,174 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FiUser, FiFileText, FiUploadCloud, FiCheckCircle, 
-  FiClock, FiAlertCircle, FiDownload, FiLogOut, FiMenu, FiX,
-  FiCreditCard, FiDollarSign, FiBook, FiBriefcase, FiAward, FiShield, FiFile, FiTrash2, FiEye
+import {
+    FiFileText, FiUploadCloud, FiCheckCircle, FiCheck,
+    FiClock, FiAlertCircle, FiLogOut, FiCreditCard, FiDollarSign,
+    FiBook, FiBriefcase, FiAward, FiShield, FiTrash2, FiX, FiPlus, FiChevronDown
 } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
+// Framer motion removed for static UI
 import { toast } from 'sonner';
-import { uploadCandidateKYC, BASE_URL } from './service/api';
+import { uploadCandidateKYC, getCandidateProfile, submitCandidateKYC, BASE_URL } from './service/api';
+import logo from '../../assets/images/mabicons logo blue.png';
 
 const CandidateDashboard = () => {
-  const [candidate, setCandidate] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const navigate = useNavigate();
+    const [candidate, setCandidate] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userType = localStorage.getItem('userType');
-    if (!token || userType !== 'candidate') {
-      navigate('/candidate-login');
-      return;
-    }
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    navigate('/candidate-login');
+                    return;
+                }
 
-    // Recover candidate info from token/localstorage
-    const name = localStorage.getItem('userName');
-    const email = localStorage.getItem('userEmail');
-    
-    // In a real app, fetch fresh data from backend
-    setCandidate({
-        name: name || 'Candidate',
-        email: email || '',
-        stage: 'Document Verification',
-        kycDocuments: {} // This would come from an API call normally
-    });
-    setLoading(false);
-  }, [navigate]);
+                const response = await getCandidateProfile();
+                if (response.success) {
+                    setCandidate(response.data);
+                }
+            } catch (err) {
+                console.error('Profile fetch error:', err);
+                const name = localStorage.getItem('userName');
+                const email = localStorage.getItem('userEmail');
+                setCandidate({
+                    name: name || 'Candidate',
+                    email: email || '',
+                    stage: 'Document Verification',
+                    kycDocuments: {}
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProfile();
+    }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/candidate-login');
-  };
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate('/candidate-login');
+    };
 
-  const menuItems = [
-    { id: 'Overview', icon: FiUser, label: 'Overview' },
-    { id: 'Documents', icon: FiUploadCloud, label: 'Upload KYC' },
-    { id: 'Offers', icon: FiFileText, label: 'Offer Letter' },
-  ];
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'Overview':
-        return <Overview candidate={candidate} setActiveTab={setActiveTab} />;
-      case 'Documents':
-        return <DocumentsUpload candidate={candidate} />;
-      case 'Offers':
-        return <OfferLetter candidate={candidate} />;
-      default:
-        return <Overview candidate={candidate} setActiveTab={setActiveTab} />;
-    }
-  };
 
-  if (loading) return null;
-
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] flex font-['Outfit']">
-      {/* Sidebar - Dark Theme */}
-      <AnimatePresence mode='wait'>
-        {isSidebarOpen && (
-          <motion.aside
-            initial={{ x: -300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="w-[260px] bg-[#1A1A2E] flex flex-col z-50 fixed inset-y-0 lg:relative shadow-2xl"
-          >
-            {/* Logo Section */}
-            <div className="p-6 border-b border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                  <FiCheckCircle className="text-white text-lg" />
-                </div>
-                <div>
-                  <span className="font-black text-white text-lg tracking-tight block">Mabicons</span>
-                  <span className="text-[9px] font-bold text-[#1B4DA0] uppercase tracking-[0.15em]">ERP Portal</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-              {menuItems.map((item) => (
-                <motion.button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  whileHover={{ x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-semibold text-sm ${
-                    activeTab === item.id 
-                      ? 'bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20' 
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <item.icon size={18} />
-                  {item.label}
-                </motion.button>
-              ))}
-            </nav>
-
-            {/* User Section & Logout */}
-            <div className="p-4 border-t border-white/5">
-              <div className="flex items-center gap-3 px-3 py-3 mb-3 bg-white/5 rounded-xl">
-                <div className="w-9 h-9 rounded-lg bg-[#1B4DA0] flex items-center justify-center text-white font-bold text-sm uppercase">
-                  {candidate?.name?.substring(0,1) || 'C'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-white truncate">{candidate?.name}</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">Candidate</p>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all font-semibold text-sm group"
-              >
-                <FiLogOut size={18} className="group-hover:rotate-12 transition-transform" />
-                Logout
-              </button>
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-      
-      {/* Mobile Overlay */}
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Main Content */}
-      <main className="flex-1 min-w-0 overflow-auto bg-[#F8FAFC] px-4 py-6 lg:px-10 lg:py-8">
-        <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#1B4DA0] shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300 border border-slate-200 lg:hidden"
-              aria-label="Open menu"
-            >
-              {isSidebarOpen ? <FiX className="w-5 h-5 stroke-[2]" /> : <FiMenu className="w-5 h-5 stroke-[2]" />}
-            </button>
-            <div>
-              <h2 className="text-xl lg:text-2xl font-bold text-[#1A1A2E] tracking-tight">Onboarding Portal</h2>
-              <p className="text-sm text-slate-500 font-medium">Welcome, {candidate?.name}</p>
-            </div>
-          </div>
-          
-          <div className="hidden sm:flex items-center gap-3 bg-white px-3 py-2 rounded-2xl shadow-sm border border-slate-100">
-             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1B4DA0] to-[#2563EB] flex items-center justify-center text-white font-bold uppercase text-sm shadow-lg shadow-blue-500/20">
-                {candidate?.name?.substring(0,2)}
-             </div>
-             <div className="pr-2">
-                <p className="text-xs font-bold text-[#1A1A2E] uppercase tracking-wide">{candidate?.name}</p>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Candidate</p>
-             </div>
-          </div>
-        </header>
-
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-    </div>
-  );
-};
-
-const Overview = ({ candidate, setActiveTab }) => {
-    const steps = [
-        { id: 1, label: 'Selected', status: 'completed', icon: FiCheckCircle },
-        { id: 2, label: 'Document Verification', status: 'current', icon: FiUploadCloud },
-        { id: 3, label: 'Offer Generation', status: 'upcoming', icon: FiFileText },
-        { id: 4, label: 'Joined', status: 'upcoming', icon: FiBriefcase },
-    ];
-
-    const requiredDocs = [
-        { name: 'PAN Card', status: 'pending', required: true },
-        { name: 'Aadhar Card', status: 'pending', required: true },
-        { name: 'Pay Slips', status: 'pending', required: true },
-        { name: 'Bank Statement', status: 'pending', required: true },
-        { name: 'Degree Certificate', status: 'pending', required: true },
-        { name: 'Marksheet', status: 'pending', required: true },
-    ];
+    if (loading) return null;
 
     return (
-        <div className="space-y-8">
-            {/* Progress Steps */}
-            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-                <h3 className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-8">My Progress</h3>
-                <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-4">
-                    {/* Line Connection */}
-                    <div className="hidden md:block absolute h-[2px] bg-slate-100 top-6 left-16 right-16 z-0" />
-                    
-                    {steps.map((step) => (
-                        <div key={step.id} className="relative z-10 flex md:flex-col items-center gap-4 md:gap-3 flex-1">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                                step.status === 'completed' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' :
-                                step.status === 'current' ? 'bg-[#1B4DA0] text-white ring-4 ring-[#1B4DA0]/20 shadow-lg shadow-[#1B4DA0]/30' :
-                                'bg-slate-100 text-slate-400'
-                            }`}>
-                                {step.status === 'completed' ? <FiCheckCircle size={22} /> : <span className="font-bold">{step.id}</span>}
-                            </div>
-                            <span className={`text-sm font-bold text-center ${
-                                step.status === 'current' ? 'text-[#1A1A2E]' : 
-                                step.status === 'completed' ? 'text-emerald-600' : 'text-[#9B9BAD]'
-                            }`}>{step.label}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+        <div className="min-h-screen bg-[#FDFDFD]">
+            <nav className="h-16 md:h-20 bg-white border-b border-[#F4F3EF] sticky top-0 z-50">
+                <div className="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
+                    <img src={logo} alt="Mabicons" className="h-8 md:h-10 w-auto" />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Current Status Card */}
-                <div className="bg-gradient-to-br from-[#1B4DA0] to-[#2563EB] rounded-[32px] p-8 text-white shadow-xl shadow-blue-500/20">
-                    <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center mb-6">
-                        <FiClock className="text-white" size={28} />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-3">Wait for Verification</h3>
-                    <p className="text-blue-100 font-medium leading-relaxed">Our HR team is currently reviewing your documents. You'll receive an email once verified.</p>
-                    
-                    <div className="mt-8 pt-6 border-t border-white/10">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-blue-200">Estimated Time</span>
-                            <span className="font-bold">2-3 Business Days</span>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 px-3 py-1.5 bg-[#FAFAFA] border border-[#F4F3EF] rounded-xl">
+                            <div className="h-7 w-7 rounded-lg bg-[#1B4DA0] text-white flex items-center justify-center font-black text-[10px] shadow-lg">
+                                {candidate?.name?.charAt(0) || 'C'}
+                            </div>
+                            <div className="hidden sm:block">
+                                <p className="text-[10px] font-black text-[#1A1A2E] leading-none mb-0.5">{candidate?.name || 'Candidate'}</p>
+                                <p className="text-[8px] text-[#9B9BAD] font-black uppercase tracking-widest leading-none">{candidate?.email || 'Portal'}</p>
+                            </div>
                         </div>
+                        <button
+                            onClick={handleLogout}
+                            className="p-2 text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                            <FiLogOut size={18} />
+                        </button>
                     </div>
                 </div>
+            </nav>
 
-                {/* Document Checklist */}
-                <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[0.2em]">Required Documents</h3>
-                        <span className="text-xs font-bold text-[#1B4DA0] bg-[#1B4DA0]/10 px-3 py-1 rounded-full">0/{requiredDocs.length} Uploaded</span>
-                    </div>
-                    <div className="space-y-3">
-                        {requiredDocs.map((doc, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                        doc.status === 'uploaded' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'
-                                    }`}>
-                                        {doc.status === 'uploaded' ? <FiCheckCircle size={16} /> : <FiFile size={16} />}
-                                    </div>
-                                    <span className="text-sm font-semibold text-[#1A1A2E]">{doc.name}</span>
-                                </div>
-                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
-                                    doc.status === 'uploaded' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                                }`}>
-                                    {doc.status === 'uploaded' ? 'Done' : 'Pending'}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                    
-                    <button 
-                        onClick={() => setActiveTab('Documents')}
-                        className="w-full mt-6 bg-[#1A1A2E] text-white py-4 rounded-2xl font-bold text-sm hover:bg-[#2A2A3E] transition-all flex items-center justify-center gap-2"
-                    >
-                        <FiUploadCloud size={18} />
-                        Upload Documents
-                    </button>
-                </div>
-            </div>
-
-            {/* Support Material */}
-            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-                <h3 className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-6">Support Material</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button className="flex items-center justify-between p-5 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#1B4DA0] shadow-sm group-hover:scale-110 transition-all">
-                                <FiFileText size={22} />
-                            </div>
-                            <div className="text-left">
-                                <span className="font-bold text-[#1A1A2E] text-sm block">Company Policies</span>
-                                <span className="text-[11px] text-[#9B9BAD]">PDF • 2.4 MB</span>
-                            </div>
-                        </div>
-                        <FiDownload className="text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors" size={20} />
-                    </button>
-                    <button className="flex items-center justify-between p-5 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#1B4DA0] shadow-sm group-hover:scale-110 transition-all">
-                                <FiBook size={22} />
-                            </div>
-                            <div className="text-left">
-                                <span className="font-bold text-[#1A1A2E] text-sm block">Onboarding Guide</span>
-                                <span className="text-[11px] text-[#9B9BAD]">PDF • 1.8 MB</span>
-                            </div>
-                        </div>
-                        <FiDownload className="text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors" size={20} />
-                    </button>
-                </div>
-            </div>
+            <main className="max-w-[1600px] mx-auto p-4 md:p-10">
+                <DocumentsUpload 
+                    candidate={candidate} 
+                    setCandidate={setCandidate}
+                    isSubmitting={isSubmitting}
+                    setIsSubmitting={setIsSubmitting}
+                />
+            </main>
         </div>
     );
 };
 
-const DocumentsUpload = ({ candidate }) => {
+const DocumentsUpload = ({ candidate, setCandidate, isSubmitting, setIsSubmitting }) => {
     const [uploading, setUploading] = useState({});
     const [uploadedDocs, setUploadedDocs] = useState({});
+    const [showSizeModal, setShowSizeModal] = useState(false);
+    const [isUniversityExpanded, setIsUniversityExpanded] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // Document categories with proper icons and requirements
+    useEffect(() => {
+        if (candidate?.kycDocuments) {
+            setUploadedDocs(candidate.kycDocuments);
+        }
+    }, [candidate]);
+
+    const uniRef = useRef(null);
+
     const documentCategories = [
         {
             title: 'Identity Documents',
-            required: true,
             documents: [
-                { type: 'pan', label: 'PAN Card', icon: FiCreditCard, required: true, priority: 1, description: 'Government issued PAN card (mandatory for taxation)' },
-                { type: 'aadhar', label: 'Aadhar Card', icon: FiShield, required: true, priority: 2, description: 'Both front and back side required' },
-            ]
-        },
-        {
-            title: 'Financial Documents',
-            required: true,
-            documents: [
-                { type: 'payslips', label: 'Pay Slips', icon: FiDollarSign, required: true, description: 'Last 3 months pay slips from current/previous employer' },
-                { type: 'bank_statement', label: 'Bank Statement', icon: FiFileText, required: true, description: 'Last 3 months statement showing salary credits' },
+                { type: 'pan', label: 'PAN Card', icon: FiCreditCard, required: true, isSplit: true, description: 'Government issued PAN card' },
+                { type: 'aadhar', label: 'Aadhar Card', icon: FiShield, required: true, isSplit: true, description: 'Both front and back side required' },
             ]
         },
         {
             title: 'Educational Documents',
-            required: true,
             documents: [
-                { type: 'degree', label: 'Degree Certificate', icon: FiAward, required: true, description: 'Highest qualification degree certificate' },
-                { type: 'marksheet', label: 'Marksheet', icon: FiBook, required: true, description: 'All semester/year marksheets' },
+                { type: 'marksheet_10', label: '10th Marksheet', icon: FiBook, required: true, description: 'Secondary school certificate' },
+                { type: 'marksheet_12', label: '12th Marksheet', icon: FiBook, required: true, description: 'Higher secondary certificate' },
+                { type: 'university_marksheet', label: 'University Marksheet', icon: FiAward, required: false, isSemester: true, description: 'Semester-wise Marksheets (Upload 1-8)' },
+                { type: 'degree', label: 'Degree Certificate', icon: FiAward, required: false, description: 'Highest qualification degree' },
+            ]
+        },
+        {
+            title: 'Financial Documents',
+            documents: [
+                { type: 'payslips', label: 'Pay Slips', icon: FiDollarSign, required: false, description: 'Last 3 months pay slips' },
+                { type: 'bank_statement', label: 'Bank Statement', icon: FiFileText, required: false, description: 'Last 3 months statement' },
             ]
         },
         {
             title: 'Employment Documents',
-            required: false,
             documents: [
-                { type: 'appointment_letter', label: 'Previous Appointment Letter', icon: FiBriefcase, required: false, description: 'Appointment letter from previous company' },
-                { type: 'relieving_letter', label: 'Relieving Letter', icon: FiFileText, required: false, description: 'Relieving/Experience letter from previous employer' },
+                { type: 'appointment_letter', label: 'Appointment Letter', icon: FiBriefcase, required: false, description: 'Previous company appointment letter' },
+                { type: 'relieving_letter', label: 'Relieving Letter', icon: FiFileText, required: false, description: 'Relieving/Experience letter' },
             ]
         },
     ];
 
-    const handleFileChange = async (e, docType, docLabel) => {
+    const handleFileChange = async (e, docType, docLabel, side = null, isMultiple = false) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validate file type
-        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-        if (!allowedTypes.includes(file.type)) {
-            toast.error('Only PDF, JPG, and PNG files are allowed');
-            return;
-        }
-
-        // Validate file size (1MB max)
+        // Strict 1MB Limit Check with App Pop-up
         if (file.size > 1 * 1024 * 1024) {
-            toast.error('File size must be less than 1MB');
+            setShowSizeModal(true);
+            e.target.value = ''; // Reset input
             return;
         }
 
-        setUploading(prev => ({ ...prev, [docType]: true }));
+        // Generate unique key. For multiple, use timestamp to avoid overwriting
+        const uploadKey = isMultiple
+            ? `${docType}_${Date.now()}`
+            : (side ? `${docType}_${side}` : docType);
+
+        setUploading(prev => ({ ...prev, [uploadKey]: true }));
+
         const formData = new FormData();
         formData.append('document', file);
-        formData.append('docType', docType);
+        formData.append('docType', isMultiple ? uploadKey : docType); // Send unique key as docType for multiple
+        if (side) formData.append('side', side);
 
         try {
             const response = await uploadCandidateKYC(formData);
             setUploadedDocs(prev => ({
                 ...prev,
-                [docType]: {
+                [uploadKey]: {
                     name: file.name,
                     url: response?.url || null,
                     uploadedAt: new Date().toISOString()
@@ -396,306 +178,385 @@ const DocumentsUpload = ({ candidate }) => {
         } catch (err) {
             toast.error('Upload failed. Please try again.');
         } finally {
-            setUploading(prev => ({ ...prev, [docType]: false }));
+            setUploading(prev => ({ ...prev, [uploadKey]: false }));
+            e.target.value = ''; // Reset input to allow re-uploading same file if desired
         }
     };
 
-    const handleRemoveDoc = (docType) => {
+    const handleRemoveDoc = (uploadKey) => {
         setUploadedDocs(prev => {
             const updated = { ...prev };
-            delete updated[docType];
+            delete updated[uploadKey];
             return updated;
         });
-        toast.info('Document removed. Please upload again.');
+        toast.info('Document removed.');
     };
 
-    const totalRequired = documentCategories.flatMap(c => c.documents).filter(d => d.required).length;
-    const uploadedRequired = documentCategories.flatMap(c => c.documents).filter(d => d.required && uploadedDocs[d.type]).length;
-    const progressPercent = Math.round((uploadedRequired / totalRequired) * 100);
+    // Calculate completion status comprehensively
+    const getDocStatus = (doc) => {
+        if (doc.isSemester) {
+            // Check if ANY semester is uploaded
+            return Object.keys(uploadedDocs).some(key => key.startsWith('university_marksheet_sem'));
+        }
+        if (doc.isMultiple) {
+            return Object.keys(uploadedDocs).some(key => key.startsWith(`${doc.type}_`));
+        }
+        if (!doc.isSplit) {
+            return !!uploadedDocs[doc.type];
+        }
+        // Support split documents (Aadhar/PAN)
+        const hasFront = !!(uploadedDocs[`${doc.type}_front`] || uploadedDocs[`${doc.type}Front`]);
+        const hasBack = !!(uploadedDocs[`${doc.type}_back`] || uploadedDocs[`${doc.type}Back`]);
+        return hasFront && hasBack;
+    };
+
+    // Check if any split document is in a partial state (one side uploaded, other missing)
+    const hasAnyPartialUpload = documentCategories.some(cat =>
+        cat.documents.some(doc => {
+            if (!doc.isSplit) return false;
+            const hasFront = !!(uploadedDocs[`${doc.type}_front`] || uploadedDocs[`${doc.type}Front`]);
+            const hasBack = !!(uploadedDocs[`${doc.type}_back`] || uploadedDocs[`${doc.type}Back`]);
+            return (hasFront || hasBack) && !(hasFront && hasBack);
+        })
+    );
+
+    const totalRequiredDocs = documentCategories.flatMap(c =>
+        c.documents.flatMap(d => d.required ? (d.isSplit ? [`${d.type}_front`, `${d.type}_back`] : [d.type]) : [])
+    );
+    const totalRequiredCount = totalRequiredDocs.length;
+    const uploadedRequiredItems = totalRequiredDocs.filter(key => uploadedDocs[key]);
+    const uploadedRequiredCount = uploadedRequiredItems.length;
+
+    // Strict 100% check: all required items present AND no partial uploads anywhere
+    const isFullyComplete = (uploadedRequiredCount === totalRequiredCount) && !hasAnyPartialUpload;
+
+    // Detect if there are any changes compared to what's already saved in the backend
+    const hasPendingChanges = JSON.stringify(uploadedDocs) !== JSON.stringify(candidate?.kycDocuments || {});
+
+    const handleSubmitProfile = async () => {
+        if (!isFullyComplete) return;
+
+        setIsSubmitting(true);
+        const loadingId = toast.loading("Submitting your profile...");
+        
+        try {
+            await submitCandidateKYC();
+            toast.success("Profile submitted successfully!", { id: loadingId });
+            setShowSuccessModal(true);
+            // Refresh profile to show new status
+            const updated = await getCandidateProfile();
+            setCandidate(updated.data);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (error) {
+            toast.error(error.message || "Failed to submit profile", { id: loadingId });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="space-y-8">
-            {/* Header Section */}
-            <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                        <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight">Document Verification</h3>
-                        <p className="text-[#9B9BAD] font-medium mt-1">Please upload clear scan copies of the required documents</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em]">Progress</p>
-                            <p className="text-2xl font-black text-[#1A1A2E]">{uploadedRequired}/{totalRequired}</p>
+            {/* Custom Modal for Size Limit - Positioned at Top */}
+            {showSizeModal && (
+                <div className="fixed inset-0 z-[100] flex justify-center p-4 pt-10 md:pt-20 overflow-hidden">
+                    <div
+                        onClick={() => setShowSizeModal(false)}
+                        className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-[2px]"
+                    />
+                    <div className="bg-white rounded-[24px] md:rounded-[32px] p-6 md:p-8 max-w-md w-full relative z-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] text-center border border-[#F4F3EF] h-fit">
+                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <FiAlertCircle size={28} />
                         </div>
-                        <div className="w-16 h-16 relative">
-                            <svg className="w-16 h-16 transform -rotate-90">
-                                <circle cx="32" cy="32" r="28" stroke="#F4F3EF" strokeWidth="4" fill="none" />
-                                <circle 
-                                    cx="32" cy="32" r="28" 
-                                    stroke={progressPercent === 100 ? '#10B981' : '#1B4DA0'} 
-                                    strokeWidth="4" 
-                                    fill="none"
-                                    strokeDasharray={`${2 * Math.PI * 28}`}
-                                    strokeDashoffset={`${2 * Math.PI * 28 * (1 - progressPercent / 100)}`}
-                                    strokeLinecap="round"
-                                />
-                            </svg>
-                            <span className="absolute inset-0 flex items-center justify-center text-xs font-black text-[#1A1A2E]">{progressPercent}%</span>
-                        </div>
+                        <h2 className="text-xl md:text-2xl font-black text-[#1A1A2E] uppercase tracking-tight mb-2">File Too Large!</h2>
+                        <p className="text-[#9B9BAD] font-bold text-[10px] md:text-xs uppercase tracking-widest leading-relaxed mb-6">
+                            Please upload a document smaller than <span className="text-red-500 font-black">1 MB</span>.
+                        </p>
+                        <button
+                            onClick={() => setShowSizeModal(false)}
+                            className="w-full py-3.5 bg-[#1B4DA0] text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] md:text-xs hover:bg-[#153b7a] transition-all active:scale-95"
+                        >
+                            Got it
+                        </button>
                     </div>
                 </div>
-            </div>
-
-            {/* Document Categories */}
-            {documentCategories.map((category, catIdx) => (
-                <div key={catIdx} className="space-y-4">
-                    <div className="flex items-center gap-3 px-2">
-                        <h4 className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[0.2em]">{category.title}</h4>
-                        {category.required && (
-                            <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-wider rounded-full">Required</span>
-                        )}
+            )}
+            {/* Success Modal - Premium Design */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-[100] flex justify-center items-center p-4 overflow-hidden">
+                    <div
+                        onClick={() => setShowSuccessModal(false)}
+                        className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-[4px]"
+                    />
+                    <div className="bg-white rounded-[32px] p-8 md:p-10 max-w-sm w-full relative z-10 shadow-[0_32px_80px_rgba(27,77,160,0.25)] text-center border-2 border-blue-50">
+                        <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ring-8 ring-emerald-50/50">
+                            <FiCheckCircle size={40} />
+                        </div>
+                        <h2 className="text-2xl md:text-3xl font-black text-[#1A1A2E] uppercase tracking-tight mb-3">Profile Submitted!</h2>
+                        <p className="text-[#6B6B7E] font-bold text-[10px] md:text-xs uppercase tracking-widest leading-relaxed mb-8">
+                            Your documents have been received successfully. Our team will verify them shortly.
+                        </p>
+                        <button
+                            onClick={() => setShowSuccessModal(false)}
+                            className="w-full py-4 bg-[#1B4DA0] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] md:text-xs hover:bg-[#153b7a] transition-all shadow-xl hover:shadow-blue-200 active:scale-95"
+                        >
+                            Back to Dashboard
+                        </button>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>
+            )}
+
+            <header className="bg-white rounded-[24px] md:rounded-[32px] p-6 md:p-8 border border-[#F4F3EF] shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 rounded-full -mr-32 -mt-32" />
+                <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-[#1B4DA0] rounded-full mb-3 text-[10px] uppercase font-black tracking-widest">
+                        <FiAward /> Portal Dashboard
+                    </div>
+                    <h1 className="text-2xl md:text-3xl font-black text-[#1A1A2E] uppercase tracking-tight leading-none mb-2">Welcome to Mabicons Portal</h1>
+                    <p className="text-[#9B9BAD] text-[10px] md:text-xs font-black uppercase tracking-[0.1em]">
+                        Max Size Per Document: <span className="text-[#1B4DA0]">1 MB</span>
+                    </p>
+                </div>
+            </header>
+
+            {documentCategories.map((category, catIdx) => (
+                <section key={catIdx} className="space-y-4">
+                    <h2 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[0.3em] px-2">{category.title}</h2>
+
+                    <div className="grid grid-cols-1 gap-4 md:gap-6">
                         {category.documents.map((doc) => {
-                            const isUploaded = !!uploadedDocs[doc.type];
-                            const isLoading = uploading[doc.type];
-                            
+                            const isFullyUploaded = getDocStatus(doc);
+                            const isPartial = doc.isSplit && !isFullyUploaded && (uploadedDocs[`${doc.type}_front`] || uploadedDocs[`${doc.type}_back`]);
+
                             return (
-                                <motion.div
+                                <div
                                     key={doc.type}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className={`bg-white rounded-[24px] p-6 border-2 transition-all relative overflow-hidden group ${
-                                        isUploaded 
-                                            ? 'border-emerald-200 bg-emerald-50/30' 
-                                            : doc.required 
-                                                ? 'border-slate-100 hover:border-[#1B4DA0]/30' 
-                                                : 'border-dashed border-slate-200 hover:border-slate-300'
-                                    }`}
+                                    ref={doc.isSemester ? uniRef : null}
+                                    className={`bg-white rounded-[20px] md:rounded-[24px] p-4 md:p-6 border-2 transition-all relative overflow-hidden ${isFullyUploaded
+                                        ? 'border-emerald-200 bg-emerald-50/10'
+                                        : 'border-[#F4F3EF] hover:border-blue-200 shadow-xs'}`}
                                 >
-                                    {/* Priority Badge */}
-                                    {doc.priority === 1 && !isUploaded && (
-                                        <div className="absolute top-4 right-4">
-                                            <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[8px] font-black uppercase tracking-wider rounded-lg animate-pulse">Most Important</span>
-                                        </div>
-                                    )}
-
-                                    {/* Uploaded Badge */}
-                                    {isUploaded && (
-                                        <div className="absolute top-4 right-4">
-                                            <span className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-                                                <FiCheckCircle className="text-white" size={14} />
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-start gap-4">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all flex-shrink-0 ${
-                                            isUploaded 
-                                                ? 'bg-emerald-100 text-emerald-600' 
-                                                : 'bg-slate-50 text-[#9B9BAD] group-hover:bg-[#1B4DA0]/10 group-hover:text-[#1B4DA0]'
-                                        }`}>
-                                            <doc.icon size={22} />
-                                        </div>
-                                        
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <h5 className="font-bold text-[#1A1A2E] text-sm">{doc.label}</h5>
-                                                {doc.required && !isUploaded && (
-                                                    <span className="text-red-500 text-xs">*</span>
-                                                )}
+                                    {/* COMPLETED TICK - SIMPLE & VIBRANT */}
+                                    {isFullyUploaded && (
+                                        <div className="absolute top-3 right-3 z-20">
+                                            <div className="w-6 h-6 bg-[#10B981] rounded-full flex items-center justify-center text-white shadow-sm">
+                                                <FiCheck size={14} strokeWidth={4} />
                                             </div>
-                                            <p className="text-[11px] text-[#9B9BAD] font-medium mt-1 leading-relaxed line-clamp-2">{doc.description}</p>
-                                            
-                                            {isUploaded ? (
-                                                <div className="mt-4 space-y-2">
-                                                    <div className="flex items-center gap-2 text-xs text-emerald-700 font-medium bg-emerald-100/50 px-3 py-2 rounded-xl">
-                                                        <FiFileText size={14} />
-                                                        <span className="truncate flex-1">{uploadedDocs[doc.type].name}</span>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <button 
-                                                            onClick={() => handleRemoveDoc(doc.type)}
-                                                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all"
-                                                        >
-                                                            <FiTrash2 size={12} />
-                                                            Remove
-                                                        </button>
-                                                        <label className="flex-1 cursor-pointer">
-                                                            <input 
-                                                                type="file" 
-                                                                className="hidden" 
-                                                                accept=".pdf,.jpg,.jpeg,.png"
-                                                                onChange={(e) => handleFileChange(e, doc.type, doc.label)}
-                                                                disabled={isLoading}
-                                                            />
-                                                            <div className="flex items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-bold text-[#1B4DA0] bg-[#1B4DA0]/10 hover:bg-[#1B4DA0]/20 rounded-xl transition-all">
-                                                                <FiUploadCloud size={12} />
-                                                                Replace
-                                                            </div>
-                                                        </label>
-                                                    </div>
+                                        </div>
+                                    )}
+
+                                    <div className="relative z-10 text-left">
+                                        <div className="flex-1">
+                                            <h3 
+                                                className={`font-black text-[#1A1A2E] text-sm md:text-[15px] uppercase tracking-tight flex items-center gap-3 ${doc.isSemester ? 'cursor-pointer hover:text-[#1B4DA0]' : ''}`}
+                                                onClick={() => doc.isSemester && setIsUniversityExpanded(!isUniversityExpanded)}
+                                            >
+                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${isFullyUploaded ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-50 text-[#1B4DA0]'}`}>
+                                                    <doc.icon size={18} />
                                                 </div>
-                                            ) : (
-                                                <label className="mt-4 block cursor-pointer">
-                                                    <input 
-                                                        type="file" 
-                                                        className="hidden" 
-                                                        accept=".pdf,.jpg,.jpeg,.png"
-                                                        onChange={(e) => handleFileChange(e, doc.type, doc.label)}
-                                                        disabled={isLoading}
-                                                    />
-                                                    <div className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-xs transition-all ${
-                                                        isLoading 
-                                                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                                            : 'bg-[#1A1A2E] text-white hover:bg-[#2A2A3E] active:scale-[0.98]'
-                                                    }`}>
-                                                        {isLoading ? (
-                                                            <>
-                                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                                Uploading...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <FiUploadCloud size={14} />
-                                                                Upload {doc.label}
-                                                            </>
-                                                        )}
+                                                <span className="flex-1">{doc.label}</span>
+                                                {doc.required && !isFullyUploaded && <span className="text-red-500 font-black text-xl leading-none">*</span>}
+                                                {doc.isSemester && (
+                                                    <div className={`transition-transform duration-300 ${isUniversityExpanded ? 'rotate-180' : ''}`}>
+                                                        <FiChevronDown size={18} className="text-[#9B9BAD]" />
                                                     </div>
-                                                </label>
-                                            )}
+                                                )}
+                                            </h3>
+                                            <p className="text-[9px] text-[#9B9BAD] font-bold uppercase tracking-wider mt-1 opacity-80 min-h-[14px] ml-11">
+                                                {doc.description}
+                                            </p>
+
+                                            <div className="mt-4">
+                                                {doc.isSplit ? (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {['front', 'back'].map((side) => (
+                                                            <div key={side}>
+                                                                <div className="flex items-center gap-1.5 ml-1 mb-1">
+                                                                    <div className={`w-1.5 h-1.5 rounded-full ${uploadedDocs[`${doc.type}_${side}`] ? 'bg-emerald-500' : 'bg-blue-400'}`} />
+                                                                    <p className="text-[9px] font-black uppercase text-[#1B4DA0] tracking-widest">{side} Side</p>
+                                                                </div>
+                                                                <DocumentActions
+                                                                    docType={doc.type}
+                                                                    docLabel={doc.label}
+                                                                    side={side}
+                                                                    uploadedDocs={uploadedDocs}
+                                                                    uploading={uploading}
+                                                                    handleFileChange={handleFileChange}
+                                                                    handleRemoveDoc={handleRemoveDoc}
+                                                                    isSplit={true}
+                                                                    isMultiple={false}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : doc.isSemester ? (
+                                                    isUniversityExpanded ? (
+                                                        <div className="space-y-4">
+                                                            <div className="grid grid-cols-1 gap-2">
+                                                                {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => {
+                                                                    const semKey = `university_marksheet_sem${sem}`;
+                                                                    return (
+                                                                        <div key={sem} className="flex items-center justify-between p-2 bg-[#FAFAFA] rounded-xl border border-[#F4F3EF]">
+                                                                            <span className="text-[9px] font-black text-[#1A1A2E] uppercase">Sem {sem}</span>
+                                                                            <div className="flex-1 max-w-[200px] px-3">
+                                                                                {uploadedDocs[semKey] ? (
+                                                                                    <span className="text-[8px] text-[#9B9BAD] font-bold truncate block">{uploadedDocs[semKey].name}</span>
+                                                                                ) : (
+                                                                                    <span className="text-[8px] text-[#9B9BAD] font-bold opacity-40 italic">Not Uploaded</span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                {uploadedDocs[semKey] ? (
+                                                                                    <>
+                                                                                        <div className="w-5 h-5 bg-emerald-500 rounded-lg flex items-center justify-center text-white">
+                                                                                            <FiCheck size={12} strokeWidth={4} />
+                                                                                        </div>
+                                                                                        <button onClick={() => handleRemoveDoc(semKey)} className="p-1 hover:text-red-500 transition-colors">
+                                                                                            <FiTrash2 size={12} />
+                                                                                        </button>
+                                                                                    </>
+                                                                                ) : (
+                                                                                    <label className="cursor-pointer">
+                                                                                        <input
+                                                                                            type="file"
+                                                                                            className="hidden"
+                                                                                            onChange={(e) => handleFileChange(e, doc.type, `Sem ${sem}`, `sem${sem}`, false)}
+                                                                                        />
+                                                                                        <div className="w-8 h-8 bg-blue-50 text-[#1B4DA0] rounded-lg flex items-center justify-center hover:bg-[#1B4DA0] hover:text-white transition-all">
+                                                                                            <FiPlus size={18} />
+                                                                                        </div>
+                                                                                    </label>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); setIsUniversityExpanded(false); }}
+                                                                className="w-full py-2.5 text-[9px] font-black uppercase text-[#9B9BAD] tracking-widest hover:text-[#1A1A2E] transition-colors"
+                                                            >
+                                                                Collapse List
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div 
+                                                            onClick={() => setIsUniversityExpanded(true)}
+                                                            className="mt-4 p-4 bg-blue-50/50 border border-dashed border-blue-200 rounded-2xl flex items-center justify-center gap-2 cursor-pointer hover:bg-blue-50 transition-all text-[#1B4DA0] font-black text-[9px] uppercase tracking-widest"
+                                                        >
+                                                            <FiPlus size={14} /> Click to manage semesters
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    <DocumentActions
+                                                        docType={doc.type}
+                                                        docLabel={doc.label}
+                                                        uploadedDocs={uploadedDocs}
+                                                        uploading={uploading}
+                                                        handleFileChange={handleFileChange}
+                                                        handleRemoveDoc={handleRemoveDoc}
+                                                        isSplit={false}
+                                                        isMultiple={doc.isMultiple}
+                                                    />
+                                                )}
+
+                                            </div>
                                         </div>
                                     </div>
-                                </motion.div>
+                                </div>
                             );
                         })}
                     </div>
-                </div>
+                </section>
             ))}
 
-            {/* Submit Section */}
-            <div className="bg-gradient-to-r from-[#1B4DA0] to-[#2563EB] rounded-[32px] p-8 text-white">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                        <h4 className="text-xl font-bold">Ready to Submit?</h4>
-                        <p className="text-blue-100 font-medium mt-1 text-sm">
-                            {progressPercent === 100 
-                                ? 'All required documents uploaded! Click submit to proceed.'
-                                : `Please upload all required documents (${totalRequired - uploadedRequired} remaining)`
-                            }
-                        </p>
-                    </div>
-                    <button 
-                        disabled={progressPercent < 100}
-                        className={`px-8 py-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-2 ${
-                            progressPercent === 100 
-                                ? 'bg-white text-[#1B4DA0] hover:bg-blue-50 shadow-lg shadow-black/10 active:scale-[0.98]' 
-                                : 'bg-white/20 text-white/60 cursor-not-allowed'
-                        }`}
-                    >
-                        <FiCheckCircle size={18} />
-                        Submit for Verification
-                    </button>
-                </div>
-            </div>
 
-            {/* Info Note */}
-            <div className="flex items-start gap-4 px-6 py-5 bg-amber-50 border border-amber-200 rounded-2xl">
-                <FiAlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={18} />
-                <div>
-                    <p className="text-sm font-bold text-amber-800">Important Note</p>
-                    <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                        All documents should be clear, readable, and in PDF/JPG/PNG format. Maximum file size is <strong>1MB</strong> per document. 
-                        Documents marked with <span className="text-red-500">*</span> are mandatory for verification.
-                    </p>
-                </div>
-            </div>
+
+            {/* Submission Section */}
+            <footer className="mt-12 bg-[#EEF2FB] rounded-[24px] md:rounded-[32px] p-6 md:p-8 border border-[#D1D9F0] flex items-center justify-center shadow-xs">
+                
+                {candidate?.bgvStatus === 'KYC Submitted' && !hasPendingChanges ? (
+                    <div className="flex items-center gap-3 px-8 py-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl text-emerald-600 font-black text-xs uppercase tracking-widest shadow-sm">
+                        <FiCheckCircle size={20} /> Application Under Review
+                    </div>
+                ) : (
+                    <button
+                        onClick={handleSubmitProfile}
+                        disabled={!isFullyComplete || isSubmitting || (candidate?.bgvStatus === 'KYC Submitted' && !hasPendingChanges)}
+                        className={`px-10 py-5 rounded-2xl font-black text-xs transition-all flex items-center gap-3 uppercase tracking-widest shadow-lg ${isFullyComplete && !isSubmitting && (candidate?.bgvStatus !== 'KYC Submitted' || hasPendingChanges)
+                            ? 'bg-[#1B4DA0] text-white hover:bg-[#153b7a] hover:scale-105'
+                            : 'bg-[#1B4DA0]/10 text-[#1B4DA0]/30 cursor-not-allowed'}`}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                {candidate?.bgvStatus === 'KYC Submitted' ? 'Updating...' : 'Submitting...'}
+                            </>
+                        ) : (
+                            <>
+                                <FiCheckCircle size={20} /> 
+                                {candidate?.bgvStatus === 'KYC Submitted' ? 'Update Submission' : 'Submit Profile'}
+                            </>
+                        )}
+                    </button>
+                )}
+            </footer>
         </div>
     );
 };
 
-const OfferLetter = ({ candidate }) => {
-    return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 text-center">
-                <div className="max-w-md mx-auto">
-                    <div className="w-20 h-20 bg-slate-50 rounded-[24px] flex items-center justify-center text-[#9B9BAD] mx-auto mb-6 border border-slate-100">
-                        <FiFileText size={36} />
-                    </div>
-                    
-                    {candidate?.offerLetterUrl ? (
-                        <>
-                            <h3 className="text-2xl font-bold text-[#1A1A2E] mb-3">Offer Letter Ready!</h3>
-                            <p className="text-[#9B9BAD] font-medium mb-8 leading-relaxed">
-                                Your official offer letter is now available for download. Please review, sign, and return it to complete your onboarding.
-                            </p>
-                            
-                            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-8">
-                                <div className="flex items-center justify-center gap-3 text-emerald-700">
-                                    <FiCheckCircle size={20} />
-                                    <span className="font-bold">Document Verification Complete</span>
-                                </div>
-                            </div>
-                            
-                            <a 
-                                href={`${BASE_URL}${candidate.offerLetterUrl}`} 
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-3 bg-[#1B4DA0] hover:bg-[#164088] text-white px-10 py-5 rounded-2xl font-bold shadow-xl shadow-[#1B4DA0]/20 active:scale-[0.98] transition-all"
-                            >
-                                <FiDownload size={20} />
-                                Download Offer Letter
-                            </a>
-                        </>
-                    ) : (
-                        <>
-                            <h3 className="text-2xl font-bold text-[#1A1A2E] mb-3">Offer Letter Pending</h3>
-                            <p className="text-[#9B9BAD] font-medium mb-8 leading-relaxed">
-                                Your offer letter will be generated and attached here once all your documents have been verified by our HR team.
-                            </p>
-                            
-                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
-                                <div className="flex items-center justify-center gap-3 text-amber-700">
-                                    <FiClock size={20} />
-                                    <span className="font-bold">Awaiting Document Verification</span>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
+const DocumentActions = ({
+    docType, docLabel, side, uploadedDocs, uploading, handleFileChange, handleRemoveDoc, isSplit, isMultiple
+}) => {
+    const isLoading = uploading[isMultiple ? docType : (side ? `${docType}_${side}` : docType)];
 
-            {/* Timeline */}
-            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-                <h3 className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-6">Offer Process Timeline</h3>
-                <div className="space-y-4">
-                    {[
-                        { step: 1, title: 'Documents Submitted', status: 'done', date: 'Completed' },
-                        { step: 2, title: 'HR Verification', status: 'current', date: 'In Progress' },
-                        { step: 3, title: 'Offer Generation', status: 'pending', date: 'Pending' },
-                        { step: 4, title: 'Offer Acceptance', status: 'pending', date: 'Pending' },
-                    ].map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${
-                                item.status === 'done' ? 'bg-emerald-100 text-emerald-600' :
-                                item.status === 'current' ? 'bg-[#1B4DA0] text-white' :
-                                'bg-slate-100 text-slate-400'
-                            }`}>
-                                {item.status === 'done' ? <FiCheckCircle size={18} /> : item.step}
+    // For multiple uploads, we find all keys that match the pattern
+    const matchingKeys = isMultiple
+        ? Object.keys(uploadedDocs).filter(key => key.startsWith(`${docType}_`))
+        : (side ? [`${docType}_${side}`] : [docType]);
+
+    return (
+        <div className="space-y-3">
+            {/* List of uploaded files */}
+            {matchingKeys.map((key) => {
+                const doc = uploadedDocs[key];
+                if (!doc) return null;
+                
+                return (
+                    <div 
+                        key={key}
+                        className="flex items-center gap-3 bg-[#FAFAFA] px-3 py-2 rounded-xl border border-[#F4F3EF] shadow-xs"
+                    >
+                        <FiFileText className="text-[#1B4DA0] shrink-0" size={14} />
+                        <span className="truncate flex-1 text-[10px] font-black text-[#1A1A2E] uppercase">{doc.name || doc.fileName}</span>
+                        <div className="flex items-center gap-1">
+                            <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white text-[8px] font-bold">
+                                <FiCheck />
                             </div>
-                            <div className="flex-1">
-                                <p className={`font-bold text-sm ${item.status === 'pending' ? 'text-[#9B9BAD]' : 'text-[#1A1A2E]'}`}>{item.title}</p>
-                            </div>
-                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                                item.status === 'done' ? 'bg-emerald-100 text-emerald-700' :
-                                item.status === 'current' ? 'bg-[#1B4DA0]/10 text-[#1B4DA0]' :
-                                'bg-slate-100 text-slate-400'
-                            }`}>{item.date}</span>
+                            <button onClick={() => handleRemoveDoc(key)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors">
+                                <FiTrash2 size={14} />
+                            </button>
                         </div>
-                    ))}
-                </div>
-            </div>
+                    </div>
+                );
+            })}
+
+            {/* Upload Button - Hidden if single/split and already uploaded, always visible if multiple */}
+            {(isMultiple || matchingKeys.every(k => !uploadedDocs[k])) && (
+                <label className="block cursor-pointer group">
+                    <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => handleFileChange(e, docType, docLabel, side, isMultiple)}
+                        disabled={isLoading}
+                    />
+                    <div className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all border ${isLoading
+                        ? 'bg-slate-100 text-slate-400 border-slate-200'
+                        : 'bg-[#EEF2FB] text-[#1B4DA0] border-[#D1D9F0] group-hover:bg-white group-hover:border-blue-300 active:scale-95'}`}>
+                        {isLoading ? 'Uploading...' : <><FiUploadCloud size={14} /> {isMultiple && matchingKeys.length > 0 ? 'Add Another' : 'Upload Now'}</>}
+                    </div>
+                </label>
+            )}
         </div>
     );
 };
