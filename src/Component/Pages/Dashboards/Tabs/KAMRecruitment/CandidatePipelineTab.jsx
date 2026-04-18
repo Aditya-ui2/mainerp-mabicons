@@ -115,75 +115,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         const parsed = JSON.parse(c);
         if (parsed.length > 0) return parsed;
       }
-      // High-fidelity mock data for UI testing if empty
-      return [
-        {
-          id: 'mock-101',
-          name: 'Alex Rivera',
-          email: 'alex.rivera@example.com',
-          phone: '+91 98765 43210',
-          location: 'Bangalore, India',
-          role: 'Senior Software Engineer',
-          jobTitle: 'Senior Software Engineer',
-          client: 'TechSolutions Inc.',
-          experience: '6.5 Years',
-          currentCTC: '18 LPA',
-          expectedCTC: '24 LPA',
-          noticePeriod: '30 Days',
-          skills: ['React', 'Node.js', 'Redux', 'TypeScript', 'AWS'],
-          stage: 'Screening',
-          source: 'LinkedIn',
-          rating: 4.5,
-          appliedDate: new Date().toISOString().split('T')[0],
-          lastActivity: new Date().toISOString().split('T')[0],
-          shortDescription: 'Experienced full-stack developer with a strong background in scalable cloud architectures.',
-          profileImage: 'https://i.pravatar.cc/150?u=mock-101'
-        },
-        {
-          id: 'mock-102',
-          name: 'Jordan Smith',
-          email: 'jordan.smith@example.com',
-          phone: '+91 88888 77777',
-          location: 'Mumbai, India',
-          role: 'Frontend Developer',
-          jobTitle: 'Frontend Developer',
-          client: 'Microsoft',
-          experience: '4 Years',
-          currentCTC: '12 LPA',
-          expectedCTC: '16 LPA',
-          noticePeriod: 'Immediate',
-          skills: ['React', 'Tailwind CSS', 'Framer Motion', 'Next.js'],
-          stage: 'Screening',
-          source: 'Naukri',
-          rating: 4.2,
-          appliedDate: new Date().toISOString().split('T')[0],
-          lastActivity: new Date().toISOString().split('T')[0],
-          shortDescription: 'Passionate about building beautiful, interactive user interfaces with modern React ecosystems.',
-          profileImage: 'https://i.pravatar.cc/150?u=mock-102'
-        },
-        {
-          id: 'mock-103',
-          name: 'Sarah Johnson',
-          email: 'sarah.j@example.com',
-          phone: '+91 99999 55555',
-          location: 'Pune, India',
-          role: 'Lead UI/UX Designer',
-          jobTitle: 'Lead UI/UX Designer',
-          client: 'Google',
-          experience: '8 Years',
-          currentCTC: '25 LPA',
-          expectedCTC: '32 LPA',
-          noticePeriod: '60 Days',
-          skills: ['Figma', 'Adobe XD', 'Prototyping', 'User Research'],
-          stage: 'Technical Round',
-          source: 'Referral',
-          rating: 4.8,
-          appliedDate: new Date().toISOString().split('T')[0],
-          lastActivity: new Date().toISOString().split('T')[0],
-          shortDescription: 'Senior design leader focused on human-centric product design and cross-functional team leadership.',
-          profileImage: 'https://i.pravatar.cc/150?u=mock-103'
-        }
-      ];
+      return [];
     } catch {
       return [];
     }

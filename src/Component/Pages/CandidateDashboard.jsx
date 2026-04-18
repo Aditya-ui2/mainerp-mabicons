@@ -151,9 +151,10 @@ const CandidateDashboard = () => {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all lg:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#1B4DA0] shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300 border border-slate-200 lg:hidden"
+              aria-label="Open menu"
             >
-              {isSidebarOpen ? <FiX size={20} className="text-slate-600" /> : <FiMenu size={20} className="text-slate-600" />}
+              {isSidebarOpen ? <FiX className="w-5 h-5 stroke-[2]" /> : <FiMenu className="w-5 h-5 stroke-[2]" />}
             </button>
             <div>
               <h2 className="text-xl lg:text-2xl font-bold text-[#1A1A2E] tracking-tight">Onboarding Portal</h2>

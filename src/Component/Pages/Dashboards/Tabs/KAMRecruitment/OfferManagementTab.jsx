@@ -1108,10 +1108,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
                               }
                             }
                            }}
-                          className={`${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#1967D2] hover:bg-[#185ABC]'} text-white px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-blue-500/10`}
+                          className={`${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#1B4DA0] hover:bg-[#1557B0]'} text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95`}
                         >
                           <Zap size={14} fill="currentColor" />
-                          GENERATE CREDENTIALS
+                          Generate Credentials
                         </motion.button>
                       ) : (
                         <div className="flex flex-col items-center justify-center w-full max-w-[140px] group/bgv relative">
@@ -1146,7 +1146,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                     {/* Verify Status Column */}
                     <div className={`flex-shrink-0 w-[140px] flex items-center justify-center border-r ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
                       {offer.bgvStatus === 'Verified' ? (
-                        <div className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 transition-all hover:scale-105">
+                        <div className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all">
                           <BadgeCheck size={12} />
                           Verified
                         </div>
@@ -1158,10 +1158,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
                             e.stopPropagation();
                             handleManualVerify(offer.id || offer._id);
                           }}
-                          className="bg-black text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all hover:bg-slate-800"
+                          className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
                         >
-                          <AlertCircle size={12} />
-                          Unverified
+                          <ShieldCheck size={12} />
+                          Mark Verified
                         </motion.button>
                       )}
                     </div>

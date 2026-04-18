@@ -13,9 +13,13 @@ import {
   FiZap,
   FiCheckCircle,
   FiXCircle,
-  FiAlertCircle
+  FiAlertCircle,
+  FiDownload,
+  FiEye,
+  FiMail,
+  FiRefreshCw
 } from 'react-icons/fi';
-import { BadgeCheck, Send, ShieldCheck, FileSearch, Fingerprint, User, FileText } from 'lucide-react';
+import { BadgeCheck, Send, ShieldCheck, FileSearch, Fingerprint, User, FileText, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAllCandidates, verifyCandidateKYC, attachFinalOfferLetter, generateCandidateCredentials, BASE_URL } from '../../../service/api';
 import { toast } from 'sonner';
@@ -30,6 +34,10 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
   const [selectedDocType, setSelectedDocType] = useState('pan');
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectingDoc, setRejectingDoc] = useState(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => {
     console.log('DocumentVerifyTab Effect running...');
@@ -77,11 +85,65 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
       const status = action === 'verified' ? 'Verified' : 'Rejected';
       const res = await verifyCandidateKYC({ candidateId, docType, status });
       if (res && res.success) {
-        toast.success(`Marked as ${status}`);
+        toast.success(`Document marked as ${status}`);
         fetchCandidates();
       }
     } catch (err) {
       toast.error('Verification failed');
+    }
+  };
+
+  const openRejectModal = (candidateId, docType) => {
+    setRejectingDoc({ candidateId, docType });
+    setRejectionReason('');
+    setShowRejectModal(true);
+  };
+
+  const handleRejectWithEmail = async () => {
+    if (!rejectingDoc) return;
+    
+    try {
+      const loadingId = toast.loading('Rejecting document & sending email...');
+      const res = await verifyCandidateKYC({ 
+        candidateId: rejectingDoc.candidateId, 
+        docType: rejectingDoc.docType, 
+        status: 'rejected',
+        rejectionReason: rejectionReason || 'Document could not be verified. Please re-upload a valid document.'
+      });
+      
+      if (res && res.success) {
+        toast.success('Document rejected & email sent to candidate', { id: loadingId });
+        fetchCandidates();
+        setShowRejectModal(false);
+        setRejectingDoc(null);
+        setRejectionReason('');
+      }
+    } catch (err) {
+      toast.error('Failed to reject document');
+    }
+  };
+
+  const getDocUrl = (doc) => {
+    if (!doc?.url) return null;
+    return doc.url.startsWith('http') ? doc.url : `${BASE_URL}${doc.url}`;
+  };
+
+  const handleDownload = async (url, fileName) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName || 'document';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      toast.success('Document downloaded');
+    } catch (err) {
+      toast.error('Download failed');
+      window.open(url, '_blank');
     }
   };
 
@@ -272,62 +334,135 @@ Mabicons Recruitment Team`);
 
               <div className="flex-1 p-10 overflow-y-auto custom-scrollbar">
                 {selectedCandidate.kycDocuments?.[selectedDocType] ? (
-                  <div className="flex flex-col gap-10 h-full min-h-0">
-                    <div className={`flex-1 min-h-[450px] rounded-[3.5rem] overflow-hidden relative group shadow-2xl transition-all border-4 ${
-                      isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-900 border-slate-50'
+                  <div className="flex flex-col gap-8 h-full min-h-0">
+                    {/* Document Preview Card */}
+                    <div className={`flex-1 min-h-[400px] rounded-3xl overflow-hidden relative group shadow-xl transition-all border ${
+                      isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
                     }`}>
+                      {/* Document Status Badge */}
+                      {selectedCandidate.kycDocuments[selectedDocType].verified !== undefined && (
+                        <div className="absolute top-4 left-4 z-10">
+                          <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                            selectedCandidate.kycDocuments[selectedDocType].verified 
+                              ? 'bg-emerald-500 text-white' 
+                              : 'bg-rose-500 text-white'
+                          }`}>
+                            {selectedCandidate.kycDocuments[selectedDocType].verified ? (
+                              <><FiCheckCircle size={12} /> Verified</>
+                            ) : (
+                              <><FiXCircle size={12} /> Rejected</>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Document Image */}
                       <img
-                        src={`${BASE_URL}${selectedCandidate.kycDocuments[selectedDocType].url}`}
-                        className="w-full h-full object-contain" alt="KYC"
+                        src={getDocUrl(selectedCandidate.kycDocuments[selectedDocType])}
+                        className="w-full h-full object-contain p-4" 
+                        alt={`${selectedDocType} document`}
                         onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
                       />
-                      <div className="hidden absolute inset-0 flex flex-col items-center justify-center text-white gap-6 bg-slate-950/90 backdrop-blur-md">
-                        <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
-                           <FileSearch size={40} className="text-[#1B4DA0]" />
+                      
+                      {/* Fallback for non-image files */}
+                      <div className="hidden absolute inset-0 flex-col items-center justify-center gap-6 bg-slate-100 dark:bg-slate-900">
+                        <div className={`w-24 h-24 rounded-2xl flex items-center justify-center ${
+                          isDarkMode ? 'bg-slate-800' : 'bg-white shadow-lg'
+                        }`}>
+                          <FiFileText size={40} className="text-[#1B4DA0]" />
                         </div>
-                        <div className="text-center">
-                          <p className="text-[11px] font-bold uppercase tracking-[6px] text-[#1B4DA0] mb-4">Secured Transmission</p>
-                          <a href={`${BASE_URL}${selectedCandidate.kycDocuments[selectedDocType].url}`} target="_blank" rel="noreferrer" 
-                             className="px-10 py-5 bg-[#1B4DA0] rounded-2xl font-bold uppercase text-[11px] tracking-widest hover:bg-[#15418a] transition-all shadow-2xl shadow-blue-500/20 inline-flex items-center gap-3">
-                             <FiDownload /> Download Core Asset
-                          </a>
-                        </div>
+                        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                          Document preview not available
+                        </p>
                       </div>
-                      <div className="absolute top-8 right-8 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
-                        <button onClick={() => window.open(`${BASE_URL}${selectedCandidate.kycDocuments[selectedDocType].url}`, '_blank')} 
-                                className="w-14 h-14 rounded-2xl bg-white text-slate-900 shadow-2xl hover:bg-[#1B4DA0] hover:text-white transition-all flex items-center justify-center">
-                          <FiExternalLink size={24} />
-                        </button>
+                      
+                      {/* Quick Action Buttons - Top Right */}
+                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => window.open(getDocUrl(selectedCandidate.kycDocuments[selectedDocType]), '_blank')}
+                          className="w-10 h-10 rounded-xl bg-white shadow-lg flex items-center justify-center text-slate-600 hover:text-[#1B4DA0] hover:bg-blue-50 transition-all"
+                          title="View Full Screen"
+                        >
+                          <FiEye size={18} />
+                        </motion.button>
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleDownload(
+                            getDocUrl(selectedCandidate.kycDocuments[selectedDocType]),
+                            `${selectedCandidate.name}_${selectedDocType}`
+                          )}
+                          className="w-10 h-10 rounded-xl bg-white shadow-lg flex items-center justify-center text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                          title="Download"
+                        >
+                          <FiDownload size={18} />
+                        </motion.button>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-6 pb-10">
+                    {/* Action Buttons Row */}
+                    <div className="flex gap-4">
+                      {/* View Button */}
+                      <motion.button 
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => window.open(getDocUrl(selectedCandidate.kycDocuments[selectedDocType]), '_blank')}
+                        className={`flex-1 py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border ${
+                          isDarkMode ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <FiEye size={18} /> View Document
+                      </motion.button>
+                      
+                      {/* Download Button */}
+                      <motion.button 
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleDownload(
+                          getDocUrl(selectedCandidate.kycDocuments[selectedDocType]),
+                          `${selectedCandidate.name}_${selectedDocType}`
+                        )}
+                        className={`flex-1 py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                          isDarkMode ? 'bg-[#1B4DA0] text-white hover:bg-[#164088]' : 'bg-[#1B4DA0] text-white hover:bg-[#164088]'
+                        } shadow-lg shadow-blue-500/20`}
+                      >
+                        <FiDownload size={18} /> Download
+                      </motion.button>
+                    </div>
+
+                    {/* Verification Action Buttons */}
+                    <div className="grid grid-cols-2 gap-4 pb-6">
                       <motion.button 
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleVerify(selectedCandidate.id, selectedDocType, 'verified')} 
-                        className="py-5 bg-[#10b981] text-white rounded-[1.5rem] font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"
+                        className="py-4 bg-emerald-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
                       >
-                        <FiCheckCircle size={18} /> Approve Coordinate
+                        <FiCheckCircle size={18} /> Approve Document
                       </motion.button>
                       <motion.button 
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => handleVerify(selectedCandidate.id, selectedDocType, 'rejected')} 
-                        className={`py-5 border-2 rounded-[1.5rem] font-bold text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${
-                          isDarkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20' : 'border-rose-100 bg-white text-rose-500 hover:border-rose-200 hover:bg-rose-50'
-                        }`}
+                        onClick={() => openRejectModal(selectedCandidate.id, selectedDocType)} 
+                        className="py-4 bg-rose-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all flex items-center justify-center gap-2"
                       >
-                        <FiXCircle size={18} /> Decline Audit
+                        <FiMail size={18} /> Reject & Notify
                       </motion.button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center py-32">
                     <div className="text-center max-w-sm">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#1B4DA0]">Pending Audit Analysis</p>
-                      <p className={`text-[11px] font-medium mt-4 leading-relaxed opacity-40 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Document coordinates awaiting digital transmission.
+                      <div className={`w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center ${
+                        isDarkMode ? 'bg-slate-800' : 'bg-slate-100'
+                      }`}>
+                        <FiClock size={32} className="text-slate-400" />
+                      </div>
+                      <p className="text-lg font-bold text-slate-700 dark:text-slate-200 mb-2">Pending Upload</p>
+                      <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Candidate has not uploaded this document yet. They will receive a reminder to complete their KYC.
                       </p>
                     </div>
                   </div>
@@ -343,6 +478,98 @@ Mabicons Recruitment Team`);
           )}
         </div>
       </div>
+
+      {/* Rejection Modal */}
+      <AnimatePresence>
+        {showRejectModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowRejectModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${
+                isDarkMode ? 'bg-slate-900' : 'bg-white'
+              }`}
+            >
+              {/* Modal Header */}
+              <div className={`px-6 py-5 border-b flex items-center justify-between ${
+                isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-slate-50'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center">
+                    <FiMail className="text-rose-500" size={20} />
+                  </div>
+                  <div>
+                    <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Reject Document</h3>
+                    <p className="text-xs text-slate-500">Candidate will be notified via email</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowRejectModal(false)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6">
+                <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Reason for Rejection <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="e.g., Document is blurry, expired, or information doesn't match..."
+                  rows={4}
+                  className={`w-full px-4 py-3 rounded-xl border text-sm resize-none transition-all focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]/20 ${
+                    isDarkMode 
+                      ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'
+                  }`}
+                />
+                <p className="mt-2 text-xs text-slate-400">
+                  This message will be included in the email sent to the candidate.
+                </p>
+              </div>
+
+              {/* Modal Footer */}
+              <div className={`px-6 py-4 border-t flex gap-3 ${
+                isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50'
+              }`}>
+                <button
+                  onClick={() => setShowRejectModal(false)}
+                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all ${
+                    isDarkMode 
+                      ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' 
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRejectWithEmail}
+                  disabled={!rejectionReason.trim()}
+                  className={`flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                    rejectionReason.trim()
+                      ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/20'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  <FiMail size={16} /> Reject & Send Email
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
