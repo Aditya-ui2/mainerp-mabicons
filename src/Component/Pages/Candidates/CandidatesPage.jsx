@@ -945,7 +945,7 @@ Mabicons Recruitment Team`);
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-[#F4F3EF] dark:border-slate-800 text-left bg-transparent">
-                  <th className="py-4 pl-6 pr-4 w-12">
+                  <th className="py-[25px] pl-8 pr-4 w-14">
                     <button
                       onClick={() => selectedIds.length === candidates.length ? setSelectedIds([]) : setSelectedIds(candidates.map(c => c.id))}
                       className={`p-1 rounded-md transition-all ${selectedIds.length === candidates.length ? 'text-[#1B4DA0]' : 'text-[#C5C5D2]'}`}
@@ -954,7 +954,7 @@ Mabicons Recruitment Team`);
                     </button>
                   </th>
                   {["Candidate Info", "Department / Role", "Applied Date", "Pipeline Stage", "Quick Actions", ""].map((h) => (
-                    <th key={h} className={`py-4 px-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${h === "" ? "text-right" : ""}`} style={{ fontFamily: "'Syne', sans-serif" }}>{h}</th>
+                    <th key={h} className={`py-[25px] px-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${h === "" ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>

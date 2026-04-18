@@ -155,12 +155,20 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
   const relativeDate = getRelativeDate(editableTask.dueDate || task.dueDate);
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
-      {/* Header */}
-      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
-        <div className="text-left">
-          <h2 className="text-xl font-bold text-[#1A1A2E] leading-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Task Details</h2>
-          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">RECRUITMENT OPERATIONS</p>
+    <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right-10 duration-500">
+      {/* Header - Sticky Style */}
+      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
+        <div className="flex-1 mr-4">
+          <h2 className="text-2xl font-black text-[#1A1A2E] font-syne outline-none">{editableTask.title || 'Task Details'}</h2>
+          <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
+            <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] outline-none truncate">
+                {task.assignedToName || 'PENDING ASSIGNMENT'}
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2] flex-shrink-0" />
+            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] outline-none">
+                {task.status}
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {isEditing ? (
@@ -185,10 +193,10 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
               <button
                 disabled={isSaving}
                 onClick={handleSave}
-                className="w-[145.83px] h-[32px] rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
               >
                 {isSaving ? (
-                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <FiLoader className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <FiCheck size={14} />
                 )}
@@ -199,164 +207,169 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsEditing(true)}
-                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] hover:border-blue-100 shadow-sm"
               >
-                <FiEdit2 size={18} />
+                <FiEdit2 size={20} />
               </button>
 
               <button
                 onClick={onBack}
-                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] hover:border-red-100 shadow-sm"
               >
-                <FiX size={20} />
+                <FiX size={22} />
               </button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
-        {/* Title Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#0D47A1]/5 flex items-center justify-center text-[#0D47A1]">
-              <FiCheckSquare size={24} />
-            </div>
-            <input type="text"
-              readOnly={!isEditing}
-              className={`flex-1 bg-transparent rounded-xl px-3 py-1.5 -ml-2 text-2xl font-bold text-[#1A1A2E] leading-tight transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent'}`}
-              value={editableTask.title}
-              onChange={e => setEditableTask(p => ({ ...p, title: e.target.value }))}
-              onBlur={e => handleBlur('title', e.target.value)}
-              placeholder="Task Title"
-            />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <StatusBadge status={task.status} />
-            <PriorityBadge priority={task.priority} />
-          </div>
+      <div className="flex-1 p-10 space-y-10 overflow-y-auto custom-scrollbar">
+        {/* Status Quick View */}
+        <div className="flex flex-wrap gap-4">
+           <div className="flex items-center gap-2.5 px-3 py-1.5 bg-[#F4F3EF] rounded-lg border border-[#E8E7E2]">
+              <span className={`w-2 h-2 rounded-full ${task.status === 'Completed' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest">{task.status}</span>
+           </div>
+           <div className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg border ${
+            task.priority === 'High' || task.priority === 'Urgent' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[#F4F3EF] border-[#E8E7E2] text-[#1A1A2E]'
+           }`}>
+              <FiFlag size={12} />
+              <span className="text-[10px] font-black uppercase tracking-widest">{task.priority} PRIORITY</span>
+           </div>
         </div>
 
-        {/* Info Grid */}
-        <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8">
-          <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-            <div className="space-y-1.5 text-left relative">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Assigned To</span>
-              <div className="flex items-center gap-2 relative">
-                <div className="w-8 h-8 rounded-lg bg-[#F0F7FF] text-[#1B4DA0] flex items-center justify-center font-black text-[10px] shrink-0">
+        {/* Unified Info Block */}
+        <div className="bg-[#FAFAF9] rounded-[40px] border border-[#F4F3EF] p-10 space-y-10 shadow-sm">
+          {/* Main Attributes */}
+          <div className="grid grid-cols-2 gap-x-12 gap-y-10">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Assigned Specialist</span>
+                {isEditing && <span className="text-[9px] font-bold text-[#1B4DA0] italic">Select below</span>}
+              </div>
+              <div className="flex items-center gap-4 relative">
+                <div className="w-12 h-12 rounded-2xl bg-[#F0F7FF] text-[#1B4DA0] flex items-center justify-center font-black text-sm border border-[#1B4DA0]/10 shadow-sm group-hover:scale-110 transition-transform">
                   {editableTask.assignedToName?.split(' ').map(n => n[0]).join('') || '?'}
                 </div>
-                <input
-                  type="text"
-                  readOnly={!isEditing}
-                  className={`w-full bg-transparent rounded-xl px-3 py-1.5 -ml-2 text-sm font-bold text-[#1A1A2E] outline-none transition-all border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent'}`}
-                  value={editableTask.assignedToName}
-                  onChange={e => {
-                    setEditableTask(p => ({ ...p, assignedToName: e.target.value }));
-                    if (isEditing) setShowAssigneeSuggestions(true);
-                  }}
-                  onFocus={() => isEditing && setShowAssigneeSuggestions(true)}
-                  onBlur={(e) => {
-                    setTimeout(() => setShowAssigneeSuggestions(false), 200);
-                  }}
-                />
-                
-                {showAssigneeSuggestions && (
-                  <div className="absolute z-50 top-full left-0 mt-1 w-full bg-white border border-[#F4F3EF] rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
-                    {teamMembers
-                      .filter(m => m.name.toLowerCase().includes((editableTask.assignedToName || '').toLowerCase()))
-                      .map(m => (
-                        <div
-                          key={m.id || m._id}
-                          className="px-4 py-3 hover:bg-[#FAFAF8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3"
-                          onClick={() => {
-                            const newId = m.id || m._id;
-                            const newName = m.name;
-                            setEditableTask(p => ({ ...p, assignedToName: newName, assignedTo: newId }));
-                            
-                            // Immediately dispatch save for both name and ID
-                            handleBlur('assignedTo', newId);
-                            // To keep parent UI correctly synced with assignedToName instead of UUID, 
-                            // we update the parent state object directly via another action block down in handleBlur:
-                            setTimeout(() => handleBlur('assignedToName', newName), 100);
-                            
-                            setShowAssigneeSuggestions(false);
-                          }}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[10px]">
-                            {m.name.charAt(0)}
-                          </div>
-                          <span className="text-xs font-bold text-[#1A1A2E]">{m.name}</span>
-                        </div>
-                      ))}
-                  </div>
-                )}
+                <div className="flex-1">
+                    <input
+                      type="text"
+                      readOnly={!isEditing}
+                      className={`w-full bg-transparent text-base font-black text-[#1A1A2E] outline-none border-b-2 transition-all ${isEditing ? 'border-[#1B4DA0] pb-1' : 'border-transparent'}`}
+                      value={editableTask.assignedToName}
+                      onChange={e => {
+                        setEditableTask(p => ({ ...p, assignedToName: e.target.value }));
+                        if (isEditing) setShowAssigneeSuggestions(true);
+                      }}
+                      onFocus={() => isEditing && setShowAssigneeSuggestions(true)}
+                      onBlur={(e) => {
+                        setTimeout(() => setShowAssigneeSuggestions(false), 200);
+                      }}
+                    />
+                    
+                    {showAssigneeSuggestions && (
+                      <div className="absolute z-50 top-full left-0 mt-3 w-full bg-white border border-[#F4F3EF] rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar">
+                        {teamMembers
+                          .filter(m => m.name.toLowerCase().includes((editableTask.assignedToName || '').toLowerCase()))
+                          .map(m => (
+                            <div
+                              key={m.id || m._id}
+                              className="px-5 py-4 hover:bg-[#F9F9F8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-4"
+                              onClick={() => {
+                                const newId = m.id || m._id;
+                                const newName = m.name;
+                                setEditableTask(p => ({ ...p, assignedToName: newName, assignedTo: newId }));
+                                handleBlur('assignedTo', newId);
+                                setTimeout(() => handleBlur('assignedToName', newName), 100);
+                                setShowAssigneeSuggestions(false);
+                              }}
+                            >
+                              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[11px]">
+                                {m.name.charAt(0)}
+                              </div>
+                              <span className="text-sm font-bold text-[#1A1A2E]">{m.name}</span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                </div>
               </div>
             </div>
-            <div className="space-y-1.5 text-left group">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Due Date</span>
-              <div className="flex items-center gap-2">
-                <FiCalendar className="text-[#9B9BAD]" size={14} />
-                <input type="date"
-                  readOnly={!isEditing}
-                  className={`w-full bg-transparent rounded-xl px-3 py-1.5 -ml-2 text-sm font-bold transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent'} ${relativeDate.color} cursor-pointer`}
-                  value={editableTask.dueDate}
-                  onChange={e => setEditableTask(p => ({ ...p, dueDate: e.target.value }))}
-                  onBlur={e => handleBlur('dueDate', e.target.value)}
-                />
-                <span className={`text-sm font-bold ${relativeDate.color} opacity-60 pointer-events-none -ml-2`}>({relativeDate.label})</span>
+
+            <div className="space-y-4">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deadline Protocol</span>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center border border-rose-100 shadow-sm">
+                   <FiCalendar size={20} />
+                </div>
+                <div className="flex flex-col">
+                    <input type="date"
+                      readOnly={!isEditing}
+                      className={`text-base font-black transition-all outline-none border-b-2 ${isEditing ? 'border-rose-300 pb-1' : 'border-transparent text-[#1A1A2E]'} ${relativeDate.color} cursor-pointer`}
+                      value={editableTask.dueDate}
+                      onChange={e => setEditableTask(p => ({ ...p, dueDate: e.target.value }))}
+                      onBlur={e => handleBlur('dueDate', e.target.value)}
+                    />
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${relativeDate.color} mt-0.5`}>{relativeDate.label} PHASE</span>
+                </div>
               </div>
             </div>
+
+            {/* Metrics & Performance */}
             {task.targets && task.targets.length > 0 && (
-              <div className="col-span-2 space-y-4 pt-4 border-t border-[#F4F3EF]">
-                <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Targets & Metrics</span>
-                <div className="grid grid-cols-2 gap-4">
-                  {task.targets.map((tg, idx) => (
-                    <div key={idx} className="bg-white border border-[#F4F3EF] rounded-2x p-4 flex items-center gap-4 group hover:shadow-md transition-all duration-300">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                        {tg.type === 'Calling' && <FiPhone size={18} />}
-                        {tg.type === 'Interviews' && <FiUsers size={18} />}
-                        {tg.type === 'Hiring' && <FiUserPlus size={18} />}
-                        {tg.type === 'Profile Visited' && <FiEye size={18} />}
+              <div className="col-span-2 space-y-6 pt-10 border-t border-[#F4F3EF]">
+                 <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Mission Metrics</span>
+                    <div className="h-px bg-[#F4F3EF] flex-1 ml-8" />
+                 </div>
+                 <div className="grid grid-cols-2 gap-6">
+                    {task.targets.map((tg, idx) => (
+                    <div key={idx} className="bg-white border border-[#F4F3EF] rounded-[24px] p-6 flex items-center gap-5 hover:shadow-lg transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-[#FAFAF9] text-[#1B4DA0] flex items-center justify-center shrink-0 border border-[#F4F3EF] group-hover:bg-[#1B4DA0] group-hover:text-white transition-colors shadow-sm">
+                        {tg.type === 'Calling' && <FiPhone size={20} />}
+                        {tg.type === 'Interviews' && <FiUsers size={20} />}
+                        {tg.type === 'Hiring' && <FiUserPlus size={20} />}
+                        {tg.type === 'Profile Visited' && <FiEye size={20} />}
                       </div>
                       <div className="text-left">
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-wider">{tg.type}</p>
-                        <p className="text-lg font-black text-[#1A1A2E]">{tg.value}</p>
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">{tg.type}</p>
+                        <p className="text-xl font-black text-[#1A1A2E]">{tg.value}</p>
                       </div>
                     </div>
                   ))}
-                </div>
+                 </div>
               </div>
             )}
-          </div>
 
-          <div className="pt-8 mt-8 border-t border-[#F4F3EF] text-left group">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left group-hover:text-[#0D47A1] transition-colors">Description</span>
-              <span className="text-[9px] font-bold text-[#9B9BAD] opacity-0 group-hover:opacity-100 transition-opacity italic">Click to edit</span>
+            {/* Description Block */}
+            <div className="col-span-2 space-y-6 pt-10 border-t border-[#F4F3EF]">
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Task Description</span>
+                    <div className="h-px bg-[#F4F3EF] flex-1 ml-8" />
+                </div>
+                <div className={`p-6 bg-white rounded-[24px] border transition-all ${isEditing ? 'border-[#1B4DA0] shadow-md' : 'border-[#F4F3EF]'}`}>
+                    <textarea
+                      readOnly={!isEditing}
+                      className="w-full bg-transparent text-sm text-[#4B4B5E] leading-relaxed font-bold resize-none outline-none placeholder:text-[#9B9BAD]"
+                      rows={Math.max(5, (editableTask.description || '').split('\n').length)}
+                      value={editableTask.description}
+                      onChange={e => setEditableTask(p => ({ ...p, description: e.target.value }))}
+                      onBlur={e => handleBlur('description', e.target.value)}
+                      placeholder="Brief your team on mission details..."
+                    />
+                </div>
             </div>
-            <textarea
-              readOnly={!isEditing}
-              className={`w-full bg-transparent rounded-xl p-3 -mx-3 text-sm text-[#4B4B5E] leading-relaxed font-medium resize-none transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent'}`}
-              rows={Math.max(4, (editableTask.description || '').split('\n').length)}
-              value={editableTask.description}
-              onChange={e => setEditableTask(p => ({ ...p, description: e.target.value }))}
-              onBlur={e => handleBlur('description', e.target.value)}
-              placeholder="No description provided for this task (Click to edit)."
-            />
           </div>
         </div>
-
-
       </div>
 
-      {/* Footer */}
-      <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF8]">
+      {/* Footer Navigation */}
+      <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFA]">
         <button
           onClick={onBack}
-          className="w-full py-4 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-bold text-sm hover:bg-[#F4F3EF] transition-all"
+          className="w-full py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:bg-slate-50 transition-all active:scale-95"
         >
-          Close View
+          Close Detail View
         </button>
       </div>
     </div>
@@ -689,16 +702,15 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       </div>
 
       {/* Task Directory Table */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-
+      <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-2xl shadow-gray-200/50 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#FAFAF8]">
-                <th className="p-5 w-14">
+              <tr className="border-b border-[#F4F3EF]">
+                <th className="px-8 py-[25px] w-14 text-center">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]"
+                    className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] focus:ring-[#1B4DA0]"
                     onChange={(e) => {
                       if (e.target.checked) setSelectedTasks(filteredTasks.map(t => t._id || t.id));
                       else setSelectedTasks([]);
@@ -706,10 +718,10 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0}
                   />
                 </th>
-                <th className="p-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest">Task Details</th>
-                <th className="p-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Assignee</th>
-                <th className="p-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest">Status</th>
-                <th className="p-5 w-16"></th>
+                <th className="px-8 py-[25px] text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Task Details</th>
+                <th className="px-8 py-[25px] text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Assignee</th>
+                <th className="px-8 py-[25px] text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Status</th>
+                <th className="px-8 py-[25px] w-16"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">

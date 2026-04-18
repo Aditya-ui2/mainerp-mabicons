@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUsers,
@@ -23,6 +22,10 @@ import {
   FiLayers,
   FiSave,
   FiRefreshCw,
+  FiChevronDown,
+  FiChevronRight,
+  FiPlus,
+  FiSend,
 } from 'react-icons/fi';
 import {
   getDepartmentTeamMembers,
@@ -357,80 +360,89 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="text-left">
-            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Team Management
-            </h1>
-            <p className="text-sm font-medium text-[#9B9BAD] mt-1 text-left" style={{ fontFamily: "Calibri, sans-serif" }}>
-              {department} — Manage your team members
-            </p>
-          </div>
+      <div className="flex items-center justify-between gap-4 mb-2">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-bold leading-tight text-left text-[#1A1A2E] font-syne">
+            My Team
+          </h2>
+          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] text-left">
+            {department} • MANAGE YOUR SQUAD
+          </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            setEditingMember(null);
-            setFormData({
-              name: '',
-              email: '',
-              phone: '',
-              employeeId: '',
-              department: 'HR Recruitment',
-              joiningDate: '',
-              profilePhoto: null,
-              profilePhotoPreview: null,
-              status: 'Active'
-            });
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-semibold transition-all hover:bg-[#0a3d8a] shadow-md shadow-blue-500/20"
-          style={{ fontFamily: "Calibri, sans-serif" }}
-        >
-          <FiUserPlus className="w-4 h-4" />
-          Add Member
-        </motion.button>
+        <div className="flex gap-2">
+          <button
+            onClick={fetchMembers}
+            className="flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+          >
+            <FiRefreshCw size={14} className={`text-[#1B4DA0] ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={() => {
+                setEditingMember(null);
+                setFormData({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    employeeId: '',
+                    department: department,
+                    joiningDate: '',
+                    profilePhoto: null,
+                    profilePhotoPreview: null,
+                    status: 'Active'
+                });
+                setShowModal(true);
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+          >
+            <FiPlus size={14} />
+            Add Member
+          </button>
+        </div>
       </div>
 
 
-      {/* Search Bar Block */}
-      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 group min-w-[200px]">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+      {/* Filter & Search Bar */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="flex-1 flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-6 py-4 transition-all focus-within:bg-[#EEF2FB] focus-within:ring-2 focus-within:ring-blue-100">
+          <FiSearch className="text-[#9B9BAD]" size={20} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, email, or role..."
-            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
-            style={{ fontFamily: "'Calibri', sans-serif" }}
+            placeholder="Search by candidate, role or host..."
+            className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
           />
+        </div>
+        <div className="hidden lg:flex items-center gap-3">
+            {['ALL DATES', 'ALL CLIENTS', 'ALL STATUS'].map(f => (
+                <button key={f} className="flex items-center gap-3 px-6 py-4 bg-[#F4F3EF] hover:bg-[#EEEFED] text-[#4B4B5E] text-[10px] font-black uppercase tracking-[2px] rounded-2xl transition-all shadow-sm">
+                    {f} <FiChevronDown size={14} className="text-[#9B9BAD]" />
+                </button>
+            ))}
         </div>
       </div>
       {/* Team Directory Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100/60 overflow-hidden relative">
+      <div className={`bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-2xl shadow-gray-200/50`}>
         <div className="overflow-x-auto min-h-[300px]">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 text-left bg-transparent">
-                <th className="py-4 pl-6 pr-4 w-12">
+              <tr className="border-b border-[#F4F3EF] text-left">
+                <th className="px-8 py-10 w-12 text-center">
                   <input
                     type="checkbox"
                     checked={selectedIds.length > 0 && selectedIds.length === filteredMembers.length}
                     onChange={() => setSelectedIds(selectedIds.length === filteredMembers.length ? [] : filteredMembers.map(m => m._id))}
-                    className="w-4 h-4 rounded text-[#0D47A1] cursor-pointer"
-                    style={{ accentColor: '#0D47A1' }}
+                    className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] cursor-pointer focus:ring-[#1B4DA0]"
                   />
                 </th>
-                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Member</th>
-                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Department</th>
-                <th className="py-4 px-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Email Address</th>
-                <th className="py-4 pl-4 pr-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest w-24">Contact</th>
-                <th className="py-4 pr-6 w-12"></th>
+                <th className="px-8 py-10 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Member</th>
+                <th className="px-8 py-10 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Department</th>
+                <th className="px-8 py-10 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Email Address</th>
+                <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] w-32">Connect</th>
+                <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] w-12">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-left">
@@ -445,61 +457,69 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                     </div>
                   </td>
                 </tr>
-              ) : (
-                filteredMembers.map((member) => (
+              ) : (                filteredMembers.map((member) => (
                   <tr
                     key={member._id}
                     onClick={() => setSelectedMemberForDetail(member)}
-                    className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                    className="group hover:bg-[#F9F9F8] transition-all border-b border-[#F4F3EF] last:border-0 cursor-pointer"
                   >
-                    <td className="py-4 pl-6 pr-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-8 py-8 text-center" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(member._id)}
                         onChange={() => setSelectedIds(prev => prev.includes(member._id) ? prev.filter(id => id !== member._id) : [...prev, member._id])}
-                        style={{ accentColor: '#0D47A1' }}
-                        className="w-4 h-4 rounded text-[#0D47A1] cursor-pointer"
+                        className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
                       />
                     </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-[42px] h-[42px] rounded-2xl flex items-center justify-center text-[13px] font-bold text-[#1B4DA0] bg-[#E3F2FD] border border-[#D1E9FF] flex-shrink-0">
+                    <td className="px-8 py-8 whitespace-nowrap">
+                      <div className="flex items-center gap-6">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-lg font-black shadow-xl border border-[#F4F3EF] group-hover:scale-110 transition-transform overflow-hidden">
                           {member.profilePhoto ? (
-                            <img src={member.profilePhoto} alt={member.name} className="w-full h-full rounded-2xl object-cover" />
+                            <img src={member.profilePhoto} alt={member.name} className="w-full h-full object-cover" />
                           ) : (
                             <span>{(member.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
                           )}
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-[14px] font-bold text-[#0f172a]">{member.name}</span>
-                          <span className="text-[11px] text-gray-400 font-medium">{member.role}</span>
+                        <div className="min-w-0">
+                          <p className="text-base font-black text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors tracking-tight">{member.name}</p>
+                          <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mt-0.5">MEMBER SINCE {member.joiningDate?.split('-')[0] || '2023'}</span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4">
-                      <span className="text-[13px] font-medium text-[#64748b]">{member.department}</span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="text-[13px] font-medium text-[#64748b]">{member.email}</span>
-                    </td>
-                    <td className="py-4 pl-4 pr-6">
-                      <div className="flex items-center gap-3">
-                        <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiMail className="w-[15px] h-[15px] stroke-[2.5]" /></button>
-                        <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiPhone className="w-[15px] h-[15px] stroke-[2.5]" /></button>
+                    <td className="px-8 py-8 whitespace-nowrap">
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-bold text-[#1A1A2E]">{member.department}</span>
+                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] flex items-center gap-1.5 mt-0.5">
+                           <FiActivity size={10} className="text-[#1B4DA0]" /> {member.stats?.interviewsScheduled || 0} Active Status
+                        </span>
                       </div>
                     </td>
-                    <td className="py-4 pr-6 text-right">
-                      <div className="flex items-center gap-2 justify-end">
-
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setConfirmDelete(member._id); }}
-                          className="p-2 text-[#94a3b8] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    <td className="px-8 py-8 whitespace-nowrap">
+                      <span className="text-sm font-bold text-[#4B4B5E]">{member.email}</span>
+                    </td>
+                    <td className="px-8 py-8 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-3">
+                        <button 
+                             onClick={(e) => { e.stopPropagation(); window.location.href = `mailto:${member.email}`; }}
+                             className="p-3 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl transition-all shadow-sm"
                         >
-                          <FiTrash2 className="w-4 h-4" />
+                            <FiMail size={16} />
+                        </button>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${member.phone}`; }}
+                            className="p-3 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl transition-all shadow-sm"
+                        >
+                            <FiPhone size={16} />
                         </button>
                       </div>
                     </td>
+                    <td className="px-8 py-8 whitespace-nowrap text-center">
+                      <button className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-[#1A1A2E] group-hover:text-white transition-all shadow-sm">
+                        <FiChevronRight size={20} className="transition-transform group-hover:translate-x-0.5" />
+                      </button>
+                    </td>
                   </tr>
+
                 ))
               )}
             </tbody>
@@ -572,149 +592,107 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                 className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[1101] flex flex-col"
               >
                 {/* Header - Sticky Style */}
-                <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
-                  <div className="text-left">
-                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">Member Detail</h2>
+                <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
+                  <div className="flex-1 mr-4">
+                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne outline-none">{selectedMemberForDetail.name}</h2>
+                    <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
+                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] outline-none truncate">
+                          {selectedMemberForDetail.role || selectedMemberForDetail.department}
+                      </span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2] flex-shrink-0" />
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] outline-none">
+                          {selectedMemberForDetail.status}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {isEditingInDetail ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setIsEditingInDetail(false)}
-                          className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          disabled={isSavingDetail}
-                          onClick={handleSaveInline}
-                          className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center gap-2 shadow-md shadow-blue-500/10"
-                        >
-                          {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
-                          {isSavingDetail ? 'Saving...' : 'Save'}
-                        </button>
-                      </div>
-                    ) : (
+                    {!isEditingInDetail && (
                       <button
                         onClick={() => setIsEditingInDetail(true)}
-                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#0D47A1] transition-all border-2 border-transparent hover:border-blue-100 shadow-sm"
+                        className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] hover:border-blue-100 shadow-sm"
                         title="Edit Member"
                       >
-                        <FiEdit2 size={18} />
+                        <FiEdit2 size={20} />
                       </button>
                     )}
                     <button
                       onClick={() => setSelectedMemberForDetail(null)}
-                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border-2 border-transparent hover:border-red-100 shadow-sm"
+                      className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] hover:border-red-100 shadow-sm"
                       title="Close"
                     >
-                      <FiX size={18} />
+                      <FiX size={22} />
                     </button>
                   </div>
                 </div>
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
-                  {/* Profile Header */}
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="w-20 h-20 rounded-[28px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-blue-500/20 overflow-hidden">
+                  {/* Profile Header Block */}
+                  <div className="bg-[#FAFAF9] rounded-[40px] p-8 border border-[#F4F3EF] flex flex-col items-center text-center">
+                    <div className="w-24 h-24 rounded-[32px] bg-gradient-to-br from-white to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-3xl font-black shadow-2xl border border-[#F4F3EF] group-hover:scale-105 transition-transform overflow-hidden relative">
                       {editableMember?.profilePhoto ? (
                         <img src={editableMember.profilePhoto} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <span>{(editableMember?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
                       )}
                     </div>
-                    <div>
+                    <div className="mt-6 w-full max-w-sm">
                       {isEditingInDetail ? (
                         <input
                           type="text"
-                          className="w-full text-2xl font-bold text-[#1A1A2E] bg-[#F4F3EF] border-none rounded-xl py-2 px-4 text-center focus:ring-2 focus:ring-[#0D47A1]/20 outline-none"
+                          className="w-full text-2xl font-black text-[#1A1A2E] bg-white border-2 border-[#F4F3EF] rounded-2xl py-3 px-6 text-center focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all placeholder:text-[#9B9BAD]"
                           value={editableMember.name}
                           onChange={(e) => setEditableMember({ ...editableMember, name: e.target.value })}
-                          placeholder="Full Name"
+                          placeholder="Team Member Name"
                         />
                       ) : (
-                        <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedMemberForDetail.name}</h4>
+                        <h4 className="text-2xl font-black text-[#1A1A2E] font-syne tracking-tight leading-tight">{selectedMemberForDetail.name}</h4>
                       )}
-                      {isEditingInDetail ? (
-                        <input
-                          type="text"
-                          className="w-full text-sm font-semibold text-[#1B4DA0] bg-[#F4F3EF] border-none rounded-lg py-1 px-3 text-center focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none mt-2"
-                          value={editableMember.role}
-                          onChange={(e) => setEditableMember({ ...editableMember, role: e.target.value })}
-                          placeholder="Role e.g. Lead Recruiter"
-                        />
-                      ) : (
-                        <p className="text-sm font-semibold text-[#1B4DA0] mt-1">{selectedMemberForDetail.role || selectedMemberForDetail.department}</p>
-                      )}
+                      <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-2">
+                        {selectedMemberForDetail.employeeId || 'MEMBERSHIP VERIFIED'}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Unified Info Container */}
-                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-6">
-                    {/* Professional & Contact Info */}
-                    <div className="space-y-6">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
-                        {isEditingInDetail ? (
-                          <select 
-                            className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none"
-                            value={editableMember.department}
-                            onChange={(e) => setEditableMember({ ...editableMember, department: e.target.value })}
-                          >
-                            {['HR Recruitment', 'HR Operations', 'IT', 'Sales', 'Marketing', 'BD', 'Finance', 'Management'].map(dept => (
-                              <option key={dept} value={dept}>{dept}</option>
+                  {/* Professional Records */}
+                  <div className="space-y-8">
+                     <div className="flex items-center justify-between px-2">
+                        <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Member Information</span>
+                        <div className="h-px bg-[#F4F3EF] flex-1 ml-6" />
+                     </div>
+                     
+                     <div className="grid grid-cols-2 gap-6 px-2">
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Email Address</span>
+                            <div className="flex items-center gap-2 p-4 bg-[#FAFAF9] rounded-2xl border border-[#F4F3EF]">
+                                <FiMail className="text-[#1B4DA0]" size={14} />
+                                <span className="text-sm font-bold text-[#1A1A2E] truncate overflow-hidden">{selectedMemberForDetail.email}</span>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Contact Number</span>
+                            <div className="flex items-center gap-2 p-4 bg-[#FAFAF9] rounded-2xl border border-[#F4F3EF]">
+                                <FiPhone className="text-[#1B4DA0]" size={14} />
+                                <span className="text-sm font-bold text-[#1A1A2E]">{selectedMemberForDetail.phone}</span>
+                            </div>
+                        </div>
+                     </div>
+
+                     {/* Performance Matrix (Stats) */}
+                     <div className="px-2">
+                        <div className="grid grid-cols-3 gap-4">
+                            {[
+                                { label: 'Assigned', value: selectedMemberForDetail.stats?.candidatesPipeline || 0, color: 'text-violet-600', bg: 'bg-violet-50' },
+                                { label: 'Scheduled', value: selectedMemberForDetail.stats?.interviewsScheduled || 0, color: 'text-blue-600', bg: 'bg-blue-50' },
+                                { label: 'Active', value: selectedMemberForDetail.stats?.activePositions || 0, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                            ].map((stat, sidx) => (
+                                <div key={sidx} className="p-5 rounded-[24px] border border-[#F4F3EF] bg-white shadow-sm hover:shadow-md transition-all">
+                                    <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">{stat.label}</p>
+                                    <p className={`text-xl font-black ${stat.color} font-syne`}>{stat.value}</p>
+                                </div>
                             ))}
-                          </select>
-                        ) : (
-                          <span className="text-sm text-[#1A1A2E] font-bold">{selectedMemberForDetail.department || 'HR Recruitment'}</span>
-                        )}
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-[#6B6B7E] font-medium">Status</span>
-                        {isEditingInDetail ? (
-                          <select 
-                            className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none"
-                            value={editableMember.status}
-                            onChange={(e) => setEditableMember({ ...editableMember, status: e.target.value })}
-                          >
-                            {['Active', 'Inactive', 'On Leave'].map(status => (
-                              <option key={status} value={status}>{status}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${selectedMemberForDetail.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {selectedMemberForDetail.status}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-[#6B6B7E] font-medium">Email</span>
-                        {isEditingInDetail ? (
-                          <input
-                            type="email"
-                            className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none text-right"
-                            value={editableMember.email}
-                            onChange={(e) => setEditableMember({ ...editableMember, email: e.target.value })}
-                          />
-                        ) : (
-                          <span className="text-sm text-[#1A1A2E] font-bold truncate max-w-[250px]">{selectedMemberForDetail.email}</span>
-                        )}
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-[#6B6B7E] font-medium">Contact</span>
-                        {isEditingInDetail ? (
-                          <input
-                            type="tel"
-                            className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none text-right"
-                            value={editableMember.phone}
-                            onChange={(e) => setEditableMember({ ...editableMember, phone: e.target.value })}
-                          />
-                        ) : (
-                          <span className="text-sm text-[#1A1A2E] font-bold">{selectedMemberForDetail.phone}</span>
-                        )}
-                      </div>
-                    </div>
+                        </div>
+                     </div>
                   </div>
                 </div>
 

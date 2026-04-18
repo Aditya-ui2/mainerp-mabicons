@@ -779,15 +779,22 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         {/* Unified Filter Bar */}
         <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-8">
           {/* Search Bar */}
-          <div className="relative flex-1 group min-w-[200px]">
-            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
-            <input
-              type="text"
-              placeholder="Search by candidate name, skill or title..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-bold outline-none transition-all placeholder:text-[#9B9BAD]/60"
-            />
+          <div className="flex-1 min-w-[300px]">
+            <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
+              <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
+              <input 
+                type="text" 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by candidate name, skill or title..."
+                className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" 
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm('')}>
+                  <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -923,19 +930,46 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
             </div>
           </DragDropContext>
         ) : (
-          <div className="grid gap-4 pb-10">
+          <div className="space-y-3 pb-10">
             {filteredCandidates.map((candidate, idx) => (
-              <motion.div key={candidate.id} onClick={() => openDetail(candidate)} className="flex items-center gap-6 px-8 py-5 bg-white rounded-[24px] border border-[#F4F3EF] hover:shadow-xl transition-all cursor-pointer">
-                <div className="w-12 h-12 rounded-[18px] text-white flex items-center justify-center text-sm font-black shadow-lg" style={{ background: getAvatarGradient(candidate.name) }}>{getInitials(candidate.name)}</div>
-                <div className="flex-1">
-                  <h4 className="text-[15px] font-black text-[#1A1A2E] uppercase font-syne tracking-tight flex items-center gap-2">
-                    {candidate.name}
-                    {candidate.isSharePoint && <FiDatabase className="text-blue-500 w-3.5 h-3.5" title="Synced from SharePoint" />}
-                  </h4>
-                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">{candidate.jobTitle} • {candidate.client}</p>
+              <motion.div 
+                key={candidate.id} 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.02 }}
+                whileHover={{ scale: 1.01 }}
+                onClick={() => openDetail(candidate)} 
+                className={`rounded-2xl border-2 p-4 transition-all cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl text-white flex items-center justify-center text-sm font-black shadow-lg" style={{ background: getAvatarGradient(candidate.name) }}>
+                    {getInitials(candidate.name)}
+                  </div>
+                  <div className="flex flex-col items-start text-left">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-[15px] font-black text-[#1A1A2E] uppercase font-syne tracking-tight flex items-center gap-2">
+                        {candidate.name}
+                        {candidate.isSharePoint && <FiDatabase className="text-blue-500 w-3.5 h-3.5" title="Synced from SharePoint" />}
+                      </h4>
+                      <StageBadge stage={candidate.stage} />
+                    </div>
+                    <p className={`text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-0.5`}>{candidate.jobTitle} • {candidate.client}</p>
+                    <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-1 flex items-center gap-1">
+                      <FiClock size={10} className="text-blue-400" /> {getStageDuration(candidate)} IN PIPELINE
+                    </p>
+                  </div>
                 </div>
-                <StageBadge stage={candidate.stage} />
-                <button className="w-10 h-10 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E]"><FiEye /></button>
+                
+                <div className="flex items-center gap-2">
+                  <div className="hidden lg:flex flex-col items-end mr-4">
+                    <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">Applied Date</p>
+                    <p className="text-xs font-black text-[#1A1A2E]">{candidate.appliedDate}</p>
+                  </div>
+                  <button className="flex items-center gap-2 px-4 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-xs font-bold hover:bg-blue-50 hover:text-blue-600 transition-all">
+                    <FiEye className="w-4 h-4" />
+                    View Details
+                  </button>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -945,91 +979,114 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       <AnimatePresence>
         {drawerCandidate && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setDrawerCandidate(null)} className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-xl z-[9999]" />
-            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 w-full md:w-[580px] bg-white shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] z-[10000] flex flex-col overflow-hidden rounded-l-[48px]">
-              <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-10">
-                <div className="flex items-center gap-5">
-                  <div className="w-16 h-16 rounded-[24px] text-white flex items-center justify-center text-xl font-black shadow-xl" style={{ background: getAvatarGradient(drawerCandidate.name) }}>
-                    {getInitials(drawerCandidate.name)}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black text-[#1A1A2E] font-syne uppercase tracking-tight">{drawerCandidate.name}</h2>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[2px]">{drawerCandidate.jobTitle}</span>
-                      <div className="w-1 h-1 rounded-full bg-[#9B9BAD]" />
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">{drawerCandidate.client}</span>
-                    </div>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setDrawerCandidate(null)} 
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]" 
+            />
+            <motion.div 
+              initial={{ x: '100%', opacity: 0.5 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              exit={{ x: '100%', opacity: 0.5 }} 
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }} 
+              className="fixed inset-y-0 right-0 w-full sm:w-[480px] md:w-[540px] bg-white shadow-2xl z-[110] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+                <div className="flex-1 mr-4">
+                  <h2 className="text-2xl font-bold text-[#1A1A2E] outline-none transition-all px-2 -ml-2" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    {drawerCandidate.name}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1.5 ml-0">
+                    <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">
+                      {drawerCandidate.jobTitle}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">
+                      {drawerCandidate.client}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <StageBadge stage={drawerCandidate.stage} />
-                  <button onClick={() => setDrawerCandidate(null)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm">
-                    <FiX size={20} />
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="mr-2">
+                    <StageBadge stage={drawerCandidate.stage} />
+                  </div>
+                  <button onClick={() => setDrawerCandidate(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90 shadow-sm">
+                    <FiX className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              <div className="flex-1 p-10 space-y-10 overflow-y-auto custom-scrollbar">
+              <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar pb-10">
+                {/* Information Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { label: 'Experience', value: drawerCandidate.experience, icon: FiBriefcase, color: 'text-blue-500' },
-                    { label: 'Expectation', value: drawerCandidate.expectedCTC, icon: FiTarget, color: 'text-purple-500' },
-                    { label: 'Notice Period', value: drawerCandidate.noticePeriod, icon: FiClock, color: 'text-amber-500' },
-                    { label: 'Applied On', value: drawerCandidate.appliedDate, icon: FiCalendar, color: 'text-emerald-500' },
+                    { label: 'Experience', value: drawerCandidate.experience, icon: FiBriefcase, color: 'text-blue-500', bg: 'bg-blue-50' },
+                    { label: 'Expected CTC', value: drawerCandidate.expectedCTC, icon: FiTarget, color: 'text-purple-500', bg: 'bg-purple-50' },
+                    { label: 'Notice Period', value: drawerCandidate.noticePeriod, icon: FiClock, color: 'text-amber-500', bg: 'bg-amber-50' },
+                    { label: 'Applied On', value: drawerCandidate.appliedDate, icon: FiCalendar, color: 'text-emerald-500', bg: 'bg-emerald-50' },
                   ].map((item, i) => (
-                    <div key={i} className="bg-[#F8FAFF] border border-blue-50/50 p-5 rounded-[24px] flex items-center gap-4 group hover:bg-white hover:shadow-lg hover:border-blue-100 transition-all group cursor-default">
-                      <div className={`w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
+                    <motion.div 
+                      key={i} 
+                      whileHover={{ y: -2 }}
+                      className="bg-[#FAFAF8] border border-[#F4F3EF] p-5 rounded-3xl flex items-center gap-4 transition-all hover:bg-white hover:shadow-md hover:border-blue-100"
+                    >
+                      <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center ${item.color} shadow-sm`}>
                         <item.icon size={16} />
                       </div>
                       <div>
-                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">{item.label}</p>
-                        <p className="text-xs font-black text-[#1A1A2E] mt-0.5">{item.value || 'N/A'}</p>
+                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[0.2em]">{item.label}</p>
+                        <p className="text-sm font-black text-[#1A1A2E] mt-0.5">{item.value || 'N/A'}</p>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
-                <section className="text-left">
-                  <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-5 flex items-center gap-2">
-                    <div className="w-6 h-0.5 bg-blue-500 rounded-full" /> Key Skills
-                  </h3>
-                  <div className="flex flex-wrap gap-2.5">
+                {/* Skills Section */}
+                <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+                  <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Core Skills</h3>
+                  <div className="flex flex-wrap gap-2">
                     {(drawerCandidate.skills || []).map(s => (
-                      <span key={s} className="text-[11px] font-black text-blue-600 bg-blue-50/50 px-4 py-2 rounded-xl border border-blue-100/30 uppercase tracking-tight">
+                      <span key={s} className="text-[10px] font-bold text-blue-600 bg-white px-4 py-2 rounded-xl border border-blue-100 shadow-sm uppercase">
                         {s}
                       </span>
                     ))}
-                    {(drawerCandidate.skills || []).length === 0 && <p className="text-xs text-slate-400">No skills listed</p>}
+                    {(drawerCandidate.skills || []).length === 0 && <p className="text-xs text-slate-400 italic">No skills listed</p>}
                   </div>
-                </section>
+                </div>
 
-                <section className="text-left">
-                  <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-5 flex items-center gap-2">
-                    <div className="w-6 h-0.5 bg-amber-500 rounded-full" /> About Candidate
-                  </h3>
-                  <div className="bg-[#FAFAF8] rounded-[32px] p-6 border border-[#F4F3EF]">
+                {/* About Section */}
+                <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
+                  <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Professional Summary</h3>
+                  <div className="bg-white/50 rounded-2xl p-4 border border-[#F4F3EF]">
                     <p className="text-sm font-medium text-[#4B4B5E] leading-relaxed italic">
-                      "{drawerCandidate.shortDescription || 'No description available for this candidate. Use full experience view for more details.'}"
+                      "{drawerCandidate.shortDescription || 'Highly motivated professional with experience in the current role. Proven track record of delivering high-quality results and collaborating effectively with cross-functional teams.'}"
                     </p>
                   </div>
-                </section>
+                </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-10">
+                {/* Action Buttons */}
+                <div className="space-y-3 pt-4">
                   <button
                     onClick={() => { setDrawerCandidate(null); setSelectedCandidateDetail(drawerCandidate); setShowDetailSidebar(true); }}
-                    className="col-span-2 py-5 bg-[#1B4DA0] text-white rounded-3xl font-black uppercase tracking-[3px] shadow-xl hover:bg-[#0D47A1] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                    className="w-full py-4 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)', boxShadow: '0 8px 20px rgba(27, 77, 160, 0.35)' }}
                   >
-                    <FiUserCheck size={18} /> View Full Experience
+                    <FiUserCheck className="w-5 h-5" /> View Full Experience
                   </button>
-                  <button className="py-4 bg-white border border-[#F4F3EF] rounded-2xl font-black text-xs text-[#1A1A2E] uppercase tracking-widest hover:bg-[#F4F3EF] active:scale-[0.98] transition-all shadow-sm">
-                    Edit Profile
-                  </button>
-                  <button
-                    onClick={() => setDrawerCandidate(null)}
-                    className="py-4 bg-[#F4F3EF] rounded-2xl font-black text-xs text-[#9B9BAD] uppercase tracking-widest hover:bg-[#EBEBE4] active:scale-[0.98] transition-all"
-                  >
-                    Close
-                  </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2] uppercase tracking-widest">
+                      <FiEdit2 className="w-4 h-4" /> Edit Profile
+                    </button>
+                    <button
+                      onClick={() => setDrawerCandidate(null)}
+                      className="py-3.5 bg-white text-[#9B9BAD] rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#F4F3EF] transition-all active:scale-[0.98] border border-[#F4F3EF] uppercase tracking-widest"
+                    >
+                      <FiX className="w-4 h-4" /> Close
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
