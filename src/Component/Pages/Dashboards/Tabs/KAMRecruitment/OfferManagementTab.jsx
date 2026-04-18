@@ -903,66 +903,94 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
         {/* Main Dashboard Content - Always Rendered */}
         <div className="max-w-full mx-auto" style={{ fontFamily: "'Calibri', sans-serif" }}>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 flex-wrap gap-4 px-0">
-            <div className="flex flex-col items-start text-left">
-              <h1 className={`text-3xl font-bold tracking-tight font-syne leading-none mb-1 ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>
+          {/* Refined Header */}
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+            <div className="text-left">
+              <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
                 Offer Management
               </h1>
-              <p className={`text-sm font-medium mt-1 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>
-                {offers.length} Total Compensation Packages In Lifecycle
-              </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={fetchOffers}
-                className={`flex items-center gap-2 px-5 py-3 ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-[#F4F3EF] text-[#6B6B7E]'} rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-100 flex-shrink-0`}
+                disabled={loading}
+                className="group flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[170px]"
               >
-                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-                Sync Data
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <FiDatabase className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />
+                )}
+                {loading ? 'Syncing...' : 'Sync Data'}
               </button>
               <button
                 onClick={handleCreateOffer}
-                className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/10 hover:bg-[#153e82] transition-all active:scale-95 text-center flex-shrink-0 whitespace-nowrap"
+                className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
               >
-                <Plus size={18} /> Generate Offer
+                <Plus size={18} /> Generate New Offer
               </button>
             </div>
           </div>
 
-          {/* Search Bar Container - Matching Candidate/Job tabs */}
-          <div className="bg-white dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-[24px] p-2 mb-10 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-4 bg-[#F4F3EF] dark:bg-slate-800 rounded-2xl px-6 h-[48px] flex-1">
-                <Search size={18} className="text-[#9B9BAD] flex-shrink-0" />
-                <input
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search candidate, role, or client..."
-                  className="bg-transparent text-sm text-[#1A1A2E] dark:text-white placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold"
-                />
-              </div>
+          {/* Filter Bar Unification */}
+          <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
+            {/* Search Bar */}
+            <div className="relative flex-1 group min-w-[200px]">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by candidate, role, or client..."
+                className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+              />
+            </div>
+
+            {/* Date Filter */}
+            <div className="relative">
+              <select
+                value={dateFilter}
+                onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== 'custom') { setCustomStartDate(''); setCustomEndDate(''); } }}
+                className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+              >
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
+            </div>
+
+            {/* Client Filter */}
+            <div className="relative">
               <select
                 value={filterClient}
                 onChange={(e) => setFilterClient(e.target.value)}
-                className="bg-[#F4F3EF] dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
               >
                 <option value="all">All Clients</option>
-                {[...new Set(offers.map(o => o.client).filter(Boolean))].sort().map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+                {activeClientNames.map(name => <option key={name} value={name}>{name}</option>)}
               </select>
+              <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
+            </div>
+
+            {/* Status Filter */}
+            <div className="relative">
               <select
-                value={filterJob}
-                onChange={(e) => setFilterJob(e.target.value)}
-                className="bg-[#F4F3EF] dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider outline-none appearance-none cursor-pointer pr-8 border-0"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239B9BAD' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
               >
-                <option value="all">All Jobs</option>
-                {[...new Set(offers.map(o => o.position).filter(Boolean))].sort().map(j => (
-                  <option key={j} value={j}>{j}</option>
-                ))}
+                <option value="all">All Status</option>
+                <option value="Generated">Offer Created</option>
+                <option value="Sent">Sent</option>
+                <option value="Negotiating">Negotiating</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Declined">Declined</option>
+                <option value="Joined">Joined</option>
               </select>
+              <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
             </div>
           </div>
 
@@ -992,75 +1020,93 @@ const OfferManagementTab = ({ isDarkMode }) => {
             )}
           </AnimatePresence>
 
-          {/* Offers Deck - Table Interface */}
-          <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-10">
-            <div className="flex items-center gap-8 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
-              <div className="w-6 flex-shrink-0 flex items-center justify-center">
+          {/* Table Interface */}
+          <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm overflow-hidden">
+            <div className="overflow-x-auto custom-scrollbar">
+              <div className="min-w-[1200px]">
+                <div className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_100px_140px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+              <div className="flex items-center">
                 <input
                   type="checkbox"
                   checked={filteredOffers.length > 0 && selectedRowIds.length === filteredOffers.length}
                   onChange={() => toggleSelectAll(filteredOffers)}
-                  className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                  className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
                 />
               </div>
-              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest lg:w-[280px] flex-shrink-0 text-left">Candidate</span>
-              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest flex-1 px-8 border-l border-[#F4F3EF] dark:border-slate-800 text-left">Client</span>
-              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[180px] text-center border-x border-[#F4F3EF] dark:border-slate-800">BGV</span>
-              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[140px] text-center border-r border-[#F4F3EF] dark:border-slate-800">Verify</span>
-              <span className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest flex-shrink-0 w-[120px] text-left ml-6">Actions</span>
+              {["Offer Date", "Candidate", "Hiring Client", "Position", "Offered CTC", "BGV Protocol", "Verify Status", ""].map((h, i) => (
+                <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start ${h === 'BGV Protocol' || h === 'Verify Status' ? 'justify-center' : ''}`}>
+                  {h}
+                </div>
+              ))}
             </div>
 
             {filteredOffers.length === 0 ? (
-              <div className={`py-24 flex flex-col items-center gap-4 text-[#9B9BAD]`}>
-                <div className={`w-16 h-16 rounded-3xl flex items-center justify-center ${isDarkMode ? 'bg-slate-900' : 'bg-[#FAFAF8]'}`}>
-                  <FileText size={32} />
-                </div>
-                <p className="text-sm font-bold">No offers found matching your criteria</p>
+              <div className="py-24 text-center">
+                <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No offer records found matching criteria</p>
               </div>
             ) : (
-              <div className="divide-y divide-[#F4F3EF] dark:divide-slate-800">
+              <div className="divide-y divide-[#F4F3EF]">
                 {filteredOffers.map((offer) => (
                   <div
                     key={offer._id || offer.id}
                     onClick={() => handleViewOffer(offer)}
-                    className={`group px-8 py-3 transition-all duration-300 cursor-pointer relative z-10 flex flex-col lg:flex-row lg:items-center gap-8 overflow-hidden ${
-                      selectedRowIds.includes(offer._id || offer.id) 
-                        ? (isDarkMode ? 'bg-blue-500/10' : 'bg-[#F0F7FF]') 
-                        : (isDarkMode ? 'bg-slate-900 hover:bg-slate-800/50' : 'bg-white hover:bg-[#F8FAFF]')
-                    }`}
+                    className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_100px_140px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
                   >
-                    <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                    <div className="flex items-center" onClick={e => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedRowIds.includes(offer._id || offer.id)}
                         onChange={(e) => toggleSelectRow(offer._id || offer.id, e)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-4 h-4 rounded border-slate-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                        className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
                       />
                     </div>
-                    {/* Candidate Info */}
-                    <div className="lg:w-[280px] flex-shrink-0 flex items-start gap-4">
-                      <div className="min-w-0">
-                        <h3 className="text-[15px] font-semibold text-[#1A1A2E] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
-                          {offer.candidateName}
-                        </h3>
-                        <p className="text-[10px] font-semibold text-[#9B9BAD] uppercase tracking-[0.1em] mt-1 text-left">
-                          {offer.position}
-                        </p>
+
+                    {/* Offer Date */}
+                    <div className="flex flex-col justify-center items-start py-1">
+                      <p className="text-[13px] font-bold text-[#1A1A2E] text-left">
+                        {offer.offerDate && !isNaN(new Date(offer.offerDate)) 
+                          ? new Date(offer.offerDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
+                          : 'Date TBD'}
+                      </p>
+                      <div className="flex items-center justify-start gap-1 mt-0.5 opacity-60">
+                        <Clock size={10} className="text-[#9B9BAD]" />
+                        <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left">
+                          {offer.status}
+                        </span>
                       </div>
                     </div>
 
-                    <div className={`flex-1 flex items-center px-4 border-l ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
-                      <p className={`text-[13px] font-bold ${isDarkMode ? 'text-white' : 'text-[#64748b]'} truncate`}>{offer.client || '—'}</p>
+                    {/* Candidate */}
+                    <div className="flex items-center min-w-0 py-1 overflow-hidden">
+                      <div className="flex flex-col items-start min-w-0 w-full">
+                        <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left w-full">
+                          {offer.candidateName}
+                        </p>
+                        <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest truncate w-full">{offer.email || 'No Email'}</p>
+                      </div>
                     </div>
 
-                    {/* BGV Column */}
-                    <div className={`flex-shrink-0 w-[160px] flex items-center justify-center border-x ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
+                    {/* Client */}
+                    <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left min-w-0 overflow-hidden">
+                      <span className="truncate">{offer.client || 'Internal'}</span>
+                    </div>
+
+                    {/* Position */}
+                    <div className="flex flex-col justify-center items-start min-w-0 py-1 text-left overflow-hidden">
+                      <p className="text-[13px] font-bold text-[#1A1A2E] truncate w-full">{offer.position}</p>
+                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest opacity-60 truncate w-full">Joining: {offer.joiningDate || 'TBD'}</span>
+                    </div>
+
+                    {/* CTC */}
+                    <div className="flex items-center py-1 text-left">
+                      <span className="text-[13px] font-bold text-[#1A1A2E]">₹{offer.offeredCTC}</span>
+                    </div>
+
+                    {/* BGV Protocol */}
+                    <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
                       {offer.bgvStatus === 'Not Started' ? (
-                        <motion.button 
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={async (e) => { 
+                        <button
+                          onClick={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
@@ -1070,115 +1116,45 @@ const OfferManagementTab = ({ isDarkMode }) => {
                                 toast.error("System Error: Reference missing.", { id: loadingId });
                                 return;
                               }
-                              
                               const response = await generateCandidateCredentials(targetId);
                               if (response && response.success && response.data) {
-                                   const finalEmail = response.data.email;
-                                   const finalUsername = response.data.username || finalEmail;
-                                   const finalPass = response.data.password;
- 
-                                   setOffers(prev => prev.map(o => {
-                                     const oId = String(o.id || o._id || '');
-                                     const tId = String(offer.id || offer._id || '');
-                                     if (oId === tId && oId !== '') {
-                                       return { ...o, bgvStatus: 'Sent', tempUsername: finalUsername, tempPassword: finalPass };
-                                     }
-                                     return o;
-                                   }));
-                                   toast.success(`Success: Credentials sent to ${finalEmail}`, { id: loadingId });
-                                 } else {
-                                   console.error('❌ Server logic failed:', response);
-                                   toast.error(`Error: ${response?.message || 'Gateway rejection'}`, { id: loadingId });
-                                 }
-                            } catch (err) {
-                              console.error('❌ Console Protocol Error:', err);
-                              // Handle "already generated" case
-                              if (err?.data?.alreadyGenerated) {
-                                setOffers(prev => prev.map(o => {
-                                  const oId = String(o.id || o._id || '');
-                                  const tId = String(offer.id || offer._id || '');
-                                  if (oId === tId && oId !== '') {
-                                    return { ...o, bgvStatus: 'Sent', tempUsername: err.data.username };
-                                  }
-                                  return o;
-                                }));
-                                toast.info("Credentials already generated for this candidate", { id: loadingId });
-                              } else {
-                                toast.error(err?.message || "Console Error: Protocol failed to reach gateway.", { id: loadingId });
+                                setOffers(prev => prev.map(o => (o.id === offer.id || o._id === offer.id) ? { ...o, bgvStatus: 'Sent', tempUsername: response.data.username, tempPassword: response.data.password } : o));
+                                toast.success(`Success: Credentials sent`, { id: loadingId });
                               }
-                            }
-                           }}
-                          className={`${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#1B4DA0] hover:bg-[#1557B0]'} text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95`}
-                        >
-                          <Zap size={14} fill="currentColor" />
-                          Generate Credentials
-                        </motion.button>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center w-full max-w-[140px] group/bgv relative">
-                           <div className={`${isDarkMode ? 'bg-[#1A1C1E]' : 'bg-[#F8F9FA]'} border ${isDarkMode ? 'border-slate-800' : 'border-[#DADCE0]'} rounded-lg px-4 py-2.5 w-full shadow-sm`}>
-                             <div className="flex items-center justify-between gap-2 mb-1.5 overflow-hidden">
-                               <span className="text-[9px] font-bold text-[#5F6368] dark:text-[#9AA0A6] uppercase tracking-tighter">ID:</span>
-                               <span className="text-[10px] font-medium text-[#1A73E8] dark:text-[#8AB4F8] truncate">{offer.tempUsername}</span>
-                             </div>
-                             <div className="flex items-center justify-between gap-2 overflow-hidden">
-                               <span className="text-[9px] font-bold text-[#5F6368] dark:text-[#9AA0A6] uppercase tracking-tighter">PW:</span>
-                               <span className="text-[10px] font-mono font-bold text-[#202124] dark:text-white">{offer.tempPassword}</span>
-                             </div>
-                           </div>
-                           <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleResetBGV(offer.id || offer._id);
-                              }}
-                              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-white dark:bg-[#202124] border border-[#DADCE0] dark:border-slate-700 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-500 transition-all shadow-md opacity-0 group-hover/bgv:opacity-100 z-10"
-                              title="Reset User"
-                            >
-                              <RotateCcw size={11} />
-                            </button>
-                           <p className="text-[9px] font-bold text-[#1E8E3E] uppercase tracking-widest mt-2 flex items-center gap-1.5">
-                             <div className="w-1.5 h-1.5 rounded-full bg-[#1E8E3E] animate-pulse" />
-                             Verified / Active
-                           </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Verify Status Column */}
-                    <div className={`flex-shrink-0 w-[140px] flex items-center justify-center border-r ${isDarkMode ? 'border-slate-700' : 'border-[#F4F3EF]'}`}>
-                      {offer.bgvStatus === 'Verified' ? (
-                        <div className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all">
-                          <BadgeCheck size={12} />
-                          Verified
-                        </div>
-                      ) : (
-                        <motion.button 
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleManualVerify(offer.id || offer._id);
+                            } catch (err) { toast.error("Gateway protocol failed", { id: loadingId }); }
                           }}
-                          className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
+                          className="bg-[#1B4DA0] text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-blue-500/20 active:scale-95 transition-all"
                         >
-                          <ShieldCheck size={12} />
-                          Mark Verified
-                        </motion.button>
+                          Generate
+                        </button>
+                      ) : (
+                        <div className="flex flex-col items-center gap-0.5">
+                           <span className="text-[10px] font-bold text-[#1A73E8]">{offer.tempUsername}</span>
+                           <span className="text-[9px] font-mono text-slate-400">{offer.tempPassword}</span>
+                        </div>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-start gap-3 flex-shrink-0 w-[120px] ml-6">
-                      <button 
+                    {/* Verify Status */}
+                    <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleEditOffer(offer);
+                          if (offer.bgvStatus === 'Verified') handleResetBGV(offer.id || offer._id);
+                          else handleManualVerify(offer.id || offer._id);
                         }}
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50/50 hover:border-blue-200 shadow-sm`}
-                        title="Edit Offer"
+                        className={`inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border transition-all ${
+                          offer.bgvStatus === 'Verified' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                        }`}
                       >
-                        <Edit2 size={14} />
+                        {offer.bgvStatus === 'Verified' ? 'Verified' : 'Verify Now'}
                       </button>
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all bg-white dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 text-[#9B9BAD] group-hover:text-[#1B4DA0] group-hover:bg-[#F8FAFF] shadow-sm`}>
-                        <ChevronRight size={16} />
+                    </div>
+
+                    {/* Chevron */}
+                    <div className="flex justify-end pr-2">
+                      <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
+                        <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
                       </div>
                     </div>
                   </div>
@@ -1187,6 +1163,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
             )}
           </div>
         </div>
+      </div>
+    </div>
 
         <AnimatePresence>
           {showFullPageForm && (

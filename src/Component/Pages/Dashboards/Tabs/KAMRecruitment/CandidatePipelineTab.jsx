@@ -356,7 +356,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       if (filterStage !== 'all') filters.stage = filterStage;
       if (filterPipelineStatus !== 'all') filters.pipelineStatus = filterPipelineStatus;
       if (searchTerm) filters.search = searchTerm;
-      
+
       const [erpRes, spRes] = await Promise.all([
         getAllCandidates(filters),
         getSharePointCandidates(filters).catch(e => ({ success: false, data: [] }))
@@ -381,7 +381,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       }
 
       let spMapped = [];
-      if (spRes?.success && spRes.data) { 
+      if (spRes?.success && spRes.data) {
         spMapped = spRes.data.map(c => ({
           id: `sp-${c.id}`,
           sharePointId: c.id,
@@ -708,20 +708,20 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="bg-white rounded-2xl p-1 border border-[#F4F3EF] shadow-sm flex items-center">
-              <button 
-                onClick={() => setIsKanbanView(true)} 
+              <button
+                onClick={() => setIsKanbanView(true)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#6B6B7E] hover:text-[#1B4DA0]'}`}
               >
                 <FiGrid /> Kanban
               </button>
-              <button 
-                onClick={() => setIsKanbanView(false)} 
+              <button
+                onClick={() => setIsKanbanView(false)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${!isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#6B6B7E] hover:text-[#1B4DA0]'}`}
               >
                 <FiList /> List
               </button>
             </div>
-            <button 
+            <button
               onClick={async () => {
                 try {
                   setRefreshing(true);
@@ -736,8 +736,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
               <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : 'text-blue-500 group-hover:text-[#0D47A1]'}`} />
               Sync SharePoint
             </button>
-            <button 
-              onClick={() => setShowAddModal(true)} 
+            <button
+              onClick={() => setShowAddModal(true)}
               className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg active:scale-95 text-center"
             >
               <FiPlus size={18} />
@@ -910,7 +910,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                                     </div>
                                   </div>
                                 </motion.div>
-                              )}  
+                              )}
                             </Draggable>
                           ))}
                           {provided.placeholder}

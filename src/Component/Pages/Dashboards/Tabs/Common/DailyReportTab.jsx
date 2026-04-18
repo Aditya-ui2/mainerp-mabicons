@@ -2,12 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiFileText, FiPlus, FiCheckCircle, FiAlertCircle,
-  FiSmile, FiMeh, FiFrown, FiSend, FiPhone, FiEye,
-  FiShare2, FiUsers, FiCalendar, FiClock, FiX,
-  FiEdit3, FiStar, FiRefreshCw, FiMessageSquare,
-  FiChevronRight, FiSearch, FiChevronDown, FiPaperclip
-} from 'react-icons/fi';
+  Search, ChevronDown, Plus, Send, Phone, Eye, Share2, Users, Calendar, Clock, X, FileText, CheckCircle, AlertCircle, Paperclip, ChevronRight
+} from "lucide-react";
 import { submitDailyReport, getMyReports } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
 
@@ -173,18 +169,18 @@ const Toast = ({ message, type }) => (
     className="fixed top-4 right-4 z-50 px-5 py-3 rounded-xl shadow-xl text-white font-medium flex items-center gap-2"
     style={{ background: type === 'error' ? '#ef4444' : '#10b981' }}
   >
-    {type === 'error' ? <FiAlertCircle className="w-4 h-4" /> : <FiCheckCircle className="w-4 h-4" />}
+    {type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
     {message}
   </motion.div>
 );
 
 const ReportCard = ({ report, index, onClick }) => {
   const metrics = [
-    { label: 'Calls', value: report.callsCount, icon: FiPhone, color: '#3b82f6', bg: '#dbeafe' },
-    { label: 'Visited', value: report.profilesVisited, icon: FiEye, color: '#8b5cf6', bg: '#ede9fe' },
-    { label: 'Shared', value: report.profilesShared, icon: FiShare2, color: '#0891b2', bg: '#ecfeff' },
-    { label: 'Contacted', value: report.candidatesContacted, icon: FiUsers, color: '#10b981', bg: '#d1fae5' },
-    { label: 'Interviews', value: report.interviewsArranged, icon: FiCalendar, color: '#f59e0b', bg: '#fef3c7' },
+    { label: 'Calls', value: report.callsCount, icon: Phone, color: '#3b82f6', bg: '#dbeafe' },
+    { label: 'Visited', value: report.profilesVisited, icon: Eye, color: '#8b5cf6', bg: '#ede9fe' },
+    { label: 'Shared', value: report.profilesShared, icon: Share2, color: '#0891b2', bg: '#ecfeff' },
+    { label: 'Contacted', value: report.candidatesContacted, icon: Users, color: '#10b981', bg: '#d1fae5' },
+    { label: 'Interviews', value: report.interviewsArranged, icon: Calendar, color: '#f59e0b', bg: '#fef3c7' },
   ];
   const formattedDate = new Date(report.date + 'T00:00:00').toLocaleDateString('en-IN', {
     weekday: 'long', day: '2-digit', month: 'short', year: 'numeric',
@@ -356,245 +352,219 @@ const DailyReportTab = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ fontFamily: "'Calibri', sans-serif" }}>
       <AnimatePresence>
         {toast && <Toast message={toast.message} type={toast.type} />}
       </AnimatePresence>
 
-      {/* Modernized Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div className="flex flex-col items-start">
-          <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight leading-tight" style={{ fontFamily: '"Syne", sans-serif' }}>
+      {/* Refined Header */}
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div className="text-left">
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
             Daily MIS Report
           </h1>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
-            High-Fidelity Performance Tracking
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <span className="normal-case tracking-normal font-medium text-gray-400">Shift: 09:00 AM – 06:30 PM</span>
+          <p className="text-[11px] font-medium text-[#9B9BAD] mt-1 uppercase tracking-widest opacity-60">
+            Shift: {SHIFT_START} AM – {SHIFT_END.replace('18:30', '06:30')} PM Protocol
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-
-
-          {todayReport ? (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={openForm}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-lg hover:shadow-xl hover:translate-y-[-1px] transition-all active:scale-95"
-                style={{ background: '#0D47A1', fontFamily: '"Plus Jakarta Sans", sans-serif' }}
-              >
-                <FiPlus className="w-4 h-4" />
-                Add
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={openForm}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-[0_10px_20px_rgba(13,71,161,0.2)] hover:shadow-[0_12px_24px_rgba(13,71,161,0.3)] hover:translate-y-[-1px] active:translate-y-[0] transition-all"
-              style={{ background: '#0D47A1', fontFamily: '"Plus Jakarta Sans", sans-serif' }}
-            >
-              <FiPlus className="w-4 h-4" />
-              Submit Today's Report
-            </button>
-          )}
+          <button
+            onClick={openForm}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all active:scale-95"
+          >
+            <Plus size={18} />
+            {todayReport ? 'Update Report' : 'Generate MIS Report'}
+          </button>
         </div>
       </div>
 
 
-      {/* Filter Bar Container */}
-      <div className="bg-white rounded-[24px] border border-[#F4F3EF] p-2 mb-8 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="flex-1 relative group">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94a3b8] w-4 h-4 transition-colors group-focus-within:text-[#1B4DA0]" />
-            <input
-              type="text"
-              placeholder="Search by date, summary or content..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-[52px] pl-11 pr-4 bg-[#F9F9F8] border-none rounded-2xl text-sm font-medium text-[#0f172a] placeholder:text-[#94a3b8] focus:ring-2 focus:ring-[#1B4DA0]/10 transition-all outline-none"
-            />
-          </div>
+      {/* Filter Bar Unification based on Job Openings style */}
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
+        {/* Search Bar */}
+        <div className="relative flex-1 group min-w-[200px]">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <input
+            type="text"
+            placeholder="Search report logs by date or content..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+          />
+        </div>
 
-          <div className="flex gap-2">
-            {/* Date Filter */}
-            <div className="relative">
-              <input
-                type="date"
-                ref={dateInputRef}
-                className="absolute opacity-0 pointer-events-none"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setDateFilter(e.target.value);
-                    setShowDateDropdown(false);
-                  }
-                }}
-              />
-              <button
-                onClick={() => { setShowDateDropdown(!showDateDropdown); setShowKamDropdown(false); }}
-                className="h-[52px] px-5 bg-[#F9F9F8] rounded-2xl flex items-center gap-3 text-[11px] font-bold text-[#0f172a] uppercase tracking-wider hover:bg-[#F2F2F1] transition-all min-w-[140px]"
+        {/* Date Filter */}
+        <div className="relative">
+          <input
+            type="date"
+            ref={dateInputRef}
+            className="absolute opacity-0 pointer-events-none"
+            onChange={(e) => {
+              if (e.target.value) {
+                setDateFilter(e.target.value);
+                setShowDateDropdown(false);
+              }
+            }}
+          />
+          <button
+            onClick={() => { setShowDateDropdown(!showDateDropdown); setShowKamDropdown(false); }}
+            className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest flex items-center justify-between"
+          >
+            <span className="truncate">
+              {dateFilter === 'All Dates' || dateFilter === 'Today' || dateFilter === 'Yesterday'
+                ? dateFilter
+                : new Date(dateFilter).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+            </span>
+            <ChevronDown className={`ml-2 text-[#9B9BAD] transition-transform duration-300 ${showDateDropdown ? 'rotate-180' : ''}`} size={14} />
+          </button>
+          <AnimatePresence>
+            {showDateDropdown && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-[#F4F3EF] py-2 z-[100]"
               >
-                {dateFilter === 'All Dates' || dateFilter === 'Today' || dateFilter === 'Yesterday'
-                  ? dateFilter
-                  : new Date(dateFilter).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                <FiChevronDown className={`w-4 h-4 text-[#94a3b8] transition-transform duration-300 ${showDateDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {showDateDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[100]"
+                {['All Dates', 'Today', 'Yesterday', 'Custom Date'].map(opt => (
+                  <button
+                    key={opt}
+                    onClick={() => {
+                      if (opt === 'Custom Date') {
+                        dateInputRef.current.showPicker();
+                      } else {
+                        setDateFilter(opt);
+                        setShowDateDropdown(false);
+                      }
+                    }}
+                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-all uppercase tracking-widest ${dateFilter === opt ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-slate-600 hover:bg-[#F4F3EF]/50'}`}
                   >
-                    {['All Dates', 'Today', 'Yesterday', 'Custom Date'].map(opt => (
-                      <button
-                        key={opt}
-                        onClick={() => {
-                          if (opt === 'Custom Date') {
-                            dateInputRef.current.showPicker();
-                          } else {
-                            setDateFilter(opt);
-                            setShowDateDropdown(false);
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 text-left text-sm font-bold transition-all ${dateFilter === opt ? 'bg-[#1B4DA0]/5 text-[#1B4DA0]' : 'text-gray-600 hover:bg-gray-50'}`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    {opt}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-            {/* KAM Filter */}
-            <div className="relative">
-              <button
-                onClick={() => { setShowKamDropdown(!showKamDropdown); setShowDateDropdown(false); }}
-                className="h-[52px] px-5 bg-[#F9F9F8] rounded-2xl flex items-center gap-3 text-[11px] font-bold text-[#0f172a] uppercase tracking-wider hover:bg-[#F2F2F1] transition-all min-w-[140px]"
+        {/* KAM Filter */}
+        <div className="relative">
+          <button
+            onClick={() => { setShowKamDropdown(!showKamDropdown); setShowDateDropdown(false); }}
+            className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest flex items-center justify-between"
+          >
+            <span className="truncate">{kamFilter}</span>
+            <ChevronDown className={`ml-2 text-[#9B9BAD] transition-transform duration-300 ${showKamDropdown ? 'rotate-180' : ''}`} size={14} />
+          </button>
+          <AnimatePresence>
+            {showKamDropdown && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-[#F4F3EF] py-2 z-[100]"
               >
-                {kamFilter}
-                <FiChevronDown className={`w-4 h-4 text-[#94a3b8] transition-transform duration-300 ${showKamDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {showKamDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[100]"
+                {uniqueKams.map(kam => (
+                  <button
+                    key={kam}
+                    onClick={() => { setKamFilter(kam); setShowKamDropdown(false); }}
+                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-all uppercase tracking-widest ${kamFilter === kam ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-slate-600 hover:bg-[#F4F3EF]/50'}`}
                   >
-                    {uniqueKams.map(kam => (
-                      <button
-                        key={kam}
-                        onClick={() => { setKamFilter(kam); setShowKamDropdown(false); }}
-                        className={`w-full px-4 py-2.5 text-left text-sm font-bold transition-all ${kamFilter === kam ? 'bg-[#1B4DA0]/5 text-[#1B4DA0]' : 'text-gray-600 hover:bg-gray-50'}`}
-                      >
-                        {kam}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
+                    {kam}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      <div>
-        <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm overflow-hidden mb-8">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[#F4F3EF]">
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em]">Position / Date</th>
-                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Calls</th>
-                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Visited</th>
-                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Shared</th>
-                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Candidates</th>
-                  <th className="px-4 py-5 text-[11px] font-bold text-[#94a3b8] uppercase tracking-[0.2em] text-center">Interviews</th>
-                  <th className="px-8 py-5 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F4F3EF]">
-                {loading ? (
-                  <tr>
-                    <td colSpan="8" className="p-12 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <FiRefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-                        <p className="text-sm font-bold text-gray-400">Loading your history...</p>
+      {/* Table Interface */}
+      <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm overflow-hidden mb-12">
+        <div className="overflow-x-auto custom-scrollbar">
+          <div className="min-w-[1000px]">
+            {/* Table Header */}
+            <div className="grid grid-cols-[2fr_100px_100px_100px_120px_120px_80px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+              <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Date / Timeline</div>
+              {["Calls", "Visited", "Shared", "Candidates", "Interviews"].map((h, i) => (
+                <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">{h}</div>
+              ))}
+              <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-right pr-4">Annex</div>
+            </div>
+
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-40 gap-4">
+                <div className="w-12 h-12 rounded-full border-4 border-[#1B4DA0]/20 border-t-[#1B4DA0] animate-spin" />
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#9B9BAD]">Analyzing Performance Logs...</p>
+              </div>
+            ) : filteredReports.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-32 text-center">
+                <FileText size={48} className="text-slate-200 mb-4" />
+                <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">No matching report logs found</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#F4F3EF]">
+                {filteredReports.map((report) => {
+                  const formattedDate = new Date(report.date + 'T00:00:00').toLocaleDateString('en-US', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                  });
+                  return (
+                    <div
+                      key={report.id}
+                      onClick={() => setSelectedReport(report)}
+                      className="grid grid-cols-[2fr_100px_100px_100px_120px_120px_80px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+                    >
+                      {/* Date & Shift */}
+                      <div className="flex flex-col justify-center items-start py-1">
+                        <p className="text-[14px] font-bold text-[#1A1A2E] text-left group-hover:text-[#1B4DA0] transition-colors">
+                          {formattedDate}
+                        </p>
+                        <div className="flex items-center justify-start gap-1 mt-0.5 opacity-60">
+                          <Clock size={10} className="text-[#9B9BAD]" />
+                          <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">
+                            {report.checkInTime ? `${report.checkInTime} – ${report.checkOutTime || 'Present'}` : 'MIS Summary'}
+                          </span>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                ) : filteredReports.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" className="p-16 text-center">
-                      <FiFileText className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                      <p className="text-gray-400 font-bold">No matching reports found</p>
-                      <p className="text-xs text-gray-300 mt-1">Try adjusting your filters or search terms.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredReports.map((report) => {
-                    const formattedDate = new Date(report.date + 'T00:00:00').toLocaleDateString('en-IN', {
-                      weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
-                    });
-                    return (
-                      <tr
-                        key={report.id}
-                        onClick={() => setSelectedReport(report)}
-                        className="group cursor-pointer hover:bg-[#F8FAFF] transition-all active:bg-blue-100/40"
-                      >
-                        <td className="px-8 py-5">
-                          <div className="flex flex-col text-left">
-                            <span className="text-[15px] font-bold text-[#0F172A] group-hover:text-[#1B4DA0] transition-colors">
-                              {formattedDate}
-                            </span>
-                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
-                              {report.checkInTime ? `${report.checkInTime} – ${report.checkOutTime || 'Present'}` : 'MIS Summary'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <span className="text-sm font-bold text-slate-700">{report.callsCount ?? 0}</span>
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <span className="text-sm font-bold text-slate-700">{report.profilesVisited ?? 0}</span>
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <span className="text-sm font-bold text-slate-700">{report.profilesShared ?? 0}</span>
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <span className="text-sm font-bold text-slate-700">{report.candidatesContacted ?? 0}</span>
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <span className="text-sm font-bold text-slate-700">{report.interviewsArranged ?? 0}</span>
-                        </td>
-                        <td className="px-8 py-5 text-right">
-                          <div className="flex items-center justify-end">
-                            <label
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-10 h-10 rounded-xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm cursor-pointer group/btn"
-                            >
-                              <FiPaperclip className="w-5 h-5" />
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept=".xlsx, .xls"
-                                onChange={(e) => {
-                                  const file = e.target.files[0];
-                                  if (file) {
-                                    alert(`Excel file "${file.name}" attached successfully to this report!`);
-                                    // Here you would typically handle the file upload
-                                  }
-                                }}
-                              />
-                            </label>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+
+                      {/* Performance Metrics */}
+                      <div className="text-center py-1">
+                        <span className="text-[13px] font-bold text-[#475569]">{report.callsCount ?? 0}</span>
+                      </div>
+                      <div className="text-center py-1">
+                        <span className="text-[13px] font-bold text-[#475569]">{report.profilesVisited ?? 0}</span>
+                      </div>
+                      <div className="text-center py-1">
+                        <span className="text-[13px] font-bold text-[#475569]">{report.profilesShared ?? 0}</span>
+                      </div>
+                      <div className="text-center py-1">
+                        <span className="text-[13px] font-bold text-[#475569]">{report.candidatesContacted ?? 0}</span>
+                      </div>
+                      <div className="text-center py-1">
+                        <span className="text-[13px] font-bold text-[#475569]">{report.interviewsArranged ?? 0}</span>
+                      </div>
+
+                      {/* Action: Excel Attach */}
+                      <div className="flex justify-end pr-2" onClick={e => e.stopPropagation()}>
+                        <label className="w-8 h-8 rounded-lg bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm cursor-pointer active:scale-95">
+                          <Paperclip size={14} />
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept=".xlsx, .xls"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) alert(`Excel file "${file.name}" attached successfully!`);
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Chevron Indicator */}
+                      <div className="absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ChevronRight size={14} className="text-[#9B9BAD]" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -634,7 +604,7 @@ const DailyReportTab = () => {
                     onClick={() => setSelectedReport(null)}
                     className="p-3 rounded-2xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all active:scale-95"
                   >
-                    <FiX className="w-6 h-6" />
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
 
@@ -645,12 +615,12 @@ const DailyReportTab = () => {
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Performance Metrics</p>
                     <div className="grid grid-cols-2 gap-4">
                       {[
-                        { label: 'Phone Calls', value: selectedReport.callsCount, icon: FiPhone },
-                        { label: 'Profiles Visited', value: selectedReport.profilesVisited, icon: FiEye },
-                        { label: 'Profiles Shared', value: selectedReport.profilesShared, icon: FiShare2 },
-                        { label: 'Candidates', value: selectedReport.candidatesContacted, icon: FiUsers },
-                        { label: 'Interviews Set', value: selectedReport.interviewsArranged, icon: FiCalendar },
-                        { label: 'Work Hours', value: `${selectedReport.workHours || 0}h`, icon: FiClock },
+                        { label: 'Phone Calls', value: selectedReport.callsCount, icon: Phone },
+                        { label: 'Profiles Visited', value: selectedReport.profilesVisited, icon: Eye },
+                        { label: 'Profiles Shared', value: selectedReport.profilesShared, icon: Share2 },
+                        { label: 'Candidates', value: selectedReport.candidatesContacted, icon: Users },
+                        { label: 'Interviews Set', value: selectedReport.interviewsArranged, icon: Calendar },
+                        { label: 'Work Hours', value: `${selectedReport.workHours || 0}h`, icon: Clock },
                       ].map((stat) => {
                         const StatIcon = stat.icon;
                         return (
@@ -672,7 +642,7 @@ const DailyReportTab = () => {
                   {selectedReport.summary && (
                     <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
-                        <FiFileText className="w-3.5 h-3.5" /> Daily Summary
+                        <FileText className="w-3.5 h-3.5" /> Daily Summary
                       </p>
                       <p className="text-sm text-[#0f172a] leading-relaxed font-medium">
                         {selectedReport.summary}
@@ -688,7 +658,7 @@ const DailyReportTab = () => {
                         {selectedReport.tasksCompleted.map((t, i) => (
                           <div key={i} className="flex items-start gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                             <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5 border border-emerald-100">
-                              <FiCheckCircle className="w-3 h-3" />
+                              <CheckCircle className="w-3 h-3" />
                             </div>
                             <span className="text-sm font-medium text-[#0f172a]">{t}</span>
                           </div>
@@ -705,7 +675,7 @@ const DailyReportTab = () => {
                         {selectedReport.tasksPlanned.map((t, i) => (
                           <div key={i} className="flex items-start gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                             <div className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5 border border-indigo-100">
-                              <FiPlus className="w-3 h-3" />
+                              <Plus className="w-3 h-3" />
                             </div>
                             <span className="text-sm font-medium text-[#0f172a]">{t}</span>
                           </div>
@@ -769,7 +739,7 @@ const DailyReportTab = () => {
                         <p className="text-sm text-gray-500 mt-0.5">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</p>
                       </div>
                       <button onClick={() => setShowForm(false)} className="p-2 rounded-xl hover:bg-red-50 hover:text-red-500 transition-colors">
-                        <FiX className="w-5 h-5" />
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
 
@@ -780,11 +750,11 @@ const DailyReportTab = () => {
                           Today's KPI Numbers
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          <MetricInput icon={FiPhone} label="Phone Calls" sublabel="Total calls made" color="#3b82f6" bg="#dbeafe" name="callsCount" value={form.callsCount} onChange={handleFieldChange} />
-                          <MetricInput icon={FiEye} label="Profiles Visited" sublabel="Sourced / reviewed" color="#8b5cf6" bg="#ede9fe" name="profilesVisited" value={form.profilesVisited} onChange={handleFieldChange} />
-                          <MetricInput icon={FiShare2} label="Profiles Shared" sublabel="Shared with client" color="#0891b2" bg="#ecfeff" name="profilesShared" value={form.profilesShared} onChange={handleFieldChange} />
-                          <MetricInput icon={FiUsers} label="Candidates" sublabel="Contacted today" color="#10b981" bg="#d1fae5" name="candidatesContacted" value={form.candidatesContacted} onChange={handleFieldChange} />
-                          <MetricInput icon={FiCalendar} label="Interviews Set" sublabel="Arranged today" color="#f59e0b" bg="#fef3c7" name="interviewsArranged" value={form.interviewsArranged} onChange={handleFieldChange} />
+                          <MetricInput icon={Phone} label="Phone Calls" sublabel="Total calls made" color="#3b82f6" bg="#dbeafe" name="callsCount" value={form.callsCount} onChange={handleFieldChange} />
+                          <MetricInput icon={Eye} label="Profiles Visited" sublabel="Sourced / reviewed" color="#8b5cf6" bg="#ede9fe" name="profilesVisited" value={form.profilesVisited} onChange={handleFieldChange} />
+                          <MetricInput icon={Share2} label="Profiles Shared" sublabel="Shared with client" color="#0891b2" bg="#ecfeff" name="profilesShared" value={form.profilesShared} onChange={handleFieldChange} />
+                          <MetricInput icon={Users} label="Candidates" sublabel="Contacted today" color="#10b981" bg="#d1fae5" name="candidatesContacted" value={form.candidatesContacted} onChange={handleFieldChange} />
+                          <MetricInput icon={Calendar} label="Interviews Set" sublabel="Arranged today" color="#f59e0b" bg="#fef3c7" name="interviewsArranged" value={form.interviewsArranged} onChange={handleFieldChange} />
                         </div>
                       </div>
 
@@ -821,7 +791,7 @@ const DailyReportTab = () => {
                       <button type="submit" disabled={submitting}
                         className="w-full py-3.5 rounded-xl text-white font-bold flex items-center justify-center gap-2 shadow-lg transition-all hover:opacity-90 disabled:opacity-70 bg-[#1B4DA0]"
                       >
-                        <FiSend className="w-4 h-4" />
+                        <Send className="w-4 h-4" />
                         {submitting ? 'Submitting...' : todayReport ? 'Update MIS Report' : 'Submit MIS Report'}
                       </button>
                     </form>

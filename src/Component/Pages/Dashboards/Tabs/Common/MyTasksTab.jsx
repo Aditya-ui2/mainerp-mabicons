@@ -2,25 +2,26 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiCheckSquare,
-  FiClock,
-  FiCalendar,
-  FiFlag,
-  FiMessageSquare,
-  FiSearch,
-  FiLoader,
-  FiCheckCircle,
-  FiAlertCircle,
-  FiSend,
-  FiChevronDown,
-  FiChevronUp,
-  FiFilter,
-  FiX,
-  FiEdit2,
-  FiActivity,
-  FiLayers,
-  FiChevronRight,
-} from 'react-icons/fi';
+  CheckSquare,
+  Clock,
+  Calendar,
+  Flag,
+  MessageSquare,
+  Search,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Send,
+  ChevronDown,
+  ChevronUp,
+  Filter,
+  X,
+  Edit2,
+  Activity,
+  Layers,
+  ChevronRight,
+  ChevronLeft
+} from 'lucide-react';
 import {
   getMyDepartmentTasks,
   updateDepartmentTask,
@@ -110,7 +111,7 @@ const StatusFilterDropdown = ({ filterStatus, setFilterStatus }) => {
         <span className="flex items-center gap-2">
           {selected.label}
         </span>
-        <FiChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} />
       </button>
 
       <AnimatePresence>
@@ -160,7 +161,7 @@ const PriorityFilterDropdown = ({ filterPriority, setFilterPriority }) => {
         <span className="flex items-center gap-2">
           {selected.label}
         </span>
-        <FiChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} />
       </button>
 
       <AnimatePresence>
@@ -212,7 +213,7 @@ const TaskActionDropdown = ({ currentStatus, onStatusChange, isUpdating, isOpen,
         disabled={isUpdating}
       >
         <span>{currentStatus === 'Completed' ? 'Completed' : 'Actions'}</span>
-        <FiChevronDown className={`w-3 h-3 text-white/70 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-white/70 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence>
@@ -369,7 +370,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
@@ -403,21 +404,22 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
       </AnimatePresence>
       {/* Header */}
       <div className="flex flex-col items-start text-left mb-6 px-1">
-        <h1 className="text-[28px] font-bold text-[#0f172a] mb-1 tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Tasks</h1>
+        <h1 className="text-[28px] font-bold text-[#0f172a] mb-1 tracking-tight font-syne">My Tasks</h1>
         <p className="text-[#64748b] font-medium text-[14px]">Your assigned tasks and todo items</p>
       </div>
 
 
       {/* Search & Filter - Integrated Container */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-2 md:p-2 flex flex-col md:flex-row gap-3 shadow-sm mb-8 relative z-[110]">
-        <div className="relative flex-1">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap relative z-[110]">
+        {/* Search Bar */}
+        <div className="relative flex-1 group min-w-[200px]">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by title, description..."
-            className="w-full rounded-xl border-none bg-[#F5F5F2] py-2.5 pl-11 pr-4 text-xs font-semibold text-slate-700 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-slate-100 transition-all"
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -440,7 +442,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
         <div className="divide-y divide-gray-100 min-h-[400px]">
           {filteredTasks.length === 0 ? (
             <div className="text-center py-24 text-gray-500">
-              <FiCheckSquare style={{ width: '48px', height: '48px', margin: '0 auto 12px', opacity: 0.3 }} />
+              <CheckSquare style={{ width: '48px', height: '48px', margin: '0 auto 12px', opacity: 0.3 }} />
               <p className="font-medium">{tasks.length === 0 ? 'No tasks assigned yet' : 'No tasks match your filters'}</p>
               <p className="text-sm mt-1 text-gray-400">Tasks assigned by your team head will appear here</p>
             </div>
@@ -497,14 +499,14 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                           onStatusChange={(newStatus) => handleStatusChange(task.id, newStatus)}
                         />
                         {updatingTaskId === task.id && (
-                          <FiLoader className="w-4 h-4 text-[#1B4DA0] animate-spin" />
+                          <Loader2 className="w-4 h-4 text-[#1B4DA0] animate-spin" />
                         )}
                       </div>
 
                       {/* Chevron Column */}
                       <div className="flex justify-end pr-2">
                         <div className="w-8 h-8 rounded-full bg-[#F0F7FF] flex items-center justify-center text-[#1B4DA0] opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-                          <FiChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-4 h-4" />
                         </div>
                       </div>
                     </div>
@@ -554,7 +556,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                         onClick={() => setSelectedTask(null)}
                         className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
                       >
-                        <FiX className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -566,7 +568,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                       <div className="grid grid-cols-2 gap-y-8 gap-x-12">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
-                            <FiActivity className="w-5 h-5" />
+                            <Activity className="w-5 h-5" />
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">STATUS</p>
@@ -575,7 +577,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
-                            <FiLayers className="w-5 h-5" />
+                            <Layers className="w-5 h-5" />
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">PRIORITY</p>
@@ -584,7 +586,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
-                            <FiCalendar className="w-5 h-5" />
+                            <Calendar className="w-5 h-5" />
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">DEADLINE</p>
@@ -595,7 +597,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
-                            <FiCheckCircle className="w-5 h-5" />
+                            <CheckCircle className="w-5 h-5" />
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">TASK TYPE</p>
@@ -658,10 +660,10 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                         disabled={!commentText.trim() || sendingComment}
                         className="bg-[#1B4DA0] text-white px-8 py-3.5 rounded-2xl text-sm font-bold hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                       >
-                        {sendingComment ? <FiLoader className="w-4 h-4 animate-spin" /> : (
+                        {sendingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                           <>
                             <span>Post</span>
-                            <FiSend className="w-4 h-4" />
+                            <Send className="w-4 h-4" />
                           </>
                         )}
                       </button>

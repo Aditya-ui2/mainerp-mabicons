@@ -1,17 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  FiFileText,
-  FiSearch,
-  FiCheckCircle,
-  FiXCircle,
-  FiDownload,
-  FiEye,
-  FiUser,
-  FiClock,
-  FiAlertCircle,
-  FiDatabase
-} from 'react-icons/fi';
-import { X, ChevronRight, Download, Eye, Mail, Archive, CheckCircle2, XCircle, Clock, AlertTriangle, FileText, ChevronDown, Building2 } from 'lucide-react';
+import { 
+  X, 
+  ChevronRight, 
+  Download, 
+  Eye, 
+  Mail, 
+  Archive, 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  AlertTriangle, 
+  FileText, 
+  ChevronDown, 
+  Building2,
+  Search,
+  Filter,
+  User,
+  AlertCircle,
+  Database,
+  RefreshCw
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAllCandidates, verifyCandidateKYC, BASE_URL, syncSharePointAll } from '../../../service/api';
 import { toast } from 'sonner';
@@ -77,6 +85,21 @@ const TOTAL_DOCS = DOC_TYPES.length; // 23 documents
 const getDocUrl = (doc) => {
   if (!doc?.url) return null;
   return doc.url.startsWith('http') ? doc.url : `${BASE_URL}${doc.url}`;
+};
+
+const StatusBadge = ({ status }) => {
+  const configs = {
+    verified: { label: 'Verified', icon: CheckCircle, bg: 'bg-emerald-500', text: 'text-white' },
+    rejected: { label: 'Rejected', icon: XCircle, bg: 'bg-rose-500', text: 'text-white' },
+    pending: { label: 'Pending', icon: Clock, bg: 'bg-amber-500', text: 'text-white' }
+  };
+  const config = configs[status] || configs.pending;
+  const Icon = config.icon;
+  return (
+    <span className={`px-3 py-1.5 rounded-lg ${config.bg} ${config.text} text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm`}>
+      <Icon size={12} /> {config.label}
+    </span>
+  );
 };
 
 const DocumentVerifyTab = ({ isDarkMode = false }) => {
@@ -268,10 +291,10 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
   }, [candidates, searchTerm, statusFilter]);
 
   const stats = useMemo(() => [
-    { label: "Total Candidates", value: candidates.length, icon: FiUser, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Pending Review", value: candidates.filter(c => getDocumentStats(c).pending > 0).length, icon: FiClock, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Fully Verified", value: candidates.filter(c => { const s = getDocumentStats(c); return s.verified === s.uploaded && s.uploaded > 0; }).length, icon: FiCheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Action Required", value: candidates.filter(c => getDocumentStats(c).rejected > 0).length, icon: FiAlertCircle, color: "text-rose-600", bg: "bg-rose-50" },
+    { label: "Total Candidates", value: candidates.length, icon: User, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Pending Review", value: candidates.filter(c => getDocumentStats(c).pending > 0).length, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "Fully Verified", value: candidates.filter(c => { const s = getDocumentStats(c); return s.verified === s.uploaded && s.uploaded > 0; }).length, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Action Required", value: candidates.filter(c => getDocumentStats(c).rejected > 0).length, icon: AlertCircle, color: "text-rose-600", bg: "bg-rose-50" },
   ], [candidates]);
 
   if (loading && candidates.length === 0) {
@@ -292,8 +315,15 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
             Document Verification
           </h1>
         </div>
-        <div className="flex gap-2">
-           
+        <div className="flex gap-3">
+          <button
+            onClick={handleSync}
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-[#F4F3EF] rounded-2xl text-[11px] font-bold text-[#1B4DA0] uppercase tracking-[2px] hover:bg-[#F8FAFF] transition-all shadow-sm active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+            {isSyncing ? 'Syncing...' : 'Sync Data'}
+          </button>
         </div>
       </div>
 
@@ -301,7 +331,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
       <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
         {/* Search Bar */}
         <div className="relative flex-1 group min-w-[200px]">
-          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
             value={searchTerm}
@@ -311,7 +341,21 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
           />
         </div>
 
-         
+        {/* Status Filter */}
+        <div className="relative">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[160px]"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending Review</option>
+            <option value="verified">Fully Verified</option>
+            <option value="rejected">Action Required</option>
+            <option value="incomplete">Incomplete KYC</option>
+          </select>
+          <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+        </div>
       </div>
 
       {/* Table Interface */}
@@ -487,11 +531,11 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                                 : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
                           }`}
                         >
-                          {hasAnyDoc && (
-                            allVerified ? <CheckCircle2 size={10} /> :
+                          {hasAnyDoc ? (
+                            allVerified ? <CheckCircle size={10} /> :
                               anyRejected ? <XCircle size={10} /> :
                                 <Clock size={10} />
-                          )}
+                          ) : null}
                           {group.label}
                           <ChevronDown size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                         </button>
@@ -521,7 +565,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                                   >
                                     <span>{doc.label}</span>
                                     {hasDoc ? (
-                                      isVerified ? <CheckCircle2 size={12} className="text-emerald-500" /> :
+                                      isVerified ? <CheckCircle size={12} className="text-emerald-500" /> :
                                         isRejected ? <XCircle size={12} className="text-rose-500" /> :
                                           <Clock size={12} className="text-amber-500" />
                                     ) : (
@@ -559,11 +603,11 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                               : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
                           }`}
                       >
-                        {hasDoc && (
-                          isVerified ? <CheckCircle2 size={10} /> :
+                        {hasDoc ? (
+                          isVerified ? <CheckCircle size={10} /> :
                             isRejected ? <XCircle size={10} /> :
                               <Clock size={10} />
-                        )}
+                        ) : null}
                         {doc.label}
                       </button>
                     );
@@ -580,17 +624,11 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                       {/* Status Badge */}
                       <div className="absolute top-3 left-3 z-10">
                         {selectedCandidate.kycDocuments[selectedDocType].verified === true ? (
-                          <span className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                            <CheckCircle2 size={12} /> Verified
-                          </span>
+                          <StatusBadge status="verified" />
                         ) : selectedCandidate.kycDocuments[selectedDocType].verified === false ? (
-                          <span className="px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                            <XCircle size={12} /> Rejected
-                          </span>
+                          <StatusBadge status="rejected" />
                         ) : (
-                          <span className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                            <Clock size={12} /> Pending Review
-                          </span>
+                          <StatusBadge status="pending" />
                         )}
                       </div>
 
@@ -661,7 +699,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                           onClick={() => handleVerify(selectedCandidate.id, selectedDocType, 'verified')}
                           className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/20"
                         >
-                          <CheckCircle2 size={16} /> Approve
+                          <CheckCircle size={16} /> Approve
                         </button>
                         <button
                           onClick={() => openRejectModal(selectedCandidate.id, selectedDocType)}
