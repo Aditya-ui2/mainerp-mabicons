@@ -144,21 +144,7 @@ const JobDetailSidebar = ({ job, onClose }) => {
       </div>
 
       {/* Footer Actions */}
-      <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-6 flex items-center gap-4 z-20">
-        <button
-          onClick={onClose}
-          className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-bold text-sm hover:bg-[#E8E7E2] transition-all active:scale-[0.98]"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => { /* Prepare for edit logic */ }}
-          className="flex-[2] py-4 bg-[#0D47A1] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#0a3a82] transition-all active:scale-[0.98] shadow-lg shadow-blue-500/10"
-        >
-          <FiBriefcase size={18} />
-          Edit Position
-        </button>
-      </div>
+
     </div>
   );
 };
@@ -193,7 +179,7 @@ export default function ClientJobsTab() {
       if (!token) return;
       const decoded = jwtDecode(token);
       setClientId(decoded.id);
-      
+
       // Fetch fresh client details to get the company name
       const res = await getClientDashboardOverview(decoded.id);
 
@@ -283,70 +269,88 @@ export default function ClientJobsTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 -mt-10">
+      <style>{`
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          background: transparent;
+          bottom: 0;
+          color: transparent;
+          cursor: pointer;
+          height: auto;
+          left: 0;
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: auto;
+          z-index: 10;
+        }
+      `}</style>
       {/* Detached Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div className="flex flex-col items-start text-left">
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Job Positions</h1>
-        </div>
         <div className="flex items-center gap-3">
+
+          <div className="flex flex-col justify-center items-start">
+
+            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">Job Positions</h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+
           <button
             onClick={() => setShowAddJob(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-2xl text-xs font-bold hover:bg-[#0a3a82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all active:scale-95 shadow-lg shadow-blue-500/20 ml-2"
           >
-            <FiPlus className="w-5 h-5" strokeWidth="3" />
+            <FiPlus className="w-4 h-4" strokeWidth="3" />
             <span>Post New Job</span>
           </button>
         </div>
       </div>
 
-      {/* Modern Pill Filter Bar */}
-      <div className="bg-white rounded-full p-2 border border-[#E8E7E2] shadow-sm mb-8 flex items-center gap-2 flex-wrap sm:flex-nowrap">
-        {/* Search Input */}
-        <div className="flex-1 relative group h-12">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+
+      {/* Filter Bar */}
+      <div className="bg-white rounded-2xl p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-8">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
           <input
             type="text"
-            placeholder="Search jobs, clients or location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-full pl-14 pr-5 text-sm bg-[#F4F3EF] border-none rounded-2xl text-[#1A1A2E] placeholder:text-[#9B9BAD] focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all font-medium"
+            placeholder="Search by job title or keywords..."
+            className="w-full bg-[#F4F3EF] border-none rounded-xl py-2.5 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
           />
         </div>
 
-        {/* Filters Group */}
-        <div className="flex items-center gap-2">
-          <div className="relative h-12">
-            <select
-              value={dateFilter}
-              onChange={e => setDateFilter(e.target.value)}
-              className="h-full pl-5 pr-10 text-[10px] font-bold bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] appearance-none outline-none cursor-pointer hover:bg-[#E8E7E2] transition-all min-w-[130px] uppercase tracking-wider"
-            >
-              <option value="all">All Dates</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="prev-month">Previous Month</option>
-              <option value="quarter">This Quarter</option>
-              <option value="custom">Custom Range</option>
-            </select>
-            <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B9BAD] pointer-events-none" />
-          </div>
+        <div className="relative">
+          <select
+            value={dateFilter}
+            onChange={e => setDateFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="prev-month">Previous Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          <FiChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none opacity-50" />
+        </div>
 
-          <div className="relative h-12">
-            <select
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              className="h-full pl-5 pr-10 text-[10px] font-bold bg-[#F4F3EF] border-0 rounded-2xl text-[#1A1A2E] appearance-none outline-none cursor-pointer hover:bg-[#E8E7E2] transition-all min-w-[130px] uppercase tracking-wider"
-            >
-              <option value="all">All Status</option>
-              <option value="Open">Open</option>
-              <option value="Closed">Closed</option>
-            </select>
-            <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B9BAD] pointer-events-none" />
-          </div>
+        <div className="relative">
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="all">All Status</option>
+            <option value="Open">Open</option>
+            <option value="Closed">Closed</option>
+          </select>
+          <FiChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none opacity-50" />
         </div>
       </div>
+
 
       {dateFilter === 'custom' && (
         <motion.div
@@ -372,14 +376,15 @@ export default function ClientJobsTab() {
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {showAddJob && (
-            <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-8">
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8">
               {/* Backdrop Blur Overlay */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowAddJob(false)}
-                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+                className="absolute inset-0 backdrop-blur-xl"
+                style={{ backgroundColor: '#1A1A2E66' }}
               />
 
               {/* Modal Content Card */}
@@ -392,20 +397,16 @@ export default function ClientJobsTab() {
                 className="bg-white rounded-[44px] w-full max-w-2xl max-h-[92vh] overflow-hidden shadow-[0_32px_128px_rgba(0,0,0,0.25)] relative z-[2001] flex flex-col animate-in zoom-in-95 duration-300 border border-white/20"
               >
                 {/* Modal Header */}
-                <div className="sticky top-0 z-20 px-10 pt-10 pb-8 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF] text-center">
+                <div className="sticky top-0 z-20 px-10 pt-10 pb-8 bg-white/80 backdrop-blur-md border-b border-[#F4F3EF] text-left">
                   <div className="relative">
-                    <h2 className="text-3xl font-extrabold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      Create New Position
-                    </h2>
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[4px] mt-2">
-                      LINKED TO RECRUITMENT HEAD: SACHIN
-                    </p>
+
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-syne"> Create New Position</h1>
 
                     <button
                       onClick={() => setShowAddJob(false)}
                       className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-[#FAFAF8] text-[#1A1A2E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 group shadow-sm border border-[#F4F3EF]"
                     >
-                      <FiX size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                      <FiX size={20} className="transition-transform duration-300" />
                     </button>
                   </div>
                 </div>
@@ -629,77 +630,76 @@ export default function ClientJobsTab() {
         document.body
       )}
 
-      {/* Positions Table */}
-      <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
-        {/* Table Header */}
-        <div className="grid grid-cols-[2fr_130px_130px_110px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
-          {["Position", "Status", "Posted", "Applicants", ""].map((h, i) => (
-            <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start justify-start">
-              {h}
-            </div>
-          ))}
-        </div>
-
-        {filteredPositions.length === 0 ? (
-          <div className="py-24 text-center">
-            <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No positions found</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-[#F4F3EF]">
-            {filteredPositions.map((pos) => (
-              <div
-                key={pos.id}
-                onClick={() => setSelectedJob(pos)}
-                className="grid grid-cols-[2fr_130px_130px_110px_40px] gap-4 items-center px-8 py-4 last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
-              >
-
-                {/* Position Info */}
-                <div className="flex items-center justify-start gap-4 min-w-0">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-xs font-black group-hover:bg-[#EEF2FB] transition-colors">
-                    {pos.title.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex flex-col items-start min-w-0">
-                    <p className="text-[14px] font-bold text-[#0f172a] group-hover:text-[#0D47A1] transition-colors truncate text-left">
-                      {pos.title}
-                    </p>
-                    <div className="flex items-center justify-start gap-1.5 mt-0.5">
-                      <MapPin size={11} className="text-[#9B9BAD]" />
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest truncate text-left">{pos.location || 'Remote'}</span>
+      {/* Positions Table Interface */}
+      <div className="bg-white rounded-[24px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
+                <th className="px-8 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Position</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Status</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Posted</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Applicants</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F4F3EF]">
+              {filteredPositions.length > 0 ? filteredPositions.map((pos) => (
+                <tr key={pos.id} onClick={() => setSelectedJob(pos)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                  <td className="px-8 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xs font-black shadow-sm group-hover:scale-105 transition-transform">
+                        {pos.title.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-[#1A1A2E]">{pos.title}</span>
+                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                          <MapPin size={10} className="text-[#1B4DA0]" /> {pos.location || 'Remote'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center justify-start py-1">
-                  <StatusBadge status={pos.status} />
-                </div>
-
-                {/* Posted Date */}
-                <div className="flex items-center justify-start py-1">
-                  <span className="text-xs font-bold text-[#94a3b8]">
-                    {new Date(pos.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </span>
-                </div>
-
-                {/* Applicants */}
-                <div className="flex items-center justify-start gap-2 py-1">
-                  <div className="w-8 h-8 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
-                    <Users size={12} />
-                  </div>
-                  <span className="text-sm font-black text-[#1A1A2E]">{pos.candidateCount || 0}</span>
-                </div>
-
-                {/* Chevron */}
-                <div className="flex justify-end">
-                  <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
-                    <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <StatusBadge status={pos.status} />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="flex flex-col items-center">
+                      <span className="text-xs font-bold text-[#1A1A2E]">
+                        {new Date(pos.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">
+                        {new Date(pos.postedDate || Date.now()).getFullYear()}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0]">
+                        <Users size={12} />
+                      </div>
+                      <span className="text-sm font-black text-[#1A1A2E]">{pos.candidateCount || 0}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button className="p-2 bg-white text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all shadow-sm border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20">
+                        <FiChevronRight size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="5" className="px-8 py-12 text-center">
+                    <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No positions found Matching your criteria</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
 
       {/* Right Side Drawer for Job Details */}
       {typeof document !== 'undefined' && createPortal(
@@ -712,7 +712,8 @@ export default function ClientJobsTab() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedJob(null)}
-                className="fixed inset-0 bg-black/40 backdrop-blur-xl z-[999]"
+                className="fixed inset-0 backdrop-blur-xl z-[9999]"
+                style={{ backgroundColor: '#1A1A2E66' }}
               />
 
               {/* Sliding Panel */}
@@ -721,7 +722,7 @@ export default function ClientJobsTab() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: '100%', opacity: 0.5 }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="fixed inset-y-0 right-0 w-[698px] bg-white shadow-2xl z-[1000] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+                className="fixed inset-y-0 right-0 w-[698px] bg-white shadow-2xl z-[10000] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
               >
                 <JobDetailSidebar
                   job={selectedJob}

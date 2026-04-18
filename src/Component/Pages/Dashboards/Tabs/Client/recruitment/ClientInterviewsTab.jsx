@@ -1,17 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiCalendar, 
-  FiClock, 
-  FiUsers, 
-  FiMapPin, 
-  FiMail, 
-  FiChevronRight, 
-  FiVideo, 
-  FiUser, 
-  FiSearch, 
+import {
+  FiCalendar,
+  FiClock,
+  FiUsers,
+  FiMapPin,
+  FiMail,
+  FiChevronRight,
+  FiVideo,
+  FiUser,
+  FiSearch,
   FiFilter,
-  FiExternalLink
+  FiExternalLink,
+  FiRefreshCw,
+  FiChevronDown
 } from 'react-icons/fi';
 import { Video, Clock, User, ChevronRight, Calendar, Search, AlertCircle } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
@@ -53,12 +55,12 @@ export default function ClientInterviewsTab() {
 
   const filteredInterviews = useMemo(() => {
     return interviews.filter(i => {
-      const matchesSearch = !searchTerm || 
+      const matchesSearch = !searchTerm ||
         i.candidateName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         i.positionTitle?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesStatus = statusFilter === 'All' || i.status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
   }, [interviews, searchTerm, statusFilter]);
@@ -92,25 +94,33 @@ export default function ClientInterviewsTab() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 -mt-10">
+      <style>{`
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          background: transparent;
+          bottom: 0;
+          color: transparent;
+          cursor: pointer;
+          height: auto;
+          left: 0;
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: auto;
+          z-index: 10;
+        }
+      `}</style>
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">
             Interview Schedule
           </h1>
-          <p className="text-sm text-[#9B9BAD] mt-1">Track and manage upcoming candidate interviews</p>
+
         </div>
-        <div className="flex gap-2">
-            <button 
-              onClick={fetchData}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
-            >
-              <FiUsers size={16} className="text-[#1B4DA0]" />
-              Refresh List
-            </button>
-        </div>
+
       </div>
+
 
       {/* Filter Bar */}
       <div className="bg-white rounded-2xl p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
@@ -121,7 +131,7 @@ export default function ClientInterviewsTab() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by candidate or role..."
-            className="w-full bg-[#F4F3EF] border-none rounded-xl py-2.5 pl-12 pr-4 text-sm font-medium focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD]"
+            className="w-full bg-[#F4F3EF] border-none rounded-xl py-2.5 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
           />
         </div>
 
@@ -129,7 +139,7 @@ export default function ClientInterviewsTab() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
           >
             <option value="All">All Status</option>
             <option value="Scheduled">Scheduled</option>
@@ -137,9 +147,10 @@ export default function ClientInterviewsTab() {
             <option value="Completed">Completed</option>
             <option value="Cancelled">Cancelled</option>
           </select>
-          <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
+          <FiChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none opacity-50" />
         </div>
       </div>
+
 
       {/* Table Interface */}
       <div className="bg-white rounded-[24px] border border-[#F4F3EF] overflow-hidden shadow-sm">
@@ -147,64 +158,62 @@ export default function ClientInterviewsTab() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
-                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Time & Date</th>
-                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Candidate</th>
-                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Role / Job</th>
-                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Type</th>
-                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Time & Date</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Candidate</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Role / Job</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Type</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-[#F4F3EF]">
               {filteredInterviews.length > 0 ? filteredInterviews.map((iv, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col items-start text-left">
                       <span className="text-sm font-bold text-[#1A1A2E]">{formatTime(iv.startTime)}</span>
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight flex items-center gap-1 mt-0.5">
-                        <Calendar size={10} /> {formatDate(iv.interviewDate)}
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5 text-left">
+                        <Calendar size={10} className="text-[#1B4DA0]" /> {formatDate(iv.interviewDate)}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xs font-bold">
-                        {iv.candidateName?.charAt(0).toUpperCase() || <User size={14} />}
-                      </div>
-                      <span className="text-sm font-semibold text-[#1A1A2E]">{iv.candidateName}</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{iv.candidateName}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-[#1A1A2E]">{iv.positionTitle || 'Requirement mapping'}</span>
-                      <span className="text-[10px] font-semibold text-[#9B9BAD] flex items-center gap-1 mt-0.5">
-                         {iv.interviewType === 'Video' ? <Video size={10} /> : <FiMapPin size={10} />} {iv.interviewType || 'Video'}
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-bold text-[#1A1A2E]">{iv.positionTitle || 'Requirement Mapping'}</span>
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                        {iv.interviewType === 'Video' ? <Video size={10} className="text-[#1B4DA0]" /> : <FiMapPin size={10} className="text-[#1B4DA0]" />} {iv.interviewType || 'Video'}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-xs font-medium text-[#6B6B7E]">{iv.round || 'Technical Round'}</span>
+                  <td className="px-6 py-4 whitespace-nowrap text-left">
+                    <span className="text-[10px] font-bold text-[#6B6B7E] uppercase tracking-widest">{iv.round || 'Technical Round'}</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${STATUS_COLORS[iv.status] || 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${STATUS_COLORS[iv.status] || 'bg-slate-50 text-slate-500 border-slate-100'}`}>
                       {iv.status || 'Scheduled'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
                       {iv.meetingLink && (
-                        <a 
+                        <a
                           href={iv.meetingLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-2 bg-[#1B4DA0] hover:bg-[#153e82] text-white rounded-lg transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+                          className="p-2.5 bg-[#1B4DA0] hover:bg-[#153e82] text-white rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20"
                           title="Join Meeting"
                         >
                           <Video size={16} />
                         </a>
                       )}
                       {!iv.meetingLink && (
-                        <button className="p-2 bg-slate-100 text-slate-400 rounded-lg cursor-not-allowed">
+                        <button className="p-2.5 bg-[#FAFAF8] text-[#9B9BAD] rounded-xl border border-[#F4F3EF] cursor-not-allowed">
                           <FiExternalLink size={16} />
                         </button>
                       )}

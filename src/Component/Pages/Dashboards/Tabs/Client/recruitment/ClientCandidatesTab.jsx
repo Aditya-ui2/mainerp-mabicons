@@ -65,7 +65,7 @@ export default function ClientCandidatesTab() {
   }
 
   return (
-     <div className="p-0 min-h-screen bg-[#FDFDFD] text-left" style={{ fontFamily: 'Calibri, sans-serif' }}>
+    <div className="space-y-6 animate-in fade-in duration-500 -mt-10">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif !important; }
@@ -73,48 +73,63 @@ export default function ClientCandidatesTab() {
       `}</style>
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-        <div className="flex flex-col items-start text-left">
-          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Shortlisted Candidates</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+        <div>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">
+            Shortlisted Candidates
+          </h1>
+          <p className="text-sm text-[#9B9BAD] mt-1 text-left">Review and manage candidates selected for your positions</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+          >
+            <FiUsers size={14} className="text-[#1B4DA0]" />
+            Refresh List
+          </button>
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white border border-[#F4F3EF] rounded-[28px] p-3 mb-10 shadow-sm">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[300px] bg-[#F4F3EF] rounded-2xl px-6 h-[56px] flex items-center gap-4">
-            <FiSearch size={20} className="text-[#9B9BAD]" />
-            <input
-              type="text"
-              placeholder="Search by candidate name or position..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD]/60 outline-none w-full font-bold"
-            />
-          </div>
+      {/* Filter Bar */}
+      <div className="bg-white rounded-2xl p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by candidate name or position..."
+            className="w-full bg-[#F4F3EF] border-none rounded-xl py-2.5 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
+          />
+        </div>
+
+        <div className="relative">
+          <select
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="all">All Stages</option>
+            {stageKeys.map(k => (
+              <option key={k} value={k}>{STAGE_CONFIG[k].label}</option>
+            ))}
+          </select>
+          <FiChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
         </div>
       </div>
 
-      {/* Candidates List */}
-      <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-[#F4F3EF] flex items-center justify-between">
-            <h2 className="text-sm font-black text-[#1A1A2E] uppercase tracking-[2px] flex items-center gap-2">
-               <FiUsers className="text-[#1B4DA0]" /> Active Registry
-            </h2>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-[#9B9BAD] uppercase">
-                Showing {filtered.length} Applications
-            </div>
-        </div>
-
-        <div className="overflow-x-auto invisible-scrollbar">
-          <table className="w-full text-left border-collapse">
+      {/* Table Interface */}
+      <div className="bg-white rounded-[24px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-[#FAFAF9]">
-                <th className="px-8 py-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Candidate Profile</th>
-                <th className="px-6 py-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Position</th>
-                <th className="px-6 py-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Current Stage</th>
-                <th className="px-6 py-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Last Activity</th>
-                <th className="px-8 py-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-right">Operations</th>
+              <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
+                <th className="px-8 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Candidate Profile</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Position</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Current Stage</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Last Activity</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F4F3EF]">
@@ -122,10 +137,10 @@ export default function ClientCandidatesTab() {
                 <tr>
                   <td colSpan={5} className="py-24 text-center">
                     <div className="flex flex-col items-center gap-3">
-                       <div className="w-16 h-16 rounded-3xl bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
-                         <FiUser size={24} />
-                       </div>
-                       <p className="text-sm font-bold text-[#9B9BAD]">Zero candidate findings</p>
+                      <div className="w-16 h-16 rounded-3xl bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
+                        <FiUser size={24} />
+                      </div>
+                      <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">Zero candidate findings</p>
                     </div>
                   </td>
                 </tr>
@@ -140,36 +155,38 @@ export default function ClientCandidatesTab() {
                       layout
                       key={c.id} 
                       onClick={() => setSelectedCandidate(c)}
-                      className="hover:bg-[#FAFAF9] transition-colors group cursor-pointer"
+                      className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
                     >
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-sm font-black shadow-inner">
+                          <div className="w-12 h-12 rounded-2xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-sm font-black shadow-sm group-hover:scale-105 transition-transform">
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-[#1A1A2E] truncate font-jakarta group-hover:text-[#1B4DA0] transition-colors">{c.name}</p>
+                            <p className="text-sm font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors">{c.name}</p>
+                            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest block mt-0.5">Candidate ID: {c.id.slice(-6).toUpperCase()}</span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs font-bold text-[#1A1A2E] flex items-center gap-1.5"><FiBriefcase className="text-blue-500" /> {c.positionTitle || c.position || '—'}</span>
+                      <td className="px-6 py-6 text-center">
+                        <div className="flex flex-col items-center">
+                          <span className="text-sm font-bold text-[#1A1A2E]">{c.positionTitle || c.position || '—'}</span>
+                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5"><FiBriefcase size={10} className="text-[#1B4DA0]" /> Corporate Opening</span>
                         </div>
                       </td>
                       <td className="px-6 py-6 text-center">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${stageBg} border border-white/20 shadow-sm`}>
+                        <span className={`inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${stageBg} border border-white/20 shadow-sm`}>
                           {c.stage}
                         </span>
                       </td>
-                      <td className="px-6 py-6 font-jakarta">
-                        <div className="flex flex-col">
-                           <span className="text-xs font-bold text-[#1A1A2E]">{c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Today'}</span>
-                           <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-0.5">Interaction Log</span>
+                      <td className="px-6 py-6 text-center font-jakarta">
+                        <div className="flex flex-col items-center">
+                           <span className="text-sm font-bold text-[#1A1A2E]">{c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Today'}</span>
+                           <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-0.5">Interaction Log</span>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-right">
-                        <button className="p-3 bg-[#F4F3EF] hover:bg-[#1A1A2E] hover:text-white rounded-xl transition-all duration-300">
+                      <td className="px-6 py-6 text-center">
+                        <button className="p-2.5 bg-white text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20 transition-all shadow-sm">
                           <FiChevronRight size={18} />
                         </button>
                       </td>
@@ -192,7 +209,8 @@ export default function ClientCandidatesTab() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedCandidate(null)}
-                className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[2000]"
+                className="fixed inset-0 backdrop-blur-xl z-[9999]"
+                style={{ backgroundColor: '#1A1A2E66' }}
               />
 
               {/* Sidebar */}
@@ -201,7 +219,7 @@ export default function ClientCandidatesTab() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: '100%', opacity: 0.5 }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="fixed inset-y-0 right-0 w-full max-w-[580px] bg-white shadow-2xl z-[2001] flex flex-col overflow-hidden"
+                className="fixed inset-y-0 right-0 w-full max-w-[580px] bg-white shadow-2xl z-[10000] flex flex-col overflow-hidden border-l border-[#F4F3EF]"
               >
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
