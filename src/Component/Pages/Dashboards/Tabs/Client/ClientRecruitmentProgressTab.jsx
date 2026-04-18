@@ -205,6 +205,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   const [isCandidatesModalOpen, setIsCandidatesModalOpen] = useState(false);
   const [isInterviewsModalOpen, setIsInterviewsModalOpen] = useState(false);
   const [isHiredModalOpen, setIsHiredModalOpen] = useState(false);
+  const [candidatePositionFilter, setCandidatePositionFilter] = useState('all');
   const datePickerRef = useRef(null);
 
   const scrollToSection = (id) => {
@@ -336,7 +337,36 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   const dateFilteredPositions = filterByDate(positions, 'createdAt');
   const dateFilteredInterviews = filterByDate(upcomingInterviews || [], 'interviewDate');
 
-  // Recompute funnel from date-filtered candidates
+  // Apply position filter to candidates for pie chart
+  const positionFilteredCandidates = candidatePositionFilter === 'all'
+    ? dateFilteredCandidates
+    : dateFilteredCandidates.filter(c => 
+        (c.positionTitle || c.position || c.appliedPosition || '') === candidatePositionFilter ||
+        (c.positionId || '') === candidatePositionFilter
+      );
+
+  // Get unique positions for filter dropdown (from both positions and candidates)
+  const positionsFromPositions = dateFilteredPositions
+    .filter(p => p.status === 'Open' || p.status === 'Urgent')
+    .map(p => p.title || p.jobTitle || p.positionTitle)
+    .filter(Boolean);
+  const positionsFromCandidates = dateFilteredCandidates
+    .map(c => c.positionTitle || c.position || c.appliedPosition)
+    .filter(Boolean);
+  const uniquePositionsFromCandidates = [...new Set([...positionsFromPositions, ...positionsFromCandidates])];
+
+  // Compute upcoming joinings from candidates with "Offer Sent" stage
+  const computedJoinings = candidates
+    .filter(c => c.stage === 'Offer Sent' || c.stage === 'Offer Accepted')
+    .map(c => ({
+      candidateName: c.name,
+      client: clientData?.companyName || 'Client',
+      joiningDate: c.expectedJoiningDate || c.joiningDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      position: c.appliedPosition || c.position
+    }))
+    .slice(0, 5);
+
+  // Recompute funnel from position-filtered candidates
   const stageMap = {
     'Screening': 'screening',
     'Phone Interview': 'phoneInterview',
@@ -355,6 +385,13 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
         return acc;
       }, { screening: 0, phoneInterview: 0, technical: 0, hrRound: 0, clientInterview: 0, offerSent: 0, joined: 0, rejected: 0 })
     : funnel;
+
+  // Compute funnel for pie chart based on position filter
+  const pieChartFunnel = positionFilteredCandidates.reduce((acc, c) => {
+    const key = stageMap[c.stage] || 'screening';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, { screening: 0, phoneInterview: 0, technical: 0, hrRound: 0, clientInterview: 0, offerSent: 0, joined: 0, rejected: 0 });
 
   // Recompute KPI summary from filtered data
    const computedSummary = isDateFiltered
@@ -535,39 +572,56 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
         })}
       </div>
 
-      {/* Candidates Pie Chart */}
-      {(() => {
-        const CustomTooltip = ({ active, payload }) => {
-          if (active && payload && payload.length) {
-            return (
-              <div className="bg-white p-3 rounded-xl border border-[#E8E7E2] shadow-xl">
-                <p className="text-xs font-bold text-[#1A1A2E] mb-1">{payload[0].name}</p>
-                <p className="text-sm font-extrabold text-[#1B4DA0]">{payload[0].value} candidates</p>
+      {/* Candidates & Open Positions Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Candidates Pie Chart */}
+        {(() => {
+          const CustomTooltip = ({ active, payload }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="bg-white p-3 rounded-xl border border-[#E8E7E2] shadow-xl">
+                  <p className="text-xs font-bold text-[#1A1A2E] mb-1">{payload[0].name}</p>
+                  <p className="text-sm font-extrabold text-[#1B4DA0]">{payload[0].value} candidates</p>
+                </div>
+              );
+            }
+            return null;
+          };
+
+          const pieColors = ['#cbd5e1', '#fde68a', '#fcd34d', '#fdba74', '#fbbf24', '#c4b5fd', '#93c5fd'];
+          const chartData = funnelStages
+            .map((stage, i) => ({
+              name: STAGE_CONFIG[stage].label,
+              value: pieChartFunnel[stage] || 0,
+              fill: pieColors[i],
+            }))
+            .filter(d => d.value > 0);
+
+          const totalCandidates = chartData.reduce((sum, d) => sum + d.value, 0);
+
+          return (
+            <div id="candidates-chart-section" className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm flex flex-col items-start scroll-mt-24 transition-all hover:shadow-xl hover:shadow-blue-500/5 min-h-[400px]">
+            <div className="flex items-center justify-between w-full mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-[#E3F2FD80] text-[#1B4DA0] shadow-sm">
+                  <FiUsers className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  Candidates
+                </h2>
               </div>
-            );
-          }
-          return null;
-        };
-
-        const pieColors = ['#cbd5e1', '#fde68a', '#fcd34d', '#fdba74', '#fbbf24', '#c4b5fd', '#93c5fd'];
-        const chartData = funnelStages
-          .map((stage, i) => ({
-            name: STAGE_CONFIG[stage].label,
-            value: computedFunnel[stage] || 0,
-            fill: pieColors[i],
-          }))
-          .filter(d => d.value > 0);
-
-        const totalCandidates = chartData.reduce((sum, d) => sum + d.value, 0);
-
-        return (
-          <div id="candidates-chart-section" className="bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col items-start scroll-mt-24">
-            <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3 mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
-              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                <FiUsers className="w-5 h-5 text-[#1B4DA0]" />
-              </div>
-              Candidates
-            </h2>
+              {/* Position Filter Dropdown */}
+              <select
+                value={candidatePositionFilter}
+                onChange={(e) => setCandidatePositionFilter(e.target.value)}
+                className="px-4 py-2 rounded-xl border border-[#E8E7E2] text-sm font-medium text-[#1A1A2E] bg-white hover:bg-[#F4F3EF] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]/20"
+              >
+                <option value="all">All Positions</option>
+                {uniquePositionsFromCandidates.map((pos, i) => (
+                  <option key={i} value={pos}>{pos}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex flex-col xl:flex-row items-center xl:items-start gap-12 w-full">
               <div className="relative w-[280px] h-[280px] flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -590,7 +644,9 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-4xl font-extrabold text-[#1A1A2E] leading-none mb-1">{totalCandidates}</span>
-                  <span className="text-[10px] font-bold text-[#9B9BAD] tracking-widest uppercase">Total</span>
+                  <span className="text-[10px] font-bold text-[#9B9BAD] tracking-widest uppercase text-center px-2 max-w-[120px] truncate">
+                    {candidatePositionFilter === 'all' ? 'Total' : candidatePositionFilter}
+                  </span>
                 </div>
               </div>
 
@@ -604,11 +660,11 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                     <span className="text-sm font-bold text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors">{entry.value}</span>
                   </div>
                 ))}
-                {computedFunnel.rejected > 0 && (
+                {pieChartFunnel.rejected > 0 && (
                   <div className="col-span-2 lg:col-span-1 pt-4 mt-4 border-t border-[#F4F3EF] flex items-center gap-2">
                     <FiUsers className="w-3.5 h-3.5 text-red-400" />
                     <p className="text-xs text-[#9B9BAD]">
-                      <span className="text-red-500 font-bold">{computedFunnel.rejected}</span> rejected candidates
+                      <span className="text-red-500 font-bold">{pieChartFunnel.rejected}</span> rejected candidates
                     </p>
                   </div>
                 )}
@@ -618,82 +674,88 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
         );
       })()}
 
-      {/* Positions & Upcoming Interviews Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Positions List */}
-        <div id="positions-section" className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col min-h-[500px] scroll-mt-24">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3" style={{ fontFamily: "'Syne', sans-serif" }}>
-              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-amber-50 rounded-2xl">
-                <FiBriefcase className="w-5 h-5 text-amber-500" />
-              </div>
-              <span>Open Positions</span>
+        {/* Open Positions */}
+        <div id="positions-section" className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm flex flex-col min-h-[400px] scroll-mt-24 transition-all hover:shadow-xl hover:shadow-amber-500/5">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-3 rounded-2xl bg-amber-50 text-amber-500 shadow-sm">
+              <FiBriefcase className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Open Positions
             </h2>
           </div>
 
           <div className="flex-1 overflow-x-auto custom-scrollbar">
-            <table className="w-full">
+            <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-100 pb-2">
-                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Position</th>
-                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Openings</th>
-                  <th className="py-4 px-4 text-right text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Position</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Openings</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-[#F4F3EF]">
                 {filteredPositions.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="py-12 text-center text-sm font-medium text-slate-400">
+                    <td colSpan="3" className="py-12 text-center text-[10px] uppercase font-medium text-slate-400">
                       No active vacancies
                     </td>
                   </tr>
                 ) : (
                   filteredPositions.map(pos => (
-                    <tr key={pos._id || pos.id} className="group hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => setSelectedJob(pos)}>
-                      <td className="py-4 px-4">
+                    <motion.tr 
+                      key={pos._id || pos.id} 
+                      whileHover={{ backgroundColor: '#F8FAFF' }}
+                      onClick={() => setSelectedJob(pos)}
+                      className="group cursor-pointer transition-all"
+                    >
+                      <td className="px-6 py-5">
                         <div className="flex flex-col">
-                          <h3 className="text-sm font-semibold text-slate-700">{pos.title}</h3>
-                          <p className="text-[11px] text-slate-400 font-medium">{pos.location || 'Remote'}</p>
+                          <p className="text-sm font-semibold text-slate-700 group-hover:text-[#1B4DA0] transition-colors">{pos.title}</p>
+                          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{pos.location || 'Remote'}</p>
                         </div>
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="px-6 py-5">
                         <span className="text-sm font-semibold text-slate-600">{pos.openings || 1}</span>
                       </td>
-                      <td className="py-4 px-4 text-right">
+                      <td className="px-6 py-5">
                         <StatusBadge status={pos.status} />
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
         </div>
+      </div>
 
+      {/* Upcoming Interviews & Upcoming Joinings Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Interviews */}
-        <div id="interviews-section" className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col min-h-[500px] scroll-mt-24">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-[#1A1A2E] flex items-center gap-3" style={{ fontFamily: "'Syne', sans-serif" }}>
-              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-blue-50 rounded-2xl">
-                <FiCalendar className="w-5 h-5 text-blue-500" />
-              </div>
-              <span>Upcoming Interviews</span>
+        <div id="interviews-section" className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm flex flex-col min-h-[400px] scroll-mt-24 transition-all hover:shadow-xl hover:shadow-[#3FA9F5]/5">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-3 rounded-2xl bg-[#E3F2FD80] text-[#3FA9F5] shadow-sm">
+              <FiCalendar className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Upcoming Interviews
             </h2>
           </div>
 
           <div className="flex-1 overflow-x-auto custom-scrollbar">
-            <table className="w-full">
+            <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-100 pb-2">
-                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Candidate</th>
-                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Position</th>
-                  <th className="py-4 px-4 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Date & Time</th>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Position</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Schedule</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-[#F4F3EF]">
                 {(!dateFilteredInterviews || dateFilteredInterviews.length === 0) ? (
                   <tr>
-                    <td colSpan="3" className="py-12 text-center text-sm font-medium text-slate-400">
+                    <td colSpan="3" className="py-12 text-center text-[10px] uppercase font-medium text-slate-400">
                       No scheduled sessions
                     </td>
                   </tr>
@@ -703,24 +765,85 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                     const formattedDate = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                     
                     return (
-                      <tr 
+                      <motion.tr 
                         key={i} 
+                        whileHover={{ backgroundColor: '#F8FAFF' }}
                         onClick={() => setSelectedInterview(iv)}
-                        className="group hover:bg-slate-50/50 transition-colors cursor-pointer"
+                        className="group cursor-pointer transition-all"
                       >
-                        <td className="py-4 px-4">
-                          <p className="text-sm font-semibold text-slate-700">{iv.candidateName}</p>
+                        <td className="px-6 py-5">
+                          <p className="text-sm font-semibold text-slate-700 group-hover:text-[#1B4DA0] transition-colors">{iv.candidateName}</p>
                         </td>
-                        <td className="py-4 px-4">
-                          <p className="text-sm font-semibold text-slate-600">{iv.positionTitle}</p>
+                        <td className="px-6 py-5">
+                          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{iv.positionTitle}</p>
                         </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-slate-600">{formattedDate}</p>
-                            <p className="text-sm font-semibold text-[#1B4DA0]">{iv.startTime}</p>
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col items-start gap-0.5">
+                            <span className="text-sm font-semibold text-slate-600">{formattedDate}</span>
+                            <span className="text-[11px] font-semibold text-[#1B4DA0] uppercase">{iv.startTime}</span>
                           </div>
                         </td>
-                      </tr>
+                      </motion.tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Upcoming Joinings */}
+        <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm flex flex-col min-h-[400px] transition-all hover:shadow-xl hover:shadow-emerald-500/5">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-3 rounded-2xl bg-[#E3F2FD80] border border-blue-100/50 text-[#1B4DA0] shadow-sm">
+              <FiCheckCircle className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Upcoming Joinings
+            </h2>
+          </div>
+
+          <div className="flex-1 overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-[#F4F3EF]">
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Client</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Joining Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F4F3EF]">
+                {(!computedJoinings || computedJoinings.length === 0) ? (
+                  <tr>
+                    <td colSpan="3" className="py-12 text-center text-[10px] uppercase font-medium text-slate-400">
+                      No joinings this week
+                    </td>
+                  </tr>
+                ) : (
+                  computedJoinings.map((joining, i) => {
+                    const formattedDate = new Date(joining.joiningDate || joining.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                    
+                    return (
+                      <motion.tr 
+                        key={i} 
+                        whileHover={{ backgroundColor: '#F8FAFF' }}
+                        className="group cursor-pointer transition-all"
+                      >
+                        <td className="px-6 py-5">
+                          <p className="text-sm font-semibold text-slate-700">{joining.candidateName || joining.candidate}</p>
+                        </td>
+                        <td className="px-6 py-5">
+                          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{joining.client || 'Mabicons'}</p>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{formattedDate}</span>
+                            <div className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter bg-emerald-50 text-emerald-600 border border-emerald-100">
+                              Confirmed
+                            </div>
+                          </div>
+                        </td>
+                      </motion.tr>
                     );
                   })
                 )}

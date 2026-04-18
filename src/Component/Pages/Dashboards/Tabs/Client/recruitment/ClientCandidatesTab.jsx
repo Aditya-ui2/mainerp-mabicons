@@ -81,13 +81,6 @@ export default function ClientCandidatesTab() {
           <p className="text-sm text-[#9B9BAD] mt-1 text-left">Review and manage candidates selected for your positions</p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
-          >
-            <FiUsers size={14} className="text-[#1B4DA0]" />
-            Refresh List
-          </button>
         </div>
       </div>
 
@@ -125,10 +118,10 @@ export default function ClientCandidatesTab() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
-                <th className="px-8 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Candidate Profile</th>
-                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Position</th>
-                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Current Stage</th>
-                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Last Activity</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Candidate</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Position</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Stage</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Status</th>
                 <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
@@ -148,49 +141,40 @@ export default function ClientCandidatesTab() {
                 filtered.map(c => {
                   const stageKey = stageKeys.find(k => STAGE_CONFIG[k].label === c.stage);
                   const stageBg = stageKey ? STAGE_CONFIG[stageKey].bg : 'bg-slate-100 text-slate-600';
-                  const initials = c.name?.split(' ').map(n=>n[0]).join('').slice(0,2) || '??';
                   
                   return (
-                    <motion.tr 
-                      layout
+                    <tr 
                       key={c.id} 
                       onClick={() => setSelectedCandidate(c)}
                       className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
                     >
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-sm font-black shadow-sm group-hover:scale-105 transition-transform">
-                            {initials}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors">{c.name}</p>
-                            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest block mt-0.5">Candidate ID: {c.id.slice(-6).toUpperCase()}</span>
-                          </div>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-[#1A1A2E]">{c.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-6 text-center">
-                        <div className="flex flex-col items-center">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col items-start">
                           <span className="text-sm font-bold text-[#1A1A2E]">{c.positionTitle || c.position || '—'}</span>
-                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5"><FiBriefcase size={10} className="text-[#1B4DA0]" /> Corporate Opening</span>
+                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                            <FiBriefcase size={10} className="text-[#1B4DA0]" /> Corporate Opening
+                          </span>
                         </div>
                       </td>
-                      <td className="px-6 py-6 text-center">
-                        <span className={`inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${stageBg} border border-white/20 shadow-sm`}>
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
+                        <span className="text-[10px] font-bold text-[#6B6B7E] uppercase tracking-widest">{c.stage || 'Screening'}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${stageBg}`}>
                           {c.stage}
                         </span>
                       </td>
-                      <td className="px-6 py-6 text-center font-jakarta">
-                        <div className="flex flex-col items-center">
-                           <span className="text-sm font-bold text-[#1A1A2E]">{c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Today'}</span>
-                           <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-0.5">Interaction Log</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6 text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
                         <button className="p-2.5 bg-white text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20 transition-all shadow-sm">
                           <FiChevronRight size={18} />
                         </button>
                       </td>
-                    </motion.tr>
+                    </tr>
                   );
                 })
               )}

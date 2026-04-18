@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiCalendar,
@@ -13,9 +14,12 @@ import {
   FiFilter,
   FiExternalLink,
   FiRefreshCw,
-  FiChevronDown
+  FiChevronDown,
+  FiX,
+  FiBriefcase,
+  FiPhone
 } from 'react-icons/fi';
-import { Video, Clock, User, ChevronRight, Calendar, Search, AlertCircle } from 'lucide-react';
+import { Video, Clock, User, ChevronRight, Calendar, Search, AlertCircle, MapPin } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { getClientDashboardOverview } from '../../../../service/api';
 
@@ -31,6 +35,7 @@ export default function ClientInterviewsTab() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedInterview, setSelectedInterview] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -169,7 +174,7 @@ export default function ClientInterviewsTab() {
 
             <tbody className="divide-y divide-[#F4F3EF]">
               {filteredInterviews.length > 0 ? filteredInterviews.map((iv, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                <tr key={idx} onClick={() => setSelectedInterview(iv)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col items-start text-left">
                       <span className="text-sm font-bold text-[#1A1A2E]">{formatTime(iv.startTime)}</span>
@@ -236,6 +241,180 @@ export default function ClientInterviewsTab() {
           </table>
         </div>
       </div>
+
+      {/* Interview Detail Sidebar */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedInterview && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedInterview(null)}
+                className="fixed inset-0 backdrop-blur-xl z-[9999]"
+                style={{ backgroundColor: '#1A1A2E66' }}
+              />
+
+              {/* Sidebar */}
+              <motion.div
+                initial={{ x: '100%', opacity: 0.5 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: '100%', opacity: 0.5 }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed inset-y-0 right-0 w-full max-w-[580px] bg-white shadow-2xl z-[10000] flex flex-col overflow-hidden border-l border-[#F4F3EF]"
+              >
+                {/* Header */}
+                <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xl font-black shadow-inner">
+                      {selectedInterview.candidateName?.split(' ').map(n => n[0]).join('').slice(0, 2) || '??'}
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedInterview.candidateName}</h2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest ${STATUS_COLORS[selectedInterview.status] || 'bg-slate-100 text-slate-600'}`}>
+                          {selectedInterview.status || 'Scheduled'}
+                        </span>
+                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">• {selectedInterview.positionTitle || 'Position'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedInterview(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar space-y-10">
+                  {/* Interview Schedule Section */}
+                  <div className="pt-0">
+                    <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] block mb-6">Interview Schedule</span>
+                    <div className="bg-[#F8F9FA] border border-[#DADCE0] rounded-2xl p-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Date</span>
+                          <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
+                            <FiCalendar className="text-[#1B4DA0]" />
+                            {selectedInterview.interviewDate
+                              ? new Date(selectedInterview.interviewDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+                              : 'Not Scheduled'}
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Time</span>
+                          <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
+                            <FiClock className="text-[#1B4DA0]" />
+                            {formatTime(selectedInterview.startTime)} {selectedInterview.endTime && `- ${formatTime(selectedInterview.endTime)}`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Interview Details Grid */}
+                  <div className="pt-8 border-t border-[#F4F3EF]">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Interview Type</span>
+                        <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
+                          {selectedInterview.interviewType === 'Video' ? <Video size={16} className="text-[#1B4DA0]" /> : <MapPin size={16} className="text-[#1B4DA0]" />}
+                          {selectedInterview.interviewType || 'Video Call'}
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Round</span>
+                        <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
+                          <FiBriefcase className="text-[#1B4DA0]" />
+                          {selectedInterview.round || 'Technical Round'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Position Details */}
+                  <div className="pt-8 border-t border-[#F4F3EF]">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4">Position Details</span>
+                    <div className="bg-white border border-[#F4F3EF] rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm">
+                          <FiBriefcase size={20} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.positionTitle || 'Unknown Position'}</p>
+                          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-0.5">
+                            {selectedInterview.location || 'Remote'} • {selectedInterview.type || 'Full-time'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Candidate Contact Info */}
+                  <div className="pt-8 border-t border-[#F4F3EF]">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4">Candidate Contact</span>
+                    <div className="space-y-3">
+                      {selectedInterview.candidateEmail && (
+                        <div className="flex items-center gap-3 text-sm font-medium text-[#4B4B5E]">
+                          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                            <FiMail size={16} />
+                          </div>
+                          <span>{selectedInterview.candidateEmail}</span>
+                        </div>
+                      )}
+                      {selectedInterview.candidatePhone && (
+                        <div className="flex items-center gap-3 text-sm font-medium text-[#4B4B5E]">
+                          <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                            <FiPhone size={16} />
+                          </div>
+                          <span>{selectedInterview.candidatePhone}</span>
+                        </div>
+                      )}
+                      {!selectedInterview.candidateEmail && !selectedInterview.candidatePhone && (
+                        <p className="text-xs text-[#9B9BAD] italic font-bold">Contact information not available</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Interview Notes */}
+                  {selectedInterview.notes && (
+                    <div className="pt-8 border-t border-[#F4F3EF]">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-2">Interview Notes</span>
+                      <p className="text-sm text-[#4B4B5E] leading-relaxed bg-[#FDFDFD] p-4 rounded-xl border border-[#F4F3EF]">
+                        {selectedInterview.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF9]">
+                  {selectedInterview.meetingLink ? (
+                    <a
+                      href={selectedInterview.meetingLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full py-4 bg-[#1B4DA0] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#153e82] transition-all shadow-xl shadow-blue-500/20"
+                    >
+                      <Video size={18} />
+                      Join Video Meeting
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => setSelectedInterview(null)}
+                      className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl shadow-gray-200"
+                    >
+                      Close Details
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

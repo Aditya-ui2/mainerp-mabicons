@@ -99,81 +99,84 @@ export default function ClientFinalizedTab() {
         </div>
 
         <div className="flex gap-2">
-          {[
-            { key: 'all', label: 'All Finalized' },
-            { key: 'offer', label: 'Offers Only' },
-            { key: 'hired', label: 'Hired Only' },
-          ].map(f => (
-            <button
-              key={f.key}
-              onClick={() => setViewFilter(f.key)}
-              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewFilter === f.key
-                ? 'bg-[#1A1A2E] text-white shadow-lg shadow-gray-400/20'
-                : 'bg-white text-[#9B9BAD] border border-[#F4F3EF] hover:bg-[#F4F3EF]'
-                }`}
-            >
-              {f.label}
-            </button>
-          ))}
+           
         </div>
       </div>
 
-      {/* Results Deck */}
-      <div className="grid grid-cols-1 gap-4">
-        {filtered.length === 0 ? (
-          <div className="bg-white rounded-[24px] border border-[#F4F3EF] p-24 text-center flex flex-col items-center gap-4 shadow-sm">
-            <div className="w-20 h-20 rounded-3xl bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD] shadow-inner">
-              <FiUserCheck size={32} />
-            </div>
-            <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest">No Findings In This Segment</p>
-          </div>
-        ) : (
-          filtered.map(c => {
-            const isHired = c.stage === 'Joined';
-            const isOffer = c.stage === 'Offer Sent';
-            const initials = c.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '??';
-
-            return (
-              <motion.div
-                layout
-                key={c.id}
-                onClick={() => setSelectedCandidate(c)}
-                className="bg-white rounded-[24px] border border-[#F4F3EF] p-5 flex items-center justify-between hover:shadow-lg transition-all duration-500 group cursor-pointer"
-              >
-                <div className="flex items-center gap-5">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-sm font-black shadow-sm group-hover:scale-110 transition-transform ${isHired ? 'bg-emerald-50 text-emerald-600' : isOffer ? 'bg-purple-50 text-purple-600' : 'bg-amber-50 text-amber-600'
-                    }`}>
-                    {initials}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{c.name}</h3>
-                    <div className="flex items-center gap-4 mt-1">
-                      <span className="text-[10px] font-bold text-[#9B9BAD] flex items-center gap-1.5 uppercase tracking-widest">
-                        <FiBriefcase size={12} className="text-[#1B4DA0]" /> {c.positionTitle || c.position || '—'}
-                      </span>
-                      <span className="w-1 h-1 bg-[#F4F3EF] rounded-full" />
-                      <span className="text-[10px] font-bold text-[#9B9BAD] flex items-center gap-1.5 uppercase tracking-widest">
-                        <FiCalendar size={12} className="text-purple-500" /> {c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Active'}
-                      </span>
+      {/* Table Interface */}
+      <div className="bg-white rounded-[24px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Candidate</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Position</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Date</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F4F3EF]">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-3xl bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD]">
+                        <FiUserCheck size={24} />
+                      </div>
+                      <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No Findings In This Segment</p>
                     </div>
-                  </div>
-                </div>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map(c => {
+                  const isHired = c.stage === 'Joined';
+                  const isOffer = c.stage === 'Offer Sent';
+                  const statusBg = isHired 
+                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                    : isOffer 
+                    ? 'bg-purple-50 text-purple-600 border-purple-100' 
+                    : 'bg-amber-50 text-amber-600 border-amber-100';
 
-                <div className="flex items-center gap-6">
-                  <div className="hidden md:flex flex-col items-end">
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border shadow-sm ${isHired ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : isOffer ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                      }`}>
-                      {c.stage}
-                    </span>
-                  </div>
-                  <button className="p-3 bg-white text-[#9B9BAD] group-hover:text-[#1B4DA0] rounded-2xl border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20 transition-all shadow-sm">
-                    <FiChevronRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })
-        )}
+                  return (
+                    <tr 
+                      key={c.id}
+                      onClick={() => setSelectedCandidate(c)}
+                      className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-bold text-[#1A1A2E]">{c.name}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col items-start">
+                          <span className="text-sm font-bold text-[#1A1A2E]">{c.positionTitle || c.position || '—'}</span>
+                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                            <FiBriefcase size={10} className="text-[#1B4DA0]" /> Corporate Opening
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
+                        <span className="text-[10px] font-bold text-[#6B6B7E] uppercase tracking-widest">
+                          {c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase() : 'TODAY'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusBg}`}>
+                          {c.stage}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button className="p-2.5 bg-white text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20 transition-all shadow-sm">
+                          <FiChevronRight size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Candidate Detail Sidebar */}
