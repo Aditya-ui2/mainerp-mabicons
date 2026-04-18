@@ -67,11 +67,11 @@ import {
   deleteNote,
   getRecruitmentClients,
   getAllOffers,
+  createWorkHandover,
 } from '../service/api';
 
 // Lazy load Tab Components
 const DocumentVerifyTab = lazy(() => import('./Tabs/KAM/DocumentVerifyTab'));
-const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
 const CandidatePipelineTab = lazy(() => import('../Candidates/CandidatesPage'));
 const InterviewScheduleTab = lazy(() => import('../Candidates/InterviewsPage'));
@@ -213,7 +213,6 @@ const sidebarConfig = [
       { id: 'mis-reports', title: 'Team MIS Reports', icon: FiBarChart2 },
       { id: 'notes', title: 'Notes', icon: FiEdit2 },
       { id: 'document-verification', title: 'Document Verification', icon: FiShield },
-      { id: 'work-handover', title: 'Work Handover', icon: FiRefreshCw },
     ],
   },
 ];
@@ -1340,6 +1339,14 @@ const RecruitmentHeadDashboard = () => {
   const [noteEditForm, setNoteEditForm] = useState({ title: '', content: '' });
   const [isSavingNote, setIsSavingNote] = useState(false);
 
+  // Work Handover State
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [handoverTargetMember, setHandoverTargetMember] = useState(null);
+  const [handoverReason, setHandoverReason] = useState('');
+  const [handoverStartDate, setHandoverStartDate] = useState('');
+  const [handoverEndDate, setHandoverEndDate] = useState('');
+  const [handoverSubmitting, setHandoverSubmitting] = useState(false);
+
   const showToast = (message, type = 'success') => setToast({ message, type });
   const hideToast = () => setToast(null);
 
@@ -1350,6 +1357,47 @@ const RecruitmentHeadDashboard = () => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Handle Work Handover Submission
+  const handleWorkHandover = async () => {
+    if (!selectedKAM || !handoverTargetMember) {
+      showToast('Please select a team member to handover work to', 'error');
+      return;
+    }
+    if (!handoverReason.trim()) {
+      showToast('Please provide a reason for the handover', 'error');
+      return;
+    }
+    if (!handoverStartDate || !handoverEndDate) {
+      showToast('Please select start and end dates', 'error');
+      return;
+    }
+    try {
+      setHandoverSubmitting(true);
+      // Get all clients assigned to this KAM (we send empty array if none, backend will handle)
+      const clientIds = selectedKAM.assignedClients?.map(c => c.id || c) || [];
+      await createWorkHandover({
+        fromUserId: selectedKAM.id,
+        toUserId: handoverTargetMember.id,
+        reason: handoverReason.trim(),
+        startDate: handoverStartDate,
+        endDate: handoverEndDate,
+        clientIds: clientIds.length > 0 ? clientIds : ['all'], // 'all' indicates transfer all work
+        notes: `Handover from ${selectedKAM.name} to ${handoverTargetMember.name}`
+      });
+      showToast(`Work transferred from ${selectedKAM.name} to ${handoverTargetMember.name} successfully`, 'success');
+      setShowHandoverModal(false);
+      setHandoverTargetMember(null);
+      setHandoverReason('');
+      setHandoverStartDate('');
+      setHandoverEndDate('');
+      setShowKAMModal(false);
+    } catch (error) {
+      showToast(error.message || 'Failed to create work handover', 'error');
+    } finally {
+      setHandoverSubmitting(false);
+    }
+  };
 
   const fetchUpcomingJoinings = async () => {
     try {
@@ -2223,8 +2271,6 @@ const RecruitmentHeadDashboard = () => {
             case 'Document Verification':
             case 'document-verification':
               return <DocumentVerifyTab isDarkMode={false} />;
-            case 'Work Handover':
-              return <WorkHandoverTab />;
             default:
               return (
                 <>
@@ -3381,16 +3427,186 @@ const RecruitmentHeadDashboard = () => {
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => setShowKAMModal(false)}
-                    className="flex-1 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
-                  >
-                    Close
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowHandoverModal(true)}
+                      className="flex-1 py-3 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-500/10"
+                    >
+                      <FiRefreshCw className="w-3.5 h-3.5" />
+                      Work Handover
+                    </button>
+                    <button
+                      onClick={() => setShowKAMModal(false)}
+                      className="flex-1 py-3 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
+                    >
+                      Close
+                    </button>
+                  </>
                 )}
               </div>
             </motion.div>
           </React.Fragment>
+        )}
+      </AnimatePresence>
+
+      {/* Work Handover Modal */}
+      <AnimatePresence>
+        {showHandoverModal && selectedKAM && (
+          <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-md transition-all duration-300">
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.96, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                <div>
+                  <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Work Handover</h3>
+                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Transfer Assignments</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowHandoverModal(false);
+                    setHandoverTargetMember(null);
+                    setHandoverReason('');
+                    setHandoverStartDate('');
+                    setHandoverEndDate('');
+                  }}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              {/* Form Content */}
+              <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-7">
+
+                  {/* From Member */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Handover From *</label>
+                    <div className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#1B4DA0] flex items-center justify-center text-white text-sm font-bold"
+                        style={{ background: selectedKAM.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}>
+                        {selectedKAM.avatar || (selectedKAM.name || 'U')[0]}
+                      </div>
+                      <div>
+                        <p className="font-bold">{selectedKAM.name}</p>
+                        <p className="text-xs text-[#9B9BAD]">{selectedKAM.email}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* To Member Selection */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Handover To *</label>
+                    <div className="relative">
+                      <select
+                        value={handoverTargetMember?.id || ''}
+                        onChange={(e) => {
+                          const member = kamTeam.find(m => String(m.id) === e.target.value);
+                          setHandoverTargetMember(member || null);
+                        }}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-12 cursor-pointer"
+                      >
+                        <option value="">Select Team Member</option>
+                        {kamTeam
+                          .filter(m => String(m.id) !== String(selectedKAM.id) && m.status === 'Active')
+                          .map(member => (
+                            <option key={member.id} value={member.id}>
+                              {member.name} - {member.role}
+                            </option>
+                          ))}
+                      </select>
+                      <FiChevronRight size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#0D47A1] pointer-events-none opacity-50 rotate-90" />
+                    </div>
+                  </div>
+
+                  {/* Start Date */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Start Date *</label>
+                    <input
+                      type="date"
+                      value={handoverStartDate}
+                      onChange={(e) => setHandoverStartDate(e.target.value)}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">End Date *</label>
+                    <input
+                      type="date"
+                      value={handoverEndDate}
+                      onChange={(e) => setHandoverEndDate(e.target.value)}
+                      min={handoverStartDate}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                    />
+                  </div>
+
+                  {/* Reason */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left">Reason *</label>
+                    <textarea
+                      value={handoverReason}
+                      onChange={(e) => setHandoverReason(e.target.value)}
+                      placeholder="e.g., On leave, Emergency, Workload balancing..."
+                      rows={3}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50 resize-none"
+                    />
+                  </div>
+
+                </div>
+
+                {/* Info Note */}
+                <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4 mt-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#0D47A1]/10 flex items-center justify-center flex-shrink-0">
+                    <FiAlertCircle className="w-5 h-5 text-[#0D47A1]" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-[#0D47A1]">What will be transferred?</p>
+                    <p className="text-xs text-[#6B6B7E] mt-1 leading-relaxed">All assigned clients, positions, and pending tasks will be transferred to the selected team member for the specified duration.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-10 py-6 border-t border-[#F4F3EF] flex gap-4 bg-[#FAFAF8]">
+                <button
+                  disabled={handoverSubmitting || !handoverTargetMember || !handoverReason.trim() || !handoverStartDate || !handoverEndDate}
+                  onClick={handleWorkHandover}
+                  className="flex-1 py-4 bg-[#0D47A1] text-white rounded-2xl text-sm font-bold hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {handoverSubmitting ? (
+                    <>
+                      <FiRefreshCw className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FiCheck className="w-4 h-4" />
+                      Confirm Handover
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowHandoverModal(false);
+                    setHandoverTargetMember(null);
+                    setHandoverReason('');
+                    setHandoverStartDate('');
+                    setHandoverEndDate('');
+                  }}
+                  className="px-8 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-sm font-bold hover:bg-[#EEF2FB] transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
