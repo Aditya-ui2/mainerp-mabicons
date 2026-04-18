@@ -960,7 +960,7 @@ export default function InterviewsPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-950/40 backdrop-blur-md z-[9998]"
+              className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[9998]"
               onClick={() => { setSelectedInterview(null); setEditMode(false); }}
             />
             <motion.div
@@ -1221,19 +1221,6 @@ export default function InterviewsPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="space-y-1.5 text-left">
-                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Duration (Minutes)</label>
-                        <input
-                          type="number"
-                          readOnly={!isEditing}
-                          className={`w-full bg-transparent rounded-xl px-3 py-2 text-sm font-bold text-[#1A1A2E] transition-all outline-none border ${isEditing ? 'border-black bg-white shadow-sm' : 'border-transparent cursor-default'}`}
-                          value={editableInterview.duration}
-                          onChange={e => setEditableInterview(p => ({ ...p, duration: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-
                     <div className="space-y-4 col-span-2">
                       <div className="space-y-1.5 text-left">
                         <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Status</label>
@@ -1308,7 +1295,7 @@ export default function InterviewsPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsScheduleModalOpen(false)}
-              className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+              className="absolute inset-0 bg-black/50 backdrop-blur-xl"
             />
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -1392,25 +1379,6 @@ export default function InterviewsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                      value={interviewForm.round}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, round: e.target.value })}
-                    >
-                      <option value="Screening">Select Round</option>
-                      <option value="Phone Screening">Phone Screening</option>
-                      <option value="Technical Round">Technical Round</option>
-                      <option value="Client Interview">Client Interview</option>
-                      <option value="HR Round">HR Round</option>
-                      <option value="Final Round">Final Round</option>
-                    </select>
-                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Date *</label>
                   <input type="date"
                     className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
@@ -1428,23 +1396,6 @@ export default function InterviewsPage() {
                     onChange={(e) => setInterviewForm({ ...interviewForm, time: e.target.value })}
                     required
                   />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                      value={interviewForm.duration}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, duration: e.target.value })}
-                    >
-                      <option value="30">30 mins</option>
-                      <option value="45">45 mins</option>
-                      <option value="60">60 mins</option>
-                      <option value="90">90 mins</option>
-                    </select>
-                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -1549,7 +1500,7 @@ export default function InterviewsPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFeedbackModal(false)}
-              className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+              className="absolute inset-0 bg-black/50 backdrop-blur-xl"
             />
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}

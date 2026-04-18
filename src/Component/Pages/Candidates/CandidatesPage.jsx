@@ -88,7 +88,7 @@ export default function CandidatesPage({ setActiveTab }) {
 
   // Schedule Interview Modal state
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({ candidateId: '', candidateName: '', candidateEmail: '', positionTitle: '', clientName: '', date: '', time: '', duration: '60', meetingType: 'Video', meetingLink: '', round: 'Technical Round', interviewerName: '', interviewerRole: '' });
+  const [scheduleForm, setScheduleForm] = useState({ candidateId: '', candidateName: '', candidateEmail: '', positionTitle: '', clientName: '', date: '', time: '', duration: '60', meetingType: 'Video', meetingLink: '', interviewerName: '', interviewerRole: '' });
   const [schedulingLoading, setSchedulingLoading] = useState(false);
   const [showCvPreview, setShowCvPreview] = useState(false);
 
@@ -333,8 +333,7 @@ export default function CandidatesPage({ setActiveTab }) {
           candidateEmail: updatedC.email || '',
           positionTitle: updatedC.role || '',
           clientName: updatedC.clientName || '',
-          date: '', time: '', duration: '60', meetingType: 'Video', meetingLink: '',
-          round: 'Technical Round', interviewerName: '', interviewerRole: ''
+          date: '', time: '', meetingType: 'Video', meetingLink: ''
         });
         setIsScheduleOpen(true);
       }
@@ -1239,7 +1238,6 @@ Mabicons Recruitment Team`);
                           value={editCandidate.noticePeriod}
                           onChange={(e) => setEditCandidate({ ...editCandidate, noticePeriod: e.target.value })}
                         >
-                          <option value="">Select duration</option>
                           <option value="Immediate">Immediate</option>
                           <option value="15 Days">15 Days</option>
                           <option value="30 Days">30 Days</option>
@@ -1898,18 +1896,6 @@ Mabicons Recruitment Team`);
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
-                <div className="relative">
-                  <select value={scheduleForm.round} onChange={(e) => setScheduleForm({ ...scheduleForm, round: e.target.value })}
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
-                    <option value="Phone Screening">Phone Screening</option>
-                    <option value="Technical Round">Technical Round</option>
-                    <option value="HR Round">HR Round</option>
-                    <option value="Client Interview">Client Interview</option>
-                    <option value="Final Round">Final Round</option>
-                  </select>
-                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -1925,17 +1911,7 @@ Mabicons Recruitment Team`);
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Duration</label>
-                <div className="relative">
-                  <select value={scheduleForm.duration} onChange={(e) => setScheduleForm({ ...scheduleForm, duration: e.target.value })}
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
-                    <option value="30">30 mins</option>
-                    <option value="45">45 mins</option>
-                    <option value="60">60 mins</option>
-                    <option value="90">90 mins</option>
-                  </select>
-                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                </div>
+                 
               </div>
 
               <div className="space-y-1.5">
