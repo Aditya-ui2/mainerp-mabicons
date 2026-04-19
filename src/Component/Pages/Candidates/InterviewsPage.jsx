@@ -798,7 +798,7 @@ export default function InterviewsPage() {
       {/* Table Interface */}
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
         <div className="grid grid-cols-[40px_120px_2fr_1.5fr_1.5fr_120px_110px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
-          <div className="flex items-center">
+          <div className="flex items-center justify-center">
             <input
               type="checkbox"
               checked={selectedRowIds.length > 0 && selectedRowIds.length === filteredInterviews.length}
@@ -807,7 +807,7 @@ export default function InterviewsPage() {
             />
           </div>
           {["Time & Date", "Candidate", "Client", "Postion", "Host", "Status", "Actions", ""].map((h, i) => (
-            <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start">
+            <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center flex items-center justify-center">
               {h}
             </div>
           ))}
@@ -830,7 +830,7 @@ export default function InterviewsPage() {
                 onClick={() => setSelectedInterview(interview)}
                 className={`grid grid-cols-[40px_120px_2fr_1.5fr_1.5fr_120px_110px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative ${isLive ? 'bg-amber-50/30' : ''}`}
               >
-                <div className="flex items-center" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-center" onClick={e => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={selectedRowIds.includes(interview.id)}
@@ -840,19 +840,19 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Time & Date */}
-                <div className="flex flex-col justify-center items-start py-1">
-                  <p className="text-[13px] font-bold text-[#1A1A2E] text-left">{formatTime(interview.time)}</p>
-                  <div className="flex items-center justify-start gap-1 mt-0.5 opacity-60">
+                <div className="flex flex-col justify-center items-center py-1">
+                  <p className="text-[13px] font-bold text-[#1A1A2E] text-center">{formatTime(interview.time)}</p>
+                  <div className="flex items-center justify-center gap-1 mt-0.5 opacity-60">
                     <Calendar size={10} className="text-[#9B9BAD]" />
-                    <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left">
+                    <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider text-center">
                       {new Date(interview.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
                     </span>
                   </div>
                 </div>
 
                 {/* Candidate */}
-                <div className="flex items-center min-w-0 py-1">
-                  <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left flex items-center gap-2">
+                <div className="flex items-center justify-center min-w-0 py-1">
+                  <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-center flex items-center gap-2">
                     {interview.candidateName}
                     {interview.source === 'sharepoint' && (
                       <FiDatabase size={10} className="text-emerald-500" title="Source: SharePoint" />
@@ -861,23 +861,23 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Client */}
-                <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
+                <div className="flex items-center justify-center text-[13px] font-medium text-[#64748b] truncate py-1 text-center">
                   {interview.clientName}
                 </div>
 
                 {/* Position */}
-                <div className="flex flex-col justify-center items-start min-w-0 py-1">
-                  <p className="text-[13px] font-bold text-[#1A1A2E] truncate text-left">{interview.role}</p>
-                  <div className="flex items-center justify-start gap-1 mt-0.5 opacity-50">
+                <div className="flex flex-col justify-center items-center min-w-0 py-1">
+                  <p className="text-[13px] font-bold text-[#1A1A2E] truncate text-center">{interview.role}</p>
+                  <div className="flex items-center justify-center gap-1 mt-0.5 opacity-50">
                     <Video size={10} className="text-[#9B9BAD]" />
-                    <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">{interview.type}</span>
+                    <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">{interview.type}</span>
                   </div>
                 </div>
 
                 {/* Host */}
-                <div className="flex items-center py-1" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
                   <select
-                    className="bg-transparent text-xs font-bold text-[#1A1A2E] outline-none border-0 cursor-pointer hover:text-[#1B4DA0] transition-colors"
+                    className="bg-transparent text-xs font-bold text-[#1A1A2E] outline-none border-0 cursor-pointer hover:text-[#1B4DA0] transition-colors text-center"
                     value={interview.interviewer}
                     onChange={(e) => handleInlineEdit(interview.id, 'interviewer', e.target.value, 'interviewerName')}
                   >
@@ -889,7 +889,7 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Status */}
-                <div className="flex items-center py-1" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
                   <select
                     className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border bg-slate-50 outline-none cursor-pointer hover:border-slate-300 transition-all ${(STATUS_COLORS[interview.status] || STATUS_COLORS[Object.keys(STATUS_COLORS).find(k => k.toLowerCase() === interview.status?.toLowerCase())] || "")
                         .split(' ').filter(c => !c.startsWith('bg-')).join(' ') || "text-slate-400 border-slate-100"
@@ -905,7 +905,7 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 py-1 relative" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-center gap-2 py-1 relative" onClick={e => e.stopPropagation()}>
                   {joinable ? (
                     <button
                       onClick={() => window.open(interview.meetingLink, '_blank')}

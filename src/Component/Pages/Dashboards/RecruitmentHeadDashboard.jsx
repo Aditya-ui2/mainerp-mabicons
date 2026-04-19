@@ -34,6 +34,7 @@ import {
   FiLayers,
   FiChevronLeft,
   FiChevronRight,
+  FiChevronDown,
   FiSearch,
   FiFilter,
   FiDownload,
@@ -372,98 +373,143 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
     callsDone: globalStats?.phoneScreeningCalls ?? teamAggregatedStats.callsDone,
   };
   return (
-    <div className="space-y-6" style={{ fontFamily: "'Calibri', sans-serif" }}>
-      {/* Detached Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div className="flex flex-col items-start text-left">
+    <div className="min-h-screen" style={{ fontFamily: "'Calibri', sans-serif" }}>
+      {/* Header Section - Same as Job Openings */}
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div className="text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
-
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {onAddKAM && (
             <button
               onClick={onAddKAM}
-              style={{ fontFamily: '"Syne", sans-serif' }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#1B4DA0] hover:bg-[#153b7a] text-white rounded-xl text-sm font-semibold transition-all shadow-sm whitespace-nowrap"
+              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
             >
-              <FiPlus className="w-4 h-4" strokeWidth="3" />
-              <span>Add Team Member</span>
+              <FiPlus size={18} /> Add Team Member
             </button>
           )}
         </div>
       </div>
 
-      {/* Team Directory Table */}
-      <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden relative">
-        <div className="px-6 py-4 border-b border-[#F4F3EF]">
-          <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm">
-            <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
-              <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
-              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name, role, email..."
-                className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" />
-            </div>
-          </div>
+      {/* Filter Bar - Same as Job Openings */}
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
+        {/* Search Bar */}
+        <div className="relative flex-1 group min-w-[200px]">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <input 
+            type="text" 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, role, email..."
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+          />
         </div>
 
+        {/* Role Filter */}
+        <div className="relative">
+          <select className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]">
+            <option value="all">All Roles</option>
+            <option value="HR Executive">HR Executive</option>
+            <option value="KAM - Recruitment">KAM - Recruitment</option>
+            <option value="Department Head">Department Head</option>
+          </select>
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+        </div>
+
+        {/* Status Filter */}
+        <div className="relative">
+          <select className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]">
+            <option value="all">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+        </div>
+      </div>
+
+      {/* Table Interface - Same as Job Openings */}
+      <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden relative">
         <div className="overflow-x-auto min-h-[300px]">
           {/* Grid Header */}
-          <div className="grid grid-cols-[40px_1.5fr_1fr_1.5fr_100px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+          <div className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
             <div className="flex items-center">
               <input
                 type="checkbox"
                 checked={selectedKAMs.length > 0 && selectedKAMs.length === filteredTeamData.length}
                 onChange={toggleAll}
-                style={{ accentColor: '#2563eb' }}
-                className="w-4 h-4 rounded text-[#2563eb] cursor-pointer"
+                className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
               />
             </div>
-            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Member</div>
-            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Role</div>
-            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Email</div>
-            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Contact</div>
+            {["Member", "Role", "Email", "Contact", ""].map((h, i) => (
+              <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start">
+                {h}
+              </div>
+            ))}
           </div>
 
           {/* Grid Rows */}
           {loading ? (
-            <div className="py-12 text-center text-[#94a3b8] font-medium">Loading members...</div>
+            <div className="py-24 text-center">
+              <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">Loading members...</p>
+            </div>
           ) : filteredTeamData.length === 0 ? (
-            <div className="py-12 text-center text-[#94a3b8] font-medium">No members found matching your filters.</div>
+            <div className="py-24 text-center">
+              <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No members found</p>
+            </div>
           ) : (
             filteredTeamData.map((kam) => (
               <div
                 key={kam.id}
                 onClick={() => onViewKAM(kam)}
-                className="grid grid-cols-[40px_1.5fr_1fr_1.5fr_100px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
+                className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
               >
+                {/* Checkbox */}
                 <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={selectedKAMs.includes(kam.id)}
                     onChange={() => toggleSelection(kam.id)}
-                    style={{ accentColor: '#2563eb' }}
-                    className="w-4 h-4 rounded text-[#2563eb] cursor-pointer"
+                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
                   />
                 </div>
-                <div className="flex items-center gap-4">
+
+                {/* Member */}
+                <div className="flex items-center gap-4 min-w-0 py-1">
                   {kam.profilePhoto ? (
-                    <img src={kam.profilePhoto} alt={kam.name} className="w-[42px] h-[42px] rounded-[14px] object-cover border border-[#E0E7FF] flex-shrink-0" />
+                    <img src={kam.profilePhoto} alt={kam.name} className="w-10 h-10 rounded-xl object-cover border border-[#F4F3EF] flex-shrink-0" />
                   ) : (
-                    <div className="w-[42px] h-[42px] rounded-[14px] bg-[#F0F7FF] flex items-center justify-center text-[13px] font-bold text-[#1B4DA0] border border-[#E0E7FF] flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-sm font-black border border-[#F4F3EF] group-hover:scale-105 transition-transform shrink-0">
                       {kam.avatar}
                     </div>
                   )}
-                  <span className="text-[14px] font-bold text-[#0f172a]">{kam.name}</span>
+                  <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left">{kam.name}</p>
                 </div>
-                <div>
-                  <span className="text-[13px] font-medium text-[#64748b]">{kam.role}</span>
+
+                {/* Role */}
+                <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
+                  {kam.role}
                 </div>
-                <div>
-                  <span className="text-[13px] font-medium text-[#64748b]">{kam.email}</span>
+
+                {/* Email */}
+                <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
+                  {kam.email}
                 </div>
-                <div className="flex items-center justify-center gap-3">
-                  <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiMail className="w-[15px] h-[15px] stroke-[2.5]" /></button>
-                  <button className="text-[#94a3b8] hover:text-[#0f172a] transition-colors"><FiPhone className="w-[15px] h-[15px] stroke-[2.5]" /></button>
+
+                {/* Contact */}
+                <div className="flex items-center justify-start gap-2 py-1" onClick={(e) => e.stopPropagation()}>
+                  <button className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all">
+                    <FiMail size={14} />
+                  </button>
+                  <button className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all">
+                    <FiPhone size={14} />
+                  </button>
+                </div>
+
+                {/* Arrow */}
+                <div className="flex justify-end items-center">
+                  <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
+                    <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                  </div>
                 </div>
               </div>
             ))

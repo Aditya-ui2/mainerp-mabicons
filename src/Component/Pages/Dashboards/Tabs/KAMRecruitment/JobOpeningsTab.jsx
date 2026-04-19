@@ -2274,7 +2274,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
             >
               {isSyncing ? <Plus size={18} className="animate-spin" /> : <Database size={18} className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />}
-              {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
+              {isSyncing ? 'Syncing...' : 'Sync Data'}
             </button>
 
             <button
@@ -2519,12 +2519,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     document.body
                   )}
                 </div>
-                <div className="flex justify-end gap-2 items-center">
-                  <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-[#9B9BAD] group-hover:text-[#0D47A1]">
-                    <Pencil size={14} />
-                  </div>
+                <div className="flex justify-end items-center">
                   <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
-                    <ChevronRight size={18} className="text-[#C5C5D2] transition-all" />
+                    <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
                   </div>
                 </div>
               </div>

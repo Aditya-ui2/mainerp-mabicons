@@ -701,7 +701,7 @@ Mabicons Recruitment Team`);
             className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
           >
             {isSyncing ? <FiRefreshCw className="animate-spin" /> : <FiDatabase className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />}
-            {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
+            {isSyncing ? 'Syncing...' : 'Sync Data'}
           </button>
 
           <button
@@ -945,7 +945,7 @@ Mabicons Recruitment Team`);
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-[#F4F3EF] dark:border-slate-800 text-left bg-transparent">
-                  <th className="py-[25px] pl-8 pr-4 w-14">
+                  <th className="py-3 pl-6 pr-2 w-12">
                     <button
                       onClick={() => selectedIds.length === candidates.length ? setSelectedIds([]) : setSelectedIds(candidates.map(c => c.id))}
                       className={`p-1 rounded-md transition-all ${selectedIds.length === candidates.length ? 'text-[#1B4DA0]' : 'text-[#C5C5D2]'}`}
@@ -953,8 +953,8 @@ Mabicons Recruitment Team`);
                       {selectedIds.length === candidates.length ? <CheckSquare size={16} /> : <Square size={16} />}
                     </button>
                   </th>
-                  {["Candidate Info", "Position", "Applied Date", "Pipeline Stage", "Quick Actions", ""].map((h) => (
-                    <th key={h} className={`py-[25px] px-6 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${h === "" ? "text-right" : "text-left"}`}>{h}</th>
+                  {["Candidate Info", "Position", "Applied Date", "Pipeline Stage", "Quick Actions", "Actions"].map((h) => (
+                    <th key={h} className={`py-3 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -965,7 +965,7 @@ Mabicons Recruitment Team`);
                     className={`hover:bg-[#FAFAF8] transition-colors group cursor-pointer ${selectedIds.includes(candidate.id) ? 'bg-blue-50/40' : ''}`}
                     onClick={() => setSelectedCandidate(candidate)}
                   >
-                    <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="pl-6 pr-2 py-2" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => toggleSelect(candidate.id)}
                         className={`p-1 rounded-md transition-all ${selectedIds.includes(candidate.id) ? 'text-[#1B4DA0]' : 'text-[#C5C5D2] hover:text-[#1A1A2E]'}`}
@@ -973,66 +973,51 @@ Mabicons Recruitment Team`);
                         {selectedIds.includes(candidate.id) ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>
                     </td>
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-3.5">
-                        <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center text-[11px] font-bold relative border border-white/30 shadow-sm ${getAvatarColor(candidate.name, candidate.avatar)}`}>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center justify-center gap-3">
+                        <div className={`w-9 h-9 rounded-[12px] flex items-center justify-center text-[10px] font-bold relative border border-white/30 shadow-sm ${getAvatarColor(candidate.name, candidate.avatar)}`}>
                           {candidate.avatar}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors">{candidate.name}</span>
+                            <span className="text-[13px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors">{candidate.name}</span>
                             <CheckSquare size={10} className="text-emerald-500" />
                           </div>
-                          <p className="text-[9px] text-[#9B9BAD] font-bold uppercase tracking-[2px] mt-0.5">{candidate.email.split('@')[0]}</p>
+                          <p className="text-[8px] text-[#9B9BAD] font-bold uppercase tracking-[2px]">{candidate.email.split('@')[0]}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-3">
-                      <p className="text-[14px] font-bold text-[#0f172a] dark:text-white">{candidate.role}</p>
-                      <p className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider mt-0.5">{candidate.raw?.position?.department || 'Recruitment'}</p>
+                    <td className="px-4 py-2 text-center">
+                      <p className="text-[13px] font-bold text-[#0f172a] dark:text-white">{candidate.role}</p>
+                      <p className="text-[9px] text-[#9B9BAD] font-bold uppercase tracking-wider">{candidate.raw?.position?.department || 'Recruitment'}</p>
                     </td>
-                    <td className="px-6 py-3 text-sm text-[#6B6B7E] font-bold">
+                    <td className="px-4 py-2 text-center text-[13px] text-[#6B6B7E] font-bold">
                       {formatDate(candidate.appliedDate)}
                     </td>
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-2">
+                      <div className="flex items-center justify-center gap-2">
                         <span className={`w-1.5 h-1.5 rounded-full ${STAGE_COLORS[candidate.stage]?.dot || 'bg-slate-400'}`} />
                         <span className={`text-[10px] font-bold uppercase tracking-widest ${STAGE_COLORS[candidate.stage]?.count?.split(' ')[1] || 'text-slate-600'}`}>
                           {candidate.stage}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative inline-flex items-center group/select">
-                        <select
-                          value={candidate.stage}
-                          onChange={(e) => handleStatusChange(candidate.id, e.target.value)}
-                          className="bg-[#F4F3EF] border-0 rounded-xl pl-4 pr-6 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#1B4DA0] outline-none hover:bg-blue-50 transition-all cursor-pointer appearance-none border-b-2 border-transparent focus:border-[#1B4DA0]/20"
-                        >
-                          {PIPELINE_STAGES.map((s) => <option key={s} value={s}>Move to {s}</option>)}
-                        </select>
-                        <ChevronRight size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none" />
+                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center">
+                        <div className="relative inline-flex items-center">
+                          <select
+                            value={candidate.stage}
+                            onChange={(e) => handleStatusChange(candidate.id, e.target.value)}
+                            className="bg-[#F4F3EF] border-0 rounded-lg pl-3 pr-6 py-1.5 text-[9px] font-extrabold uppercase tracking-widest text-[#1B4DA0] outline-none hover:bg-blue-50 transition-all cursor-pointer appearance-none"
+                          >
+                            {PIPELINE_STAGES.map((s) => <option key={s} value={s}>Move to {s}</option>)}
+                          </select>
+                          <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-2">
-                        {candidate.stage === 'Hired' && (
-                          <button
-                            onClick={() => {
-                              setCredsCandidate({
-                                id: candidate.id,
-                                name: candidate.name,
-                                email: candidate.email,
-                                role: candidate.role
-                              });
-                              setIsCredsModalOpen(true);
-                            }}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-bold hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/20 active:scale-95"
-                            title="Generate Credentials"
-                          >
-                            <Zap size={12} fill="currentColor" />
-                          </button>
-                        )}
+                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center">
                         <button
                           onClick={() => {
                             if (candidate.cvUrl) {
@@ -1042,9 +1027,10 @@ Mabicons Recruitment Team`);
                               toast.error('No CV uploaded for this candidate');
                             }
                           }}
-                          className="flex items-center gap-1.5 px-3.5 py-2 bg-[#0D47A1] text-white rounded-xl text-[10px] font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-[#F4F3EF] text-[#6B6B7E] rounded-lg text-[11px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
                         >
-                          <Eye size={12} /> View CV
+                          <FileText size={14} />
+                          View CV
                         </button>
                       </div>
                     </td>

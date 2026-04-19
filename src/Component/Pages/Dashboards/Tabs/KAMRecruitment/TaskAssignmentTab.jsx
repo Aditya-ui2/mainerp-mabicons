@@ -18,7 +18,7 @@ import {
   FiTarget,
   FiRefreshCw,
 } from 'react-icons/fi';
-import { getDepartmentTasks, createDepartmentTask, updateDepartmentTask, deleteDepartmentTask, getDepartmentTeamMembers } from '../../../service/api';
+import { getDepartmentTasks, createDepartmentTask, updateDepartmentTask, deleteDepartmentTask, getAllKAMMembers } from '../../../service/api';
 
 /* ── Priority Badge ── */
 const PriorityBadge = ({ priority }) => {
@@ -105,12 +105,12 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
 
   const fetchTeamMembers = async () => {
     try {
-      const res = await getDepartmentTeamMembers('HR Recruitment');
+      const res = await getAllKAMMembers('HR Recruitment');
       if (res?.success && res.data) {
         setTeamMembers(res.data.map(m => ({
           id: m.id?.toString() || m._id,
           name: m.name,
-          photo: m.avatar || null,
+          photo: m.avatar || m.profilePhoto || null,
         })));
       }
     } catch (err) {
@@ -589,12 +589,14 @@ const TaskAssignmentTab = ({ isDarkMode, userRole = 'KAM', currentUserId = null 
                   </div>
                   <div>
                     <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Due Date *</label>
-                    <input
-                      type="date"
-                      value={newTask.dueDate}
-                      onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
-                      className={`w-full mt-1.5 px-4 py-2.5 rounded-xl border-2 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
-                    />
+                    <div className="relative cursor-pointer" onClick={(e) => e.currentTarget.querySelector('input')?.showPicker?.()}>
+                      <input
+                        type="date"
+                        value={newTask.dueDate}
+                        onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
+                        className={`w-full mt-1.5 px-4 py-2.5 rounded-xl border-2 cursor-pointer ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200'}`}
+                      />
+                    </div>
                   </div>
                 </div>
 

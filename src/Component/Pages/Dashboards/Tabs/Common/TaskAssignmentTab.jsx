@@ -37,7 +37,7 @@ import {
   createDepartmentTask,
   updateDepartmentTask,
   deleteDepartmentTask,
-  getDepartmentTeamMembers,
+  getAllKAMMembers,
 } from '../../../service/api';
 
 const StatusBadge = ({ status }) => {
@@ -460,19 +460,25 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
     try {
       setLoading(true);
       // We wrap individual promises in a shorter timeout for dev experience
-      const fetchWithTimeout = (promise, ms = 2000) =>
+      const fetchWithTimeout = (promise, ms = 8000) =>
         Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
 
       const [tasksRes, membersRes] = await Promise.all([
-        fetchWithTimeout(getDepartmentTasks(department)).catch(() => null),
-        fetchWithTimeout(getDepartmentTeamMembers(department)).catch(() => null),
+        fetchWithTimeout(getDepartmentTasks(department)).catch((e) => { console.error('Tasks fetch error:', e); return null; }),
+        fetchWithTimeout(getAllKAMMembers(department)).catch((e) => { console.error('Members fetch error:', e); return null; }),
       ]);
+
+      console.log('Department:', department);
+      console.log('Tasks Response:', tasksRes);
+      console.log('Members Response:', membersRes);
 
       if (tasksRes?.tasks && tasksRes.tasks.length > 0) {
         setTasks(tasksRes.tasks.map(t => ({ ...t, id: t.id || t._id })));
       }
-      if (membersRes?.members && membersRes.members.length > 0) {
-        setTeamMembers(membersRes.members);
+      // getAllKAMMembers returns { success: true, data: [...] }
+      if (membersRes?.success && membersRes?.data) {
+        setTeamMembers(membersRes.data);
+        console.log('Set teamMembers:', membersRes.data);
       }
     } catch (error) {
       console.warn('API Error, using mock data:', error);
@@ -702,111 +708,116 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       </div>
 
       {/* Task Directory Table */}
-      <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-2xl shadow-gray-200/50 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-[#F4F3EF]">
-                <th className="px-8 py-[25px] w-14 text-center">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] focus:ring-[#1B4DA0]"
-                    onChange={(e) => {
-                      if (e.target.checked) setSelectedTasks(filteredTasks.map(t => t._id || t.id));
-                      else setSelectedTasks([]);
-                    }}
-                    checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0}
-                  />
-                </th>
-                <th className="px-8 py-[25px] text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Task Details</th>
-                <th className="px-8 py-[25px] text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Assignee</th>
-                <th className="px-8 py-[25px] text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest">Status</th>
-                <th className="px-8 py-[25px] w-16"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 text-sm">
-              {filteredTasks.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-20 text-center text-[#9B9BAD]">
-                    <div className="flex flex-col items-center gap-4">
-                      <FiCheckSquare size={48} className="opacity-20" />
-                      <p className="font-bold">No tasks found in this directory</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredTasks.map((task) => (
-                  <tr
-                    key={task._id || task.id}
-                    onClick={() => {
-                      setViewingTask(task);
-                      setShowDrawer(true);
-                    }}
-                    className={`group hover:bg-[#F8FAFC] transition-colors cursor-pointer ${selectedTasks.includes(task._id || task.id) ? 'bg-[#F1F5F9]' : ''}`}
-                  >
-                    <td className="p-5">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]"
-                        checked={selectedTasks.includes(task._id || task.id)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          const taskId = task._id || task.id;
-                          if (selectedTasks.includes(taskId)) setSelectedTasks(selectedTasks.filter(id => id !== taskId));
-                          else setSelectedTasks([...selectedTasks, taskId]);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </td>
-                    <td className="p-5 max-w-sm">
-                      <div className="space-y-1">
-                        <p className="font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{task.title}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">RECRUITMENT</span>
-                          <PriorityBadge priority={task.priority} />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-5">
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#F0F7FF] text-[#1B4DA0] flex items-center justify-center font-black text-xs border border-[#1B4DA0]/10 shadow-sm">
-                          {task.assignedToName.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <span className="font-bold text-[#4B4B5E]">{task.assignedToName}</span>
-                      </div>
-                    </td>
-                    <td className="p-5">
-                      <StatusBadge status={task.status} />
-                    </td>
-                    <td className="p-5 px-0">
-                      <div className="flex items-center gap-1 pr-5">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingTask(task);
-                            setShowDrawer(true);
-                          }}
-                          className="w-8 h-8 rounded-lg bg-[#F4F3EF] text-[#6B6B7E] hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center shadow-sm"
-                        >
-                          <FiEdit2 size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDelete(task);
-                          }}
-                          className="w-8 h-8 rounded-lg bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shadow-sm"
-                        >
-                          <FiTrash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+        {/* Grid Header */}
+        <div className="grid grid-cols-[40px_2fr_1.5fr_130px_120px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
+              onChange={(e) => {
+                if (e.target.checked) setSelectedTasks(filteredTasks.map(t => t._id || t.id));
+                else setSelectedTasks([]);
+              }}
+              checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0}
+            />
+          </div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Tasks</div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Assignee</div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Status</div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Actions</div>
+          <div></div>
         </div>
+
+        {/* Grid Rows */}
+        {filteredTasks.length === 0 ? (
+          <div className="py-24 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <FiCheckSquare size={48} className="text-[#9B9BAD] opacity-20" />
+              <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No tasks found</p>
+            </div>
+          </div>
+        ) : (
+          filteredTasks.map((task) => (
+            <div
+              key={task._id || task.id}
+              onClick={() => {
+                setViewingTask(task);
+                setShowDrawer(true);
+              }}
+              className={`grid grid-cols-[40px_2fr_1.5fr_130px_120px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group ${selectedTasks.includes(task._id || task.id) ? 'bg-blue-50/30' : ''}`}
+            >
+              {/* Checkbox */}
+              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
+                  checked={selectedTasks.includes(task._id || task.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    const taskId = task._id || task.id;
+                    if (selectedTasks.includes(taskId)) setSelectedTasks(selectedTasks.filter(id => id !== taskId));
+                    else setSelectedTasks([...selectedTasks, taskId]);
+                  }}
+                />
+              </div>
+
+              {/* Task Details */}
+              <div className="flex flex-col justify-center items-start min-w-0 py-1">
+                <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left">{task.title}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">RECRUITMENT</span>
+                  <PriorityBadge priority={task.priority} />
+                </div>
+              </div>
+
+              {/* Assignee */}
+              <div className="flex items-center justify-center gap-3 min-w-0 py-1">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] text-[#1B4DA0] flex items-center justify-center font-black text-xs border border-[#F4F3EF] shrink-0">
+                  {task.assignedToName?.split(' ').map(n => n[0]).join('') || '?'}
+                </div>
+                <span className="text-[13px] font-medium text-[#64748b] truncate">{task.assignedToName || 'Unassigned'}</span>
+              </div>
+
+              {/* Status */}
+              <div className="flex items-center justify-center py-1">
+                <StatusBadge status={task.status} />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-center gap-3 py-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  title="Edit Task"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewingTask(task);
+                    setShowDrawer(true);
+                  }}
+                  className="w-9 h-9 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-[#0D47A1] hover:text-white transition-all flex items-center justify-center"
+                >
+                  <FiEdit2 size={15} />
+                </button>
+                <button
+                  title="Delete Task"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(task);
+                  }}
+                  className="w-9 h-9 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                >
+                  <FiTrash2 size={15} />
+                </button>
+              </div>
+
+              {/* Arrow */}
+              <div className="flex justify-end items-center">
+                <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
+                  <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Selection Action Bar (Snackbar) */}
@@ -966,13 +977,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                   <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-1.5 w-full">
                       <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Due Date</label>
-                      <div className="relative group">
-                        <FiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                      <div className="relative group cursor-pointer" onClick={(e) => e.currentTarget.querySelector('input')?.showPicker?.()}>
                         <input
                           type="date"
                           value={formData.dueDate}
                           onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                          className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-12 pr-4 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all"
+                          className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 px-4 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all cursor-pointer"
                         />
                       </div>
                     </div>
