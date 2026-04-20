@@ -220,7 +220,19 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   };
 
   // Close date picker on outside click
-
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+        setShowDatePicker(false);
+      }
+    };
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDatePicker]);
   // Date range helper
   const getDateRange = () => {
     const now = new Date();
@@ -453,19 +465,19 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-2 w-72 bg-white border border-[#E8E7E2] rounded-2xl shadow-xl z-50 overflow-hidden"
+                  className="absolute right-0 mt-2 w-80 bg-white border border-[#E8E7E2] rounded-2xl shadow-xl z-50 overflow-hidden"
                 >
                   {/* Quick presets */}
-                  <div className="p-2 border-b border-[#F4F3EF]">
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest px-3 py-1.5">Quick Filter</p>
-                    <div className="grid grid-cols-2 gap-1">
+                  <div className="p-4 border-b border-[#F4F3EF]">
+                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] px-1 mb-3">Quick Filter</p>
+                    <div className="grid grid-cols-2 gap-2">
                       {['all', 'today', 'week', 'month', 'quarter', 'year'].map(preset => (
                         <button
                           key={preset}
                           onClick={() => { setDatePreset(preset); if (preset !== 'custom') setShowDatePicker(false); fetchData(); }}
-                          className={`px-3 py-2 rounded-lg text-xs font-semibold text-left transition-all ${
+                          className={`px-3 py-2.5 rounded-xl text-xs font-bold text-left transition-all ${
                             datePreset === preset
-                              ? 'bg-[#1B4DA0] text-white'
+                              ? 'bg-[#1B4DA0] text-white shadow-md'
                               : 'text-[#1A1A2E] hover:bg-[#F4F3EF]'
                           }`}
                         >
@@ -475,30 +487,32 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                     </div>
                   </div>
                   {/* Custom date range */}
-                  <div className="p-3">
-                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2">Custom Range</p>
-                    <div className="flex items-center gap-2">
+                  <div className="p-4 bg-[#FAFAF8]">
+                    <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] mb-3">Custom Range</p>
+                    <div className="flex items-center gap-3">
                       <div className="flex-1">
-                        <label className="text-[10px] font-semibold text-[#9B9BAD] block mb-1">From</label>
+                        <label className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider block mb-1.5 ml-1">From</label>
                         <input
                           type="date"
                           value={customFrom}
+                          onClick={(e) => e.target.showPicker?.()}
                           onChange={(e) => { setCustomFrom(e.target.value); setDatePreset('custom'); }}
-                          className="w-full px-2.5 py-1.5 text-xs border border-[#E8E7E2] rounded-lg bg-[#FAFAF8] text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-blue-200"
+                          className="w-full px-3 py-2 text-xs border border-[#E8E7E2] rounded-xl bg-white text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]/20 transition-all cursor-pointer"
                         />
                       </div>
-                      <span className="text-[#9B9BAD] text-xs mt-4">→</span>
+                      <span className="text-[#9B9BAD] text-xs mt-6">→</span>
                       <div className="flex-1">
-                        <label className="text-[10px] font-semibold text-[#9B9BAD] block mb-1">To</label>
+                        <label className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider block mb-1.5 ml-1">To</label>
                         <input
                           type="date"
                           value={customTo}
+                          onClick={(e) => e.target.showPicker?.()}
                           onChange={(e) => { setCustomTo(e.target.value); setDatePreset('custom'); }}
-                          className="w-full px-2.5 py-1.5 text-xs border border-[#E8E7E2] rounded-lg bg-[#FAFAF8] text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-blue-200"
+                          className="w-full px-3 py-2 text-xs border border-[#E8E7E2] rounded-xl bg-white text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]/20 transition-all cursor-pointer"
                         />
                       </div>
                     </div>
-                    <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#E8E7E2]">
                       <button
                         onClick={() => { setDatePreset('all'); setCustomFrom(''); setCustomTo(''); setShowDatePicker(false); fetchData(); }}
                         className="text-[10px] font-bold text-red-500 hover:text-red-600"

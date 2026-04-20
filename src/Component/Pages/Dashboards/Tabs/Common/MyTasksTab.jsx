@@ -54,15 +54,15 @@ const PriorityBadge = ({ priority }) => {
   };
   const c = config[priority] || config.Medium;
   return (
-    <span style={{ 
-      background: c.bg, 
-      color: c.text, 
-      display: 'inline-flex', 
-      alignItems: 'center', 
-      padding: '2px 8px', 
-      borderRadius: '6px', 
-      fontSize: '10px', 
-      fontWeight: 900, 
+    <span style={{
+      background: c.bg,
+      color: c.text,
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: '2px 8px',
+      borderRadius: '6px',
+      fontSize: '10px',
+      fontWeight: 900,
       textTransform: 'uppercase',
       letterSpacing: '0.5px',
       border: `1px solid ${c.text}20`
@@ -227,14 +227,13 @@ const TaskActionDropdown = ({ currentStatus, onStatusChange, isUpdating, isOpen,
             {options.map((opt) => (
               <button
                 key={opt.value}
-                onClick={(e) => { 
+                onClick={(e) => {
                   e.stopPropagation();
-                  onStatusChange(opt.value); 
-                  setIsOpen(false); 
+                  onStatusChange(opt.value);
+                  setIsOpen(false);
                 }}
-                className={`flex items-center px-4 py-2.5 w-full text-left text-xs font-bold transition-all border-none cursor-pointer ${
-                  currentStatus === opt.value ? 'bg-indigo-50 text-[#1B4DA0]' : 'text-slate-600 hover:bg-gray-50'
-                }`}
+                className={`flex items-center px-4 py-2.5 w-full text-left text-xs font-bold transition-all border-none cursor-pointer ${currentStatus === opt.value ? 'bg-indigo-50 text-[#1B4DA0]' : 'text-slate-600 hover:bg-gray-50'
+                  }`}
               >
                 {opt.label}
               </button>
@@ -405,7 +404,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
       {/* Header */}
       <div className="flex flex-col items-start text-left mb-6 px-1">
         <h1 className="text-[28px] font-bold text-[#0f172a] mb-1 tracking-tight font-syne">My Tasks</h1>
-        <p className="text-[#64748b] font-medium text-[14px]">Your assigned tasks and todo items</p>
+
       </div>
 
 
@@ -491,8 +490,8 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
 
                       {/* Actions Column */}
                       <div className="flex items-center justify-end gap-2">
-                        <TaskActionDropdown 
-                          currentStatus={task.status} 
+                        <TaskActionDropdown
+                          currentStatus={task.status}
                           isUpdating={updatingTaskId === task.id}
                           isOpen={isActiveDropdown}
                           setIsOpen={(val) => setActiveDropdownId(val ? task.id : null)}
@@ -552,7 +551,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button 
+                      <button
                         onClick={() => setSelectedTask(null)}
                         className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
                       >

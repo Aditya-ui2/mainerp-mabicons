@@ -227,6 +227,15 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                           </button>
                         </>
                       )}
+                      
+                      {/* Close Button */}
+                      <button
+                        onClick={() => setSelectedNote(null)}
+                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                        title="Close"
+                      >
+                        <X size={18} />
+                      </button>
                     </div>
                   </div>
 

@@ -1132,7 +1132,7 @@ Mabicons Recruitment Team`);
                   onClick={() => setSelectedIds([])}
                   className="text-[10px] font-bold text-white/40 hover:text-white transition-all ml-4 uppercase tracking-[2px]"
                 >
-                  Cancel
+
                 </button>
               </div>
             </div>
@@ -1479,19 +1479,7 @@ Mabicons Recruitment Team`);
             <div className="p-8 border-t border-[#F4F3EF] bg-white sticky bottom-0 z-20">
               {!editMode ? (
                 <div className="flex gap-4">
-                  <button
-                    onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
-                    className="flex-1 h-14 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-sm font-bold hover:bg-[#E8E7E2] transition-all active:scale-[0.98]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => { setEditCandidate({ ...selectedCandidate }); setEditMode(true); }}
-                    className="flex-[2] h-14 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153D80] transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
-                  >
-                    <User size={18} />
-                    Update Profile
-                  </button>
+
                 </div>
               ) : (
                 <button
@@ -1897,7 +1885,7 @@ Mabicons Recruitment Team`);
               </div>
 
               <div className="space-y-1.5">
-                 
+
               </div>
 
               <div className="space-y-1.5">

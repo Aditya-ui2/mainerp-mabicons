@@ -402,9 +402,9 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
         {/* Search Bar */}
         <div className="relative flex-1 group min-w-[200px]">
           <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
-          <input 
-            type="text" 
-            value={searchQuery} 
+          <input
+            type="text"
+            value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, role, email..."
             className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
@@ -3051,7 +3051,7 @@ const RecruitmentHeadDashboard = () => {
             />
           )}
         </AnimatePresence>
-        
+
         {/* Note Detail Drawer Portal (Moved inside AdminLayout for reliable rendering) */}
         {createPortal(
           <AnimatePresence>
@@ -3117,6 +3117,16 @@ const RecruitmentHeadDashboard = () => {
                             title="Edit Note"
                           >
                             <FiEdit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedNote(null);
+                              setIsEditingNote(false);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                            title="Close Note"
+                          >
+                            <FiX size={18} />
                           </button>
                         </>
                       ) : (
@@ -3188,79 +3198,79 @@ const RecruitmentHeadDashboard = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md pointer-events-auto"
-              onClick={() => setShowAddNoteModal(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-[5vh] -translate-x-1/2 w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[10002] flex flex-col max-h-[90vh] overflow-hidden"
-            >
-              <div className="p-10 border-b border-slate-50 flex flex-col items-center justify-center relative flex-shrink-0">
-                <div className="text-center">
-                  <h3 className="text-2xl font-bold text-slate-900 font-syne tracking-tight">Create Note</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[4px] mt-1.5">Strategy Protocol Entry</p>
+                onClick={() => setShowAddNoteModal(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="fixed left-1/2 top-[5vh] -translate-x-1/2 w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[10002] flex flex-col max-h-[90vh] overflow-hidden"
+              >
+                <div className="p-10 border-b border-slate-50 flex flex-col items-center justify-center relative flex-shrink-0">
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold text-slate-900 font-syne tracking-tight">Create Note</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[4px] mt-1.5">Strategy Protocol Entry</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddNoteModal(false)}
+                    className="absolute right-8 top-10 w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center"
+                  >
+                    <FiX size={24} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowAddNoteModal(false)}
-                  className="absolute right-8 top-10 w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center"
-                >
-                  <FiX size={24} />
-                </button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
-                <form onSubmit={handleCreateQuickNote} className="space-y-10">
-                  <div className="space-y-4 text-center">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] block">Title *</label>
-                    <input
-                      autoFocus
-                      type="text"
-                      required
-                      value={newNote.title}
-                      onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                      className="w-full p-6 rounded-[24px] bg-[#F8F9FA] border border-slate-100 text-slate-900 font-bold text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none placeholder:text-slate-300 text-center"
-                      placeholder="Enter note title..."
-                    />
-                  </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
+                  <form onSubmit={handleCreateQuickNote} className="space-y-10">
+                    <div className="space-y-4 text-center">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] block">Title *</label>
+                      <input
+                        autoFocus
+                        type="text"
+                        required
+                        value={newNote.title}
+                        onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                        className="w-full p-6 rounded-[24px] bg-[#F8F9FA] border border-slate-100 text-slate-900 font-bold text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none placeholder:text-slate-300 text-center"
+                        placeholder="Enter note title..."
+                      />
+                    </div>
 
-                  <div className="space-y-4 text-center">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] block">Content *</label>
-                    <textarea
-                      required
-                      rows={6}
-                      value={newNote.content}
-                      onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-                      className="w-full p-6 rounded-[24px] bg-[#F8F9FA] border border-slate-100 text-slate-900 font-medium text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none placeholder:text-slate-300 resize-none text-center"
-                      placeholder="Write your note content here..."
-                    />
-                  </div>
+                    <div className="space-y-4 text-center">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] block">Content *</label>
+                      <textarea
+                        required
+                        rows={6}
+                        value={newNote.content}
+                        onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                        className="w-full p-6 rounded-[24px] bg-[#F8F9FA] border border-slate-100 text-slate-900 font-medium text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none placeholder:text-slate-300 resize-none text-center"
+                        placeholder="Write your note content here..."
+                      />
+                    </div>
 
-                  <div className="flex gap-4 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowAddNoteModal(false)}
-                      className="flex-1 py-5 bg-white border-2 border-slate-100 text-slate-500 rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={noteSaving}
-                      className="flex-[2] py-5 bg-[#1B4DA0] text-white rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-[#153e82] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 group disabled:opacity-70"
-                    >
-                      {noteSaving ? (
-                        <FiRefreshCw className="animate-spin w-4 h-4" />
-                      ) : (
-                        <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" strokeWidth={3} />
-                      )}
-                      {noteSaving ? 'Processing...' : 'Create Note'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddNoteModal(false)}
+                        className="flex-1 py-5 bg-white border-2 border-slate-100 text-slate-500 rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={noteSaving}
+                        className="flex-[2] py-5 bg-[#1B4DA0] text-white rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-[#153e82] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 group disabled:opacity-70"
+                      >
+                        {noteSaving ? (
+                          <FiRefreshCw className="animate-spin w-4 h-4" />
+                        ) : (
+                          <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        )}
+                        {noteSaving ? 'Processing...' : 'Create Note'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
           )}
         </AnimatePresence>, document.body
       )}
@@ -3318,13 +3328,6 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                   ) : (
                     <>
-                      <button
-                        onClick={() => setShowHandoverModal(true)}
-                        className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300"
-                        title="Work Handover"
-                      >
-                        <FiRefreshCw size={18} />
-                      </button>
                       <button
                         onClick={() => setIsEditingInDetail(true)}
                         className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300"
@@ -3831,202 +3834,202 @@ const RecruitmentHeadDashboard = () => {
                 exit={{ opacity: 0 }}
                 onClick={() => setShowKAMFormModal(false)}
                 className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Modal Header */}
-              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                <div>
-                  <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    {kamFormMode === 'add' ? 'Add Team Member' : 'Edit Member Details'}
-                  </h2>
-                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
-                    {kamFormMode === 'add'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowKAMFormModal(false)}
-                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
-                  disabled={formSubmitting}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <FiX size={18} />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <form onSubmit={handleSubmitKAMForm} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                {/* Profile Photo Section */}
-                <div className="flex flex-col items-center justify-center pb-4">
-                  <div className="relative group">
-                    <div className="w-24 h-24 rounded-[32px] bg-[#F4F3EF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center overflow-hidden transition-all group-hover:border-[#1B4DA0]/50">
-                      {kamFormData.profilePhotoPreview ? (
-                        <img src={kamFormData.profilePhotoPreview} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <FiUsers size={32} className="text-[#C5C5D2]" />
-                      )}
-
-                      <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                        <FiEdit2 className="text-white w-6 h-6 hover:scale-110 transition-transform" />
-                        <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} disabled={formSubmitting} />
-                      </label>
+                  {/* Modal Header */}
+                  <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                    <div>
+                      <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                        {kamFormMode === 'add' ? 'Add Team Member' : 'Edit Member Details'}
+                      </h2>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                        {kamFormMode === 'add'}
+                      </p>
                     </div>
-                    {kamFormData.profilePhotoPreview && (
+                    <button
+                      onClick={() => setShowKAMFormModal(false)}
+                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
+                      disabled={formSubmitting}
+                    >
+                      <FiX size={18} />
+                    </button>
+                  </div>
+
+                  {/* Modal Body */}
+                  <form onSubmit={handleSubmitKAMForm} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    {/* Profile Photo Section */}
+                    <div className="flex flex-col items-center justify-center pb-4">
+                      <div className="relative group">
+                        <div className="w-24 h-24 rounded-[32px] bg-[#F4F3EF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center overflow-hidden transition-all group-hover:border-[#1B4DA0]/50">
+                          {kamFormData.profilePhotoPreview ? (
+                            <img src={kamFormData.profilePhotoPreview} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <FiUsers size={32} className="text-[#C5C5D2]" />
+                          )}
+
+                          <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                            <FiEdit2 className="text-white w-6 h-6 hover:scale-110 transition-transform" />
+                            <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} disabled={formSubmitting} />
+                          </label>
+                        </div>
+                        {kamFormData.profilePhotoPreview && (
+                          <button
+                            type="button"
+                            onClick={() => setKamFormData(prev => ({ ...prev, profilePhoto: null, profilePhotoPreview: null }))}
+                            className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-all scale-0 group-hover:scale-100"
+                            disabled={formSubmitting}
+                          >
+                            <FiX size={14} />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mt-3">Profile Photo (Max 1MB)</p>
+                    </div>
+
+                    {/* Personal Information */}
+
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Full Name *</label>
+                        <div className="relative flex items-center">
+                          <FiUsers className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="text" required placeholder="e.g. John Doe"
+                            className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                            value={kamFormData.name} onChange={(e) => setKamFormData({ ...kamFormData, name: e.target.value })} disabled={formSubmitting} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Employee ID</label>
+                        <div className="relative flex items-center">
+                          <FiFileText className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="text" placeholder="e.g. MAB-0042"
+                            className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                            value={kamFormData.employeeId || ''} onChange={(e) => setKamFormData({ ...kamFormData, employeeId: e.target.value })} disabled={formSubmitting} />
+                        </div>
+                      </div>
+                    </div>
+
+
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address *</label>
+                        <div className="relative flex items-center">
+                          <FiMail className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="email" required placeholder="john@mabicons.com"
+                            className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                            value={kamFormData.email} onChange={(e) => setKamFormData({ ...kamFormData, email: e.target.value })} disabled={formSubmitting} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number * (10 Digits)</label>
+                        <div className="relative flex items-center">
+                          <FiPhone className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="tel" required placeholder="9876543210" maxLength="10"
+                            className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                            value={kamFormData.phone}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              setKamFormData({ ...kamFormData, phone: value });
+                            }}
+                            pattern="[0-9]{10}"
+                            disabled={formSubmitting} />
+                        </div>
+                      </div>
+                    </div>
+
+
+
+                    <div className="grid grid-cols-2 gap-4">
+
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Department</label>
+                        <div className="relative flex items-center">
+                          <FiLayers className="absolute left-4 text-[#C5C5D2]" />
+                          <select
+                            className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
+                            value={kamFormData.department || 'HR Recruitment'} onChange={(e) => setKamFormData({ ...kamFormData, department: e.target.value })} disabled={formSubmitting}>
+                            <option value="HR Recruitment">HR Recruitment</option>
+                            <option value="HR Operations">HR Operations</option>
+                            <option value="IT">IT</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="BD">Business Development</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Management">Management</option>
+                          </select>
+                        </div>
+                      </div>
+
+
+
+
+
+
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>
+                        <div className="relative flex items-center">
+                          <FiCalendar className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="date"
+                            className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                            value={kamFormData.joiningDate || ''} onChange={(e) => setKamFormData({ ...kamFormData, joiningDate: e.target.value })} disabled={formSubmitting} />
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Monthly Hiring Target</label>
+                        <div className="relative flex items-center">
+                          <FiTarget className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="number" placeholder="e.g. 5"
+                            className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
+                            value={kamFormData.monthlyHiringTarget || ''} onChange={(e) => setKamFormData({ ...kamFormData, monthlyHiringTarget: e.target.value })} disabled={formSubmitting} />
+                        </div>
+                      </div>
+                    </div>
+
+
+                    {/* Modal Footer */}
+                    <div className="pt-4 flex gap-4">
                       <button
                         type="button"
-                        onClick={() => setKamFormData(prev => ({ ...prev, profilePhoto: null, profilePhotoPreview: null }))}
-                        className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-all scale-0 group-hover:scale-100"
+                        onClick={() => setShowKAMFormModal(false)}
                         disabled={formSubmitting}
+                        className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all disabled:opacity-50"
                       >
-                        <FiX size={14} />
+                        Cancel
                       </button>
-                    )}
-                  </div>
-                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mt-3">Profile Photo (Max 1MB)</p>
-                </div>
-
-                {/* Personal Information */}
-
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Full Name *</label>
-                    <div className="relative flex items-center">
-                      <FiUsers className="absolute left-4 text-[#C5C5D2]" />
-                      <input type="text" required placeholder="e.g. John Doe"
-                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                        value={kamFormData.name} onChange={(e) => setKamFormData({ ...kamFormData, name: e.target.value })} disabled={formSubmitting} />
+                      <button
+                        type="submit"
+                        disabled={formSubmitting}
+                        className="flex-[2] py-5 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                      >
+                        {formSubmitting ? (
+                          <>
+                            <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            <span>Processing...</span>
+                          </>
+                        ) : (
+                          <>{kamFormMode === 'add' ? 'Add Member' : 'Save Changes'}</>
+                        )}
+                      </button>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Employee ID</label>
-                    <div className="relative flex items-center">
-                      <FiFileText className="absolute left-4 text-[#C5C5D2]" />
-                      <input type="text" placeholder="e.g. MAB-0042"
-                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                        value={kamFormData.employeeId || ''} onChange={(e) => setKamFormData({ ...kamFormData, employeeId: e.target.value })} disabled={formSubmitting} />
-                    </div>
-                  </div>
-                </div>
-
-
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address *</label>
-                    <div className="relative flex items-center">
-                      <FiMail className="absolute left-4 text-[#C5C5D2]" />
-                      <input type="email" required placeholder="john@mabicons.com"
-                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                        value={kamFormData.email} onChange={(e) => setKamFormData({ ...kamFormData, email: e.target.value })} disabled={formSubmitting} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number * (10 Digits)</label>
-                    <div className="relative flex items-center">
-                      <FiPhone className="absolute left-4 text-[#C5C5D2]" />
-                      <input type="tel" required placeholder="9876543210" maxLength="10"
-                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                        value={kamFormData.phone} 
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, '');
-                          setKamFormData({ ...kamFormData, phone: value });
-                        }} 
-                        pattern="[0-9]{10}"
-                        disabled={formSubmitting} />
-                    </div>
-                  </div>
-                </div>
-
-
-
-                <div className="grid grid-cols-2 gap-4">
-
-                  <div className="space-y-2">
-                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Department</label>
-                    <div className="relative flex items-center">
-                      <FiLayers className="absolute left-4 text-[#C5C5D2]" />
-                      <select
-                        className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
-                        value={kamFormData.department || 'HR Recruitment'} onChange={(e) => setKamFormData({ ...kamFormData, department: e.target.value })} disabled={formSubmitting}>
-                        <option value="HR Recruitment">HR Recruitment</option>
-                        <option value="HR Operations">HR Operations</option>
-                        <option value="IT">IT</option>
-                        <option value="Sales">Sales</option>
-                        <option value="Marketing">Marketing</option>
-                        <option value="BD">Business Development</option>
-                        <option value="Finance">Finance</option>
-                        <option value="Management">Management</option>
-                      </select>
-                    </div>
-                  </div>
-
-
-
-
-
-
-                  <div className="space-y-2">
-                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>
-                    <div className="relative flex items-center">
-                      <FiCalendar className="absolute left-4 text-[#C5C5D2]" />
-                      <input type="date"
-                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                        value={kamFormData.joiningDate || ''} onChange={(e) => setKamFormData({ ...kamFormData, joiningDate: e.target.value })} disabled={formSubmitting} />
-                    </div>
-                  </div>
-
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Monthly Hiring Target</label>
-                    <div className="relative flex items-center">
-                      <FiTarget className="absolute left-4 text-[#C5C5D2]" />
-                      <input type="number" placeholder="e.g. 5"
-                        className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                        value={kamFormData.monthlyHiringTarget || ''} onChange={(e) => setKamFormData({ ...kamFormData, monthlyHiringTarget: e.target.value })} disabled={formSubmitting} />
-                    </div>
-                  </div>
-                </div>
-
-
-                {/* Modal Footer */}
-                <div className="pt-4 flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowKAMFormModal(false)}
-                    disabled={formSubmitting}
-                    className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={formSubmitting}
-                    className="flex-[2] py-5 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
-                  >
-                    {formSubmitting ? (
-                      <>
-                        <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        <span>Processing...</span>
-                      </>
-                    ) : (
-                      <>{kamFormMode === 'add' ? 'Add Member' : 'Save Changes'}</>
-                    )}
-                  </button>
-                </div>
-              </form>
+                  </form>
+                </motion.div>
               </motion.div>
             </motion.div>
-          </motion.div>
           )}
         </AnimatePresence>, document.body
       )}
@@ -4190,115 +4193,106 @@ const RecruitmentHeadDashboard = () => {
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedInterview(null)}
                 className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md pointer-events-auto"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 w-full sm:w-[500px] md:w-[600px] bg-white shadow-2xl z-[10002] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
-            >
-              {/* Header - Sticky Style */}
-              <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
-                <div className="text-left">
-                  <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">{selectedInterview.candidate}</h2>
-                  <div className="flex items-center gap-2 mt-1.5 justify-start">
-                    <span className="text-[10px] font-bold text-[#3FA9F5] uppercase tracking-[3px] text-left">{selectedInterview.position}</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
-                    <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">{selectedInterview.type}</span>
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed inset-y-0 right-0 w-full sm:w-[500px] md:w-[600px] bg-white shadow-2xl z-[10002] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+              >
+                {/* Header - Sticky Style */}
+                <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
+                  <div className="text-left">
+                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">{selectedInterview.candidate}</h2>
+                    <div className="flex items-center gap-2 mt-1.5 justify-start">
+                      <span className="text-[10px] font-bold text-[#3FA9F5] uppercase tracking-[3px] text-left">{selectedInterview.position}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">{selectedInterview.type}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedInterview(null)}
+                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+
+                {/* Detailed Content - Scrollable Area */}
+                <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-10">
+                  {/* Snapshot Grid Grid - Pattern from Job Detail */}
+                  <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
+                    <div className="grid grid-cols-2 gap-y-10 gap-x-12">
+                      <div className="space-y-2 text-left">
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interview Time</p>
+                        <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.time}</p>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Status</p>
+                        <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border text-left ${selectedInterview.status === 'In Progress' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-[#E3F2FD80] text-[#3FA9F5] border-blue-100'
+                          }`}>
+                          {selectedInterview.status}
+                        </span>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Round Type</p>
+                        <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.type}</p>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Mode</p>
+                        <p className="text-sm font-bold text-[#1A1A2E] text-left">Remote (Teams)</p>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Experience</p>
+                        <p className="text-sm font-bold text-[#1A1A2E] text-left">4.5 Years</p>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interviewer</p>
+                        <p className="text-sm font-bold text-[#1A1A2E] text-left">Aravind Swamy</p>
+                      </div>
+                    </div>
+
+                    {/* Profile Summary */}
+                    <div className="pt-8 border-t border-[#F4F3EF] text-left">
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-3 text-left">Candidate Profile</p>
+                      <p className="text-[14px] font-medium text-[#4B4B5E] leading-relaxed italic text-left">
+                        "Professional developer with expertise in building high-performance systems and modern web technologies."
+                      </p>
+                    </div>
+
+                    {/* Skills Section */}
+                    <div className="pt-8 border-t border-[#F4F3EF] text-left">
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-4 text-left">Technical Skills</p>
+                      <div className="flex flex-wrap gap-2 justify-start">
+                        {['React.js', 'Node.js', 'System Design', 'Redux'].map(skill => (
+                          <span key={skill} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">{skill}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Round Details */}
+                    <div className="pt-8 border-t border-[#F4F3EF] text-left">
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-4 text-left">Interview Context</p>
+                      <ul className="space-y-3 text-left">
+                        {[
+                          'Performance optimization and profiling',
+                          'System architecture and scaling',
+                          'Team leadership qualities',
+                          'Cultural alignment'
+                        ].map((item, idx) => (
+                          <li key={idx} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#3FA9F5] mt-2 flex-shrink-0" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedInterview(null)}
-                  className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
-                >
-                  <FiX size={18} />
-                </button>
-              </div>
 
-              {/* Detailed Content - Scrollable Area */}
-              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-10">
-                {/* Snapshot Grid Grid - Pattern from Job Detail */}
-                <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
-                  <div className="grid grid-cols-2 gap-y-10 gap-x-12">
-                    <div className="space-y-2 text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interview Time</p>
-                      <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.time}</p>
-                    </div>
-                    <div className="space-y-2 text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Status</p>
-                      <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border text-left ${selectedInterview.status === 'In Progress' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-[#E3F2FD80] text-[#3FA9F5] border-blue-100'
-                        }`}>
-                        {selectedInterview.status}
-                      </span>
-                    </div>
-                    <div className="space-y-2 text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Round Type</p>
-                      <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.type}</p>
-                    </div>
-                    <div className="space-y-2 text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Mode</p>
-                      <p className="text-sm font-bold text-[#1A1A2E] text-left">Remote (Teams)</p>
-                    </div>
-                    <div className="space-y-2 text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Experience</p>
-                      <p className="text-sm font-bold text-[#1A1A2E] text-left">4.5 Years</p>
-                    </div>
-                    <div className="space-y-2 text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interviewer</p>
-                      <p className="text-sm font-bold text-[#1A1A2E] text-left">Aravind Swamy</p>
-                    </div>
-                  </div>
-
-                  {/* Profile Summary */}
-                  <div className="pt-8 border-t border-[#F4F3EF] text-left">
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-3 text-left">Candidate Profile</p>
-                    <p className="text-[14px] font-medium text-[#4B4B5E] leading-relaxed italic text-left">
-                      "Professional developer with expertise in building high-performance systems and modern web technologies."
-                    </p>
-                  </div>
-
-                  {/* Skills Section */}
-                  <div className="pt-8 border-t border-[#F4F3EF] text-left">
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-4 text-left">Technical Skills</p>
-                    <div className="flex flex-wrap gap-2 justify-start">
-                      {['React.js', 'Node.js', 'System Design', 'Redux'].map(skill => (
-                        <span key={skill} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">{skill}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Round Details */}
-                  <div className="pt-8 border-t border-[#F4F3EF] text-left">
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-4 text-left">Interview Context</p>
-                    <ul className="space-y-3 text-left">
-                      {[
-                        'Performance optimization and profiling',
-                        'System architecture and scaling',
-                        'Team leadership qualities',
-                        'Cultural alignment'
-                      ].map((item, idx) => (
-                        <li key={idx} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#3FA9F5] mt-2 flex-shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer Actions */}
-              <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
-                <button
-                  onClick={() => setSelectedInterview(null)}
-                  className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
-                >
-                  Cancel
-                </button>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
           )}
         </AnimatePresence>, document.body
       )}

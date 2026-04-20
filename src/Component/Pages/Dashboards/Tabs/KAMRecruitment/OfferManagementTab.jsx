@@ -193,20 +193,20 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
               </div>
               <div className={`p-6 rounded-[2rem] border-2 border-dashed relative overflow-hidden flex items-center justify-between ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                 <div className="flex-1 space-y-4">
-                   <div className="flex items-center justify-between max-w-[200px]">
-                      <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-tighter">Gateway ID:</span>
-                      <span className={`text-[12px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.tempUsername}</span>
-                   </div>
-                   <div className="flex items-center justify-between max-w-[200px]">
-                      <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-tighter">Secret Key:</span>
-                      <span className={`text-[12px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.tempPassword}</span>
-                   </div>
+                  <div className="flex items-center justify-between max-w-[200px]">
+                    <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-tighter">Gateway ID:</span>
+                    <span className={`text-[12px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.tempUsername}</span>
+                  </div>
+                  <div className="flex items-center justify-between max-w-[200px]">
+                    <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-tighter">Secret Key:</span>
+                    <span className={`text-[12px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.tempPassword}</span>
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                   <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${offer.bgvStatus === 'Verified' ? 'bg-emerald-500 text-white' : 'bg-[#1B4DA0] text-white'}`}>
-                      {offer.bgvStatus}
-                   </div>
-                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status Sync: Live</p>
+                  <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${offer.bgvStatus === 'Verified' ? 'bg-emerald-500 text-white' : 'bg-[#1B4DA0] text-white'}`}>
+                    {offer.bgvStatus}
+                  </div>
+                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status Sync: Live</p>
                 </div>
               </div>
             </section>
@@ -246,14 +246,7 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
                 </motion.button>
               </div>
             )}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onClose}
-              className={`w-full h-12 border-2 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-2 transition-all tracking-widest uppercase ${isDarkMode ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-100 text-slate-500 hover:bg-slate-50'}`}
-            >
-              Cancel
-            </motion.button>
+
           </div>
         </div>
       </motion.div>
@@ -405,7 +398,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
       const buf = await file.arrayBuffer();
       const doc = await pdfjsLib.getDocument({ data: buf }).promise;
       setTemplatePdf(doc);
-      
+
       const saved = await saveOfferTemplate(formData.client, file, resolvedTemplateLayout);
       console.log('✅ Template upload successful:', saved);
 
@@ -1025,146 +1018,145 @@ const OfferManagementTab = ({ isDarkMode }) => {
             <div className="overflow-x-auto custom-scrollbar">
               <div className="min-w-[1200px]">
                 <div className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_100px_140px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={filteredOffers.length > 0 && selectedRowIds.length === filteredOffers.length}
-                  onChange={() => toggleSelectAll(filteredOffers)}
-                  className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
-                />
-              </div>
-              {["Offer Date", "Candidate", "Hiring Client", "Position", "Offered CTC", "BGV Protocol", "Verify Status", ""].map((h, i) => (
-                <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start ${h === 'BGV Protocol' || h === 'Verify Status' ? 'justify-center' : ''}`}>
-                  {h}
-                </div>
-              ))}
-            </div>
-
-            {filteredOffers.length === 0 ? (
-              <div className="py-24 text-center">
-                <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No offer records found matching criteria</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-[#F4F3EF]">
-                {filteredOffers.map((offer) => (
-                  <div
-                    key={offer._id || offer.id}
-                    onClick={() => handleViewOffer(offer)}
-                    className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_100px_140px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
-                  >
-                    <div className="flex items-center" onClick={e => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedRowIds.includes(offer._id || offer.id)}
-                        onChange={(e) => toggleSelectRow(offer._id || offer.id, e)}
-                        className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
-                      />
-                    </div>
-
-                    {/* Offer Date */}
-                    <div className="flex flex-col justify-center items-start py-1">
-                      <p className="text-[13px] font-bold text-[#1A1A2E] text-left">
-                        {offer.offerDate && !isNaN(new Date(offer.offerDate)) 
-                          ? new Date(offer.offerDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
-                          : 'Date TBD'}
-                      </p>
-                      <div className="flex items-center justify-start gap-1 mt-0.5 opacity-60">
-                        <Clock size={10} className="text-[#9B9BAD]" />
-                        <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left">
-                          {offer.status}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Candidate */}
-                    <div className="flex items-center min-w-0 py-1 overflow-hidden">
-                      <div className="flex flex-col items-start min-w-0 w-full">
-                        <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left w-full">
-                          {offer.candidateName}
-                        </p>
-                        <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest truncate w-full">{offer.email || 'No Email'}</p>
-                      </div>
-                    </div>
-
-                    {/* Client */}
-                    <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left min-w-0 overflow-hidden">
-                      <span className="truncate">{offer.client || 'Internal'}</span>
-                    </div>
-
-                    {/* Position */}
-                    <div className="flex flex-col justify-center items-start min-w-0 py-1 text-left overflow-hidden">
-                      <p className="text-[13px] font-bold text-[#1A1A2E] truncate w-full">{offer.position}</p>
-                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest opacity-60 truncate w-full">Joining: {offer.joiningDate || 'TBD'}</span>
-                    </div>
-
-                    {/* CTC */}
-                    <div className="flex items-center py-1 text-left">
-                      <span className="text-[13px] font-bold text-[#1A1A2E]">₹{offer.offeredCTC}</span>
-                    </div>
-
-                    {/* BGV Protocol */}
-                    <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
-                      {offer.bgvStatus === 'Not Started' ? (
-                        <button
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
-                            const targetId = offer.candidateId || offer.id;
-                            try {
-                              if (!targetId) {
-                                toast.error("System Error: Reference missing.", { id: loadingId });
-                                return;
-                              }
-                              const response = await generateCandidateCredentials(targetId);
-                              if (response && response.success && response.data) {
-                                setOffers(prev => prev.map(o => (o.id === offer.id || o._id === offer.id) ? { ...o, bgvStatus: 'Sent', tempUsername: response.data.username, tempPassword: response.data.password } : o));
-                                toast.success(`Success: Credentials sent`, { id: loadingId });
-                              }
-                            } catch (err) { toast.error("Gateway protocol failed", { id: loadingId }); }
-                          }}
-                          className="bg-[#1B4DA0] text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-blue-500/20 active:scale-95 transition-all"
-                        >
-                          Generate
-                        </button>
-                      ) : (
-                        <div className="flex flex-col items-center gap-0.5">
-                           <span className="text-[10px] font-bold text-[#1A73E8]">{offer.tempUsername}</span>
-                           <span className="text-[9px] font-mono text-slate-400">{offer.tempPassword}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Verify Status */}
-                    <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (offer.bgvStatus === 'Verified') handleResetBGV(offer.id || offer._id);
-                          else handleManualVerify(offer.id || offer._id);
-                        }}
-                        className={`inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border transition-all ${
-                          offer.bgvStatus === 'Verified' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                        }`}
-                      >
-                        {offer.bgvStatus === 'Verified' ? 'Verified' : 'Verify Now'}
-                      </button>
-                    </div>
-
-                    {/* Chevron */}
-                    <div className="flex justify-end pr-2">
-                      <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
-                        <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
-                      </div>
-                    </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={filteredOffers.length > 0 && selectedRowIds.length === filteredOffers.length}
+                      onChange={() => toggleSelectAll(filteredOffers)}
+                      className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
+                    />
                   </div>
-                ))}
+                  {["Offer Date", "Candidate", "Hiring Client", "Position", "Offered CTC", "BGV Protocol", "Verify Status", ""].map((h, i) => (
+                    <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start ${h === 'BGV Protocol' || h === 'Verify Status' ? 'justify-center' : ''}`}>
+                      {h}
+                    </div>
+                  ))}
+                </div>
+
+                {filteredOffers.length === 0 ? (
+                  <div className="py-24 text-center">
+                    <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No offer records found matching criteria</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-[#F4F3EF]">
+                    {filteredOffers.map((offer) => (
+                      <div
+                        key={offer._id || offer.id}
+                        onClick={() => handleViewOffer(offer)}
+                        className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_100px_140px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+                      >
+                        <div className="flex items-center" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedRowIds.includes(offer._id || offer.id)}
+                            onChange={(e) => toggleSelectRow(offer._id || offer.id, e)}
+                            className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
+                          />
+                        </div>
+
+                        {/* Offer Date */}
+                        <div className="flex flex-col justify-center items-start py-1">
+                          <p className="text-[13px] font-bold text-[#1A1A2E] text-left">
+                            {offer.offerDate && !isNaN(new Date(offer.offerDate))
+                              ? new Date(offer.offerDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
+                              : 'Date TBD'}
+                          </p>
+                          <div className="flex items-center justify-start gap-1 mt-0.5 opacity-60">
+                            <Clock size={10} className="text-[#9B9BAD]" />
+                            <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left">
+                              {offer.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Candidate */}
+                        <div className="flex items-center min-w-0 py-1 overflow-hidden">
+                          <div className="flex flex-col items-start min-w-0 w-full">
+                            <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left w-full">
+                              {offer.candidateName}
+                            </p>
+                            <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest truncate w-full">{offer.email || 'No Email'}</p>
+                          </div>
+                        </div>
+
+                        {/* Client */}
+                        <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left min-w-0 overflow-hidden">
+                          <span className="truncate">{offer.client || 'Internal'}</span>
+                        </div>
+
+                        {/* Position */}
+                        <div className="flex flex-col justify-center items-start min-w-0 py-1 text-left overflow-hidden">
+                          <p className="text-[13px] font-bold text-[#1A1A2E] truncate w-full">{offer.position}</p>
+                          <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest opacity-60 truncate w-full">Joining: {offer.joiningDate || 'TBD'}</span>
+                        </div>
+
+                        {/* CTC */}
+                        <div className="flex items-center py-1 text-left">
+                          <span className="text-[13px] font-bold text-[#1A1A2E]">₹{offer.offeredCTC} LPA</span>
+                        </div>
+
+                        {/* BGV Protocol */}
+                        <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
+                          {offer.bgvStatus === 'Not Started' ? (
+                            <button
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
+                                const targetId = offer.candidateId || offer.id;
+                                try {
+                                  if (!targetId) {
+                                    toast.error("System Error: Reference missing.", { id: loadingId });
+                                    return;
+                                  }
+                                  const response = await generateCandidateCredentials(targetId);
+                                  if (response && response.success && response.data) {
+                                    setOffers(prev => prev.map(o => (o.id === offer.id || o._id === offer.id) ? { ...o, bgvStatus: 'Sent', tempUsername: response.data.username, tempPassword: response.data.password } : o));
+                                    toast.success(`Success: Credentials sent`, { id: loadingId });
+                                  }
+                                } catch (err) { toast.error("Gateway protocol failed", { id: loadingId }); }
+                              }}
+                              className="bg-[#1B4DA0] text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+                            >
+                              Generate
+                            </button>
+                          ) : (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-[10px] font-bold text-[#1A73E8]">{offer.tempUsername}</span>
+                              <span className="text-[9px] font-mono text-slate-400">{offer.tempPassword}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Verify Status */}
+                        <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (offer.bgvStatus === 'Verified') handleResetBGV(offer.id || offer._id);
+                              else handleManualVerify(offer.id || offer._id);
+                            }}
+                            className={`inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border transition-all ${offer.bgvStatus === 'Verified' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                              }`}
+                          >
+                            {offer.bgvStatus === 'Verified' ? 'Verified' : 'Verify Now'}
+                          </button>
+                        </div>
+
+                        {/* Chevron */}
+                        <div className="flex justify-end pr-2">
+                          <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
+                            <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
         <AnimatePresence>
           {showFullPageForm && (
@@ -1341,7 +1333,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                           </div>
                           <h3 className="text-xs font-black uppercase tracking-widest text-[#1A1A2E]">Offer Letter Assets</h3>
                         </div>
-                        
+
                         <div className="relative">
                           <label
                             className={`flex flex-col items-center justify-center h-44 rounded-[32px] border-2 border-dashed transition-all cursor-pointer ${isUploadingTemplate ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#1B4DA0] hover:bg-blue-50/10'} ${templatePdf ? 'border-[#1B4DA0] bg-[#EEF2FB]/20' : 'border-[#F4F3EF] bg-[#FDFDFD]'}`}
@@ -1433,36 +1425,36 @@ const OfferManagementTab = ({ isDarkMode }) => {
                   {/* Right: Live Preview */}
                   {templatePdf && (
                     <div ref={previewWrapRef} className="w-1/2 bg-[#FAFAFA] overflow-y-auto p-12 custom-scrollbar flex flex-col items-center relative gap-8">
-                       <div className="absolute top-6 left-12 right-12 flex items-center justify-between z-10 pointer-events-none">
+                      <div className="absolute top-6 left-12 right-12 flex items-center justify-between z-10 pointer-events-none">
                         <div className="px-4 py-2 bg-[#1A1A2E] text-white rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           Live Precision Preview
                         </div>
                         <div className="flex gap-2">
-                           <div className="w-8 h-8 rounded-lg bg-white shadow-md flex items-center justify-center text-[#9B9BAD]">
-                             <FiSearch size={14} />
-                           </div>
-                           <div className="w-8 h-8 rounded-lg bg-white shadow-md flex items-center justify-center text-[#9B9BAD]">
-                             <FiMaximize size={14} />
-                           </div>
+                          <div className="w-8 h-8 rounded-lg bg-white shadow-md flex items-center justify-center text-[#9B9BAD]">
+                            <FiSearch size={14} />
+                          </div>
+                          <div className="w-8 h-8 rounded-lg bg-white shadow-md flex items-center justify-center text-[#9B9BAD]">
+                            <FiMaximize size={14} />
+                          </div>
                         </div>
                       </div>
 
                       <div className="flex flex-col gap-10 mt-10 w-full items-center">
                         {templateViewports.map((vp, idx) => (
-                          <div 
-                            key={idx} 
+                          <div
+                            key={idx}
                             className="relative shadow-[0_30px_70px_rgba(0,0,0,0.12)] bg-white rounded-sm border border-[#E8E7E2]"
-                            style={{ 
-                              width: vp.width * previewScale, 
-                              height: vp.height * previewScale 
+                            style={{
+                              width: vp.width * previewScale,
+                              height: vp.height * previewScale
                             }}
                           >
                             <canvas
                               ref={(el) => { templateCanvasRefs.current[idx] = el; }}
                               className="absolute inset-0 w-full h-full pointer-events-none"
                             />
-                            
+
                             {/* Field Overlay */}
                             <div className="absolute inset-0 pointer-events-none overflow-hidden origin-top-left" style={{ transform: `scale(${previewScale})` }}>
                               {templateOverlayFields[idx + 1]?.map((f, fIdx) => (
@@ -1534,9 +1526,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 initial={{ y: 100, opacity: 0, scale: 0.9 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
                 exit={{ y: 100, opacity: 0, scale: 0.9 }}
-                className={`rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl border border-white/20 p-4 flex items-center justify-between gap-4 ${
-                  isDarkMode ? 'bg-slate-900/90' : 'bg-[#1A1A2E]/95'
-                } text-white`}
+                className={`rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl border border-white/20 p-4 flex items-center justify-between gap-4 ${isDarkMode ? 'bg-slate-900/90' : 'bg-[#1A1A2E]/95'
+                  } text-white`}
               >
                 <div className="flex items-center gap-4 pl-2">
                   <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">

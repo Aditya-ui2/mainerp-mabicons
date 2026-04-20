@@ -473,7 +473,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                   </div>
                   <button
                     onClick={() => setSelectedCandidate(null)}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
                   >
                     <X size={20} />
                   </button>
@@ -756,7 +756,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                 </div>
                 <button
                   onClick={() => setShowRejectModal(false)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
                 >
                   <X size={18} />
                 </button>

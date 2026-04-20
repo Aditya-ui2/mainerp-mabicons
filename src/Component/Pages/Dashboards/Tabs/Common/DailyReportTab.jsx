@@ -363,9 +363,7 @@ const DailyReportTab = () => {
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
             Daily MIS Report
           </h1>
-          <p className="text-[11px] font-medium text-[#9B9BAD] mt-1 uppercase tracking-widest opacity-60">
-            Shift: {SHIFT_START} AM – {SHIFT_END.replace('18:30', '06:30')} PM Protocol
-          </p>
+
         </div>
 
         <div className="flex items-center gap-3">

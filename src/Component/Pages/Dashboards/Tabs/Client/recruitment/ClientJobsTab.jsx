@@ -268,8 +268,18 @@ export default function ClientJobsTab() {
     );
   }
 
+  const handleBulkStatusUpdate = (newStatus) => {
+    setPositions(prev => prev.map(p => selectedPositions.includes(p.id) ? { ...p, status: newStatus } : p));
+    setSelectedPositions([]);
+  };
+
+  const handleBulkDelete = () => {
+    setPositions(prev => prev.filter(p => !selectedPositions.includes(p.id)));
+    setSelectedPositions([]);
+  };
+
   return (
-    <div className="space-y-6 -mt-10">
+    <div className="space-y-6 -mt-6">
       <style>{`
         input[type="date"]::-webkit-calendar-picker-indicator {
           background: transparent;
@@ -291,14 +301,14 @@ export default function ClientJobsTab() {
 
           <div className="flex flex-col justify-center items-start">
 
-            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">Job Positions</h1>
+            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">Job Openings</h1>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
 
           <button
             onClick={() => setShowAddJob(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all active:scale-95 shadow-lg shadow-blue-500/20 ml-2"
+            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
           >
             <FiPlus className="w-4 h-4" strokeWidth="3" />
             <span>Post New Job</span>
@@ -316,7 +326,7 @@ export default function ClientJobsTab() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by job title or keywords..."
-            className="w-full bg-[#F4F3EF] border-none rounded-xl py-2.5 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
 
@@ -611,16 +621,16 @@ export default function ClientJobsTab() {
                 <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-8 flex items-center justify-end gap-4">
                   <button
                     onClick={() => setShowAddJob(false)}
-                    className="px-8 py-4 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
+                    className="px-8 py-5 text-sm font-bold text-[#6B6B7E] hover:text-[#1A1A2E] transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleAddJob}
                     disabled={submitting || !newJob.title.trim()}
-                    className="px-10 py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl active:scale-95 disabled:opacity-50"
+                    className="flex-[2] bg-[#0D47A1] text-white py-5 px-10 rounded-full text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 stroke-[3px] hover:bg-[#0a367c] transition-all shadow-xl shadow-[#0D47A1]/20 active:scale-95 disabled:opacity-50 min-w-[317px]"
                   >
-                    <FiPlus size={18} /> {submitting ? 'Creating...' : 'Create Position'}
+                    <FiPlus size={16} /> {submitting ? 'Creating...' : 'Create Position'}
                   </button>
                 </div>
               </motion.div>
@@ -636,7 +646,18 @@ export default function ClientJobsTab() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
-                <th className="px-8 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Position</th>
+                <th className="px-8 py-4 w-12 text-center">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                    checked={selectedPositions.length === filteredPositions.length && filteredPositions.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedPositions(filteredPositions.map(p => p.id));
+                      else setSelectedPositions([]);
+                    }}
+                  />
+                </th>
+                <th className="px-4 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Position</th>
                 <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Status</th>
                 <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Posted</th>
                 <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Applicants</th>
@@ -646,17 +667,27 @@ export default function ClientJobsTab() {
             <tbody className="divide-y divide-[#F4F3EF]">
               {filteredPositions.length > 0 ? filteredPositions.map((pos) => (
                 <tr key={pos.id} onClick={() => setSelectedJob(pos)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
-                  <td className="px-8 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xs font-black shadow-sm group-hover:scale-105 transition-transform">
-                        {pos.title.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-[#1A1A2E]">{pos.title}</span>
-                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
-                          <MapPin size={10} className="text-[#1B4DA0]" /> {pos.location || 'Remote'}
-                        </span>
-                      </div>
+                  <td className="px-8 py-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                      checked={selectedPositions.includes(pos.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        if (selectedPositions.includes(pos.id)) {
+                          setSelectedPositions(selectedPositions.filter(id => id !== pos.id));
+                        } else {
+                          setSelectedPositions([...selectedPositions, pos.id]);
+                        }
+                      }}
+                    />
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-left">
+                    <div className="flex flex-col items-start justify-center">
+                      <span className="text-sm font-bold text-[#1A1A2E]">{pos.title}</span>
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center justify-start gap-1.5 mt-0.5 text-left">
+                        <MapPin size={10} className="text-[#9B9BAD]" /> {pos.location || 'Remote'}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -664,20 +695,15 @@ export default function ClientJobsTab() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="flex flex-col items-center">
-                      <span className="text-xs font-bold text-[#1A1A2E]">
+                      <span className="text-xs font-medium text-[#94a3b8]">
                         {new Date(pos.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </span>
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">
-                        {new Date(pos.postedDate || Date.now()).getFullYear()}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0]">
-                        <Users size={12} />
-                      </div>
-                      <span className="text-sm font-black text-[#1A1A2E]">{pos.candidateCount || 0}</span>
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="text-[13px] font-black text-[#1A1A2E]">{pos.candidateCount || 0}</span>
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[1px] ml-0.5">APPLICANTS</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -690,7 +716,7 @@ export default function ClientJobsTab() {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="5" className="px-8 py-12 text-center">
+                  <td colSpan="6" className="px-8 py-12 text-center">
                     <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No positions found Matching your criteria</p>
                   </td>
                 </tr>
@@ -700,6 +726,48 @@ export default function ClientJobsTab() {
         </div>
       </div>
 
+      {/* Selection Action Bar (Snackbar) */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedPositions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 100, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, y: 100, x: "-50%" }}
+              className="fixed bottom-10 left-1/2 z-[9999] px-6 py-4 bg-[#1A1A2E]/95 backdrop-blur-md rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-6 border border-white/10"
+            >
+              <div className="flex items-center gap-4 pr-6 border-r border-white/10 shrink-0">
+                <span className="w-6 h-6 flex items-center justify-center bg-[#1B4DA0] rounded-lg text-white text-[10px] font-black shadow-lg shadow-[#1B4DA0]/20">
+                  {selectedPositions.length}
+                </span>
+                <span className="text-xs font-bold text-white uppercase tracking-widest whitespace-nowrap">Positions Selected</span>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                  <button onClick={() => handleBulkStatusUpdate('Hold')} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-[#9B9BAD] hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/10 active:scale-95 whitespace-nowrap">
+                    Mark As Hold
+                  </button>
+                  <button onClick={() => handleBulkStatusUpdate('Open')} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-100 bg-blue-600 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap">
+                    Mark As Open
+                  </button>
+                  <button onClick={() => handleBulkStatusUpdate('Urgent')} className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-black bg-amber-400 hover:bg-amber-500 transition-all shadow-lg shadow-amber-500/20 active:scale-95 whitespace-nowrap">
+                    Mark As Urgent
+                  </button>
+                  <button onClick={() => handleBulkStatusUpdate('Closed')} className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/10 hover:bg-white/10 transition-all active:scale-95 whitespace-nowrap">
+                    Mark As Complete
+                  </button>
+                  <div className="w-px h-6 bg-white/10 mx-2" />
+                  <button onClick={handleBulkDelete} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-rose-400 hover:bg-rose-500/20 transition-all active:scale-95 whitespace-nowrap">
+                    Delete Selected
+                  </button>
+              </div>
+              <button onClick={() => setSelectedPositions([])} className="w-8 h-8 flex flex-shrink-0 items-center justify-center rounded-xl bg-white/5 hover:bg-red-500 hover:text-white transition-all text-[#9B9BAD]">
+                <FiX size={14} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Right Side Drawer for Job Details */}
       {typeof document !== 'undefined' && createPortal(

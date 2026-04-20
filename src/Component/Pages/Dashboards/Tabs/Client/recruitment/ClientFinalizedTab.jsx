@@ -66,7 +66,7 @@ export default function ClientFinalizedTab() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 -mt-10">
+    <div className="space-y-6 animate-in fade-in duration-500 -mt-6">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
         .font-syne { font-family: 'Syne', sans-serif !important; }
@@ -86,20 +86,20 @@ export default function ClientFinalizedTab() {
 
 
       {/* Action Bar */}
-      <div className="bg-white rounded-2xl p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3">
+        <div className="flex-1 flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-6 py-3.5 transition-all focus-within:bg-[#EEF2FB] focus-within:ring-2 focus-within:ring-blue-100">
+          <FiSearch className="text-[#9B9BAD]" size={18} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by candidate or position..."
-            className="w-full bg-[#F4F3EF] border-none rounded-xl py-2.5 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
+            className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 outline-none transition-all placeholder:text-[#9B9BAD]/60 placeholder:font-medium text-[#1A1A2E]"
           />
         </div>
 
         <div className="flex gap-2">
-           
+
         </div>
       </div>
 
@@ -132,36 +132,38 @@ export default function ClientFinalizedTab() {
                 filtered.map(c => {
                   const isHired = c.stage === 'Joined';
                   const isOffer = c.stage === 'Offer Sent';
-                  const statusBg = isHired 
-                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                    : isOffer 
-                    ? 'bg-purple-50 text-purple-600 border-purple-100' 
-                    : 'bg-amber-50 text-amber-600 border-amber-100';
+                  const statusBg = isHired
+                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                    : isOffer
+                      ? 'bg-purple-50 text-purple-600 border-purple-100'
+                      : 'bg-amber-50 text-amber-600 border-amber-100';
 
                   return (
-                    <tr 
+                    <tr
                       key={c.id}
                       onClick={() => setSelectedCandidate(c)}
                       className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-[#1A1A2E]">{c.name}</span>
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-[#1A1A2E]">{c.name}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col items-start">
-                          <span className="text-sm font-bold text-[#1A1A2E]">{c.positionTitle || c.position || '—'}</span>
-                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                          <span className="text-sm font-medium text-[#1A1A2E]">{c.positionTitle || c.position || '—'}</span>
+                          <span className="text-[10px] font-medium text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
                             <FiBriefcase size={10} className="text-[#1B4DA0]" /> Corporate Opening
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-left">
-                        <span className="text-[10px] font-bold text-[#6B6B7E] uppercase tracking-widest">
+                        <span className="text-[10px] font-medium text-[#6B6B7E] uppercase tracking-widest">
                           {c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase() : 'TODAY'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusBg}`}>
+                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border ${statusBg}`}>
                           {c.stage}
                         </span>
                       </td>
@@ -205,9 +207,6 @@ export default function ClientFinalizedTab() {
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xl font-black shadow-inner">
-                      {selectedCandidate.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '??'}
-                    </div>
                     <div>
                       <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">{selectedCandidate.name}</h2>
                       <div className="flex items-center gap-2 mt-1">
@@ -287,106 +286,7 @@ export default function ClientFinalizedTab() {
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF9]">
-                  {/* BGV Onboarding Credentials - Same as HR Dashboard */}
-                  {(selectedCandidate.stage === 'Joined' || selectedCandidate.stage === 'Offer Sent') && (
-                    <div className="pt-8 border-t border-[#F4F3EF]">
-                      <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] block mb-4">Onboarding Protocol</span>
 
-                      {!selectedCandidate.onboardingUsername ? (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
-                            const targetId = selectedCandidate.id || selectedCandidate._id;
-                            try {
-                              if (!targetId) {
-                                toast.error("System Error: Reference missing.", { id: loadingId });
-                                return;
-                              }
-
-                              const response = await generateCandidateCredentials(targetId);
-                              if (response && response.success && response.data) {
-                                const finalUsername = response.data.username || response.data.email;
-                                const finalPass = response.data.password;
-
-                                // Update local list
-                                setCandidates(prev => prev.map(c =>
-                                  (c.id === targetId || c._id === targetId)
-                                    ? { ...c, onboardingUsername: finalUsername, onboardingPassword: finalPass }
-                                    : c
-                                ));
-                                // Update selected candidate for sidebar
-                                setSelectedCandidate(prev => ({
-                                  ...prev,
-                                  onboardingUsername: finalUsername,
-                                  onboardingPassword: finalPass
-                                }));
-
-                                toast.success(`Success: Records Secured`, { id: loadingId });
-                              } else {
-                                toast.error(`Control Error: ${response?.message || 'Gateway rejection'}`, { id: loadingId });
-                              }
-                            } catch (err) {
-                              toast.error("Console Error: Protocol failed to reach gateway.", { id: loadingId });
-                            }
-                          }}
-                          className="bg-[#1B4DA0] text-white px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-500/10 w-full"
-                        >
-                          <Zap size={16} fill="currentColor" />
-                          GENERATE ONBOARDING CREDENTIALS
-                        </motion.button>
-                      ) : (
-                        <div className="flex flex-col gap-3 group/bgv relative scale-in-center">
-                          <div className="bg-[#F8F9FA] border border-[#DADCE0] rounded-2xl p-6 shadow-sm">
-                            <div className="flex items-center justify-between gap-4 mb-4 border-b border-slate-100 pb-3">
-                              <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-[#5F6368] uppercase tracking-[2px]">Onboarding ID</span>
-                                <span className="text-sm font-bold text-[#1B4DA0] font-jakarta">{selectedCandidate.onboardingUsername}</span>
-                              </div>
-                              <FiUserCheck className="text-[#1B4DA0] opacity-20" size={24} />
-                            </div>
-                            <div className="flex items-center justify-between gap-4">
-                              <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-[#5F6368] uppercase tracking-[2px]">Onboarding Pass</span>
-                                <span className="text-sm font-mono font-black text-[#202124] tracking-widest uppercase">{selectedCandidate.onboardingPassword}</span>
-                              </div>
-                              <FiActivity className="text-emerald-500 animate-pulse" size={18} />
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const targetId = selectedCandidate.id || selectedCandidate._id;
-                              setCandidates(prev => prev.map(c =>
-                                (c.id === targetId || c._id === targetId)
-                                  ? { ...c, onboardingUsername: null, onboardingPassword: null }
-                                  : c
-                              ));
-                              setSelectedCandidate(prev => ({ ...prev, onboardingUsername: null, onboardingPassword: null }));
-                              toast.info("Console: Security record cleared locally.");
-                            }}
-                            className="w-full py-2.5 text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-all flex items-center justify-center gap-2"
-                          >
-                            <RotateCcw size={12} />
-                            Reset Security Credentials
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => setSelectedCandidate(null)}
-                    className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl shadow-gray-200"
-                  >
-                    Close Profile
-                  </button>
-                </div>
               </motion.div>
             </>
           )}

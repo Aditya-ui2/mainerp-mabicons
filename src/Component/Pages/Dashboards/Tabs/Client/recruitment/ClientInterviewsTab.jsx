@@ -11,13 +11,14 @@ import {
   FiVideo,
   FiUser,
   FiSearch,
-  FiFilter,
-  FiExternalLink,
   FiRefreshCw,
   FiChevronDown,
   FiX,
   FiBriefcase,
-  FiPhone
+  FiPhone,
+  FiXCircle,
+  FiPlus,
+  FiExternalLink
 } from 'react-icons/fi';
 import { Video, Clock, User, ChevronRight, Calendar, Search, AlertCircle, MapPin } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
@@ -36,6 +37,7 @@ export default function ClientInterviewsTab() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedInterview, setSelectedInterview] = useState(null);
+  const [selectedRowIds, setSelectedRowIds] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -99,7 +101,7 @@ export default function ClientInterviewsTab() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 -mt-10">
+    <div className="space-y-6 animate-in fade-in duration-500 -mt-6">
       <style>{`
         input[type="date"]::-webkit-calendar-picker-indicator {
           background: transparent;
@@ -128,15 +130,15 @@ export default function ClientInterviewsTab() {
 
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-2xl p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3">
+        <div className="flex-1 flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-6 py-3.5 transition-all focus-within:bg-[#EEF2FB] focus-within:ring-2 focus-within:ring-blue-100">
+          <FiSearch className="text-[#9B9BAD]" size={18} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by candidate or role..."
-            className="w-full bg-[#F4F3EF] border-none rounded-xl py-2.5 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
+            placeholder="Search by candidate, position or host..."
+            className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 outline-none transition-all placeholder:text-[#9B9BAD]/60 placeholder:font-medium text-[#1A1A2E]"
           />
         </div>
 
@@ -144,7 +146,7 @@ export default function ClientInterviewsTab() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-[10px] font-black uppercase tracking-[2px] text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] hover:bg-[#EEEFED] transition-all"
           >
             <option value="All">All Status</option>
             <option value="Scheduled">Scheduled</option>
@@ -152,7 +154,7 @@ export default function ClientInterviewsTab() {
             <option value="Completed">Completed</option>
             <option value="Cancelled">Cancelled</option>
           </select>
-          <FiChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none opacity-50" />
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
         </div>
       </div>
 
@@ -163,6 +165,17 @@ export default function ClientInterviewsTab() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
+                <th className="px-6 py-4 text-center w-12">
+                  <input
+                    type="checkbox"
+                    checked={selectedRowIds.length === filteredInterviews.length && filteredInterviews.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedRowIds(filteredInterviews.map((_, i) => i));
+                      else setSelectedRowIds([]);
+                    }}
+                    className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] cursor-pointer focus:ring-[#1B4DA0]"
+                  />
+                </th>
                 <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Time & Date</th>
                 <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Candidate</th>
                 <th className="px-6 py-4 text-left text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Position</th>
@@ -175,10 +188,22 @@ export default function ClientInterviewsTab() {
             <tbody className="divide-y divide-[#F4F3EF]">
               {filteredInterviews.length > 0 ? filteredInterviews.map((iv, idx) => (
                 <tr key={idx} onClick={() => setSelectedInterview(iv)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                  <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedRowIds.includes(idx)}
+                      onChange={() => {
+                        setSelectedRowIds(prev =>
+                          prev.includes(idx) ? prev.filter(id => id !== idx) : [...prev, idx]
+                        );
+                      }}
+                      className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] cursor-pointer focus:ring-[#1B4DA0]"
+                    />
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col items-start text-left">
-                      <span className="text-sm font-bold text-[#1A1A2E]">{formatTime(iv.startTime)}</span>
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5 text-left">
+                      <span className="text-sm font-medium text-[#1A1A2E]">{formatTime(iv.startTime)}</span>
+                      <span className="text-[10px] font-medium text-[#9B9BAD] uppercase tracking-widest flex items-center gap-1.5 mt-0.5 text-left">
                         <Calendar size={10} className="text-[#1B4DA0]" /> {formatDate(iv.interviewDate)}
                       </span>
                     </div>
@@ -268,9 +293,6 @@ export default function ClientInterviewsTab() {
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xl font-black shadow-inner">
-                      {selectedInterview.candidateName?.split(' ').map(n => n[0]).join('').slice(0, 2) || '??'}
-                    </div>
                     <div>
                       <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedInterview.candidateName}</h2>
                       <div className="flex items-center gap-2 mt-1">
@@ -389,7 +411,7 @@ export default function ClientInterviewsTab() {
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF9]">
+                {/* <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF9]">
                   {selectedInterview.meetingLink ? (
                     <a
                       href={selectedInterview.meetingLink}
@@ -401,16 +423,65 @@ export default function ClientInterviewsTab() {
                       Join Video Meeting
                     </a>
                   ) : (
-                    <button
-                      onClick={() => setSelectedInterview(null)}
-                      className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl shadow-gray-200"
-                    >
-                      Close Details
-                    </button>
                   )}
-                </div>
+                </div> */}
               </motion.div>
             </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* ── Selection Action Bar (Inside Portal for true fixed positioning) ── */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedRowIds.length > 0 && (
+            <div className="fixed bottom-10 left-0 md:left-80 flex justify-start z-[20000] pointer-events-none">
+              <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                className="bg-[#1A1A2E] text-white px-8 py-4 rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] flex items-center gap-8 border border-white/10 pointer-events-auto"
+              >
+                <div className="flex items-center gap-3 border-r border-white/10 pr-8">
+                  <div className="w-6 h-6 rounded-full bg-[#3B82F6] flex items-center justify-center text-[10px] font-black">
+                    {selectedRowIds.length}
+                  </div>
+                  <span className="text-[13px] font-bold tracking-wide">Interviews Selected</span>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => {
+                      setInterviews(prev => prev.map((iv, idx) => selectedRowIds.includes(idx) ? { ...iv, status: 'Scheduled' } : iv));
+                      setSelectedRowIds([]);
+                    }}
+                    className="flex items-center gap-2 hover:bg-white/10 px-4 py-2 rounded-xl transition-all active:scale-95 text-xs font-bold"
+                  >
+                    <FiClock size={16} className="text-[#3B82F6]" />
+                    Reschedule
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setInterviews(prev => prev.map((iv, idx) => selectedRowIds.includes(idx) ? { ...iv, status: 'Cancelled' } : iv));
+                      setSelectedRowIds([]);
+                    }}
+                    className="flex items-center gap-2 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl transition-all active:scale-95 text-xs font-bold"
+                  >
+                    <FiXCircle size={16} />
+                    Cancel Interview
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setSelectedRowIds([])}
+                  className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-red-500/20 hover:text-red-400 transition-all ml-4"
+                >
+                  <FiX size={20} />
+                </button>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>,
         document.body
