@@ -406,19 +406,26 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
 
       {/* Filter & Search Bar */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="flex-1 flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-6 py-4 transition-all focus-within:bg-[#EEF2FB] focus-within:ring-2 focus-within:ring-blue-100">
-          <FiSearch className="text-[#9B9BAD]" size={20} />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by candidate, role or host..."
-            className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
-          />
+        <div className="flex-1 min-w-[300px]">
+          <div className="relative flex items-center group">
+            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by candidate, role or host..."
+              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-bold focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2">
+                <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
+              </button>
+            )}
+          </div>
         </div>
         <div className="hidden lg:flex items-center gap-3">
             {['ALL DATES', 'ALL CLIENTS', 'ALL STATUS'].map(f => (
-                <button key={f} className="flex items-center gap-3 px-6 py-4 bg-[#F4F3EF] hover:bg-[#EEEFED] text-[#4B4B5E] text-[10px] font-black uppercase tracking-[2px] rounded-2xl transition-all shadow-sm">
+                <button key={f} className="flex items-center gap-3 px-6 py-3 bg-[#F4F3EF] hover:bg-[#EEEFED] text-[#4B4B5E] text-[10px] font-black uppercase tracking-[2px] rounded-2xl transition-all shadow-sm">
                     {f} <FiChevronDown size={14} className="text-[#9B9BAD]" />
                 </button>
             ))}
@@ -439,8 +446,8 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                   />
                 </th>
                 <th className="px-8 py-10 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Member</th>
-                <th className="px-8 py-10 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Department</th>
-                <th className="px-8 py-10 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Email Address</th>
+                <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Department</th>
+                <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Email Address</th>
                 <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] w-32">Connect</th>
                 <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] w-12">Actions</th>
               </tr>
@@ -471,31 +478,32 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                         className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
                       />
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap">
-                      <div className="flex items-center gap-6">
+                    <td className="px-8 py-12 whitespace-nowrap text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-lg font-black shadow-xl border border-[#F4F3EF] group-hover:scale-110 transition-transform overflow-hidden">
-                          {member.profilePhoto ? (
-                            <img src={member.profilePhoto} alt={member.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{(member.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
-                          )}
+                          {member.profilePhoto && (String(member.profilePhoto).includes('data:image') || String(member.profilePhoto).includes('http')) ? (
+                            <img src={member.profilePhoto} alt={member.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                          ) : null}
+                          <span style={{ display: member.profilePhoto && (String(member.profilePhoto).includes('data:image') || String(member.profilePhoto).includes('http')) ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>{(member.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 text-center">
                           <p className="text-base font-black text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors tracking-tight">{member.name}</p>
                           <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mt-0.5">MEMBER SINCE {member.joiningDate?.split('-')[0] || '2023'}</span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap">
-                      <div className="flex flex-col items-start">
+                    <td className="px-8 py-12 whitespace-nowrap text-center">
+                      <div className="flex flex-col items-center justify-center h-full">
                         <span className="text-sm font-bold text-[#1A1A2E]">{member.department}</span>
-                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] flex items-center justify-center gap-1.5 mt-0.5">
                            <FiActivity size={10} className="text-[#1B4DA0]" /> {member.stats?.interviewsScheduled || 0} Active Status
                         </span>
                       </div>
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap">
-                      <span className="text-sm font-bold text-[#4B4B5E]">{member.email}</span>
+                    <td className="px-8 py-12 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center h-full">
+                        <span className="text-sm font-bold text-[#4B4B5E]">{member.email}</span>
+                      </div>
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-3">
@@ -630,11 +638,12 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                   {/* Profile Header Block */}
                   <div className="bg-[#FAFAF9] rounded-[40px] p-8 border border-[#F4F3EF] flex flex-col items-center text-center">
                     <div className="w-24 h-24 rounded-[32px] bg-gradient-to-br from-white to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-3xl font-black shadow-2xl border border-[#F4F3EF] group-hover:scale-105 transition-transform overflow-hidden relative">
-                      {editableMember?.profilePhoto ? (
-                        <img src={editableMember.profilePhoto} alt="" className="w-full h-full object-cover" />
-                      ) : (
+                      {editableMember?.profilePhoto && (String(editableMember.profilePhoto).includes('data:image') || String(editableMember.profilePhoto).includes('http')) ? (
+                        <img src={editableMember.profilePhoto} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                      ) : null}
+                      {!editableMember?.profilePhoto || !(String(editableMember.profilePhoto).includes('data:image') || String(editableMember.profilePhoto).includes('http')) ? (
                         <span>{(editableMember?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
-                      )}
+                      ) : null}
                     </div>
                     <div className="mt-6 w-full max-w-sm">
                       {isEditingInDetail ? (
@@ -742,6 +751,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+              onClick={() => { setShowModal(false); setEditingMember(null); }}
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
@@ -754,10 +764,10 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                 <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
                   <div>
                     <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      {editingMember ? 'Edit Member Details' : 'Invite Team Member'}
+                      {editingMember ? 'Edit Member Details' : 'Add Team Member'}
                     </h2>
                     <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
-                      {editingMember ? 'Update member details' : 'Send an invitation to join the team'}
+                      {editingMember ? 'Update member details' : 'Add a new team member'}
                     </p>
                   </div>
                   <button
@@ -834,12 +844,17 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                       </div>
                     </div>
                     <div className="space-y-2 text-left">
-                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number *</label>
+                      <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number * (10 Digits)</label>
                       <div className="relative flex items-center">
                         <FiPhone className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="tel" required placeholder="+91 9876543210"
+                        <input type="tel" required placeholder="9876543210" maxLength="10"
                           className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10"
-                          value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          value={formData.phone} 
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '');
+                            setFormData({ ...formData, phone: value });
+                          }}
+                          pattern="[0-9]{10}"
                           style={{ fontFamily: "'Calibri', sans-serif" }} />
                       </div>
                     </div>

@@ -182,7 +182,8 @@ const transformKAMData = (apiData) => {
     email: member.email || '',
     phone: member.phone || '',
     role: member.role || 'KAM - Recruitment',
-    avatar: member.avatar || (member.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+    avatar: member.profilePhoto || member.avatar || (member.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+    profilePhoto: member.profilePhoto || null,
     status: member.status || 'Active',
     color: AVATAR_COLORS[idx % AVATAR_COLORS.length],
     stats: {
@@ -253,8 +254,13 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
         style={{ backgroundColor: cardBg }}
       >
         <div className="absolute -bottom-8 left-6">
-          <div className="w-16 h-16 rounded-xl bg-white shadow-lg flex items-center justify-center text-xl font-bold text-gray-700 border-4 border-white">
-            {kam.avatar}
+          <div className="w-16 h-16 rounded-xl bg-white shadow-lg flex items-center justify-center text-xl font-bold text-gray-700 border-4 border-white overflow-hidden">
+            {(String(kam.profilePhoto).includes('data:image') || String(kam.profilePhoto).includes('http')) ? (
+              <img src={kam.profilePhoto} alt={kam.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+            ) : null}
+            {!kam.profilePhoto || !(String(kam.profilePhoto).includes('data:image') || String(kam.profilePhoto).includes('http')) ? (
+              <span>{kam.avatar}</span>
+            ) : null}
           </div>
         </div>
         <div className="absolute top-4 right-4">
@@ -2188,8 +2194,26 @@ const RecruitmentHeadDashboard = () => {
     setFormSubmitting(true);
 
     try {
+      // Prepare form data - use FormData if we have a file to upload
+      let submitData = { ...kamFormData };
+      if (kamFormData.profilePhoto instanceof File) {
+        const formData = new FormData();
+        formData.append('name', kamFormData.name);
+        formData.append('email', kamFormData.email);
+        formData.append('phone', kamFormData.phone);
+        formData.append('role', kamFormData.role);
+        formData.append('department', kamFormData.department);
+        formData.append('joiningDate', kamFormData.joiningDate);
+        formData.append('monthlyHiringTarget', kamFormData.monthlyHiringTarget);
+        formData.append('profilePhoto', kamFormData.profilePhoto);
+        submitData = formData;
+      } else if (kamFormData.profilePhotoPreview && !kamFormData.profilePhoto) {
+        // If we have a preview but no file (shouldn't happen), use the preview data
+        submitData.profilePhoto = kamFormData.profilePhotoPreview;
+      }
+
       if (kamFormMode === 'add') {
-        const response = await createKAMMember(kamFormData);
+        const response = await createKAMMember(submitData);
         if (response.success || response.data) {
           const newMember = response.data || kamFormData;
           const colorIndex = kamTeam.length % AVATAR_COLORS.length;
@@ -2209,11 +2233,11 @@ const RecruitmentHeadDashboard = () => {
           showToast(`${kamFormData.name} has been added to the team!`, 'success');
         }
       } else {
-        const response = await updateKAMMember(kamFormData.id, kamFormData);
+        const response = await updateKAMMember(kamFormData.id, submitData);
         if (response.success || response.data) {
           setKamTeam(prev => prev.map(k =>
             k.id === kamFormData.id
-              ? { ...k, name: kamFormData.name, email: kamFormData.email, phone: kamFormData.phone, role: kamFormData.role, profilePhoto: kamFormData.profilePhotoPreview, avatar: kamFormData.profilePhotoPreview || k.avatar }
+              ? { ...k, name: kamFormData.name, email: kamFormData.email, phone: kamFormData.phone, role: kamFormData.role, profilePhoto: kamFormData.profilePhotoPreview || k.profilePhoto, avatar: kamFormData.profilePhotoPreview || k.profilePhoto || k.avatar }
               : k
           ));
           showToast(`${kamFormData.name}'s details have been updated!`, 'success');
@@ -3325,11 +3349,16 @@ const RecruitmentHeadDashboard = () => {
                 <div className="flex flex-col items-center text-center space-y-4">
                   <div className="w-20 h-20 rounded-[28px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-blue-500/20 overflow-hidden"
                     style={{ background: selectedKAM.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}>
-                    {String(selectedKAM.avatar).includes('data:image') || String(selectedKAM.avatar).includes('http') ? (
-                      <img src={selectedKAM.avatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      selectedKAM.avatar || (selectedKAM.name || 'U')[0]
-                    )}
+                    {selectedKAM.profilePhoto && (String(selectedKAM.profilePhoto).includes('data:image') || String(selectedKAM.profilePhoto).includes('http')) ? (
+                      <img src={selectedKAM.profilePhoto} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                    ) : null}
+                    {!selectedKAM.profilePhoto || !(String(selectedKAM.profilePhoto).includes('data:image') || String(selectedKAM.profilePhoto).includes('http')) ? (
+                      String(selectedKAM.avatar).includes('data:image') || String(selectedKAM.avatar).includes('http') ? (
+                        <img src={selectedKAM.avatar} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                      ) : (
+                        <span>{selectedKAM.avatar || (selectedKAM.name || 'U')[0]}</span>
+                      )
+                    ) : null}
                   </div>
                   <div>
                     {isEditingInDetail ? (
@@ -3426,8 +3455,6 @@ const RecruitmentHeadDashboard = () => {
                   </div>
                 </div>
               </div>
-
-
             </motion.div>
           </React.Fragment>
         )}
@@ -3802,6 +3829,7 @@ const RecruitmentHeadDashboard = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                onClick={() => setShowKAMFormModal(false)}
                 className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto"
           >
             <motion.div
@@ -3815,10 +3843,10 @@ const RecruitmentHeadDashboard = () => {
               <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
                 <div>
                   <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    {kamFormMode === 'add' ? 'Invite Team Member' : 'Edit Member Details'}
+                    {kamFormMode === 'add' ? 'Add Team Member' : 'Edit Member Details'}
                   </h2>
                   <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
-                    {kamFormMode === 'add' ? 'Send an invitation to join the team' : 'Update member details'}
+                    {kamFormMode === 'add'}
                   </p>
                 </div>
                 <button
@@ -3898,12 +3926,18 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number *</label>
+                    <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number * (10 Digits)</label>
                     <div className="relative flex items-center">
                       <FiPhone className="absolute left-4 text-[#C5C5D2]" />
-                      <input type="tel" required placeholder="+91 9876543210"
+                      <input type="tel" required placeholder="9876543210" maxLength="10"
                         className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                        value={kamFormData.phone} onChange={(e) => setKamFormData({ ...kamFormData, phone: e.target.value })} disabled={formSubmitting} />
+                        value={kamFormData.phone} 
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          setKamFormData({ ...kamFormData, phone: value });
+                        }} 
+                        pattern="[0-9]{10}"
+                        disabled={formSubmitting} />
                     </div>
                   </div>
                 </div>
@@ -3985,7 +4019,7 @@ const RecruitmentHeadDashboard = () => {
                         <span>Processing...</span>
                       </>
                     ) : (
-                      <>{kamFormMode === 'add' ? 'Send Invitation' : 'Save Changes'}</>
+                      <>{kamFormMode === 'add' ? 'Add Member' : 'Save Changes'}</>
                     )}
                   </button>
                 </div>

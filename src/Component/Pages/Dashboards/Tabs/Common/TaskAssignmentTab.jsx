@@ -37,7 +37,7 @@ import {
   createDepartmentTask,
   updateDepartmentTask,
   deleteDepartmentTask,
-  getAllKAMMembers,
+  getDepartmentTeamMembers,
 } from '../../../service/api';
 
 const StatusBadge = ({ status }) => {
@@ -159,7 +159,7 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
       {/* Header - Sticky Style */}
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
         <div className="flex-1 mr-4">
-          <h2 className="text-2xl font-black text-[#1A1A2E] font-syne outline-none">{editableTask.title || 'Task Details'}</h2>
+          <h2 className="text-2xl font-semibold text-[#1A1A2E] font-syne outline-none">{editableTask.title || 'Task Details'}</h2>
           <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
             <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] outline-none truncate">
                 {task.assignedToName || 'PENDING ASSIGNMENT'}
@@ -224,153 +224,117 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
       </div>
 
       <div className="flex-1 p-10 space-y-10 overflow-y-auto custom-scrollbar">
-        {/* Status Quick View */}
-        <div className="flex flex-wrap gap-4">
-           <div className="flex items-center gap-2.5 px-3 py-1.5 bg-[#F4F3EF] rounded-lg border border-[#E8E7E2]">
-              <span className={`w-2 h-2 rounded-full ${task.status === 'Completed' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+        {/* Status & Priority Quick View */}
+        <div className="flex flex-wrap gap-4 items-center">
+           <div className="flex items-center gap-2.5 px-4 py-2 bg-[#F4F3EF] rounded-full border border-[#E8E7E2]">
+              <span className={`w-2.5 h-2.5 rounded-full ${task.status === 'Completed' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
               <span className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest">{task.status}</span>
            </div>
-           <div className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg border ${
+           <div className={`flex items-center gap-2.5 px-4 py-2 rounded-full border font-black uppercase tracking-widest text-[10px] ${
             task.priority === 'High' || task.priority === 'Urgent' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[#F4F3EF] border-[#E8E7E2] text-[#1A1A2E]'
            }`}>
               <FiFlag size={12} />
-              <span className="text-[10px] font-black uppercase tracking-widest">{task.priority} PRIORITY</span>
+              <span>{task.priority} PRIORITY</span>
            </div>
         </div>
 
-        {/* Unified Info Block */}
-        <div className="bg-[#FAFAF9] rounded-[40px] border border-[#F4F3EF] p-10 space-y-10 shadow-sm">
-          {/* Main Attributes */}
-          <div className="grid grid-cols-2 gap-x-12 gap-y-10">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Assigned Specialist</span>
-                {isEditing && <span className="text-[9px] font-bold text-[#1B4DA0] italic">Select below</span>}
-              </div>
-              <div className="flex items-center gap-4 relative">
-                <div className="w-12 h-12 rounded-2xl bg-[#F0F7FF] text-[#1B4DA0] flex items-center justify-center font-black text-sm border border-[#1B4DA0]/10 shadow-sm group-hover:scale-110 transition-transform">
-                  {editableTask.assignedToName?.split(' ').map(n => n[0]).join('') || '?'}
-                </div>
-                <div className="flex-1">
-                    <input
-                      type="text"
-                      readOnly={!isEditing}
-                      className={`w-full bg-transparent text-base font-black text-[#1A1A2E] outline-none border-b-2 transition-all ${isEditing ? 'border-[#1B4DA0] pb-1' : 'border-transparent'}`}
-                      value={editableTask.assignedToName}
-                      onChange={e => {
-                        setEditableTask(p => ({ ...p, assignedToName: e.target.value }));
-                        if (isEditing) setShowAssigneeSuggestions(true);
-                      }}
-                      onFocus={() => isEditing && setShowAssigneeSuggestions(true)}
-                      onBlur={(e) => {
-                        setTimeout(() => setShowAssigneeSuggestions(false), 200);
-                      }}
-                    />
-                    
-                    {showAssigneeSuggestions && (
-                      <div className="absolute z-50 top-full left-0 mt-3 w-full bg-white border border-[#F4F3EF] rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar">
-                        {teamMembers
-                          .filter(m => m.name.toLowerCase().includes((editableTask.assignedToName || '').toLowerCase()))
-                          .map(m => (
-                            <div
-                              key={m.id || m._id}
-                              className="px-5 py-4 hover:bg-[#F9F9F8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-4"
-                              onClick={() => {
-                                const newId = m.id || m._id;
-                                const newName = m.name;
-                                setEditableTask(p => ({ ...p, assignedToName: newName, assignedTo: newId }));
-                                handleBlur('assignedTo', newId);
-                                setTimeout(() => handleBlur('assignedToName', newName), 100);
-                                setShowAssigneeSuggestions(false);
-                              }}
-                            >
-                              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[11px]">
-                                {m.name.charAt(0)}
-                              </div>
-                              <span className="text-sm font-bold text-[#1A1A2E]">{m.name}</span>
+        {/* Unified Info Block - Like Job Opening Format */}
+        <div className="bg-[#FAFAF9] rounded-[40px] border border-[#F4F3EF] p-10 space-y-8 shadow-sm">
+          {/* Two Column Grid Layout */}
+          <div className="grid grid-cols-2 gap-x-16 gap-y-8">
+            {/* Assigned Specialist */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Assigned To</span>
+              {isEditing ? (
+                <div className="relative">
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    className="w-full text-base font-bold text-[#1A1A2E] bg-white border border-[#1B4DA0] rounded-xl px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-[#1B4DA0]/10"
+                    value={editableTask.assignedToName}
+                    onChange={e => {
+                      setEditableTask(p => ({ ...p, assignedToName: e.target.value }));
+                      setShowAssigneeSuggestions(true);
+                    }}
+                    onFocus={() => setShowAssigneeSuggestions(true)}
+                    onBlur={(e) => setTimeout(() => setShowAssigneeSuggestions(false), 200)}
+                    placeholder="Search team member..."
+                  />
+                  
+                  {showAssigneeSuggestions && (
+                    <div className="absolute z-50 top-full left-0 mt-2 w-full bg-white border border-[#F4F3EF] rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar">
+                      {teamMembers
+                        .filter(m => m.name.toLowerCase().includes((editableTask.assignedToName || '').toLowerCase()))
+                        .map(m => (
+                          <div
+                            key={m.id || m._id}
+                            className="px-5 py-3 hover:bg-[#F9F9F8] cursor-pointer border-b border-[#F4F3EF] last:border-0 flex items-center gap-3"
+                            onClick={() => {
+                              setEditableTask(p => ({ ...p, assignedToName: m.name, assignedTo: m.id || m._id }));
+                              setShowAssigneeSuggestions(false);
+                            }}
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                              {m.name.charAt(0)}
                             </div>
-                          ))}
-                      </div>
-                    )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deadline Protocol</span>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center border border-rose-100 shadow-sm">
-                   <FiCalendar size={20} />
-                </div>
-                <div className="flex flex-col">
-                    <input type="date"
-                      readOnly={!isEditing}
-                      className={`text-base font-black transition-all outline-none border-b-2 ${isEditing ? 'border-rose-300 pb-1' : 'border-transparent text-[#1A1A2E]'} ${relativeDate.color} cursor-pointer`}
-                      value={editableTask.dueDate}
-                      onChange={e => setEditableTask(p => ({ ...p, dueDate: e.target.value }))}
-                      onBlur={e => handleBlur('dueDate', e.target.value)}
-                    />
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${relativeDate.color} mt-0.5`}>{relativeDate.label} PHASE</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Metrics & Performance */}
-            {task.targets && task.targets.length > 0 && (
-              <div className="col-span-2 space-y-6 pt-10 border-t border-[#F4F3EF]">
-                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Mission Metrics</span>
-                    <div className="h-px bg-[#F4F3EF] flex-1 ml-8" />
-                 </div>
-                 <div className="grid grid-cols-2 gap-6">
-                    {task.targets.map((tg, idx) => (
-                    <div key={idx} className="bg-white border border-[#F4F3EF] rounded-[24px] p-6 flex items-center gap-5 hover:shadow-lg transition-all duration-300 group">
-                      <div className="w-12 h-12 rounded-2xl bg-[#FAFAF9] text-[#1B4DA0] flex items-center justify-center shrink-0 border border-[#F4F3EF] group-hover:bg-[#1B4DA0] group-hover:text-white transition-colors shadow-sm">
-                        {tg.type === 'Calling' && <FiPhone size={20} />}
-                        {tg.type === 'Interviews' && <FiUsers size={20} />}
-                        {tg.type === 'Hiring' && <FiUserPlus size={20} />}
-                        {tg.type === 'Profile Visited' && <FiEye size={20} />}
-                      </div>
-                      <div className="text-left">
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">{tg.type}</p>
-                        <p className="text-xl font-black text-[#1A1A2E]">{tg.value}</p>
-                      </div>
+                            <span className="text-sm font-bold text-[#1A1A2E]">{m.name}</span>
+                          </div>
+                        ))}
                     </div>
-                  ))}
-                 </div>
-              </div>
-            )}
+                  )}
+                </div>
+              ) : (
+                <p className="text-base font-black text-[#1A1A2E]">{editableTask.assignedToName || '—'}</p>
+              )}
+            </div>
 
-            {/* Description Block */}
-            <div className="col-span-2 space-y-6 pt-10 border-t border-[#F4F3EF]">
-                <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Task Description</span>
-                    <div className="h-px bg-[#F4F3EF] flex-1 ml-8" />
+            {/* Deadline */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deadline </span>
+              {isEditing ? (
+                <input 
+                  type="date"
+                  className="text-base font-bold text-[#1A1A2E] bg-white border border-[#1B4DA0] rounded-xl px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-[#1B4DA0]/10"
+                  value={editableTask.dueDate}
+                  onChange={e => setEditableTask(p => ({ ...p, dueDate: e.target.value }))}
+                />
+              ) : (
+                <div>
+                  <p className="text-base font-black text-[#1A1A2E]">{editableTask.dueDate || '—'}</p>
                 </div>
-                <div className={`p-6 bg-white rounded-[24px] border transition-all ${isEditing ? 'border-[#1B4DA0] shadow-md' : 'border-[#F4F3EF]'}`}>
-                    <textarea
-                      readOnly={!isEditing}
-                      className="w-full bg-transparent text-sm text-[#4B4B5E] leading-relaxed font-bold resize-none outline-none placeholder:text-[#9B9BAD]"
-                      rows={Math.max(5, (editableTask.description || '').split('\n').length)}
-                      value={editableTask.description}
-                      onChange={e => setEditableTask(p => ({ ...p, description: e.target.value }))}
-                      onBlur={e => handleBlur('description', e.target.value)}
-                      placeholder="Brief your team on mission details..."
-                    />
-                </div>
+              )}
+            </div>
+
+            {/* Priority */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Priority Level</span>
+              {isEditing ? (
+                <select
+                  className="w-full text-base font-bold text-[#1A1A2E] bg-white border border-[#1B4DA0] rounded-xl px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
+                  value={editableTask.priority}
+                  onChange={e => setEditableTask(p => ({ ...p, priority: e.target.value }))}
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Urgent">Urgent</option>
+                </select>
+              ) : (
+                <p className={`text-base font-black ${task.priority === 'High' || task.priority === 'Urgent' ? 'text-rose-600' : 'text-[#1A1A2E]'}`}>
+                  {editableTask.priority}
+                </p>
+              )}
+            </div>
+
+            {/* Status */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Task Status</span>
+              <p className={`text-base font-black ${task.status === 'Completed' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {task.status}
+              </p>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Footer Navigation */}
-      <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFA]">
-        <button
-          onClick={onBack}
-          className="w-full py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:bg-slate-50 transition-all active:scale-95"
-        >
-          Close Detail View
-        </button>
       </div>
     </div>
   );
@@ -465,7 +429,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
 
       const [tasksRes, membersRes] = await Promise.all([
         fetchWithTimeout(getDepartmentTasks(department)).catch((e) => { console.error('Tasks fetch error:', e); return null; }),
-        fetchWithTimeout(getAllKAMMembers(department)).catch((e) => { console.error('Members fetch error:', e); return null; }),
+        fetchWithTimeout(getDepartmentTeamMembers(department)).catch((e) => { console.error('Members fetch error:', e); return null; }),
       ]);
 
       console.log('Department:', department);
@@ -475,10 +439,17 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       if (tasksRes?.tasks && tasksRes.tasks.length > 0) {
         setTasks(tasksRes.tasks.map(t => ({ ...t, id: t.id || t._id })));
       }
-      // getAllKAMMembers returns { success: true, data: [...] }
-      if (membersRes?.success && membersRes?.data) {
-        setTeamMembers(membersRes.data);
-        console.log('Set teamMembers:', membersRes.data);
+      if (membersRes?.success && membersRes?.members && membersRes.members.length > 0) {
+        const mappedMembers = membersRes.members.map(m => ({
+          ...m,
+          id: m.id || m._id,
+          _id: m.id || m._id
+        }));
+        setTeamMembers(mappedMembers);
+        console.log('Team members loaded:', mappedMembers);
+      } else {
+        console.warn('No team members found:', membersRes);
+        setTeamMembers([]);
       }
     } catch (error) {
       console.warn('API Error, using mock data:', error);
@@ -491,6 +462,20 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
     e.preventDefault();
     if (!canAssignTasks) {
       showToast('Only admins can assign tasks', 'error');
+      return;
+    }
+
+    // Validate assignedTo field
+    if (!formData.assignedTo || formData.assignedTo.trim() === '') {
+      showToast('Please select a team member to assign the task', 'error');
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(formData.assignedTo)) {
+      showToast(`Invalid team member ID format: ${formData.assignedTo}`, 'error');
+      console.error('Invalid UUID:', formData.assignedTo);
       return;
     }
 
@@ -939,13 +924,20 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                         <select
                           required
                           value={formData.assignedTo}
-                          onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                          onChange={(e) => {
+                            const selectedId = e.target.value;
+                            console.log('Selected member ID:', selectedId);
+                            setFormData({ ...formData, assignedTo: selectedId });
+                          }}
                           className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-12 pr-10 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all appearance-none cursor-pointer"
                         >
                           <option value="">Select member</option>
-                          {teamMembers.map((member) => (
-                            <option key={member.id || member._id} value={member.id || member._id}>{member.name}</option>
-                          ))}
+                          {teamMembers && teamMembers.length > 0 ? teamMembers.map((member) => {
+                            const memberId = member.id || member._id;
+                            return (
+                              <option key={memberId} value={memberId}>{member.name}</option>
+                            );
+                          }) : <option disabled>No team members available</option>}
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                           <FiMoreHorizontal size={14} className="rotate-90" />

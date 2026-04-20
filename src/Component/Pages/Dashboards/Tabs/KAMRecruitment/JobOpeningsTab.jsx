@@ -2351,11 +2351,17 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 }}
               />
             </div>
-            {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => (
-              <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start justify-start">
+            {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => {
+              let alignClass = "text-left flex items-start justify-start";
+              if (["Status", "Posted", "Applicants"].includes(h)) {
+                alignClass = "text-center flex items-center justify-center";
+              }
+              return (
+              <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${alignClass}`}>
                 {h}
               </div>
-            ))}
+            );
+            })}
           </div>
 
           {filteredJobs.length === 0 ? (
@@ -2413,17 +2419,17 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
                   {job.client}
                 </div>
-                <div className="flex items-center justify-start py-1">
+                <div className="flex items-center justify-center py-3">
                   <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${STATUS_STYLES[job.status] || "bg-slate-50 text-slate-400 border-slate-100"}`}>
                     {job.status}
                   </span>
                 </div>
-                <div className="flex items-center justify-start py-1">
+                <div className="flex items-center justify-center py-3">
                   <span className="text-xs font-bold text-[#94a3b8]">
                     {new Date(job.postedDate || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </span>
                 </div>
-                <div className="flex items-center justify-start gap-1 py-1">
+                <div className="flex items-center justify-center gap-1 py-3">
                   <span className="text-[13px] font-black text-[#1A1A2E]">{job.candidateCount}</span>
                   <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[1px] ml-0.5">Applicants</span>
                 </div>

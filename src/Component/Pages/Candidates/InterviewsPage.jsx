@@ -708,7 +708,7 @@ export default function InterviewsPage() {
             ) : (
               <FiDatabase className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />
             )}
-            {isSyncing ? 'Syncing...' : 'Sync SharePoint'}
+            {isSyncing ? 'Syncing...' : 'Sync Data'}
           </button>
           <button
             onClick={() => setIsScheduleModalOpen(true)}
@@ -797,7 +797,7 @@ export default function InterviewsPage() {
 
       {/* Table Interface */}
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
-        <div className="grid grid-cols-[40px_120px_2fr_1.5fr_1.5fr_120px_110px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+        <div className="grid grid-cols-[40px_120px_2fr_1.5fr_1.5fr_120px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
           <div className="flex items-center justify-center">
             <input
               type="checkbox"
@@ -806,7 +806,7 @@ export default function InterviewsPage() {
               className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
             />
           </div>
-          {["Time & Date", "Candidate", "Client", "Postion", "Host", "Status", "Actions", ""].map((h, i) => (
+          {["Time & Date", "Candidate", "Client", "Postion", "Host", "Actions", ""].map((h, i) => (
             <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center flex items-center justify-center">
               {h}
             </div>
@@ -828,7 +828,7 @@ export default function InterviewsPage() {
               <div
                 key={interview.id}
                 onClick={() => setSelectedInterview(interview)}
-                className={`grid grid-cols-[40px_120px_2fr_1.5fr_1.5fr_120px_110px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative ${isLive ? 'bg-amber-50/30' : ''}`}
+                className={`grid grid-cols-[40px_120px_2fr_1.5fr_1.5fr_120px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative ${isLive ? 'bg-amber-50/30' : ''}`}
               >
                 <div className="flex items-center justify-center" onClick={e => e.stopPropagation()}>
                   <input
@@ -840,7 +840,7 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Time & Date */}
-                <div className="flex flex-col justify-center items-center py-1">
+                <div className="flex flex-col justify-center items-center py-3">
                   <p className="text-[13px] font-bold text-[#1A1A2E] text-center">{formatTime(interview.time)}</p>
                   <div className="flex items-center justify-center gap-1 mt-0.5 opacity-60">
                     <Calendar size={10} className="text-[#9B9BAD]" />
@@ -851,7 +851,7 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Candidate */}
-                <div className="flex items-center justify-center min-w-0 py-1">
+                <div className="flex items-center justify-center min-w-0 py-3">
                   <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-center flex items-center gap-2">
                     {interview.candidateName}
                     {interview.source === 'sharepoint' && (
@@ -861,12 +861,12 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Client */}
-                <div className="flex items-center justify-center text-[13px] font-medium text-[#64748b] truncate py-1 text-center">
+                <div className="flex items-center justify-center text-[13px] font-medium text-[#64748b] truncate py-3 text-center">
                   {interview.clientName}
                 </div>
 
                 {/* Position */}
-                <div className="flex flex-col justify-center items-center min-w-0 py-1">
+                <div className="flex flex-col justify-center items-center min-w-0 py-3">
                   <p className="text-[13px] font-bold text-[#1A1A2E] truncate text-center">{interview.role}</p>
                   <div className="flex items-center justify-center gap-1 mt-0.5 opacity-50">
                     <Video size={10} className="text-[#9B9BAD]" />
@@ -875,37 +875,12 @@ export default function InterviewsPage() {
                 </div>
 
                 {/* Host */}
-                <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
-                  <select
-                    className="bg-transparent text-xs font-bold text-[#1A1A2E] outline-none border-0 cursor-pointer hover:text-[#1B4DA0] transition-colors text-center"
-                    value={interview.interviewer}
-                    onChange={(e) => handleInlineEdit(interview.id, 'interviewer', e.target.value, 'interviewerName')}
-                  >
-                    <option value={interview.interviewer}>{interview.interviewer}</option>
-                    {availableInterviewers.slice(0, 10).map(s => (
-                      <option key={s.id || s.name} value={s.name}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
-                  <select
-                    className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border bg-slate-50 outline-none cursor-pointer hover:border-slate-300 transition-all ${(STATUS_COLORS[interview.status] || STATUS_COLORS[Object.keys(STATUS_COLORS).find(k => k.toLowerCase() === interview.status?.toLowerCase())] || "")
-                        .split(' ').filter(c => !c.startsWith('bg-')).join(' ') || "text-slate-400 border-slate-100"
-                      }`}
-                    value={interview.status}
-                    onChange={(e) => handleInlineEdit(interview.id, 'status', e.target.value, 'status')}
-                  >
-                    <option value="Scheduled">Scheduled</option>
-                    <option value="In-Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
+                <div className="flex items-center justify-center py-3">
+                  <p className="text-[13px] font-bold text-[#1A1A2E] text-center">{interview.interviewer}</p>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-center gap-2 py-1 relative" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-center gap-2 py-3 relative" onClick={e => e.stopPropagation()}>
                   {joinable ? (
                     <button
                       onClick={() => window.open(interview.meetingLink, '_blank')}

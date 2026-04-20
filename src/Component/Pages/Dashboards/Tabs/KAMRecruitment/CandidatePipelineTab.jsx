@@ -777,27 +777,27 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         </div>
 
         {/* Unified Filter Bar */}
-        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-8">
+        <div className="flex items-center gap-3 mb-8">
           {/* Search Bar */}
           <div className="flex-1 min-w-[300px]">
-            <div className="flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-5 py-3">
-              <FiSearch className="w-[18px] h-[18px] text-[#9B9BAD] flex-shrink-0" />
+            <div className="relative flex items-center group">
+              <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
               <input 
                 type="text" 
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by candidate name, skill or title..."
-                className="bg-transparent text-sm text-[#1A1A2E] placeholder:text-[#9B9BAD] outline-none w-full font-bold" 
+                placeholder="Search by candidate, role or host..."
+                className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-bold focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
               />
               {searchTerm && (
-                <button onClick={() => setSearchTerm('')}>
+                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2">
                   <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
                 </button>
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3">
             {/* Job Opening Filter */}
             <div className="relative">
               <select
