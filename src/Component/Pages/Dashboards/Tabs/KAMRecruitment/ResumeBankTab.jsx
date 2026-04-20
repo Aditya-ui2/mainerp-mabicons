@@ -117,7 +117,7 @@ const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onUpdatePosition }) =
             <h2 className="text-3xl font-bold tracking-tight font-syne">{resume.candidateName || resume.fileName.split('.')[0]}</h2>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={onClose} className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${isDarkMode ? 'text-slate-400 border-slate-700 hover:bg-slate-800' : 'text-[#6B6B7E] border-[#F4F3EF] hover:text-[#1A1A2E] hover:bg-[#F4F3EF]'}`}>
+            <button onClick={onClose} className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${isDarkMode ? 'text-slate-400 border-slate-700 hover:bg-red-500/10 hover:text-red-500' : 'text-[#6B6B7E] border-[#F4F3EF] hover:bg-red-50 hover:text-red-500'}`}>
               <X size={24} />
             </button>
           </div>
@@ -187,7 +187,7 @@ const AssignPositionModal = ({ isOpen, onClose, positions, onConfirm, isAssignin
       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className={`relative z-[1101] w-full max-w-md rounded-[32px] p-8 shadow-2xl overflow-hidden pointer-events-auto ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-[#1A1A2E]'}`}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold font-syne">Assign to Position</h3>
-          <button onClick={onClose} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}><X size={20} /></button>
+          <button onClick={onClose} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'hover:bg-red-500/10 hover:text-red-500' : 'hover:bg-red-50 hover:text-red-500'}`}><X size={20} /></button>
         </div>
         <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
           {positions.length === 0 ? (
@@ -735,7 +735,7 @@ const ResumeBankTab = () => {
                   >
                     <Eye size={14} /> Open in New Tab
                   </a>
-                  <button onClick={() => setShowPreviewModal(false)} className="w-10 h-10 rounded-xl hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"><X size={20} /></button>
+                  <button onClick={() => setShowPreviewModal(false)} className="w-10 h-10 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center"><X size={20} /></button>
                 </div>
               </div>
               <div className="flex-1 bg-slate-100 p-4">
@@ -753,7 +753,6 @@ const ResumeBankTab = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-2xl font-bold font-syne text-[#1A1A2E] dark:text-white">Add Candidate</h3>
-                  <p className="text-xs text-[#9B9BAD] mt-1 font-bold uppercase tracking-widest">Register new talent profile</p>
                 </div>
                 <button onClick={() => setShowUploadModal(false)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all flex-shrink-0">
                   <X size={18} />
@@ -869,7 +868,7 @@ const ResumeBankTab = () => {
 
                 <button
                   onClick={() => setSelectedRowIds([])}
-                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all"
+                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center transition-all"
                 >
                   <X size={18} />
                 </button>

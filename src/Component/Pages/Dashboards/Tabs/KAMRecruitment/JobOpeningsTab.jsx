@@ -1779,9 +1779,6 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
                     {editingJob ? 'Edit Position' : modalStep === 2 ? 'Matching Resumes' : 'Create New Position'}
                   </h3>
-                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
-                    {modalStep === 1 ? 'Job Posting & Recruitment' : `${matchedResumes.length} candidates found`}
-                  </p>
                 </div>
                 <button
                   onClick={handleBackToJobs}
@@ -2249,10 +2246,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 alignClass = "text-center flex items-center justify-center";
               }
               return (
-              <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${alignClass}`}>
-                {h}
-              </div>
-            );
+                <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest ${alignClass}`}>
+                  {h}
+                </div>
+              );
             })}
           </div>
 

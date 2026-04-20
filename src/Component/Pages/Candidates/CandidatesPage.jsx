@@ -1504,7 +1504,7 @@ Mabicons Recruitment Team`);
             <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
               <div>
                 <h3 className="text-2xl font-bold text-[#1A1A2E] text-left" style={{ fontFamily: "'Syne', sans-serif" }}>Register New Candidate</h3>
-                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mt-1.5 text-left">Sourcing & Pipeline Integration</p>
+
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}

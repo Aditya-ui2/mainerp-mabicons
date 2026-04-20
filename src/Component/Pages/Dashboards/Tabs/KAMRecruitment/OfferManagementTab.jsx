@@ -1184,9 +1184,6 @@ const OfferManagementTab = ({ isDarkMode }) => {
                     </h2>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">
-                        Live Template Precision Protocol
-                      </p>
                     </div>
                   </div>
                   <button

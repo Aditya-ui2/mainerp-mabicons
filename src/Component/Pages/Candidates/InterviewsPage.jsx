@@ -1039,8 +1039,8 @@ export default function InterviewsPage() {
                       <>
                         {selectedInterview?.raw?.candidate?.status === 'Shortlisted' || selectedInterview?.raw?.candidate?.status === 'Rejected' ? (
                           <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest ${selectedInterview?.raw?.candidate?.status === 'Shortlisted'
-                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                              : 'bg-rose-50 text-rose-600 border border-rose-100'
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            : 'bg-rose-50 text-rose-600 border border-rose-100'
                             }`}>
                             {selectedInterview?.raw?.candidate?.status === 'Shortlisted' ? (
                               <>
@@ -1282,7 +1282,7 @@ export default function InterviewsPage() {
               <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
                 <div>
                   <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Schedule New Interview</h3>
-                  <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">Appointment Slot</p>
+
                 </div>
                 <button onClick={() => setIsScheduleModalOpen(false)}
                   className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">

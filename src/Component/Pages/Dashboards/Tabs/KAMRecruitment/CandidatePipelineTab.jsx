@@ -1067,27 +1067,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-3 pt-4">
-                  <button
-                    onClick={() => { setDrawerCandidate(null); setSelectedCandidateDetail(drawerCandidate); setShowDetailSidebar(true); }}
-                    className="w-full py-4 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
-                    style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)', boxShadow: '0 8px 20px rgba(27, 77, 160, 0.35)' }}
-                  >
-                    <FiUserCheck className="w-5 h-5" /> View Full Experience
-                  </button>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2] uppercase tracking-widest">
-                      <FiEdit2 className="w-4 h-4" /> Edit Profile
-                    </button>
-                    <button
-                      onClick={() => setDrawerCandidate(null)}
-                      className="py-3.5 bg-white text-[#9B9BAD] rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#F4F3EF] transition-all active:scale-[0.98] border border-[#F4F3EF] uppercase tracking-widest"
-                    >
-                      <FiX className="w-4 h-4" /> Close
-                    </button>
-                  </div>
-                </div>
+
               </div>
             </motion.div>
           </>
