@@ -13,6 +13,7 @@ import {
   FiMoreVertical,
   FiUser,
   FiChevronRight,
+  FiChevronDown,
   FiX
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -137,27 +138,33 @@ const HiringLifecycleTab = () => {
           />
         </div>
         
-        <select 
-          value={filterClient}
-          onChange={(e) => setFilterClient(e.target.value)}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
-        >
-          <option value="all">All Clients</option>
-          <option value="Zomato">Zomato</option>
-          <option value="Wipro">Wipro</option>
-          <option value="TCS">TCS</option>
-        </select>
+        <div className="relative">
+          <select 
+            value={filterClient}
+            onChange={(e) => setFilterClient(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+          >
+            <option value="all">All Clients</option>
+            <option value="Zomato">Zomato</option>
+            <option value="Wipro">Wipro</option>
+            <option value="TCS">TCS</option>
+          </select>
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
+        </div>
 
-        <select 
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
-        >
-          <option value="all">All Status</option>
-          <option value="On Track">On Track</option>
-          <option value="Due Soon">Due Soon</option>
-          <option value="Overdue">Overdue</option>
-        </select>
+        <div className="relative">
+          <select 
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="all">All Status</option>
+            <option value="On Track">On Track</option>
+            <option value="Due Soon">Due Soon</option>
+            <option value="Overdue">Overdue</option>
+          </select>
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
+        </div>
       </div>
 
       {/* Table Section */}
@@ -165,12 +172,11 @@ const HiringLifecycleTab = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-[#F8FAFF] border-b border-[#F4F3EF]">
+              <tr className="bg-white border-b border-[#F4F3EF]">
                 <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Candidate & Position</th>
                 <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Client & Joining</th>
                 <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Schedule</th>
-                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Status</th>
-                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-right">Actions</th>
+                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-right">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F4F3EF]">
@@ -207,29 +213,12 @@ const HiringLifecycleTab = () => {
                       <p className="text-[9px] font-bold text-slate-400 mt-0.5">Last: {row.lastCheckin}</p>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-left">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyle(row.status)}`}>
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-8 py-6">
+                    <div className="flex items-center justify-end">
                       <button 
-                        onClick={() => handleLogAction(row.id, 'call')}
-                        className="p-2.5 bg-[#F4F3EF] text-[#6B6B7E] hover:bg-blue-50 hover:text-[#0D47A1] rounded-xl transition-all shadow-sm"
-                        title="Log Call"
+                        className="p-2.5 bg-[#F4F3EF] text-[#1B4DA0] hover:text-[#0D47A1] rounded-xl transition-all shadow-sm active:scale-95"
                       >
-                        <FiPhone size={14} />
-                      </button>
-                      <button 
-                        onClick={() => handleLogAction(row.id, 'message')}
-                        className="p-2.5 bg-[#F4F3EF] text-[#6B6B7E] hover:bg-emerald-50 hover:text-emerald-600 rounded-xl transition-all shadow-sm"
-                        title="Send Message"
-                      >
-                        <FiMessageSquare size={14} />
-                      </button>
-                      <button className="p-2.5 bg-[#F4F3EF] text-[#6B6B7E] hover:bg-white hover:text-[#1A1A2E] rounded-xl transition-all shadow-sm">
-                        <FiMoreVertical size={14} />
+                        <FiChevronRight size={18} />
                       </button>
                     </div>
                   </td>
@@ -260,19 +249,20 @@ const HiringLifecycleTab = () => {
   );
 };
 
+import { createPortal } from 'react-dom';
+
 // Detail Drawer Component
 const CandidateDetailDrawer = ({ candidate, onClose }) => {
   if (!candidate) return null;
 
-  const isDarkMode = false; // Standard for this dashboard series
-
-  return (
-    <div className="fixed inset-0 z-[1100] flex justify-end" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[10001] flex justify-end" style={{ fontFamily: "'Calibri', sans-serif" }}>
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-[#1A1A2E66] backdrop-blur-md transition-opacity"
+        onClick={onClose}
       />
       
       <motion.div 
@@ -280,13 +270,13 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-[520px] h-full flex flex-col relative z-[1101] shadow-[-12px_0_40px_rgba(0,0,0,0.15)] overflow-hidden bg-white text-slate-900 font-syne"
+        className="w-full max-w-[520px] fixed right-0 top-0 bottom-0 flex flex-col z-[10002] shadow-[-12px_0_40px_rgba(0,0,0,0.15)] overflow-hidden bg-white text-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-[#F4F3EF] bg-white">
           <div className="text-left">
-            <h2 className="text-[32px] font-bold leading-tight text-[#1A1A2E]">
+            <h2 className="text-[32px] font-bold leading-tight text-[#1A1A2E] font-syne">
               {candidate.candidate}
             </h2>
             <div className="flex items-center gap-2 mt-2">
@@ -419,7 +409,8 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
           </div>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
