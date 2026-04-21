@@ -2751,8 +2751,20 @@ export const getAllKAMMembers = async (filtersOrDepartment = 'HR Recruitment') =
 };
 
 // Create new KAM member (uses /department/members)
-// Create new KAM member (uses /department/members) with local fallback
 export const createKAMMember = async (kamData) => {
+  // If it's already FormData, pass it through directly to support photo uploads
+  if (kamData instanceof FormData) {
+    try {
+      const response = await axiosInstance.post('/department/members', kamData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response.data;
+    } catch (error) {
+      console.warn('Failed to add member via FormData:', error.message);
+      throw error.response?.data || { message: 'Failed to add member' };
+    }
+  }
+
   const payload = {
     name: kamData.name,
     email: kamData.email,
@@ -2763,13 +2775,11 @@ export const createKAMMember = async (kamData) => {
     supervisorId: kamData.supervisorId,
     skills: kamData.skills,
     targets: kamData.targets,
-    profilePhoto: kamData.profilePhotoPreview || kamData.profilePhoto // Support base64 or file reference
+    profilePhoto: kamData.profilePhotoPreview || kamData.profilePhoto
   };
 
   try {
-    const response = await axiosInstance.post('/department/members', payload, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await axiosInstance.post('/department/members', payload);
     return response.data;
   } catch (error) {
     console.warn('Failed to add member to server, saving locally for now:', error.message);
@@ -2801,7 +2811,7 @@ export const createKAMMember = async (kamData) => {
 export const updateKAMMember = async (kamId, updateData) => {
   try {
     const response = await axiosInstance.put(`/department/members/${kamId}`, updateData, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': updateData instanceof FormData ? 'multipart/form-data' : 'application/json' }
     });
     return response.data;
   } catch (error) {
@@ -3304,24 +3314,74 @@ export const updateCandidate = async (candidateId, candidateData) => {
 };
 
 // Get department team members
-export const getDepartmentTeamMembers = async (department) => {
+export const getDepartmentTeamMembers = async (department = 'HR Recruitment') => {
   try {
+    // For recruitment, try the specialized KAM endpoint first
+    if (department.toLowerCase().includes('recruitment')) {
+      const kamRes = await getAllKAMMembers(department);
+      if (kamRes.success && kamRes.data && kamRes.data.length > 0) {
+        return { success: true, members: kamRes.data, data: kamRes.data };
+      }
+    }
+
     const response = await axiosInstance.get('/department/members', {
       params: { department }
     });
-    return response.data;
+    
+    // Normalize response data
+    let members = response.data?.data || response.data?.members || (Array.isArray(response.data) ? response.data : []);
+    
+    // Merge with mock members
+    const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
+    const isRecruitment = department && (department.toLowerCase().includes('recruitment') || department.toLowerCase().includes('kam'));
+
+    const filteredMocks = mockMembers.filter(m => {
+      if (!department) return true;
+      const normalizedDept = department.toLowerCase().trim();
+      const memberDept = (m.department || '').toLowerCase().trim();
+      
+      if (memberDept === normalizedDept) return true;
+      if (isRecruitment && (memberDept.includes('recruitment') || memberDept.includes('kam') || memberDept === '')) return true;
+      if (memberDept === normalizedDept.replace('hr ', '')) return true;
+      
+      return false;
+    });
+
+    const seenEmails = new Set(members.map(m => (m.email || '').toLowerCase()));
+    filteredMocks.forEach(mock => {
+      const email = (mock.email || '').toLowerCase();
+      if (email && !seenEmails.has(email)) {
+        members.push({ ...mock, isOffline: true });
+        seenEmails.add(email);
+      } else if (!email) {
+        members.push({ ...mock, isOffline: true });
+      }
+    });
+
+    return { success: true, members, data: members };
   } catch (error) {
-    console.error('Failed to fetch team members:', error);
-    throw error.response?.data || { message: 'Failed to fetch team members' };
+    console.error('Failed to fetch team members, using fallback:', error);
+    // Fallback to just mock members for this department
+    const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
+    const isRecruitment = department && (department.toLowerCase().includes('recruitment') || department.toLowerCase().includes('kam'));
+
+    const filteredMocks = mockMembers.filter(m => {
+      if (!department) return true;
+      const normalizedDept = department.toLowerCase().trim();
+      const memberDept = (m.department || '').toLowerCase().trim();
+      if (memberDept === normalizedDept) return true;
+      if (isRecruitment && (memberDept.includes('recruitment') || memberDept.includes('kam') || memberDept === '')) return true;
+      return false;
+    });
+    
+    return { success: true, members: filteredMocks, data: filteredMocks };
   }
 };
 
 // Add department team member
 export const addDepartmentTeamMember = async (memberData) => {
   try {
-    const response = await axiosInstance.post('/department/team-members', memberData, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await axiosInstance.post('/department/members', memberData);
     return response.data;
   } catch (error) {
     console.error('Failed to add team member:', error);
@@ -3332,9 +3392,7 @@ export const addDepartmentTeamMember = async (memberData) => {
 // Update department team member
 export const updateDepartmentTeamMember = async (memberId, updateData) => {
   try {
-    const response = await axiosInstance.put(`/department/team-members/${memberId}`, updateData, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await axiosInstance.put(`/department/members/${memberId}`, updateData);
     return response.data;
   } catch (error) {
     console.error('Failed to update team member:', error);
@@ -3345,7 +3403,7 @@ export const updateDepartmentTeamMember = async (memberId, updateData) => {
 // Delete department team member
 export const deleteDepartmentTeamMember = async (memberId) => {
   try {
-    const response = await axiosInstance.delete(`/department/team-members/${memberId}`);
+    const response = await axiosInstance.delete(`/department/members/${memberId}`);
     return response.data;
   } catch (error) {
     console.error('Failed to delete team member:', error);

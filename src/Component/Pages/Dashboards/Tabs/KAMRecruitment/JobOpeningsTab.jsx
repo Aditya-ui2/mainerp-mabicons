@@ -496,39 +496,17 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
   };
 
   const fieldClasses = `w-full bg-transparent rounded-xl px-2 py-1 transition-all outline-none border ${isEditing
-    ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white'
-    : 'border-transparent cursor-default'
+      ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white'
+      : 'border-transparent cursor-default'
     }`;
 
   return (
     <div className="flex flex-col h-full bg-white relative animate-in fade-in slide-in-from-right duration-500">
       {/* Header */}
       <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
-        <div className="text-left">
-          <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-            {job.title}
-            {job.clientSource === 'sharepoint' && (
-              <span className="ml-3 inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100 align-middle">
-                <Database size={10} /> SharePoint
-              </span>
-            )}
-          </h2>
-          <div className="flex items-center gap-2 mt-1.5 justify-start">
-            <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{job.department || job.client || 'Engineering'}</span>
-            <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-            <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.type || 'Full-time'}</span>
-            {job.clientSource === 'sharepoint' && (
-              <>
-                <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                <button
-                  onClick={() => window.open('https://mabicons.sharepoint.com/:f:/s/Recruitment', '_blank')}
-                  className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-[2px] transition-colors"
-                >
-                  View Folder
-                </button>
-              </>
-            )}
-          </div>
+        <div className="flex items-center gap-3">
+          <Briefcase className="text-[#0D47A1]" size={22} />
+          <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Position Details</h3>
         </div>
         <div className="flex items-center gap-3">
           {isEditing ? (
@@ -536,20 +514,16 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
               <button
                 disabled={isSaving}
                 onClick={handleCancel}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
               >
                 Cancel
               </button>
               <button
                 disabled={isSaving}
                 onClick={handleSave}
-                className="w-[145.83px] h-[32px] rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center gap-2 shadow-md shadow-blue-500/10"
               >
-                {isSaving ? (
-                  <RefreshCw size={14} className="animate-spin" />
-                ) : (
-                  <Check size={14} />
-                )}
+                {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
@@ -557,14 +531,14 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsEditing(true)}
-                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#0D47A1] transition-all active:scale-90 shadow-sm"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#0D47A1] hover:bg-blue-50 transition-all duration-300 shadow-sm"
                 title="Edit Position"
               >
-                <Pencil size={18} />
+                <Edit2 size={18} />
               </button>
               <button
                 onClick={onBack}
-                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm"
                 title="Close"
               >
                 <X size={20} />
@@ -574,164 +548,140 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
         </div>
       </div>
 
-      <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10 custom-scrollbar">
-        {/* Job Snapshot Info Grid */}
-        <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
-          <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-            {/* Location */}
-            <div className="space-y-1.5 group text-left">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Location</span>
-              <input
-                type="text"
-                readOnly={!isEditing}
-                className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
-                value={editableJob.location}
-                onChange={(e) => setEditableJob(p => ({ ...p, location: e.target.value }))}
-                placeholder="e.g. Remote, City"
-              />
-            </div>
-
-            {/* Salary */}
-            <div className="space-y-1.5 group text-left">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Salary Range</span>
-              <input
-                type="text"
-                readOnly={!isEditing}
-                className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
-                value={editableJob.salary}
-                onChange={(e) => setEditableJob(p => ({ ...p, salary: e.target.value }))}
-                placeholder="e.g. 5-8 LPA"
-              />
-            </div>
-
-            {/* Experience */}
-            <div className="space-y-1.5 group text-left">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Experience Required</span>
-              <input
-                type="text"
-                readOnly={!isEditing}
-                className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left`}
-                value={editableJob.experience}
-                onChange={(e) => setEditableJob(p => ({ ...p, experience: e.target.value }))}
-                placeholder="e.g. 2-3 Years"
-              />
-            </div>
-
-            {/* Openings */}
-            <div className="space-y-1.5 group text-left">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Openings</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  readOnly={!isEditing}
-                  className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] max-w-[80px] text-left`}
-                  value={editableJob.openings}
-                  onChange={(e) => setEditableJob(p => ({ ...p, openings: e.target.value }))}
-                />
-                {!isEditing && <span className="text-sm font-bold text-[#1A1A2E]">Position(s)</span>}
-              </div>
-            </div>
-
-            {/* Deadline */}
-            <div className="space-y-1.5 group text-left">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Deadline</span>
-              <input
-                type="date"
-                readOnly={!isEditing}
-                className={`${fieldClasses} text-sm font-bold text-[#1A1A2E] text-left ${isEditing ? 'cursor-pointer' : ''}`}
-                value={editableJob.deadline}
-                onChange={(e) => setEditableJob(p => ({ ...p, deadline: e.target.value }))}
-              />
-            </div>
-
-            {/* Priority */}
-            <div className="space-y-1.5 group text-left relative">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Priority</span>
-              {isEditing ? (
-                <div className="relative">
-                  <select
-                    className="w-full bg-[#0D47A1]/5 border border-[#0D47A1]/20 rounded-xl p-2 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer appearance-none focus:bg-white focus:border-[#0D47A1] transition-all text-left"
-                    value={editableJob.priority}
-                    onChange={(e) => setEditableJob(p => ({ ...p, priority: e.target.value }))}
-                  >
-                    <option value="Critical">Critical</option>
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#9B9BAD] w-3 h-3" />
-                </div>
-              ) : (
-                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${editableJob.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' :
-                  editableJob.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'
-                  }`}>
-                  {editableJob.priority}
+      <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
+        {/* Identity Section (Centered) */}
+        <div className="flex flex-col items-center text-center">
+          <div className="w-24 h-24 rounded-[32px] bg-[#E3F2FD] text-[#0D47A1] flex items-center justify-center text-3xl font-extrabold shadow-xl border-4 border-white mb-6">
+            {(job.title || 'J')[0]}
+          </div>
+          <div className="space-y-1.5">
+            <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{job.title}</h4>
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-[14px] font-bold text-[#0D47A1] tracking-tight uppercase tracking-[3px]">{job.department || job.client}</p>
+              {job.clientSource === 'sharepoint' && (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-100">
+                  <Database size={10} /> SharePoint
                 </span>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Required Skills */}
-          <div className="pt-6 border-t border-[#F4F3EF] text-left group">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Required Skills</span>
-              {isEditing && <span className="text-[9px] font-bold text-[#9B9BAD] italic">Comma separated</span>}
-            </div>
-            <textarea
-              readOnly={!isEditing}
-              className={`${fieldClasses} p-3 -mx-2 text-[13px] font-bold text-[#1A1A2E] leading-relaxed resize-none text-left`}
-              rows={Math.max(2, editableJob.skills.split(',').length / 3)}
-              value={editableJob.skills}
-              onChange={(e) => setEditableJob(p => ({ ...p, skills: e.target.value }))}
-              placeholder="e.g. React, Node.js, TypeScript"
-            />
+        {/* Snapshot Cards (Horizontal) */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-[#FAFAF8] p-4 rounded-3xl border border-[#F4F3EF] text-center">
+            <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Openings</p>
+            <p className="text-lg font-bold text-[#1A1A2E]">{job.openings} Positions</p>
+          </div>
+          <div className="bg-[#FAFAF8] p-4 rounded-3xl border border-[#F4F3EF] text-center">
+            <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Exp. Required</p>
+            <p className="text-lg font-bold text-[#1A1A2E]">{job.experience || 'Not specified'}</p>
+          </div>
+          <div className="bg-[#FAFAF8] p-4 rounded-3xl border border-[#F4F3EF] text-center">
+            <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Salary</p>
+            <p className="text-lg font-bold text-[#1A1A2E]">{job.salary || 'Negotiable'}</p>
+          </div>
+        </div>
+
+        {/* Information Card (Justified Style) */}
+        <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-10 space-y-8">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[#9B9BAD]">Location</span>
+            {isEditing ? (
+              <input
+                type="text"
+                className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none"
+                value={editableJob.location}
+                onChange={(e) => setEditableJob(p => ({ ...p, location: e.target.value }))}
+              />
+            ) : (
+              <span className="text-sm font-bold text-[#1A1A2E]">{job.location || 'Remote'}</span>
+            )}
           </div>
 
-          {/* Job Description */}
-          <div className="pt-6 border-t border-[#F4F3EF] text-left group">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Job Description</span>
-            </div>
-            <textarea
-              readOnly={!isEditing}
-              className={`${fieldClasses} p-3 -mx-2 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none text-left`}
-              rows={Math.max(4, editableJob.description.split('\n').length)}
-              value={editableJob.description}
-              onChange={(e) => setEditableJob(p => ({ ...p, description: e.target.value }))}
-              placeholder="Provide a detailed description of the role..."
-            />
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[#9B9BAD]">Priority Status</span>
+            {isEditing ? (
+              <select
+                className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none cursor-pointer"
+                value={editableJob.priority}
+                onChange={(e) => setEditableJob(p => ({ ...p, priority: e.target.value }))}
+              >
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            ) : (
+              <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+                job.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' :
+                job.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 
+                'bg-blue-50 text-[#0D47A1] border-blue-100'
+              }`}>
+                {job.priority}
+              </span>
+            )}
           </div>
 
-          {/* Requirements */}
-          <div className="pt-6 border-t border-[#F4F3EF] text-left group">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Requirements</span>
-              {isEditing && <span className="text-[9px] font-bold text-[#9B9BAD] italic">One per line</span>}
-            </div>
-            <textarea
-              readOnly={!isEditing}
-              className={`${fieldClasses} p-3 -mx-2 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none text-left whitespace-pre-wrap`}
-              rows={Math.max(4, editableJob.requirements.split('\n').length)}
-              value={editableJob.requirements}
-              onChange={(e) => setEditableJob(p => ({ ...p, requirements: e.target.value }))}
-              placeholder="List the key requirements..."
-            />
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[#9B9BAD]">Deadline</span>
+             {isEditing ? (
+              <input
+                type="date"
+                className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none"
+                value={editableJob.deadline}
+                onChange={(e) => setEditableJob(p => ({ ...p, deadline: e.target.value }))}
+              />
+            ) : (
+              <span className="text-sm font-bold text-[#1A1A2E]">{job.deadline ? new Date(job.deadline).toLocaleDateString('en-GB') : 'No date set'}</span>
+            )}
           </div>
 
-          {/* Responsibilities */}
-          <div className="pt-6 border-t border-[#F4F3EF] text-left group">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block text-left">Responsibilities</span>
-              {isEditing && <span className="text-[9px] font-bold text-[#9B9BAD] italic">One per line</span>}
-            </div>
-            <textarea
-              readOnly={!isEditing}
-              className={`${fieldClasses} p-3 -mx-2 text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none text-left whitespace-pre-wrap`}
-              rows={Math.max(4, editableJob.responsibilities.split('\n').length)}
-              value={editableJob.responsibilities}
-              onChange={(e) => setEditableJob(p => ({ ...p, responsibilities: e.target.value }))}
-              placeholder="List the main responsibilities..."
-            />
+          <div className="flex items-center justify-between pt-8 border-t border-[#F4F3EF]">
+            <span className="text-sm font-medium text-[#9B9BAD]">Job Type</span>
+            <span className="text-sm font-bold text-[#1A1A2E]">{job.type || 'Full-time'}</span>
+          </div>
+        </div>
+
+        {/* Requirements & Description (Full Width) */}
+        <div className="space-y-8">
+           <div className="space-y-3">
+            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">Key Requirements</p>
+            {isEditing ? (
+              <textarea
+                className="w-full p-6 rounded-[32px] bg-[#FAFAF8] border border-[#F4F3EF] text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-syne"
+                rows={4}
+                value={editableJob.requirements}
+                onChange={(e) => setEditableJob(p => ({ ...p, requirements: e.target.value }))}
+              />
+            ) : (
+              <div className="p-8 rounded-[32px] bg-[#FAFAF8] border border-[#F4F3EF] space-y-4">
+                {(Array.isArray(job.requirements) ? job.requirements : (job.requirements || '').split('\n')).map((req, idx) => (
+                  <div key={idx} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0D47A1] mt-2 flex-shrink-0" />
+                    {req}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">Job Description</p>
+            {isEditing ? (
+              <textarea
+                className="w-full p-6 rounded-[32px] bg-[#FAFAF8] border border-[#F4F3EF] text-sm text-[#4B4B5E] font-medium leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                rows={6}
+                value={editableJob.description}
+                onChange={(e) => setEditableJob(p => ({ ...p, description: e.target.value }))}
+              />
+            ) : (
+              <div className="p-8 rounded-[32px] bg-[#FAFAF8] border border-[#F4F3EF]">
+                <p className="text-sm text-[#4B4B5E] font-medium leading-relaxed whitespace-pre-wrap">
+                  {job.description}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

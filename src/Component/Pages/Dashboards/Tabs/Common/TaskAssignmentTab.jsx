@@ -436,19 +436,29 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       console.log('Tasks Response:', tasksRes);
       console.log('Members Response:', membersRes);
 
-      if (tasksRes?.tasks && tasksRes.tasks.length > 0) {
+      if (tasksRes?.tasks) {
         setTasks(tasksRes.tasks.map(t => ({ ...t, id: t.id || t._id })));
+      } else if (Array.isArray(tasksRes)) {
+        setTasks(tasksRes.map(t => ({ ...t, id: t.id || t._id })));
       }
-      if (membersRes?.success && membersRes?.members && membersRes.members.length > 0) {
-        const mappedMembers = membersRes.members.map(m => ({
+
+      // Robust member extraction
+      let members = [];
+      if (membersRes?.success && membersRes?.members) members = membersRes.members;
+      else if (membersRes?.data) members = membersRes.data;
+      else if (Array.isArray(membersRes)) members = membersRes;
+      else if (membersRes?.members) members = membersRes.members;
+
+      if (members && members.length > 0) {
+        const mappedMembers = members.map(m => ({
           ...m,
-          id: m.id || m._id,
-          _id: m.id || m._id
+          id: m.id || m._id || m.employeeId,
+          _id: m.id || m._id || m.employeeId
         }));
         setTeamMembers(mappedMembers);
         console.log('Team members loaded:', mappedMembers);
       } else {
-        console.warn('No team members found:', membersRes);
+        console.warn('No team members found in response:', membersRes);
         setTeamMembers([]);
       }
     } catch (error) {
@@ -471,13 +481,15 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       return;
     }
 
-    // Validate UUID format
+    // Skip strict UUID validation to allow for local/mock IDs (e.g., 'offline-...')
+    /*
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(formData.assignedTo)) {
       showToast(`Invalid team member ID format: ${formData.assignedTo}`, 'error');
       console.error('Invalid UUID:', formData.assignedTo);
       return;
     }
+    */
 
     const currentUserId = getCurrentUserIdFromToken();
     if (currentUserId && formData.assignedTo === currentUserId) {

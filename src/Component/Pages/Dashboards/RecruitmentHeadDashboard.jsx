@@ -45,6 +45,7 @@ import {
   FiShield,
   FiCheck,
   FiLoader,
+  FiCamera,
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import AdminLayout, { StatCard } from './AdminLayout';
@@ -1205,86 +1206,76 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
         {/* 698px DETAIL PANEL (Right side drawer within modal) */}
         <AnimatePresence>
           {selectedClient && (
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: "spring", damping: 35, stiffness: 250 }}
-              className="absolute inset-y-0 right-0 w-[550px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] border-l border-[#F4F3EF] flex flex-col z-[60] overflow-hidden"
-            >
-              {/* Detail Header */}
-              <div className="p-10 border-b border-[#F4F3EF] bg-white relative flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="text-left">
-                    <h4 className="text-[28px] font-bold text-[#1e293b] tracking-tight leading-tight text-left">{selectedClient.name}</h4>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button onClick={() => setSelectedClient(null)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all shadow-sm">
-                    <FiX size={18} />
+            <React.Fragment>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-white/40 backdrop-blur-md z-[55]"
+                onClick={() => setSelectedClient(null)}
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: "spring", damping: 35, stiffness: 250 }}
+                className="absolute inset-y-0 right-0 w-full max-w-[698px] bg-white shadow-2xl border-l border-[#F4F3EF] flex flex-col z-[60] overflow-hidden"
+              >
+                {/* Detail Header */}
+                <div className="p-6 border-b border-[#F4F3EF] bg-gradient-to-r from-blue-50/30 to-white flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Details</h3>
+                  <button onClick={() => setSelectedClient(null)} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm">
+                    <FiX size={20} />
                   </button>
                 </div>
-              </div>
 
-              {/* Detail Content */}
-              <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-12 bg-white">
-                {/* Visual Stats Row - Matching reference pattern */}
-                <div className="grid grid-cols-2 gap-y-10 gap-x-16 px-4">
-                  <div>
-                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Industry Segment</p>
-                    <p className="text-lg font-bold text-[#334155]">{selectedClient.industry}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Total Openings</p>
-                    <p className="text-lg font-bold text-[#334155]">{selectedClient.jobCount} Positions</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Total Hires</p>
-                    <p className="text-lg font-bold text-[#334155]">{selectedClient.totalHired || '0'} Hires</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[2.5px] mb-3">Location HQ</p>
-                    <p className="text-lg font-bold text-[#334155]">{selectedClient.location || 'Bangalore / Remote'}</p>
-                  </div>
-                </div>
-
-                {/* Account Manager Card */}
-                <div className="space-y-4">
-                  <h5 className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-[3px] ml-1">SPOC</h5>
-                  <div className="p-8 rounded-[32px] bg-[#F8FAFC] border border-[#F1F5F9] flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-[#1e293b] text-lg font-bold border border-[#e2e8f0] shadow-sm">
-                        {selectedClient.hiringManager.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold text-[#1e293b] leading-tight">{selectedClient.hiringManager}</p>
-                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1.5">Hiring Decision Maker</p>
-                      </div>
+                {/* Detail Content */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
+                  
+                  {/* Identity Section */}
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-24 h-24 rounded-[32px] bg-[#F8FAFC] text-[#475569] flex items-center justify-center text-3xl font-extrabold shadow-xl border border-[#F1F5F9] mb-6">
+                      {selectedClient.name.slice(0, 2).toUpperCase()}
                     </div>
-                    <div className="flex gap-2">
-                      <button className="w-11 h-11 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center text-[#64748b] hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
-                        <FiMail size={16} />
-                      </button>
-                      <button className="w-11 h-11 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center text-[#64748b] hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
-                        <FiPhone size={16} />
-                      </button>
+                    <div className="space-y-1.5">
+                      <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedClient.name}</h4>
+                      <p className="text-[14px] font-bold text-[#1B4DA0] tracking-tight uppercase tracking-[3px]">{selectedClient.industry} Sector</p>
                     </div>
                   </div>
+
+                  {/* Information Card (Justified Style) */}
+                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-10 space-y-8">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Location HQ</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClient.location || 'Bangalore / Remote'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Active Openings</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClient.jobCount} Positions</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Total Hires</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClient.totalHired || '0'} Placements</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Hiring SPOC</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClient.hiringManager}</span>
+                    </div>
+                  </div>
+
+                  {/* Contact Actions */}
+                  <div className="flex gap-4">
+                    <button className="flex-1 flex items-center justify-center gap-3 py-4 bg-white border-2 border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#6B6B7E] hover:bg-slate-50 transition-all">
+                      <FiMail size={16} /> Contact Client
+                    </button>
+                    <button className="flex-1 flex items-center justify-center gap-3 py-4 bg-[#0D47A1] rounded-2xl text-[11px] font-black uppercase tracking-widest text-white hover:bg-[#0a3a82] shadow-lg shadow-blue-500/10 transition-all">
+                      <FiCalendar size={16} /> Schedule Call
+                    </button>
+                  </div>
+
                 </div>
-
-
-              </div>
-
-              {/* Detail Footer */}
-              <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-6">
-                <button
-                  onClick={() => setSelectedClient(null)}
-                  className="flex-1 py-5 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[11px] font-black uppercase tracking-[2px] hover:bg-slate-50 transition-all shadow-sm"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
+              </motion.div>
+            </React.Fragment>
           )}
         </AnimatePresence>
       </motion.div>
@@ -2188,6 +2179,28 @@ const RecruitmentHeadDashboard = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleDetailPhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file size (1 MB limit)
+    if (file.size > 1024 * 1024) {
+      showToast('Photo size must be less than 1 MB', 'error');
+      e.target.value = null;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEditableMember(prev => ({
+        ...prev,
+        profilePhoto: file,
+        profilePhotoPreview: reader.result
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Submit KAM form (add/edit)
   const handleSubmitKAMForm = async (e) => {
     e.preventDefault();
@@ -2218,7 +2231,7 @@ const RecruitmentHeadDashboard = () => {
           const newMember = response.data || kamFormData;
           const colorIndex = kamTeam.length % AVATAR_COLORS.length;
           setKamTeam(prev => [...prev, {
-            id: newMember._id || `kam-${Date.now()}`,
+            id: newMember.id || newMember._id || `kam-${Date.now()}`,
             name: newMember.name,
             email: newMember.email,
             phone: newMember.phone,
@@ -3310,9 +3323,30 @@ const RecruitmentHeadDashboard = () => {
                         onClick={async () => {
                           try {
                             setIsSavingDetail(true);
-                            await updateKAMMember(editableMember.id, editableMember);
-                            setKamTeam(prev => prev.map(m => m.id === editableMember.id ? { ...m, ...editableMember } : m));
-                            setSelectedKAM({ ...selectedKAM, ...editableMember });
+                            
+                            let submitData = { ...editableMember };
+                            if (editableMember.profilePhoto instanceof File) {
+                              const formData = new FormData();
+                              Object.keys(editableMember).forEach(key => {
+                                if (key !== 'profilePhotoPreview') {
+                                  formData.append(key, editableMember[key]);
+                                }
+                              });
+                              submitData = formData;
+                            }
+
+                            await updateKAMMember(editableMember.id, submitData);
+                            
+                            // Update local states
+                            const updatedMember = { 
+                              ...selectedKAM, 
+                              ...editableMember,
+                              profilePhoto: editableMember.profilePhotoPreview || selectedKAM.profilePhoto,
+                              avatar: editableMember.profilePhotoPreview || selectedKAM.avatar
+                            };
+                            
+                            setKamTeam(prev => prev.map(m => m.id === editableMember.id ? updatedMember : m));
+                            setSelectedKAM(updatedMember);
                             setIsEditingInDetail(false);
                           } catch (error) {
                             showToast(error.message || 'Failed to update member', 'error');
@@ -3346,57 +3380,71 @@ const RecruitmentHeadDashboard = () => {
                 </div>
               </div>
 
-              {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto p-8 space-y-8">
-                {/* Profile Header */}
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-20 h-20 rounded-[28px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-blue-500/20 overflow-hidden"
-                    style={{ background: selectedKAM.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}>
-                    {selectedKAM.profilePhoto && (String(selectedKAM.profilePhoto).includes('data:image') || String(selectedKAM.profilePhoto).includes('http')) ? (
-                      <img src={selectedKAM.profilePhoto} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
-                    ) : null}
-                    {!selectedKAM.profilePhoto || !(String(selectedKAM.profilePhoto).includes('data:image') || String(selectedKAM.profilePhoto).includes('http')) ? (
-                      String(selectedKAM.avatar).includes('data:image') || String(selectedKAM.avatar).includes('http') ? (
-                        <img src={selectedKAM.avatar} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
-                      ) : (
-                        <span>{selectedKAM.avatar || (selectedKAM.name || 'U')[0]}</span>
-                      )
-                    ) : null}
-                  </div>
-                  <div>
-                    {isEditingInDetail ? (
-                      <input
-                        type="text"
-                        className="w-full text-2xl font-bold text-[#1A1A2E] bg-[#F4F3EF] border-none rounded-xl py-2 px-4 text-center focus:ring-2 focus:ring-[#0D47A1]/20 outline-none"
-                        value={editableMember.name}
-                        onChange={(e) => setEditableMember({ ...editableMember, name: e.target.value })}
-                        placeholder="Full Name"
-                      />
-                    ) : (
-                      <h4 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedKAM.name}</h4>
-                    )}
-                    {isEditingInDetail ? (
-                      <input
-                        type="text"
-                        className="w-full text-sm font-semibold text-[#1B4DA0] bg-[#F4F3EF] border-none rounded-lg py-1 px-3 text-center focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none mt-2"
-                        value={editableMember.role}
-                        onChange={(e) => setEditableMember({ ...editableMember, role: e.target.value })}
-                        placeholder="Role"
-                      />
-                    ) : (
-                      <p className="text-sm font-semibold text-[#1B4DA0] mt-1">{selectedKAM.role}</p>
-                    )}
-                  </div>
-                </div>
+                {/* Drawer Content */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
+                  {/* Profile Header (Centered) */}
+                  <div className="flex flex-col items-center text-center">
+                    <div className="relative group mb-6">
+                      <label 
+                        htmlFor="detail-photo-upload"
+                        className={`w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden transition-all duration-300 ${isEditingInDetail ? 'cursor-pointer hover:scale-105' : ''}`}
+                        style={{ background: selectedKAM.color?.gradient || 'linear-gradient(135deg, #1B4DA0 0%, #0D47A1 100%)' }}>
+                        
+                        {(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto) && (String(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto).includes('data:image') || String(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto).includes('http')) ? (
+                          <img src={editableMember?.profilePhotoPreview || selectedKAM.profilePhoto} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                          <span>{selectedKAM.avatar || (selectedKAM.name || 'U')[0]}</span>
+                        )}
 
-                {/* Unified Info Container */}
-                <div className="bg-[#FAFAF8] rounded-[24px] border border-[#F4F3EF] p-5 space-y-5">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#6B6B7E] font-medium">Department</span>
+                        {isEditingInDetail && (
+                          <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex flex-col items-center justify-center opacity-100 transition-opacity cursor-pointer border-2 border-white/20 rounded-[32px]">
+                            <FiCamera className="text-white w-6 h-6 mb-1" />
+                            <span className="text-[8px] font-black text-white uppercase tracking-widest">Change</span>
+                            <input 
+                              id="detail-photo-upload"
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*" 
+                              onChange={handleDetailPhotoChange} 
+                            />
+                          </div>
+                        )}
+                      </label>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {isEditingInDetail ? (
+                        <input
+                          type="text"
+                          className="w-full max-w-[320px] text-2xl font-bold text-[#1A1A2E] bg-[#FAFAF8] border-none rounded-2xl py-2 px-4 text-center focus:outline-none transition-all font-syne"
+                          value={editableMember.name}
+                          onChange={(e) => setEditableMember({ ...editableMember, name: e.target.value })}
+                        />
+                      ) : (
+                        <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedKAM.name}</h4>
+                      )}
+                      
+                      {isEditingInDetail ? (
+                        <input
+                          type="text"
+                          className="w-full max-w-[240px] text-sm font-semibold text-[#1B4DA0] bg-[#FAFAF8] border-none rounded-xl py-1 px-3 text-center focus:outline-none mt-1 mx-auto"
+                          value={editableMember.role}
+                          onChange={(e) => setEditableMember({ ...editableMember, role: e.target.value })}
+                        />
+                      ) : (
+                        <p className="text-[14px] font-bold text-[#1B4DA0] tracking-tight">{selectedKAM.role}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Information Card (Justified to match screenshot) */}
+                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-10 space-y-8">
+                    {/* Department */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Department</span>
                       {isEditingInDetail ? (
                         <select
-                          className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none"
+                          className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none cursor-pointer"
                           value={editableMember.department}
                           onChange={(e) => setEditableMember({ ...editableMember, department: e.target.value })}
                         >
@@ -3405,14 +3453,16 @@ const RecruitmentHeadDashboard = () => {
                           ))}
                         </select>
                       ) : (
-                        <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.department || 'HR Recruitment'}</span>
+                        <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.department || 'HR Recruitment'}</span>
                       )}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#6B6B7E] font-medium">Status</span>
+
+                    {/* Status */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Status</span>
                       {isEditingInDetail ? (
                         <select
-                          className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none"
+                          className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none cursor-pointer"
                           value={editableMember.status}
                           onChange={(e) => setEditableMember({ ...editableMember, status: e.target.value })}
                         >
@@ -3421,43 +3471,47 @@ const RecruitmentHeadDashboard = () => {
                           ))}
                         </select>
                       ) : (
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${selectedKAM.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                          }`}>{selectedKAM.status}</span>
+                        <span className="text-[13px] font-bold text-[#1A1A2E]">{selectedKAM.status}</span>
                       )}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#6B6B7E] font-medium">Email</span>
+
+                    {/* Email */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Email</span>
                       {isEditingInDetail ? (
                         <input
                           type="email"
-                          className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none text-right"
+                          className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none w-1/2"
                           value={editableMember.email}
                           onChange={(e) => setEditableMember({ ...editableMember, email: e.target.value })}
                         />
                       ) : (
-                        <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.email}</span>
+                        <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.email}</span>
                       )}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#6B6B7E] font-medium">Contact</span>
+
+                    {/* Contact */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Contact</span>
                       {isEditingInDetail ? (
                         <input
-                          type="tel"
-                          className="text-sm text-[#1A1A2E] font-bold bg-white border border-[#F4F3EF] rounded-lg px-2 py-1 outline-none text-right"
+                          type="text"
+                          className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none"
                           value={editableMember.phone}
                           onChange={(e) => setEditableMember({ ...editableMember, phone: e.target.value })}
                         />
                       ) : (
-                        <span className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.phone}</span>
+                        <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.phone}</span>
                       )}
                     </div>
-                    <div className="flex justify-between items-center pt-3 border-t border-[#F4F3EF]">
-                      <p className="text-sm text-[#6B6B7E] font-medium">Total Hires</p>
-                      <p className="text-sm text-[#1A1A2E] font-bold">{selectedKAM.stats?.thisWeekHires || 0}</p>
+
+                    {/* Total Hires */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Total Hires</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.stats?.thisWeekHires || 0}</span>
                     </div>
                   </div>
                 </div>
-              </div>
             </motion.div>
           </React.Fragment>
         )}
@@ -4186,7 +4240,7 @@ const RecruitmentHeadDashboard = () => {
       {createPortal(
         <AnimatePresence>
           {selectedInterview && (
-            <motion.div key="selected-interview" className="fixed inset-0 z-[10001] pointer-events-none">
+            <React.Fragment>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -4199,100 +4253,83 @@ const RecruitmentHeadDashboard = () => {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed inset-y-0 right-0 w-full sm:w-[500px] md:w-[600px] bg-white shadow-2xl z-[10002] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+                className="fixed inset-y-0 right-0 w-full max-w-[698px] bg-white shadow-2xl z-[10002] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
               >
-                {/* Header - Sticky Style */}
-                <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
-                  <div className="text-left">
-                    <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne text-left">{selectedInterview.candidate}</h2>
-                    <div className="flex items-center gap-2 mt-1.5 justify-start">
-                      <span className="text-[10px] font-bold text-[#3FA9F5] uppercase tracking-[3px] text-left">{selectedInterview.position}</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
-                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">{selectedInterview.type}</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelectedInterview(null)}
-                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center shadow-sm"
-                  >
-                    <FiX size={18} />
+                {/* Header */}
+                <div className="p-6 border-b border-[#F4F3EF] bg-gradient-to-r from-blue-50/30 to-white flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Interview Details</h3>
+                  <button onClick={() => setSelectedInterview(null)} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm">
+                    <FiX size={20} />
                   </button>
                 </div>
 
-                {/* Detailed Content - Scrollable Area */}
-                <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-10">
-                  {/* Snapshot Grid Grid - Pattern from Job Detail */}
-                  <div className="bg-[#FAFAFA] rounded-[32px] border border-[#F4F3EF] p-8 space-y-8">
-                    <div className="grid grid-cols-2 gap-y-10 gap-x-12">
-                      <div className="space-y-2 text-left">
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interview Time</p>
-                        <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.time}</p>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Status</p>
-                        <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border text-left ${selectedInterview.status === 'In Progress' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-[#E3F2FD80] text-[#3FA9F5] border-blue-100'
-                          }`}>
-                          {selectedInterview.status}
-                        </span>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Round Type</p>
-                        <p className="text-sm font-bold text-[#1A1A2E] text-left">{selectedInterview.type}</p>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Mode</p>
-                        <p className="text-sm font-bold text-[#1A1A2E] text-left">Remote (Teams)</p>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Experience</p>
-                        <p className="text-sm font-bold text-[#1A1A2E] text-left">4.5 Years</p>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] text-left">Interviewer</p>
-                        <p className="text-sm font-bold text-[#1A1A2E] text-left">Aravind Swamy</p>
-                      </div>
+                {/* Detailed Content */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
+                  
+                  {/* Identity Section */}
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-24 h-24 rounded-[32px] bg-[#E3F2FD] text-[#0D47A1] flex items-center justify-center text-3xl font-extrabold shadow-xl border-4 border-white mb-6">
+                      {(selectedInterview.candidate || 'U')[0]}
                     </div>
-
-                    {/* Profile Summary */}
-                    <div className="pt-8 border-t border-[#F4F3EF] text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-3 text-left">Candidate Profile</p>
-                      <p className="text-[14px] font-medium text-[#4B4B5E] leading-relaxed italic text-left">
-                        "Professional developer with expertise in building high-performance systems and modern web technologies."
-                      </p>
-                    </div>
-
-                    {/* Skills Section */}
-                    <div className="pt-8 border-t border-[#F4F3EF] text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-4 text-left">Technical Skills</p>
-                      <div className="flex flex-wrap gap-2 justify-start">
-                        {['React.js', 'Node.js', 'System Design', 'Redux'].map(skill => (
-                          <span key={skill} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">{skill}</span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Round Details */}
-                    <div className="pt-8 border-t border-[#F4F3EF] text-left">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2.5px] opacity-70 mb-4 text-left">Interview Context</p>
-                      <ul className="space-y-3 text-left">
-                        {[
-                          'Performance optimization and profiling',
-                          'System architecture and scaling',
-                          'Team leadership qualities',
-                          'Cultural alignment'
-                        ].map((item, idx) => (
-                          <li key={idx} className="flex gap-3 text-sm text-[#4B4B5E] font-medium leading-relaxed justify-start">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#3FA9F5] mt-2 flex-shrink-0" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="space-y-1.5">
+                      <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedInterview.candidate}</h4>
+                      <p className="text-[14px] font-bold text-[#0D47A1] tracking-tight uppercase tracking-[3px]">{selectedInterview.position}</p>
                     </div>
                   </div>
-                </div>
 
+                  {/* Status & Time Pills (Centered) */}
+                  <div className="flex justify-center gap-4">
+                    <div className="px-6 py-3 bg-[#FAFAF8] border border-[#F4F3EF] rounded-2xl text-center">
+                      <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Time</p>
+                      <p className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.time}</p>
+                    </div>
+                    <div className="px-6 py-3 bg-[#FAFAF8] border border-[#F4F3EF] rounded-2xl text-center">
+                      <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Status</p>
+                      <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedInterview.status === 'In Progress' ? 'text-emerald-600' : 'text-[#3FA9F5]'}`}>
+                        {selectedInterview.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Information Card (Justified Style) */}
+                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-10 space-y-8">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Round Type</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.type}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Interview Mode</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">Remote (Microsoft Teams)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Interviewer</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.interviewer || 'Aravind Swamy'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Contact Number</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">+91 9876543210</span>
+                    </div>
+                  </div>
+
+                  {/* Technical Focus Section */}
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">Technical Skills Evaluated</p>
+                    <div className="flex flex-wrap gap-2">
+                       {['React.js', 'Node.js', 'System Design', 'Redux'].map(skill => (
+                          <span key={skill} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">{skill}</span>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-4">
+                    <button className="w-full py-5 bg-[#0D47A1] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-3">
+                      <FiExternalLink size={16} /> Join Interview Room
+                    </button>
+                  </div>
+                </div>
               </motion.div>
-            </motion.div>
+            </React.Fragment>
           )}
         </AnimatePresence>, document.body
       )}
