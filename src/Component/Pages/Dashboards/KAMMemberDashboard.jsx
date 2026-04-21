@@ -23,6 +23,7 @@ import {
   FiEdit3,
   FiRefreshCw,
   FiShield,
+  FiUserCheck,
   FiX,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
@@ -91,7 +92,7 @@ const getSidebarConfig = (name = '') => {
     { id: 5, title: 'Candidate Pipeline', icon: FiUserPlus },
     { id: 6, title: 'Interview Schedule', icon: FiCalendar },
     { id: 8, title: 'Offer Management', icon: FiAward },
-    { id: 9, title: 'Joined Candidates', icon: FiClock },
+    { id: 9, title: 'Joined Candidates', icon: FiUserCheck },
     { id: 10, title: 'Resume Bank', icon: FiDatabase },
     { id: 11, title: 'Activity Feed', icon: FiActivity },
     { id: 12, title: 'Document Verification', icon: FiShield },

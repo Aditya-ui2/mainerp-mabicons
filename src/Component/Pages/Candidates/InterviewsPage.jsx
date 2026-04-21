@@ -95,6 +95,9 @@ export default function InterviewsPage() {
     meetingType: "Video",
     meetingLink: "",
     clientVisibility: "With Client",
+    mode: "Online",
+    subMode: "with-client",
+    locationLink: "",
     notes: ""
   });
   const [selectedRowIds, setSelectedRowIds] = useState([]);
@@ -522,9 +525,10 @@ export default function InterviewsPage() {
         interviewerId: cleanId(interviewForm.interviewerId),
         interviewerName: interviewForm.interviewerName,
         interviewerRole: interviewForm.interviewerRole,
-        meetingType: interviewForm.meetingType,
-        meetingLink: interviewForm.meetingLink,
-        clientVisibility: interviewForm.clientVisibility,
+        meetingType: interviewForm.mode === "Online" ? "Video" : "In-Person",
+        meetingLink: interviewForm.mode === "Online" ? interviewForm.meetingLink : interviewForm.locationLink,
+        clientVisibility: interviewForm.subMode === "with-client" ? "With Client" : "Without Client",
+        location: interviewForm.mode === "Offline" ? (interviewForm.subMode === "at-client" ? "Client Location" : "Mabicons Location") : "Online",
         notes: interviewForm.notes,
         status: 'Scheduled',
         interviewerType: 'DepartmentTeam'
@@ -1377,24 +1381,64 @@ export default function InterviewsPage() {
                   />
                 </div>
 
+                {/* 2 Mode Selection: Online and Offline */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Mode</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => setInterviewForm({...interviewForm, mode: 'Online', subMode: 'with-client'})}
+                      className={`p-4 rounded-2xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-2 ${interviewForm.mode === 'Online' ? 'bg-[#EEF2FB] border-[#1B4DA0] text-[#1B4DA0] shadow-sm' : 'bg-[#FAFAFA] border-transparent text-gray-400 hover:border-gray-200'}`}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${interviewForm.mode === 'Online' ? 'bg-[#1B4DA0]' : 'bg-gray-300'}`} />
+                      Online
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setInterviewForm({...interviewForm, mode: 'Offline', subMode: 'at-client'})}
+                      className={`p-4 rounded-2xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-2 ${interviewForm.mode === 'Offline' ? 'bg-[#EEF2FB] border-[#1B4DA0] text-[#1B4DA0] shadow-sm' : 'bg-[#FAFAFA] border-transparent text-gray-400 hover:border-gray-200'}`}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${interviewForm.mode === 'Offline' ? 'bg-[#1B4DA0]' : 'bg-gray-300'}`} />
+                      Offline
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">
+                    {interviewForm.mode === 'Online' ? 'Online Setup' : 'Offline Venue'}
+                  </label>
                   <div className="relative">
                     <select
                       className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                      value={interviewForm.meetingType}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, meetingType: e.target.value })}
+                      value={interviewForm.subMode}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInterviewForm({ 
+                          ...interviewForm, 
+                          subMode: val,
+                          locationLink: val === 'at-mabicons' ? 'https://maps.app.goo.gl/LrNdJKxqwQb35D88A' : ''
+                        });
+                      }}
                     >
-                      <option value="Video">Video Call</option>
-                      <option value="In-Person">In-Person</option>
-                      <option value="Phone">Phone Call</option>
+                      {interviewForm.mode === 'Online' ? (
+                        <>
+                          <option value="with-client">Online (candidate with client)</option>
+                          <option value="without-client">Online (candidate without client)</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="at-client">Offline (at client location)</option>
+                          <option value="at-mabicons">Offline (at Mabicons)</option>
+                        </>
+                      )}
                     </select>
                     <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
                   </div>
                 </div>
 
                 <AnimatePresence>
-                  {interviewForm.meetingType === 'Video' && (
+                  {interviewForm.mode === 'Online' && (
                     <motion.div 
                       initial={{ opacity: 0, height: 0 }} 
                       animate={{ opacity: 1, height: 'auto' }} 
@@ -1411,29 +1455,57 @@ export default function InterviewsPage() {
                         />
                         <button type="button"
                           onClick={() => setInterviewForm({ ...interviewForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}` })}
-                          className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
+                          className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)] shadow-[#1B4DA0]/20"
                           style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
                           Generate
                         </button>
                       </div>
                     </motion.div>
                   )}
-                </AnimatePresence>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client Visibility</label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                      value={interviewForm.clientVisibility}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, clientVisibility: e.target.value })}
+                  {interviewForm.mode === 'Offline' && interviewForm.subMode === 'at-client' && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }} 
+                      animate={{ opacity: 1, height: 'auto' }} 
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-1.5 overflow-hidden"
                     >
-                      <option value="With Client">Candidate with client</option>
-                      <option value="Without Client">Candidate without client</option>
-                    </select>
-                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                  </div>
-                </div>
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Location Link (Google Maps)</label>
+                      <div className="flex gap-2">
+                        <input
+                          className="flex-1 bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                          placeholder="https://maps.google.com/..."
+                          value={interviewForm.locationLink}
+                          onChange={(e) => setInterviewForm({ ...interviewForm, locationLink: e.target.value })}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {interviewForm.mode === 'Offline' && interviewForm.subMode === 'at-mabicons' && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }} 
+                      animate={{ opacity: 1, height: 'auto' }} 
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-1.5 overflow-hidden"
+                    >
+                       <a 
+                         href="https://maps.app.goo.gl/LrNdJKxqwQb35D88A" 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         className="block p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3 hover:bg-emerald-100/50 transition-all cursor-pointer group"
+                       >
+                         <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                           <MapPin size={16} />
+                         </div>
+                         <div className="text-left">
+                           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Office Location Attached</p>
+                           <p className="text-[11px] font-bold text-[#1A1A2E] group-hover:text-emerald-700 transition-colors">https://maps.app.goo.gl/LrNdJKxqwQb35D88A</p>
+                         </div>
+                       </a>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="space-y-1.5 relative">
                   <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name *</label>
