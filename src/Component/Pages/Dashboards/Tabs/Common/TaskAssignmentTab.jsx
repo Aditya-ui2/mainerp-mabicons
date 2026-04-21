@@ -695,7 +695,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
               whileHover={{ scale: 1.02, translateY: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '', targets: [] }); setShowModal(true); }}
-              className="flex items-center gap-2 px-6 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[13px] font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153D80] transition-all active:scale-95"
+              className="flex items-center gap-2 px-6 py-4 text-white rounded-2xl text-[13px] font-bold shadow-xl shadow-blue-500/20 transition-all active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}
             >
               <FiPlus className="w-4 h-4" />
               Assign Task
