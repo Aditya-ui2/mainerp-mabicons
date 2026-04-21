@@ -32,6 +32,7 @@ import {
   FiMinusCircle,
   FiCheck,
   FiEdit2 as Pencil,
+  FiDatabase,
 } from 'react-icons/fi';
 import {
   getDepartmentTasks,
@@ -223,7 +224,7 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
                 onClick={() => setIsEditing(true)}
                 className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] hover:border-blue-100 shadow-sm"
               >
-                <FiEdit2 size={20} />
+                <FiEdit2 size={20} className="text-sky-500" />
               </button>
 
               <button
@@ -247,7 +248,7 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
            <div className={`flex items-center gap-2.5 px-4 py-2 rounded-full border font-black uppercase tracking-widest text-[10px] ${
             task.priority === 'High' || task.priority === 'Urgent' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[#F4F3EF] border-[#E8E7E2] text-[#1A1A2E]'
            }`}>
-              <FiFlag size={12} />
+              <FiFlag size={12} className="text-sky-400" />
               <span>{task.priority} PRIORITY</span>
            </div>
         </div>
@@ -668,7 +669,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="text-left">
-          <h2 className="text-4xl font-black tracking-tight text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Assignment</h2>
+          <h2 className="text-4xl font-bold tracking-tight text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Assignment</h2>
 
         </div>
         <div className="flex items-center gap-3">
@@ -685,17 +686,21 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
               }
             }}
             disabled={loading}
-            className="group flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[13px] font-bold transition-all shadow-sm active:scale-95 bg-white border border-[#E8E7E2] hover:bg-blue-50/30"
+            className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-emerald-600 border border-emerald-100/50 rounded-2xl text-[13px] font-bold hover:bg-emerald-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
           >
-            <FiLoader className={`w-4 h-4 text-[#1B4DA0] transition-colors group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
-            <span className="text-[#1B4DA0] tracking-tight">Sync Data</span>
+            {loading ? (
+              <FiLoader className="w-4 h-4 animate-spin text-[#1B4DA0]" />
+            ) : (
+              <FiDatabase className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+            )}
+            <span className="tracking-tight">{loading ? 'Syncing...' : 'Sync Data'}</span>
           </button>
           {canAssignTasks ? (
             <motion.button
               whileHover={{ scale: 1.02, translateY: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '', targets: [] }); setShowModal(true); }}
-              className="flex items-center gap-2 px-6 py-4 text-white rounded-2xl text-[13px] font-bold shadow-xl shadow-blue-500/20 transition-all active:scale-95"
+              className="flex items-center gap-2 px-8 py-4 text-white rounded-full text-[13px] font-bold shadow-xl shadow-blue-500/20 transition-all active:scale-95 border border-white/10"
               style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}
             >
               <FiPlus className="w-4 h-4" />
@@ -740,7 +745,6 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             <option value="High">High</option>
             <option value="Urgent">Urgent</option>
           </select>
-          <FiFlag className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
         {/* Status Filter */}
@@ -754,7 +758,6 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             <option value="Pending">Pending</option>
             <option value="Completed">Completed</option>
           </select>
-          <FiZap className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
         {/* KAM Filter */}
@@ -767,7 +770,6 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             <option value="">All KAMs</option>
             {uniqueAssignees.map(name => <option key={name} value={name}>{name}</option>)}
           </select>
-          <FiUser className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
       </div>
 
@@ -857,9 +859,9 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     setViewingTask(task);
                     setShowDrawer(true);
                   }}
-                  className="w-9 h-9 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-[#0D47A1] hover:text-white transition-all flex items-center justify-center"
+                  className="w-9 h-9 rounded-xl bg-[#F4F3EF] text-sky-500 hover:bg-[#0D47A1] hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
-                  <FiEdit2 size={15} />
+                  <FiEdit2 size={16} />
                 </button>
                 <button
                   title="Delete Task"
@@ -867,16 +869,16 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     e.stopPropagation();
                     setConfirmDelete(task);
                   }}
-                  className="w-9 h-9 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                  className="w-9 h-9 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shadow-sm"
                 >
-                  <FiTrash2 size={15} />
+                  <FiTrash2 size={16} />
                 </button>
               </div>
 
               {/* Arrow */}
               <div className="flex justify-end items-center">
                 <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
-                  <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                  <FiChevronRight size={20} className="text-sky-400 group-hover:text-[#0D47A1] transition-all" />
                 </div>
               </div>
             </div>
@@ -982,7 +984,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                   <div className="space-y-1.5 w-full">
                     <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Task Title *</label>
                     <div className="relative group">
-                      <FiType className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                      <FiType className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
                       <input
                         type="text"
                         required
@@ -999,7 +1001,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     <div className="space-y-1.5 w-full">
                       <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Assign To *</label>
                       <div className="relative group">
-                        <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors pointer-events-none" size={18} />
+                        <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400/80 group-focus-within:text-[#1B4DA0] transition-colors pointer-events-none" size={18} />
                         <select
                           required
                           value={formData.assignedTo}
@@ -1026,7 +1028,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                     <div className="space-y-1.5 w-full">
                       <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Priority</label>
                       <div className="relative group">
-                        <FiZap className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors pointer-events-none" size={18} />
+                        <FiZap className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400/80 group-focus-within:text-[#1B4DA0] transition-colors pointer-events-none" size={18} />
                         <select
                           value={formData.priority}
                           onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
@@ -1064,7 +1066,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                   <div className="space-y-1.5 w-full">
                     <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest block text-left mb-1.5">Description</label>
                     <div className="relative group">
-                      <FiAlignLeft className="absolute left-4 top-[18px] text-gray-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                      <FiAlignLeft className="absolute left-4 top-[18px] text-sky-400/80 group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}

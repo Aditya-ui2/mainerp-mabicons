@@ -2228,7 +2228,6 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <option value="all">All Clients</option>
               {clients.map(c => <option key={c.id} value={c.displayName}>{c.displayName}</option>)}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
           </div>
 
           {/* Status Filter */}
@@ -2243,7 +2242,6 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <option value="Urgent">Urgent</option>
               <option value="Hold">Hold</option>
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
           </div>
         </div>
 

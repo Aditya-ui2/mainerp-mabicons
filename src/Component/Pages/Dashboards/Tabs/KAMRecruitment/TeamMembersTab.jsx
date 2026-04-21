@@ -173,7 +173,6 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
             <option value="KAM - Recruitment">KAM - Recruitment</option>
             <option value="Department Head">Department Head</option>
           </select>
-          <FiBriefcase className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
         {/* Status Filter */}
@@ -185,7 +184,6 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
-          <FiUser className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
       </div>
 

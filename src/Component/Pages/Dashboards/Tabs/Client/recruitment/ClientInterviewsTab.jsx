@@ -117,28 +117,24 @@ export default function ClientInterviewsTab() {
           z-index: 10;
         }
       `}</style>
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">
-            Interview Schedule
-          </h1>
-
+          <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Interview Schedule</h1>
         </div>
-
       </div>
 
-
       {/* Filter Bar */}
-      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3">
-        <div className="flex-1 flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-6 py-3.5 transition-all focus-within:bg-[#EEF2FB] focus-within:ring-2 focus-within:ring-blue-100">
-          <FiSearch className="text-[#9B9BAD]" size={18} />
+      <div className="bg-white rounded-[24px] p-2 mt-8 mb-5 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 group min-w-[200px]">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by candidate, position or host..."
-            className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 outline-none transition-all placeholder:text-[#9B9BAD]/60 placeholder:font-medium text-[#1A1A2E]"
+            placeholder="Search by title, client or location..."
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+
           />
         </div>
 
@@ -187,7 +183,7 @@ export default function ClientInterviewsTab() {
 
             <tbody className="divide-y divide-[#F4F3EF]">
               {filteredInterviews.length > 0 ? filteredInterviews.map((iv, idx) => (
-                <tr key={idx} onClick={() => setSelectedInterview(iv)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                <tr key={idx} onClick={() => setSelectedInterview(iv)} className="hover:bg-[#F8FAFF] transition-all duration-300 group cursor-pointer">
                   <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"

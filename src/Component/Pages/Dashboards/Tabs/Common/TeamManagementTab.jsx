@@ -426,7 +426,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
         <div className="hidden lg:flex items-center gap-3">
             {['ALL DATES', 'ALL CLIENTS', 'ALL STATUS'].map(f => (
                 <button key={f} className="flex items-center gap-3 px-6 py-3 bg-[#F4F3EF] hover:bg-[#EEEFED] text-[#4B4B5E] text-[10px] font-black uppercase tracking-[2px] rounded-2xl transition-all shadow-sm">
-                    {f} <FiChevronDown size={14} className="text-[#9B9BAD]" />
+                    {f}
                 </button>
             ))}
         </div>

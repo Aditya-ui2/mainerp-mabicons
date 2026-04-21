@@ -806,7 +806,6 @@ const ResumeBankTab = () => {
               <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
             ))}
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
 

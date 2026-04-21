@@ -730,11 +730,15 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                 } catch (e) { console.error('Sync failed', e); }
                 finally { setRefreshing(false); }
               }}
-              className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
+              className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-emerald-600 border border-emerald-100/50 rounded-2xl text-[13px] font-bold hover:bg-emerald-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
               disabled={refreshing}
             >
-              <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : 'text-blue-500 group-hover:text-[#0D47A1]'}`} />
-              Sync SharePoint
+              {refreshing ? (
+                <FiRefreshCw className="w-4 h-4 animate-spin text-[#1B4DA0]" />
+              ) : (
+                <FiDatabase className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+              )}
+              <span className="tracking-tight">{refreshing ? 'Syncing...' : 'Sync Data'}</span>
             </button>
             <button
               onClick={() => setShowAddModal(true)}
@@ -810,7 +814,6 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   <option key={job.id} value={job.id}>{job.title}</option>
                 ))}
               </select>
-              <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
             </div>
 
             {/* Stage Filter */}
@@ -825,7 +828,6 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   <option key={stage} value={stage}>{stage}</option>
                 ))}
               </select>
-              <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
             </div>
 
             {/* Client Filter */}
@@ -840,7 +842,6 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   <option key={client} value={client}>{client}</option>
                 ))}
               </select>
-              <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
             </div>
           </div>
         </div>

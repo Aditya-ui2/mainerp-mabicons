@@ -1079,7 +1079,6 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                       <option value="Client Interview">Client Interview</option>
                       <option value="Final Round">Final Round</option>
                     </select>
-                    <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
                   </div>
                 </div>
 
@@ -1121,7 +1120,6 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                       <option value="60 mins">60 mins</option>
                       <option value="90 mins">90 mins</option>
                     </select>
-                    <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
                   </div>
                 </div>
 
@@ -1135,7 +1133,6 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                       <option value="Phone">Phone</option>
                       <option value="In-Person">In-Person</option>
                     </select>
-                    <FiChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" />
                   </div>
                 </div>
 
@@ -1255,10 +1252,14 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                 }
               }}
               disabled={loading}
-              className="group flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[13px] font-bold transition-all shadow-sm active:scale-95 bg-white border border-[#E8E7E2] hover:bg-blue-50/30"
+              className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-emerald-600 border border-emerald-100/50 rounded-2xl text-[13px] font-bold hover:bg-emerald-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
             >
-              <FiRefreshCw className={`w-4 h-4 text-[#1B4DA0] transition-colors group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
-              <span className="text-[#1B4DA0] tracking-tight">Sync Data</span>
+              {loading ? (
+                <FiRefreshCw className="w-4 h-4 animate-spin text-[#1B4DA0]" />
+              ) : (
+                <FiDatabase className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+              )}
+              <span className="tracking-tight">{loading ? 'Syncing...' : 'Sync Data'}</span>
             </button>
             <button
               onClick={() => { resetForm(); setShowFullPageForm(true); }}
