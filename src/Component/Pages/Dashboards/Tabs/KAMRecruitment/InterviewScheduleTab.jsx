@@ -106,150 +106,272 @@ const StatusBadge = ({ status }) => {
 
 /* ══════════════════════════════════════════════════════ */
 const InterviewDetailView = ({ interview, onBack, onEdit, onUpdateInterview, showToast, onOpenFeedback }) => {
-  const [editableInterview, setEditableInterview] = useState({
-    candidateName: interview?.candidateName || '',
-    position: interview?.position || '',
-    round: interview?.round || '',
-  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editableInterview, setEditableInterview] = useState({ ...interview });
 
   useEffect(() => {
-    if (!interview) return;
-    setEditableInterview({
-      candidateName: interview.candidateName || '',
-      position: interview.position || '',
-      round: interview.round || '',
-    });
+    if (interview) setEditableInterview({ ...interview });
   }, [interview]);
-
-  const handleBlur = async (field, value) => {
-    const originalValue = interview[field] || '';
-    if (value !== originalValue) {
-      try {
-        await updateInterview(interview.id, { [field]: value });
-        if (showToast) showToast('Updated successfully!');
-        if (onUpdateInterview) onUpdateInterview({ [field]: value });
-      } catch (err) {
-        if (showToast) showToast('Failed to update inline', 'error');
-        setEditableInterview(prev => ({ ...prev, [field]: originalValue }));
-      }
-    }
-  };
 
   if (!interview) return null;
 
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateInterview(interview.id, editableInterview);
+      showToast('Interview updated successfully!');
+      if (onUpdateInterview) onUpdateInterview(editableInterview);
+      setIsEditing(false);
+    } catch (err) {
+      showToast('Update failed: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const fieldClasses = `w-full bg-transparent rounded-xl px-3 py-2 transition-all outline-none border ${isEditing
+    ? 'border-[#1B4DA0]/20 bg-[#1B4DA0]/5 hover:bg-[#1B4DA0]/10 focus:border-[#1B4DA0] focus:bg-white'
+    : 'border-transparent hover:bg-slate-50 cursor-pointer'
+    }`;
+
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* Header */}
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
         <div className="flex-1 mr-4">
-          <input type="text"
-            className="w-full bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-xl p-2 -ml-2 text-2xl font-bold text-[#1A1A2E] outline-none transition-all"
-            value={editableInterview.candidateName}
-            onChange={e => setEditableInterview(p => ({ ...p, candidateName: e.target.value }))}
-            onBlur={e => handleBlur('candidateName', e.target.value)}
-            style={{ fontFamily: "'Syne', sans-serif" }}
-            placeholder="Candidate Name"
-          />
-          <div className="flex items-center gap-2 mt-1.5 ml-2">
-            <input type="text"
-              className="bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-md px-1 py-0.5 text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] outline-none w-32"
-              value={editableInterview.position}
-              onChange={e => setEditableInterview(p => ({ ...p, position: e.target.value }))}
-              onBlur={e => handleBlur('position', e.target.value)}
-              placeholder="POSITION"
+          {isEditing ? (
+            <input
+              autoFocus
+              className="text-2xl font-bold text-[#1A1A2E] bg-transparent border-b-2 border-[#1B4DA0] outline-none w-full"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+              value={editableInterview.candidateName || ''}
+              onChange={e => setEditableInterview(p => ({ ...p, candidateName: e.target.value }))}
             />
+          ) : (
+            <h2
+              onClick={() => setIsEditing(true)}
+              className="text-2xl font-bold text-[#1A1A2E] cursor-pointer hover:text-[#1B4DA0] transition-colors group flex items-center gap-3"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              {interview.candidateName || 'Unnamed Candidate'}
+              <FiEdit2 className="w-4 h-4 opacity-0 group-hover:opacity-100 text-slate-400" />
+            </h2>
+          )}
+
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1 group cursor-pointer" onClick={() => setIsEditing(true)}>
+              {isEditing ? (
+                <input
+                  className="bg-[#1B4DA0]/5 text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] outline-none rounded px-1"
+                  value={editableInterview.position || ''}
+                  onChange={e => setEditableInterview(p => ({ ...p, position: e.target.value }))}
+                />
+              ) : (
+                <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">
+                  {interview.position || 'No Position'}
+                </span>
+              )}
+            </div>
             <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-            <input type="text"
-              className="bg-transparent border border-transparent hover:border-[#F4F3EF] focus:bg-[#FAFAF8] focus:border-[#0D47A1] focus:ring-1 focus:ring-[#0D47A1] rounded-md px-1 py-0.5 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] outline-none w-24"
-              value={editableInterview.round}
-              onChange={e => setEditableInterview(p => ({ ...p, round: e.target.value }))}
-              onBlur={e => handleBlur('round', e.target.value)}
-              placeholder="ROUND"
-            />
+            <div className="flex items-center gap-1 group cursor-pointer" onClick={() => setIsEditing(true)}>
+              {isEditing ? (
+                <input
+                  className="bg-[#1B4DA0]/5 text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] outline-none rounded px-1"
+                  value={editableInterview.round || ''}
+                  onChange={e => setEditableInterview(p => ({ ...p, round: e.target.value }))}
+                />
+              ) : (
+                <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">
+                  {interview.round || 'Round'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={(e) => { e.stopPropagation(); onEdit(interview); onBack(); }} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all active:scale-90">
-            <FiEdit2 className="w-4 h-4" />
-          </button>
-          <button onClick={onBack} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90">
-            <FiX className="w-5 h-5" />
-          </button>
+
+        <div className="flex items-center gap-3">
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="px-6 py-2 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20"
+              >
+                {isSaving ? <FiRefreshCw className="animate-spin w-3 h-3" /> : <FiCheckCircle className="w-3 h-3" />}
+                Save
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onBack}
+              className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-10">
-        {/* Interview Readiness Radar */}
-        <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
-          <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-2 text-center">Interview Readiness</h3>
-          <div className="w-full h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={[
-                { axis: 'Preparation', value: interview.status === 'Completed' ? 90 : 65 },
-                { axis: 'Technical', value: interview.feedback?.technicalScore || 70 },
-                { axis: 'Communication', value: interview.feedback?.communicationScore || 60 },
-                { axis: 'Experience', value: 75 },
-              ]} cx="50%" cy="50%" outerRadius="70%">
-                <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
-                <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} />
-                <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
-                <Radar dataKey="value" stroke="#a5b4fc" fill="#a5b4fc" fillOpacity={0.25} strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
-              </RadarChart>
-            </ResponsiveContainer>
+      <div className="flex-1 p-8 space-y-8 overflow-y-auto pb-24 custom-scrollbar">
+        {/* Core Metadata Grid */}
+        <div className="grid grid-cols-2 gap-6">
+          {/* Interview Date */}
+          <div className="bg-[#FAFAF8] p-6 rounded-[32px] border border-[#F4F3EF] group cursor-pointer hover:border-[#1B4DA0]/30 transition-all" onClick={() => setIsEditing(true)}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Schedule Date</span>
+              <FiEdit2 className="w-3 h-3 opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+            </div>
+            {isEditing ? (
+              <input
+                type="date"
+                className="text-lg font-black text-[#1A1A2E] bg-transparent outline-none w-full"
+                value={editableInterview.date || ''}
+                onChange={e => setEditableInterview(p => ({ ...p, date: e.target.value }))}
+              />
+            ) : (
+              <p className="text-lg font-black text-[#1A1A2E]">{interview.date || 'Set Date'}</p>
+            )}
+          </div>
+
+          {/* Interview Time */}
+          <div className="bg-[#FAFAF8] p-6 rounded-[32px] border border-[#F4F3EF] group cursor-pointer hover:border-[#1B4DA0]/30 transition-all" onClick={() => setIsEditing(true)}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Start Time</span>
+              <FiEdit2 className="w-3 h-3 opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+            </div>
+            {isEditing ? (
+              <input
+                type="time"
+                className="text-lg font-black text-[#1A1A2E] bg-transparent outline-none w-full"
+                value={editableInterview.time || ''}
+                onChange={e => setEditableInterview(p => ({ ...p, time: e.target.value }))}
+              />
+            ) : (
+              <p className="text-lg font-black text-[#1A1A2E]">{interview.time || 'Set Time'}</p>
+            )}
+          </div>
+
+          {/* Interviewer */}
+          <div className="bg-[#FAFAF8] p-6 rounded-[32px] border border-[#F4F3EF] group cursor-pointer hover:border-[#1B4DA0]/30 transition-all" onClick={() => setIsEditing(true)}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Assigned Interviewer</span>
+              <FiEdit2 className="w-3 h-3 opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+            </div>
+            {isEditing ? (
+              <input
+                className="text-[15px] font-bold text-[#1A1A2E] bg-transparent outline-none w-full"
+                value={editableInterview.interviewer || ''}
+                onChange={e => setEditableInterview(p => ({ ...p, interviewer: e.target.value }))}
+              />
+            ) : (
+              <p className="text-[15px] font-bold text-[#1A1A2E]">{interview.interviewer || 'Assign Interviewer'}</p>
+            )}
+          </div>
+
+          {/* Duration */}
+          <div className="bg-[#FAFAF8] p-6 rounded-[32px] border border-[#F4F3EF] group cursor-pointer hover:border-[#1B4DA0]/30 transition-all" onClick={() => setIsEditing(true)}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Duration</span>
+              <FiEdit2 className="w-3 h-3 opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+            </div>
+            {isEditing ? (
+              <select
+                className="text-[15px] font-bold text-[#1A1A2E] bg-transparent outline-none w-full appearance-none"
+                value={editableInterview.duration || '60 mins'}
+                onChange={e => setEditableInterview(p => ({ ...p, duration: e.target.value }))}
+              >
+                <option value="30 mins">30 mins</option>
+                <option value="45 mins">45 mins</option>
+                <option value="60 mins">60 mins</option>
+                <option value="90 mins">90 mins</option>
+                <option value="120 mins">120 mins</option>
+              </select>
+            ) : (
+              <p className="text-[15px] font-bold text-[#1A1A2E]">{interview.duration || '60 mins'}</p>
+            )}
           </div>
         </div>
 
-        {/* Round Progress */}
-        <div className="bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] p-6">
-          <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-4">Round Progress</h3>
-          <div className="flex items-center gap-6">
-            <div className="w-[120px] h-[120px] flex-shrink-0">
+        {/* Readiness and Progress Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8">
+            <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-8 text-center">Readiness Analysis</h3>
+            <div className="w-full h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={[
-                    { name: 'Done', value: interview.status === 'Completed' ? 100 : interview.status === 'In Progress' ? 60 : 30 },
-                    { name: 'Remaining', value: interview.status === 'Completed' ? 0 : interview.status === 'In Progress' ? 40 : 70 },
-                  ]} innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                    <Cell fill="#3B82F6" />
-                    <Cell fill="#e2e8f0" />
-                  </Pie>
-                </PieChart>
+                <RadarChart data={[
+                  { axis: 'Preparation', value: interview.status === 'Completed' ? 90 : 65 },
+                  { axis: 'Technical', value: interview.feedback?.technicalScore || 70 },
+                  { axis: 'Communication', value: interview.feedback?.communicationScore || 60 },
+                  { axis: 'Experience', value: 75 },
+                ]} cx="50%" cy="50%" outerRadius="70%">
+                  <PolarGrid stroke="#e2e8f0" strokeWidth={0.8} />
+                  <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                  <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
+                  <Radar dataKey="value" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }} />
+                </RadarChart>
               </ResponsiveContainer>
             </div>
-            <div className="space-y-3 flex-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Status</span>
+          </div>
+
+          <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8">
+            <h3 className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-[3px] mb-8 text-center">Round Completion</h3>
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-[140px] h-[140px] relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Done', value: interview.status === 'Completed' ? 100 : interview.status === 'In Progress' ? 60 : 30 },
+                        { name: 'Remaining', value: interview.status === 'Completed' ? 0 : interview.status === 'In Progress' ? 40 : 70 },
+                      ]}
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={5}
+                      dataKey="value"
+                      strokeWidth={0}
+                    >
+                      <Cell fill="#3B82F6" />
+                      <Cell fill="#EEF2FB" />
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                  <span className="text-xl font-black text-[#1A1A2E]">{interview.status === 'Completed' ? '100' : interview.status === 'In Progress' ? '60' : '30'}%</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap justify-center gap-3">
                 <StatusBadge status={interview.status} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Type</span>
                 <TypeBadge type={interview.type} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#4B4B5E] uppercase tracking-wider">Duration</span>
-                <span className="text-sm font-black text-[#1A1A2E]">{interview.duration}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        {interview.meetLink && (interview.status === 'Scheduled' || interview.status === 'In Progress') && (
-          <button
-            onClick={() => { window.open(interview.meetLink, '_blank'); }}
-            className="w-full py-4 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 8px 20px rgba(63, 169, 245, 0.35)' }}
-          >
-            <FiVideo className="w-5 h-5" /> Join Meeting
-          </button>
-        )}
-        <div className="grid grid-cols-1 gap-3">
-          <button
-            onClick={() => { onOpenFeedback(interview); onBack(); }}
-            className="py-3.5 bg-[#F4F3EF] text-[#1A1A2E] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all active:scale-[0.98] border border-[#E8E7E2]"
-          >
-            <FiClipboard className="w-4 h-4" /> Add Feedback
-          </button>
+        {/* Meeting and Action Bar */}
+        <div className="fixed bottom-0 left-0 right-0 p-8 bg-white/80 backdrop-blur-xl border-t border-[#F4F3EF] z-30">
+          <div className="max-w-xl mx-auto flex gap-4">
+            {interview.meetLink && (interview.status === 'Scheduled' || interview.status === 'In Progress') && (
+              <button
+                onClick={() => { window.open(interview.meetLink, '_blank'); }}
+                className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-xl shadow-blue-500/20 hover:bg-[#153D80] transition-all active:scale-[0.98]"
+              >
+                <FiVideo className="w-5 h-5" /> Join Video Interview
+              </button>
+            )}
+            <button
+              onClick={() => { onOpenFeedback(interview); onBack(); }}
+              className="flex-1 py-4 bg-white border-2 border-[#1B4DA0] text-[#1B4DA0] rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-50 transition-all active:scale-[0.98]"
+            >
+              <FiClipboard className="w-5 h-5" /> Feedback
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1110,78 +1232,42 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
         )}
 
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3FA9F5, #1E88E5)', boxShadow: '0 10px 15px -3px rgba(63, 169, 245, 0.3)' }}>
-              <FiCalendar className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex flex-col justify-center items-start">
-              <h2 className="text-2xl font-bold leading-tight text-left" style={{ background: 'linear-gradient(90deg, #3FA9F5, #1E88E5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                Interview Schedule
-              </h2>
-              {/* <p className={`text-sm mt-0.5 text-left ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Manage and track all scheduled interviews
-              </p> */}
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`} style={{ fontFamily: "'Syne', sans-serif" }}>
+              Interview Management
+            </h2>
+            <p className={`text-xs font-bold uppercase tracking-[4px] mt-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Premium Recruitment Dashboard</p>
           </div>
-          <div className="flex items-center gap-2">
-            {/* View Toggle */}
-            <div className={`flex items-center rounded-xl p-1 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'list' ? 'bg-white shadow text-slate-700' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}
-              >
-                List
-              </button>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={fetchInterviews}
-              className={`p-2.5 rounded-xl transition-colors ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'}`}
-              title="Refresh interviews"
-            >
-              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+          <div className="flex items-center gap-3">
+            <button
               onClick={async () => {
                 try {
                   setLoading(true);
                   await syncSharePointAll();
                   await fetchInterviews();
-                  setToast('SharePoint data synced successfully!');
+                  setToast('Data synced from SharePoint!');
                   setTimeout(() => setToast(null), 3000);
-                } catch (e) {
-                  console.error('Sync failed', e);
-                  setToast('Sync failed. Please try again.');
-                  setTimeout(() => setToast(null), 3000);
+                } catch (err) {
+                  setToast('Sync failed: ' + err.message);
                 } finally {
                   setLoading(false);
                 }
               }}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 text-[11px] font-bold uppercase tracking-widest transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-blue-100 text-[#1B4DA0] hover:bg-blue-50'}`}
               disabled={loading}
+              className="group flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[13px] font-bold transition-all shadow-sm active:scale-95 bg-white border border-[#E8E7E2] hover:bg-blue-50/30"
             >
-              <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Sync SharePoint
-            </motion.button>
-            <button
-              onClick={() => setShowFullPageForm(true)}
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-colors"
-            >
-              <FiPlus className="w-4 h-4" />
-              Schedule Interview
+              <FiRefreshCw className={`w-4 h-4 text-[#1B4DA0] transition-colors group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
+              <span className="text-[#1B4DA0] tracking-tight">Sync Data</span>
             </button>
-
+            <button
+              onClick={() => { resetForm(); setShowFullPageForm(true); }}
+              className="flex items-center gap-2 px-6 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[13px] font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153D80] transition-all active:scale-95"
+            >
+              <FiPlus className="w-4 h-4" /> Schedule Interview
+            </button>
           </div>
-        </motion.div>
+        </div>
 
 
         {/* Search Bar */}

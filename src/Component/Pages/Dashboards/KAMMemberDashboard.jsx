@@ -696,7 +696,6 @@ const KAMMemberDashboard = () => {
                             </div>
                             <h3 className="font-semibold text-[#1A1A2E] text-lg tracking-tight">Upcoming Joinings</h3>
                           </div>
-                          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em] ml-1">Onboarding Pipeline</p>
                         </div>
                         <button
                           onClick={() => setActiveTab('Offer Management')}
@@ -765,76 +764,7 @@ const KAMMemberDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Quick Actions */}
-                  <div className="bg-white rounded-[32px] shadow-sm p-8 border border-[#F4F3EF]">
-                    <div className="flex flex-col items-start mb-6">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="p-1.5 rounded-lg bg-blue-50 text-[#1B4DA0]">
-                          <FiActivity size={18} />
-                        </div>
-                        <h3 className="font-bold text-[#1A1A2E] text-lg tracking-tight">Quick Actions</h3>
-                      </div>
-                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em] ml-1">COMMON RECRUITMENT TASKS</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {/* View Jobs */}
-                      <button
-                        onClick={() => handleQuickAction('Job Openings')}
-                        className="flex items-center gap-4 p-4 rounded-3xl border border-[#F4F3EF] bg-white hover:border-[#1B4DA0] hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group text-left"
-                      >
-                        <div className="w-12 h-12 flex-shrink-0 rounded-2xl border border-[#F4F3EF] bg-white flex items-center justify-center text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors shadow-sm">
-                          <FiBriefcase className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">Job Openings</span>
-                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">{stats.activePositions} Open Positions</span>
-                        </div>
-                      </button>
-
-                      {/* Add Candidate */}
-                      <button
-                        onClick={() => handleQuickAction('Candidate Pipeline', 'add-candidate')}
-                        className="flex items-center gap-4 p-4 rounded-3xl border border-[#F4F3EF] bg-white hover:border-[#1B4DA0] hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group text-left"
-                      >
-                        <div className="w-12 h-12 flex-shrink-0 rounded-2xl border border-[#F4F3EF] bg-white flex items-center justify-center text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors shadow-sm">
-                          <FiUserPlus className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">Candidate Pipeline</span>
-                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">{stats.candidatesPipeline} Total</span>
-                        </div>
-                      </button>
-
-                      {/* Schedule Interview */}
-                      <button
-                        onClick={() => handleQuickAction('Interview Schedule', 'schedule-interview')}
-                        className="flex items-center gap-4 p-4 rounded-3xl border border-[#F4F3EF] bg-white hover:border-[#1B4DA0] hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group text-left"
-                      >
-                        <div className="w-12 h-12 flex-shrink-0 rounded-2xl border border-[#F4F3EF] bg-white flex items-center justify-center text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors shadow-sm">
-                          <FiCalendar className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">Interviews</span>
-                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">{stats.interviewsScheduled} Scheduled Today</span>
-                        </div>
-                      </button>
-
-                      {/* Submit Report */}
-                      <button
-                        onClick={() => handleQuickAction('Daily Report')}
-                        className="flex items-center gap-4 p-4 rounded-3xl border border-[#F4F3EF] bg-white hover:border-[#1B4DA0] hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group text-left"
-                      >
-                        <div className="w-12 h-12 flex-shrink-0 rounded-2xl border border-[#F4F3EF] bg-white flex items-center justify-center text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors shadow-sm">
-                          <FiEdit3 className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">Daily Report</span>
-                          <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-tight mt-0.5">Submit MIS</span>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
+                    
 
                 </div>
               );

@@ -325,7 +325,7 @@ const OperationsNotesTab = () => {
                   <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
                     <FileText size={20} strokeWidth={2} />
                   </div>
-                  <h3 className="text-xl font-bold font-syne text-[#1A1A2E] tracking-tight">Notes Timeline</h3>
+                  <h3 className="text-xl font-bold font-syne text-[#1A1A2E] tracking-tight">Notes</h3>
                 </div>
               </div>
 

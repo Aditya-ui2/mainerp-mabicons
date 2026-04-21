@@ -417,13 +417,41 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by title, description..."
+            placeholder="Find specific tasks, descriptions..."
             className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <PriorityFilterDropdown filterPriority={filterPriority} setFilterPriority={setFilterPriority} />
-          <StatusFilterDropdown filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
+
+        {/* Priority Filter */}
+        <div className="relative">
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+          >
+            <option value="all">All Priorities</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+          <Flag className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+        </div>
+
+        {/* Status Filter */}
+        <div className="relative">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="all">All Logs</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Overdue">Overdue</option>
+          </select>
+          <Activity className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
       </div>
 
@@ -431,7 +459,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Table Header */}
         <div className="hidden lg:grid grid-cols-[2.5fr_1.2fr_1fr_1.2fr_40px] gap-4 px-4 py-4 bg-gray-50/50 border-b border-gray-100">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-left">Position / Task</span>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-left">Tasks</span>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Assigned By</span>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Status</span>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</span>
@@ -541,105 +569,96 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
                   className="fixed right-0 top-0 h-full w-full md:w-[600px] xl:w-[700px] bg-white shadow-2xl flex flex-col"
                 >
                   {/* Sidebar Header */}
-                  <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-bold text-slate-900 mb-1">{selectedTask.title}</h2>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-[#1B4DA0] uppercase tracking-widest">{selectedTask.assignedByName || 'ADMIN'}</span>
-                        <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">TASK ID: #{selectedTask.id.slice(-4).toUpperCase()}</span>
+                  <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
+                    <div className="flex-1">
+                      <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>Task Protocol</h2>
+                      <div className="flex items-center gap-2 mt-2">
+                         <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px]">TO: ME</span>
+                         <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                         <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">ID: #{selectedTask.id.slice(-4).toUpperCase()}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => setSelectedTask(null)}
-                        className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+                         className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-6 h-6" />
                       </button>
                     </div>
                   </div>
 
                   {/* Sidebar Body */}
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-                    {/* Stats Grid - Premium Box */}
-                    <div className="bg-[#F8F9FA] rounded-2xl p-8 mb-8">
-                      <div className="grid grid-cols-2 gap-y-8 gap-x-12">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
-                            <Activity className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">STATUS</p>
-                            <p className="text-sm font-bold text-slate-700">{selectedTask.status}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
-                            <Layers className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">PRIORITY</p>
-                            <p className="text-sm font-bold text-slate-700">{selectedTask.priority}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
-                            <Calendar className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">DEADLINE</p>
-                            <p className="text-sm font-bold text-slate-700">
-                              {new Date(selectedTask.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0f172a] shadow-sm border border-slate-100">
-                            <CheckCircle className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">TASK TYPE</p>
-                            <p className="text-sm font-bold text-slate-700">Department Task</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Description Section */}
-                    <div className="mb-8">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Task Description</h3>
-                      <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100">
-                        <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                          {selectedTask.description || 'No detailed description provided for this task.'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Discussion Section */}
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Activity & Comments</h3>
-                      <div className="space-y-6">
-                        {selectedTask.comments?.map((comment, i) => (
-                          <div key={i} className="flex gap-4">
-                            <div className="w-9 h-9 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-600 border-2 border-white shadow-sm ring-1 ring-slate-100">
-                              {comment.byName?.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1">
-                              <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <span className="text-xs font-bold text-slate-800">{comment.byName}</span>
-                                  <span className="text-[10px] text-slate-400 font-medium">
-                                    {new Date(comment.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                  </span>
-                                </div>
-                                <p className="text-[13px] text-slate-600 leading-relaxed">{comment.text}</p>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
+                     <div className="p-10 space-y-10">
+                        {/* Task Hero Section */}
+                        <div className="space-y-4">
+                           <h1 className="text-3xl font-black text-[#1A1A2E] leading-tight tracking-tight">{selectedTask.title}</h1>
+                           <div className="flex flex-wrap gap-3">
+                              <div className="flex items-center gap-2.5 px-4 py-2 bg-[#F4F3EF] rounded-full border border-[#E8E7E2]">
+                                 <span className={`w-2.5 h-2.5 rounded-full ${selectedTask.status === 'Completed' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                 <span className="text-[10px] font-black text-[#1A1A2E] uppercase tracking-widest">{selectedTask.status}</span>
                               </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                              <div className={`flex items-center gap-2.5 px-4 py-2 rounded-full border font-black uppercase tracking-widest text-[10px] ${
+                                 selectedTask.priority === 'High' || selectedTask.priority === 'Urgent' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[#F4F3EF] border-[#E8E7E2] text-[#1A1A2E]'
+                              }`}>
+                                 <Flag size={12} />
+                                 <span>{selectedTask.priority} PRIORITY</span>
+                              </div>
+                           </div>
+                        </div>
+
+                        {/* Core Task Card */}
+                        <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-8 shadow-sm">
+                           <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                              <div className="space-y-2">
+                                 <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Task Initiator</span>
+                                 <p className="text-base font-black text-[#1A1A2E]">{selectedTask.assignedByName || 'Admin'}</p>
+                              </div>
+                              <div className="space-y-2">
+                                 <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deadline</span>
+                                 <p className="text-base font-black text-[#E11D48]">
+                                    {new Date(selectedTask.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                 </p>
+                              </div>
+                              <div className="space-y-2 col-span-2 pt-4 border-t border-[#F4F3EF]">
+                                 <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block mb-3">Task Briefing</span>
+                                 <div className="bg-white p-6 rounded-[32px] border border-[#F4F3EF]">
+                                    <p className="text-sm font-medium text-slate-600 leading-relaxed italic">
+                                       "{selectedTask.description || 'No detailed instructions available.'}"
+                                    </p>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+
+                        {/* Dynamic Activity/Comments Card */}
+                        <div className="space-y-6">
+                           <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block mb-4">Official Log & Discussions</span>
+                           <div className="space-y-4">
+                              {selectedTask.comments?.length > 0 ? selectedTask.comments.map((comment, i) => (
+                                 <div key={i} className="flex gap-4 group">
+                                    <div className="w-10 h-10 rounded-2xl bg-[#FAFAF9] border border-[#F4F3EF] flex-shrink-0 flex items-center justify-center text-xs font-black text-[#1A1A2E] group-hover:bg-[#1B4DA0] group-hover:text-white transition-all">
+                                       {comment.byName?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 bg-white p-5 rounded-3xl border border-[#F4F3EF] hover:border-[#1B4DA0]/20 transition-all shadow-sm">
+                                       <div className="flex items-center justify-between mb-2">
+                                          <span className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-wider">{comment.byName}</span>
+                                          <span className="text-[10px] text-[#9B9BAD] font-bold">
+                                             {new Date(comment.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                          </span>
+                                       </div>
+                                       <p className="text-sm font-medium text-slate-600 leading-relaxed">{comment.text}</p>
+                                    </div>
+                                 </div>
+                              )) : (
+                                 <div className="py-10 text-center bg-[#FAFAF9] rounded-3xl border border-dashed border-[#F4F3EF]">
+                                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest italic">No activities recorded yet</p>
+                                 </div>
+                              )}
+                           </div>
+                        </div>
+                     </div>
                   </div>
 
                   {/* Sidebar Footer - Add Comment */}

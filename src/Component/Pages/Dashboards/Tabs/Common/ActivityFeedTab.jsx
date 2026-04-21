@@ -69,6 +69,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
+  const [specificDate, setSpecificDate] = useState('');
   const [selectedActivity, setSelectedActivity] = useState(null);
 
   useEffect(() => {
@@ -87,7 +88,11 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      if (dateFilter === 'today') {
+      if (specificDate) {
+        const activityDateStr = activityDate.toDateString();
+        const filterDateStr = new Date(specificDate).toDateString();
+        matchesDate = activityDateStr === filterDateStr;
+      } else if (dateFilter === 'today') {
         matchesDate = activityDate >= today;
       } else if (dateFilter === 'yesterday') {
         const yesterday = new Date(today);
@@ -137,6 +142,10 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 100px; }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          display: none;
+          -webkit-appearance: none;
+        }
       `}</style>
 
       {/* Activity Detail Drawer */}
@@ -257,20 +266,41 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
             />
           </div>
 
-          {/* Date Filter */}
-          <div className="relative">
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="bg-[#F4F3EF] dark:bg-slate-900 text-xs font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
-            >
-              <option value="all">All Registry</option>
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="week">This Week</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          {/* Specific Date Picker */}
+          <div 
+            className="relative group cursor-pointer"
+            onClick={(e) => {
+              const input = e.currentTarget.querySelector('input[type="date"]');
+              if (input && typeof input.showPicker === 'function') {
+                input.showPicker();
+              }
+            }}
+          >
+            <Calendar className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${specificDate ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'}`} size={16} />
+            <input
+              type="date"
+              value={specificDate}
+              onChange={(e) => {
+                setSpecificDate(e.target.value);
+                if (e.target.value) setDateFilter('all');
+              }}
+              className={`bg-[#F4F3EF] dark:bg-slate-900 text-[11px] font-bold uppercase tracking-widest rounded-xl pl-12 pr-4 py-3 outline-none border-none cursor-pointer transition-all ${specificDate ? 'text-[#1B4DA0] ring-1 ring-[#1B4DA0]/20' : 'text-[#1A1A2E] dark:text-slate-400'}`}
+            />
+            {specificDate && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSpecificDate('');
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors z-20"
+                title="Clear Date"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
+
+           
 
 
 

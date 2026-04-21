@@ -698,10 +698,14 @@ Mabicons Recruitment Team`);
           <button
             onClick={handleSharePointSync}
             disabled={isSyncing}
-            className="group flex items-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
+            className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-[#1B4DA0] border border-[#E8E7E2] rounded-2xl text-[13px] font-bold hover:bg-blue-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
           >
-            {isSyncing ? <FiRefreshCw className="animate-spin" /> : <FiDatabase className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />}
-            {isSyncing ? 'Syncing...' : 'Sync Data'}
+            {isSyncing ? (
+              <FiRefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <FiDatabase className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+            )}
+            <span className="tracking-tight">{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
           </button>
 
           <button
@@ -714,25 +718,43 @@ Mabicons Recruitment Team`);
       </div>
 
       {/* Search Bar + Filters */}
-      <div className="flex items-center gap-3 mb-6 bg-white p-2 rounded-2xl border border-[#F4F3EF] shadow-sm flex-wrap">
-        <div className="flex items-center gap-3 bg-[#F4F3EF] px-5 py-3 rounded-2xl flex-1 border border-transparent focus-within:border-[#1B4DA0]/20 transition-all min-w-[200px]">
-          <Search size={14} className="text-[#9B9BAD]" />
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-8">
+        {/* Search Bar */}
+        <div className="relative flex-1 group min-w-[200px]">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
-            placeholder="Search by name, role, or skill..."
-            className="bg-transparent border-0 outline-none text-xs text-[#1A1A2E] w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by name, role, or skill..."
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
 
+        {/* Global Registry Date Filter - Integrated Look */}
+        <div className="relative">
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
+            <option value="all">All Registry</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+        </div>
+
         {dateFilter === 'custom' && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-1 bg-[#F4F3EF] rounded-xl border border-[#E8E7E2]">
             <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
-              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer" />
+              className="bg-transparent text-[10px] font-bold text-[#1A1A2E] outline-none border-0 cursor-pointer" />
             <span className="text-[10px] text-[#9B9BAD] font-bold">to</span>
             <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
-              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-3 py-2.5 outline-none border-0 cursor-pointer" />
+              className="bg-transparent text-[10px] font-bold text-[#1A1A2E] outline-none border-0 cursor-pointer" />
           </div>
         )}
 
@@ -740,31 +762,29 @@ Mabicons Recruitment Team`);
           <select
             value={targetRoleFilter}
             onChange={(e) => setTargetRoleFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
           >
             <option value="">All Openings</option>
             {positions.map(p => (
               <option key={p.id} value={p.id}>{p.title} {p.clientName ? `(${p.clientName})` : ''}</option>
             ))}
           </select>
-          <ChevronDown size={14} className="absolute right-7 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+          <Briefcase className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
-        {/* Client Filter Dropdown */}
         <div className="relative">
           <select
             value={selectedClientFilter}
             onChange={(e) => setSelectedClientFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-12 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
           >
             <option value="All Clients">All Clients</option>
             {activeClientNames.map(name => (
               <option key={name} value={name}>{name}</option>
             ))}
           </select>
-          <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+          <User className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
-
       </div>
 
       {/* Kanban / Table Content Area */}
@@ -953,7 +973,7 @@ Mabicons Recruitment Team`);
                       {selectedIds.length === candidates.length ? <CheckSquare size={16} /> : <Square size={16} />}
                     </button>
                   </th>
-                  {["Candidate Info", "Position", "Applied Date", "Pipeline Stage", "Quick Actions", "Actions"].map((h) => (
+                  {["Candidate", "Position", "Applied Date", "Pipeline Stage", "Quick Actions", "Actions"].map((h) => (
                     <th key={h} className={`py-3 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center`}>{h}</th>
                   ))}
                 </tr>
@@ -1148,25 +1168,30 @@ Mabicons Recruitment Team`);
             onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
           />
           <div
-            className="fixed right-0 top-0 h-full w-full sm:w-[550px] md:w-[650px] bg-white z-[99999] overflow-y-auto shadow-[-16px_0_64px_rgba(0,0,0,0.15)] flex flex-col transition-transform duration-300 transform translate-x-0"
-          >
-            {/* Drawer Header */}
-            <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-10">
-              <div>
-                <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  {editMode ? "Edit Profile" : "Profile Details"}
-                </h2>
-                <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] mt-1">Application Hub</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
-                  className="w-10 h-10 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-all"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
+             className="fixed right-0 top-0 h-full w-full sm:w-[698px] bg-white z-[99999] overflow-y-auto shadow-[-16px_0_64px_rgba(0,0,0,0.15)] flex flex-col transition-transform duration-300 transform translate-x-0"
+           >
+             {/* Sticky Header */}
+             <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
+               <div className="flex-1">
+                 <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
+                   {editMode ? "Refine Profile" : "Candidate Dossier"}
+                 </h2>
+               </div>
+               <div className="flex items-center gap-3">
+                 <button
+                   onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}
+                   className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] shadow-sm"
+                 >
+                   <Edit2 size={20} />
+                 </button>
+                 <button
+                   onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
+                   className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm"
+                 >
+                   <X size={24} />
+                 </button>
+               </div>
+             </div>
 
             <div className="flex-1 p-8 space-y-10">
               {editMode && editCandidate ? (
@@ -1281,123 +1306,166 @@ Mabicons Recruitment Team`);
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-6 pb-2">
-                    <div
-                      className={`w-16 h-16 rounded-[22px] flex items-center justify-center text-xl font-bold border-4 border-white shadow-xl ${getAvatarColor(selectedCandidate.name, selectedCandidate.avatar)
-                        }`}
-                    >
-                      {selectedCandidate.avatar}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                          {selectedCandidate.name}
-                        </h3>
-                        <CheckSquare size={18} className="text-emerald-500" />
-                        {candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()] && (
-                          <div className="flex items-center gap-1 ml-2">
-                            {[1, 2, 3, 4, 5].map((s) => (
-                              <Star
-                                key={s}
-                                size={14}
-                                className={s <= candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()].rating ? "fill-amber-400 text-amber-400" : "text-[#C5C5D2] opacity-30"}
-                              />
-                            ))}
-                            <span className="text-[10px] font-black text-amber-500 ml-1 mt-0.5">
-                              {candidateFeedbacks[selectedCandidate.name?.toLowerCase().trim()].rating}/5
-                            </span>
-                          </div>
-                        )}
+                <div className="space-y-10">
+                  {/* Hero Profile Section */}
+                  <div className="flex flex-col items-center justify-center text-center py-4">
+                    <div className="relative group">
+                      <div className={`w-32 h-32 rounded-[40px] flex items-center justify-center text-white text-4xl font-black shadow-2xl transform transition-transform duration-500 border-4 border-white ${getAvatarColor(selectedCandidate.name, selectedCandidate.avatar)}`}>
+                        {selectedCandidate.avatar}
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-bold text-[#6B6B7E] uppercase tracking-[2px]">{selectedCandidate.role}</span>
-                        <span className="w-1 h-1 rounded-full bg-[#C5C5D2]" />
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${STAGE_COLORS[selectedCandidate.stage]?.count?.split(' ')[1] || 'text-slate-600'}`}>
+                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-[#E8E7E2] shadow-lg flex items-center justify-center text-emerald-500">
+                        <CheckSquare size={20} fill="currentColor" className="text-white" />
+                        <div className="absolute inset-0 bg-emerald-500 rounded-2xl flex items-center justify-center">
+                          <CheckSquare size={18} className="text-white" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 space-y-1 w-full">
+                      <h3 
+                        onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}
+                        className="text-3xl font-black text-[#1A1A2E] tracking-tight cursor-pointer hover:text-[#1B4DA0] transition-colors group flex items-center justify-center gap-3"
+                      >
+                        {selectedCandidate.name}
+                        <Pencil size={14} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                      </h3>
+                      <div className="flex items-center justify-center gap-3 mt-1.5 overflow-hidden">
+                        <span className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px]">{selectedCandidate.role}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                        <span className={`text-[11px] font-black uppercase tracking-[4px] ${STAGE_COLORS[selectedCandidate.stage]?.count?.split(' ')[1] || 'text-slate-600'}`}>
                           {selectedCandidate.stage}
                         </span>
                       </div>
-                      {selectedCandidate.cvUrl && (
-                        <div className="flex gap-2">
+                    </div>
+
+                    <div className="flex gap-3 mt-8">
+                       {selectedCandidate.cvUrl && (
                           <button
                             onClick={() => {
                               const url = selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`;
                               window.open(url, '_blank');
                             }}
-                            className="mt-2 flex items-center gap-1.5 px-4 py-2 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                            className="flex items-center gap-2 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold hover:bg-[#0D47A1] transition-all shadow-xl shadow-blue-500/20 active:scale-95"
                           >
-                            <Eye size={13} /> View CV
+                            <Eye size={16} /> View Resume
                           </button>
+                       )}
+                       {(selectedCandidate.stage === 'Selected' || selectedCandidate.stage === 'Hired' || selectedCandidate.stage === 'Joined') && (
+                          <button
+                            onClick={() => {
+                              setCredsCandidate({
+                                id: selectedCandidate.id,
+                                name: selectedCandidate.name,
+                                email: selectedCandidate.email
+                              });
+                              setIsCredsModalOpen(true);
+                            }}
+                            className="flex items-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-2xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-600/20 active:scale-95 whitespace-nowrap"
+                          >
+                            <Zap size={16} /> Generate Access
+                          </button>
+                       )}
+                    </div>
+                  </div>
 
-                          {(selectedCandidate.stage === 'Selected' || selectedCandidate.stage === 'Hired' || selectedCandidate.stage === 'Joined') && (
-                            <button
-                              onClick={() => {
-                                setCredsCandidate({
-                                  id: selectedCandidate.id,
-                                  name: selectedCandidate.name,
-                                  email: selectedCandidate.email
-                                });
-                                setIsCredsModalOpen(true);
-                              }}
-                              className="mt-2 flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/20 active:scale-95 whitespace-nowrap"
-                            >
-                              <Zap size={13} /> Gen Credentials
-                            </button>
-                          )}
+                  {/* Information Grid Container */}
+                  <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-12 space-y-12 shadow-sm">
+                    {/* Professional Info Column */}
+                    <div className="grid grid-cols-2 gap-x-16 gap-y-10">
+                       <div className="space-y-2 cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block text-left">Location</span>
+                            <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                          </div>
+                          <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2 text-left">
+                             <MapPin size={16} className="text-[#1B4DA0] shrink-0" /> {selectedCandidate.location || "Not specified"}
+                          </p>
+                       </div>
+                       <div className="space-y-2 cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                          <div className="flex items-center justify-between">
+                             <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block text-left">Experience</span>
+                             <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                          </div>
+                          <p className="text-base font-black text-[#1A1A2E] text-left">{selectedCandidate.experience || "0"} Years Total</p>
+                       </div>
+                       <div className="space-y-2 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Notice Period</span>
+                            <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                          </div>
+                          <p className="text-base font-black text-[#1A1A2E]">{selectedCandidate.noticePeriod || "N/A"}</p>
+                       </div>
+                       <div className="space-y-2 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Source</span>
+                            <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                          </div>
+                          <p className="text-base font-black text-[#1A1A2E]">{selectedCandidate.source || "Direct"}</p>
+                       </div>
+                    </div>
+
+                    <div className="h-px bg-[#F4F3EF]" />
+
+                    {/* Financial Context */}
+                    <div className="grid grid-cols-2 gap-10">
+                       <div className="bg-white p-6 rounded-[32px] border border-[#F4F3EF] shadow-sm flex flex-col items-center cursor-pointer group hover:border-[#1B4DA0]/30 transition-all" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Current CTC</span>
+                            <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                          </div>
+                          <p className="text-xl font-black text-[#1A1A2E]">{selectedCandidate.currentSalary || "N/A"}</p>
+                       </div>
+                       <div className="bg-white p-6 rounded-[32px] border border-[#F4F3EF] shadow-sm ring-4 ring-[#1B4DA0]/5 flex flex-col items-center cursor-pointer group hover:ring-[#1B4DA0]/10 transition-all" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] block">Expected CTC</span>
+                            <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#1B4DA0]" />
+                          </div>
+                          <p className="text-xl font-black text-[#1B4DA0]">{selectedCandidate.expectedSalary || "N/A"}</p>
+                       </div>
+                    </div>
+                  </div>
+
+                  {/* Skills Section */}
+                  <div className="px-4 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Candidate Skill-set</span>
+                      <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                       {Array.isArray(selectedCandidate.skills) ? selectedCandidate.skills.map(s => (
+                          <span key={s} className="px-5 py-2.5 bg-white border border-[#F4F3EF] rounded-xl text-xs font-bold text-[#1A1A2E] hover:border-[#1B4DA0] transition-colors cursor-pointer">
+                             {s}
+                          </span>
+                       )) : (selectedCandidate.skills?.split(',').map(s => (
+                          <span key={s} className="px-5 py-2.5 bg-white border border-[#F4F3EF] rounded-xl text-xs font-bold text-[#1A1A2E] hover:border-[#1B4DA0] transition-colors cursor-pointer">
+                             {s.trim()}
+                          </span>
+                       )) || <span className="text-[#9B9BAD] font-bold text-sm italic">No skills listed</span>)}
+                    </div>
+                  </div>
+
+                  {/* Communication Footnote */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-8 bg-[#FAFAF9] rounded-[32px] border border-[#F4F3EF] gap-6">
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
+                           <Mail size={18} />
                         </div>
-                      )}
-                    </div>
+                        <div className="text-left">
+                           <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Identity</p>
+                           <p className="text-sm font-black text-[#1A1A2E]">{selectedCandidate.email}</p>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
+                           <Phone size={18} />
+                        </div>
+                        <div className="text-left">
+                           <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Contact Verified</p>
+                           <p className="text-sm font-black text-[#1A1A2E]">{selectedCandidate.phone}</p>
+                        </div>
+                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#FAFAF8] p-4 rounded-2xl border border-[#F4F3EF]">
-                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1.5 leading-none flex items-center gap-1.5">
-                        <Mail size={10} /> Email
-                      </p>
-                      <p className="text-xs font-bold text-[#1A1A2E] truncate">{selectedCandidate.email}</p>
-                    </div>
-                    <div className="bg-[#FAFAF8] p-4 rounded-2xl border border-[#F4F3EF]">
-                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-1.5 leading-none flex items-center gap-1.5">
-                        <Phone size={10} /> Phone
-                      </p>
-                      <p className="text-xs font-bold text-[#1A1A2E]">{selectedCandidate.phone}</p>
-                    </div>
-                  </div>
-
-                  {/* Financial & Logistics Info */}
-                  <div className="bg-[#FAFAF8] rounded-[24px] border border-[#F4F3EF] divide-y divide-[#F4F3EF]">
-                    <div className="grid grid-cols-2 divide-x divide-[#F4F3EF]">
-                      <div className="p-4">
-                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Current CTC</p>
-                        <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-1">
-                          <DollarSign size={12} className="text-[#9B9BAD]" />
-                          {selectedCandidate.currentSalary || "N/A"}
-                        </p>
-                      </div>
-                      <div className="p-4">
-                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Expected CTC</p>
-                        <p className="text-sm font-bold text-[#1B4DA0] flex items-center gap-1">
-                          <DollarSign size={12} />
-                          {selectedCandidate.expectedSalary || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 divide-x divide-[#F4F3EF]">
-                      <div className="p-4">
-                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Notice</p>
-                        <p className="text-xs font-bold text-[#1A1A2E]">{selectedCandidate.noticePeriod || "N/A"}</p>
-                      </div>
-                      <div className="p-4">
-                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Exp.</p>
-                        <p className="text-xs font-bold text-[#1A1A2E]">{selectedCandidate.experience || "0"}y</p>
-                      </div>
-                      <div className="p-4">
-                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Location</p>
-                        <p className="text-xs font-bold text-[#1A1A2E] truncate flex items-center gap-1">
-                          <MapPin size={10} /> {selectedCandidate.location}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                </div>
 
                   {/* Resume / CV Preview */}
                   {selectedCandidate.cvUrl && (

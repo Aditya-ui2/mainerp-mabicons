@@ -316,7 +316,22 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
           </h1>
         </div>
         <div className="flex gap-3">
-          
+          <button
+            onClick={async () => {
+              try {
+                toast.info("Syncing documents from source...");
+                await syncSharePointAll();
+                toast.success("Sync completed successfully");
+                window.location.reload();
+              } catch (err) {
+                toast.error("Sync failed: " + err.message);
+              }
+            }}
+            className="group flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[13px] font-bold transition-all shadow-sm active:scale-95 bg-white border border-[#E8E7E2] hover:bg-blue-50/30"
+          >
+            <Database size={18} className="text-[#1B4DA0] transition-colors group-hover:scale-110" />
+            <span className="text-[#1B4DA0] tracking-tight">Sync Data</span>
+          </button>
         </div>
       </div>
 

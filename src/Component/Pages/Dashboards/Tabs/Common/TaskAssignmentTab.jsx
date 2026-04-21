@@ -159,14 +159,25 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
       {/* Header - Sticky Style */}
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
         <div className="flex-1 mr-4">
-          <h2 className="text-2xl font-semibold text-[#1A1A2E] font-syne outline-none">{editableTask.title || 'Task Details'}</h2>
+          {isEditing ? (
+            <input
+              autoFocus
+              className="text-2xl font-semibold text-[#1A1A2E] font-syne outline-none bg-[#0D47A1]/5 border-b-2 border-[#0D47A1] w-full px-2 py-1"
+              value={editableTask.title}
+              onChange={e => setEditableTask(p => ({ ...p, title: e.target.value }))}
+            />
+          ) : (
+            <h2 
+              onClick={() => setIsEditing(true)}
+              className="text-2xl font-semibold text-[#1A1A2E] font-syne outline-none cursor-pointer hover:text-[#0D47A1] transition-colors group flex items-center gap-3"
+            >
+              {editableTask.title || 'Task Details'}
+              <Pencil size={14} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+            </h2>
+          )}
           <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
             <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] outline-none truncate">
-                {task.assignedToName || 'PENDING ASSIGNMENT'}
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2] flex-shrink-0" />
-            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] outline-none">
-                {task.status}
+                FOR: {task.assignedToName || 'UNASSIGNED'}
             </span>
           </div>
         </div>
@@ -243,13 +254,17 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
           {/* Two Column Grid Layout */}
           <div className="grid grid-cols-2 gap-x-16 gap-y-8">
             {/* Assigned Specialist */}
-            <div className="space-y-3">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Assigned To</span>
+            <div className="space-y-3 cursor-pointer group" onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Assigned To</span>
+                {!isEditing && <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />}
+              </div>
               {isEditing ? (
-                <div className="relative">
+                <div className="relative" onClick={e => e.stopPropagation()}>
                   <input
                     type="text"
                     autoComplete="off"
+                    autoFocus
                     className="w-full text-base font-bold text-[#1A1A2E] bg-white border border-[#1B4DA0] rounded-xl px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-[#1B4DA0]/10"
                     value={editableTask.assignedToName}
                     onChange={e => {
@@ -289,18 +304,24 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
             </div>
 
             {/* Deadline */}
-            <div className="space-y-3">
-              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deadline </span>
+            <div className="space-y-3 cursor-pointer group" onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deadline</span>
+                {!isEditing && <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />}
+              </div>
               {isEditing ? (
                 <input 
                   type="date"
-                  className="text-base font-bold text-[#1A1A2E] bg-white border border-[#1B4DA0] rounded-xl px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-[#1B4DA0]/10"
+                  autoFocus
+                  className="text-base font-bold text-[#1A1A2E] bg-white border border-[#1B4DA0] rounded-xl px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-[#1B4DA0]/10 w-full"
                   value={editableTask.dueDate}
                   onChange={e => setEditableTask(p => ({ ...p, dueDate: e.target.value }))}
                 />
               ) : (
                 <div>
-                  <p className="text-base font-black text-[#1A1A2E]">{editableTask.dueDate || '—'}</p>
+                  <p className="text-base font-black text-[#E11D48]">
+                    {editableTask.dueDate ? new Date(editableTask.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                  </p>
                 </div>
               )}
             </div>
@@ -332,6 +353,22 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
               <p className={`text-base font-black ${task.status === 'Completed' ? 'text-emerald-600' : 'text-amber-600'}`}>
                 {task.status}
               </p>
+            </div>
+
+            {/* Assigned By (Static) */}
+            <div className="space-y-3 col-span-2 mt-4 pt-8 border-t border-[#F4F3EF]">
+              <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Assigned By</span>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#F4F3EF] to-[#E8E7E2] flex items-center justify-center text-[#1A1A2E] font-black text-sm shadow-sm border border-white">
+                  {(task.assignedByName || 'A').charAt(0)}
+                </div>
+                <div>
+                  <p className="text-base font-black text-[#1A1A2E]">
+                    {task.assignedByName || 'Admin'}
+                  </p>
+                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">Authorized By System</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -511,6 +548,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       }
 
       setShowModal(false);
+      setShowDrawer(false);
       setEditingTask(null);
       setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '', targets: [] });
       showToast(editingTask ? 'Task updated!' : 'Task assigned!');
@@ -627,25 +665,45 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="text-left">
-          <h2 className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Assignment</h2>
-
+          <h2 className="text-4xl font-black tracking-tight text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Assignment</h2>
+          <p className="text-xs font-bold uppercase tracking-[4px] mt-2 text-[#9B9BAD]">Premium Recruitment Dashboard</p>
         </div>
-        {canAssignTasks ? (
-          <motion.button
-            whileHover={{ scale: 1.02, translateY: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '', targets: [] }); setShowModal(true); }}
-            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#0D47A1]/20 transition-all border border-white/10"
+        <div className="flex items-center gap-3">
+          <button
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await fetchData();
+                showToast('Data synced successfully!');
+              } catch (err) {
+                showToast('Sync failed: ' + err.message, 'error');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            className="group flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[13px] font-bold transition-all shadow-sm active:scale-95 bg-white border border-[#E8E7E2] hover:bg-blue-50/30"
           >
-            <FiPlus size={20} />
-            Assign Task
-          </motion.button>
-        ) : (
-          <div className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] text-sm font-medium text-[#6B7280]">
-            <FiAlertCircle size={18} />
-            Only admins can assign tasks.
-          </div>
-        )}
+            <FiLoader className={`w-4 h-4 text-[#1B4DA0] transition-colors group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
+            <span className="text-[#1B4DA0] tracking-tight">Sync Data</span>
+          </button>
+          {canAssignTasks ? (
+            <motion.button
+              whileHover={{ scale: 1.02, translateY: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '', targets: [] }); setShowModal(true); }}
+              className="flex items-center gap-2 px-6 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[13px] font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153D80] transition-all active:scale-95"
+            >
+              <FiPlus className="w-4 h-4" />
+              Assign Task
+            </motion.button>
+          ) : (
+            <div className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] text-sm font-medium text-[#6B7280]">
+              <FiAlertCircle size={18} />
+              Only admins can assign tasks.
+            </div>
+          )}
+        </div>
       </div>
 
 
@@ -653,21 +711,24 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
 
 
       <div className="bg-white rounded-[24px] p-2 mt-8 mb-5 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+        {/* Search Bar */}
         <div className="relative flex-1 group min-w-[200px]">
           <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by title, client or location..."
+            placeholder="Search by title, owner or tags..."
             className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
+
+        {/* Priority Filter */}
         <div className="relative">
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
           >
             <option value="">All Priority</option>
             <option value="Low">Low</option>
@@ -675,32 +736,34 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             <option value="High">High</option>
             <option value="Urgent">Urgent</option>
           </select>
-          <FiChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none rotate-90" size={14} />
+          <FiFlag className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
+        {/* Status Filter */}
         <div className="relative">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[130px]"
           >
             <option value="">All Status</option>
             <option value="Pending">Pending</option>
             <option value="Completed">Completed</option>
           </select>
-          <FiChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none rotate-90" size={14} />
+          <FiZap className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
+        {/* KAM Filter */}
         <div className="relative">
           <select
             value={kamFilter}
             onChange={(e) => setKamFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
           >
-            <option value="">All KAM</option>
+            <option value="">All KAMs</option>
             {uniqueAssignees.map(name => <option key={name} value={name}>{name}</option>)}
           </select>
-          <FiChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none rotate-90" size={14} />
+          <FiUser className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
       </div>
 
@@ -720,7 +783,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             />
           </div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Tasks</div>
-          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Assignee</div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Assigned By</div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Status</div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Actions</div>
           <div></div>
@@ -768,12 +831,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                 </div>
               </div>
 
-              {/* Assignee */}
+              {/* Assigned By */}
               <div className="flex items-center justify-center gap-3 min-w-0 py-1">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] text-[#1B4DA0] flex items-center justify-center font-black text-xs border border-[#F4F3EF] shrink-0">
-                  {task.assignedToName?.split(' ').map(n => n[0]).join('') || '?'}
+                  {task.assignedByName?.split(' ').map(n => n[0]).join('') || '?'}
                 </div>
-                <span className="text-[13px] font-medium text-[#64748b] truncate">{task.assignedToName || 'Unassigned'}</span>
+                <span className="text-[13px] font-medium text-[#64748b] truncate">{task.assignedByName || 'Admin'}</span>
               </div>
 
               {/* Status */}

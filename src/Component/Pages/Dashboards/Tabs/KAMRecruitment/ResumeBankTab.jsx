@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Filter, Download, UserPlus, FileText, CheckCircle2, ChevronLeft, ChevronRight,
-  Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye, ChevronDown
+  Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye, ChevronDown, Pencil, Check
 } from 'lucide-react';
 import { toast } from "sonner";
 import {
@@ -98,8 +98,36 @@ const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSele
   </div>
 );
 
-const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onUpdatePosition }) => {
+const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onRefresh }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editedResume, setEditedResume] = useState({ ...resume });
+
+  useEffect(() => {
+    setEditedResume({ ...resume });
+  }, [resume]);
+
   if (!resume) return null;
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateResumeDetails(resume.id, editedResume);
+      toast.success('Profile updated successfully');
+      setIsEditing(false);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      toast.error(err.message || 'Update failed');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const fieldClasses = `w-full bg-transparent rounded-xl px-2 py-1 transition-all outline-none border ${isEditing
+    ? 'border-[#1B4DA0]/20 bg-[#1B4DA0]/5 hover:bg-[#1B4DA0]/10 focus:border-[#1B4DA0] focus:bg-white'
+    : 'border-transparent cursor-default'
+  }`;
+
   return (
     <div className="fixed inset-0 z-[1100] flex justify-end overflow-hidden pointer-events-none">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md pointer-events-auto" />
@@ -109,60 +137,223 @@ const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onUpdatePosition }) =
         className={`relative w-full max-w-2xl h-full shadow-2xl flex flex-col pointer-events-auto z-[1101] ${isDarkMode ? 'bg-slate-900 border-l border-slate-800' : 'bg-white border-l border-[#F4F3EF]'}`}
       >
         <div className={`p-8 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800' : 'border-[#F4F3EF]'}`}>
-          <div>
+          <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <StatusBadge status={resume.status} />
               {resume.isStarred && <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded-full uppercase">Top Choice</span>}
             </div>
-            <h2 className="text-3xl font-bold tracking-tight font-syne">{resume.candidateName || resume.fileName.split('.')[0]}</h2>
+            {isEditing ? (
+              <input
+                autoFocus
+                className="text-3xl font-bold tracking-tight font-syne bg-transparent border-b-2 border-[#1B4DA0] outline-none w-full"
+                value={editedResume.candidateName || ''}
+                onChange={e => setEditedResume(p => ({ ...p, candidateName: e.target.value }))}
+              />
+            ) : (
+              <h2
+                onClick={() => setIsEditing(true)}
+                className="text-3xl font-bold tracking-tight font-syne cursor-pointer hover:text-[#1B4DA0] transition-colors group flex items-center gap-3"
+              >
+                {resume.candidateName || resume.fileName.split('.')[0]}
+                <Pencil size={18} className="opacity-0 group-hover:opacity-100 text-slate-400" />
+              </h2>
+            )}
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={onClose} className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${isDarkMode ? 'text-slate-400 border-slate-700 hover:bg-red-500/10 hover:text-red-500' : 'text-[#6B6B7E] border-[#F4F3EF] hover:bg-red-50 hover:text-red-500'}`}>
-              <X size={24} />
-            </button>
+            {isEditing ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="px-6 py-2 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                >
+                  {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+                  Save
+                </button>
+              </div>
+            ) : (
+              <button onClick={onClose} className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${isDarkMode ? 'text-slate-400 border-slate-700 hover:bg-red-500/10 hover:text-red-500' : 'text-[#6B6B7E] border-[#F4F3EF] hover:bg-red-50 hover:text-red-500'}`}>
+                <X size={24} />
+              </button>
+            )}
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
           <div className="grid grid-cols-2 gap-6">
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><User size={13} /> Email Address</p>
-              <p className="text-sm font-bold truncate">{resume.email || 'N/A'}</p>
+            {/* Email Address */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><User size={13} /> Email Address</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.email || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, email: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold truncate">{resume.email || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><Briefcase size={13} /> Contact Number</p>
-              <p className="text-sm font-bold">{resume.phone || 'N/A'}</p>
+
+            {/* Contact Number */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}><Briefcase size={13} /> Contact Number</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.phone || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, phone: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.phone || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Target Role</p>
-              <p className="text-sm font-bold">{resume.roleType || 'N/A'}</p>
+
+            {/* Target Role */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Target Role</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.roleType || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, roleType: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.roleType || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Company</p>
-              <p className="text-sm font-bold">{resume.currentCompany || 'N/A'}</p>
+
+            {/* Current Company */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Company</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.currentCompany || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, currentCompany: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.currentCompany || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Experience</p>
-              <p className="text-sm font-bold">{resume.experience || 'N/A'}</p>
+
+            {/* Experience */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Experience</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.experience || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, experience: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.experience || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Location</p>
-              <p className="text-sm font-bold">{resume.currentLocation || 'N/A'}</p>
+
+            {/* Current Location */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Location</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.currentLocation || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, currentLocation: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.currentLocation || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Salary</p>
-              <p className="text-sm font-bold">{resume.currentSalary || 'N/A'}</p>
+
+            {/* Current Salary */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Current Salary</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.currentSalary || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, currentSalary: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.currentSalary || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Expected Salary</p>
-              <p className="text-sm font-bold">{resume.expectedSalary || 'N/A'}</p>
+
+            {/* Expected Salary */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Expected Salary</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.expectedSalary || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, expectedSalary: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.expectedSalary || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Notice Period</p>
-              <p className="text-sm font-bold">{resume.noticePeriod || 'N/A'}</p>
+
+            {/* Notice Period */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Notice Period</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.noticePeriod || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, noticePeriod: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.noticePeriod || 'N/A'}</p>
+              )}
             </div>
-            <div className={`p-6 rounded-[32px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Preferred Location</p>
-              <p className="text-sm font-bold">{resume.preferredLocation || 'N/A'}</p>
+
+            {/* Preferred Location */}
+            <div className={`p-6 rounded-[32px] border group cursor-pointer ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-[#FDFDFD] border-[#F4F3EF]'}`} onClick={() => !isEditing && setIsEditing(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Preferred Location</p>
+                {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400" />}
+              </div>
+              {isEditing ? (
+                <input
+                  className="text-sm font-bold w-full bg-[#1B4DA0]/5 border-none outline-none rounded-lg px-2 py-1"
+                  value={editedResume.preferredLocation || ''}
+                  onChange={e => setEditedResume(p => ({ ...p, preferredLocation: e.target.value }))}
+                />
+              ) : (
+                <p className="text-sm font-bold">{resume.preferredLocation || 'N/A'}</p>
+              )}
             </div>
           </div>
           <div className="space-y-4">
@@ -547,13 +738,14 @@ const ResumeBankTab = () => {
           <button
             onClick={() => setShowSyncMenu(!showSyncMenu)}
             disabled={syncing}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95 ${syncing
-              ? 'bg-slate-100 text-slate-400'
-              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
-              }`}
+            className={`flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[13px] font-bold transition-all shadow-sm active:scale-95 bg-white border border-[#E8E7E2] hover:bg-blue-50/30 group ${syncing ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
-            {syncing ? 'Syncing...' : 'Sync Source'}
+            {syncing ? (
+              <RefreshCw size={18} className="text-[#1B4DA0] animate-spin" />
+            ) : (
+              <Database size={18} className="text-[#1B4DA0] transition-colors group-hover:scale-110" />
+            )}
+            <span className="text-[#1B4DA0] tracking-tight">{syncing ? 'Syncing...' : 'Sync Data'}</span>
           </button>
           <button
             onClick={handleOpenAddCandidate}
@@ -609,7 +801,7 @@ const ResumeBankTab = () => {
             onChange={(e) => handleFilterChange('roleType', e.target.value)}
             className="bg-[#F4F3EF] dark:bg-slate-900 text-xs font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
           >
-            <option value="">Roles (Global)</option>
+            <option value="">Positions</option>
             {roleTypes.map(role => (
               <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
             ))}
@@ -633,7 +825,7 @@ const ResumeBankTab = () => {
       <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-20">
         <div className="grid grid-cols-[1.5fr_1fr_100px] items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
           <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Candidate</span>
-          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Roles</span>
+          <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Positions</span>
           <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Actions</span>
         </div>
 
@@ -689,7 +881,7 @@ const ResumeBankTab = () => {
 
       {/* Bottom Info */}
       <div className="mt-6 py-10 border-t border-[#F4F3EF] dark:border-slate-700 text-center">
-        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[4px]">Verified Talent Ecosystem • Managed by Human Intelligence</p>
+         
       </div>
 
       {/* Overlays */}
@@ -699,7 +891,7 @@ const ResumeBankTab = () => {
             resume={selectedResume}
             isDarkMode={isDarkMode}
             onClose={() => setShowDetailDrawer(false)}
-            onUpdatePosition={handleUpdatePosition}
+            onRefresh={fetchResumes}
           />
         )}
       </AnimatePresence>

@@ -696,6 +696,12 @@ const KAMPerformanceContent = ({
       className="space-y-8"
       style={{ fontFamily: "'Calibri', sans-serif" }}
     >
+      <style>{`
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          display: none;
+          -webkit-appearance: none;
+        }
+      `}</style>
       {/* ── Premium Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 relative z-[20]">
         <div className="text-left">
@@ -728,12 +734,21 @@ const KAMPerformanceContent = ({
 
             <AnimatePresence>
               {showClientDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 5 }}
-                  className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden py-1.5"
-                >
+                <>
+                  {/* Global Backdrop to catch clicks outside */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowClientDropdown(false)}
+                    className="fixed inset-0 z-[9998] bg-transparent cursor-default"
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden py-1.5"
+                  >
                   {clientNames.map((client) => (
                     <button
                       key={client}
@@ -749,6 +764,7 @@ const KAMPerformanceContent = ({
                     </button>
                   ))}
                 </motion.div>
+                </>
               )}
             </AnimatePresence>
           </div>
@@ -771,12 +787,22 @@ const KAMPerformanceContent = ({
 
             <AnimatePresence>
               {showDateFilter && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 5 }}
-                  className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden"
-                >
+                <>
+                  {/* Global Backdrop to catch clicks outside */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowDateFilter(false)}
+                    className="fixed inset-0 z-[9998] bg-transparent cursor-default"
+                  />
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden"
+                  >
                   <div className="px-5 py-4 border-b border-[#F4F3EF] bg-[#FAFAF8]">
                     <p className="font-bold text-[#1A1A2E] text-left text-sm">Select Time Period</p>
                   </div>
@@ -849,6 +875,7 @@ const KAMPerformanceContent = ({
                     </button>
                   </div>
                 </motion.div>
+                </>
               )}
             </AnimatePresence>
           </div>
@@ -1231,7 +1258,7 @@ const ClientDistributionModal = ({ distribution, onClose }) => {
 
                 {/* Detail Content */}
                 <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
-                  
+
                   {/* Identity Section */}
                   <div className="flex flex-col items-center text-center">
                     <div className="w-24 h-24 rounded-[32px] bg-[#F8FAFC] text-[#475569] flex items-center justify-center text-3xl font-extrabold shadow-xl border border-[#F1F5F9] mb-6">
@@ -3323,7 +3350,7 @@ const RecruitmentHeadDashboard = () => {
                         onClick={async () => {
                           try {
                             setIsSavingDetail(true);
-                            
+
                             let submitData = { ...editableMember };
                             if (editableMember.profilePhoto instanceof File) {
                               const formData = new FormData();
@@ -3336,15 +3363,15 @@ const RecruitmentHeadDashboard = () => {
                             }
 
                             await updateKAMMember(editableMember.id, submitData);
-                            
+
                             // Update local states
-                            const updatedMember = { 
-                              ...selectedKAM, 
+                            const updatedMember = {
+                              ...selectedKAM,
                               ...editableMember,
                               profilePhoto: editableMember.profilePhotoPreview || selectedKAM.profilePhoto,
                               avatar: editableMember.profilePhotoPreview || selectedKAM.avatar
                             };
-                            
+
                             setKamTeam(prev => prev.map(m => m.id === editableMember.id ? updatedMember : m));
                             setSelectedKAM(updatedMember);
                             setIsEditingInDetail(false);
@@ -3380,138 +3407,138 @@ const RecruitmentHeadDashboard = () => {
                 </div>
               </div>
 
-                {/* Drawer Content */}
-                <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
-                  {/* Profile Header (Centered) */}
-                  <div className="flex flex-col items-center text-center">
-                    <div className="relative group mb-6">
-                      <label 
-                        htmlFor="detail-photo-upload"
-                        className={`w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden transition-all duration-300 ${isEditingInDetail ? 'cursor-pointer hover:scale-105' : ''}`}
-                        style={{ background: selectedKAM.color?.gradient || 'linear-gradient(135deg, #1B4DA0 0%, #0D47A1 100%)' }}>
-                        
-                        {(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto) && (String(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto).includes('data:image') || String(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto).includes('http')) ? (
-                          <img src={editableMember?.profilePhotoPreview || selectedKAM.profilePhoto} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
-                        ) : (
-                          <span>{selectedKAM.avatar || (selectedKAM.name || 'U')[0]}</span>
-                        )}
+              {/* Drawer Content */}
+              <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
+                {/* Profile Header (Centered) */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative group mb-6">
+                    <label
+                      htmlFor="detail-photo-upload"
+                      className={`w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden transition-all duration-300 ${isEditingInDetail ? 'cursor-pointer hover:scale-105' : ''}`}
+                      style={{ background: selectedKAM.color?.gradient || 'linear-gradient(135deg, #1B4DA0 0%, #0D47A1 100%)' }}>
 
-                        {isEditingInDetail && (
-                          <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex flex-col items-center justify-center opacity-100 transition-opacity cursor-pointer border-2 border-white/20 rounded-[32px]">
-                            <FiCamera className="text-white w-6 h-6 mb-1" />
-                            <span className="text-[8px] font-black text-white uppercase tracking-widest">Change</span>
-                            <input 
-                              id="detail-photo-upload"
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*" 
-                              onChange={handleDetailPhotoChange} 
-                            />
-                          </div>
-                        )}
-                      </label>
-                    </div>
+                      {(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto) && (String(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto).includes('data:image') || String(editableMember?.profilePhotoPreview || selectedKAM.profilePhoto).includes('http')) ? (
+                        <img src={editableMember?.profilePhotoPreview || selectedKAM.profilePhoto} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                      ) : (
+                        <span>{selectedKAM.avatar || (selectedKAM.name || 'U')[0]}</span>
+                      )}
 
-                    <div className="space-y-1.5">
-                      {isEditingInDetail ? (
-                        <input
-                          type="text"
-                          className="w-full max-w-[320px] text-2xl font-bold text-[#1A1A2E] bg-[#FAFAF8] border-none rounded-2xl py-2 px-4 text-center focus:outline-none transition-all font-syne"
-                          value={editableMember.name}
-                          onChange={(e) => setEditableMember({ ...editableMember, name: e.target.value })}
-                        />
-                      ) : (
-                        <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedKAM.name}</h4>
+                      {isEditingInDetail && (
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex flex-col items-center justify-center opacity-100 transition-opacity cursor-pointer border-2 border-white/20 rounded-[32px]">
+                          <FiCamera className="text-white w-6 h-6 mb-1" />
+                          <span className="text-[8px] font-black text-white uppercase tracking-widest">Change</span>
+                          <input
+                            id="detail-photo-upload"
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleDetailPhotoChange}
+                          />
+                        </div>
                       )}
-                      
-                      {isEditingInDetail ? (
-                        <input
-                          type="text"
-                          className="w-full max-w-[240px] text-sm font-semibold text-[#1B4DA0] bg-[#FAFAF8] border-none rounded-xl py-1 px-3 text-center focus:outline-none mt-1 mx-auto"
-                          value={editableMember.role}
-                          onChange={(e) => setEditableMember({ ...editableMember, role: e.target.value })}
-                        />
-                      ) : (
-                        <p className="text-[14px] font-bold text-[#1B4DA0] tracking-tight">{selectedKAM.role}</p>
-                      )}
-                    </div>
+                    </label>
                   </div>
 
-                  {/* Information Card (Justified to match screenshot) */}
-                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-10 space-y-8">
-                    {/* Department */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Department</span>
-                      {isEditingInDetail ? (
-                        <select
-                          className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none cursor-pointer"
-                          value={editableMember.department}
-                          onChange={(e) => setEditableMember({ ...editableMember, department: e.target.value })}
-                        >
-                          {['HR Recruitment', 'HR Operations', 'IT', 'Sales', 'Marketing', 'BD', 'Finance', 'Management'].map(dept => (
-                            <option key={dept} value={dept}>{dept}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.department || 'HR Recruitment'}</span>
-                      )}
-                    </div>
+                  <div className="space-y-1.5">
+                    {isEditingInDetail ? (
+                      <input
+                        type="text"
+                        className="w-full max-w-[320px] text-2xl font-bold text-[#1A1A2E] bg-[#FAFAF8] border-none rounded-2xl py-2 px-4 text-center focus:outline-none transition-all font-syne"
+                        value={editableMember.name}
+                        onChange={(e) => setEditableMember({ ...editableMember, name: e.target.value })}
+                      />
+                    ) : (
+                      <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedKAM.name}</h4>
+                    )}
 
-                    {/* Status */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Status</span>
-                      {isEditingInDetail ? (
-                        <select
-                          className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none cursor-pointer"
-                          value={editableMember.status}
-                          onChange={(e) => setEditableMember({ ...editableMember, status: e.target.value })}
-                        >
-                          {['Active', 'Inactive', 'On Leave'].map(status => (
-                            <option key={status} value={status}>{status}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className="text-[13px] font-bold text-[#1A1A2E]">{selectedKAM.status}</span>
-                      )}
-                    </div>
-
-                    {/* Email */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Email</span>
-                      {isEditingInDetail ? (
-                        <input
-                          type="email"
-                          className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none w-1/2"
-                          value={editableMember.email}
-                          onChange={(e) => setEditableMember({ ...editableMember, email: e.target.value })}
-                        />
-                      ) : (
-                        <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.email}</span>
-                      )}
-                    </div>
-
-                    {/* Contact */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Contact</span>
-                      {isEditingInDetail ? (
-                        <input
-                          type="text"
-                          className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none"
-                          value={editableMember.phone}
-                          onChange={(e) => setEditableMember({ ...editableMember, phone: e.target.value })}
-                        />
-                      ) : (
-                        <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.phone}</span>
-                      )}
-                    </div>
-
-                    {/* Total Hires */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Total Hires</span>
-                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.stats?.thisWeekHires || 0}</span>
-                    </div>
+                    {isEditingInDetail ? (
+                      <input
+                        type="text"
+                        className="w-full max-w-[240px] text-sm font-semibold text-[#1B4DA0] bg-[#FAFAF8] border-none rounded-xl py-1 px-3 text-center focus:outline-none mt-1 mx-auto"
+                        value={editableMember.role}
+                        onChange={(e) => setEditableMember({ ...editableMember, role: e.target.value })}
+                      />
+                    ) : (
+                      <p className="text-[14px] font-bold text-[#1B4DA0] tracking-tight">{selectedKAM.role}</p>
+                    )}
                   </div>
                 </div>
+
+                {/* Information Card (Justified to match screenshot) */}
+                <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-10 space-y-8">
+                  {/* Department */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#9B9BAD]">Department</span>
+                    {isEditingInDetail ? (
+                      <select
+                        className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none cursor-pointer"
+                        value={editableMember.department}
+                        onChange={(e) => setEditableMember({ ...editableMember, department: e.target.value })}
+                      >
+                        {['HR Recruitment', 'HR Operations', 'IT', 'Sales', 'Marketing', 'BD', 'Finance', 'Management'].map(dept => (
+                          <option key={dept} value={dept}>{dept}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.department || 'HR Recruitment'}</span>
+                    )}
+                  </div>
+
+                  {/* Status */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#9B9BAD]">Status</span>
+                    {isEditingInDetail ? (
+                      <select
+                        className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none cursor-pointer"
+                        value={editableMember.status}
+                        onChange={(e) => setEditableMember({ ...editableMember, status: e.target.value })}
+                      >
+                        {['Active', 'Inactive', 'On Leave'].map(status => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-[13px] font-bold text-[#1A1A2E]">{selectedKAM.status}</span>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#9B9BAD]">Email</span>
+                    {isEditingInDetail ? (
+                      <input
+                        type="email"
+                        className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none w-1/2"
+                        value={editableMember.email}
+                        onChange={(e) => setEditableMember({ ...editableMember, email: e.target.value })}
+                      />
+                    ) : (
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.email}</span>
+                    )}
+                  </div>
+
+                  {/* Contact */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#9B9BAD]">Contact</span>
+                    {isEditingInDetail ? (
+                      <input
+                        type="text"
+                        className="bg-transparent border-none text-right font-bold text-[#1A1A2E] outline-none"
+                        value={editableMember.phone}
+                        onChange={(e) => setEditableMember({ ...editableMember, phone: e.target.value })}
+                      />
+                    ) : (
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.phone}</span>
+                    )}
+                  </div>
+
+                  {/* Total Hires */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#9B9BAD]">Total Hires</span>
+                    <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.stats?.thisWeekHires || 0}</span>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </React.Fragment>
         )}
@@ -4265,7 +4292,7 @@ const RecruitmentHeadDashboard = () => {
 
                 {/* Detailed Content */}
                 <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
-                  
+
                   {/* Identity Section */}
                   <div className="flex flex-col items-center text-center">
                     <div className="w-24 h-24 rounded-[32px] bg-[#E3F2FD] text-[#0D47A1] flex items-center justify-center text-3xl font-extrabold shadow-xl border-4 border-white mb-6">
@@ -4315,9 +4342,9 @@ const RecruitmentHeadDashboard = () => {
                   <div className="space-y-4">
                     <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">Technical Skills Evaluated</p>
                     <div className="flex flex-wrap gap-2">
-                       {['React.js', 'Node.js', 'System Design', 'Redux'].map(skill => (
-                          <span key={skill} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">{skill}</span>
-                        ))}
+                      {['React.js', 'Node.js', 'System Design', 'Redux'].map(skill => (
+                        <span key={skill} className="px-4 py-2 bg-white border border-[#F4F3EF] rounded-xl text-[11px] font-bold text-[#4B4B5E] shadow-sm">{skill}</span>
+                      ))}
                     </div>
                   </div>
 

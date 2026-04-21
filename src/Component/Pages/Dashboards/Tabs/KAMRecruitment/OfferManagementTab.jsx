@@ -161,7 +161,7 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
               <p className={`text-[15px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.position}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Hiring Client</p>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Client</p>
               <p className={`text-[15px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.client || 'Internal'}</p>
             </div>
             <div>
@@ -1026,7 +1026,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
                     />
                   </div>
-                  {["Offer Date", "Candidate", "Hiring Client", "Position", "Offered CTC", "BGV Protocol", "Verify Status", ""].map((h, i) => (
+                  {["Offer Date", "Candidate", "Client", "Position", "Offered CTC", "BGV Protocol", "Verify Status", ""].map((h, i) => (
                     <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start ${h === 'BGV Protocol' || h === 'Verify Status' ? 'justify-center' : ''}`}>
                       {h}
                     </div>
@@ -1256,7 +1256,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Hiring Client *</label>
+                            <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Client *</label>
                             <div className="relative">
                               <select
                                 value={formData.client}

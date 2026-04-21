@@ -327,7 +327,7 @@ const AdminDashboardNew = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Task</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Assignee</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Assigned By</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Due Date</th>
                     </tr>
