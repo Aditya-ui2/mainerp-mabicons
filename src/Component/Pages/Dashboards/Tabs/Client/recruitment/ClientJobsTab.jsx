@@ -318,14 +318,14 @@ export default function ClientJobsTab() {
 
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-2xl p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-8">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+      <div className="bg-white rounded-[24px] p-2 mt-8 mb-5 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 group min-w-[200px]">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by job title or keywords..."
+            placeholder="Search by title, client or location..."
             className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
@@ -334,7 +334,7 @@ export default function ClientJobsTab() {
           <select
             value={dateFilter}
             onChange={e => setDateFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-[10px] font-black uppercase tracking-[2px] text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] hover:bg-[#EEEFED] transition-all"
           >
             <option value="all">All Dates</option>
             <option value="today">Today</option>
@@ -344,20 +344,20 @@ export default function ClientJobsTab() {
             <option value="quarter">This Quarter</option>
             <option value="custom">Custom Range</option>
           </select>
-          <FiChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none opacity-50" />
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
         </div>
 
         <div className="relative">
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-[10px] font-black uppercase tracking-[2px] text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] hover:bg-[#EEEFED] transition-all"
           >
             <option value="all">All Status</option>
             <option value="Open">Open</option>
             <option value="Closed">Closed</option>
           </select>
-          <FiChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none opacity-50" />
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
         </div>
       </div>
 
@@ -628,9 +628,9 @@ export default function ClientJobsTab() {
                   <button
                     onClick={handleAddJob}
                     disabled={submitting || !newJob.title.trim()}
-                    className="flex-[2] bg-[#0D47A1] text-white py-5 px-10 rounded-full text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 stroke-[3px] hover:bg-[#0a367c] transition-all shadow-xl shadow-[#0D47A1]/20 active:scale-95 disabled:opacity-50 min-w-[317px]"
+                    className="flex-[2] bg-[#0D47A1] text-white py-5 px-10 rounded-full text-[11px] font-bold uppercase tracking-[2px] flex items-center justify-center transition-all shadow-xl shadow-[#0D47A1]/20 active:scale-95 disabled:opacity-70 min-w-[317px]"
                   >
-                    <FiPlus size={16} /> {submitting ? 'Creating...' : 'Create Position'}
+                    {submitting ? 'Creating...' : '+ Create Position'}
                   </button>
                 </div>
               </motion.div>
@@ -666,7 +666,7 @@ export default function ClientJobsTab() {
             </thead>
             <tbody className="divide-y divide-[#F4F3EF]">
               {filteredPositions.length > 0 ? filteredPositions.map((pos) => (
-                <tr key={pos.id} onClick={() => setSelectedJob(pos)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                <tr key={pos.id} onClick={() => setSelectedJob(pos)} className="hover:bg-[#F8FAFF] transition-all duration-300 group cursor-pointer">
                   <td className="px-8 py-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
@@ -708,7 +708,7 @@ export default function ClientJobsTab() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button className="p-2 bg-white text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all shadow-sm border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20">
+                      <button className="p-2 bg-white text-[#9B9BAD] group-hover:bg-[#EEF2FB] group-hover:text-[#1B4DA0] rounded-xl transition-all shadow-sm border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20 active:scale-95">
                         <FiChevronRight size={18} />
                       </button>
                     </div>
@@ -743,22 +743,22 @@ export default function ClientJobsTab() {
                 <span className="text-xs font-bold text-white uppercase tracking-widest whitespace-nowrap">Positions Selected</span>
               </div>
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-                  <button onClick={() => handleBulkStatusUpdate('Hold')} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-[#9B9BAD] hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/10 active:scale-95 whitespace-nowrap">
-                    Mark As Hold
-                  </button>
-                  <button onClick={() => handleBulkStatusUpdate('Open')} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-100 bg-blue-600 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap">
-                    Mark As Open
-                  </button>
-                  <button onClick={() => handleBulkStatusUpdate('Urgent')} className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-black bg-amber-400 hover:bg-amber-500 transition-all shadow-lg shadow-amber-500/20 active:scale-95 whitespace-nowrap">
-                    Mark As Urgent
-                  </button>
-                  <button onClick={() => handleBulkStatusUpdate('Closed')} className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/10 hover:bg-white/10 transition-all active:scale-95 whitespace-nowrap">
-                    Mark As Complete
-                  </button>
-                  <div className="w-px h-6 bg-white/10 mx-2" />
-                  <button onClick={handleBulkDelete} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-rose-400 hover:bg-rose-500/20 transition-all active:scale-95 whitespace-nowrap">
-                    Delete Selected
-                  </button>
+                <button onClick={() => handleBulkStatusUpdate('Hold')} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-[#9B9BAD] hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/10 active:scale-95 whitespace-nowrap">
+                  Mark As Hold
+                </button>
+                <button onClick={() => handleBulkStatusUpdate('Open')} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-100 bg-blue-600 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap">
+                  Mark As Open
+                </button>
+                <button onClick={() => handleBulkStatusUpdate('Urgent')} className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-black bg-amber-400 hover:bg-amber-500 transition-all shadow-lg shadow-amber-500/20 active:scale-95 whitespace-nowrap">
+                  Mark As Urgent
+                </button>
+                <button onClick={() => handleBulkStatusUpdate('Closed')} className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/10 hover:bg-white/10 transition-all active:scale-95 whitespace-nowrap">
+                  Mark As Complete
+                </button>
+                <div className="w-px h-6 bg-white/10 mx-2" />
+                <button onClick={handleBulkDelete} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-rose-400 hover:bg-rose-500/20 transition-all active:scale-95 whitespace-nowrap">
+                  Delete Selected
+                </button>
               </div>
               <button onClick={() => setSelectedPositions([])} className="w-8 h-8 flex flex-shrink-0 items-center justify-center rounded-xl bg-white/5 hover:bg-red-500 hover:text-white transition-all text-[#9B9BAD]">
                 <FiX size={14} />

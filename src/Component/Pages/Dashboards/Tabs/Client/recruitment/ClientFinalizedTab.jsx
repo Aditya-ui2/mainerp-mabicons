@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiCheckCircle, FiSearch, FiMail, FiCalendar, FiUsers, FiMapPin, FiChevronRight,
-  FiUserCheck, FiAward, FiBriefcase, FiX, FiClock, FiPhone, FiMap, FiActivity
+  FiUserCheck, FiAward, FiBriefcase, FiX, FiClock, FiPhone, FiMap, FiActivity, FiChevronDown
 } from 'react-icons/fi';
 import { FaRupeeSign } from 'react-icons/fa';
 import { UserCheck } from 'lucide-react';
@@ -18,6 +18,11 @@ export default function ClientFinalizedTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewFilter, setViewFilter] = useState('all');
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+
+  // New Filter States
+  const [dateFilter, setDateFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [customDate, setCustomDate] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -36,22 +41,44 @@ export default function ClientFinalizedTab() {
   }, []);
 
   const allCandidates = candidates;
+  // Initially we filter for finalized stages
   const shortlisted = allCandidates.filter(c => c.stage === 'Client Interview' || c.stage === 'Offer Sent' || c.stage === 'Joined');
-  const offerSent = allCandidates.filter(c => c.stage === 'Offer Sent');
-  const hired = allCandidates.filter(c => c.stage === 'Joined');
 
-  const displayList = (() => {
-    switch (viewFilter) {
-      case 'shortlisted': return shortlisted;
-      case 'offer': return offerSent;
-      case 'hired': return hired;
-      default: return shortlisted;
+  const filtered = shortlisted.filter(c => {
+    // 1. Search Query
+    const matchesSearch = !searchQuery ||
+      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.positionTitle || c.position || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+    // 2. Status Filter
+    const matchesStatus = statusFilter === 'all' || c.stage === statusFilter;
+
+    // 3. Date Filter
+    let matchesDate = true;
+    const itemDate = new Date(c.updatedAt || Date.now());
+    const now = new Date();
+
+    if (dateFilter === 'today') {
+      matchesDate = itemDate.toDateString() === now.toDateString();
+    } else if (dateFilter === 'week') {
+      const weekAgo = new Date();
+      weekAgo.setDate(now.getDate() - 7);
+      matchesDate = itemDate >= weekAgo;
+    } else if (dateFilter === 'month') {
+      const monthAgo = new Date();
+      monthAgo.setMonth(now.getMonth() - 1);
+      matchesDate = itemDate >= monthAgo;
+    } else if (dateFilter === 'quarter') {
+      const quarterAgo = new Date();
+      quarterAgo.setMonth(now.getMonth() - 3);
+      matchesDate = itemDate >= quarterAgo;
+    } else if (dateFilter === 'custom' && customDate) {
+      const selected = new Date(customDate);
+      matchesDate = itemDate.toDateString() === selected.toDateString();
     }
-  })();
 
-  const filtered = displayList.filter(c =>
-    !searchQuery || c.name?.toLowerCase().includes(searchQuery.toLowerCase()) || (c.positionTitle || c.position || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    return matchesSearch && matchesStatus && matchesDate;
+  });
 
   if (loading) {
     return (
@@ -85,22 +112,72 @@ export default function ClientFinalizedTab() {
       </div>
 
 
-      {/* Action Bar */}
-      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3">
-        <div className="flex-1 flex items-center gap-3 bg-[#F4F3EF] rounded-2xl px-6 py-3.5 transition-all focus-within:bg-[#EEF2FB] focus-within:ring-2 focus-within:ring-blue-100">
-          <FiSearch className="text-[#9B9BAD]" size={18} />
+      {/* Filter Bar */}
+      <div className="bg-white rounded-[24px] p-2 mt-8 mb-5 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 group min-w-[200px]">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by candidate or position..."
-            className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 outline-none transition-all placeholder:text-[#9B9BAD]/60 placeholder:font-medium text-[#1A1A2E]"
+            placeholder="Search by title, client or location..."
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
 
-        <div className="flex gap-2">
-
+        <div className="relative">
+          <select
+            value={dateFilter}
+            onChange={e => setDateFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-[10px] font-black uppercase tracking-[2px] text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] hover:bg-[#EEEFED] transition-all"
+          >
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="custom">Custom Date</option>
+          </select>
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
         </div>
+
+        <div className="relative">
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-[10px] font-black uppercase tracking-[2px] text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] hover:bg-[#EEEFED] transition-all"
+          >
+            <option value="all">All Status</option>
+            <option value="Client Interview">Shortlisted</option>
+            <option value="Offer Sent">Offer Sent</option>
+            <option value="Joined">Joined</option>
+          </select>
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+        </div>
+
+        {dateFilter === 'custom' && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-3 bg-[#FAFAF8] px-6 py-2.5 rounded-2xl border border-[#F4F3EF] shadow-sm ml-auto"
+          >
+            <FiCalendar className="text-[#1B4DA0]" size={16} />
+            <input 
+              type="date" 
+              value={customDate} 
+              onChange={e => setCustomDate(e.target.value)} 
+              className="text-sm bg-transparent outline-none font-bold text-[#1A1A2E] cursor-pointer" 
+            />
+            {customDate && (
+              <button 
+                onClick={() => setCustomDate('')}
+                className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors ml-2"
+              >
+                Clear
+              </button>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {/* Table Interface */}
@@ -142,7 +219,7 @@ export default function ClientFinalizedTab() {
                     <tr
                       key={c.id}
                       onClick={() => setSelectedCandidate(c)}
-                      className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                      className="hover:bg-[#F8FAFF] transition-all duration-300 group cursor-pointer"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-left">
                         <div className="flex items-center gap-3">
@@ -168,7 +245,7 @@ export default function ClientFinalizedTab() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button className="p-2.5 bg-white text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20 transition-all shadow-sm">
+                        <button className="p-2.5 bg-white text-[#9B9BAD] group-hover:bg-[#EEF2FB] group-hover:text-[#1B4DA0] rounded-xl border border-[#F4F3EF] group-hover:border-[#1B4DA0]/20 transition-all shadow-sm active:scale-95">
                           <FiChevronRight size={18} />
                         </button>
                       </td>

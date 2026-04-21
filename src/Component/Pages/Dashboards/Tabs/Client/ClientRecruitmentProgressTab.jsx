@@ -81,6 +81,12 @@ const PriorityBadge = ({ priority }) => {
 
 /* ── Job Detail Sidebar ── */
 const JobDetailSidebar = ({ job, onClose }) => {
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [job?.id]);
+
   if (!job) return null;
 
   const skillsArr = (Array.isArray(job.skills) ? job.skills : (job.skills || '').split(',')).filter(Boolean);
@@ -99,12 +105,15 @@ const JobDetailSidebar = ({ job, onClose }) => {
             <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{job.type || 'Full-time'}</span>
           </div>
         </div>
-        <button onClick={onClose} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90 shadow-sm">
+        <button
+          onClick={onClose}
+          className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+        >
           <FiX size={20} />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar">
         {/* Job Snapshot Info Grid */}
         <div className="px-8 py-8 space-y-8">
           <div className="grid grid-cols-2 gap-x-12 gap-y-8">
@@ -175,14 +184,6 @@ const JobDetailSidebar = ({ job, onClose }) => {
         </div>
       </div>
 
-      <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-[#F4F3EF] px-10 py-6 flex items-center gap-4 z-20">
-        <button
-          onClick={onClose}
-          className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl font-bold text-sm hover:bg-[#E8E7E2] transition-all"
-        >
-          Close
-        </button>
-      </div>
     </div>
   );
 };
@@ -207,6 +208,11 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   const [isHiredModalOpen, setIsHiredModalOpen] = useState(false);
   const [candidatePositionFilter, setCandidatePositionFilter] = useState('all');
   const datePickerRef = useRef(null);
+  const interviewScrollRef = useRef(null);
+
+  useEffect(() => {
+    if (interviewScrollRef.current) interviewScrollRef.current.scrollTop = 0;
+  }, [selectedInterview?.id]);
 
   const scrollToSection = (id) => {
     const el = document.getElementById(id);
@@ -236,7 +242,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   // Date range helper
   const getDateRange = () => {
     const now = new Date();
-    const startOfDay = (d) => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
+    const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
     switch (datePreset) {
       case 'today': return { from: startOfDay(now), to: now };
       case 'week': { const d = startOfDay(now); d.setDate(d.getDate() - d.getDay()); return { from: d, to: now }; }
@@ -277,7 +283,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
       // Use the clientId passed via props or from localStorage if user is a client
       const cid = clientData?.id;
       if (!cid) throw new Error('Client ID not found');
-      
+
       const res = await getClientDashboardOverview(cid, datePreset);
       if (res?.success && res.data?.recruitment) {
         const r = res.data.recruitment;
@@ -352,10 +358,10 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   // Apply position filter to candidates for pie chart
   const positionFilteredCandidates = candidatePositionFilter === 'all'
     ? dateFilteredCandidates
-    : dateFilteredCandidates.filter(c => 
-        (c.positionTitle || c.position || c.appliedPosition || '') === candidatePositionFilter ||
-        (c.positionId || '') === candidatePositionFilter
-      );
+    : dateFilteredCandidates.filter(c =>
+      (c.positionTitle || c.position || c.appliedPosition || '') === candidatePositionFilter ||
+      (c.positionId || '') === candidatePositionFilter
+    );
 
   // Get unique positions for filter dropdown (from both positions and candidates)
   const positionsFromPositions = dateFilteredPositions
@@ -392,10 +398,10 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   const isDateFiltered = datePreset !== 'all';
   const computedFunnel = isDateFiltered
     ? dateFilteredCandidates.reduce((acc, c) => {
-        const key = stageMap[c.stage] || 'screening';
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, { screening: 0, phoneInterview: 0, technical: 0, hrRound: 0, clientInterview: 0, offerSent: 0, joined: 0, rejected: 0 })
+      const key = stageMap[c.stage] || 'screening';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, { screening: 0, phoneInterview: 0, technical: 0, hrRound: 0, clientInterview: 0, offerSent: 0, joined: 0, rejected: 0 })
     : funnel;
 
   // Compute funnel for pie chart based on position filter
@@ -406,16 +412,16 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   }, { screening: 0, phoneInterview: 0, technical: 0, hrRound: 0, clientInterview: 0, offerSent: 0, joined: 0, rejected: 0 });
 
   // Recompute KPI summary from filtered data
-   const computedSummary = isDateFiltered
+  const computedSummary = isDateFiltered
     ? {
-        openPositions: dateFilteredPositions.filter(p => p.status === 'Open' || p.status === 'Urgent').length,
-        totalPositions: dateFilteredPositions.length,
-        inPipeline: dateFilteredCandidates.filter(c => c.stage !== 'Rejected' && c.stage !== 'Joined').length,
-        totalCandidates: dateFilteredCandidates.length,
-        scheduledInterviews: dateFilteredInterviews.length,
-        totalInterviews: dateFilteredInterviews.length,
-        hired: dateFilteredCandidates.filter(c => c.stage === 'Joined').length,
-      }
+      openPositions: dateFilteredPositions.filter(p => p.status === 'Open' || p.status === 'Urgent').length,
+      totalPositions: dateFilteredPositions.length,
+      inPipeline: dateFilteredCandidates.filter(c => c.stage !== 'Rejected' && c.stage !== 'Joined').length,
+      totalCandidates: dateFilteredCandidates.length,
+      scheduledInterviews: dateFilteredInterviews.length,
+      totalInterviews: dateFilteredInterviews.length,
+      hired: dateFilteredCandidates.filter(c => c.stage === 'Joined').length,
+    }
     : summary;
 
   // Filter positions by status
@@ -430,9 +436,9 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
   const maxFunnel = Math.max(...funnelStages.map(s => computedFunnel[s] || 0), 1);
 
   const kpiCards = [
-    { label: 'Open Positions', value: computedSummary.openPositions, change: `${computedSummary.totalPositions} total`, up: computedSummary.openPositions > 0, icon: Briefcase },
-    { label: 'Candidates', value: computedSummary.inPipeline, change: `${computedSummary.totalCandidates} total`, up: computedSummary.inPipeline > 0 ? true : null, icon: LuUsers },
-    { label: 'Interviews', value: computedSummary.scheduledInterviews || 0, change: `${computedSummary.totalInterviews || 0} total`, up: (computedSummary.scheduledInterviews || 0) > 0, icon: LuTarget },
+    { label: 'Total Opening', value: computedSummary.openPositions, change: `${computedSummary.totalPositions} total`, up: computedSummary.openPositions > 0, icon: Briefcase },
+    { label: 'Total Candidate', value: computedSummary.inPipeline, change: `${computedSummary.totalCandidates} total`, up: computedSummary.inPipeline > 0 ? true : null, icon: LuUsers },
+    { label: datePreset === 'all' ? 'Interviews' : `${datePresetLabel[datePreset]} Interviews`, value: computedSummary.scheduledInterviews || 0, change: `${computedSummary.totalInterviews || 0} total`, up: (computedSummary.scheduledInterviews || 0) > 0, icon: LuTarget },
     { label: 'Hired', value: computedSummary.hired || 0, change: `${computedSummary.totalCandidates || 0} total`, up: (computedSummary.hired || 0) > 0, icon: UserCheck },
   ];
 
@@ -448,11 +454,10 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
           <div className="relative" ref={datePickerRef}>
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
-                datePreset !== 'all'
-                  ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white shadow-lg shadow-blue-500/20'
-                  : 'bg-white border-[#E8E7E2] text-[#1A1A2E] hover:bg-[#F4F3EF]'
-              } shadow-sm active:scale-95`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${datePreset !== 'all'
+                ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white shadow-lg shadow-blue-500/20'
+                : 'bg-white border-[#E8E7E2] text-[#1A1A2E] hover:bg-[#F4F3EF]'
+                } shadow-sm active:scale-95`}
             >
               <FiCalendar className={`w-4 h-4 ${datePreset !== 'all' ? 'text-white' : 'text-[#1B4DA0]'}`} />
               <span className="max-w-[180px] truncate">{datePresetLabel[datePreset]}</span>
@@ -461,7 +466,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
 
             <AnimatePresence>
               {showDatePicker && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
@@ -475,11 +480,10 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                         <button
                           key={preset}
                           onClick={() => { setDatePreset(preset); if (preset !== 'custom') setShowDatePicker(false); fetchData(); }}
-                          className={`px-3 py-2.5 rounded-xl text-xs font-bold text-left transition-all ${
-                            datePreset === preset
-                              ? 'bg-[#1B4DA0] text-white shadow-md'
-                              : 'text-[#1A1A2E] hover:bg-[#F4F3EF]'
-                          }`}
+                          className={`px-3 py-2.5 rounded-xl text-xs font-bold text-left transition-all ${datePreset === preset
+                            ? 'bg-[#1B4DA0] text-white shadow-md'
+                            : 'text-[#1A1A2E] hover:bg-[#F4F3EF]'
+                            }`}
                         >
                           {{ all: 'All Time', today: 'Today', week: 'This Week', month: 'This Month', quarter: 'This Quarter', year: 'This Year' }[preset]}
                         </button>
@@ -531,14 +535,6 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
               )}
             </AnimatePresence>
           </div>
-
-          <button
-            onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E8E7E2] rounded-xl text-sm font-semibold text-[#1A1A2E] hover:bg-[#F4F3EF] transition-all shadow-sm active:scale-95"
-          >
-            <FiRefreshCw className={`w-4 h-4 text-[#1B4DA0] ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </button>
         </div>
       </div>
 
@@ -547,11 +543,11 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
         {kpiCards.map((kpi, i) => {
           const Icon = kpi.icon;
           const handleClick = () => {
-            if (kpi.label === 'Open Positions') {
+            if (kpi.label === 'Total Opening') {
               if (computedSummary.openPositions > 0) setIsPositionsModalOpen(true);
               else toast.error('No open positions found');
             }
-            else if (kpi.label === 'Candidates') {
+            else if (kpi.label === 'Total Candidate') {
               if (computedSummary.inPipeline > 0) setIsCandidatesModalOpen(true);
               else toast.error('No candidates in pipeline');
             }
@@ -566,8 +562,8 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
           };
 
           return (
-            <div 
-              key={i} 
+            <div
+              key={i}
               onClick={handleClick}
               className="bg-white p-6 rounded-[24px] border border-[#E8E7E2] shadow-sm hover:shadow-xl hover:border-[#1B4DA0]/30 hover:-translate-y-1 transition-all duration-300 group cursor-pointer active:scale-[0.98] relative overflow-hidden"
             >
@@ -615,78 +611,78 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
 
           return (
             <div id="candidates-chart-section" className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm flex flex-col items-start scroll-mt-24 transition-all hover:shadow-xl hover:shadow-blue-500/5 min-h-[400px]">
-            <div className="flex items-center justify-between w-full mb-8">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-2xl bg-[#E3F2FD80] text-[#1B4DA0] shadow-sm">
-                  <FiUsers className="w-5 h-5" />
+              <div className="flex items-center justify-between w-full mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-[#E3F2FD80] text-[#1B4DA0] shadow-sm">
+                    <FiUsers className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    Candidates
+                  </h2>
                 </div>
-                <h2 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  Candidates
-                </h2>
+                {/* Position Filter Dropdown */}
+                <select
+                  value={candidatePositionFilter}
+                  onChange={(e) => setCandidatePositionFilter(e.target.value)}
+                  className="px-4 py-2 rounded-xl border border-[#E8E7E2] text-sm font-medium text-[#1A1A2E] bg-white hover:bg-[#F4F3EF] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]/20"
+                >
+                  <option value="all">All Positions</option>
+                  {uniquePositionsFromCandidates.map((pos, i) => (
+                    <option key={i} value={pos}>{pos}</option>
+                  ))}
+                </select>
               </div>
-              {/* Position Filter Dropdown */}
-              <select
-                value={candidatePositionFilter}
-                onChange={(e) => setCandidatePositionFilter(e.target.value)}
-                className="px-4 py-2 rounded-xl border border-[#E8E7E2] text-sm font-medium text-[#1A1A2E] bg-white hover:bg-[#F4F3EF] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]/20"
-              >
-                <option value="all">All Positions</option>
-                {uniquePositionsFromCandidates.map((pos, i) => (
-                  <option key={i} value={pos}>{pos}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col xl:flex-row items-center xl:items-start gap-12 w-full">
-              <div className="relative w-[280px] h-[280px] flex-shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={85}
-                      outerRadius={110}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-4xl font-extrabold text-[#1A1A2E] leading-none mb-1">{totalCandidates}</span>
-                  <span className="text-[10px] font-bold text-[#9B9BAD] tracking-widest uppercase text-center px-2 max-w-[120px] truncate">
-                    {candidatePositionFilter === 'all' ? 'Total' : candidatePositionFilter}
-                  </span>
+              <div className="flex flex-col xl:flex-row items-center xl:items-start gap-12 w-full">
+                <div className="relative w-[280px] h-[280px] flex-shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={85}
+                        outerRadius={110}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-4xl font-extrabold text-[#1A1A2E] leading-none mb-1">{totalCandidates}</span>
+                    <span className="text-[10px] font-bold text-[#9B9BAD] tracking-widest uppercase text-center px-2 max-w-[120px] truncate">
+                      {candidatePositionFilter === 'all' ? 'Total' : candidatePositionFilter}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-1 gap-x-8 gap-y-4 flex-1">
-                {chartData.map((entry, i) => (
-                  <div key={i} className="flex items-center justify-between group cursor-pointer w-full max-w-[240px]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.fill }} />
-                      <span className="text-sm font-semibold text-[#1A1A2E]">{entry.name}</span>
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-x-8 gap-y-4 flex-1">
+                  {chartData.map((entry, i) => (
+                    <div key={i} className="flex items-center justify-between group cursor-pointer w-full max-w-[240px]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.fill }} />
+                        <span className="text-sm font-semibold text-[#1A1A2E]">{entry.name}</span>
+                      </div>
+                      <span className="text-sm font-bold text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors">{entry.value}</span>
                     </div>
-                    <span className="text-sm font-bold text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors">{entry.value}</span>
-                  </div>
-                ))}
-                {pieChartFunnel.rejected > 0 && (
-                  <div className="col-span-2 lg:col-span-1 pt-4 mt-4 border-t border-[#F4F3EF] flex items-center gap-2">
-                    <FiUsers className="w-3.5 h-3.5 text-red-400" />
-                    <p className="text-xs text-[#9B9BAD]">
-                      <span className="text-red-500 font-bold">{pieChartFunnel.rejected}</span> rejected candidates
-                    </p>
-                  </div>
-                )}
+                  ))}
+                  {pieChartFunnel.rejected > 0 && (
+                    <div className="col-span-2 lg:col-span-1 pt-4 mt-4 border-t border-[#F4F3EF] flex items-center gap-2">
+                      <FiUsers className="w-3.5 h-3.5 text-red-400" />
+                      <p className="text-xs text-[#9B9BAD]">
+                        <span className="text-red-500 font-bold">{pieChartFunnel.rejected}</span> rejected candidates
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
         {/* Open Positions */}
         <div id="positions-section" className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm flex flex-col min-h-[400px] scroll-mt-24 transition-all hover:shadow-xl hover:shadow-amber-500/5">
@@ -717,8 +713,8 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                   </tr>
                 ) : (
                   filteredPositions.map(pos => (
-                    <motion.tr 
-                      key={pos._id || pos.id} 
+                    <motion.tr
+                      key={pos._id || pos.id}
                       whileHover={{ backgroundColor: '#F8FAFF' }}
                       onClick={() => setSelectedJob(pos)}
                       className="group cursor-pointer transition-all"
@@ -777,10 +773,10 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                   dateFilteredInterviews.map((iv, i) => {
                     const date = new Date(iv.interviewDate);
                     const formattedDate = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-                    
+
                     return (
-                      <motion.tr 
-                        key={i} 
+                      <motion.tr
+                        key={i}
                         whileHover={{ backgroundColor: '#F8FAFF' }}
                         onClick={() => setSelectedInterview(iv)}
                         className="group cursor-pointer transition-all"
@@ -823,7 +819,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 <tr className="border-b border-[#F4F3EF]">
                   <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
                   <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Client</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Joining Date</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD] text-right">Joining Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F4F3EF]">
@@ -836,10 +832,10 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 ) : (
                   computedJoinings.map((joining, i) => {
                     const formattedDate = new Date(joining.joiningDate || joining.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-                    
+
                     return (
-                      <motion.tr 
-                        key={i} 
+                      <motion.tr
+                        key={i}
                         whileHover={{ backgroundColor: '#F8FAFF' }}
                         className="group cursor-pointer transition-all"
                       >
@@ -849,13 +845,8 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                         <td className="px-6 py-5">
                           <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{joining.client || 'Mabicons'}</p>
                         </td>
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{formattedDate}</span>
-                            <div className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter bg-emerald-50 text-emerald-600 border border-emerald-100">
-                              Confirmed
-                            </div>
-                          </div>
+                        <td className="px-6 py-5 text-right">
+                          <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{formattedDate}</span>
                         </td>
                       </motion.tr>
                     );
@@ -888,17 +879,17 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Open Positions</h3>
                 <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Live Vacancy Status</p>
               </div>
-              <button 
+              <button
                 onClick={() => setIsPositionsModalOpen(false)}
-                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
+                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 shadow-sm"
               >
-                <FiX size={24} />
+                <FiX size={20} />
               </button>
             </div>
-            
+
             <div className="max-h-[60vh] overflow-y-auto p-8 space-y-4 custom-scrollbar">
               {filteredPositions.filter(p => p.status === 'Open' || p.status === 'Urgent').map(p => (
-                <div 
+                <div
                   key={p._id || p.id}
                   onClick={() => { setSelectedJob(p); setIsPositionsModalOpen(false); }}
                   className="p-6 rounded-[32px] bg-[#FAFAF8] border border-[#E8E7E2] hover:border-[#1B4DA0] hover:bg-white transition-all cursor-pointer group flex items-center justify-between"
@@ -916,15 +907,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 </div>
               ))}
             </div>
-            
-            <div className="p-8 bg-[#F4F3EF]/50 border-t border-[#F4F3EF]">
-              <button 
-                onClick={() => setIsPositionsModalOpen(false)}
-                className="w-full py-4 bg-white border border-[#E8E7E2] rounded-2xl text-[#1A1A2E] font-bold hover:bg-[#F4F3EF] transition-all"
-              >
-                Close Breakdown
-              </button>
-            </div>
+
           </motion.div>
         </div>,
         document.body
@@ -947,20 +930,23 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Active Candidates</h3>
                 <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Hiring Pipeline Status</p>
               </div>
-              <button onClick={() => setIsCandidatesModalOpen(false)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
-                <FiX size={24} />
+              <button
+                onClick={() => setIsCandidatesModalOpen(false)}
+                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 shadow-sm"
+              >
+                <FiX size={20} />
               </button>
             </div>
             <div className="max-h-[60vh] overflow-y-auto p-8 space-y-4 custom-scrollbar">
               {dateFilteredCandidates.filter(c => c.stage !== 'Rejected' && c.stage !== 'Joined').map(c => (
-                <div 
+                <div
                   key={c.id}
                   onClick={() => { setSelectedCandidate(c); setIsCandidatesModalOpen(false); }}
                   className="p-6 rounded-[32px] bg-[#FAFAF8] border border-[#E8E7E2] hover:border-[#1B4DA0] hover:bg-white transition-all cursor-pointer group flex items-center justify-between"
                 >
                   <div className="flex items-center gap-5">
                     <div className="w-14 h-14 rounded-2xl bg-white border border-[#E8E7E2] flex items-center justify-center text-[#1B4DA0] text-lg font-black group-hover:bg-blue-50 transition-colors">
-                      {c.name?.split(' ').map(n=>n[0]).join('').slice(0, 2)}
+                      {c.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                     <div>
                       <p className="text-base font-bold text-[#1A1A2E]">{c.name}</p>
@@ -970,9 +956,6 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                   <FiChevronRight className="text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-colors" size={20} />
                 </div>
               ))}
-            </div>
-            <div className="p-8 bg-[#F4F3EF]/50 border-t border-[#F4F3EF]">
-              <button onClick={() => setIsCandidatesModalOpen(false)} className="w-full py-4 bg-white border border-[#E8E7E2] rounded-2xl text-[#1A1A2E] font-bold hover:bg-[#F4F3EF] transition-all">Close</button>
             </div>
           </motion.div>
         </div>,
@@ -996,13 +979,16 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Today's Interviews</h3>
                 <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Scheduled Slots</p>
               </div>
-              <button onClick={() => setIsInterviewsModalOpen(false)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
-                <FiX size={24} />
+              <button
+                onClick={() => setIsInterviewsModalOpen(false)}
+                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 shadow-sm"
+              >
+                <FiX size={20} />
               </button>
             </div>
             <div className="max-h-[60vh] overflow-y-auto p-8 space-y-4 custom-scrollbar">
               {dateFilteredInterviews.map((iv, i) => (
-                <div 
+                <div
                   key={i}
                   className="p-6 rounded-[32px] bg-[#FAFAF8] border border-[#E8E7E2] group flex items-center justify-between"
                 >
@@ -1019,9 +1005,6 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                   <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest">Confirmed</span>
                 </div>
               ))}
-            </div>
-            <div className="p-8 bg-[#F4F3EF]/50 border-t border-[#F4F3EF]">
-              <button onClick={() => setIsInterviewsModalOpen(false)} className="w-full py-4 bg-white border border-[#E8E7E2] rounded-2xl text-[#1A1A2E] font-bold hover:bg-[#F4F3EF] transition-all">Close</button>
             </div>
           </motion.div>
         </div>,
@@ -1045,20 +1028,23 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Successful Hires</h3>
                 <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest mt-1">Growth Milestones</p>
               </div>
-              <button onClick={() => setIsHiredModalOpen(false)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
-                <FiX size={24} />
+              <button
+                onClick={() => setIsHiredModalOpen(false)}
+                className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 shadow-sm"
+              >
+                <FiX size={20} />
               </button>
             </div>
             <div className="max-h-[60vh] overflow-y-auto p-8 space-y-4 custom-scrollbar">
               {dateFilteredCandidates.filter(c => c.stage === 'Joined').map(c => (
-                <div 
+                <div
                   key={c.id}
                   onClick={() => { setSelectedCandidate(c); setIsHiredModalOpen(false); }}
                   className="p-6 rounded-[32px] bg-emerald-50/30 border border-emerald-100 hover:border-emerald-500 hover:bg-white transition-all cursor-pointer group flex items-center justify-between"
                 >
                   <div className="flex items-center gap-5">
                     <div className="w-14 h-14 rounded-2xl bg-white border border-emerald-100 flex items-center justify-center text-emerald-600 text-lg font-black group-hover:bg-emerald-50 transition-colors">
-                      {c.name?.split(' ').map(n=>n[0]).join('').slice(0, 2)}
+                      {c.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                     <div>
                       <p className="text-base font-bold text-[#1A1A2E]">{c.name}</p>
@@ -1071,14 +1057,6 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="p-8 bg-emerald-50/20 border-t border-[#F4F3EF]">
-              <button 
-                onClick={() => { setIsHiredModalOpen(false); setActiveTab?.('Finalized & Offers'); }} 
-                className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl text-xs font-bold hover:bg-black transition-all shadow-lg shadow-gray-200"
-              >
-                View Hired Tab
-              </button>
             </div>
           </motion.div>
         </div>,
@@ -1140,7 +1118,7 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-[#EEF2FB] flex items-center justify-center text-[#1B4DA0] text-xl font-black shadow-inner">
-                      {selectedCandidate.name?.split(' ').map(n=>n[0]).join('').slice(0,2) || '??'}
+                      {selectedCandidate.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '??'}
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">{selectedCandidate.name}</h2>
@@ -1211,111 +1189,69 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 border-t border-[#F4F3EF] bg-[#FAFAF9]">
-                  {/* BGV Onboarding Credentials - Same as HR Dashboard */}
-                  {(selectedCandidate.stage === 'Joined' || selectedCandidate.stage === 'Offer Sent') && (
-                    <div className="pt-8 mb-8 border-t border-[#F4F3EF]">
-                      <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] block mb-4">Onboarding Protocol</span>
-                      
-                      {!selectedCandidate.onboardingUsername ? (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
-                            const targetId = selectedCandidate.id || selectedCandidate._id;
-                            try {
-                              if (!targetId) {
-                                toast.error("System Error: Reference missing.", { id: loadingId });
-                                return;
-                              }
-                              
-                              const response = await generateCandidateCredentials(targetId);
-                              if (response && response.success && response.data) {
-                                   const finalUsername = response.data.username || response.data.email;
-                                   const finalPass = response.data.password;
 
-                                   // Update local data state
-                                   setData(prev => ({
-                                     ...prev,
-                                     candidates: prev.candidates.map(c => 
-                                       (c.id === targetId || c._id === targetId) 
-                                         ? { ...c, onboardingUsername: finalUsername, onboardingPassword: finalPass } 
-                                         : c
-                                     )
-                                   }));
-                                   // Update selected candidate
-                                   setSelectedCandidate(prev => ({ 
-                                     ...prev, 
-                                     onboardingUsername: finalUsername, 
-                                     onboardingPassword: finalPass 
-                                   }));
-                                   
-                                   toast.success(`Success: Records Secured`, { id: loadingId });
-                                 } else {
-                                   toast.error(`Control Error: ${response?.message || 'Gateway rejection'}`, { id: loadingId });
-                                 }
-                            } catch (err) {
-                               toast.error("Console Error: Protocol failed to reach gateway.", { id: loadingId });
-                            }
-                          }}
-                          className="bg-[#1B4DA0] text-white px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-500/10 w-full"
-                        >
-                          <Zap size={16} fill="currentColor" />
-                          GENERATE ONBOARDING CREDENTIALS
-                        </motion.button>
-                      ) : (
-                        <div className="flex flex-col gap-3 group/bgv relative bg-white rounded-2xl">
-                           <div className="bg-[#F8F9FA] border border-[#DADCE0] rounded-2xl p-6 shadow-sm">
-                             <div className="flex items-center justify-between gap-4 mb-4 border-b border-slate-100 pb-3">
-                               <div className="flex flex-col">
-                                 <span className="text-[9px] font-black text-[#5F6368] uppercase tracking-[2px]">Onboarding ID</span>
-                                 <span className="text-sm font-bold text-[#1B4DA0] font-jakarta">{selectedCandidate.onboardingUsername}</span>
-                                </div>
-                                <UserCheck className="text-[#1B4DA0] opacity-20" size={24} />
-                             </div>
-                             <div className="flex items-center justify-between gap-4">
-                               <div className="flex flex-col">
-                                 <span className="text-[9px] font-black text-[#5F6368] uppercase tracking-[2px]">Onboarding Pass</span>
-                                 <span className="text-sm font-mono font-black text-[#202124] tracking-widest uppercase">{selectedCandidate.onboardingPassword}</span>
-                               </div>
-                               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                             </div>
-                           </div>
-                           
-                           <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const targetId = selectedCandidate.id || selectedCandidate._id;
-                                setData(prev => ({
-                                  ...prev,
-                                  candidates: prev.candidates.map(c => 
-                                    (c.id === targetId || c._id === targetId) 
-                                      ? { ...c, onboardingUsername: null, onboardingPassword: null } 
-                                      : c
-                                  )
-                                }));
-                                setSelectedCandidate(prev => ({ ...prev, onboardingUsername: null, onboardingPassword: null }));
-                                toast.info("Console: Security record cleared locally.");
-                              }}
-                              className="w-full py-2 text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-all flex items-center justify-center gap-2"
-                            >
-                              <RotateCcw size={12} />
-                              Reset Security Credentials
-                            </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <button 
-                    onClick={() => setSelectedCandidate(null)}
-                    className="w-full py-4 bg-[#1A1A2E] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#2A2A3E] transition-all shadow-xl shadow-gray-200"
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+      {/* Interview Detail Drawer */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedInterview && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedInterview(null)}
+                className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[5000]"
+              />
+              <motion.div
+                initial={{ x: '100%', opacity: 0.5 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: '100%', opacity: 0.5 }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed inset-y-0 right-0 w-[698px] bg-white shadow-2xl z-[5001] border-l border-[#F4F3EF] flex flex-col overflow-hidden text-left"
+              >
+                <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
+                  <div>
+                    <h3 className="text-2xl font-bold text-[#1A1A2E] font-syne">{selectedInterview.candidateName}</h3>
+                    <p className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest mt-1 uppercase tracking-[3px]">
+                      {selectedInterview.positionTitle || 'PROPOSED POSITION'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedInterview(null)}
+                    className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 shadow-sm"
                   >
-                    Close Profile
+                    <FiX size={20} />
                   </button>
+                </div>
+
+                <div ref={interviewScrollRef} className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar scroll-smooth">
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Schedule Date</span>
+                      <p className="text-sm font-bold text-[#1A1A2E]">
+                        {new Date(selectedInterview.interviewDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Session Time</span>
+                      <p className="text-sm font-bold text-[#1A1A2E]">
+                        {selectedInterview.startTime}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-8 border-t border-[#F4F3EF]">
+                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4">Meeting Details</span>
+                    <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
+                      Technical evaluation session with the candidate. Please ensure all required interviewers are briefed on the candidate's profile and current hiring requirements.
+                    </p>
+                  </div>
                 </div>
               </motion.div>
             </>
@@ -1323,74 +1259,6 @@ export default function ClientRecruitmentProgressTab({ isDarkMode, clientData, s
         </AnimatePresence>,
         document.body
       )}
-      {/* Interview Detail Modal */}
-      <AnimatePresence>
-        {selectedInterview && (
-          <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedInterview(null)}
-              className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF]"
-            >
-              <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedInterview.candidateName}</h3>
-                  <p className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest mt-1">
-                    {selectedInterview.positionTitle || 'PROPOSED POSITION'}
-                  </p>
-                </div>
-                <button 
-                  onClick={() => setSelectedInterview(null)}
-                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
-                >
-                   <FiX size={24} />
-                </button>
-              </div>
-              
-              <div className="p-8 space-y-6 text-left">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Schedule Date</span>
-                    <p className="text-sm font-bold text-[#1A1A2E]">
-                      {new Date(selectedInterview.interviewDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
-                    </p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Session Time</span>
-                    <p className="text-sm font-bold text-[#1A1A2E]">
-                      {selectedInterview.startTime}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-6 border-t border-[#F4F3EF]">
-                   <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3">Meeting Details</span>
-                   <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
-                      Technical evaluation session with the candidate. Please ensure all required interviewers are briefed on the candidate's profile and current hiring requirements.
-                   </p>
-                </div>
-              </div>
-
-              <div className="p-8 bg-[#F4F3EF]/50">
-                <button 
-                  onClick={() => setSelectedInterview(null)}
-                  className="w-full py-4 bg-[#1B4DA0] text-white rounded-2xl font-bold text-sm hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/10"
-                >
-                  Done
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
