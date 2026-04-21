@@ -57,6 +57,7 @@ const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
 const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
 const DocumentVerifyTab = lazy(() => import('./Tabs/KAM/DocumentVerifyTab'));
 const HiringLifecycleTab = lazy(() => import('./Tabs/KAMRecruitment/HiringLifecycleTab'));
+const TeamMembersTab = lazy(() => import('./Tabs/KAMRecruitment/TeamMembersTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -466,8 +467,11 @@ const KAMMemberDashboard = () => {
               return <ActivityFeedTab department="HR Recruitment" />;
             case 'My Profile':
               return <MyProfileTab />;
-            case 'Work Handover':
-              return <WorkHandoverTab />;
+            case 'My Team':
+              return <TeamMembersTab />;
+            case 'Joined Candidates':
+            case 'Hiring':
+              return <HiringLifecycleTab />;
             case 'Document Verification':
               return <DocumentVerifyTab isDarkMode={false} />;
             default:

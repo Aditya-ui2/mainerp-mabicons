@@ -1503,7 +1503,7 @@ export default function InterviewsPage() {
                            <p className="text-[11px] font-bold text-[#1A1A2E] group-hover:text-emerald-700 transition-colors">https://maps.app.goo.gl/LrNdJKxqwQb35D88A</p>
                          </div>
                        </a>
-                    </motion.div>
+                    </motion.div> 
                   )}
                 </AnimatePresence>
 

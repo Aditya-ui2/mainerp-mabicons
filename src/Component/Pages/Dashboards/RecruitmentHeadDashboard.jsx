@@ -2382,6 +2382,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Hiring':
             case 'Hiring Lifecycle':
             case 'hiring-lifecycle':
+            case 'Joined Candidates':
               return <HiringLifecycleTab />;
             default:
               return (

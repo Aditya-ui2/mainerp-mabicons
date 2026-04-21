@@ -66,7 +66,7 @@ const StatusBadge = ({ status }) => {
 const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSelected, onToggleSelect }) => (
   <div
     onClick={() => onViewProfile(resume.id)}
-    className={`group px-8 py-3 border-b border-[#F4F3EF] last:border-0 transition-all duration-300 cursor-pointer overflow-hidden relative grid grid-cols-[1.5fr_1fr_100px] items-center gap-6 hover:bg-[#F8FAFF] ${isSelected
+    className={`group px-8 py-3 border-b border-[#F4F3EF] last:border-0 transition-all duration-300 cursor-pointer overflow-hidden relative grid grid-cols-[1.5fr_1fr_150px] items-center gap-6 hover:bg-[#F8FAFF] ${isSelected
       ? (isDarkMode ? 'bg-blue-500/10 border-blue-500/20' : 'bg-[#F0F7FF] border-[#D0E5FF]')
       : (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white')
       }`}
@@ -822,7 +822,7 @@ const ResumeBankTab = () => {
 
       {/* Profile Deck - Table Interface */}
       <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 overflow-hidden shadow-sm mb-20">
-        <div className="grid grid-cols-[1.5fr_1fr_100px] items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
+        <div className="grid grid-cols-[1.5fr_1fr_150px] items-center gap-6 px-8 py-4 border-b border-[#F4F3EF] dark:border-slate-700 bg-transparent">
           <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Candidate</span>
           <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Positions</span>
           <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Actions</span>

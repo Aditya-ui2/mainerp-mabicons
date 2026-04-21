@@ -18,6 +18,7 @@ import {
   FiX
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 const HiringLifecycleTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,6 +26,9 @@ const HiringLifecycleTab = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingMonth, setPendingMonth] = useState(null);
+  const [isMarkLeft, setIsMarkLeft] = useState(false);
 
   // Mock data for Hired Candidates and their Check-ins
   const [lifecycleData, setLifecycleData] = useState([
@@ -78,7 +82,8 @@ const HiringLifecycleTab = () => {
       status: 'On Track',
       contact: '+91 99999 00000',
       checkinCount: 0,
-      performance: 'New Joining'
+      performance: 'New Joining',
+      completedMilestones: []
     }
   ]);
 
@@ -98,8 +103,44 @@ const HiringLifecycleTab = () => {
     }
   };
 
-  const handleLogAction = (candidateId, type) => {
-    alert(`Logged ${type} for candidate ID: ${candidateId}`);
+  const handleInitiateAction = (month, left) => {
+    if (!left && selectedCandidate?.completedMilestones?.includes(month)) {
+      toast.info("This milestone is already secured");
+      return;
+    }
+    setPendingMonth(month);
+    setIsMarkLeft(left);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmAction = () => {
+    if (!selectedCandidate) return;
+    
+    if (isMarkLeft) {
+      setLifecycleData(prev => prev.map(item => {
+        if (item.id === selectedCandidate.id) {
+          return { ...item, status: 'Left' };
+        }
+        return item;
+      }));
+      toast.success("Candidate marked as Left");
+      setSelectedCandidate(null);
+    } else {
+      setLifecycleData(prev => prev.map(item => {
+        if (item.id === selectedCandidate.id) {
+          const currentMilestones = item.completedMilestones || [];
+          if (!currentMilestones.includes(pendingMonth)) {
+            const newMilestones = [...currentMilestones, pendingMonth].sort((a, b) => a - b);
+            const updated = { ...item, completedMilestones: newMilestones };
+            setSelectedCandidate(updated);
+            return updated;
+          }
+        }
+        return item;
+      }));
+      toast.success(`Milestone Month ${pendingMonth} SECURED`);
+    }
+    setShowConfirm(false);
   };
 
   const filteredData = lifecycleData.filter(item => {
@@ -117,7 +158,7 @@ const HiringLifecycleTab = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">
-            Hiring 
+            Joined Candidates
           </h1>
         </div>
       </div>
@@ -170,7 +211,8 @@ const HiringLifecycleTab = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-white border-b border-[#F4F3EF]">
-                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Candidate & Position</th>
+                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Candidate</th>
+                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-center">Position</th>
                 <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Client & Joining</th>
                 <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Schedule</th>
                 <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-right">Details</th>
@@ -188,10 +230,14 @@ const HiringLifecycleTab = () => {
                       <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0D47A1] flex items-center justify-center font-bold text-sm border border-blue-100 group-hover:scale-105 transition-transform">
                         {row.candidate.charAt(0)}
                       </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-[#1A1A2E]">{row.candidate}</p>
-                        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5">{row.position}</p>
+                      <div className="text-left font-bold text-sm text-[#1A1A2E]">
+                        {row.candidate}
                       </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="text-center font-black text-[10px] text-[#9B9BAD] uppercase tracking-widest">
+                      {row.position}
                     </div>
                   </td>
                   <td className="px-8 py-6">
@@ -237,24 +283,83 @@ const HiringLifecycleTab = () => {
           <CandidateDetailDrawer 
             candidate={selectedCandidate} 
             onClose={() => setSelectedCandidate(null)} 
+            onInitiateAction={handleInitiateAction}
           />
+        )}
+      </AnimatePresence>
+
+      {/* GLOBAL CONFIRMATION MODAL - AT THE ROOT TO ENSURE SCREEN CENTERING */}
+      <AnimatePresence>
+        {showConfirm && createPortal(
+          <div className="fixed inset-0 z-[999999] flex items-center justify-center p-6 pointer-events-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-[#000000]/80 backdrop-blur-xl" 
+              onClick={() => setShowConfirm(false)}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="relative w-full max-w-[400px] bg-white rounded-[40px] p-10 shadow-[0_32px_64px_rgba(0,0,0,0.5)] overflow-hidden border border-slate-100 flex flex-col items-center"
+            >
+              <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center mb-8 ${isMarkLeft ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'}`}>
+                {isMarkLeft ? <FiAlertCircle size={40} /> : <FiClock size={40} />}
+              </div>
+              
+              <h3 className="text-3xl font-bold text-[#1A1A2E] text-center mb-4 font-syne">
+                Are you sure?
+              </h3>
+              
+              <p className="text-[15px] leading-relaxed text-[#6B6B7E] text-center mb-10 font-medium px-4">
+                {isMarkLeft ? (
+                  <>Mark <span className="text-[#1A1A2E] font-bold">{selectedCandidate?.candidate}</span> as resigned/left? This status update is permanent.</>
+                ) : (
+                  <>Confirm <span className="text-[#1A1A2E] font-bold">{pendingMonth} Month</span> milestone reached for {selectedCandidate?.candidate}?</>
+                )}
+              </p>
+
+              <div className="flex flex-col gap-4 w-full">
+                <button 
+                  type="button"
+                  onClick={handleConfirmAction}
+                  className={`w-full py-5 rounded-[20px] text-[13px] font-black uppercase tracking-[3px] text-white shadow-xl transition-all active:scale-[0.95] cursor-pointer ${
+                    isMarkLeft 
+                    ? 'bg-rose-600 shadow-rose-500/30 hover:bg-rose-700' 
+                    : 'bg-[#1B4DA0] shadow-blue-500/30 hover:bg-blue-700'
+                  }`}
+                >
+                  Confirm Action
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setShowConfirm(false)}
+                  className="w-full py-5 bg-[#F4F3EF] text-[#6B6B7E] rounded-[20px] text-[13px] font-black uppercase tracking-[3px] hover:bg-slate-200 transition-all font-jakarta active:scale-[0.95] cursor-pointer"
+                >
+                  Go Back
+                </button>
+              </div>
+            </motion.div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </div>
   );
 };
 
-// Detail Drawer Component
-const CandidateDetailDrawer = ({ candidate, onClose }) => {
+const CandidateDetailDrawer = ({ candidate, onClose, onInitiateAction }) => {
   if (!candidate) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[10001] flex justify-end font-jakarta">
+    <div className="fixed inset-0 z-[10001] flex justify-end font-jakarta pointer-events-none">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-[#1A1A2E66] backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-[#1A1A2E66] backdrop-blur-md transition-opacity pointer-events-auto"
         onClick={onClose}
       />
       
@@ -263,7 +368,7 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-[520px] fixed right-0 top-0 bottom-0 flex flex-col z-[10002] shadow-[-12px_0_40px_rgba(0,0,0,0.15)] overflow-hidden bg-white text-slate-900"
+        className="w-full max-w-[520px] fixed right-0 top-0 bottom-0 flex flex-col z-[10002] shadow-[-12px_0_40px_rgba(0,0,0,0.15)] overflow-hidden bg-white text-slate-900 pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -289,24 +394,24 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-10 space-y-12 overflow-y-auto custom-scrollbar text-left">
+        <div className="flex-1 p-10 space-y-12 overflow-y-auto custom-scrollbar text-left font-jakarta">
           {/* Information Grid */}
           <div className="grid grid-cols-2 gap-x-8 gap-y-12">
             <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2 font-jakarta">Primary Contact</p>
-              <p className="text-[15px] font-black text-[#1A1A2E] font-jakarta">{candidate.contact}</p>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Primary Contact</p>
+              <p className="text-[15px] font-black text-[#1A1A2E]">{candidate.contact}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2 font-jakarta">Joining Date</p>
-              <p className="text-[15px] font-black text-[#1A1A2E] font-jakarta">{candidate.joiningDate}</p>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Joining Date</p>
+              <p className="text-[15px] font-black text-[#1A1A2E]">{candidate.joiningDate}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2 font-jakarta">Performance Score</p>
-              <p className="text-[15px] font-black text-emerald-600 font-jakarta">{candidate.performance}</p>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Performance Score</p>
+              <p className="text-[15px] font-black text-emerald-600 uppercase tracking-widest">{candidate.performance}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2 font-jakarta">Review Cycle</p>
-              <p className="text-[15px] font-black text-[#1A1A2E] font-jakarta">Every 3 Months</p>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Review Cycle</p>
+              <p className="text-[15px] font-black text-[#1A1A2E]">Every 3 Months</p>
             </div>
           </div>
 
@@ -315,53 +420,77 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
           {/* Retention Timeline */}
           <section className="px-2">
             <div className="flex items-center gap-2 mb-8">
-              <FiClock size={14} className="text-[#1B4DA0]" />
-              <h3 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] font-jakarta">Retention Protocol Asset</h3>
+              <FiClock size={16} className="text-[#1B4DA0]" />
+              <h3 className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-[0.2em]">Retention Protocol Status</h3>
             </div>
             
-            <div className="relative pl-8 space-y-10 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-blue-50">
+            {/* Quick Actions Panel */}
+            <div className="mb-10 p-8 bg-slate-100/50 rounded-[2.5rem] border border-slate-200/50 backdrop-blur-sm">
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mb-6 px-4">Secure Milestones</p>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                {[1, 2, 3].map(month => {
+                  const isCompleted = candidate.completedMilestones?.includes(month);
+                  return (
+                    <button 
+                      key={month}
+                      onClick={() => onInitiateAction(month, false)}
+                      className={`flex flex-col items-center justify-center py-6 rounded-[2rem] border transition-all group relative overflow-hidden cursor-pointer shadow-md active:scale-95 z-[10] ${
+                        isCompleted 
+                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/20' 
+                        : 'bg-white border-slate-200 text-slate-400 hover:border-[#1B4DA0] hover:text-[#1B4DA0]'
+                      }`}
+                    >
+                      <span className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">Month</span>
+                      <span className="text-2xl font-black">0{month}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button 
+                onClick={() => onInitiateAction(null, true)}
+                className="w-full py-5 bg-rose-50 text-rose-600 border border-rose-100 rounded-[2rem] text-xs font-black uppercase tracking-[3px] shadow-sm hover:bg-rose-600 hover:text-white transition-all cursor-pointer text-center z-[10] active:scale-[0.98]"
+              >
+                Mark Candidate as Left
+              </button>
+            </div>
+            
+            <div className="relative pl-8 space-y-12 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2.5px] before:bg-slate-100">
               <div className="relative">
-                <div className="absolute -left-9 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white border-4 border-white shadow-sm ring-4 ring-emerald-50">
+                <div className="absolute -left-9 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white border-4 border-white shadow-md ring-4 ring-emerald-50 scale-110">
                   <FiCheckCircle size={10} />
                 </div>
                 <div>
-                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight font-jakarta">Joined {candidate.client}</p>
-                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5 font-jakarta">{candidate.joiningDate}</p>
+                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">Joined {candidate.client}</p>
+                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5">{candidate.joiningDate}</p>
                 </div>
               </div>
+
+              {/* Dynamic Milestones */}
+              {candidate.completedMilestones?.map(month => (
+                <div key={month} className="relative">
+                  <div className="absolute -left-9 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white border-4 border-white shadow-md ring-4 ring-emerald-50 scale-110">
+                    <FiCheckCircle size={10} />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">{month} Month Check-in</p>
+                    <p className="text-[11px] font-black text-emerald-500 mt-1 uppercase tracking-widest">Milestone Secured</p>
+                  </div>
+                </div>
+              ))}
 
               <div className="relative">
-                <div className={`absolute -left-9 w-6 h-6 rounded-full flex items-center justify-center text-white border-4 border-white shadow-sm ring-4 ${candidate.checkinCount > 0 ? 'bg-emerald-500 ring-emerald-50' : 'bg-amber-500 ring-amber-50'}`}>
-                  {candidate.checkinCount > 0 ? <FiCheckCircle size={10} /> : <FiClock size={10} />}
+                <div className={`absolute -left-9 w-6 h-6 rounded-full flex items-center justify-center text-white border-4 border-white shadow-md ring-4 ${(candidate.completedMilestones?.length || 0) > 0 ? 'bg-emerald-500 ring-emerald-50' : 'bg-amber-500 ring-amber-50'}`}>
+                  {(candidate.completedMilestones?.length || 0) > 0 ? <FiCheckCircle size={10} /> : <FiClock size={10} />}
                 </div>
                 <div>
-                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight font-jakarta">3rd Month Check-in</p>
-                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5 font-jakarta">{candidate.lastCheckin !== '-' ? candidate.lastCheckin : 'Pending Implementation'}</p>
-                  {candidate.lastCheckin !== '-' && (
-                    <div className="mt-4 p-5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-[13px] font-bold text-[#4B4B5E] italic leading-relaxed font-jakarta">
-                      "Settling in well, client is happy with the initial deliveries. No immediate concerns."
-                      <div className="mt-3 flex items-center gap-2 not-italic">
-                        <div className="w-4 h-4 rounded-full bg-blue-100" />
-                        <span className="text-[9px] uppercase tracking-widest text-[#9B9BAD] font-jakarta">Verified by Recruitment Head</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="relative opacity-50">
-                <div className="absolute -left-9 w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-white border-4 border-white shadow-sm ring-4 ring-slate-50">
-                  <FiClock size={10} />
-                </div>
-                <div>
-                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight font-jakarta">Next Scheduled Review</p>
-                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5 font-jakarta">{candidate.nextCheckin}</p>
+                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">Current Retention Status</p>
+                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-1">{(candidate.completedMilestones?.length || 0) > 0 ? 'Documentation in progress' : 'Awaiting first milestone'}</p>
                 </div>
               </div>
             </div>
           </section>
 
-          <div className="border-t border-[#F4F3EF]" />
+          <div className="border-t border-[#F4F3EF] pt-8" />
         </div>
       </motion.div>
     </div>,
