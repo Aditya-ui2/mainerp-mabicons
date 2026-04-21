@@ -64,6 +64,8 @@ const Edit2 = (props) => (
   </svg>
 );
 
+const Pencil = Edit2;
+
 export default function CandidatesPage({ setActiveTab }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -745,7 +747,6 @@ Mabicons Recruitment Team`);
             <option value="quarter">This Quarter</option>
             <option value="custom">Custom Range</option>
           </select>
-          <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
         {dateFilter === 'custom' && (
@@ -769,7 +770,6 @@ Mabicons Recruitment Team`);
               <option key={p.id} value={p.id}>{p.title} {p.clientName ? `(${p.clientName})` : ''}</option>
             ))}
           </select>
-          <Briefcase className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
         <div className="relative">
@@ -783,7 +783,6 @@ Mabicons Recruitment Team`);
               <option key={name} value={name}>{name}</option>
             ))}
           </select>
-          <User className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
       </div>
 
