@@ -26,10 +26,10 @@ import {
 
 const STATUS_STYLES = {
   Open: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  Urgent: "bg-rose-50 text-rose-600 border-rose-100",
-  "Hold": "bg-amber-50 text-amber-600 border-amber-100",
+  Urgent: "bg-orange-50 text-orange-600 border-orange-100",
+  "Hold": "bg-yellow-50 text-yellow-600 border-yellow-100",
   "In Progress": "bg-blue-50 text-[#0D47A1] border-blue-100",
-  "Complete": "bg-emerald-100 text-emerald-700 border-emerald-200",
+  "Complete": "bg-green-50 text-green-600 border-green-100",
   "Medium": "bg-slate-100 text-slate-600 border-slate-200",
 };
 
@@ -2475,7 +2475,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasOpen && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Hold')}
-                          className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white bg-white/10 hover:bg-white/20 transition-all border border-white/10 active:scale-95 whitespace-nowrap"
+                          className="h-10 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#856404] bg-[#FFE082] hover:bg-[#FFD54F] transition-all border border-[#FFD54F] active:scale-95 whitespace-nowrap shadow-lg shadow-amber-500/10"
                         >
                           Mark As Hold
                         </button>
@@ -2483,7 +2483,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasHold && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Open')}
-                          className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-100 bg-blue-600 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                          className="h-10 px-5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-100 bg-blue-600 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
                         >
                           Mark As Open
                         </button>
@@ -2491,7 +2491,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasNotUrgent && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Urgent')}
-                          className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-black bg-amber-400 hover:bg-amber-500 transition-all shadow-lg shadow-amber-500/20 active:scale-95 whitespace-nowrap"
+                          className="h-10 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-[#FF9800] hover:bg-[#F57C00] transition-all shadow-lg shadow-orange-500/20 active:scale-95 whitespace-nowrap"
                         >
                           Mark As Urgent
                         </button>
@@ -2499,7 +2499,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasUrgent && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Medium')}
-                          className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white bg-slate-600 hover:bg-slate-700 transition-all active:scale-95 whitespace-nowrap"
+                          className="h-10 px-5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white bg-slate-600 hover:bg-slate-700 transition-all active:scale-95 whitespace-nowrap"
                         >
                           Mark As Normal
                         </button>
@@ -2507,7 +2507,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasNotComplete && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Complete')}
-                          className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 whitespace-nowrap"
+                          className="h-10 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-[#2E7D32] hover:bg-[#1B5E20] transition-all shadow-lg shadow-green-500/20 active:scale-95 whitespace-nowrap"
                         >
                           Mark As Complete
                         </button>
@@ -2530,7 +2530,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       }
                     }
                   }}
-                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-rose-600 hover:bg-rose-700 transition-all shadow-lg shadow-rose-500/20 active:scale-95 whitespace-nowrap"
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-red-600 hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 active:scale-95 whitespace-nowrap"
                 >
                   Delete Selected
                 </button>

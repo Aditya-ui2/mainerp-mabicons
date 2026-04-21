@@ -93,10 +93,6 @@ const getSidebarConfig = (name = '') => {
     { id: 12, title: 'Document Verification', icon: FiShield },
   ];
 
-  if (isSpecialKAM) {
-    items.push({ id: 18, title: 'Work Handover', icon: FiRefreshCw });
-  }
-
   return [
     {
       items: items,

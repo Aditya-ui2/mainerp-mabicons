@@ -214,13 +214,7 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
 
           <div className={`border-t ${isDarkMode ? 'border-slate-800' : 'border-[#F4F3EF]'}`} />
 
-          {/* Negotiation Notes Section */}
-          <section className="text-left px-2">
-            <h3 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-5">Negotiation Notes</h3>
-            <p className="text-[15px] font-bold text-[#9B9BAD] leading-relaxed italic">
-              "{offer.negotiationNotes || 'No specific notes provided for this offer'}"
-            </p>
-          </section>
+           
         </div>
 
         {/* Footer Actions - Fixed at bottom */}

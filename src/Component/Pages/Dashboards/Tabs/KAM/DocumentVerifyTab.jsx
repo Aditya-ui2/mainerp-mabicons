@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  X, 
-  ChevronRight, 
-  Download, 
-  Eye, 
-  Mail, 
-  Archive, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  AlertTriangle, 
-  FileText, 
-  ChevronDown, 
+import {
+  X,
+  ChevronRight,
+  Download,
+  Eye,
+  Mail,
+  Archive,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertTriangle,
+  FileText,
+  ChevronDown,
   Building2,
   Search,
   Filter,
@@ -36,15 +36,15 @@ const DOC_TYPES = [
   // PAN Card - Front & Back (Mandatory)
   { id: 'pan_front', label: 'PAN Card (Front)', required: true, group: 'pan' },
   { id: 'pan_back', label: 'PAN Card (Back)', required: true, group: 'pan' },
-  
+
   // Aadhar Card - Front & Back (Mandatory)
   { id: 'aadhar_front', label: 'Aadhar Card (Front)', required: true, group: 'aadhar' },
   { id: 'aadhar_back', label: 'Aadhar Card (Back)', required: true, group: 'aadhar' },
-  
+
   // 10th & 12th Marksheet (Mandatory)
   { id: 'marksheet_10', label: '10th Marksheet', required: true },
   { id: 'marksheet_12', label: '12th Marksheet', required: true },
-  
+
   // University Marksheets - Semester 1-8 (Optional)
   { id: 'semester_1', label: 'Semester 1', required: false, group: 'university' },
   { id: 'semester_2', label: 'Semester 2', required: false, group: 'university' },
@@ -54,21 +54,21 @@ const DOC_TYPES = [
   { id: 'semester_6', label: 'Semester 6', required: false, group: 'university' },
   { id: 'semester_7', label: 'Semester 7', required: false, group: 'university' },
   { id: 'semester_8', label: 'Semester 8', required: false, group: 'university' },
-  
+
   // Degree Certificate (Optional)
   { id: 'degree', label: 'Degree Certificate', required: false },
-  
+
   // Pay Slips - Last 3 months (Optional)
   { id: 'payslip_1', label: 'Pay Slip (Month 1)', required: false, group: 'payslips' },
   { id: 'payslip_2', label: 'Pay Slip (Month 2)', required: false, group: 'payslips' },
   { id: 'payslip_3', label: 'Pay Slip (Month 3)', required: false, group: 'payslips' },
-  
+
   // Bank Statement - Last 3 months (Optional)
   { id: 'bank_statement', label: 'Bank Statement (3 months)', required: false },
-  
+
   // Appointment Letter (Optional)
   { id: 'appointment_letter', label: 'Appointment Letter', required: false },
-  
+
   // Relieving/Experience Letter (Optional)
   { id: 'relieving_letter', label: 'Relieving Letter', required: false },
 ];
@@ -523,7 +523,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                     const groupDocs = DOC_TYPES.filter(d => group.docs.includes(d.id));
                     const isGroupSelected = group.docs.includes(selectedDocType);
                     const isOpen = openDropdown === group.id;
-                    
+
                     // Check if any doc in group is uploaded
                     const hasAnyDoc = groupDocs.some(d => selectedCandidate.kycDocuments?.[d.id]);
                     const allVerified = groupDocs.every(d => selectedCandidate.kycDocuments?.[d.id]?.verified === true);
@@ -533,8 +533,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                       <div key={group.id} className="relative">
                         <button
                           onClick={() => setOpenDropdown(isOpen ? null : group.id)}
-                          className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                            isGroupSelected
+                          className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${isGroupSelected
                               ? 'bg-[#1B4DA0] text-white shadow-md'
                               : hasAnyDoc
                                 ? allVerified
@@ -543,7 +542,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                                     ? 'bg-rose-50 text-rose-600 hover:bg-rose-100'
                                     : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
                                 : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-                          }`}
+                            }`}
                         >
                           {hasAnyDoc ? (
                             allVerified ? <CheckCircle size={10} /> :
@@ -553,7 +552,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                           {group.label}
                           <ChevronDown size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                         </button>
-                        
+
                         {/* Dropdown Menu */}
                         <AnimatePresence>
                           {isOpen && (
@@ -573,9 +572,8 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                                   <button
                                     key={doc.id}
                                     onClick={() => { setSelectedDocType(doc.id); setOpenDropdown(null); }}
-                                    className={`w-full px-4 py-2.5 text-left text-[11px] font-semibold flex items-center justify-between hover:bg-slate-50 transition-all ${
-                                      selectedDocType === doc.id ? 'bg-blue-50 text-[#1B4DA0]' : 'text-slate-600'
-                                    }`}
+                                    className={`w-full px-4 py-2.5 text-left text-[11px] font-semibold flex items-center justify-between hover:bg-slate-50 transition-all ${selectedDocType === doc.id ? 'bg-blue-50 text-[#1B4DA0]' : 'text-slate-600'
+                                      }`}
                                   >
                                     <span>{doc.label}</span>
                                     {hasDoc ? (
@@ -607,14 +605,14 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                         key={doc.id}
                         onClick={() => { setSelectedDocType(doc.id); setOpenDropdown(null); }}
                         className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${selectedDocType === doc.id
-                            ? 'bg-[#1B4DA0] text-white shadow-md'
-                            : hasDoc
-                              ? isVerified
-                                ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                                : isRejected
-                                  ? 'bg-rose-50 text-rose-600 hover:bg-rose-100'
-                                  : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
-                              : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                          ? 'bg-[#1B4DA0] text-white shadow-md'
+                          : hasDoc
+                            ? isVerified
+                              ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                              : isRejected
+                                ? 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                                : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
                           }`}
                       >
                         {hasDoc ? (
@@ -806,8 +804,8 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                   onClick={handleRejectWithEmail}
                   disabled={!rejectionReason.trim()}
                   className={`flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${rejectionReason.trim()
-                      ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/20'
-                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/20'
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
                 >
                   <Mail size={16} /> Reject & Send Email

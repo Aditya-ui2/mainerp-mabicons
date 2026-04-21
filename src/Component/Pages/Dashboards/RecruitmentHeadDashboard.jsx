@@ -90,6 +90,7 @@ const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 const SettingsTab = lazy(() => import('./Tabs/SettingsTab'));
 const SelectionMISTab = lazy(() => import('./Tabs/KAMRecruitment/SelectionMISTab'));
 const MyProfileTab = lazy(() => import('./Tabs/Common/MyProfileTab'));
+const HiringLifecycleTab = lazy(() => import('./Tabs/KAMRecruitment/HiringLifecycleTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -217,6 +218,7 @@ const sidebarConfig = [
       { id: 'mis-reports', title: 'Team MIS Reports', icon: FiBarChart2 },
       { id: 'notes', title: 'Notes', icon: FiEdit2 },
       { id: 'document-verification', title: 'Document Verification', icon: FiShield },
+      { id: 'hiring-lifecycle', title: 'Hiring', icon: FiClock },
     ],
   },
 ];
@@ -2376,6 +2378,10 @@ const RecruitmentHeadDashboard = () => {
             case 'Document Verification':
             case 'document-verification':
               return <DocumentVerifyTab isDarkMode={false} />;
+            case 'Hiring':
+            case 'Hiring Lifecycle':
+            case 'hiring-lifecycle':
+              return <HiringLifecycleTab />;
             default:
               return (
                 <>
