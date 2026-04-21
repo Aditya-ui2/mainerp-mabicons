@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   FiSearch, 
   FiFilter, 
@@ -98,7 +99,6 @@ const HiringLifecycleTab = () => {
   };
 
   const handleLogAction = (candidateId, type) => {
-    // Logic to log call/message update
     alert(`Logged ${type} for candidate ID: ${candidateId}`);
   };
 
@@ -112,18 +112,15 @@ const HiringLifecycleTab = () => {
   });
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500" style={{ fontFamily: "'Calibri', sans-serif" }}>
+    <div className="space-y-8 animate-in fade-in duration-500 font-jakarta">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">
             Hiring 
           </h1>
-        
         </div>
       </div>
-
-       
 
       {/* Filter Bar */}
       <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
@@ -215,9 +212,7 @@ const HiringLifecycleTab = () => {
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center justify-end">
-                      <button 
-                        className="p-2.5 bg-[#F4F3EF] text-[#1B4DA0] hover:text-[#0D47A1] rounded-xl transition-all shadow-sm active:scale-95"
-                      >
+                      <button className="p-2.5 bg-[#F4F3EF] text-[#1B4DA0] hover:text-[#0D47A1] rounded-xl transition-all shadow-sm active:scale-95">
                         <FiChevronRight size={18} />
                       </button>
                     </div>
@@ -249,14 +244,12 @@ const HiringLifecycleTab = () => {
   );
 };
 
-import { createPortal } from 'react-dom';
-
 // Detail Drawer Component
 const CandidateDetailDrawer = ({ candidate, onClose }) => {
   if (!candidate) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[10001] flex justify-end" style={{ fontFamily: "'Calibri', sans-serif" }}>
+    <div className="fixed inset-0 z-[10001] flex justify-end font-jakarta">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -296,34 +289,34 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-10 space-y-12 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 p-10 space-y-12 overflow-y-auto custom-scrollbar text-left">
           {/* Information Grid */}
           <div className="grid grid-cols-2 gap-x-8 gap-y-12">
-            <div className="text-left">
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Primary Contact</p>
-              <p className="text-[15px] font-black text-[#1A1A2E]">{candidate.contact}</p>
+            <div>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2 font-jakarta">Primary Contact</p>
+              <p className="text-[15px] font-black text-[#1A1A2E] font-jakarta">{candidate.contact}</p>
             </div>
-            <div className="text-left">
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Joining Date</p>
-              <p className="text-[15px] font-black text-[#1A1A2E]">{candidate.joiningDate}</p>
+            <div>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2 font-jakarta">Joining Date</p>
+              <p className="text-[15px] font-black text-[#1A1A2E] font-jakarta">{candidate.joiningDate}</p>
             </div>
-            <div className="text-left">
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Performance Score</p>
-              <p className="text-[15px] font-black text-emerald-600">{candidate.performance}</p>
+            <div>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2 font-jakarta">Performance Score</p>
+              <p className="text-[15px] font-black text-emerald-600 font-jakarta">{candidate.performance}</p>
             </div>
-            <div className="text-left">
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Review Cycle</p>
-              <p className="text-[15px] font-black text-[#1A1A2E]">Every 3 Months</p>
+            <div>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2 font-jakarta">Review Cycle</p>
+              <p className="text-[15px] font-black text-[#1A1A2E] font-jakarta">Every 3 Months</p>
             </div>
           </div>
 
           <div className="border-t border-[#F4F3EF]" />
 
           {/* Retention Timeline */}
-          <section className="text-left px-2">
+          <section className="px-2">
             <div className="flex items-center gap-2 mb-8">
               <FiClock size={14} className="text-[#1B4DA0]" />
-              <h3 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em]">Retention Protocol Asset</h3>
+              <h3 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] font-jakarta">Retention Protocol Asset</h3>
             </div>
             
             <div className="relative pl-8 space-y-10 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-blue-50">
@@ -332,8 +325,8 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
                   <FiCheckCircle size={10} />
                 </div>
                 <div>
-                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">Joined {candidate.client}</p>
-                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5">{candidate.joiningDate}</p>
+                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight font-jakarta">Joined {candidate.client}</p>
+                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5 font-jakarta">{candidate.joiningDate}</p>
                 </div>
               </div>
 
@@ -342,14 +335,14 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
                   {candidate.checkinCount > 0 ? <FiCheckCircle size={10} /> : <FiClock size={10} />}
                 </div>
                 <div>
-                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">3rd Month Check-in</p>
-                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5">{candidate.lastCheckin !== '-' ? candidate.lastCheckin : 'Pending Implementation'}</p>
+                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight font-jakarta">3rd Month Check-in</p>
+                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5 font-jakarta">{candidate.lastCheckin !== '-' ? candidate.lastCheckin : 'Pending Implementation'}</p>
                   {candidate.lastCheckin !== '-' && (
-                    <div className="mt-4 p-5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-[13px] font-bold text-[#4B4B5E] italic leading-relaxed">
+                    <div className="mt-4 p-5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-[13px] font-bold text-[#4B4B5E] italic leading-relaxed font-jakarta">
                       "Settling in well, client is happy with the initial deliveries. No immediate concerns."
                       <div className="mt-3 flex items-center gap-2 not-italic">
                         <div className="w-4 h-4 rounded-full bg-blue-100" />
-                        <span className="text-[9px] uppercase tracking-widest text-[#9B9BAD]">Verified by Recruitment Head</span>
+                        <span className="text-[9px] uppercase tracking-widest text-[#9B9BAD] font-jakarta">Verified by Recruitment Head</span>
                       </div>
                     </div>
                   )}
@@ -361,52 +354,14 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
                   <FiClock size={10} />
                 </div>
                 <div>
-                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">Next Scheduled Review</p>
-                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5">{candidate.nextCheckin}</p>
+                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight font-jakarta">Next Scheduled Review</p>
+                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5 font-jakarta">{candidate.nextCheckin}</p>
                 </div>
               </div>
             </div>
           </section>
 
           <div className="border-t border-[#F4F3EF]" />
-        </div>
-
-        {/* Footer Actions */}
-        <div className="p-8 border-t border-[#F4F3EF] bg-white">
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1 h-14 bg-[#1A1A2E] text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-black/10 flex items-center justify-center gap-2"
-              >
-                Log Full Review
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleLogAction(candidate.id, 'call')}
-                className="w-14 h-14 border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-xl flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-all shadow-sm"
-              >
-                <FiPhone size={20} />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleLogAction(candidate.id, 'message')}
-                className="w-14 h-14 border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-xl flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm"
-              >
-                <FiMessageSquare size={20} />
-              </motion.button>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full h-14 border-2 border-dashed border-rose-200 text-rose-500 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-rose-50 transition-all flex items-center justify-center"
-            >
-              Escalate Issue
-            </motion.button>
-          </div>
         </div>
       </motion.div>
     </div>,

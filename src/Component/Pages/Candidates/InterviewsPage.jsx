@@ -94,6 +94,7 @@ export default function InterviewsPage() {
     interviewerRole: "",
     meetingType: "Video",
     meetingLink: "",
+    clientVisibility: "With Client",
     notes: ""
   });
   const [selectedRowIds, setSelectedRowIds] = useState([]);
@@ -426,6 +427,7 @@ export default function InterviewsPage() {
       interviewerRole: interview.raw?.interviewerRole || "",
       meetingType: interview.type || "Video",
       meetingLink: "",
+      clientVisibility: "With Client",
       notes: `Next round for ${interview.candidateName}`
     });
     setIsScheduleModalOpen(true);
@@ -522,6 +524,7 @@ export default function InterviewsPage() {
         interviewerRole: interviewForm.interviewerRole,
         meetingType: interviewForm.meetingType,
         meetingLink: interviewForm.meetingLink,
+        clientVisibility: interviewForm.clientVisibility,
         notes: interviewForm.notes,
         status: 'Scheduled',
         interviewerType: 'DepartmentTeam'
@@ -546,6 +549,7 @@ export default function InterviewsPage() {
           interviewerRole: "",
           meetingType: "Video",
           meetingLink: "",
+          clientVisibility: "With Client",
           notes: ""
         });
         fetchInterviews();
@@ -1389,21 +1393,45 @@ export default function InterviewsPage() {
                   </div>
                 </div>
 
+                <AnimatePresence>
+                  {interviewForm.meetingType === 'Video' && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }} 
+                      animate={{ opacity: 1, height: 'auto' }} 
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-1.5 overflow-hidden"
+                    >
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Google Meet Link</label>
+                      <div className="flex gap-2">
+                        <input
+                          className="flex-1 bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                          placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                          value={interviewForm.meetingLink}
+                          onChange={(e) => setInterviewForm({ ...interviewForm, meetingLink: e.target.value })}
+                        />
+                        <button type="button"
+                          onClick={() => setInterviewForm({ ...interviewForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}` })}
+                          className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
+                          style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
+                          Generate
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Google Meet Link</label>
-                  <div className="flex gap-2">
-                    <input
-                      className="flex-1 bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                      placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                      value={interviewForm.meetingLink}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, meetingLink: e.target.value })}
-                    />
-                    <button type="button"
-                      onClick={() => setInterviewForm({ ...interviewForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}` })}
-                      className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
-                      style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
-                      Generate
-                    </button>
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client Visibility</label>
+                  <div className="relative">
+                    <select
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                      value={interviewForm.clientVisibility}
+                      onChange={(e) => setInterviewForm({ ...interviewForm, clientVisibility: e.target.value })}
+                    >
+                      <option value="With Client">Candidate with client</option>
+                      <option value="Without Client">Candidate without client</option>
+                    </select>
+                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
                   </div>
                 </div>
 

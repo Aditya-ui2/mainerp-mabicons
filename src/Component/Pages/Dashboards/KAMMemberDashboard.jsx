@@ -42,6 +42,7 @@ import {
 } from '../service/api';
 
 // Lazy load Tab Components
+const TeamManagementTab = lazy(() => import('./Tabs/Common/TeamManagementTab'));
 const JobOpeningsTab = lazy(() => import('./Tabs/KAMRecruitment/JobOpeningsTab'));
 const CandidatePipelineTab = lazy(() => import('../Candidates/CandidatesPage'));
 const InterviewScheduleTab = lazy(() => import('../Candidates/InterviewsPage'));
@@ -54,6 +55,7 @@ const DailyReportTab = lazy(() => import('./Tabs/Common/DailyReportTab'));
 const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
 const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
 const DocumentVerifyTab = lazy(() => import('./Tabs/KAM/DocumentVerifyTab'));
+const HiringLifecycleTab = lazy(() => import('./Tabs/KAMRecruitment/HiringLifecycleTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -82,14 +84,16 @@ const getSidebarConfig = (name = '') => {
     name.toLowerCase().includes('priyanshi');
 
   const items = [
+    { id: 0, title: 'My Team', icon: FiUsers },
     { id: 1, title: 'My Tasks', icon: FiCheckSquare },
     { id: 2, title: 'Daily Report', icon: FiFileText },
     { id: 4, title: 'Job Openings', icon: FiBriefcase },
     { id: 5, title: 'Candidate Pipeline', icon: FiUserPlus },
     { id: 6, title: 'Interview Schedule', icon: FiCalendar },
     { id: 8, title: 'Offer Management', icon: FiAward },
-    { id: 9, title: 'Resume Bank', icon: FiDatabase },
-    { id: 10, title: 'Activity Feed', icon: FiActivity },
+    { id: 9, title: 'Joined Candidates', icon: FiClock },
+    { id: 10, title: 'Resume Bank', icon: FiDatabase },
+    { id: 11, title: 'Activity Feed', icon: FiActivity },
     { id: 12, title: 'Document Verification', icon: FiShield },
   ];
 
