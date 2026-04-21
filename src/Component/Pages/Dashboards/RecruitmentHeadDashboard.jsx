@@ -693,7 +693,7 @@ const KAMPerformanceContent = ({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8"
+      className="space-y-8 -mt-10"
       style={{ fontFamily: "'Calibri', sans-serif" }}
     >
       <style>{`
@@ -749,21 +749,21 @@ const KAMPerformanceContent = ({
                     exit={{ opacity: 0, y: 5 }}
                     className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden py-1.5"
                   >
-                  {clientNames.map((client) => (
-                    <button
-                      key={client}
-                      onClick={() => {
-                        setClientFilter(client);
-                        setShowClientDropdown(false);
-                        fetchDashboardData(dateFilter, 'All Team', client);
-                        fetchKAMTeam(dateFilter, client);
-                      }}
-                      className={`w-full px-5 py-2.5 text-left text-[13px] transition-colors ${clientFilter === client ? 'bg-[#0D47A1]/5 text-[#0D47A1] font-bold' : 'text-[#4B4B5E] hover:bg-[#FAFAF8] font-medium'}`}
-                    >
-                      {client}
-                    </button>
-                  ))}
-                </motion.div>
+                    {clientNames.map((client) => (
+                      <button
+                        key={client}
+                        onClick={() => {
+                          setClientFilter(client);
+                          setShowClientDropdown(false);
+                          fetchDashboardData(dateFilter, 'All Team', client);
+                          fetchKAMTeam(dateFilter, client);
+                        }}
+                        className={`w-full px-5 py-2.5 text-left text-[13px] transition-colors ${clientFilter === client ? 'bg-[#0D47A1]/5 text-[#0D47A1] font-bold' : 'text-[#4B4B5E] hover:bg-[#FAFAF8] font-medium'}`}
+                      >
+                        {client}
+                      </button>
+                    ))}
+                  </motion.div>
                 </>
               )}
             </AnimatePresence>
@@ -803,78 +803,78 @@ const KAMPerformanceContent = ({
                     exit={{ opacity: 0, y: 5 }}
                     className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden"
                   >
-                  <div className="px-5 py-4 border-b border-[#F4F3EF] bg-[#FAFAF8]">
-                    <p className="font-bold text-[#1A1A2E] text-left text-sm">Select Time Period</p>
-                  </div>
-                  <div className="p-5 space-y-4">
-                    <div className="flex gap-1 p-1 bg-[#F4F3EF] rounded-xl">
-                      {['all', 'last7days', 'year', 'month', 'date'].map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => setDateFilter({ ...dateFilter, filterType: type })}
-                          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${dateFilter.filterType === type ? 'bg-white text-[#0D47A1] shadow-sm' : 'text-[#9B9BAD] hover:text-[#6B6B7E]'}`}
-                        >
-                          {type === 'all' ? 'All' : type === 'last7days' ? 'Last 7 Days' : type.charAt(0).toUpperCase() + type.slice(1)}
-                        </button>
-                      ))}
+                    <div className="px-5 py-4 border-b border-[#F4F3EF] bg-[#FAFAF8]">
+                      <p className="font-bold text-[#1A1A2E] text-left text-sm">Select Time Period</p>
                     </div>
-                    {(dateFilter.filterType === 'year' || dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
-                      <div className="space-y-1">
-                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Year</label>
-                        <select
-                          value={dateFilter.year}
-                          onChange={(e) => setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })}
-                          className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl text-sm font-bold text-[#1A1A2E] bg-white focus:outline-none focus:border-[#1B4DA0] transition-colors cursor-pointer"
-                        >
-                          {years.map((year) => (
-                            <option key={year} value={year}>{year}</option>
-                          ))}
-                        </select>
+                    <div className="p-5 space-y-4">
+                      <div className="flex gap-1 p-1 bg-[#F4F3EF] rounded-xl">
+                        {['all', 'last7days', 'year', 'month', 'date'].map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => setDateFilter({ ...dateFilter, filterType: type })}
+                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${dateFilter.filterType === type ? 'bg-white text-[#0D47A1] shadow-sm' : 'text-[#9B9BAD] hover:text-[#6B6B7E]'}`}
+                          >
+                            {type === 'all' ? 'All' : type === 'last7days' ? 'Last 7 Days' : type.charAt(0).toUpperCase() + type.slice(1)}
+                          </button>
+                        ))}
                       </div>
-                    )}
-
-                    {(dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
-                      <div className="space-y-1">
-                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Month</label>
-                        <select
-                          value={dateFilter.month}
-                          onChange={(e) => setDateFilter({ ...dateFilter, month: parseInt(e.target.value) })}
-                          className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl text-sm font-bold text-[#1A1A2E] bg-white focus:outline-none focus:border-[#1B4DA0] transition-colors cursor-pointer"
-                        >
-                          {months.map((month, idx) => (
-                            <option key={idx} value={idx}>{month}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {dateFilter.filterType === 'date' && (
-                      <div className="space-y-1">
-                        <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Date</label>
-                        <div
-                          onClick={() => openDatePicker(compactDateInputRef)}
-                          className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl flex items-center justify-between cursor-pointer hover:border-[#E8E7E2] transition-all bg-white"
-                        >
-                          <input
-                            ref={compactDateInputRef}
-                            type="date"
-                            value={dateFilter.date}
-                            onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
-                            className="bg-transparent text-sm font-bold text-[#1A1A2E] outline-none flex-1"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <FiCalendar className="text-[#9B9BAD] w-4 h-4" />
+                      {(dateFilter.filterType === 'year' || dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Year</label>
+                          <select
+                            value={dateFilter.year}
+                            onChange={(e) => setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })}
+                            className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl text-sm font-bold text-[#1A1A2E] bg-white focus:outline-none focus:border-[#1B4DA0] transition-colors cursor-pointer"
+                          >
+                            {years.map((year) => (
+                              <option key={year} value={year}>{year}</option>
+                            ))}
+                          </select>
                         </div>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => setShowDateFilter(false)}
-                      className="w-full py-3 bg-[#0D47A1] text-white rounded-xl font-bold text-sm shadow-sm active:scale-[0.98] transition-all"
-                    >
-                      Apply Filter
-                    </button>
-                  </div>
-                </motion.div>
+                      )}
+
+                      {(dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Month</label>
+                          <select
+                            value={dateFilter.month}
+                            onChange={(e) => setDateFilter({ ...dateFilter, month: parseInt(e.target.value) })}
+                            className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl text-sm font-bold text-[#1A1A2E] bg-white focus:outline-none focus:border-[#1B4DA0] transition-colors cursor-pointer"
+                          >
+                            {months.map((month, idx) => (
+                              <option key={idx} value={idx}>{month}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {dateFilter.filterType === 'date' && (
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left ml-1">Select Date</label>
+                          <div
+                            onClick={() => openDatePicker(compactDateInputRef)}
+                            className="w-full px-4 py-3 border border-[#F4F3EF] rounded-xl flex items-center justify-between cursor-pointer hover:border-[#E8E7E2] transition-all bg-white"
+                          >
+                            <input
+                              ref={compactDateInputRef}
+                              type="date"
+                              value={dateFilter.date}
+                              onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
+                              className="bg-transparent text-sm font-bold text-[#1A1A2E] outline-none flex-1"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <FiCalendar className="text-[#9B9BAD] w-4 h-4" />
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setShowDateFilter(false)}
+                        className="w-full py-3 bg-[#0D47A1] text-white rounded-xl font-bold text-sm shadow-sm active:scale-[0.98] transition-all"
+                      >
+                        Apply Filter
+                      </button>
+                    </div>
+                  </motion.div>
                 </>
               )}
             </AnimatePresence>
@@ -1554,6 +1554,7 @@ const RecruitmentHeadDashboard = () => {
   const activityDropdownRef = useRef(null);
 
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const mainDateFilterRef = useRef(null);
   const compactDateInputRef = useRef(null);
   const dashboardDateInputRef = useRef(null);
 
@@ -1710,6 +1711,9 @@ const RecruitmentHeadDashboard = () => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Date dropdown logic
+      if (mainDateFilterRef.current && !mainDateFilterRef.current.contains(event.target)) {
+        setShowDateFilter(false);
+      }
 
       // Activity dropdown logic
       if (activityDropdownRef.current && !activityDropdownRef.current.contains(event.target)) {
@@ -2386,7 +2390,7 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                     <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
                       {/* Date Filter */}
-                      <div className="relative">
+                      <div className="relative" ref={mainDateFilterRef}>
                         <button
                           onClick={() => setShowDateFilter(!showDateFilter)}
                           className="flex items-center gap-2 px-4 py-2.5 bg-[#0D47A1] text-white rounded-xl hover:bg-[#0a3a82] transition-all shadow-md hover:shadow-lg"
@@ -3811,14 +3815,14 @@ const RecruitmentHeadDashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[10001] flex items-center justify-center p-4"
             onClick={() => setShowStatsInsightModal(false)}
           >
             <motion.div
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-[#F4F3EF]"
+              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-[#F4F3EF] z-[10002]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-10 py-8 border-b border-[#F4F3EF] bg-gradient-to-r from-white to-[#F8FAFF]">
@@ -3914,13 +3918,13 @@ const RecruitmentHeadDashboard = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowKAMFormModal(false)}
-                className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto"
+                className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto z-[10001]"
               >
                 <motion.div
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative"
+                  className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative z-[10002]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Modal Header */}
@@ -4123,7 +4127,7 @@ const RecruitmentHeadDashboard = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-[4px] z-[9999]"
+              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[10001]"
               onClick={() => setPerformanceKam(null)}
             />
 
@@ -4132,7 +4136,7 @@ const RecruitmentHeadDashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-[698px] bg-[#FAFAF8] z-[10000] shadow-2xl flex flex-col"
+              className="fixed right-0 top-0 h-full w-full max-w-[698px] bg-[#FAFAF8] z-[10002] shadow-2xl flex flex-col"
               style={{ boxShadow: "-12px 0 40px rgba(0,0,0,0.15)" }}
             >
               {/* Drawer Header */}
@@ -4273,7 +4277,7 @@ const RecruitmentHeadDashboard = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedInterview(null)}
-                className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md pointer-events-auto"
+                className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[10001] pointer-events-auto"
               />
               <motion.div
                 initial={{ x: '100%' }}
@@ -4349,11 +4353,6 @@ const RecruitmentHeadDashboard = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-4">
-                    <button className="w-full py-5 bg-[#0D47A1] text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-3">
-                      <FiExternalLink size={16} /> Join Interview Room
-                    </button>
-                  </div>
                 </div>
               </motion.div>
             </React.Fragment>

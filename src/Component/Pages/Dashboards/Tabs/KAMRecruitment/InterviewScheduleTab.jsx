@@ -1237,30 +1237,30 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
             <p className={`text-xs font-bold uppercase tracking-[4px] mt-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Premium Recruitment Dashboard</p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={async () => {
-                try {
-                  setLoading(true);
-                  await syncSharePointAll();
-                  await fetchInterviews();
-                  setToast('Data synced from SharePoint!');
-                  setTimeout(() => setToast(null), 3000);
-                } catch (err) {
-                  setToast('Sync failed: ' + err.message);
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              disabled={loading}
-              className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-emerald-600 border border-emerald-100/50 rounded-2xl text-[13px] font-bold hover:bg-emerald-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
-            >
-              {loading ? (
-                <FiRefreshCw className="w-4 h-4 animate-spin text-[#1B4DA0]" />
-              ) : (
-                <FiDatabase className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
-              )}
-              <span className="tracking-tight">{loading ? 'Syncing...' : 'Sync Data'}</span>
-            </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    await syncSharePointAll();
+                    await fetchInterviews();
+                    setToast('Data synced from SharePoint!');
+                    setTimeout(() => setToast(null), 3000);
+                  } catch (err) {
+                    setToast('Sync failed: ' + err.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="group flex items-center justify-center gap-2.5 px-6 py-3.5 bg-white text-[#1B4DA0] border border-blue-100/30 rounded-2xl text-[13px] font-bold hover:bg-[#E3F2FD] hover:text-[#0D47A1] transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[170px]"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <FiDatabase className="w-4 h-4 text-[#1B4DA0] group-hover:text-[#0D47A1] transition-transform group-hover:scale-110" />
+                )}
+                <span className="tracking-tight">{loading ? 'Syncing...' : 'Sync Data'}</span>
+              </button>
             <button
               onClick={() => { resetForm(); setShowFullPageForm(true); }}
               className="flex items-center gap-2 px-6 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[13px] font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153D80] transition-all active:scale-95"

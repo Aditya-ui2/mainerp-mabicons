@@ -157,7 +157,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/30 z-[9999]"
+                className="fixed inset-0 bg-[#1A1A2E66] backdrop-blur-md z-[10001]"
                 onClick={() => setSelectedActivity(null)}
               />
               <motion.div
@@ -165,7 +165,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                className="fixed right-0 top-0 bottom-0 w-full max-w-[520px] bg-white dark:bg-slate-950 z-[10000] shadow-2xl flex flex-col border-l border-[#F4F3EF] dark:border-slate-800"
+                className="fixed right-0 top-0 bottom-0 w-full max-w-[520px] bg-white dark:bg-slate-950 z-[10002] shadow-2xl flex flex-col border-l border-[#F4F3EF] dark:border-slate-800"
               >
                 {/* Drawer Header */}
                 <div className="p-10 pb-6 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA] dark:bg-slate-950">

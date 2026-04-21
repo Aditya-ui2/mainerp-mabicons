@@ -686,12 +686,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
               }
             }}
             disabled={loading}
-            className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-emerald-600 border border-emerald-100/50 rounded-2xl text-[13px] font-bold hover:bg-emerald-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
+            className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-[#1B4DA0] border border-blue-100/30 rounded-2xl text-[13px] font-bold hover:bg-[#E3F2FD] hover:text-[#0D47A1] transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
           >
             {loading ? (
               <FiLoader className="w-4 h-4 animate-spin text-[#1B4DA0]" />
             ) : (
-              <FiDatabase className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+              <FiDatabase className="w-4 h-4 text-[#1B4DA0] group-hover:text-[#0D47A1] transition-transform group-hover:scale-110" />
             )}
             <span className="tracking-tight">{loading ? 'Syncing...' : 'Sync Data'}</span>
           </button>
@@ -700,8 +700,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
               whileHover={{ scale: 1.02, translateY: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => { setEditingTask(null); setFormData({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '', targets: [] }); setShowModal(true); }}
-              className="flex items-center gap-2 px-8 py-4 text-white rounded-full text-[13px] font-bold shadow-xl shadow-blue-500/20 transition-all active:scale-95 border border-white/10"
-              style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}
+              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all duration-300 whitespace-nowrap"
             >
               <FiPlus className="w-4 h-4" />
               Assign Task

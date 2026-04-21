@@ -701,12 +701,12 @@ export default function InterviewsPage() {
           <button
             onClick={handleSharePointSync}
             disabled={isSyncing}
-            className="group flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[170px]"
+            className="group flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#1B4DA0] border border-blue-100/30 rounded-xl text-sm font-bold hover:bg-[#E3F2FD] hover:text-[#0D47A1] transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[170px]"
           >
             {isSyncing ? (
               <div className="w-4 h-4 border-2 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
             ) : (
-              <FiDatabase className="text-emerald-500 group-hover:text-[#0D47A1] transition-colors" />
+              <FiDatabase className="text-[#1B4DA0] group-hover:text-[#0D47A1] transition-colors" />
             )}
             {isSyncing ? 'Syncing...' : 'Sync Data'}
           </button>

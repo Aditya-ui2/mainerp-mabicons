@@ -738,14 +738,14 @@ const ResumeBankTab = () => {
           <button
             onClick={() => setShowSyncMenu(!showSyncMenu)}
             disabled={syncing}
-            className={`flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[13px] font-bold transition-all shadow-sm active:scale-95 bg-white border border-[#E8E7E2] hover:bg-blue-50/30 group ${syncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex items-center justify-center gap-2.5 px-6 py-3 bg-white text-[#1B4DA0] border border-blue-100/30 rounded-xl text-sm font-bold transition-all duration-300 shadow-sm active:scale-95 hover:bg-[#E3F2FD] hover:text-[#0D47A1] group ${syncing ? 'opacity-50 cursor-not-allowed' : ''} min-w-[170px]`}
           >
             {syncing ? (
               <RefreshCw size={18} className="text-[#1B4DA0] animate-spin" />
             ) : (
-              <Database size={18} className="text-[#1B4DA0] transition-colors group-hover:scale-110" />
+              <Database size={18} className="text-[#1B4DA0] group-hover:text-[#0D47A1] transition-transform group-hover:scale-110" />
             )}
-            <span className="text-[#1B4DA0] tracking-tight">{syncing ? 'Syncing...' : 'Sync Data'}</span>
+            <span className="tracking-tight">{syncing ? 'Syncing...' : 'Sync Data'}</span>
           </button>
           <button
             onClick={handleOpenAddCandidate}
