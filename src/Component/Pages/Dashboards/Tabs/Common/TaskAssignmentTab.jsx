@@ -31,6 +31,7 @@ import {
   FiEye,
   FiMinusCircle,
   FiCheck,
+  FiEdit2 as Pencil,
 } from 'react-icons/fi';
 import {
   getDepartmentTasks,
@@ -169,7 +170,8 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
           ) : (
             <h2 
               onClick={() => setIsEditing(true)}
-              className="text-2xl font-semibold text-[#1A1A2E] font-syne outline-none cursor-pointer hover:text-[#0D47A1] transition-colors group flex items-center gap-3"
+              className="text-2xl font-bold text-[#1A1A2E] outline-none cursor-pointer hover:text-[#0D47A1] transition-colors group flex items-center gap-3"
+              style={{ fontFamily: "'Syne', sans-serif" }}
             >
               {editableTask.title || 'Task Details'}
               <Pencil size={14} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
@@ -204,7 +206,8 @@ const TaskDetailView = ({ task, onBack, onEdit, onUpdateTask, showToast, teamMem
               <button
                 disabled={isSaving}
                 onClick={handleSave}
-                className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D47A1] hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                className="px-6 py-3 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}
               >
                 {isSaving ? (
                   <FiLoader className="w-3.5 h-3.5 animate-spin" />
@@ -666,7 +669,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="text-left">
           <h2 className="text-4xl font-black tracking-tight text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Task Assignment</h2>
-          <p className="text-xs font-bold uppercase tracking-[4px] mt-2 text-[#9B9BAD]">Premium Recruitment Dashboard</p>
+
         </div>
         <div className="flex items-center gap-3">
           <button

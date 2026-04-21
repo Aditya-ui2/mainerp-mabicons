@@ -315,7 +315,7 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
               <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
                 <Activity size={20} strokeWidth={2} />
               </div>
-              <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Activity Timeline</h3>
+              <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Activity</h3>
             </div>
           </div>
           {/* Vertical Bridge Line */}
