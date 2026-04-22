@@ -2,30 +2,31 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Cropper from 'react-easy-crop';
 import {
-  FiUser,
-  FiMail,
-  FiPhone,
-  FiBriefcase,
-  FiEdit3,
-  FiSave,
-  FiX,
-  FiMapPin,
-  FiCalendar,
-  FiShield,
-  FiImage,
-  FiLock,
-  FiZap,
-  FiChevronRight,
-  FiFileText,
-  FiActivity,
-  FiSettings,
-  FiCheckCircle,
-  FiClock,
-  FiDownload,
-  FiUnlock,
-  FiCheck,
-  FiUploadCloud
-} from 'react-icons/fi';
+  User,
+  Mail,
+  Phone,
+  Briefcase,
+  Edit3,
+  Save,
+  X,
+  MapPin,
+  Calendar,
+  Shield,
+  Image as ImageIcon,
+  Lock,
+  Zap,
+  ChevronRight,
+  FileText,
+  Activity,
+  Settings,
+  CheckCircle,
+  Clock,
+  Download,
+  Unlock,
+  Check,
+  UploadCloud,
+  Pencil
+} from 'lucide-react';
 import { getMyProfile, updateMyProfile } from '../../../service/api';
 
 const MyProfileTab = () => {
@@ -198,17 +199,17 @@ const MyProfileTab = () => {
   };
 
   const tabs = [
-    { id: 'personal', label: 'Personal Info', icon: FiUser },
-    { id: 'documents', label: 'Documents', icon: FiFileText },
-    { id: 'settings', label: 'Settings', icon: FiSettings },
+    { id: 'personal', label: 'Personal Info', icon: User },
+    { id: 'documents', label: 'Documents', icon: FileText },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   const infoList = [
-    { icon: FiMail, label: 'Email Address', value: profile?.email, key: 'email' },
-    { icon: FiPhone, label: 'Phone Number', value: profile?.phone || 'Not set', key: 'phone' },
-    { icon: FiBriefcase, label: 'Department Name', value: profile?.department, key: 'department' },
-    { icon: FiShield, label: 'Company Designation', value: profile?.role, key: 'role' },
-    { icon: FiMapPin, label: 'Office Address', value: profile?.address || 'Not set', key: 'address' },
+    { icon: Mail, label: 'Email Address', value: profile?.email, key: 'email' },
+    { icon: Phone, label: 'Phone Number', value: profile?.phone || 'Not set', key: 'phone' },
+    { icon: Briefcase, label: 'Department Name', value: profile?.department, key: 'department' },
+    { icon: Shield, label: 'Company Designation', value: profile?.role, key: 'role' },
+    { icon: MapPin, label: 'Office Address', value: profile?.address || 'Not set', key: 'address' },
   ];
 
   const renderDocuments = () => {
@@ -260,7 +261,7 @@ const MyProfileTab = () => {
                 <div key={idx} className="bg-white p-5 rounded-[24px] border border-[#F4F3EF] flex items-center justify-between group hover:border-[#6B6B7E]/30 transition-all hover:shadow-md">
                   <div className="flex items-center gap-4 truncate">
                     <div className="w-10 h-10 bg-slate-50 text-[#6B6B7E] rounded-xl flex items-center justify-center shrink-0">
-                      <FiFileText size={18} />
+                      <FileText size={18} />
                     </div>
                     <div className="text-left truncate">
                       <p className="text-[12px] font-bold text-[#1A1A2E] truncate">{file.name}</p>
@@ -281,7 +282,7 @@ const MyProfileTab = () => {
                       {uploadingDoc === file.name ? (
                         <div className="w-3.5 h-3.5 border-2 border-[#6B6B7E]/30 border-t-[#6B6B7E] rounded-full animate-spin" />
                       ) : (
-                        <FiUploadCloud size={14} />
+                        <UploadCloud size={14} />
                       )}
                       {uploadingDoc === file.name ? 'Uploading...' : 'Upload'}
                     </button>
@@ -293,8 +294,8 @@ const MyProfileTab = () => {
         ))}
 
         <button className="w-full py-6 border-2 border-dashed border-[#F4F3EF] rounded-[28px] text-[#9B9BAD] text-[10px] font-bold uppercase tracking-[3px] hover:border-[#6B6B7E] hover:text-[#6B6B7E] hover:bg-slate-50 transition-all">
-          <FiUploadCloud size={18} className="mx-auto mb-2" />
-          Add More Evidence
+          <UploadCloud size={18} className="mx-auto mb-2" />
+          Add More documents
         </button>
       </motion.div>
     );
@@ -307,9 +308,18 @@ const MyProfileTab = () => {
     >
       <div className="bg-white p-8 rounded-[32px] border border-[#F4F3EF] shadow-sm space-y-8">
         <div className="space-y-4 text-left">
-          <h4 className="text-sm font-bold text-[#1A1A2E]">Security Protocol</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-[#1A1A2E]">Security Protocol</h4>
+            <button
+               onClick={() => showToast('Update security settings')}
+               className="w-8 h-8 flex items-center justify-center text-[#9B9BAD] hover:text-[#1B4DA0] transition-all group/edit"
+               title="Update Security"
+            >
+              <Pencil size={18} strokeWidth={1.5} className="transition-transform group-hover/edit:rotate-12" />
+            </button>
+          </div>
           <button className="flex items-center gap-3 px-6 py-3 bg-[#6B6B7E] text-white rounded-xl text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-slate-900/20 hover:scale-105 transition-transform active:scale-95">
-            <FiLock size={14} /> Reset Password
+            <Lock size={14} /> Reset Password
           </button>
         </div>
       </div>
@@ -328,10 +338,12 @@ const MyProfileTab = () => {
   return (
     <div className="min-h-screen bg-[#FDFDFD] pt-2 pb-8 px-4" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* 1. Top Header Section */}
-      <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6 mb-4">
-        <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>
-          My Profile
-        </h1>
+      <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+        <div className="text-left">
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>
+            My Profile
+          </h1>
+        </div>
 
         {/* Pill-style Tab Navigation */}
         <div className="bg-white p-1.5 rounded-[24px] border border-[#F4F3EF] shadow-sm flex items-center gap-1 overflow-x-auto no-scrollbar">
@@ -340,8 +352,8 @@ const MyProfileTab = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2.5 px-6 py-2.5 rounded-[20px] text-[11px] font-bold uppercase tracking-widest transition-all ${activeTab === tab.id
-                ? 'bg-[#6B6B7E] text-white shadow-lg shadow-slate-900/20 scale-105'
-                : 'text-[#9B9BAD] hover:text-[#6B6B7E] hover:bg-slate-50'
+                ? 'bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20 scale-105'
+                : 'text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-slate-50'
                 }`}
             >
               <tab.icon size={14} />
@@ -377,7 +389,7 @@ const MyProfileTab = () => {
               )}
               {editing && (
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <FiImage className="text-white" size={24} />
+                  <ImageIcon className="text-white" size={24} />
                 </div>
               )}
             </div>
@@ -385,7 +397,7 @@ const MyProfileTab = () => {
               onClick={() => editing && fileInputRef.current.click()}
               className={`absolute -bottom-2 -right-2 w-11 h-11 bg-[#6B6B7E] text-white rounded-2xl shadow-xl border-4 border-white flex items-center justify-center hover:scale-110 transition-transform ${!editing && 'opacity-0 scale-75 pointer-events-none'}`}
             >
-              <FiImage size={18} />
+              <ImageIcon size={18} />
             </button>
           </div>
 
@@ -437,19 +449,40 @@ const MyProfileTab = () => {
             >
               {activeTab === 'personal' && (
                 <div className="space-y-10">
-                  <div className="flex items-center justify-between relative">
-                    <div className="space-y-1">
+                  <div className="relative">
+                    <div className="text-left space-y-1">
                       <h3 className="text-2xl font-black text-[#1A1A2E]">Personal Information</h3>
                       <p className="text-sm text-[#9B9BAD]">Manage your identification and contact details</p>
                     </div>
-                    <button
-                      onClick={() => editing ? handleSave() : setEditing(true)}
-                      className={`flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-[12px] uppercase tracking-widest transition-all ${editing ? 'bg-[#6B6B7E] text-white shadow-xl shadow-slate-900/10' : 'bg-[#F4F3EF] text-[#6B6B7E] hover:bg-[#E8E7E2]'
-                        }`}
-                    >
-                      {editing ? (saving ? <FiSave className="animate-spin" /> : <FiSave size={16} />) : <FiEdit3 size={16} />}
-                      {editing ? (saving ? 'Saving...' : 'Confirm Changes') : 'Edit Profile'}
-                    </button>
+
+                    <div className="absolute top-0 right-0 flex items-center gap-3">
+                      {editing ? (
+                        <>
+                          <button
+                            onClick={() => setEditing(false)}
+                            className="px-5 py-2.5 rounded-xl text-[12px] font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-[#1B4DA0] text-white rounded-xl font-bold text-[12px] shadow-xl shadow-blue-500/10 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                          >
+                            {saving ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Check size={16} strokeWidth={2.5} />}
+                            {saving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setEditing(true)}
+                          className="w-8 h-8 flex items-center justify-center text-[#9B9BAD] hover:text-[#1B4DA0] transition-all group/edit"
+                          title="Edit Profile"
+                        >
+                          <Pencil size={18} strokeWidth={1.5} className="transition-transform group-hover/edit:rotate-12" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
@@ -475,13 +508,7 @@ const MyProfileTab = () => {
                     ))}
                   </div>
 
-                  {editing && (
-                    <div className="pt-8 flex justify-center border-t border-[#F4F3EF]">
-                      <button onClick={() => setEditing(false)} className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-[#9B9BAD] hover:text-rose-500 transition-colors">
-                        Discard Alterations
-                      </button>
-                    </div>
-                  )}
+
                 </div>
               )}
 
@@ -516,7 +543,7 @@ const MyProfileTab = () => {
                   onClick={() => setCropModalOpen(false)}
                   className="w-10 h-10 rounded-full bg-slate-50 text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
                 >
-                  <FiX size={20} />
+                  <X size={20} />
                 </button>
               </div>
 
@@ -582,7 +609,7 @@ const MyProfileTab = () => {
             className={`fixed bottom-8 right-8 px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[1000] ${toast.type === 'error' ? 'bg-rose-600 text-white' : 'bg-[#111827] text-white'
               }`}
           >
-            {toast.type === 'error' ? <FiX size={20} /> : <FiCheckCircle size={20} className="text-emerald-400" />}
+            {toast.type === 'error' ? <X size={20} /> : <CheckCircle size={20} className="text-emerald-400" />}
             <span className="text-sm font-bold tracking-wide">{toast.message}</span>
           </motion.div>
         )}
