@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
     FiFileText, FiUploadCloud, FiCheckCircle, FiCheck,
     FiClock, FiAlertCircle, FiLogOut, FiCreditCard, FiDollarSign,
-    FiBook, FiBriefcase, FiAward, FiShield, FiTrash2, FiX, FiPlus, FiChevronDown
+    FiBook, FiBriefcase, FiAward, FiShield, FiTrash2, FiX, FiPlus, FiChevronDown,
+    FiInfo, FiEye
 } from 'react-icons/fi';
 // Framer motion removed for static UI
 import { toast } from 'sonner';
+import { IndianRupee } from 'lucide-react';
 import { uploadCandidateKYC, getCandidateProfile, submitCandidateKYC, BASE_URL } from './service/api';
 import logo from '../../assets/images/mabicons logo blue.png';
 
@@ -72,9 +74,31 @@ const CandidateDashboard = () => {
                 </header>
 
                 <div className="flex-1 overflow-y-auto px-5 py-8 pb-32 space-y-8 custom-scrollbar">
-                    <div className="space-y-1">
+                    <div className="space-y-1 text-center">
                         <h1 className="text-xl font-bold text-slate-900">Welcome to Mabicons</h1>
-                        <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Upload the documents</p>
+                        <p className="text-[11px] text-slate-500 font-medium uppercase tracking-[0.2em]">Upload the documents</p>
+                    </div>
+
+                    {/* Upload Guidelines Card */}
+                    <div className="bg-white rounded-[24px] border border-slate-100 p-6 shadow-sm space-y-4">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-sm font-bold text-slate-800">Upload Guidelines</h2>
+                        </div>
+
+                        <div className="divide-y divide-slate-50">
+                            {[
+                                { icon: FiCheckCircle, text: "All documents are mandatory." },
+                                { icon: FiFileText, text: (<>Each document must be less than <span className="font-bold">1MB</span>.</>) },
+                                { icon: FiFileText, text: "Accepted formats: PDF, JPG, PNG" },
+                                { icon: FiEye, text: "Ensure documents are clear and readable." },
+                                { icon: FiShield, text: "All uploads are secure and confidential." },
+                            ].map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0 text-left">
+                                    <item.icon className="text-slate-400" size={14} />
+                                    <span className="text-[11px] font-medium text-slate-500">{item.text}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <DocumentsUpload 
@@ -122,7 +146,7 @@ const DocumentsUpload = ({ candidate, setCandidate, isSubmitting, setIsSubmittin
         {
             title: 'Financial Documents',
             documents: [
-                { type: 'payslips', label: 'Pay Slips', icon: FiDollarSign, required: false, description: 'Last 3 months pay slips' },
+                { type: 'payslips', label: 'Pay Slips', icon: IndianRupee, required: false, description: 'Last 3 months pay slips' },
                 { type: 'bank_statement', label: 'Bank Statement', icon: FiFileText, required: false, description: 'Last 3 months statement' },
             ]
         },
