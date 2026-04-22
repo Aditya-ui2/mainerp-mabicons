@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { getMyProfile, updateMyProfile } from '../../../service/api';
 
-const MyProfileTab = () => {
+const MyProfileTab = ({ onProfileUpdate }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -168,6 +168,7 @@ const MyProfileTab = () => {
 
       showToast('Profile modernized successfully');
       setEditing(false);
+      if (onProfileUpdate) onProfileUpdate();
       fetchProfile();
     } catch (err) {
       showToast(err.message || 'Failed to update profile', 'error');
@@ -345,19 +346,19 @@ const MyProfileTab = () => {
           </h1>
         </div>
 
-        {/* Pill-style Tab Navigation */}
-        <div className="bg-white p-1.5 rounded-[24px] border border-[#F4F3EF] shadow-sm flex items-center gap-1 overflow-x-auto no-scrollbar">
+        {/* Pill-style Tab Navigation - Fixed edge 'sticking' (chipakna) */}
+        <div className="bg-white p-1.5 rounded-[26px] border border-[#F4F3EF] shadow-sm flex items-center gap-1.5 overflow-x-auto no-scrollbar h-fit">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2.5 px-6 py-2.5 rounded-[20px] text-[11px] font-bold uppercase tracking-widest transition-all ${activeTab === tab.id
-                ? 'bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20 scale-105'
-                : 'text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-slate-50'
+              className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id
+                ? 'bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20 scale-[1.02]'
+                : 'text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFC]'
                 }`}
             >
-              <tab.icon size={14} />
-              <span className="whitespace-nowrap">{tab.label}</span>
+              <tab.icon size={13} strokeWidth={2.5} />
+              <span className="whitespace-nowrap leading-none mb-[1px]">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -556,15 +557,15 @@ const MyProfileTab = () => {
                   onCropChange={setCrop}
                   onCropComplete={onCropComplete}
                   onZoomChange={setZoom}
-                  cropShape="round"
-                  showGrid={false}
+                  cropShape="rect"
+                  showGrid={true}
                 />
               </div>
 
               <div className="p-10 space-y-8 bg-white mt-auto">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase tracking-[2px] text-[#6B6B7E]">Zoom Intensity</label>
+                    <label className="text-[10px] font-black uppercase tracking-[2px] text-[#1B4DA0]">Zoom</label>
                     <span className="text-[10px] font-black text-[#1A1A2E]">{Math.round(zoom * 100)}%</span>
                   </div>
                   <input
@@ -575,7 +576,7 @@ const MyProfileTab = () => {
                     step={0.1}
                     aria-labelledby="Zoom"
                     onChange={(e) => setZoom(parseFloat(e.target.value))}
-                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#6B6B7E]"
+                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#1B4DA0]"
                   />
                 </div>
 
@@ -588,9 +589,9 @@ const MyProfileTab = () => {
                   </button>
                   <button
                     onClick={finalizeCrop}
-                    className="flex-[2] py-4 rounded-2xl bg-[#6B6B7E] text-white text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-slate-900/10 hover:scale-[1.02] active:scale-95 transition-all"
+                    className="flex-[2] py-4 rounded-2xl bg-[#1B4DA0] text-white text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
                   >
-                    Finalize Crop
+                    Crop
                   </button>
                 </div>
               </div>

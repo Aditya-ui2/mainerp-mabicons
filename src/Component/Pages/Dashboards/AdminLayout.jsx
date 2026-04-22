@@ -266,8 +266,12 @@ const AdminLayout = ({
         {/* User Footer Profile */}
         <div className="p-3 border-t border-[#F4F3EF] dark:border-gray-800">
           <div className={`flex items-center gap-2.5 p-2 rounded-2xl transition-all ${sidebarCollapsed ? 'justify-center border-0' : 'bg-[#FAFAFA] dark:bg-gray-800/50 border border-[#F4F3EF] dark:border-gray-700'}`}>
-            <div className="h-9 w-9 rounded-xl bg-[#1B4DA0] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-lg shadow-blue-500/20">
-              {userInfo.name?.charAt(0) || 'U'}
+            <div className="h-9 w-9 rounded-2xl bg-[#1B4DA0] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-lg shadow-blue-500/20 overflow-hidden">
+              {userInfo.avatar ? (
+                <img src={userInfo.avatar} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                userInfo.name?.charAt(0) || 'U'
+              )}
             </div>
             {!sidebarCollapsed && (
               <div className="flex-1 min-w-0">

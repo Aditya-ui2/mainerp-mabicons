@@ -2219,29 +2219,31 @@ const JobOpeningsTab = ({ isDarkMode }) => {
           </div>
 
           {/* Client Filter */}
-          <div className="relative">
+          <div className="relative group">
             <select
               value={filterClient}
               onChange={(e) => setFilterClient(e.target.value)}
-              className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] hover:bg-[#EEF2FB] transition-all"
             >
               <option value="all">All Clients</option>
               {clients.map(c => <option key={c.id} value={c.displayName}>{c.displayName}</option>)}
             </select>
+            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
           </div>
 
           {/* Status Filter */}
-          <div className="relative">
+          <div className="relative group">
             <select
               value={filterPosition}
               onChange={(e) => setFilterPosition(e.target.value)}
-              className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px] hover:bg-[#EEF2FB] transition-all"
             >
               <option value="all">All Status</option>
               <option value="Open">Open</option>
               <option value="Urgent">Urgent</option>
               <option value="Hold">Hold</option>
             </select>
+            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
           </div>
         </div>
 

@@ -7,7 +7,9 @@ import {
   FileText, Upload, Eye, Video, Star, Zap
 } from "lucide-react";
 import { toast } from "sonner";
-import { PIPELINE_STAGES, AVATAR_COLORS, getAvatarColor } from "./mockData";
+import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+import { PIPELINE_STAGES, AVATAR_COLORS, getAvatarColor } from "./candidatesConfig";
 import {
   getAllCandidates,
   updateCandidateStatus,
@@ -23,7 +25,10 @@ import {
   syncSharePointAll,
   BASE_URL
 } from "../service/api";
-import { FiDatabase, FiRefreshCw } from 'react-icons/fi';
+import {
+  FiDatabase, FiRefreshCw, FiUser, FiMail, FiBriefcase, FiCalendar, FiClock,
+  FiVideo, FiCopy, FiCheckCircle, FiX, FiRefreshCcw
+} from 'react-icons/fi';
 
 const STAGE_COLORS = {
   Screening: {
@@ -49,12 +54,6 @@ const STAGE_COLORS = {
     border: "border-purple-200",
     dot: "bg-purple-400",
     count: "bg-purple-100 text-purple-600",
-  },
-  Hired: {
-    bg: "bg-green-50",
-    border: "border-green-200",
-    dot: "bg-green-400",
-    count: "bg-green-100 text-green-600",
   },
 };
 
@@ -90,7 +89,23 @@ export default function CandidatesPage({ setActiveTab }) {
 
   // Schedule Interview Modal state
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({ candidateId: '', candidateName: '', candidateEmail: '', positionTitle: '', clientName: '', date: '', time: '', duration: '60', meetingType: 'Video', meetingLink: '', interviewerName: '', interviewerRole: '' });
+  const [scheduleForm, setScheduleForm] = useState({
+    candidateId: '',
+    candidateName: '',
+    candidateEmail: '',
+    positionTitle: '',
+    clientName: '',
+    date: '',
+    time: '',
+    duration: '60 mins',
+    mode: 'Online',
+    subMode: 'with-client',
+    meetingLink: '',
+    locationLink: '',
+    round: 'Technical Round',
+    interviewerName: '',
+    interviewerRole: ''
+  });
   const [schedulingLoading, setSchedulingLoading] = useState(false);
   const [showCvPreview, setShowCvPreview] = useState(false);
 
@@ -123,6 +138,9 @@ export default function CandidatesPage({ setActiveTab }) {
     source: "",
     resume: null
   });
+
+  const [availableInterviewers, setAvailableInterviewers] = useState([]);
+  const [showInterviewerSuggestions, setShowInterviewerSuggestions] = useState(false);
 
   useEffect(() => {
     fetchCandidates();
@@ -177,6 +195,14 @@ export default function CandidatesPage({ setActiveTab }) {
       }
     } catch (error) {
       console.error('Failed to fetch clients:', error);
+    }
+
+    // 3. Fetch Recruitment Team for Interviewer Suggestions
+    try {
+      const teamRes = await axios.get(`${BASE_URL}/employees/department/Recruitment`);
+      setAvailableInterviewers(teamRes.data || []);
+    } catch (err) {
+      console.error('Failed to fetch recruitment team:', err);
     }
   };
 
@@ -254,7 +280,7 @@ export default function CandidatesPage({ setActiveTab }) {
   };
 
   const mapBackendToFrontendStage = (stage, status) => {
-    if (stage === 'Joined' || status === 'Selected') return "Hired";
+    if (stage === 'Joined' || status === 'Selected' || stage === 'Offer Sent' || status === 'Offer') return "Offer";
     if (stage === 'Offer Sent' || status === 'Offer') return "Offer";
     if (status === 'Shortlisted') return "Shortlisted";
     if (['Technical Round', 'HR Round', 'Client Interview'].includes(stage) || status === 'Interview') return "Interview";
@@ -263,7 +289,7 @@ export default function CandidatesPage({ setActiveTab }) {
 
   const mapFrontendToBackendStage = (uiStage) => {
     switch (uiStage) {
-      case "Hired": return { stage: "Joined", status: "Selected" };
+      case "Offer": return { stage: "Offer Sent", status: "Shortlisted" };
       case "Offer": return { stage: "Offer Sent", status: "Shortlisted" };
       case "Shortlisted": return { stage: "Technical Round", status: "Shortlisted" };
       case "Interview": return { stage: "Technical Round", status: "Interview" };
@@ -335,7 +361,16 @@ export default function CandidatesPage({ setActiveTab }) {
           candidateEmail: updatedC.email || '',
           positionTitle: updatedC.role || '',
           clientName: updatedC.clientName || '',
-          date: '', time: '', meetingType: 'Video', meetingLink: ''
+          round: 'Technical Round',
+          duration: '60 mins',
+          mode: 'Online',
+          subMode: 'with-client',
+          date: '',
+          time: '',
+          meetingLink: '',
+          locationLink: '',
+          interviewerName: '',
+          interviewerRole: ''
         });
         setIsScheduleOpen(true);
       }
@@ -343,12 +378,6 @@ export default function CandidatesPage({ setActiveTab }) {
       // Offer stage transition - just update status, no popup as requested
       if (stage === 'Offer') {
         // No action needed here, updateCandidateStatus already called above
-      }
-
-      // Open Credential Modal when moved to Hired
-      if (stage === 'Hired') {
-        setCredsCandidate(candidate);
-        setIsCredsModalOpen(true);
       }
     } catch (error) {
       toast.error("Failed to update candidate stage");
@@ -734,11 +763,11 @@ Mabicons Recruitment Team`);
         </div>
 
         {/* Global Registry Date Filter - Integrated Look */}
-        <div className="relative">
+        <div className="relative group">
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px] hover:bg-[#EEF2FB] transition-all"
           >
             <option value="all">All Date</option>
             <option value="today">Today</option>
@@ -747,6 +776,7 @@ Mabicons Recruitment Team`);
             <option value="quarter">This Quarter</option>
             <option value="custom">Custom Range</option>
           </select>
+          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
         </div>
 
         {dateFilter === 'custom' && (
@@ -759,36 +789,38 @@ Mabicons Recruitment Team`);
           </div>
         )}
 
-        <div className="relative">
+        <div className="relative group">
           <select
             value={targetRoleFilter}
             onChange={(e) => setTargetRoleFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[170px] hover:bg-[#EEF2FB] transition-all"
           >
             <option value="">All Openings</option>
             {positions.map(p => (
               <option key={p.id} value={p.id}>{p.title} {p.clientName ? `(${p.clientName})` : ''}</option>
             ))}
           </select>
+          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
         </div>
 
-        <div className="relative">
+        <div className="relative group">
           <select
             value={selectedClientFilter}
             onChange={(e) => setSelectedClientFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] hover:bg-[#EEF2FB] transition-all"
           >
             <option value="All Clients">All Clients</option>
             {activeClientNames.map(name => (
               <option key={name} value={name}>{name}</option>
             ))}
           </select>
+          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
         </div>
       </div>
 
       {/* Kanban / Table Content Area */}
       {viewMode === "kanban" ? (
-        <div className="grid grid-cols-5 gap-2 min-h-[500px]">
+        <div className="grid grid-cols-4 gap-4 min-h-[500px]">
           {PIPELINE_STAGES.map((stage) => {
             const stageCandidates = filteredCandidates.filter((c) => c.stage === stage);
             const colors = STAGE_COLORS[stage] || STAGE_COLORS.Applied;
@@ -1167,30 +1199,30 @@ Mabicons Recruitment Team`);
             onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
           />
           <div
-             className="fixed right-0 top-0 h-full w-full sm:w-[698px] bg-white z-[99999] overflow-y-auto shadow-[-16px_0_64px_rgba(0,0,0,0.15)] flex flex-col transition-transform duration-300 transform translate-x-0"
-           >
-             {/* Sticky Header */}
-             <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
-               <div className="flex-1">
-                 <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
-                   {editMode ? "Refine Profile" : "Candidate Dossier"}
-                 </h2>
-               </div>
-               <div className="flex items-center gap-3">
-                 <button
-                   onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}
-                   className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] shadow-sm"
-                 >
-                   <Edit2 size={20} />
-                 </button>
-                 <button
-                   onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
-                   className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm"
-                 >
-                   <X size={24} />
-                 </button>
-               </div>
-             </div>
+            className="fixed right-0 top-0 h-full w-full sm:w-[698px] bg-white z-[99999] overflow-y-auto shadow-[-16px_0_64px_rgba(0,0,0,0.15)] flex flex-col transition-transform duration-300 transform translate-x-0"
+          >
+            {/* Sticky Header */}
+            <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  {editMode ? "Refine Profile" : "Candidate Dossier"}
+                </h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}
+                  className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] shadow-sm"
+                >
+                  <Edit2 size={20} />
+                </button>
+                <button
+                  onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
+                  className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
 
             <div className="flex-1 p-8 space-y-10">
               {editMode && editCandidate ? (
@@ -1305,40 +1337,40 @@ Mabicons Recruitment Team`);
                 </div>
               ) : (
                 <>
-                <div className="space-y-10">
-                  {/* Hero Profile Section */}
-                  <div className="flex flex-col items-center justify-center text-center py-4">
-                    <div className="relative group">
-                      <div className={`w-32 h-32 rounded-[40px] flex items-center justify-center text-white text-4xl font-black shadow-2xl transform transition-transform duration-500 border-4 border-white ${getAvatarColor(selectedCandidate.name, selectedCandidate.avatar)}`}>
-                        {selectedCandidate.avatar}
-                      </div>
-                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-[#E8E7E2] shadow-lg flex items-center justify-center text-emerald-500">
-                        <CheckSquare size={20} fill="currentColor" className="text-white" />
-                        <div className="absolute inset-0 bg-emerald-500 rounded-2xl flex items-center justify-center">
-                          <CheckSquare size={18} className="text-white" />
+                  <div className="space-y-10">
+                    {/* Hero Profile Section */}
+                    <div className="flex flex-col items-center justify-center text-center py-4">
+                      <div className="relative group">
+                        <div className={`w-32 h-32 rounded-[40px] flex items-center justify-center text-white text-4xl font-black shadow-2xl transform transition-transform duration-500 border-4 border-white ${getAvatarColor(selectedCandidate.name, selectedCandidate.avatar)}`}>
+                          {selectedCandidate.avatar}
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-[#E8E7E2] shadow-lg flex items-center justify-center text-emerald-500">
+                          <CheckSquare size={20} fill="currentColor" className="text-white" />
+                          <div className="absolute inset-0 bg-emerald-500 rounded-2xl flex items-center justify-center">
+                            <CheckSquare size={18} className="text-white" />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="mt-8 space-y-1 w-full">
-                      <h3 
-                        onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}
-                        className="text-3xl font-black text-[#1A1A2E] tracking-tight cursor-pointer hover:text-[#1B4DA0] transition-colors group flex items-center justify-center gap-3"
-                      >
-                        {selectedCandidate.name}
-                        <Pencil size={14} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
-                      </h3>
-                      <div className="flex items-center justify-center gap-3 mt-1.5 overflow-hidden">
-                        <span className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px]">{selectedCandidate.role}</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
-                        <span className={`text-[11px] font-black uppercase tracking-[4px] ${STAGE_COLORS[selectedCandidate.stage]?.count?.split(' ')[1] || 'text-slate-600'}`}>
-                          {selectedCandidate.stage}
-                        </span>
+                      <div className="mt-8 space-y-1 w-full">
+                        <h3
+                          onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}
+                          className="text-3xl font-black text-[#1A1A2E] tracking-tight cursor-pointer hover:text-[#1B4DA0] transition-colors group flex items-center justify-center gap-3"
+                        >
+                          {selectedCandidate.name}
+                          <Pencil size={14} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                        </h3>
+                        <div className="flex items-center justify-center gap-3 mt-1.5 overflow-hidden">
+                          <span className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px]">{selectedCandidate.role}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                          <span className={`text-[11px] font-black uppercase tracking-[4px] ${STAGE_COLORS[selectedCandidate.stage]?.count?.split(' ')[1] || 'text-slate-600'}`}>
+                            {selectedCandidate.stage}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex gap-3 mt-8">
-                       {selectedCandidate.cvUrl && (
+                      <div className="flex gap-3 mt-8">
+                        {selectedCandidate.cvUrl && (
                           <button
                             onClick={() => {
                               const url = selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`;
@@ -1348,8 +1380,8 @@ Mabicons Recruitment Team`);
                           >
                             <Eye size={16} /> View Resume
                           </button>
-                       )}
-                       {(selectedCandidate.stage === 'Selected' || selectedCandidate.stage === 'Hired' || selectedCandidate.stage === 'Joined') && (
+                        )}
+                        {(selectedCandidate.stage === 'Selected' || selectedCandidate.stage === 'Hired' || selectedCandidate.stage === 'Joined') && (
                           <button
                             onClick={() => {
                               setCredsCandidate({
@@ -1363,108 +1395,108 @@ Mabicons Recruitment Team`);
                           >
                             <Zap size={16} /> Generate Access
                           </button>
-                       )}
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Information Grid Container */}
-                  <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-12 space-y-12 shadow-sm">
-                    {/* Professional Info Column */}
-                    <div className="grid grid-cols-2 gap-x-16 gap-y-10">
-                       <div className="space-y-2 cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                    {/* Information Grid Container */}
+                    <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-12 space-y-12 shadow-sm">
+                      {/* Professional Info Column */}
+                      <div className="grid grid-cols-2 gap-x-16 gap-y-10">
+                        <div className="space-y-2 cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block text-left">Location</span>
                             <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
                           </div>
                           <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2 text-left">
-                             <MapPin size={16} className="text-[#1B4DA0] shrink-0" /> {selectedCandidate.location || "Not specified"}
+                            <MapPin size={16} className="text-[#1B4DA0] shrink-0" /> {selectedCandidate.location || "Not specified"}
                           </p>
-                       </div>
-                       <div className="space-y-2 cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                        </div>
+                        <div className="space-y-2 cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
                           <div className="flex items-center justify-between">
-                             <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block text-left">Experience</span>
-                             <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block text-left">Experience</span>
+                            <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
                           </div>
                           <p className="text-base font-black text-[#1A1A2E] text-left">{selectedCandidate.experience || "0"} Years Total</p>
-                       </div>
-                       <div className="space-y-2 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                        </div>
+                        <div className="space-y-2 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Notice Period</span>
                             <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
                           </div>
                           <p className="text-base font-black text-[#1A1A2E]">{selectedCandidate.noticePeriod || "N/A"}</p>
-                       </div>
-                       <div className="space-y-2 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                        </div>
+                        <div className="space-y-2 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Source</span>
                             <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
                           </div>
                           <p className="text-base font-black text-[#1A1A2E]">{selectedCandidate.source || "Direct"}</p>
-                       </div>
-                    </div>
+                        </div>
+                      </div>
 
-                    <div className="h-px bg-[#F4F3EF]" />
+                      <div className="h-px bg-[#F4F3EF]" />
 
-                    {/* Financial Context */}
-                    <div className="grid grid-cols-2 gap-10">
-                       <div className="bg-white p-6 rounded-[32px] border border-[#F4F3EF] shadow-sm flex flex-col items-center cursor-pointer group hover:border-[#1B4DA0]/30 transition-all" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                      {/* Financial Context */}
+                      <div className="grid grid-cols-2 gap-10">
+                        <div className="bg-white p-6 rounded-[32px] border border-[#F4F3EF] shadow-sm flex flex-col items-center cursor-pointer group hover:border-[#1B4DA0]/30 transition-all" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Current CTC</span>
                             <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
                           </div>
                           <p className="text-xl font-black text-[#1A1A2E]">{selectedCandidate.currentSalary || "N/A"}</p>
-                       </div>
-                       <div className="bg-white p-6 rounded-[32px] border border-[#F4F3EF] shadow-sm ring-4 ring-[#1B4DA0]/5 flex flex-col items-center cursor-pointer group hover:ring-[#1B4DA0]/10 transition-all" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                        </div>
+                        <div className="bg-white p-6 rounded-[32px] border border-[#F4F3EF] shadow-sm ring-4 ring-[#1B4DA0]/5 flex flex-col items-center cursor-pointer group hover:ring-[#1B4DA0]/10 transition-all" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px] block">Expected CTC</span>
                             <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#1B4DA0]" />
                           </div>
                           <p className="text-xl font-black text-[#1B4DA0]">{selectedCandidate.expectedSalary || "N/A"}</p>
-                       </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Skills Section */}
-                  <div className="px-4 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
-                    <div className="flex items-center gap-3 mb-6">
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Candidate Skill-set</span>
-                      <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                       {Array.isArray(selectedCandidate.skills) ? selectedCandidate.skills.map(s => (
+                    {/* Skills Section */}
+                    <div className="px-4 text-left cursor-pointer group" onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}>
+                      <div className="flex items-center gap-3 mb-6">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Candidate Skill-set</span>
+                        <Pencil size={10} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.isArray(selectedCandidate.skills) ? selectedCandidate.skills.map(s => (
                           <span key={s} className="px-5 py-2.5 bg-white border border-[#F4F3EF] rounded-xl text-xs font-bold text-[#1A1A2E] hover:border-[#1B4DA0] transition-colors cursor-pointer">
-                             {s}
+                            {s}
                           </span>
-                       )) : (selectedCandidate.skills?.split(',').map(s => (
+                        )) : (selectedCandidate.skills?.split(',').map(s => (
                           <span key={s} className="px-5 py-2.5 bg-white border border-[#F4F3EF] rounded-xl text-xs font-bold text-[#1A1A2E] hover:border-[#1B4DA0] transition-colors cursor-pointer">
-                             {s.trim()}
+                            {s.trim()}
                           </span>
-                       )) || <span className="text-[#9B9BAD] font-bold text-sm italic">No skills listed</span>)}
+                        )) || <span className="text-[#9B9BAD] font-bold text-sm italic">No skills listed</span>)}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Communication Footnote */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-8 bg-[#FAFAF9] rounded-[32px] border border-[#F4F3EF] gap-6">
-                     <div className="flex items-center gap-4">
+                    {/* Communication Footnote */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-8 bg-[#FAFAF9] rounded-[32px] border border-[#F4F3EF] gap-6">
+                      <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
-                           <Mail size={18} />
+                          <Mail size={18} />
                         </div>
                         <div className="text-left">
-                           <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Identity</p>
-                           <p className="text-sm font-black text-[#1A1A2E]">{selectedCandidate.email}</p>
+                          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Identity</p>
+                          <p className="text-sm font-black text-[#1A1A2E]">{selectedCandidate.email}</p>
                         </div>
-                     </div>
-                     <div className="flex items-center gap-4">
+                      </div>
+                      <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
-                           <Phone size={18} />
+                          <Phone size={18} />
                         </div>
                         <div className="text-left">
-                           <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Contact Verified</p>
-                           <p className="text-sm font-black text-[#1A1A2E]">{selectedCandidate.phone}</p>
+                          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Contact Verified</p>
+                          <p className="text-sm font-black text-[#1A1A2E]">{selectedCandidate.phone}</p>
                         </div>
-                     </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
                   {/* Resume / CV Preview */}
                   {selectedCandidate.cvUrl && (
@@ -1865,28 +1897,20 @@ Mabicons Recruitment Team`);
       )}
 
       {/* Schedule Interview Dialog */}
-      {isScheduleOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
+      {isScheduleOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl transition-all duration-300"
           onClick={() => setIsScheduleOpen(false)}>
-          <style>{`
-            .schedule-scrollbar::-webkit-scrollbar { width: 6px; }
-            .schedule-scrollbar::-webkit-scrollbar-track { background: transparent; }
-            .schedule-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
-            .schedule-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-          `}</style>
           <div className="bg-white w-full max-w-xl rounded-[40px] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500"
             onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
               <div>
-                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Schedule Interview</h3>
-                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
-                  {scheduleForm.candidateName} • {scheduleForm.positionTitle}
-                </p>
+                <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Schedule New Interview</h3>
+
               </div>
               <button onClick={() => setIsScheduleOpen(false)}
                 className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
-                <X size={20} />
+                <FiX size={20} />
               </button>
             </div>
 
@@ -1894,6 +1918,7 @@ Mabicons Recruitment Team`);
               e.preventDefault();
               setSchedulingLoading(true);
               try {
+                const durationValue = parseInt(scheduleForm.duration) || 60;
                 await scheduleNewInterview({
                   candidateId: scheduleForm.candidateId,
                   candidateName: scheduleForm.candidateName,
@@ -1902,103 +1927,259 @@ Mabicons Recruitment Team`);
                   client: scheduleForm.clientName,
                   date: scheduleForm.date,
                   time: scheduleForm.time,
-                  duration: scheduleForm.duration + ' mins',
-                  type: scheduleForm.meetingType,
+
+
+                  duration: durationValue + ' mins',
+                  mode: scheduleForm.mode,
+                  subMode: scheduleForm.subMode,
                   meetLink: scheduleForm.meetingLink,
+                  locationLink: scheduleForm.locationLink,
                   round: scheduleForm.round,
                   interviewer: scheduleForm.interviewerName,
-                  interviewerRole: scheduleForm.interviewerRole
+                  interviewerRole: scheduleForm.interviewerRole,
+                  positionTitle: scheduleForm.positionTitle,
+                  clientName: scheduleForm.clientName
                 });
                 toast.success('Interview scheduled successfully!');
                 setIsScheduleOpen(false);
+                fetchCandidates();
               } catch (err) {
                 toast.error(err.message || 'Failed to schedule interview');
               } finally {
                 setSchedulingLoading(false);
               }
-            }} className="p-10 max-h-[75vh] overflow-y-auto schedule-scrollbar space-y-7">
+            }} className="p-10 max-h-[75vh] overflow-y-auto dialog-scrollbar space-y-8 text-left">
 
-              {/* Candidate Info (read-only) */}
-              <div>
-                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
-                  <User size={14} /> Candidate
-                </h4>
-                <div className="bg-[#F4F3EF] rounded-2xl px-6 py-4">
-                  <p className="text-sm font-bold text-[#1A1A2E]">{scheduleForm.candidateName}</p>
-                  <p className="text-[10px] text-[#9B9BAD] font-bold mt-0.5">{scheduleForm.candidateEmail} • {scheduleForm.positionTitle}</p>
+              {/* Section: Candidate Details */}
+              <div className="space-y-6">
+
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Name *</label>
+                  <input className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none" value={scheduleForm.candidateName} readOnly />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Candidate Email</label>
+                  <input type="email" value={scheduleForm.candidateEmail}
+                    onChange={(e) => setScheduleForm(prev => ({ ...prev, candidateEmail: e.target.value }))}
+                    placeholder="Enter email"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  />
                 </div>
               </div>
 
-              {/* Interview Details */}
-              <div>
-                <h4 className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[2px] flex items-center gap-2 mb-5">
-                  <Calendar size={14} /> Interview Details
-                </h4>
-              </div>
+              {/* Section: Position Details */}
+              <div className="space-y-6">
 
-              <div className="space-y-1.5">
-              </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Date *</label>
-                <input type="date" value={scheduleForm.date} onChange={(e) => setScheduleForm({ ...scheduleForm, date: e.target.value })}
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]" required />
-              </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
+                  <input type="text" value={scheduleForm.positionTitle}
+                    onChange={(e) => setScheduleForm(prev => ({ ...prev, positionTitle: e.target.value }))}
+                    placeholder="e.g. Senior Software Engineer"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Time *</label>
-                <input type="time" value={scheduleForm.time} onChange={(e) => setScheduleForm({ ...scheduleForm, time: e.target.value })}
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]" required />
-              </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
+                  <input type="text" value={scheduleForm.clientName}
+                    onChange={(e) => setScheduleForm(prev => ({ ...prev, clientName: e.target.value }))}
+                    placeholder="e.g. TechCorp India"
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interview Type</label>
-                <div className="relative">
-                  <select value={scheduleForm.meetingType} onChange={(e) => setScheduleForm({ ...scheduleForm, meetingType: e.target.value })}
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10">
-                    <option value="Video">Video Call</option>
-                    <option value="In-Person">In-Person</option>
-                    <option value="Phone">Phone Call</option>
-                  </select>
-                  <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
+                  <div className="relative group">
+                    <select value={scheduleForm.round} onChange={(e) => setScheduleForm(prev => ({ ...prev, round: e.target.value }))}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
+                      <option value="Phone Screening">Phone Screening</option>
+                      <option value="Technical Round">Technical Round</option>
+                      <option value="HR Round">HR Round</option>
+                      <option value="Client Interview">Client Interview</option>
+                      <option value="Final Round">Final Round</option>
+                    </select>
+                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Google Meet Link</label>
-                <div className="flex gap-2">
-                  <input value={scheduleForm.meetingLink} onChange={(e) => setScheduleForm({ ...scheduleForm, meetingLink: e.target.value })}
-                    className="flex-1 bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                    placeholder="https://meet.google.com/xxx-xxxx-xxx" />
-                  <button type="button"
-                    onClick={() => setScheduleForm({ ...scheduleForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}` })}
-                    className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)]"
-                    style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
-                    Generate
-                  </button>
+              {/* Section: Interview Details */}
+              <div className="space-y-6 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Date *</label>
+                  <input type="date" value={scheduleForm.date} onChange={(e) => setScheduleForm(prev => ({ ...prev, date: e.target.value }))}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" required />
                 </div>
-              </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Time *</label>
+                  <input type="time" value={scheduleForm.time} onChange={(e) => setScheduleForm(prev => ({ ...prev, time: e.target.value }))}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" required />
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name</label>
-                <input value={scheduleForm.interviewerName} onChange={(e) => setScheduleForm({ ...scheduleForm, interviewerName: e.target.value })}
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                  placeholder="Assign interviewer" />
-              </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] pl-1">Interview Mode</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setScheduleForm({ ...scheduleForm, mode: 'Online', subMode: 'with-client' })}
+                      className={`py-4 rounded-2xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-2 ${scheduleForm.mode === 'Online' ? 'bg-[#EEF2FB] border-[#1B4DA0] text-[#1B4DA0] shadow-sm' : 'bg-[#FAFAFA] border-transparent text-gray-400 hover:border-gray-200'}`}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${scheduleForm.mode === 'Online' ? 'bg-[#1B4DA0]' : 'bg-gray-300'}`} />
+                      Online
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setScheduleForm({ ...scheduleForm, mode: 'Offline', subMode: 'at-client' })}
+                      className={`py-4 rounded-2xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-2 ${scheduleForm.mode === 'Offline' ? 'bg-[#EEF2FB] border-[#1B4DA0] text-[#1B4DA0] shadow-sm' : 'bg-[#FAFAFA] border-transparent text-gray-400 hover:border-gray-200'}`}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${scheduleForm.mode === 'Offline' ? 'bg-[#1B4DA0]' : 'bg-gray-300'}`} />
+                      Offline
+                    </button>
+                  </div>
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
-                <input value={scheduleForm.interviewerRole} onChange={(e) => setScheduleForm({ ...scheduleForm, interviewerRole: e.target.value })}
-                  className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                  placeholder="e.g., Tech Lead" />
+                <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] pl-1">
+                    {scheduleForm.mode === 'Online' ? 'Online Setup' : 'Offline Venue'}
+                  </label>
+                  <div className="relative group">
+                    <select
+                      value={scheduleForm.subMode}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setScheduleForm({
+                          ...scheduleForm,
+                          subMode: val,
+                          locationLink: val === 'at-mabicons' ? 'https://maps.app.goo.gl/LrNdJKxqwQb35D88A' : ''
+                        });
+                      }}
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12"
+                    >
+                      {scheduleForm.mode === 'Online' ? (
+                        <>
+                          <option value="with-client">Online (candidate with client)</option>
+                          <option value="without-client">Online (candidate without client)</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="at-client">Offline (at client location)</option>
+                          <option value="at-mabicons">Offline (at Mabicons)</option>
+                        </>
+                      )}
+                    </select>
+                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {scheduleForm.mode === 'Online' && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-1.5 overflow-hidden text-left">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] flex items-center gap-2 pl-1">
+                        <FiVideo size={12} className="text-[#1B4DA0]" /> Google Meet Link
+                      </label>
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <input value={scheduleForm.meetingLink} onChange={(e) => setScheduleForm({ ...scheduleForm, meetingLink: e.target.value })}
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50 font-bold"
+                            placeholder="https://meet.google.com/xxx-xxxx-xxx" />
+                          {scheduleForm.meetingLink && (
+                            <button type="button" onClick={() => { navigator.clipboard.writeText(scheduleForm.meetingLink); toast.success('Copied to clipboard'); }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100">
+                              <FiCopy className="w-4 h-4 text-[#9B9BAD]" />
+                            </button>
+                          )}
+                        </div>
+                        <button type="button"
+                          onClick={() => setScheduleForm({ ...scheduleForm, meetingLink: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}` })}
+                          className="flex items-center gap-2 px-5 py-4 text-white text-sm font-bold rounded-2xl shadow-[0_10px_25px_rgba(27,77,160,0.3)] shadow-[#1B4DA0]/20 active:scale-95 transition-all outline-none"
+                          style={{ background: 'linear-gradient(135deg, #1B4DA0, #3FA9F5)' }}>
+                          Generate
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {scheduleForm.mode === 'Offline' && scheduleForm.subMode === 'at-client' && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-1.5 overflow-hidden text-left">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] flex items-center gap-2 pl-1">
+                        <MapPin size={12} className="text-emerald-500" /> Location Link (Google Maps)
+                      </label>
+                      <input value={scheduleForm.locationLink} onChange={(e) => setScheduleForm({ ...scheduleForm, locationLink: e.target.value })}
+                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
+                        placeholder="https://maps.google.com/..." />
+                    </motion.div>
+                  )}
+
+                  {scheduleForm.mode === 'Offline' && scheduleForm.subMode === 'at-mabicons' && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-1.5 overflow-hidden text-left">
+                      <a href="https://maps.app.goo.gl/LrNdJKxqwQb35D88A" target="_blank" rel="noopener noreferrer"
+                        className="block p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3 hover:bg-emerald-100/50 transition-all cursor-pointer group">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                          <MapPin size={16} />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Office Location Attached</p>
+                          <p className="text-[11px] font-bold text-[#1A1A2E] group-hover:text-emerald-700 transition-colors">Vasant Kunj, New Delhi</p>
+                        </div>
+                      </a>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="space-y-1.5 relative text-left">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Name *</label>
+                  <input value={scheduleForm.interviewerName}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setScheduleForm({ ...scheduleForm, interviewerName: val });
+                      setShowInterviewerSuggestions(val.length > 0);
+                    }}
+                    onFocus={() => setShowInterviewerSuggestions(scheduleForm.interviewerName.length > 0)}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                    placeholder="Assign member" />
+
+                  <AnimatePresence>
+                    {showInterviewerSuggestions && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-30 w-full mt-2 bg-white border border-[#F4F3EF] rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        {availableInterviewers
+                          .filter(hr => (hr.name || '').toLowerCase().includes((scheduleForm.interviewerName || '').toLowerCase().trim()))
+                          .map((hr) => (
+                            <button key={hr.id} type="button" className="w-full text-left px-4 py-3 flex flex-col transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                              onClick={() => {
+                                setScheduleForm(prev => ({
+                                  ...prev,
+                                  interviewerName: hr.name,
+                                  interviewerRole: hr.role || 'HR recruitment'
+                                }));
+                                setShowInterviewerSuggestions(false);
+                              }}>
+                              <span className="font-semibold text-sm text-[#1A1A2E]">{hr.name}</span>
+                              <span className="text-[10px] text-[#9B9BAD] font-bold uppercase tracking-wider">{hr.role} • {hr.department}</span>
+                            </button>
+                          ))}
+                        {availableInterviewers.filter(hr => (hr.name || '').toLowerCase().includes((scheduleForm.interviewerName || '').toLowerCase().trim())).length === 0 && (
+                          <div className="p-4 text-center text-xs text-[#9B9BAD] font-bold tracking-widest uppercase py-6">No members found</div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Interviewer Role</label>
+                  <input value={scheduleForm.interviewerRole} onChange={(e) => setScheduleForm({ ...scheduleForm, interviewerRole: e.target.value })}
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                    placeholder="e.g. Tech Lead" />
+                </div>
               </div>
 
               {/* Footer Buttons */}
-              <div className="pt-4 flex gap-4">
+              <div className="pt-8 flex gap-4">
                 <button type="button" onClick={() => setIsScheduleOpen(false)}
                   className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
                   Cancel
@@ -2006,23 +2187,18 @@ Mabicons Recruitment Team`);
                 <button type="submit" disabled={schedulingLoading}
                   className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                   {schedulingLoading ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Scheduling...
-                    </span>
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      <Calendar size={18} /> Schedule Interview
+                      <FiCalendar size={18} /> Schedule Interview
                     </>
                   )}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Offer Details Modal */}

@@ -240,25 +240,26 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                   </div>
 
                   {/* Drawer Content */}
-                  <div className="flex-1 p-10 pt-6 space-y-6 overflow-y-auto pb-10 custom-scrollbar text-left scroll-smooth">
+                  <div className="flex-1 p-10 pt-6 space-y-10 overflow-y-auto pb-10 custom-scrollbar text-left scroll-smooth">
                     {/* Full Description */}
-                    <div className="space-y-4 text-left">
-                      <div className="flex items-center gap-3 mb-2 justify-start text-left">
-                        <div className="w-8 h-8 rounded-lg bg-[#0D47A1]/5 flex items-center justify-center text-[#0D47A1]">
+                    <div className="flex flex-col gap-6 text-left">
+                      <div className="flex items-center gap-3 px-2 justify-start text-left">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0]">
                           <FileText size={16} />
                         </div>
-                        <h4 className="text-sm font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest text-left">DESCRIPTION</h4>
+                        <h4 className="text-[10px] font-black text-[#9B9BAD] dark:text-slate-400 uppercase tracking-[3px] text-left">DESCRIPTION</h4>
                       </div>
-                      <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm text-left">
+                      
+                      <div className="bg-[#FAFAFA] dark:bg-slate-900 p-10 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm text-left min-h-[300px] transition-all duration-300">
                         {isEditingDetail ? (
                           <textarea
                             value={detailEditForm.content}
                             onChange={(e) => setDetailEditForm({ ...detailEditForm, content: e.target.value })}
-                            className="w-full min-h-[300px] text-[#475569] dark:text-slate-300 text-[15px] leading-[1.8] font-medium bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
+                            className="w-full min-h-[300px] text-[#475569] dark:text-slate-300 text-[15px] underline-offset-4 leading-[1.8] font-medium bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
                             placeholder="Type your findings here..."
                           />
                         ) : (
-                          <p className="text-[#475569] dark:text-slate-300 text-[13.5px] leading-[1.6] font-medium whitespace-pre-wrap text-left opacity-90">
+                          <p className="text-[#475569] dark:text-slate-300 text-[14.5px] leading-[1.8] font-medium whitespace-pre-wrap text-left opacity-90">
                             {selectedNote.content}
                           </p>
                         )}

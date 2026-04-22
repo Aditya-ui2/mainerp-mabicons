@@ -1345,7 +1345,7 @@ const RecruitmentHeadDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [loading, setLoading] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
-  const [userInfo, setUserInfo] = useState({ name: '', role: '' });
+  const [userInfo, setUserInfo] = useState({ name: '', role: '', avatar: '' });
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
   const [upcomingJoinings, setUpcomingJoinings] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -1845,15 +1845,30 @@ const RecruitmentHeadDashboard = () => {
     }
   };
 
-  useEffect(() => {
+  const refreshUserInfo = () => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
         setUserInfo({
           name: decoded.name || localStorage.getItem('userName') || '',
-          role: 'Recruitment Head'
+          role: 'Recruitment Head',
+          avatar: localStorage.getItem('userPicture') || decoded.picture || ''
         });
+      } catch (e) {
+        setUserInfo({ name: localStorage.getItem('userName') || '', role: 'Recruitment Head', avatar: localStorage.getItem('userPicture') || '' });
+      }
+    } else {
+      setUserInfo({ name: localStorage.getItem('userName') || '', role: 'Recruitment Head', avatar: localStorage.getItem('userPicture') || '' });
+    }
+  };
+
+  useEffect(() => {
+    refreshUserInfo();
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
         fetchNotifications(decoded.id || decoded.userId);
         fetchDashboardData();
         fetchKAMTeam();
@@ -1863,7 +1878,6 @@ const RecruitmentHeadDashboard = () => {
         fetchUpcomingJoinings();
       } catch (e) {
         console.log('Token decode error');
-        setUserInfo({ name: localStorage.getItem('userName') || '', role: 'Recruitment Head' });
         fetchKAMTeam();
         fetchClientList();
         fetchRecentNotes();
@@ -2371,7 +2385,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Settings':
               return <SettingsTab />;
             case 'My Profile':
-              return <MyProfileTab />;
+              return <MyProfileTab onProfileUpdate={refreshUserInfo} />;
             case 'Document Verification':
             case 'document-verification':
               return <DocumentVerifyTab isDarkMode={false} />;

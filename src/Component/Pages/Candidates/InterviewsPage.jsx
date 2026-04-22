@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Video, MapPin, X, Clock, User, ChevronRight, Pencil, Check, CheckSquare, Plus, AlertCircle, Calendar, Search, Star } from "lucide-react";
 import { toast } from "sonner";
-import { AVATAR_COLORS, getAvatarColor } from "./mockData";
+import { AVATAR_COLORS, getAvatarColor } from "./candidatesConfig";
 import {
   getAllInterviews,
   updateInterview,

@@ -24,6 +24,7 @@ import {
   FiAlignLeft,
   FiActivity,
   FiChevronRight,
+  FiChevronDown,
   FiTarget,
   FiPhone,
   FiUsers,
@@ -732,11 +733,11 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
         </div>
 
         {/* Priority Filter */}
-        <div className="relative">
+        <div className="relative group">
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px] hover:bg-[#EEF2FB] transition-all"
           >
             <option value="">All Priority</option>
             <option value="Low">Low</option>
@@ -744,31 +745,34 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             <option value="High">High</option>
             <option value="Urgent">Urgent</option>
           </select>
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
         </div>
 
         {/* Status Filter */}
-        <div className="relative">
+        <div className="relative group">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[130px]"
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[130px] hover:bg-[#EEF2FB] transition-all"
           >
             <option value="">All Status</option>
             <option value="Pending">Pending</option>
             <option value="Completed">Completed</option>
           </select>
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
         </div>
 
         {/* KAM Filter */}
-        <div className="relative">
+        <div className="relative group">
           <select
             value={kamFilter}
             onChange={(e) => setKamFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px] hover:bg-[#EEF2FB] transition-all"
           >
             <option value="">All KAMs</option>
             {uniqueAssignees.map(name => <option key={name} value={name}>{name}</option>)}
           </select>
+          <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
         </div>
       </div>
 
@@ -1009,7 +1013,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                             console.log('Selected member ID:', selectedId);
                             setFormData({ ...formData, assignedTo: selectedId });
                           }}
-                          className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-12 pr-10 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all appearance-none cursor-pointer"
+                          className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-12 pr-10 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all appearance-none cursor-pointer hover:bg-white"
                         >
                           <option value="">Select member</option>
                           {teamMembers && teamMembers.length > 0 ? teamMembers.map((member) => {
@@ -1019,8 +1023,8 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                             );
                           }) : <option disabled>No team members available</option>}
                         </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                          <FiMoreHorizontal size={14} className="rotate-90" />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all">
+                          <FiChevronDown size={16} />
                         </div>
                       </div>
                     </div>
@@ -1031,15 +1035,15 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                         <select
                           value={formData.priority}
                           onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                          className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-12 pr-10 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all appearance-none cursor-pointer"
+                          className="w-full bg-[#F8F9FA] border-none rounded-2xl py-3 pl-12 pr-10 text-sm font-bold text-[#1A1A2E] focus:ring-4 focus:ring-[#1B4DA0]/5 outline-none transition-all appearance-none cursor-pointer hover:bg-white"
                         >
                           <option value="Low">Low</option>
                           <option value="Medium">Medium</option>
                           <option value="High">High</option>
                           <option value="Urgent">Urgent</option>
                         </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                          <FiMoreHorizontal size={14} className="rotate-90" />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all">
+                          <FiChevronDown size={16} />
                         </div>
                       </div>
                     </div>

@@ -795,17 +795,18 @@ const ResumeBankTab = () => {
         </div>
 
         {/* Global Roles Filter */}
-        <div className="relative">
+        <div className="relative group">
           <select
             value={filters.roleType}
             onChange={(e) => handleFilterChange('roleType', e.target.value)}
-            className="bg-[#F4F3EF] dark:bg-slate-900 text-xs font-bold text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
+            className="bg-[#F4F3EF] dark:bg-slate-900 text-[11px] font-black text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest hover:bg-[#EEF2FB] dark:hover:bg-slate-700 transition-all"
           >
             <option value="">Positions</option>
             {roleTypes.map(role => (
               <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
             ))}
           </select>
+          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
         </div>
 
 
@@ -975,15 +976,22 @@ const ResumeBankTab = () => {
               </div>
 
               {/* Role Type */}
-              <div>
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Role Type</label>
-                <select value={selectedUploadRoleType} onChange={(e) => setSelectedUploadRoleType(e.target.value)} className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white cursor-pointer transition-colors">
-                  <option value="">Select Role (Optional)</option>
-                  {roleTypes.map(role => (<option key={role.name} value={role.name}>{role.name}</option>))}
-                  <option value="__custom__">+ Custom Role</option>
-                </select>
+                <div className="relative group">
+                  <select 
+                    value={selectedUploadRoleType} 
+                    onChange={(e) => setSelectedUploadRoleType(e.target.value)} 
+                    className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm font-bold focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white cursor-pointer transition-all appearance-none bg-[#F4F3EF]/50 hover:bg-white dark:hover:bg-slate-700"
+                  >
+                    <option value="">Select Role (Optional)</option>
+                    {roleTypes.map(role => (<option key={role.name} value={role.name}>{role.name}</option>))}
+                    <option value="__custom__">+ Custom Role</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
+                </div>
                 {selectedUploadRoleType === '__custom__' && (
-                  <input type="text" value={customUploadRoleType} onChange={(e) => setCustomUploadRoleType(e.target.value)} placeholder="Enter custom role name" className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm mt-3 focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white" />
+                  <input type="text" value={customUploadRoleType} onChange={(e) => setCustomUploadRoleType(e.target.value)} placeholder="Enter custom role name" className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm mt-3 font-bold focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white bg-[#F4F3EF]/50 transition-all" />
                 )}
               </div>
 
