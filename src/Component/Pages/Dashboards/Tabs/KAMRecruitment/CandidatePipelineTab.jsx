@@ -83,7 +83,6 @@ const stageConfig = {
   Interview: { color: '#3b82f6', icon: FiPhone, bgColor: 'bg-blue-50/50', borderColor: 'border-blue-200/50', dotColor: 'bg-blue-500' },
   Shortlisted: { color: '#f59e0b', icon: FiStar, bgColor: 'bg-amber-50/50', borderColor: 'border-amber-200/50', dotColor: 'bg-amber-500' },
   Offer: { color: '#ec4899', icon: FiMail, bgColor: 'bg-purple-50/50', borderColor: 'border-purple-200/50', dotColor: 'bg-purple-500' },
-  Hired: { color: '#22c55e', icon: FiCheckCircle, bgColor: 'bg-emerald-50/50', borderColor: 'border-emerald-200/50', dotColor: 'bg-emerald-500' },
 };
 
 /* ── Rating Stars ── */
@@ -412,8 +411,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
   useEffect(() => { fetchCandidates(); }, [fetchCandidates]);
 
-  const stageOrder = ['Screening', 'Interview', 'Shortlisted', 'Offer', 'Hired'];
-  const fullStageOrder = ['Screening', 'Phone Interview', 'Interview', 'Technical Round', 'HR Round', 'Shortlisted', 'Offer Sent', 'Offer', 'Joined', 'Hired'];
+  const stageOrder = ['Screening', 'Interview', 'Shortlisted', 'Offer'];
+  const fullStageOrder = ['Screening', 'Phone Interview', 'Interview', 'Technical Round', 'HR Round', 'Shortlisted', 'Offer Sent', 'Offer', 'Joined'];
 
   const stats = {
     total: candidates.length,
@@ -854,7 +853,6 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   if (stage === 'Interview') return ['Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Interview'].includes(c.stage);
                   if (stage === 'Screening') return c.stage === 'Screening' || c.stage === 'Applied' || !c.stage;
                   if (stage === 'Offer') return c.stage === 'Offer Sent' || c.stage === 'Offer';
-                  if (stage === 'Hired') return c.stage === 'Joined' || c.stage === 'Hired';
                   return c.stage === stage;
                 });
                 const config = stageConfig[stage] || stageConfig.Screening;
