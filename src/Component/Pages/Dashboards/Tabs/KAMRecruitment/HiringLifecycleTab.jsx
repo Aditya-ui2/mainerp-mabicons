@@ -125,9 +125,9 @@ const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLe
                     <button 
                       key={month}
                       onClick={() => handleActionClick(month, false)}
-                      className={`flex flex-col items-center justify-center py-6 rounded-[2rem] border transition-all group relative overflow-hidden cursor-pointer shadow-md active:scale-95 ${
+                      className={`flex flex-col items-center justify-center py-6 rounded-[2rem] border transition-all duration-300 group relative overflow-hidden cursor-pointer shadow-md active:scale-95 ${
                         isCompleted 
-                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/20' 
+                        ? 'bg-white border-[#10B981] text-[#10B981] shadow-lg shadow-emerald-500/15 scale-[1.02]' 
                         : 'bg-white border-slate-200 text-slate-400 hover:border-[#1B4DA0] hover:text-[#1B4DA0]'
                       }`}
                     >
@@ -139,7 +139,7 @@ const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLe
               </div>
               <button 
                 onClick={() => handleActionClick(null, true)}
-                className="w-full py-5 bg-rose-50 text-rose-600 border border-rose-100 rounded-[2rem] text-xs font-black uppercase tracking-[3px] shadow-sm hover:bg-rose-600 hover:text-white transition-all cursor-pointer text-center active:scale-[0.98] font-bold"
+                className="w-full py-5 bg-rose-50 text-rose-600 border border-rose-100 rounded-[2rem] text-xs font-black uppercase tracking-[3px] shadow-sm transition-all cursor-pointer text-center active:scale-[0.98] font-bold"
               >
                 Mark Candidate as Left
               </button>
@@ -184,43 +184,65 @@ const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLe
           <div className="border-t border-[#F4F3EF] pt-8" />
         </div>
 
-        {/* Confirmation Modal */}
-        <AnimatePresence>
-          {showConfirm && (
-            <div className="fixed inset-0 z-[10100] flex items-center justify-center p-6 pointer-events-auto">
-              <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                exit={{ opacity: 0 }} 
-                className="absolute inset-0 bg-[#000000]/80 backdrop-blur-xl" 
-                onClick={() => setShowConfirm(false)}
-              />
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0, y: 30 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 30 }}
-                className="relative w-full max-w-[400px] bg-white rounded-[40px] p-10 shadow-[0_32px_64px_rgba(0,0,0,0.5)] overflow-hidden border border-slate-100 flex flex-col items-center"
-              >
-                <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center mb-8 ${isMarkLeft ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'}`}>
-                  {isMarkLeft ? <FiAlertCircle size={40} /> : <FiClock size={40} />}
-                </div>
-                <h3 className="text-3xl font-bold text-[#1A1A2E] text-center mb-4 font-syne">Are you sure?</h3>
-                <p className="text-[15px] leading-relaxed text-[#6B6B7E] text-center mb-10 font-medium px-4">
-                  {isMarkLeft ? `Mark ${candidate.candidate} as resigned?` : `Confirm Month ${pendingMonth} milestone for ${candidate.candidate}?`}
-                </p>
-                <div className="flex flex-col gap-4 w-full">
-                  <button onClick={handleConfirmAction} className={`w-full py-5 rounded-[20px] text-[13px] font-black uppercase tracking-[3px] text-white shadow-xl transition-all active:scale-[0.95] ${isMarkLeft ? 'bg-rose-600 hover:bg-rose-700' : 'bg-[#1B4DA0] hover:bg-blue-700'}`}>
-                    Confirm
-                  </button>
-                  <button onClick={() => setShowConfirm(false)} className="w-full py-5 bg-[#F4F3EF] text-[#6B6B7E] rounded-[20px] text-[13px] font-black uppercase tracking-[3px] hover:bg-slate-200 active:scale-[0.95]">
-                    Go Back
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
       </motion.div>
+
+      {/* Confirmation Modal - Moved outside to be centered globally */}
+      <AnimatePresence>
+        {showConfirm && (
+          <div className="fixed inset-0 z-[10100] flex items-center justify-center p-6 pointer-events-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-[#0a0a1a]/60 backdrop-blur-md" 
+              onClick={() => setShowConfirm(false)}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-[420px] bg-white rounded-[48px] p-12 shadow-[0_40px_80px_rgba(0,0,0,0.25)] overflow-hidden border border-white/20 flex flex-col items-center"
+            >
+              {/* Premium Glow Effect */}
+              <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/5 blur-[80px] rounded-full" />
+              <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/5 blur-[80px] rounded-full" />
+
+              <div className={`w-24 h-24 rounded-[32px] flex items-center justify-center mb-8 ${isMarkLeft ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-[#1B4DA0]'} shadow-inner`}>
+                {isMarkLeft ? <FiAlertCircle size={44} /> : <FiClock size={44} />}
+              </div>
+              
+              <h3 className="text-[32px] font-bold text-[#1A1A2E] text-center mb-4 font-syne tracking-tight leading-tight">
+                Are you sure?
+              </h3>
+              
+              <p className="text-[15px] leading-relaxed text-[#6B6B7E] text-center mb-10 font-jakarta font-medium px-4 max-w-[320px]">
+                {isMarkLeft 
+                  ? `You are about to mark ${candidate.candidate} as resigned. This action will update their retention status.` 
+                  : `Confirm Month ${pendingMonth} milestone for ${candidate.candidate}? This will secure their recruitment cycle.`
+                }
+              </p>
+              
+              <div className="flex flex-col gap-4 w-full">
+                <button 
+                  onClick={handleConfirmAction} 
+                  className={`w-full py-5 rounded-[24px] text-[13px] font-black uppercase tracking-[3px] text-white shadow-lg transition-all active:scale-[0.95] flex items-center justify-center gap-3 ${
+                    isMarkLeft ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200' : 'bg-[#1B4DA0] hover:bg-blue-800 shadow-blue-200'
+                  }`}
+                >
+                  {isMarkLeft ? 'Confirm Departure' : 'Mark as Active'}
+                </button>
+                <button 
+                  onClick={() => setShowConfirm(false)} 
+                  className="w-full py-5 bg-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[13px] font-black uppercase tracking-[3px] hover:bg-slate-200 transition-all active:scale-[0.95]"
+                >
+                  Take Me Back
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>,
     document.body
   );
