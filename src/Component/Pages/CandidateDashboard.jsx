@@ -73,8 +73,8 @@ const CandidateDashboard = () => {
 
                 <div className="flex-1 overflow-y-auto px-5 py-8 pb-32 space-y-8 custom-scrollbar">
                     <div className="space-y-1">
-                        <h1 className="text-xl font-bold text-slate-900">Document Vault</h1>
-                        <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Required for BGV Protocol</p>
+                        <h1 className="text-xl font-bold text-slate-900">Welcome to Mabicons</h1>
+                        <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Upload the documents</p>
                     </div>
 
                     <DocumentsUpload 
