@@ -322,17 +322,19 @@ const DocumentActions = ({ docType, docLabel, side, uploadedDocs, uploading, han
     const isLoading = uploading[uploadKey];
     return (
         <div className="w-full">
+            <input type="file" id={`input-${uploadKey}`} className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFileChange(e, docType, docLabel, side)} disabled={isLoading} />
+            
             {uploadedDocs[uploadKey] ? (
-                <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-100 rounded-xl group/doc relative overflow-hidden">
                     <FiFileText className="text-emerald-500 shrink-0" size={14} />
                     <span className="text-[10px] font-bold text-emerald-700 truncate flex-1 uppercase">{uploadedDocs[uploadKey].name}</span>
-                    <button onClick={() => handleRemoveDoc(uploadKey)} className="text-rose-500 hover:bg-rose-100 p-1 rounded-md transition-colors">
-                        <FiTrash2 size={14} />
-                    </button>
+                    <label htmlFor={`input-${uploadKey}`} className="cursor-pointer text-emerald-600 hover:bg-emerald-100 p-1.5 rounded-md transition-all flex items-center gap-1">
+                        <FiUploadCloud size={14} />
+                        <span className="text-[8px] font-bold uppercase"> </span>
+                    </label>
                 </div>
             ) : (
-                <label className="cursor-pointer block group">
-                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFileChange(e, docType, docLabel, side)} disabled={isLoading} />
+                <label htmlFor={`input-${uploadKey}`} className="cursor-pointer block group">
                     <div className={`w-full py-3.5 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-all ${isLoading ? 'bg-slate-50 border-slate-200' : 'bg-slate-50 border-slate-200 group-hover:border-[#1B4DA0] group-hover:bg-blue-50/30'}`}>
                         {isLoading ? <div className="w-4 h-4 border-2 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" /> : <><FiUploadCloud className="text-slate-400 group-hover:text-[#1B4DA0]" size={18} /><span className="text-[9px] font-bold text-slate-400 group-hover:text-[#1B4DA0] uppercase tracking-wider">{side ? side : 'Upload'}</span></>}
                     </div>
