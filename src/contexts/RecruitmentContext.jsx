@@ -10,51 +10,14 @@ const RecruitmentContext = createContext(null);
 // Team hierarchy data
 const TEAM_DATA = {
   kam: {
-    id: 'kam-001',
-    name: 'Sachin',
-    email: 'sachin@mabicons.com',
+    id: '',
+    name: '',
+    email: '',
     role: 'KAM',
-    designation: 'HR Recruitment Head',
+    designation: '',
     photo: null,
   },
-  members: [
-    {
-      id: 'emp-001',
-      name: 'Jyoti Yadav',
-      email: 'jyoti.yadav@mabicons.com',
-      role: 'Employee',
-      designation: 'HR Recruiter',
-      status: 'Active',
-      photo: 'https://randomuser.me/api/portraits/women/32.jpg',
-    },
-    {
-      id: 'emp-002',
-      name: 'Manju Saini',
-      email: 'manju.saini@mabicons.com',
-      role: 'Employee',
-      designation: 'HR Recruiter',
-      status: 'Active',
-      photo: 'https://randomuser.me/api/portraits/women/44.jpg',
-    },
-    {
-      id: 'emp-003',
-      name: 'Priyanshi Sharma',
-      email: 'priyanshi.sharma@mabicons.com',
-      role: 'Employee',
-      designation: 'HR Recruiter',
-      status: 'Active',
-      photo: 'https://randomuser.me/api/portraits/women/68.jpg',
-    },
-    {
-      id: 'emp-004',
-      name: 'Anushka Raturi',
-      email: 'anushka.raturi@mabicons.com',
-      role: 'Employee',
-      designation: 'HR Recruiter',
-      status: 'Active',
-      photo: 'https://randomuser.me/api/portraits/women/65.jpg',
-    },
-  ],
+  members: [],
 };
 
 // Permissions by role

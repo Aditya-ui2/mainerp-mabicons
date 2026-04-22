@@ -180,11 +180,11 @@ const transformKAMData = (apiData) => {
   if (!Array.isArray(apiData)) return [];
 
   return apiData.map((member, idx) => ({
-    id: member.id || `kam-${idx + 1}`,
-    name: member.name || 'Unknown',
+    id: member.id || member._id || `kam-${idx + 1}`,
+    name: member.name || '',
     email: member.email || '',
     phone: member.phone || '',
-    role: member.role || 'KAM - Recruitment',
+    role: member.role || '',
     avatar: member.profilePhoto || member.avatar || (member.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
     profilePhoto: member.profilePhoto || null,
     status: member.status || 'Active',
@@ -1345,7 +1345,7 @@ const RecruitmentHeadDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [loading, setLoading] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
-  const [userInfo, setUserInfo] = useState({ name: 'Sachin', role: 'Recruitment Head' });
+  const [userInfo, setUserInfo] = useState({ name: '', role: '' });
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
   const [upcomingJoinings, setUpcomingJoinings] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -1851,7 +1851,7 @@ const RecruitmentHeadDashboard = () => {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
         setUserInfo({
-          name: decoded.name || localStorage.getItem('userName') || 'Sachin',
+          name: decoded.name || localStorage.getItem('userName') || '',
           role: 'Recruitment Head'
         });
         fetchNotifications(decoded.id || decoded.userId);
@@ -1863,7 +1863,7 @@ const RecruitmentHeadDashboard = () => {
         fetchUpcomingJoinings();
       } catch (e) {
         console.log('Token decode error');
-        setUserInfo({ name: localStorage.getItem('userName') || 'Sachin', role: 'Recruitment Head' });
+        setUserInfo({ name: localStorage.getItem('userName') || '', role: 'Recruitment Head' });
         fetchKAMTeam();
         fetchClientList();
         fetchRecentNotes();
@@ -1971,11 +1971,7 @@ const RecruitmentHeadDashboard = () => {
       );
       setStats(totalStats);
 
-      setStatsBarData([
-        { label: 'Total Candidates', value: totalStats.totalCandidates, percentage: '100%', color: 'bg-blue-500' },
-        { label: 'In Interview', value: totalStats.scheduledInterviews, percentage: '17%', color: 'bg-purple-500' },
-        { label: 'Offers Extended', value: totalStats.pendingOffers, percentage: '8%', color: 'bg-green-500' },
-      ]);
+      setStatsBarData([]);
     } finally {
       setLoading(false);
     }
@@ -2830,7 +2826,7 @@ const RecruitmentHeadDashboard = () => {
                           </thead>
                           <tbody className="divide-y divide-[#F4F3EF]">
                             {upcomingInterviews.map((interview) => {
-                              const dateStr = (interview.date?.includes('T') ? interview.date.split('T')[0] : interview.date) || '2026-04-30';
+                              const dateStr = (interview.date?.includes('T') ? interview.date.split('T')[0] : interview.date) || '';
                               const formattedDate = new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 
                               return (
@@ -2844,7 +2840,7 @@ const RecruitmentHeadDashboard = () => {
                                     <p className="text-sm font-semibold text-slate-700 group-hover:text-[#1B4DA0] transition-colors">{interview.candidate}</p>
                                   </td>
                                   <td className="px-6 py-5">
-                                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{interview.position || 'Mabicons'}</p>
+                                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{interview.position || ''}</p>
                                   </td>
                                   <td className="px-6 py-5">
                                     <div className="flex flex-col items-start gap-0.5">
@@ -2900,7 +2896,7 @@ const RecruitmentHeadDashboard = () => {
                                       <p className="text-sm font-semibold text-slate-700">{joining.candidate}</p>
                                     </td>
                                     <td className="px-6 py-5">
-                                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{joining.client || 'Mabicons'}</p>
+                                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{joining.client || ''}</p>
                                     </td>
                                     <td className="px-6 py-5">
                                       <div className="flex items-center gap-2">
@@ -4342,7 +4338,7 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-[#9B9BAD]">Interviewer</span>
-                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.interviewer || 'Aravind Swamy'}</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedInterview.interviewer || 'N/A'}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-[#9B9BAD]">Contact Number</span>

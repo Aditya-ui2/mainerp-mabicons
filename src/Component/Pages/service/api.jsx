@@ -2709,43 +2709,22 @@ export const getAllKAMMembers = async (filtersOrDepartment = 'HR Recruitment') =
       ? filtersOrDepartment
       : (filtersOrDepartment?.department || 'HR Recruitment');
 
-    // Try recruitment/kams endpoint first
     const response = await axiosInstance.get('/recruitment/kams', {
       params: filters
     });
 
-    // Merge with local mock members
-    const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
     const serverMembers = response.data?.data || response.data?.members || (Array.isArray(response.data) ? response.data : []);
-
-    const combined = [...serverMembers];
-    const serverEmails = new Set(serverMembers.map(m => m.email?.toLowerCase()));
-
-    mockMembers.forEach(mock => {
-      if (!serverEmails.has(mock.email?.toLowerCase())) {
-        combined.push({ ...mock, isOffline: true });
-      }
-    });
-
-    return { success: true, data: combined };
+    return { success: true, data: serverMembers };
   } catch (error) {
     console.warn('Failed to fetch KAM members from server, trying fallback or local storage:', error.message);
     try {
-      const department = typeof filtersOrDepartment === 'string' ? filtersOrDepartment : 'HR Recruitment';
       const fallbackResponse = await axiosInstance.get('/department/members', {
         params: { department, role: 'KAM' }
       });
       const serverMembers = fallbackResponse.data?.data || fallbackResponse.data?.members || (Array.isArray(fallbackResponse.data) ? fallbackResponse.data : []);
-      const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
-      const combined = [...serverMembers];
-      const serverEmails = new Set(serverMembers.map(m => m.email?.toLowerCase()));
-      mockMembers.forEach(mock => {
-        if (!serverEmails.has(mock.email?.toLowerCase())) combined.push({ ...mock, isOffline: true });
-      });
-      return { success: true, data: combined };
+      return { success: true, data: serverMembers };
     } catch (fallbackError) {
-      const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
-      return { success: true, data: mockMembers };
+      throw fallbackError.response?.data || { message: 'Failed to fetch KAM members' };
     }
   }
 };
@@ -2782,27 +2761,8 @@ export const createKAMMember = async (kamData) => {
     const response = await axiosInstance.post('/department/members', payload);
     return response.data;
   } catch (error) {
-    console.warn('Failed to add member to server, saving locally for now:', error.message);
-
-    // Save to local storage mock list
-    const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
-    const newMock = {
-      id: "offline-" + Date.now(),
-      ...payload,
-      status: 'Active',
-      stats: { activePositions: 0, candidatesPipeline: 0, interviewsScheduled: 0, offersExtended: 0, thisWeekHires: 0 },
-      isOffline: true,
-      createdAt: new Date().toISOString()
-    };
-
-    mockMembers.push(newMock);
-    localStorage.setItem('mock_kam_members', JSON.stringify(mockMembers));
-
-    return {
-      success: true,
-      data: newMock,
-      message: 'Member added locally (Server unreachable)'
-    };
+    console.error('Failed to add member to server:', error.message);
+    throw error.response?.data || { message: 'Failed to add member' };
   }
 };
 
