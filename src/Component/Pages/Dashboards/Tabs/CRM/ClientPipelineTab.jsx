@@ -10,29 +10,29 @@ import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiDatabase, FiRefreshCw, FiUser, FiMail, FiBriefcase, FiCalendar, FiClock,
-  FiVideo, FiCopy, FiCheckCircle, FiX, FiRefreshCcw, FiLock
+  FiVideo, FiCopy, FiCheckCircle, FiX, FiRefreshCcw, FiLock, FiActivity
 } from 'react-icons/fi';
 
 const PIPELINE_STAGES = ["All Clients", "Finalize", "Generate Password"];
 
 const STAGE_COLORS = {
   "All Clients": {
-    bg: "bg-gray-50",
-    border: "border-gray-200",
-    dot: "bg-gray-400",
-    count: "bg-gray-100 text-gray-600",
+    bg: "bg-slate-50",
+    border: "border-slate-200",
+    dot: "bg-slate-400",
+    count: "bg-slate-100 text-slate-600",
   },
   "Finalize": {
-    bg: "bg-orange-50",
-    border: "border-orange-100",
-    dot: "bg-orange-400",
-    count: "bg-orange-200 text-orange-600",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    dot: "bg-amber-400",
+    count: "bg-amber-100 text-amber-600",
   },
   "Generate Password": {
     bg: "bg-purple-50",
-    border: "border-purple-100",
+    border: "border-purple-200",
     dot: "bg-purple-400",
-    count: "bg-purple-200 text-purple-600",
+    count: "bg-purple-100 text-purple-600",
   },
 };
 
@@ -119,8 +119,7 @@ const MOCK_CLIENTS = [
   }
 ];
 
-export default function ClientPipelineTab() {
-  const [clients, setClients] = useState(MOCK_CLIENTS);
+export default function ClientPipelineTab({ clients, setClients }) {
   const [viewMode, setViewMode] = useState("kanban");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -197,156 +196,156 @@ export default function ClientPipelineTab() {
     setDragOverStage(null);
   };
 
-  const PipelineCard = ({ client }) => (
-    <motion.div
-      layoutId={client.id}
-      draggable
-      onDragStart={(e) => handleDragStart(e, client.id)}
-      onClick={() => setSelectedClient(client)}
-      className="bg-white p-5 rounded-[24px] border border-[#F4F3EF] shadow-sm hover:shadow-xl hover:border-[#1B4DA0]/20 transition-all cursor-grab active:cursor-grabbing group mb-4"
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#F8FAFF] text-[#1B4DA0] flex items-center justify-center font-black text-base border border-[#E8E7E2]">
+  const PipelineCard = ({ client }) => {
+    const avatarColor = getAvatarColor(client.companyName);
+    const progress = Math.round(((Math.max(0, PIPELINE_STAGES.indexOf(client.stage)) + 1) / PIPELINE_STAGES.length) * 100);
+
+    return (
+      <motion.div
+        layoutId={client.id}
+        draggable
+        onDragStart={(e) => handleDragStart(e, client.id)}
+        onClick={() => setSelectedClient(client)}
+        className="bg-white rounded-xl p-2.5 cursor-grab active:cursor-grabbing transition-all duration-200 select-none group border-2 border-[#E8E7E2] relative hover:-translate-y-1 hover:shadow-lg hover:border-[#1B4DA0]/20 mb-3 shadow-sm"
+      >
+        <div className="flex items-start gap-2.5">
+          <div className={`w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-bold flex-shrink-0 shadow-sm border border-white/20 text-white ${avatarColor}`}>
             {client.avatar}
           </div>
-          <div className="text-left">
-            <h4 className="text-sm font-black text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors line-clamp-1">{client.companyName}</h4>
-            <p className="text-[10px] text-[#9B9BAD] font-black uppercase tracking-wider">{client.industry}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center gap-2.5 text-[#6B6B7E]">
-          <div className="w-5 h-5 rounded-lg bg-[#F4F3EF] flex items-center justify-center">
-            <User size={12} className="text-[#9B9BAD]" />
-          </div>
-          <span className="text-[11px] font-bold text-[#1A1A2E]">{client.contactPerson}</span>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <div className="w-5 h-5 rounded-lg bg-emerald-50 flex items-center justify-center">
-            <DollarSign size={12} className="text-emerald-500" />
-          </div>
-          <span className="text-[12px] font-black text-[#1A1A2E]">{client.value}</span>
-        </div>
-      </div>
-
-      {/* Show credentials if in Generate Password stage */}
-      {client.stage === "Generate Password" && client.portalPassword && (
-        <div className="mb-5 p-4 bg-purple-50 rounded-[20px] border border-purple-100/50 space-y-3 relative overflow-hidden group/cred">
-          <div className="absolute top-0 right-0 w-12 h-12 bg-purple-100/30 rounded-bl-[40px] -mr-4 -mt-4 transition-all group-hover/cred:scale-110" />
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-              <span className="text-[9px] font-black text-purple-500 uppercase tracking-[2px]">System Access</span>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigator.clipboard.writeText(`Email: ${client.portalEmail}\nPassword: ${client.portalPassword}`);
-                toast.success("Credentials copied!");
-              }}
-              className="p-1.5 rounded-lg bg-white shadow-sm border border-purple-100 text-purple-500 hover:bg-purple-500 hover:text-white transition-all"
-            >
-              <FiCopy size={12} />
-            </button>
-          </div>
-
-          <div className="space-y-2.5 relative z-10">
-            <div className="flex items-center justify-between group/email">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shadow-sm border border-purple-50">
-                  <FiMail size={12} className="text-purple-500" />
-                </div>
-                <span className="text-[11px] font-bold text-gray-700 truncate max-w-[180px]">{client.portalEmail}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-start">
+              <p className="text-sm font-bold text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors pb-0.5">
+                {client.companyName}
+              </p>
+              <div className="flex items-center justify-center p-1 rounded-md bg-blue-50 text-[#1B4DA0] opacity-0 group-hover:opacity-100 transition-opacity">
+                <FiActivity size={10} />
               </div>
+            </div>
+            <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[1px] truncate">
+              {client.industry}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <User size={10} className="text-[#9B9BAD]" />
+            <span className="text-[10px] font-bold text-[#6B6B7E]">{client.contactPerson}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <DollarSign size={10} className="text-emerald-500" />
+            <span className="text-[11px] font-black text-[#1A1A2E]">{client.value}</span>
+          </div>
+        </div>
+
+        {/* Progress Bar Section - Matching Candidate Pipeline */}
+        <div className="mt-4 space-y-1.5">
+          <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-[#9B9BAD]">
+            <span className="flex items-center gap-1.5 opacity-70">
+              <FiActivity size={10} />
+              Pipeline Progress
+            </span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-1.5 bg-[#F4F3EF] rounded-full overflow-hidden shadow-inner">
+            <div
+              className={`h-full transition-all duration-700 rounded-full shadow-sm ${progress === 100 ? 'bg-emerald-500' : 'bg-[#1B4DA0]'}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Show credentials if in Generate Password stage - Refined Style */}
+        {client.stage === "Generate Password" && client.portalPassword && (
+          <div className="mt-4 p-3 bg-purple-50 rounded-2xl border border-purple-100/50 space-y-2 relative overflow-hidden group/cred">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[8px] font-black text-purple-500 uppercase tracking-[2px]">Portal Access</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigator.clipboard.writeText(client.portalEmail);
-                  toast.success("Email copied!");
+                  navigator.clipboard.writeText(`Email: ${client.portalEmail}\nPassword: ${client.portalPassword}`);
+                  toast.success("Credentials copied!");
                 }}
-                className="opacity-0 group-hover/email:opacity-100 p-1 text-purple-400 hover:text-purple-600 transition-all"
+                className="p-1 rounded-md bg-white border border-purple-100 text-purple-500 hover:bg-purple-500 hover:text-white transition-all scale-75"
               >
-                <FiCopy size={10} />
+                <FiCopy size={12} />
               </button>
             </div>
-
-            <div className="flex items-center justify-between group/pass">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shadow-sm border border-purple-50">
-                  <FiLock size={12} className="text-purple-500" />
-                </div>
-                <code className="text-[11px] font-black text-purple-600 tracking-[3px] bg-white px-2 py-0.5 rounded border border-purple-50 shadow-sm">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <FiMail size={10} className="text-purple-400" />
+                <span className="text-[9px] font-bold text-gray-600 truncate">{client.portalEmail}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FiLock size={10} className="text-purple-400" />
+                <code className="text-[9px] font-black text-purple-600 tracking-[1px] bg-white px-1.5 py-0.5 rounded border border-purple-50 shadow-sm">
                   {client.portalPassword}
                 </code>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigator.clipboard.writeText(client.portalPassword);
-                  toast.success("Password copied!");
-                }}
-                className="opacity-0 group-hover/pass:opacity-100 p-1 text-purple-400 hover:text-purple-600 transition-all"
-              >
-                <FiCopy size={10} />
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="flex items-center justify-between pt-4 border-t border-[#F4F3EF]">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-[#1B4DA0] text-white flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm">
-            {client.owner.split(' ').map(n => n[0]).join('')}
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#F4F3EF]">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-lg bg-[#1B4DA0] text-white flex items-center justify-center text-[8px] font-black border-2 border-white shadow-sm shrink-0">
+              {client.owner.split(' ').map(n => n[0]).join('')}
+            </div>
+            <span className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-wider truncate max-w-[80px]">{client.owner}</span>
           </div>
-          <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-wider">{client.owner}</span>
+          <div className="flex items-center gap-1.5">
+            <Clock size={10} className="text-[#9B9BAD]" />
+            <span className="text-[9px] font-black text-[#6B6B7E]">{client.lastContact}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 px-2 py-1 bg-[#F4F3EF] rounded-lg border border-transparent group-hover:border-[#E8E7E2] transition-all">
-          <Clock size={10} className="text-[#9B9BAD]" />
-          <span className="text-[9px] font-black text-[#6B6B7E]">{client.lastContact}</span>
-        </div>
-      </div>
-    </motion.div>
-  );
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setSelectedClient(client); }}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[#1B4DA0]/10 text-[#1B4DA0] rounded-lg text-[9px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all active:scale-95"
+        >
+          <Eye size={10} /> View Details
+        </button>
+      </motion.div>
+    );
+  };
 
   return (
     <div className="space-y-6 relative" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Client Pipeline</h1>
-          </div>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">{filteredClients.length} Active Opportunities</p>
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div className="flex flex-col items-start text-left">
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Client Pipeline</h1>
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1">{filteredClients.length} Total Clients In Pipeline</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-white p-1 rounded-2xl border border-[#F4F3EF] shadow-sm flex items-center">
+          <div className="flex bg-[#F4F3EF] p-1 rounded-xl border border-[#E8E7E2]">
             <button
               onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'kanban' ? 'bg-[#1B4DA0] text-white shadow-md shadow-[#1B4DA0]/20' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'kanban'
+                ? "bg-white text-[#1B4DA0] shadow-sm"
+                : "text-[#6B6B7E] hover:text-[#1A1A2E]"
                 }`}
             >
               <LayoutGrid size={14} /> Kanban
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-[#1B4DA0] text-white shadow-md shadow-[#1B4DA0]/20' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'list'
+                ? "bg-white text-[#1B4DA0] shadow-sm"
+                : "text-[#6B6B7E] hover:text-[#1A1A2E]"
                 }`}
             >
               <List size={14} /> List
             </button>
           </div>
+
           <button
             onClick={() => setIsAddClientOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#1a3a82] transition-all shadow-lg shadow-[#1B4DA0]/20 active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#1a3a82] transition-all shadow-lg active:scale-95"
           >
             <Plus size={18} />
-            Add new client
+            Add Client
           </button>
         </div>
       </div>
@@ -366,32 +365,35 @@ export default function ClientPipelineTab() {
       </div>
 
       {viewMode === "kanban" ? (
-        <div className="overflow-x-auto pb-6 -mx-4 px-4 custom-scrollbar">
-          <div className="flex gap-8 min-w-[1200px] h-[calc(100vh-350px)] min-h-[600px]">
-            {PIPELINE_STAGES.map((stage) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[500px]">
+          {PIPELINE_STAGES.map((stage) => {
+            const stageClients = filteredClients.filter((c) => c.stage === stage);
+            const colors = STAGE_COLORS[stage];
+            const isDragOver = dragOverStage === stage;
+
+            return (
               <div
                 key={stage}
                 onDragOver={(e) => handleDragOver(e, stage)}
                 onDrop={(e) => handleDrop(e, stage)}
-                className={`flex flex-col w-[380px] flex-shrink-0 h-full rounded-[32px] border-2 transition-all p-5 ${dragOverStage === stage
-                  ? "bg-blue-50/50 border-[#1B4DA0] border-dashed scale-[1.01]"
-                  : `${STAGE_COLORS[stage]?.bg || "bg-[#FAFBFF]"} border-transparent`
-                  }`}
+                onDragLeave={() => setDragOverStage(null)}
+                className={`rounded-[24px] border-2 transition-all duration-200 ${colors.border} ${isDragOver ? "ring-2 ring-[#1B4DA0]/40 scale-[1.01] bg-[#F8FAFF]" : colors.bg}`}
               >
-                <div className="flex items-center justify-between mb-8 px-2">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${STAGE_COLORS[stage]?.dot || "bg-gray-400"} shadow-sm`} />
-                    <h3 className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-[3px]">{stage}</h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-xl bg-white text-[#1B4DA0] text-[10px] font-black border border-[#F4F3EF] shadow-sm">
-                      {filteredClients.filter(c => c.stage === stage).length}
+                {/* Column Header */}
+                <div className="px-4 py-4 flex items-center justify-between border-b border-black/5 rounded-t-[24px]">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`w-2.5 h-2.5 rounded-full ${colors.dot} shadow-sm`} />
+                    <span className="text-sm font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                      {stage}
                     </span>
                   </div>
+                  <span className={`text-[10px] font-black px-2.5 py-1 rounded-xl bg-white border border-[#F4F3EF] shadow-sm ${colors.count.split(' ')[1]}`}>
+                    {stageClients.length}
+                  </span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
-                  {filteredClients.filter(c => c.stage === stage).map((client) => (
+                <div className="p-3 space-y-3 min-h-[400px]">
+                  {stageClients.length > 0 ? stageClients.map((client) => (
                     <motion.div
                       key={client.id}
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -400,11 +402,20 @@ export default function ClientPipelineTab() {
                     >
                       <PipelineCard client={client} />
                     </motion.div>
-                  ))}
+                  )) : (
+                    <div
+                      className={`h-24 rounded-2xl border-2 border-dashed flex items-center justify-center transition-all ${isDragOver ? "border-[#1B4DA0]/40 bg-[#1B4DA0]/5" : "border-[#F4F3EF] bg-transparent opacity-30"
+                        }`}
+                    >
+                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest leading-none">
+                        {isDragOver ? "Drop Here" : "No Records"}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       ) : (
         <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm overflow-hidden">

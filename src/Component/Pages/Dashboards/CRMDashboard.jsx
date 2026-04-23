@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,9 +14,12 @@ import {
   FiSearch,
   FiFilePlus,
   FiChevronDown,
+  FiChevronRight,
   FiUpload,
   FiMail,
   FiLock,
+  FiPhone,
+  FiTrash,
   FiFileText,
   FiBriefcase,
   FiCalendar,
@@ -28,6 +31,10 @@ import {
   FiShare2,
   FiUser,
   FiActivity,
+  FiZap,
+  FiCheckSquare,
+  FiMapPin,
+  FiClock,
 } from 'react-icons/fi';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -37,14 +44,94 @@ import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import ClientPipelineTab from './Tabs/CRM/ClientPipelineTab';
 import CRMTeamTab from './Tabs/CRM/CRMTeamTab';
+import MyProfileTab from './Tabs/Common/MyProfileTab';
+const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
+const ClientReportingTab = lazy(() => import('./Tabs/CRM/ClientReportingTab'));
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
+
+const INITIAL_PIPELINE_CLIENTS = [
+  {
+    id: "1",
+    companyName: "TechNova Solutions",
+    contactPerson: "Rajesh Kumar",
+    email: "rajesh@technova.com",
+    phone: "+91 98765 43210",
+    industry: "Information Technology",
+    value: "₹25,00,000",
+    stage: "Finalize",
+    location: "Bangalore",
+    lastContact: "2024-03-20",
+    avatar: "TN",
+    owner: "Sanya Gupta"
+  },
+  {
+    id: "2",
+    companyName: "Global Retail Corp",
+    contactPerson: "Anita Sharma",
+    email: "anita.s@globalretail.com",
+    phone: "+91 87654 32109",
+    industry: "Retail",
+    value: "₹12,50,000",
+    stage: "All Clients",
+    location: "Delhi",
+    lastContact: "2024-03-21",
+    avatar: "GR",
+    owner: "Rahul Mehta"
+  },
+  {
+    id: "3",
+    companyName: "Zenith Manufacturing",
+    contactPerson: "Vikram Singh",
+    email: "vikram@zenithmfg.in",
+    phone: "+91 76543 21098",
+    industry: "Manufacturing",
+    value: "₹45,00,000",
+    stage: "Finalize",
+    location: "Pune",
+    lastContact: "2024-03-18",
+    avatar: "ZM",
+    owner: "Sanya Gupta"
+  },
+  {
+    id: "4",
+    companyName: "BlueSky Logistics",
+    contactPerson: "Priya Verma",
+    email: "p.verma@bluesky.com",
+    phone: "+91 65432 10987",
+    industry: "Logistics",
+    value: "₹8,00,000",
+    stage: "All Clients",
+    location: "Hyderabad",
+    lastContact: "2024-03-22",
+    avatar: "BL",
+    owner: "Rahul Mehta"
+  },
+  {
+    id: "5",
+    companyName: "Evergreen Wellness",
+    contactPerson: "Dr. Arun Joshi",
+    email: "arun@evergreen.org",
+    phone: "+91 54321 09876",
+    industry: "Healthcare",
+    value: "₹30,00,000",
+    stage: "Generate Password",
+    location: "Chennai",
+    lastContact: "2024-03-15",
+    avatar: "EW",
+    owner: "Sanya Gupta",
+    portalPassword: 'AB123',
+    portalEmail: 'evergreen.admin@mabicons.com'
+  }
+];
 
 const sidebarConfig = [
   {
     items: [
+
       { id: 2, title: 'Client', icon: FiUsers },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
+      { id: 7, title: 'Notes', icon: FiEdit3 },
       { id: 6, title: 'My Team', icon: FiUserPlus },
       { id: 4, title: 'Work Handover', icon: FiShare2 },
       { id: 5, title: 'Report to Client', icon: FiClipboard },
@@ -79,6 +166,7 @@ const CRMDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState([]);
+  const [pipelineClients, setPipelineClients] = useState(INITIAL_PIPELINE_CLIENTS);
   const [leads, setLeads] = useState([]);
   const [metrics, setMetrics] = useState(null);
   const [filters, setFilters] = useState({
@@ -87,15 +175,81 @@ const CRMDashboard = () => {
     rep: 'All',
     segment: 'All',
   });
-  const [userInfo, setUserInfo] = useState({ name: 'User', role: 'CRM' });
+  const [userInfo, setUserInfo] = useState({ name: 'User', role: 'CRM', picture: '' });
+
+  const refreshUserInfo = () => {
+    setUserInfo({
+      name: localStorage.getItem('userName') || 'User',
+      role: localStorage.getItem('userType') || 'CRM',
+      picture: localStorage.getItem('userPicture') || ''
+    });
+  };
+
+  useEffect(() => {
+    refreshUserInfo();
+  }, []);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [dateFilter, setDateFilter] = useState({
+    filterType: 'all',
+    year: new Date().getFullYear(),
+    month: new Date().getMonth(),
+    date: new Date().toISOString().split('T')[0]
+  });
+  const mainDateFilterRef = useRef(null);
+  const dashboardDateInputRef = useRef(null);
+
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const getLocalISODate = (offset = 0) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return d.toISOString().split('T')[0];
+  };
+
+  const getFilterLabel = () => {
+    switch (dateFilter.filterType) {
+      case 'all': return 'All Time';
+      case 'last7days': return 'Last 7 Days';
+      case 'year': return `${dateFilter.year}`;
+      case 'month': return `${months[dateFilter.month]} ${dateFilter.year}`;
+      case 'date':
+        const [y, m, d] = dateFilter.date.split('-');
+        return `${d} ${months[parseInt(m) - 1].slice(0, 3)} ${y}`;
+      default: return 'All Time';
+    }
+  };
+
+  const openDatePicker = (ref) => {
+    if (ref.current) {
+      if (typeof ref.current.showPicker === 'function') {
+        ref.current.showPicker();
+      } else {
+        ref.current.focus();
+        ref.current.click();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mainDateFilterRef.current && !mainDateFilterRef.current.contains(event.target)) {
+        setShowDateFilter(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const [submitting, setSubmitting] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const [clientQuery, setClientQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedClients, setSelectedClients] = useState([]);
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [viewClient, setViewClient] = useState(null);
+  const [selectedClientDetail, setSelectedClientDetail] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState({});
   const [isOfferOpen, setIsOfferOpen] = useState(false);
@@ -296,9 +450,31 @@ const CRMDashboard = () => {
       if (!inRange(created)) return false;
       if (filters.rep !== 'All' && getRepName(l) !== filters.rep) return false;
       if (filters.segment !== 'All' && getSegment(l) !== filters.segment) return false;
+
+      // Date Filtering Logic
+      const leadDate = parseDate(created);
+      if (!leadDate) return true;
+
+      if (dateFilter.filterType === 'last7days') {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        return leadDate >= sevenDaysAgo;
+      }
+      if (dateFilter.filterType === 'year') {
+        return leadDate.getFullYear() === dateFilter.year;
+      }
+      if (dateFilter.filterType === 'month') {
+        return leadDate.getFullYear() === dateFilter.year && leadDate.getMonth() === dateFilter.month;
+      }
+      if (dateFilter.filterType === 'date') {
+        const filterDateString = dateFilter.date; // YYYY-MM-DD
+        const leadDateString = leadDate.toISOString().split('T')[0];
+        return leadDateString === filterDateString;
+      }
+
       return true;
     });
-  }, [leads, filters]);
+  }, [leads, filters, dateFilter]);
 
   const totalCustomers = clients.length;
   const totalLeads = filteredLeads.length;
@@ -513,6 +689,140 @@ const CRMDashboard = () => {
       isLoading={loading}
       bottomTabName="My Profile"
     >
+      {/* Client Detail Drawer */}
+      <AnimatePresence>
+        {selectedClientDetail && createPortal(
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#1A1A2E]/60 backdrop-blur-md z-[99998]"
+              onClick={() => setSelectedClientDetail(null)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full sm:w-[620px] bg-white z-[99999] overflow-y-auto shadow-[-20px_0_80px_rgba(0,0,0,0.25)] flex flex-col"
+            >
+              <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
+                <div className="flex-1 text-left">
+                  <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    Client Profile
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setSelectedClientDetail(null)}
+                  className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm outline-none"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+
+              <div className="flex-1 p-8 space-y-10 custom-scrollbar">
+                <div className="space-y-10">
+                  <div className="flex flex-col items-center justify-center text-center py-4">
+                    <div className="relative group">
+                      <div className={`w-32 h-32 rounded-[40px] flex items-center justify-center text-white text-4xl font-black shadow-2xl transition-transform duration-500 border-4 border-white bg-gradient-to-br from-[#1B4DA0] to-[#0D47A1]`}>
+                        {String(selectedClientDetail.companyName || selectedClientDetail.company || selectedClientDetail.name || 'C').substring(0, 1).toUpperCase()}
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-[#E8E7E2] shadow-lg flex items-center justify-center text-emerald-500">
+                        <div className="absolute inset-0 bg-emerald-500 rounded-2xl flex items-center justify-center">
+                          <FiCheckSquare size={18} className="text-white" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-8 space-y-1 w-full text-center">
+                      <h3 className="text-3xl font-black text-[#1A1A2E] tracking-tight flex items-center justify-center gap-3">
+                        {selectedClientDetail.companyName || selectedClientDetail.company || selectedClientDetail.name}
+                      </h3>
+                      <div className="flex items-center justify-center gap-3 mt-1.5 overflow-hidden">
+                        <span className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px]">{selectedClientDetail.industry || 'CLIENT'}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                        <span className="text-[11px] font-black uppercase tracking-[4px] text-emerald-600">
+                          {selectedClientDetail.stage || 'ACTIVE'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-10 shadow-sm">
+                    <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                      <div className="space-y-2 text-left">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Location</span>
+                        <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                          <FiMapPin size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.location || "Not specified"}
+                        </p>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Contact Person</span>
+                        <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                          <FiUser size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.contactPerson || selectedClientDetail.owner || "N/A"}
+                        </p>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deal Value</span>
+                        <p className="text-base font-black text-emerald-600 flex items-center gap-2">
+                          <FiDollarSign size={16} className="shrink-0" /> {selectedClientDetail.value || '₹0'}
+                        </p>
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Last Activity</span>
+                        <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                          <FiClock size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.lastContact || "Updated Today"}
+                        </p>
+                      </div>
+                    </div>
+                    {(selectedClientDetail.portalPassword || selectedClientDetail.portalEmail) && (
+                      <div className="p-8 bg-purple-50 rounded-[40px] border border-purple-100/50 space-y-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-100/30 rounded-bl-[80px] -mr-8 -mt-8" />
+                        <div className="flex items-center gap-3 relative z-10">
+                          <FiZap className="text-purple-500" size={20} />
+                          <h4 className="text-base font-black text-purple-700 uppercase tracking-widest text-left">Portal Access Summary</h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10 text-left">
+                          <div className="bg-white p-4 rounded-3xl border border-purple-100 shadow-sm text-left">
+                            <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1.5 text-left">User Email</p>
+                            <p className="text-sm font-bold text-gray-800 break-all">{selectedClientDetail.portalEmail}</p>
+                          </div>
+                          <div className="bg-white p-4 rounded-3xl border border-purple-100 shadow-sm text-left">
+                            <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1.5">Default Password</p>
+                            <p className="text-sm font-black text-purple-600 tracking-[4px]">{selectedClientDetail.portalPassword}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-8 bg-[#FAFAF9] rounded-[32px] border border-[#F4F3EF] gap-6">
+                    <div className="flex items-center gap-4 flex-1 text-left">
+                      <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
+                        <FiMail size={18} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Official Email</p>
+                        <p className="text-sm font-black text-[#1A1A2E]">{selectedClientDetail.email || selectedClientDetail.portalEmail || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 flex-1 text-left">
+                      <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
+                        <FiPhone size={18} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Record</p>
+                        <p className="text-sm font-black text-[#1A1A2E]">{selectedClientDetail.phone || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>,
+          document.body
+        )}
+      </AnimatePresence>
       <div style={{ fontFamily: "'Calibri', sans-serif" }}>
         <style>{dashboardStyles}</style>
         <div className="space-y-6 pt-0">
@@ -530,21 +840,7 @@ const CRMDashboard = () => {
                   <div className="text-left">
                     <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Client Directory</h1>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-6 py-3 bg-white text-[#0D47A1] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-[#F4F3EF] transition-all shadow-sm active:scale-95">
-                      <FiFilePlus size={14} />
-                      Bulk Upload
-                    </button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => { setFormStep(1); setShowSuccess(false); setIsAddOpen(true); }}
-                      className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
-                    >
-                      <FiPlus size={18} />
-                      Add New Client
-                    </motion.button>
-                  </div>
+
                 </div>
 
                 {/* Search Bar */}
@@ -565,7 +861,7 @@ const CRMDashboard = () => {
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-[#F4F3EF] text-[10px] font-black uppercase tracking-[2px] text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+                        className="bg-[#F4F3EF] text-[10px] font-black uppercase tracking-[2.5px] text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] shadow-sm hover:bg-[#EEF2FB] transition-all"
                       >
                         <option value="All">All Clients</option>
                         <option value="Active">Active</option>
@@ -579,7 +875,7 @@ const CRMDashboard = () => {
                 <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden relative">
                   <div className="overflow-x-auto min-h-[300px]">
                     {/* Grid Header */}
-                    <div className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+                    <div className="grid grid-cols-[40px_2.5fr_1.5fr_2fr_1.5fr_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
                       <div className="flex items-center">
                         <input
                           type="checkbox"
@@ -588,7 +884,7 @@ const CRMDashboard = () => {
                           className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
                         />
                       </div>
-                      {["Company", "GST", "Email", "Contact", ""].map((h, i) => (
+                      {["Company", "Industry", "Location", "Login Access", ""].map((h, i) => (
                         <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start">
                           {h}
                         </div>
@@ -600,17 +896,26 @@ const CRMDashboard = () => {
                       <div className="py-24 text-center">
                         <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">Loading Clients...</p>
                       </div>
-                    ) : clients.length === 0 ? (
-                      <div className="py-24 text-center">
-                        <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No Clients found</p>
-                      </div>
-                    ) : (
-                      (clients || []).filter(c => {
+                    ) : (() => {
+                      const finalDirectoryClients = [
+                        ...clients,
+                        ...pipelineClients.filter(c => c.stage === "Generate Password")
+                      ];
+
+                      if (finalDirectoryClients.length === 0) {
+                        return (
+                          <div className="py-24 text-center">
+                            <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No Clients found</p>
+                          </div>
+                        );
+                      }
+
+                      return finalDirectoryClients.filter(c => {
                         const rowData = {
                           company: (c.companyName || c.name || '').toLowerCase(),
-                          gst: (c.gstNumber || '').toLowerCase(),
-                          owner: (c.ownerName || c.owner?.name || '').toLowerCase(),
-                          email: (c.email || '').toLowerCase()
+                          industry: (c.industry || '').toLowerCase(),
+                          location: (c.location || '').toLowerCase(),
+                          email: (c.email || c.portalEmail || '').toLowerCase()
                         };
                         const matchesQuery = clientQuery
                           ? Object.values(rowData).some(v => v.includes(clientQuery.toLowerCase()))
@@ -620,8 +925,8 @@ const CRMDashboard = () => {
                       }).map((c) => (
                         <div
                           key={c._id || c.id}
-                          onClick={() => { setViewClient(c); setIsViewOpen(true); }}
-                          className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
+                          onClick={() => { setSelectedClientDetail(c); }}
+                          className="grid grid-cols-[40px_2.5fr_1.5fr_2fr_1.5fr_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
                         >
                           {/* Checkbox */}
                           <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
@@ -633,13 +938,15 @@ const CRMDashboard = () => {
                             />
                           </div>
 
-                          {/* Company / Member column */}
+                          {/* Company column */}
                           <div className="flex items-center gap-4 min-w-0 py-1">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-sm font-black border border-[#F4F3EF] group-hover:scale-105 transition-transform shrink-0 overflow-hidden">
                               {c.logoUrl ? (
                                 <img src={c.logoUrl} alt={c.companyName} className="w-full h-full object-contain" />
                               ) : (
-                                <span>{String(c.companyName || 'C').charAt(0).toUpperCase()}</span>
+                                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                  {String(c.companyName || 'C').charAt(0).toUpperCase()}
+                                </div>
                               )}
                             </div>
                             <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left uppercase">
@@ -647,24 +954,30 @@ const CRMDashboard = () => {
                             </p>
                           </div>
 
-                          {/* GST / Role */}
+                          {/* Industry */}
                           <div className="text-[13px] font-medium text-[#64748b] truncate py-1 text-left uppercase">
-                            {c.gstNumber || '—'}
+                            {c.industry || '—'}
                           </div>
 
-                          {/* Email */}
-                          <div className="text-[13px] font-medium text-[#64748b] truncate py-1 text-left lowercase">
-                            {c.email || '—'}
+                          {/* Location */}
+                          <div className="text-[13px] font-medium text-slate-500 truncate py-1 text-left flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                            {c.location || 'N/A'}
                           </div>
 
-                          {/* Contact Icons */}
-                          <div className="flex items-center justify-start gap-2 py-1" onClick={(e) => e.stopPropagation()}>
-                            <button className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all" title="Email Client">
-                              <FiMail size={14} />
-                            </button>
-                            <button className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all" title="Call Client">
-                              <FiPhone size={14} />
-                            </button>
+                          {/* Login Access / Credentials */}
+                          <div className="py-1">
+                            {c.portalEmail ? (
+                              <div className="flex flex-col">
+                                <p className="text-[11px] font-bold text-slate-700 truncate lowercase">{c.portalEmail}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <FiLock size={10} className="text-emerald-500" />
+                                  <p className="text-[10px] font-black text-emerald-600 tracking-widest">{c.portalPassword}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 font-medium">No Access Generated</span>
+                            )}
                           </div>
 
                           {/* Arrow */}
@@ -675,7 +988,7 @@ const CRMDashboard = () => {
                           </div>
                         </div>
                       ))
-                    )}
+                    })()}
                   </div>
 
                   {/* Floating Action Bar */}
@@ -697,7 +1010,7 @@ const CRMDashboard = () => {
                                 onClick={() => deleteMultipleClients(selectedClients)}
                                 className="text-rose-400 hover:text-rose-300 flex items-center gap-2 transition-colors"
                               >
-                                <FiTrash2 className="w-4 h-4 stroke-[2.5]" /> Remove
+                                <FiTrash className="w-4 h-4 stroke-[2.5]" /> Remove
                               </button>
                             </div>
                             <button
@@ -730,97 +1043,215 @@ const CRMDashboard = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="text-left">
                     <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>CRM Dashboard</h1>
-                    <p className="text-sm font-medium text-[#9B9BAD] mt-1">Real-time performance metrics</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button onClick={handleExport} className="px-5 py-2.5 rounded-xl bg-white border border-[#F4F3EF] text-[#0D47A1] text-sm font-bold flex items-center gap-2 hover:bg-gray-50 transition-all shadow-sm">
-                      <FiDownload className="w-4 h-4" />
-                      Export Report
+                  <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
+                    {/* Date Filter Component */}
+                    <div className="relative" ref={mainDateFilterRef}>
+                      <button
+                        onClick={() => setShowDateFilter(!showDateFilter)}
+                        className="flex items-center gap-2 px-6 py-3.5 bg-[#EEF2FB] text-[#1B4DA0] rounded-2xl hover:bg-[#E0E7FF] transition-all shadow-sm font-bold"
+                      >
+                        <FiCalendar className="w-5 h-5" />
+                        <span className="text-sm">{getFilterLabel()}</span>
+                        <FiChevronDown className={`w-4 h-4 transition-transform ${showDateFilter ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {/* Dropdown UI */}
+                      <AnimatePresence>
+                        {showDateFilter && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute right-0 mt-3 w-80 bg-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[#F4F3EF] z-50 overflow-hidden text-left"
+                          >
+                            <div className="p-6 border-b border-[#F4F3EF] bg-[#FAFAFA]">
+                              <p className="text-sm font-black text-[#1A1A2E] uppercase tracking-widest">Select Time Period</p>
+                            </div>
+
+                            <div className="flex border-b border-[#F4F3EF] bg-[#FDFDFD]">
+                              {['all', 'last7days', 'year', 'month', 'date'].map((type) => (
+                                <button
+                                  key={type}
+                                  onClick={() => setDateFilter({ ...dateFilter, filterType: type })}
+                                  className={`flex-1 px-2 py-4 text-[9px] font-black uppercase tracking-widest transition-all ${dateFilter.filterType === type
+                                    ? 'text-[#1B4DA0] bg-white border-b-2 border-[#1B4DA0]'
+                                    : 'text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-[#F4F3EF]'
+                                    }`}
+                                >
+                                  {type === 'all' ? 'All' : type === 'last7days' ? 'Wk' : type}
+                                </button>
+                              ))}
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                              {(dateFilter.filterType === 'year' || dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Target Year</label>
+                                  <select
+                                    value={dateFilter.year}
+                                    onChange={(e) => setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })}
+                                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all appearance-none cursor-pointer"
+                                  >
+                                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                  </select>
+                                </div>
+                              )}
+
+                              {(dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Focus Month</label>
+                                  <select
+                                    value={dateFilter.month}
+                                    onChange={(e) => setDateFilter({ ...dateFilter, month: parseInt(e.target.value) })}
+                                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all appearance-none cursor-pointer"
+                                  >
+                                    {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                                  </select>
+                                </div>
+                              )}
+
+                              {dateFilter.filterType === 'date' && (
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Exact Date</label>
+                                  <div
+                                    className="w-full bg-[#F4F3EF] rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] cursor-pointer group"
+                                    onClick={() => openDatePicker(dashboardDateInputRef)}
+                                  >
+                                    <input
+                                      ref={dashboardDateInputRef}
+                                      type="date"
+                                      value={dateFilter.date}
+                                      onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
+                                      className="w-full bg-transparent border-0 outline-none cursor-pointer"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              <button
+                                onClick={() => setShowDateFilter(false)}
+                                className="w-full py-4 bg-[#1B4DA0] text-white rounded-[20px] text-xs font-black uppercase tracking-[3px] shadow-xl shadow-blue-500/20 hover:bg-[#0D47A1] transition-all"
+                              >
+                                Apply Analytics
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <button
+                      onClick={() => setActiveTab('My Team')}
+                      className="px-8 py-3.5 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-[#0D47A1] transition-all flex items-center gap-2"
+                    >
+                      View Team
                     </button>
                   </div>
                 </div>
 
-                <StatsBar stats={statsBarData} />
-
-                <div className="bg-white rounded-[32px] p-6 shadow-sm border border-[#F4F3EF]">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2.5">Start Date</p>
-                      <input type="date" className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2.5">End Date</p>
-                      <input type="date" className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10" value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2.5">Sales Rep</p>
-                      <select className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10 appearance-none" value={filters.rep} onChange={e => setFilters(f => ({ ...f, rep: e.target.value }))}>
-                        {reps.map(r => <option key={r} value={r}>{r}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2.5">Segment</p>
-                      <select className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10 appearance-none" value={filters.segment} onChange={e => setFilters(f => ({ ...f, segment: e.target.value }))}>
-                        {segments.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                  <StatCard
+                    title="New Leads"
+                    value={totalLeads}
+                    icon={FiTrendingUp}
+                    color="blue"
+                  />
+                  <StatCard
+                    title="Pipeline Open"
+                    value={pipelineOpen}
+                    icon={FiActivity}
+                    color="blue"
+                    change={totalLeads ? `${Math.round(pipelineOpen / totalLeads * 100)}%` : '0%'}
+                  />
+                  <StatCard
+                    title="Converted"
+                    value={converted}
+                    icon={FiZap}
+                    color="blue"
+                    change={totalLeads ? `${Math.round(converted / totalLeads * 100)}%` : '0%'}
+                  />
+                  <StatCard
+                    title="Conv. Rate"
+                    value={`${conversionRate}%`}
+                    icon={FiTarget}
+                    color="blue"
+                  />
+                  <StatCard
+                    title="Sales Reps"
+                    value={Math.max(0, reps.length - 1)}
+                    icon={FiUsers}
+                    color="blue"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF]">
-                    <h3 className="text-xl font-bold text-[#1A1A2E] mb-6 tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Sales Trend</h3>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="bg-white rounded-[40px] p-10 shadow-sm border border-[#F4F3EF]">
+                    <div className="flex items-center justify-between mb-8 text-left">
+                      <div>
+                        <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Performance Trend</h3>
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">Lead volume over time</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-2xl bg-[#F8FAFF] flex items-center justify-center text-[#1B4DA0]">
+                        <FiActivity size={20} />
+                      </div>
+                    </div>
                     <div className="h-80">
                       <Line data={lineData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
                     </div>
                   </div>
-                  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF]">
-                    <h3 className="text-xl font-bold text-[#1A1A2E] mb-6 tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Segmentation</h3>
+                  <div className="bg-white rounded-[40px] p-10 shadow-sm border border-[#F4F3EF]">
+                    <div className="flex items-center justify-between mb-8 text-left">
+                      <div>
+                        <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Market Segmentation</h3>
+                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">Lead distribution by sector</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-2xl bg-[#F8FAFF] flex items-center justify-center text-[#1B4DA0]">
+                        <FiGrid size={20} />
+                      </div>
+                    </div>
                     <div className="h-80">
-                      <Doughnut data={pieData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { weight: 'bold', size: 10 } } } } }} />
+                      <Doughnut data={pieData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 25, font: { weight: 'bold', size: 10, family: 'Calibri' } } } } }} />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF]">
-                  <h3 className="text-xl font-bold text-[#1A1A2E] mb-6 tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Team Performance</h3>
+                <div className="bg-white rounded-[40px] p-10 shadow-sm border border-[#F4F3EF]">
+                  <div className="flex items-center justify-between mb-8 text-left">
+                    <div>
+                      <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Team Performance Analysis</h3>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">Conversion metrics per representative</p>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-blue-400" />
+                        <span className="text-[10px] font-bold text-[#6B6B7E] uppercase">Total Leads</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                        <span className="text-[10px] font-bold text-[#6B6B7E] uppercase">Converted</span>
+                      </div>
+                    </div>
+                  </div>
                   <div className="h-96">
                     <Bar
                       data={barData}
                       options={{
                         responsive: true,
                         maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
                         scales: { x: { stacked: false, grid: { display: false } }, y: { beginAtZero: true, grid: { color: '#F4F3EF' } } },
                       }}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF] flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Acquisition Cost</p>
-                      <p className="mt-2 text-3xl font-black text-[#1A1A2E]">{cac ? `₹${cac}` : '—'}</p>
-                    </div>
-                    <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 shadow-sm shadow-rose-500/10">
-                      <FiDollarSign className="w-7 h-7" />
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF] flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Lifetime Value</p>
-                      <p className="mt-2 text-3xl font-black text-[#1A1A2E]">{ltv ? `₹${ltv}` : '—'}</p>
-                    </div>
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-500 shadow-sm shadow-emerald-500/10">
-                      <FiDollarSign className="w-7 h-7" />
-                    </div>
-                  </div>
-                </div>
               </motion.div>
             )}
 
             {activeTab === 'Client Pipeline' && (
-              <ClientPipelineTab />
+              <ClientPipelineTab clients={pipelineClients} setClients={setPipelineClients} />
             )}
 
             {activeTab === 'My Team' && (
@@ -844,35 +1275,13 @@ const CRMDashboard = () => {
             )}
 
             {activeTab === 'Report to Client' && (
-              <motion.div
-                key="report_client"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="bg-white rounded-[32px] p-12 text-center border border-[#F4F3EF]"
-              >
-                <div className="w-20 h-20 bg-teal-50 text-teal-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                  <FiClipboard className="w-10 h-10" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Report to Client</h3>
-                <p className="text-[#9B9BAD] max-w-md mx-auto mt-2">Generate and manage performance reports for your clients.</p>
-              </motion.div>
+              <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Preparing Analytics...</div>}>
+                <ClientReportingTab />
+              </Suspense>
             )}
 
             {activeTab === 'My Profile' && (
-              <motion.div
-                key="profile"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="bg-white rounded-[32px] p-12 text-center border border-[#F4F3EF]"
-              >
-                <div className="w-20 h-20 bg-purple-50 text-purple-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                  <FiUser className="w-10 h-10" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Profile</h3>
-                <p className="text-[#9B9BAD] max-w-md mx-auto mt-2">Manage your personal settings and profile information.</p>
-              </motion.div>
+              <MyProfileTab onProfileUpdate={refreshUserInfo} />
             )}
 
             {activeTab === 'Reports' && (
@@ -890,11 +1299,17 @@ const CRMDashboard = () => {
                 <p className="text-[#9B9BAD] max-w-md mx-auto mt-2">Comprehensive CRM analytics and reporting module is being prepared for your account.</p>
               </motion.div>
             )}
+
+            {activeTab === 'Notes' && (
+              <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Notes...</div>}>
+                <NotesTab department="CRM" />
+              </Suspense>
+            )}
           </AnimatePresence>
 
           <AnimatePresence>
-          {isAddOpen && createPortal(
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
+            {isAddOpen && createPortal(
+              <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -914,8 +1329,8 @@ const CRMDashboard = () => {
                         </p>
                       </div>
                       {!submitting && (
-                        <button 
-                          onClick={() => setIsAddOpen(false)} 
+                        <button
+                          onClick={() => setIsAddOpen(false)}
                           className="w-14 h-14 rounded-2xl bg-[#F4F3EF] text-[#1A1A2E] hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center shadow-sm border border-[#E8E7E2]"
                         >
                           <FiX className="w-6 h-6" />
@@ -1151,9 +1566,9 @@ const CRMDashboard = () => {
                     )}
                   </div>
                 </motion.div>
-            </div>,
-            document.body
-          )}
+              </div>,
+              document.body
+            )}
           </AnimatePresence>
 
           {/* Generate Offer Modal */}
@@ -1377,78 +1792,7 @@ const CRMDashboard = () => {
             )}
           </AnimatePresence>
 
-          {/* View Client Modal */}
-          <AnimatePresence>
-            {isViewOpen && viewClient && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setIsViewOpen(false)}
-                  className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-sm"
-                />
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                  className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden"
-                >
-                  <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center overflow-hidden p-2 shadow-sm">
-                        {viewClient.logoUrl ? (
-                          <img src={viewClient.logoUrl} alt={viewClient.company} className="w-full h-full object-contain" />
-                        ) : (
-                          <div className="w-full h-full bg-[#0D47A1]/10 flex items-center justify-center text-[#0D47A1] font-bold text-lg">
-                            {String(viewClient.company || 'C').charAt(0)}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-[#1A1A2E]">{viewClient.company}</h3>
-                        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-0.5">Client Profile</p>
-                      </div>
-                    </div>
-                    <button onClick={() => setIsViewOpen(false)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center">
-                      <FiX />
-                    </button>
-                  </div>
-                  <div className="p-10 grid grid-cols-2 gap-8">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">GST Number</p>
-                      <p className="text-sm font-bold text-[#1A1A2E]">{viewClient.gst || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Owner / Director</p>
-                      <p className="text-sm font-bold text-[#1A1A2E]">{viewClient.owner || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address</p>
-                      <p className="text-sm font-bold text-[#1A1A2E] truncate">{viewClient.email || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Contact Phone</p>
-                      <p className="text-sm font-bold text-[#1A1A2E]">{viewClient.phone || '—'}</p>
-                    </div>
-                    <div className="col-span-2 pt-4 border-t border-[#F4F3EF]">
-                      <div className="flex items-center justify-between bg-[#F8FAFF] p-4 rounded-2xl border border-[#EEF2FB]">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                            <FiMail size={14} />
-                          </div>
-                          <p className="text-[10px] font-bold text-[#1A1A2E] uppercase tracking-widest">Account Status</p>
-                        </div>
-                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-widest border border-emerald-100">
-                          {viewClient.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
+          {/* Client Detail Drawer handled at top level */}
         </div>
       </div>
     </AdminLayout>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUsers,
@@ -235,166 +236,149 @@ const CRMTeamTab = () => {
         )}
       </AnimatePresence>
 
-      {/* Invite Member Modal - TWO COLUMN LAYOUT */}
-      <AnimatePresence>
-        {showInviteModal && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowInviteModal(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-[720px] bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col"
-            >
-              {/* Modal Header */}
-              <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#FAFAF9]">
-                <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  Add Team Member
-                </h3>
-                <button
-                  onClick={() => setShowInviteModal(false)}
-                  className="w-10 h-10 rounded-2xl bg-white text-[#1A1A2E] hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center border border-[#F4F3EF] shadow-sm"
+      {/* Add/Invite Team Member Modal */}
+      {createPortal(
+        <AnimatePresence>
+          {showInviteModal && (
+            <motion.div key="kam-invite-modal" className="fixed inset-0 z-[10001] pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowInviteModal(false)}
+                className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto z-[10001]"
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden relative z-[10002]"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <FiX className="w-5 h-5" />
-                </button>
-              </div>
+                  {/* Modal Header */}
+                  <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                    <div>
+                      <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                        Add Team Member
+                      </h2>
 
-              {/* Modal Body - Grid Layout */}
-              <div className="p-8 space-y-6 bg-white max-h-[75vh] overflow-y-auto custom-scrollbar">
-                <div className="flex flex-col items-center mb-6">
-                  <div className="w-24 h-24 rounded-[32px] bg-[#F4F3EF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center text-[#9B9BAD] hover:border-[#1B4DA0] hover:text-[#1B4DA0] cursor-pointer transition-all group/photo">
-                    <FiUsers size={32} className="group-hover/photo:scale-110 transition-transform" />
+                    </div>
+                    <button
+                      onClick={() => setShowInviteModal(false)}
+                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                    >
+                      <FiX size={18} />
+                    </button>
                   </div>
-                  <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-4">PROFILE PHOTO (MAX 1MB)</p>
-                </div>
 
-                <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1 flex items-center gap-2">FULL NAME <span className="text-rose-500">*</span></label>
-                    <div className="relative group">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                        <FiUsers size={15} />
+                  {/* Modal Body */}
+                  <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    {/* Profile Photo Section */}
+                    <div className="flex flex-col items-center justify-center pb-4">
+                      <div className="relative group">
+                        <div className="w-24 h-24 rounded-[32px] bg-[#F4F3EF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center overflow-hidden transition-all group-hover:border-[#1B4DA0]/50">
+                          <FiUsers size={32} className="text-[#C5C5D2]" />
+                          <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                            <FiEdit2 className="text-white w-6 h-6 hover:scale-110 transition-transform" />
+                            <input type="file" className="hidden" accept="image/*" />
+                          </label>
+                        </div>
                       </div>
-                      <input
-                        type="text"
-                        className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[16px] px-12 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/10"
-                        placeholder="e.g. John Doe"
-                      />
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mt-3">Profile Photo (Max 1MB)</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Full Name *</label>
+                        <div className="relative flex items-center">
+                          <FiUsers className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="text" required placeholder="e.g. John Doe"
+                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Employee ID</label>
+                        <div className="relative flex items-center">
+                          <FiHash className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="text" placeholder="e.g. CRM-0042"
+                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address *</label>
+                        <div className="relative flex items-center">
+                          <FiMail className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="email" required placeholder="john@mabicons.com"
+                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number *</label>
+                        <div className="relative flex items-center">
+                          <FiPhone className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="tel" required placeholder="9876543210" maxLength="10"
+                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Department</label>
+                        <div className="relative flex items-center">
+                          <FiBriefcase className="absolute left-4 text-[#C5C5D2]" />
+                          <select className="w-full pl-11 pr-12 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all appearance-none cursor-pointer">
+                            <option value="CRM Department">CRM Department</option>
+                            <option value="Sales Team">Sales Team</option>
+                            <option value="Client Relations">Client Relations</option>
+                          </select>
+                          <FiChevronDown className="absolute right-4 text-[#9B9BAD] pointer-events-none" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>
+                        <div className="relative flex items-center">
+                          <FiCalendar className="absolute left-4 text-[#C5C5D2]" />
+                          <input type="date"
+                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Monthly CRM Target</label>
+                      <div className="relative flex items-center">
+                        <FiTarget className="absolute left-4 text-[#C5C5D2]" />
+                        <input type="number" placeholder="e.g. 10"
+                          className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">EMPLOYEE ID</label>
-                    <div className="relative group">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                        <FiHash size={15} />
-                      </div>
-                      <input
-                        type="text"
-                        className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[16px] px-12 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/10"
-                        placeholder="e.g. MAB-0042"
-                      />
-                    </div>
+                  {/* Modal Footer */}
+                  <div className="px-10 py-6 bg-white border-t border-[#F4F3EF] flex items-center gap-4">
+                    <button
+                      onClick={() => setShowInviteModal(false)}
+                      className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { setShowInviteModal(false); toast.success("Team member onboarded successfully"); }}
+                      className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#1a3a82] transition-all shadow-lg shadow-[#1B4DA0]/20 active:scale-95"
+                    >
+                      Onboard Member
+                    </button>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1 flex items-center gap-2">EMAIL ADDRESS <span className="text-rose-500">*</span></label>
-                    <div className="relative group">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                        <FiMail size={15} />
-                      </div>
-                      <input
-                        type="email"
-                        className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[16px] px-12 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/10"
-                        placeholder="john@mabicons.com"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">PHONE NUMBER * (10 DIGITS)</label>
-                    <div className="relative group">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                        <FiPhone size={15} />
-                      </div>
-                      <input
-                        type="tel"
-                        className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[16px] px-12 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/10"
-                        placeholder="9876543210"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">DEPARTMENT</label>
-                    <div className="relative group">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                        <FiBriefcase size={15} />
-                      </div>
-                      <select className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[16px] px-12 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none appearance-none cursor-pointer focus:bg-white focus:border-[#1B4DA0]/10">
-                        <option>CRM Department</option>
-                        <option>Sales Team</option>
-                        <option>Client Relations</option>
-                      </select>
-                      <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={15} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">JOINING DATE</label>
-                    <div className="relative group">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                        <FiCalendar size={15} />
-                      </div>
-                      <input
-                        type="text"
-                        className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[16px] px-12 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/10"
-                        placeholder="DD-MM-YYYY"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">MONTHLY CRM TARGET</label>
-                    <div className="relative group">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                        <FiTarget size={15} />
-                      </div>
-                      <input
-                        type="text"
-                        className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[16px] px-12 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]/10"
-                        placeholder="e.g. 10"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="px-10 py-6 bg-[#FAFAF9] border-t border-[#F4F3EF] flex gap-5">
-                <button
-                  onClick={() => setShowInviteModal(false)}
-                  className="flex-1 py-4 bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] rounded-[20px] text-[11px] font-black uppercase tracking-[3px] hover:bg-rose-50 hover:text-rose-500 hover:border-rose-100 transition-all active:scale-95 shadow-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => { setShowInviteModal(false); toast.success("Team member onboarded successfully"); }}
-                  className="flex-[1.5] py-4 bg-[#1B4DA0] text-white rounded-[20px] text-[11px] font-black uppercase tracking-[3px] shadow-xl shadow-blue-500/20 hover:bg-[#1a3a82] active:scale-95 transition-all"
-                >
-                  ADD MEMBER
-                </button>
-              </div>
+                </motion.div>
+              </motion.div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+        , document.body)}
     </div>
   );
 };
