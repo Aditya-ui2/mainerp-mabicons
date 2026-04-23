@@ -136,8 +136,43 @@ const sidebarConfig = [
       { id: 4, title: 'Work Handover', icon: FiShare2 },
       { id: 5, title: 'Report to Client', icon: FiClipboard },
     ]
-  },
+  }
 ];
+
+const STAGE_COLORS = {
+  "All Clients": {
+    bg: "bg-slate-50",
+    border: "border-slate-200",
+    dot: "bg-slate-400",
+    count: "bg-slate-100 text-slate-600",
+  },
+  "Finalize": {
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    dot: "bg-amber-400",
+    count: "bg-amber-100 text-amber-600",
+  },
+  "Generate Password": {
+    bg: "bg-purple-50",
+    border: "border-purple-200",
+    dot: "bg-purple-400",
+    count: "bg-purple-100 text-purple-600",
+  },
+};
+
+const getAvatarColor = (name) => {
+  const colors = [
+    'bg-gradient-to-br from-blue-500 to-indigo-600',
+    'bg-gradient-to-br from-emerald-500 to-teal-600',
+    'bg-gradient-to-br from-amber-500 to-orange-600',
+    'bg-gradient-to-br from-fuchsia-500 to-purple-600',
+    'bg-gradient-to-br from-rose-500 to-pink-600',
+    'bg-gradient-to-br from-cyan-500 to-blue-600'
+  ];
+  if (!name) return colors[0];
+  const charCode = name.charCodeAt(0);
+  return colors[charCode % colors.length];
+};
 
 const dashboardStyles = `
   .custom-scrollbar::-webkit-scrollbar {
@@ -689,140 +724,6 @@ const CRMDashboard = () => {
       isLoading={loading}
       bottomTabName="My Profile"
     >
-      {/* Client Detail Drawer */}
-      <AnimatePresence>
-        {selectedClientDetail && createPortal(
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[#1A1A2E]/60 backdrop-blur-md z-[99998]"
-              onClick={() => setSelectedClientDetail(null)}
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full sm:w-[620px] bg-white z-[99999] overflow-y-auto shadow-[-20px_0_80px_rgba(0,0,0,0.25)] flex flex-col"
-            >
-              <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
-                <div className="flex-1 text-left">
-                  <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    Client Profile
-                  </h2>
-                </div>
-                <button
-                  onClick={() => setSelectedClientDetail(null)}
-                  className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm outline-none"
-                >
-                  <FiX size={24} />
-                </button>
-              </div>
-
-              <div className="flex-1 p-8 space-y-10 custom-scrollbar">
-                <div className="space-y-10">
-                  <div className="flex flex-col items-center justify-center text-center py-4">
-                    <div className="relative group">
-                      <div className={`w-32 h-32 rounded-[40px] flex items-center justify-center text-white text-4xl font-black shadow-2xl transition-transform duration-500 border-4 border-white bg-gradient-to-br from-[#1B4DA0] to-[#0D47A1]`}>
-                        {String(selectedClientDetail.companyName || selectedClientDetail.company || selectedClientDetail.name || 'C').substring(0, 1).toUpperCase()}
-                      </div>
-                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-[#E8E7E2] shadow-lg flex items-center justify-center text-emerald-500">
-                        <div className="absolute inset-0 bg-emerald-500 rounded-2xl flex items-center justify-center">
-                          <FiCheckSquare size={18} className="text-white" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-8 space-y-1 w-full text-center">
-                      <h3 className="text-3xl font-black text-[#1A1A2E] tracking-tight flex items-center justify-center gap-3">
-                        {selectedClientDetail.companyName || selectedClientDetail.company || selectedClientDetail.name}
-                      </h3>
-                      <div className="flex items-center justify-center gap-3 mt-1.5 overflow-hidden">
-                        <span className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px]">{selectedClientDetail.industry || 'CLIENT'}</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
-                        <span className="text-[11px] font-black uppercase tracking-[4px] text-emerald-600">
-                          {selectedClientDetail.stage || 'ACTIVE'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-10 shadow-sm">
-                    <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-                      <div className="space-y-2 text-left">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Location</span>
-                        <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
-                          <FiMapPin size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.location || "Not specified"}
-                        </p>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Contact Person</span>
-                        <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
-                          <FiUser size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.contactPerson || selectedClientDetail.owner || "N/A"}
-                        </p>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deal Value</span>
-                        <p className="text-base font-black text-emerald-600 flex items-center gap-2">
-                          <FiDollarSign size={16} className="shrink-0" /> {selectedClientDetail.value || '₹0'}
-                        </p>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Last Activity</span>
-                        <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
-                          <FiClock size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.lastContact || "Updated Today"}
-                        </p>
-                      </div>
-                    </div>
-                    {(selectedClientDetail.portalPassword || selectedClientDetail.portalEmail) && (
-                      <div className="p-8 bg-purple-50 rounded-[40px] border border-purple-100/50 space-y-6 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-100/30 rounded-bl-[80px] -mr-8 -mt-8" />
-                        <div className="flex items-center gap-3 relative z-10">
-                          <FiZap className="text-purple-500" size={20} />
-                          <h4 className="text-base font-black text-purple-700 uppercase tracking-widest text-left">Portal Access Summary</h4>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10 text-left">
-                          <div className="bg-white p-4 rounded-3xl border border-purple-100 shadow-sm text-left">
-                            <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1.5 text-left">User Email</p>
-                            <p className="text-sm font-bold text-gray-800 break-all">{selectedClientDetail.portalEmail}</p>
-                          </div>
-                          <div className="bg-white p-4 rounded-3xl border border-purple-100 shadow-sm text-left">
-                            <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1.5">Default Password</p>
-                            <p className="text-sm font-black text-purple-600 tracking-[4px]">{selectedClientDetail.portalPassword}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-8 bg-[#FAFAF9] rounded-[32px] border border-[#F4F3EF] gap-6">
-                    <div className="flex items-center gap-4 flex-1 text-left">
-                      <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
-                        <FiMail size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Official Email</p>
-                        <p className="text-sm font-black text-[#1A1A2E]">{selectedClientDetail.email || selectedClientDetail.portalEmail || 'N/A'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 flex-1 text-left">
-                      <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
-                        <FiPhone size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Record</p>
-                        <p className="text-sm font-black text-[#1A1A2E]">{selectedClientDetail.phone || 'N/A'}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </>,
-          document.body
-        )}
-      </AnimatePresence>
       <div style={{ fontFamily: "'Calibri', sans-serif" }}>
         <style>{dashboardStyles}</style>
         <div className="space-y-6 pt-0">
@@ -838,7 +739,7 @@ const CRMDashboard = () => {
               >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="text-left">
-                    <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Client Directory</h1>
+                    <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Client</h1>
                   </div>
 
                 </div>
@@ -925,7 +826,10 @@ const CRMDashboard = () => {
                       }).map((c) => (
                         <div
                           key={c._id || c.id}
-                          onClick={() => { setSelectedClientDetail(c); }}
+                          onClick={() => { 
+                            setSelectedClientDetail(c); 
+                            toast.success(`Viewing ${c.companyName || c.name || 'Client'}`);
+                          }}
                           className="grid grid-cols-[40px_2.5fr_1.5fr_2fr_1.5fr_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
                         >
                           {/* Checkbox */}
@@ -966,17 +870,21 @@ const CRMDashboard = () => {
                           </div>
 
                           {/* Login Access / Credentials */}
-                          <div className="py-1">
+                          <div className="py-1 flex flex-col items-start justify-center min-w-0">
                             {c.portalEmail ? (
-                              <div className="flex flex-col">
-                                <p className="text-[11px] font-bold text-slate-700 truncate lowercase">{c.portalEmail}</p>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                  <FiLock size={10} className="text-emerald-500" />
-                                  <p className="text-[10px] font-black text-emerald-600 tracking-widest">{c.portalPassword}</p>
+                              <>
+                                <p className="text-[11px] font-bold text-slate-700 truncate lowercase text-left w-full">
+                                  {c.portalEmail}
+                                </p>
+                                <div className="flex items-center gap-1.5 mt-0.5 border-l-2 border-emerald-500/20 pl-2">
+                                  <FiLock size={10} className="text-emerald-500 shrink-0" />
+                                  <p className="text-[10px] font-black text-emerald-600 tracking-widest uppercase">
+                                    {c.portalPassword}
+                                  </p>
                                 </div>
-                              </div>
+                              </>
                             ) : (
-                              <span className="text-[11px] text-slate-400 font-medium">No Access Generated</span>
+                              <span className="text-[11px] text-slate-400 font-medium italic opacity-70">No Access Account</span>
                             )}
                           </div>
 
@@ -1792,7 +1700,147 @@ const CRMDashboard = () => {
             )}
           </AnimatePresence>
 
-          {/* Client Detail Drawer handled at top level */}
+          {/* Client Detail Drawer */}
+          <AnimatePresence>
+            {selectedClientDetail && createPortal(
+              <>
+                <motion.div
+                  key="client-drawer-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-[12px] z-[99998]"
+                  onClick={() => setSelectedClientDetail(null)}
+                />
+                <motion.div
+                  key="client-drawer-content"
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                  className="fixed right-0 top-0 h-full w-full sm:w-[680px] bg-white z-[99999] overflow-y-auto shadow-[-20px_0_80px_rgba(0,0,0,0.2)] flex flex-col"
+                >
+                  {/* Sticky Header */}
+                  <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
+                    <div className="flex-1 text-left">
+                      <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
+                        Client Profile
+                      </h2>
+                    </div>
+                    <button
+                      onClick={() => setSelectedClientDetail(null)}
+                      className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm outline-none"
+                    >
+                      <FiX size={24} />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 p-8 space-y-10 custom-scrollbar">
+                    <div className="space-y-10">
+                      {/* Hero Profile Section */}
+                      <div className="flex flex-col items-center justify-center text-center py-4">
+                        <div className="relative group">
+                          <div className={`w-32 h-32 rounded-[40px] flex items-center justify-center text-white text-4xl font-black shadow-2xl transition-transform duration-500 border-4 border-white ${getAvatarColor(selectedClientDetail.companyName || selectedClientDetail.company || selectedClientDetail.name)}`}>
+                            {String(selectedClientDetail.companyName || selectedClientDetail.company || selectedClientDetail.name || 'C').substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-[#E8E7E2] shadow-lg flex items-center justify-center text-emerald-500">
+                            <div className="absolute inset-0 bg-emerald-500 rounded-2xl flex items-center justify-center">
+                              <FiCheckSquare size={18} className="text-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-8 space-y-1 w-full text-center">
+                          <h3 className="text-3xl font-black text-[#1A1A2E] tracking-tight flex items-center justify-center gap-3" style={{ fontFamily: "'Syne', sans-serif" }}>
+                            {selectedClientDetail.companyName || selectedClientDetail.company || selectedClientDetail.name}
+                          </h3>
+                          <div className="flex items-center justify-center gap-3 mt-1.5 overflow-hidden">
+                            <span className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px]">{selectedClientDetail.industry || 'CLIENT'}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                            <span className={`text-[11px] font-black uppercase tracking-[4px] ${STAGE_COLORS[selectedClientDetail.stage]?.count?.split(' ')[1] || 'text-slate-600'}`}>
+                              {selectedClientDetail.stage || 'ALL CLIENTS'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Information Grid Container */}
+                      <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-10 shadow-sm">
+                        <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                          <div className="space-y-2 text-left">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Location</span>
+                            <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                              <FiMapPin size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.location || "Not specified"}
+                            </p>
+                          </div>
+                          <div className="space-y-2 text-left">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Contact Person</span>
+                            <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                              <FiUser size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.contactPerson || selectedClientDetail.owner || "N/A"}
+                            </p>
+                          </div>
+                          <div className="space-y-2 text-left">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Deal Value</span>
+                            <p className="text-base font-black text-emerald-600 flex items-center gap-2">
+                              <FiDollarSign size={16} className="shrink-0" /> {selectedClientDetail.value || '₹0'}
+                            </p>
+                          </div>
+                          <div className="space-y-2 text-left">
+                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Last Activity</span>
+                            <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                              <FiClock size={16} className="text-[#1B4DA0] shrink-0" /> {selectedClientDetail.lastContact || "Updated Today"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Credentials Display */}
+                        {(selectedClientDetail.portalPassword || selectedClientDetail.portalEmail) && (
+                          <div className="p-8 bg-purple-50 rounded-[40px] border border-purple-100/50 space-y-6 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-100/30 rounded-bl-[80px] -mr-8 -mt-8" />
+                            <div className="flex items-center gap-3 relative z-10">
+                              <FiZap className="text-purple-500 fill-purple-500" size={20} />
+                              <h4 className="text-base font-black text-purple-700 uppercase tracking-widest text-left">Portal Access Summary</h4>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10 text-left">
+                              <div className="bg-white p-4 rounded-3xl border border-purple-100 shadow-sm text-left">
+                                <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1.5 text-left">User Email</p>
+                                <p className="text-sm font-bold text-gray-800 break-all">{selectedClientDetail.portalEmail}</p>
+                              </div>
+                              <div className="bg-white p-4 rounded-3xl border border-purple-100 shadow-sm text-left">
+                                <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1.5">Default Password</p>
+                                <p className="text-sm font-black text-purple-600 tracking-[4px]">{selectedClientDetail.portalPassword}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-8 bg-[#FAFAF9] rounded-[32px] border border-[#F4F3EF] gap-6">
+                        <div className="flex items-center gap-4 flex-1 text-left">
+                          <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
+                            <FiMail size={18} />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Official Email</p>
+                            <p className="text-sm font-black text-[#1A1A2E] leading-tight break-all">{selectedClientDetail.email || selectedClientDetail.portalEmail || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 flex-1 text-left">
+                          <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
+                            <FiPhone size={18} />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Record</p>
+                            <p className="text-sm font-black text-[#1A1A2E]">{selectedClientDetail.phone || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </>,
+              document.body
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </AdminLayout>
