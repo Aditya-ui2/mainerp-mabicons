@@ -4,11 +4,14 @@ import {
   X, Mail, Phone, Calendar, ChevronRight, ChevronDown, Plus, Download, Search, Filter,
   User, Briefcase, Tag, AlignLeft, LayoutGrid, List, AlertCircle,
   CheckSquare, Square, Trash2, Send, MapPin, DollarSign, Clock, Award,
-  FileText, Upload, Eye, Video, Star, Zap
+  FileText, Upload, Eye, Video, Star, Zap, Sparkles, Wand2
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import * as pdfjsLib from 'pdfjs-dist';
+import { parseResumeWithAI, rankCandidatesWithAI } from "../../Utilities/geminiService";
+
 import { PIPELINE_STAGES, AVATAR_COLORS, getAvatarColor } from "./candidatesConfig";
 import {
   getAllCandidates,
@@ -23,12 +26,15 @@ import {
   getSharePointCandidates,
   updateSharePointCandidate,
   syncSharePointAll,
+  getResumeBankResumes,
   BASE_URL
 } from "../service/api";
 import {
   FiDatabase, FiRefreshCw, FiUser, FiMail, FiBriefcase, FiCalendar, FiClock,
   FiVideo, FiCopy, FiCheckCircle, FiX, FiRefreshCcw
 } from 'react-icons/fi';
+
+
 
 const STAGE_COLORS = {
   Screening: {
@@ -139,8 +145,18 @@ export default function CandidatesPage({ setActiveTab }) {
     resume: null
   });
 
+  const [isParsing, setIsParsing] = useState(false);
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [suggestedCandidates, setSuggestedCandidates] = useState([]);
   const [availableInterviewers, setAvailableInterviewers] = useState([]);
   const [showInterviewerSuggestions, setShowInterviewerSuggestions] = useState(false);
+
+  useEffect(() => {
+    // Set worker source for pdfjsLib safely inside useEffect
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    }
+  }, []);
 
   useEffect(() => {
     fetchCandidates();
@@ -174,7 +190,9 @@ export default function CandidatesPage({ setActiveTab }) {
           id: p.id || p._id,
           title: p.title || 'Untitled Position',
           clientName: p.clientName || p.client?.companyName || p.client?.name || '',
-          clientId: p.clientId || p.client?.id
+          clientId: p.clientId || p.client?.id,
+          description: p.description || p.jobDescription || '',
+          skills: p.skills || p.requiredSkills || []
         }));
         setPositions(mappedPositions);
       }
@@ -210,16 +228,16 @@ export default function CandidatesPage({ setActiveTab }) {
     try {
       if (candidates.length === 0) setLoading(true);
 
-      // Fetch both sources in parallel
-      const [erpRes, spRes] = await Promise.all([
+      // Fetch all sources in parallel
+      const [erpRes, spRes, bankRes] = await Promise.all([
         getAllCandidates(),
-        getSharePointCandidates().catch(() => ({ success: true, data: [] }))
+        getSharePointCandidates().catch(() => ({ success: true, data: [] })),
+        getResumeBankResumes().catch(() => ({ success: true, data: [] }))
       ]);
 
-      let allMerged = [];
-
+      let mappedERP = [];
       if (erpRes.success) {
-        const mappedERP = erpRes.data.map(c => ({
+        mappedERP = erpRes.data.map(c => ({
           id: c.id,
           name: c.name,
           email: c.email,
@@ -244,11 +262,11 @@ export default function CandidatesPage({ setActiveTab }) {
           source: 'erp',
           raw: c
         }));
-        allMerged = [...allMerged, ...mappedERP];
       }
 
+      let mappedSP = [];
       if (spRes.success && spRes.data) {
-        const mappedSP = spRes.data.map(c => ({
+        mappedSP = spRes.data.map(c => ({
           id: c.sharePointId, // Use SharePoint ID
           name: c.name,
           email: c.email,
@@ -267,10 +285,27 @@ export default function CandidatesPage({ setActiveTab }) {
           source: 'sharepoint',
           raw: c
         }));
-        allMerged = [...allMerged, ...mappedSP];
       }
 
+      // 3. Map Resume Bank candidates
+      const bankData = bankRes.data || bankRes || [];
+      const mappedBank = (Array.isArray(bankData) ? bankData : []).map(c => ({
+        id: c.userId || c.id || `bank_${Math.random()}`,
+        name: c.candidateName || c.name,
+        email: c.email || "",
+        phone: c.contactNo || c.phone || "N/A",
+        role: c.position || c.role || "Resume Bank",
+        stage: "Resume Bank",
+        location: c.location || "Remote",
+        experience: c.experience || "N/A",
+        skills: c.skills || [],
+        avatar: (c.candidateName || c.name || "U")[0].toUpperCase()
+      }));
+
+      // Merge all sources
+      const allMerged = [...mappedERP, ...mappedSP, ...mappedBank];
       setCandidates(allMerged);
+      console.log(`Synced Candidates: ERP(${mappedERP.length}), SP(${mappedSP.length}), Bank(${mappedBank.length})`);
     } catch (error) {
       toast.error("Failed to load candidates");
       console.error(error);
@@ -289,11 +324,140 @@ export default function CandidatesPage({ setActiveTab }) {
 
   const mapFrontendToBackendStage = (uiStage) => {
     switch (uiStage) {
-      case "Offer": return { stage: "Offer Sent", status: "Shortlisted" };
-      case "Offer": return { stage: "Offer Sent", status: "Shortlisted" };
-      case "Shortlisted": return { stage: "Technical Round", status: "Shortlisted" };
-      case "Interview": return { stage: "Technical Round", status: "Interview" };
-      case "Screening": default: return { stage: "Screening", status: "Submitted" };
+      case "Offer":
+        return { stage: "Offer Sent", status: "Shortlisted" };
+      case "Shortlisted":
+        return { stage: "Technical Round", status: "Shortlisted" };
+      case "Interview":
+        return { stage: "Technical Round", status: "Interview" };
+      case "Screening":
+      default:
+        return { stage: "Screening", status: "Submitted" };
+    }
+  };
+
+  const handleAiAutofill = async (file) => {
+    // If no file, perform candidate discovery instead
+    if (!file && candidateForm.positionId) {
+      handleDiscoverCandidates();
+      return;
+    }
+
+    if (!file) {
+      toast.error("Please upload a resume first");
+      return;
+    }
+
+    setIsParsing(true);
+    try {
+      // ... (existing text extraction logic)
+      let text = "";
+      if (file.type === "application/pdf") {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const maxPages = Math.min(pdf.numPages, 3);
+        for (let i = 1; i <= maxPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map(item => item.str).join(" ");
+        }
+      } else {
+        text = await file.text();
+      }
+
+      if (!text) throw new Error("Could not extract text from file");
+
+      const parsedData = await parseResumeWithAI(text);
+      if (parsedData) {
+        setCandidateForm(prev => ({
+          ...prev,
+          name: parsedData.name || prev.name,
+          email: parsedData.email || prev.email,
+          phone: parsedData.phone || prev.phone,
+          location: parsedData.location || prev.location,
+          experience: parsedData.experience || prev.experience,
+          skills: parsedData.skills || prev.skills,
+          currentSalary: parsedData.currentSalary || prev.currentSalary,
+          expectedSalary: parsedData.expectedSalary || prev.expectedSalary,
+          noticePeriod: parsedData.noticePeriod || prev.noticePeriod,
+        }));
+        toast.success("Form autofilled with AI!");
+        
+        // After parsing, automatically discover similar candidates from bank
+        handleDiscoverCandidates(parsedData.skills);
+      }
+    } catch (err) {
+      console.error("AI Autofill Error:", err);
+      toast.error("Failed to parse resume with AI");
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const handleDiscoverCandidates = async (searchSkills = "") => {
+    setIsDiscovering(true);
+    try {
+      const selectedJob = positions.find(p => p.id === candidateForm.positionId);
+      if (!selectedJob) return;
+
+      const jobTitle = selectedJob.title;
+      const jobContext = `${jobTitle} ${selectedJob.skills ? (Array.isArray(selectedJob.skills) ? selectedJob.skills.join(" ") : selectedJob.skills) : ""} ${selectedJob.description || ""}`;
+      
+      const pool = candidates.filter(c => String(c.id) !== String(candidateForm.id));
+      console.log("Candidate Discovery Started. Pool size:", pool.length);
+      
+      if (pool.length === 0) {
+        toast.info("Resume Bank is currently empty. Add more candidates first!");
+        return;
+      }
+
+      // Use AI to rank them with full JD context
+      const rankings = await rankCandidatesWithAI(pool, jobContext + " " + searchSkills);
+      console.log("AI Rankings received:", rankings);
+      
+      if (rankings && rankings.length > 0) {
+        // Map the rankings back to our candidate objects (Enforce string comparison for ID)
+        const matches = rankings.map(rank => {
+          const candidate = pool.find(c => String(c.id) === String(rank.id));
+          if (candidate) {
+            return {
+              ...candidate,
+              matchScore: rank.score,
+              matchReason: rank.reason
+            };
+          }
+          return null;
+        }).filter(Boolean);
+
+        setSuggestedCandidates(matches);
+        if (matches.length > 0) {
+            toast.success(`AI suggested ${matches.length} matches!`);
+        } else {
+            toast.info("AI suggested some people, but we couldn't find them in the list.");
+        }
+      } else {
+        // Fallback to basic search
+        console.log("AI Discovery returned no rankings, using fallback search...");
+        const jobKeywords = (jobTitle + " " + searchSkills).toLowerCase();
+        const matches = pool
+          .filter(c => {
+            const candidateData = ((c.name || "") + " " + (c.role || "") + " " + (Array.isArray(c.skills) ? c.skills.join(" ") : (c.skills || ""))).toLowerCase();
+            return jobKeywords.split(" ").some(word => word.length > 3 && candidateData.includes(word));
+          })
+          .slice(0, 3);
+        
+        setSuggestedCandidates(matches);
+        if (matches.length === 0) {
+          toast.info("No close matches found in the bank.");
+        } else {
+          toast.success(`Found ${matches.length} candidates via smart search!`);
+        }
+      }
+    } catch (err) {
+      console.error("Discovery Error:", err);
+      toast.error("AI Discovery failed");
+    } finally {
+      setIsDiscovering(false);
     }
   };
 
@@ -904,6 +1068,11 @@ Mabicons Recruitment Team`);
                             <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] truncate">
                               {candidate.role}
                             </p>
+                            <div className="flex items-center gap-2 mt-1 opacity-70">
+                              <p className="text-[9px] font-black text-[#1B4DA0] uppercase tracking-wider">{candidate.clientName || 'Direct'}</p>
+                              <span className="w-1 h-1 rounded-full bg-[#C5C5D2]" />
+                              <p className="text-[9px] font-bold text-[#6B6B7E] uppercase">{candidate.source || 'Portal'}</p>
+                            </div>
                           </div>
                         </div>
 
@@ -1004,8 +1173,8 @@ Mabicons Recruitment Team`);
                       {selectedIds.length === candidates.length ? <CheckSquare size={16} /> : <Square size={16} />}
                     </button>
                   </th>
-                  {["Candidate", "Position", "Applied Date", "Pipeline Stage", "Quick Actions", "Actions"].map((h) => (
-                    <th key={h} className={`py-3 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center`}>{h}</th>
+                  {["Candidate", "Job Title", "Client", "Source", "Skills", "Role Type", "Stage", "Actions"].map((h) => (
+                    <th key={h} className={`py-3 text-[10px] font-black uppercase tracking-[2px] text-[#9B9BAD] text-center`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1016,7 +1185,7 @@ Mabicons Recruitment Team`);
                     className={`hover:bg-[#FAFAF8] transition-colors group cursor-pointer ${selectedIds.includes(candidate.id) ? 'bg-blue-50/40' : ''}`}
                     onClick={() => setSelectedCandidate(candidate)}
                   >
-                    <td className="pl-6 pr-2 py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="pl-6 pr-2 py-4" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => toggleSelect(candidate.id)}
                         className={`p-1 rounded-md transition-all ${selectedIds.includes(candidate.id) ? 'text-[#1B4DA0]' : 'text-[#C5C5D2] hover:text-[#1A1A2E]'}`}
@@ -1024,64 +1193,75 @@ Mabicons Recruitment Team`);
                         {selectedIds.includes(candidate.id) ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>
                     </td>
-                    <td className="px-4 py-2">
-                      <div className="flex items-center justify-center gap-3">
-                        <div className={`w-9 h-9 rounded-[12px] flex items-center justify-center text-[10px] font-bold relative border border-white/30 shadow-sm ${getAvatarColor(candidate.name, candidate.avatar)}`}>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center justify-start gap-3 pl-4">
+                        <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center text-[11px] font-bold relative border border-white/30 shadow-sm ${getAvatarColor(candidate.name, candidate.avatar)}`}>
                           {candidate.avatar}
                         </div>
-                        <div>
+                        <div className="text-left">
                           <div className="flex items-center gap-2">
-                            <span className="text-[13px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors">{candidate.name}</span>
-                            <CheckSquare size={10} className="text-emerald-500" />
+                            <span className="text-[13px] font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{candidate.name}</span>
                           </div>
-                          <p className="text-[8px] text-[#9B9BAD] font-bold uppercase tracking-[2px]">{candidate.email.split('@')[0]}</p>
+                          <p className="text-[9px] text-[#9B9BAD] font-bold uppercase tracking-[1px]">{candidate.location || 'N/A'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-2 text-center">
-                      <p className="text-[13px] font-bold text-[#0f172a] dark:text-white">{candidate.role}</p>
-                      <p className="text-[9px] text-[#9B9BAD] font-bold uppercase tracking-wider">{candidate.raw?.position?.department || 'Recruitment'}</p>
+                    <td className="px-4 py-4 text-center">
+                      <p className="text-[12px] font-bold text-[#1A1A2E]">{candidate.role || candidate.displayJobTitle || 'N/A'}</p>
                     </td>
-                    <td className="px-4 py-2 text-center text-[13px] text-[#6B6B7E] font-bold">
-                      {formatDate(candidate.appliedDate)}
+                    <td className="px-4 py-4 text-center">
+                      <div className="px-3 py-1.5 bg-[#F4F3EF] rounded-xl inline-block">
+                        <p className="text-[11px] font-black text-[#6B6B7E] uppercase tracking-wider">{candidate.clientName || 'Direct'}</p>
+                      </div>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        {candidate.source === 'sharepoint' ? (
+                          <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
+                            <FiDatabase size={12} />
+                            <span className="text-[9px] font-black uppercase tracking-widest">SharePoint</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-bold text-[#6B6B7E] uppercase tracking-widest">{candidate.source || 'Direct'}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap gap-1 justify-center max-w-[150px] mx-auto text-left">
+                        {(candidate.skills || []).slice(0, 3).map((skill) => (
+                          <span key={skill} className="text-[9px] bg-blue-50/50 text-[#1B4DA0] px-2 py-0.5 rounded-lg font-bold uppercase tracking-wide border border-[#1B4DA0]/5">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className="text-[10px] font-black text-[#1A1A2E] bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 uppercase tracking-widest">
+                        {candidate.roleType || 'Direct Hire'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <span className={`w-1.5 h-1.5 rounded-full ${STAGE_COLORS[candidate.stage]?.dot || 'bg-slate-400'}`} />
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${STAGE_COLORS[candidate.stage]?.count?.split(' ')[1] || 'text-slate-600'}`}>
+                        <span className={`w-2 h-2 rounded-full ${STAGE_COLORS[candidate.stage]?.dot || 'bg-slate-400'}`} />
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${STAGE_COLORS[candidate.stage]?.count?.split(' ')[1] || 'text-[#1A1A2E]'}`}>
                           {candidate.stage}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center">
-                        <div className="relative inline-flex items-center">
-                          <select
-                            value={candidate.stage}
-                            onChange={(e) => handleStatusChange(candidate.id, e.target.value)}
-                            className="bg-[#F4F3EF] border-0 rounded-lg pl-3 pr-6 py-1.5 text-[9px] font-extrabold uppercase tracking-widest text-[#1B4DA0] outline-none hover:bg-blue-50 transition-all cursor-pointer appearance-none"
-                          >
-                            {PIPELINE_STAGES.map((s) => <option key={s} value={s}>Move to {s}</option>)}
-                          </select>
-                          <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none" />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center">
+                    <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => {
                             if (candidate.cvUrl) {
                               const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
                               window.open(url, '_blank');
                             } else {
-                              toast.error('No CV uploaded for this candidate');
+                              toast.error('No CV uploaded');
                             }
                           }}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-[#F4F3EF] text-[#6B6B7E] rounded-lg text-[11px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+                          className="p-2.5 bg-white text-[#6B6B7E] rounded-xl hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm border border-[#F4F3EF]"
                         >
-                          <FileText size={14} />
-                          View CV
+                          <FileText size={16} />
                         </button>
                       </div>
                     </td>
@@ -1304,34 +1484,6 @@ Mabicons Recruitment Team`);
                           onChange={(e) => setEditCandidate({ ...editCandidate, expectedSalary: e.target.value })}
                         />
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t border-[#F4F3EF] font-black">
-                    <h4 className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest">Skills & Source</h4>
-                    <div className="space-y-2 font-black">
-                      <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 font-black">Skills (comma separated)</label>
-                      <input
-                        className="w-full bg-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none border-2 border-transparent focus:border-[#1B4DA0]/20 transition-all"
-                        value={Array.isArray(editCandidate.skills) ? editCandidate.skills.join(', ') : editCandidate.skills}
-                        onChange={(e) => setEditCandidate({ ...editCandidate, skills: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2 font-black">
-                      <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 font-black">Source</label>
-                      <select
-                        className="w-full bg-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none border-2 border-transparent focus:border-[#1B4DA0]/20 transition-all appearance-none"
-                        value={editCandidate.source}
-                        onChange={(e) => setEditCandidate({ ...editCandidate, source: e.target.value })}
-                      >
-                        <option value="">Select source</option>
-                        <option value="LinkedIn">LinkedIn</option>
-                        <option value="Job Portal">Job Portal</option>
-                        <option value="Referral">Referral</option>
-                        <option value="Direct">Direct</option>
-                        <option value="Social Media">Social Media</option>
-                        <option value="Other">Other</option>
-                      </select>
                     </div>
                   </div>
                 </div>
@@ -1597,26 +1749,133 @@ Mabicons Recruitment Team`);
 
       {/* Add Candidate Modal Placeholder */}
       {isCreateModalOpen && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl transition-all duration-300">
-          <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-500">
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl transition-all duration-300 cursor-pointer"
+          onClick={() => setIsCreateModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-500 cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
               <div>
-                <h3 className="text-2xl font-bold text-[#1A1A2E] text-left" style={{ fontFamily: "'Syne', sans-serif" }}>Register New Candidate</h3>
+                <h3 className="text-2xl font-bold text-[#1A1A2E] text-left" style={{ fontFamily: "'Syne', sans-serif" }}>Add New Candidate</h3>
 
               </div>
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleCreateSubmit} className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
 
                 {/* Form fields start directly */}
+                <div className="space-y-1.5 md:col-span-2 text-left">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center justify-start gap-2 w-full">
+                    Job Opening *
+                  </label>
+                  <div className="relative group">
+                    <select
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                      value={candidateForm.positionId}
+                      onChange={(e) => handlePositionChange(e.target.value)}
+                      required
+                    >
+                      <option value="">Select Opening</option>
+                      {positions.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.title} {p.clientName ? `(${p.clientName})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                  </div>
+                  {candidateForm.positionId && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }} 
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-3 flex items-center justify-between p-4 bg-indigo-50 rounded-2xl border border-indigo-100 shadow-sm"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">AI Matching</span>
+                        <span className="text-[11px] font-bold text-indigo-800">Ready to match with this JD</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAiAutofill(candidateForm.resume)}
+                        disabled={isParsing || isDiscovering}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg group ${
+                          isParsing || isDiscovering
+                            ? 'bg-indigo-100 text-indigo-600 animate-pulse' 
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 active:scale-95 shadow-indigo-200'
+                        }`}
+                      >
+                        <Sparkles size={14} className={`${isParsing ? 'animate-spin' : 'group-hover:rotate-12 transition-transform'}`} />
+                        {isParsing || isDiscovering ? 'Discovery...' : 'Magic Match'}
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* AI Suggested Candidates from Bank */}
+                  <AnimatePresence>
+                    {suggestedCandidates.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }} 
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-4 space-y-3"
+                      >
+                        <div className="flex items-center justify-between px-1">
+                          <span className="text-[9px] font-black text-indigo-600 uppercase tracking-[2px]">Resume Bank Matches</span>
+                          <button type="button" onClick={() => setSuggestedCandidates([])} className="text-[9px] font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest">Clear</button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {suggestedCandidates.map(c => (
+                            <div key={c.id} className="group relative flex items-center gap-3 p-4 bg-white border border-[#F4F3EF] rounded-[24px] hover:border-indigo-300 hover:shadow-xl transition-all cursor-pointer overflow-hidden"
+                              onClick={() => {
+                                setCandidateForm({
+                                  ...candidateForm,
+                                  name: c.name,
+                                  email: c.email,
+                                  phone: c.phone,
+                                  experience: c.experience,
+                                  location: c.location,
+                                  skills: Array.isArray(c.skills) ? c.skills.join(", ") : c.skills
+                                });
+                                setSuggestedCandidates([]);
+                                toast.success(`Selected ${c.name} with AI Match!`);
+                              }}
+                            >
+                              {/* Match Score Badge */}
+                              <div className="absolute top-0 right-0 px-3 py-1 bg-indigo-600 text-white text-[9px] font-black rounded-bl-xl shadow-lg">
+                                {c.matchScore}% MATCH
+                              </div>
+
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white text-sm font-bold shadow-md ${getAvatarColor(c.name, c.avatar)}`}>
+                                {c.avatar}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-black text-[#1A1A2E] truncate">{c.name}</p>
+                                <p className="text-[10px] text-indigo-600 font-black uppercase tracking-wider mb-0.5">{c.matchReason || c.role}</p>
+                                <p className="text-[9px] text-[#9B9BAD] font-bold uppercase truncate opacity-70">{c.experience} Exp • {c.location}</p>
+                              </div>
+                              <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                                <Plus size={18} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2 pl-1">
@@ -1656,6 +1915,7 @@ Mabicons Recruitment Team`);
                     onChange={(e) => setCandidateForm({ ...candidateForm, phone: e.target.value })}
                   />
                 </div>
+
                 <div className="space-y-1.5 md:col-span-2 text-left">
                   <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">
                     Location
@@ -1668,77 +1928,6 @@ Mabicons Recruitment Team`);
                       onChange={(e) => setCandidateForm({ ...candidateForm, location: e.target.value })}
                     />
                     <MapPin size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />
-                  </div>
-                </div>
-
-                {/* Job Details fields continue directly */}
-                <div className="space-y-1.5 text-left">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center justify-start gap-2 w-full">
-                    Target Position *
-                  </label>
-                  <div className="relative group">
-                    <select
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                      value={candidateForm.positionId}
-                      onChange={(e) => handlePositionChange(e.target.value)}
-                      required
-                    >
-                      <option value="">Select Opening (Optional)</option>
-                      {positions.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.title} {p.clientName ? `(${p.clientName})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 text-left">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">
-                    Role Type (Core Matching) *
-                  </label>
-                  <div className="relative group">
-                    <select
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                      value={candidateForm.roleType}
-                      onChange={(e) => setCandidateForm({ ...candidateForm, roleType: e.target.value })}
-                      required
-                    >
-                      <option value="">Select Role Category</option>
-                      <option value="Direct Hire">Direct Hire</option>
-                      <option value="Temporary">Temporary</option>
-                      <option value="Contract">Contract</option>
-                      <option value="Internship">Internship</option>
-                    </select>
-                    <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 text-left">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">
-                    Display Job Title *
-                  </label>
-                  <input
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
-                    placeholder="e.g. Senior Software Engineer"
-                    value={candidateForm.displayJobTitle}
-                    onChange={(e) => setCandidateForm({ ...candidateForm, displayJobTitle: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-1.5 text-left">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">
-                    Client
-                  </label>
-                  <div className="relative group">
-                    <input
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
-                      placeholder="Company Name"
-                      value={candidateForm.clientName}
-                      onChange={(e) => setCandidateForm({ ...candidateForm, clientName: e.target.value })}
-                    />
-                    <Tag size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />
                   </div>
                 </div>
 
@@ -1804,39 +1993,7 @@ Mabicons Recruitment Team`);
 
                 {/* Skills fields continue directly */}
 
-                <div className="space-y-1.5 md:col-span-2 text-left">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">
-                    Skills (comma separated)
-                  </label>
-                  <input
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB]"
-                    placeholder="React, Node.js, MongoDB"
-                    value={candidateForm.skills}
-                    onChange={(e) => setCandidateForm({ ...candidateForm, skills: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-1.5 md:col-span-2 text-left">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">
-                    Source
-                  </label>
-                  <div className="relative group">
-                    <select
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
-                      value={candidateForm.source}
-                      onChange={(e) => setCandidateForm({ ...candidateForm, source: e.target.value })}
-                    >
-                      <option value="">Select candidate source</option>
-                      <option value="LinkedIn">LinkedIn</option>
-                      <option value="Job Portal">Job Portal (Naukri/Indeed)</option>
-                      <option value="Referral">Referral</option>
-                      <option value="Direct/Company Website">Direct/Company Website</option>
-                      <option value="Social Media">Social Media (FB/Insta)</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                  </div>
-                </div>
+                 
 
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2 pl-1">
@@ -1969,43 +2126,6 @@ Mabicons Recruitment Team`);
                 </div>
               </div>
 
-              {/* Section: Position Details */}
-              <div className="space-y-6">
-
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
-                  <input type="text" value={scheduleForm.positionTitle}
-                    onChange={(e) => setScheduleForm(prev => ({ ...prev, positionTitle: e.target.value }))}
-                    placeholder="e.g. Senior Software Engineer"
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
-                  <input type="text" value={scheduleForm.clientName}
-                    onChange={(e) => setScheduleForm(prev => ({ ...prev, clientName: e.target.value }))}
-                    placeholder="e.g. TechCorp India"
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                  />
-                </div>
-
-                <div className="space-y-1.5 text-left">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Round</label>
-                  <div className="relative group">
-                    <select value={scheduleForm.round} onChange={(e) => setScheduleForm(prev => ({ ...prev, round: e.target.value }))}
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12">
-                      <option value="Phone Screening">Phone Screening</option>
-                      <option value="Technical Round">Technical Round</option>
-                      <option value="HR Round">HR Round</option>
-                      <option value="Client Interview">Client Interview</option>
-                      <option value="Final Round">Final Round</option>
-                    </select>
-                    <ChevronRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
-                  </div>
-                </div>
-              </div>
 
               {/* Section: Interview Details */}
               <div className="space-y-6 text-left">

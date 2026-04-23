@@ -23,7 +23,7 @@ import {
   FiActivity,
   FiChevronRight,
 } from 'react-icons/fi';
-import { getDepartmentTeamMembers, createDepartmentTask } from '../../service/api';
+import { getDepartmentTeamMembers, createDepartmentTask } from '../../../service/api';
 
 
 /* ══════════════════════════════════════════════════════ */

@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Filter, Download, UserPlus, FileText, CheckCircle2, ChevronLeft, ChevronRight,
-  Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye, ChevronDown, Pencil, Check
+  Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye, ChevronDown, Pencil, Check,
+  Sparkles, Bot, Wand2
 } from 'lucide-react';
+import { searchResumesWithAI } from '../../../../Utilities/geminiService';
 import { toast } from "sonner";
 import {
   getResumeBankStats,
@@ -446,6 +448,12 @@ const ResumeBankTab = () => {
   const [uploadCandidateName, setUploadCandidateName] = useState('');
   const [uploadPhone, setUploadPhone] = useState('');
 
+  // AI Search State
+  const [isAiMode, setIsAiMode] = useState(false);
+  const [aiQuery, setAiQuery] = useState('');
+  const [isAiSearching, setIsAiSearching] = useState(false);
+  const [aiResults, setAiResults] = useState(null);
+
   // Assignment Modal State
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [allPositions, setAllPositions] = useState([]);
@@ -545,8 +553,33 @@ const ResumeBankTab = () => {
   }, []);
 
   useEffect(() => {
-    fetchResumes();
-  }, [filters, pagination.page, pagination.limit]);
+    if (!isAiMode) {
+      fetchResumes();
+    }
+  }, [filters, pagination.page, pagination.limit, isAiMode]);
+
+  const handleAiSearch = async () => {
+    if (!aiQuery.trim()) return;
+    setIsAiSearching(true);
+    try {
+      // Get all current resumes for context
+      const allResumesResponse = await getResumeBankResumes({ limit: 100 });
+      const allData = allResumesResponse.resumes || [];
+      
+      const matchingIds = await searchResumesWithAI(allData, aiQuery);
+      
+      if (matchingIds && Array.isArray(matchingIds)) {
+        const filtered = allData.filter(r => matchingIds.includes(r.id));
+        setResumes(filtered);
+        setAiResults(filtered.length);
+        toast.success(`AI found ${filtered.length} matching candidates`);
+      }
+    } catch (err) {
+      toast.error("AI Search failed. Check if API Key is set.");
+    } finally {
+      setIsAiSearching(false);
+    }
+  };
 
   // Handlers
   const handleSync = async (source = 's3') => {
@@ -781,39 +814,92 @@ const ResumeBankTab = () => {
       </AnimatePresence>
 
       {/* Control Bar (Unified with Job Openings Style) */}
-      <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-3 flex-wrap">
-        {/* Search Bar */}
-        <div className="relative flex-1 group min-w-[200px]">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+      <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-3 flex-wrap relative overflow-hidden">
+        {/* AI Mode Toggle Background Glow */}
+        {isAiMode && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-gradient-to-r from-violet-500/5 via-fuchsia-500/5 to-blue-500/5 pointer-events-none"
+          />
+        )}
+
+        {/* Search Input Area */}
+        <div className="relative flex-1 group min-w-[300px]">
+          {isAiMode ? (
+            <Bot className="absolute left-5 top-1/2 -translate-y-1/2 text-violet-500 animate-pulse" size={18} />
+          ) : (
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          )}
+          
           <input
             type="text"
-            value={filters.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
-            placeholder="Search by name, expertise, or tech stack..."
-            className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white"
+            value={isAiMode ? aiQuery : filters.search}
+            onChange={(e) => isAiMode ? setAiQuery(e.target.value) : handleFilterChange('search', e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && isAiMode && handleAiSearch()}
+            placeholder={isAiMode ? "Ask Gemini: 'Find me Java experts with 5+ years experience'..." : "Search by name, expertise, or tech stack..."}
+            className={`w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-24 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white ${isAiMode ? 'ring-2 ring-violet-500/20' : 'focus:ring-2 focus:ring-[#F4F3EF]'}`}
           />
+
+          {/* AI Search Action Button inside the input */}
+          {isAiMode && (
+            <button
+              onClick={handleAiSearch}
+              disabled={isAiSearching}
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-700 transition-all flex items-center gap-2 shadow-lg shadow-violet-500/20"
+            >
+              {isAiSearching ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
+              Ask AI
+            </button>
+          )}
         </div>
 
-        {/* Global Roles Filter */}
-        <div className="relative group">
-          <select
-            value={filters.roleType}
-            onChange={(e) => handleFilterChange('roleType', e.target.value)}
-            className="bg-[#F4F3EF] dark:bg-slate-900 text-[11px] font-black text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest hover:bg-[#EEF2FB] dark:hover:bg-slate-700 transition-all"
-          >
-            <option value="">Positions</option>
-            {roleTypes.map(role => (
-              <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
-        </div>
+        {/* AI Toggle Button */}
+        <button
+          onClick={() => {
+            setIsAiMode(!isAiMode);
+            if (isAiMode) {
+                setAiResults(null);
+                fetchResumes();
+            }
+          }}
+          className={`px-4 py-2.5 rounded-xl border-2 flex items-center gap-2 transition-all active:scale-95 ${isAiMode ? 'bg-violet-50 border-violet-200 text-violet-600' : 'bg-white border-[#F4F3EF] text-[#9B9BAD] hover:border-violet-200 hover:text-violet-500'}`}
+        >
+          <Sparkles size={16} className={isAiMode ? 'animate-bounce' : ''} />
+          <span className="text-[11px] font-black uppercase tracking-widest">{isAiMode ? 'AI ON' : 'Smart AI'}</span>
+        </button>
 
+        {/* Global Roles Filter (Hidden in AI mode to avoid confusion) */}
+        {!isAiMode && (
+          <div className="relative group">
+            <select
+              value={filters.roleType}
+              onChange={(e) => handleFilterChange('roleType', e.target.value)}
+              className="bg-[#F4F3EF] dark:bg-slate-900 text-[11px] font-black text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest hover:bg-[#EEF2FB] dark:hover:bg-slate-700 transition-all"
+            >
+              <option value="">Positions</option>
+              {roleTypes.map(role => (
+                <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
+          </div>
+        )}
 
-        {/* Reset Button */}
-        {(filters.search || filters.roleType) && (
+        {/* Reset / Status Labels */}
+        {aiResults !== null && (
+          <div className="px-4 py-1.5 bg-violet-50 text-violet-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+            AI matched: {aiResults}
+          </div>
+        )}
+
+        {(filters.search || filters.roleType || aiResults !== null) && (
           <button
-            onClick={handleResetFilters}
+            onClick={() => {
+                handleResetFilters();
+                setIsAiMode(false);
+                setAiResults(null);
+                setAiQuery('');
+            }}
             className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
           >
             Reset
