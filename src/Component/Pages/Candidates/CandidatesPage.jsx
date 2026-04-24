@@ -27,6 +27,9 @@ import {
   updateSharePointCandidate,
   syncSharePointAll,
   getResumeBankResumes,
+  getDepartmentTeamMembers,
+  getAllKAMMembers,
+  getAllAdmins,
   BASE_URL
 } from "../service/api";
 import {
@@ -110,7 +113,9 @@ export default function CandidatesPage({ setActiveTab }) {
     locationLink: '',
     round: 'Technical Round',
     interviewerName: '',
-    interviewerRole: ''
+    interviewerRole: '',
+    interviewerId: '',
+    interviewerType: 'DepartmentTeam'
   });
   const [schedulingLoading, setSchedulingLoading] = useState(false);
   const [showCvPreview, setShowCvPreview] = useState(false);
@@ -217,8 +222,36 @@ export default function CandidatesPage({ setActiveTab }) {
 
     // 3. Fetch Recruitment Team for Interviewer Suggestions
     try {
-      const teamRes = await axios.get(`${BASE_URL}/employees/department/Recruitment`);
-      setAvailableInterviewers(teamRes.data || []);
+      const [hrRecRes, hrOpsRes, kamRes, adminRes] = await Promise.allSettled([
+        getDepartmentTeamMembers('HR Recruitment'),
+        getDepartmentTeamMembers('HR Operations'),
+        getAllKAMMembers(),
+        getAllAdmins()
+      ]);
+
+      let allMembers = [];
+      const seenIds = new Set();
+
+      [hrRecRes, hrOpsRes, kamRes, adminRes].forEach(res => {
+        if (res.status === 'fulfilled' && res.value) {
+          const data = res.value.members || res.value.data || res.value.admins || (Array.isArray(res.value) ? res.value : []);
+          data.forEach(m => {
+            if (m && m.id && !seenIds.has(m.id)) {
+              seenIds.add(m.id);
+              allMembers.push({
+                id: m.id,
+                name: m.name || m.fullName || 'Unknown',
+                role: m.role || 'Member',
+                department: m.department || 'Recruitment',
+                email: m.email || '',
+                type: res.value.tableName === 'TeamLeaders' ? 'TeamLeader' : 'DepartmentTeam'
+              });
+            }
+          });
+        }
+      });
+
+      setAvailableInterviewers(allMembers);
     } catch (err) {
       console.error('Failed to fetch recruitment team:', err);
     }
@@ -2094,22 +2127,19 @@ Mabicons Recruitment Team`);
                   candidateId: scheduleForm.candidateId,
                   candidateName: scheduleForm.candidateName,
                   candidateEmail: scheduleForm.candidateEmail,
-                  position: scheduleForm.positionTitle,
-                  client: scheduleForm.clientName,
-                  date: scheduleForm.date,
-                  time: scheduleForm.time,
-
-
-                  duration: durationValue + ' mins',
-                  mode: scheduleForm.mode,
-                  subMode: scheduleForm.subMode,
-                  meetLink: scheduleForm.meetingLink,
-                  locationLink: scheduleForm.locationLink,
-                  round: scheduleForm.round,
-                  interviewer: scheduleForm.interviewerName,
-                  interviewerRole: scheduleForm.interviewerRole,
                   positionTitle: scheduleForm.positionTitle,
-                  clientName: scheduleForm.clientName
+                  clientName: scheduleForm.clientName,
+                  interviewType: scheduleForm.round || scheduleForm.interviewType,
+                  interviewDate: scheduleForm.date,
+                  startTime: scheduleForm.time,
+                  duration: durationValue,
+                  meetingType: scheduleForm.mode === "Online" ? "Video" : (scheduleForm.mode === "Offline" ? "In-Person" : "Phone"),
+                  meetingLink: scheduleForm.meetingLink || scheduleForm.locationLink,
+                  interviewerName: scheduleForm.interviewerName,
+                  interviewerRole: scheduleForm.interviewerRole,
+                  interviewerId: scheduleForm.interviewerId || null,
+                  interviewerType: scheduleForm.interviewerType || 'DepartmentTeam',
+                  notes: scheduleForm.notes || ''
                 });
                 toast.success('Interview scheduled successfully!');
                 setIsScheduleOpen(false);
@@ -2288,7 +2318,9 @@ Mabicons Recruitment Team`);
                                 setScheduleForm(prev => ({
                                   ...prev,
                                   interviewerName: hr.name,
-                                  interviewerRole: hr.role || 'HR recruitment'
+                                  interviewerRole: hr.role || 'HR recruitment',
+                                  interviewerId: hr.id,
+                                  interviewerType: hr.type || 'DepartmentTeam'
                                 }));
                                 setShowInterviewerSuggestions(false);
                               }}>

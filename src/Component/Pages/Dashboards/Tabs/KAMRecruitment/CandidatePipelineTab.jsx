@@ -107,18 +107,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     return 'Unknown';
   };
 
-  const [candidates, setCandidates] = useState(() => {
-    try {
-      const c = localStorage.getItem(CACHE_KEY_CANDIDATES);
-      if (c) {
-        const parsed = JSON.parse(c);
-        if (parsed.length > 0) return parsed;
-      }
-      return [];
-    } catch {
-      return [];
-    }
-  });
+  const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -235,46 +224,14 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     };
     fetchPositions();
 
-    const selectedData = localStorage.getItem('kamSelectedResumes');
-    if (selectedData) {
-      try {
-        const resumes = JSON.parse(selectedData);
-        const newCandidatesArr = resumes.map(resume => ({
-          id: Date.now() + Math.random(),
-          name: resume.candidateName || resume.fileName?.replace(/\.[^.]+$/, '') || 'Unknown',
-          email: resume.email || '', phone: resume.phone || '', location: resume.location || '',
-          jobTitle: resume.jobTitle || '', client: resume.client || '', stage: 'Screening',
-          rating: 0, experience: resume.experience || '', currentCTC: resume.currentCTC || '',
-          expectedCTC: resume.expectedCTC || '', noticePeriod: '30 days', skills: resume.skills || [],
-          appliedDate: new Date().toISOString().split('T')[0], lastActivity: new Date().toISOString().split('T')[0],
-          photo: null, source: 'Resume Bank', resumeId: resume.id, pipelineStatus: 'pending',
-        }));
-        setCandidates(prev => [...newCandidatesArr, ...prev]);
-        localStorage.removeItem('kamSelectedResumes');
-      } catch (e) {
-        console.error('Failed to process selected resumes');
-      }
-    }
-
     const handleStorage = (e) => {
       if (e.key === 'kamJobOpenings' && e.newValue) {
         try { setJobOpenings(JSON.parse(e.newValue)); } catch (err) { console.error('Failed to parse job openings update'); }
       }
       if (e.key === 'kamSelectedResumes' && e.newValue) {
         try {
-          const resumes = JSON.parse(e.newValue);
-          const newCandidatesArr = resumes.map(resume => ({
-            id: Date.now() + Math.random(),
-            name: resume.candidateName || resume.fileName?.replace(/\.[^.]+$/, '') || 'Unknown',
-            email: resume.email || '', phone: resume.phone || '', location: resume.location || '',
-            jobTitle: resume.jobTitle || '', client: resume.client || '', stage: 'Screening',
-            rating: 0, experience: resume.experience || '', currentCTC: resume.currentCTC || '',
-            expectedCTC: resume.expectedCTC || '', noticePeriod: '30 days', skills: resume.skills || [],
-            appliedDate: new Date().toISOString().split('T')[0], lastActivity: new Date().toISOString().split('T')[0],
-            photo: null, source: 'Resume Bank', resumeId: resume.id, pipelineStatus: 'pending',
-          }));
-          setCandidates(prev => [...newCandidatesArr, ...prev]);
-          localStorage.removeItem('kamSelectedResumes');
+          // Removed staleness-prone localStorage auto-load for kamSelectedResumes
+          // Candidates should be fetched from the database to ensure data integrity.
         } catch (err) { console.error('Failed to process selected resumes update'); }
       }
     };
@@ -404,8 +361,9 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
       const combined = [...erpMapped, ...spMapped];
       setCandidates(combined);
-      try { localStorage.setItem(CACHE_KEY_CANDIDATES, JSON.stringify(combined)); } catch { }
-    } catch (error) { console.error('Failed to fetch candidates:', error); }
+      setTotalCandidates(combined.length);
+    } catch (error) {
+      console.error('Failed to fetch candidates:', error); }
     finally { setRefreshing(false); }
   }, [filterStage, filterPipelineStatus, searchTerm]);
 

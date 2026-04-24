@@ -1531,7 +1531,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         const val = positionData[key];
         // Skip if undefined, null, or a mock-prefix string
         if (val === undefined || val === null) return;
-        if (typeof val === 'string' && (val.startsWith('mock-') || val === '')) return;
+        if (typeof val === 'string' && (val.startsWith('mock-') || val === '' || val === '00000000-0000-0000-0000-000000000000' || val === '11111111-1111-1111-1111-111111111111')) return;
 
         cleanPositionData[key] = val;
       });

@@ -2291,8 +2291,7 @@ export const sendInterviewReminder = async (interviewId) => {
 export const cancelInterview = async (interviewId, reason) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.delete(`/interview/${interviewId}`, {
-      data: { reason },
+    const response = await axiosInstance.put(`/interview/cancel/${interviewId}`, { reason }, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

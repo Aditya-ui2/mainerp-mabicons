@@ -43,7 +43,9 @@ import {
   getAllClients,
   getDepartmentTeamMembers,
   getSharePointInterviews,
-  syncSharePointAll
+  syncSharePointAll,
+  getAllKAMMembers,
+  getAllAdmins,
 } from '../../../service/api';
 
 /* ── Generate unique Google Meet link ── */
@@ -520,22 +522,40 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
 
     const fetchRecruitmentData = async () => {
       try {
-        const [candidatesData, positionsData, clientsData, hrRecData, hrOpsData] = await Promise.all([
+        const [candRes, posRes, clientRes, hrRecRes, hrOpsRes, kamRes, adminRes] = await Promise.allSettled([
           getAllCandidates(),
           getAllRecruitmentPositions(),
           getAllClients(),
           getDepartmentTeamMembers('HR Recruitment'),
-          getDepartmentTeamMembers('HR Operations')
+          getDepartmentTeamMembers('HR Operations'),
+          getAllKAMMembers(),
+          getAllAdmins()
         ]);
-        setAvailableCandidates(candidatesData.data || []);
-        setAvailablePositions(positionsData.data || []);
-        setAvailableClients(clientsData.data || []);
 
-        const hrStaff = [
-          ...(hrRecData.data || []),
-          ...(hrOpsData.data || [])
-        ];
-        setAvailableInterviewers(hrStaff);
+        if (candRes.status === 'fulfilled') setAvailableCandidates(candRes.value.data || []);
+        if (posRes.status === 'fulfilled') setAvailablePositions(posRes.value.data || []);
+        if (clientRes.status === 'fulfilled') setAvailableClients(clientRes.value.data || []);
+
+        const allStaff = [];
+        const seenIds = new Set();
+
+        [hrRecRes, hrOpsRes, kamRes, adminRes].forEach(res => {
+          if (res.status === 'fulfilled' && res.value) {
+            const data = res.value.members || res.value.data || res.value.admins || (Array.isArray(res.value) ? res.value : []);
+            data.forEach(m => {
+              if (m && m.id && !seenIds.has(m.id)) {
+                seenIds.add(m.id);
+                allStaff.push({
+                  id: m.id,
+                  name: m.name || m.fullName || 'Unknown',
+                  role: m.role || 'Member',
+                  department: m.department || 'Recruitment'
+                });
+              }
+            });
+          }
+        });
+        setAvailableInterviewers(allStaff);
       } catch (err) {
         console.error('Failed to fetch recruitment data:', err);
       }
@@ -1601,7 +1621,7 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
       {/* ── Selection Action Bar ── */}
       <AnimatePresence>
         {selectedRowIds.length > 0 && (
-          <div className="fixed bottom-10 inset-x-0 flex justify-center z-[200] pointer-events-none">
+          <div className="fixed bottom-10 inset-x-0 flex justify-center z-[200] pointer-events-none pl-72">
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}

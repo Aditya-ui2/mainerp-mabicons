@@ -16,6 +16,8 @@ import {
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { getAllCandidates, getSharePointCandidates } from '../../../service/api';
+import { format } from 'date-fns';
 
 // Sub-component defined above to avoid any hoisting confusion
 const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLeft }) => {
@@ -253,6 +255,59 @@ const HiringLifecycleTab = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 
   const [lifecycleData, setLifecycleData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    fetchJoinedCandidates();
+  }, []);
+
+  const fetchJoinedCandidates = async () => {
+    try {
+      setLoading(true);
+      const [erpRes, spRes] = await Promise.all([
+        getAllCandidates({ stage: 'Joined' }),
+        getSharePointCandidates({ stage: 'Joined' }).catch(() => ({ success: true, data: [] }))
+      ]);
+
+      let allJoined = [];
+
+      if (erpRes.success) {
+        allJoined = [...allJoined, ...erpRes.data.map(c => ({
+          id: c.id,
+          candidate: c.name,
+          client: c.client?.companyName || c.client?.name || 'Internal',
+          position: c.position?.title || 'Unknown',
+          joiningDate: c.joiningDate ? format(new Date(c.joiningDate), 'MMM dd, yyyy') : 'TBD',
+          contact: c.phone || c.email || 'N/A',
+          performance: 'Active',
+          status: 'Active',
+          source: 'ERP',
+          completedMilestones: []
+        }))];
+      }
+
+      if (spRes.success && spRes.data) {
+        allJoined = [...allJoined, ...spRes.data.map(c => ({
+          id: c.id || c.sharePointId,
+          candidate: c.name,
+          client: c.client || 'External',
+          position: c.position || 'Unknown',
+          joiningDate: c.joiningDate || c.sharePointCreatedAt ? format(new Date(c.joiningDate || c.sharePointCreatedAt), 'MMM dd, yyyy') : 'TBD',
+          contact: c.phone || c.email || 'N/A',
+          performance: 'Active',
+          status: c.status || 'Active',
+          source: 'SharePoint',
+          completedMilestones: []
+        }))];
+      }
+
+      setLifecycleData(allJoined);
+    } catch (err) {
+      console.error('Failed to fetch joined candidates:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleUpdateMilestone = (month) => {
     if (!selectedCandidate) return;
@@ -321,12 +376,35 @@ const HiringLifecycleTab = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F4F3EF]">
-              {filteredData.map((row) => (
+              {loading ? (
+                <tr>
+                  <td colSpan="3" className="px-8 py-24 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest">Loading candidates...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="px-8 py-24 text-center">
+                    <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest">No joined candidates found</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredData.map((row) => (
                 <tr key={row.id} onClick={() => setSelectedCandidate(row)} className="hover:bg-[#F8FAFF] transition-all group cursor-pointer">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0D47A1] flex items-center justify-center font-bold text-sm border border-blue-100">{row.candidate.charAt(0)}</div>
-                      <div className="text-left font-bold text-sm text-[#1A1A2E]">{row.candidate}</div>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm border ${row.source === 'SharePoint' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'}`}>
+                        {row.candidate?.charAt(0) || '?'}
+                      </div>
+                      <div className="text-left font-bold text-sm text-[#1A1A2E]">
+                        {row.candidate}
+                        {row.source === 'SharePoint' && (
+                          <span className="ml-2 py-0.5 px-1.5 bg-emerald-100 text-emerald-700 text-[8px] rounded uppercase tracking-tighter">SP</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
@@ -341,7 +419,7 @@ const HiringLifecycleTab = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

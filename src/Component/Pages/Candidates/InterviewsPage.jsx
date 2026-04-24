@@ -101,6 +101,7 @@ export default function InterviewsPage() {
     notes: ""
   });
   const [selectedRowIds, setSelectedRowIds] = useState([]);
+  const [isScheduling, setIsScheduling] = useState(false);
 
   useEffect(() => {
     fetchInterviews();
@@ -273,23 +274,18 @@ export default function InterviewsPage() {
 
       staffResults.forEach(res => {
         if (res.status === 'fulfilled' && res.value) {
-          // Exhaustive check for result arrays in common ERP patterns
           const rawData = res.value.members || res.value.admins || res.value.users || res.value.data || res.value.kams || res.value.teamMembers || (Array.isArray(res.value) ? res.value : []);
 
           if (Array.isArray(rawData)) {
             rawData.forEach(s => {
-              const name = s.name || s.fullName || s.userName || s.memberName || s.fullName;
-              if (!name) return;
-
-              const identifier = (s.email || name || "").toLowerCase().trim();
-
-              if (identifier && !seen.has(identifier)) {
-                seen.add(identifier);
+              if (s && s.id && !seen.has(s.id)) {
+                seen.add(s.id);
                 allStaff.push({
                   id: s.id || s._id,
-                  name: name,
+                  name: s.name || s.fullName || s.userName || s.memberName || "Unknown Staff",
                   role: s.designation || s.role || s.jobTitle || s.position?.title || s.roleName || "Team Member",
-                  department: s.department || "General Staff"
+                  department: s.department || "General Staff",
+                  email: s.email || ""
                 });
               }
             });
@@ -534,10 +530,12 @@ export default function InterviewsPage() {
         interviewerType: 'DepartmentTeam'
       };
 
+      setIsScheduling(true);
       const response = await scheduleNewInterview(dataToSubmit);
       if (response.success) {
         toast.success("Interview scheduled successfully!");
         setIsScheduleModalOpen(false);
+        fetchInterviews();
         setInterviewForm({
           candidateId: null,
           candidateName: "",
@@ -561,6 +559,8 @@ export default function InterviewsPage() {
     } catch (error) {
       console.error("Scheduling failed:", error);
       toast.error(error.message || "Failed to schedule interview");
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -573,9 +573,13 @@ export default function InterviewsPage() {
     return interviews.filter(i => {
       // Status/type filter
       let matchesFilter = true;
-      if (filter === "Today") matchesFilter = i.date === new Date().toISOString().split('T')[0];
-      else if (filter === "Video") matchesFilter = i.type === "Video";
-      else if (filter === "Pending") matchesFilter = i.feedbackStatus === "Pending" && i.status === "Completed";
+      if (filter === "Today") {
+        matchesFilter = new Date(i.date).toDateString() === new Date().toDateString();
+      } else if (filter === "Video") {
+        matchesFilter = i.type === "Video";
+      } else if (filter === "Pending") {
+        matchesFilter = i.feedbackStatus === "Pending" && i.status === "Completed";
+      }
 
       // Date filter
       let matchesDate = true;
@@ -583,7 +587,7 @@ export default function InterviewsPage() {
         const interviewDate = new Date(i.date);
         const now = new Date();
         if (dateFilter === "today") {
-          matchesDate = i.date === now.toISOString().split('T')[0];
+          matchesDate = interviewDate.toDateString() === now.toDateString();
         } else if (dateFilter === "week") {
           const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0, 0, 0, 0);
           const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23, 59, 59, 999);
@@ -889,14 +893,18 @@ export default function InterviewsPage() {
 
                 {/* Actions */}
                 <div className="flex items-center justify-center gap-2 py-3 relative" onClick={e => e.stopPropagation()}>
-                  {joinable ? (
+                  {interview.status === 'Cancelled' ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-500 rounded-lg text-xs font-bold border border-rose-100">
+                      <X size={13} /> Cancelled
+                    </div>
+                  ) : joinable ? (
                     <button
                       onClick={() => window.open(interview.meetingLink, '_blank')}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-[#26A69A] text-white rounded-lg text-xs font-bold hover:bg-[#00897B] transition-all shadow-md shadow-[#26A69A]/20 active:scale-95"
                     >
                       <Video size={13} /> Join
                     </button>
-                  ) : (interview.status === 'Completed' || interview.status === 'Cancelled' || interview.status === 'Scheduled' || interview.status === 'In Progress') ? (
+                  ) : (interview.status === 'Completed' || interview.status === 'Scheduled' || interview.status === 'In Progress') ? (
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => {
@@ -963,6 +971,12 @@ export default function InterviewsPage() {
                     <span className="text-[10px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedInterview?.role || 'Unknown Position'}</span>
                     <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
                     <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{selectedInterview?.type}</span>
+                    {selectedInterview?.status === 'Cancelled' && (
+                      <>
+                        <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
+                        <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded uppercase tracking-[2px]">Cancelled</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1554,9 +1568,12 @@ export default function InterviewsPage() {
                     className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
                     Cancel
                   </button>
-                  <button type="submit"
-                    className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-3xl text-sm font-bold shadow-[0_10px_25px_rgba(27,77,160,0.3)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.4)] hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-                    Schedule Interview
+                  <button 
+                    type="submit" 
+                    disabled={isScheduling}
+                    className="flex-[2] bg-[#1A1A2E] text-white py-4 rounded-2xl text-sm font-bold shadow-xl hover:bg-black transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isScheduling ? "Scheduling..." : "Schedule Interview"}
                   </button>
                 </div>
               </form>
@@ -1688,7 +1705,7 @@ export default function InterviewsPage() {
       {/* Floating Bottom Action Bar */}
       <AnimatePresence>
         {selectedRowIds.length > 0 && (
-          <div className="fixed bottom-10 left-0 right-0 z-[150] flex justify-center pointer-events-none">
+          <div className="fixed bottom-10 left-0 right-0 z-[150] flex justify-center pointer-events-none pl-72">
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
