@@ -45,6 +45,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ClientPipelineTab from './Tabs/CRM/ClientPipelineTab';
 import CRMTeamTab from './Tabs/CRM/CRMTeamTab';
 import MyProfileTab from './Tabs/Common/MyProfileTab';
+import AccountsTab from './Tabs/CRM/AccountsTab';
+const MeetingWithClientTab = lazy(() => import('./Tabs/CRM/MeetingWithClientTab'));
 const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 const ClientReportingTab = lazy(() => import('./Tabs/CRM/ClientReportingTab'));
 
@@ -128,14 +130,12 @@ const INITIAL_PIPELINE_CLIENTS = [
 const sidebarConfig = [
   {
     items: [
-      { id: 1, title: 'Dashboard', icon: FiLayout },
-      { id: 2, title: 'Client', icon: FiUsers },
-      { id: 8, title: 'Leads', icon: FiTarget },
+      { id: 6, title: 'Manage team', icon: FiUserPlus },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
-      { id: 7, title: 'Notes', icon: FiEdit3 },
-      { id: 6, title: 'My Team', icon: FiUserPlus },
-      { id: 4, title: 'Work Handover', icon: FiShare2 },
+      { id: 2, title: 'All clients', icon: FiUsers },
+      { id: 9, title: 'Accounts', icon: FiBriefcase },
       { id: 5, title: 'Report to Client', icon: FiClipboard },
+      { id: 10, title: 'Meeting with client', icon: FiCalendar },
     ]
   }
 ];
@@ -730,7 +730,7 @@ const CRMDashboard = () => {
         <style>{dashboardStyles}</style>
         <div className="space-y-6 pt-0">
           <AnimatePresence mode="wait">
-            {activeTab === 'Client' && (
+            {activeTab === 'All clients' && (
               <motion.div
                 key="client"
                 initial={{ opacity: 0, y: 10 }}
@@ -950,24 +950,23 @@ const CRMDashboard = () => {
                 transition={{ duration: 0.4 }}
                 className="space-y-6"
               >
-                  {/* Sticky Welcome Header */}
-                  <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-6 -mx-8 px-8 py-8 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/50">
-                    <div className="flex flex-col items-start text-left">
-                      <h2 className="text-3xl font-black text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>
-                        Welcome {userInfo.name.split(' ')[0]}
-                      </h2>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[4px] mt-1">CRM Overview & Intelligence</p>
-                    </div>
-                    <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
+                {/* Sticky Welcome Header */}
+                <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-4 lg:-mt-6 -mx-4 lg:-mx-6 px-4 lg:px-8 py-6 border-b border-[#F4F3EF] mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="text-left">
+                    <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>
+                      Welcome {userInfo.name.split(' ')[0]}
+                    </h1>
+                  </div>
+                  <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
                     {/* Date Filter Component */}
                     <div className="relative" ref={mainDateFilterRef}>
                       <button
                         onClick={() => setShowDateFilter(!showDateFilter)}
-                        className="flex items-center gap-2 px-6 py-3.5 bg-[#EEF2FB] text-[#1B4DA0] rounded-2xl hover:bg-[#E0E7FF] transition-all shadow-sm font-bold"
+                        className="px-5 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-sm font-bold shadow-sm hover:border-[#E8E7E2] transition-all flex items-center gap-2 active:scale-95"
                       >
-                        <FiCalendar className="w-5 h-5" />
-                        <span className="text-sm">{getFilterLabel()}</span>
-                        <FiChevronDown className={`w-4 h-4 transition-transform ${showDateFilter ? 'rotate-180' : ''}`} />
+                        <FiCalendar className="w-4 h-4 text-[#1B4DA0]" />
+                        <span className="whitespace-nowrap">{getFilterLabel()}</span>
+                        <FiChevronDown className={`w-3.5 h-3.5 ml-1 text-[#9B9BAD] transition-transform ${showDateFilter ? 'rotate-180' : ''}`} />
                       </button>
 
                       {/* Dropdown UI */}
@@ -1056,8 +1055,8 @@ const CRMDashboard = () => {
                     </div>
 
                     <button
-                      onClick={() => setActiveTab('My Team')}
-                      className="px-8 py-3.5 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-[#0D47A1] transition-all flex items-center gap-2"
+                      onClick={() => setActiveTab('Manage team')}
+                      className="px-6 py-2.5 bg-[#0D47A1] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/10 hover:bg-[#0a3a82] transition-all flex items-center justify-center min-w-max active:scale-95"
                     >
                       View Team
                     </button>
@@ -1101,7 +1100,7 @@ const CRMDashboard = () => {
 
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="bg-white rounded-[40px] p-10 shadow-sm border border-[#F4F3EF]">
+                  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF]">
                     <div className="flex items-center justify-between mb-8 text-left">
                       <div>
                         <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Performance Trend</h3>
@@ -1115,7 +1114,7 @@ const CRMDashboard = () => {
                       <Line data={lineData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
                     </div>
                   </div>
-                  <div className="bg-white rounded-[40px] p-10 shadow-sm border border-[#F4F3EF]">
+                  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF]">
                     <div className="flex items-center justify-between mb-8 text-left">
                       <div>
                         <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Market Segmentation</h3>
@@ -1131,7 +1130,7 @@ const CRMDashboard = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-[40px] p-10 shadow-sm border border-[#F4F3EF]">
+                <div className="bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF]">
                   <div className="flex items-center justify-between mb-8 text-left">
                     <div>
                       <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Team Performance Analysis</h3>
@@ -1227,8 +1226,18 @@ const CRMDashboard = () => {
               <ClientPipelineTab clients={pipelineClients} setClients={setPipelineClients} />
             )}
 
-            {activeTab === 'My Team' && (
+            {activeTab === 'Manage team' && (
               <CRMTeamTab />
+            )}
+
+            {activeTab === 'Accounts' && (
+              <AccountsTab />
+            )}
+
+            {activeTab === 'Meeting with client' && (
+              <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Meetings...</div>}>
+                <MeetingWithClientTab />
+              </Suspense>
             )}
 
             {activeTab === 'Work Handover' && (
