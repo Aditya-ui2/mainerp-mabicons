@@ -146,21 +146,32 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
   const [selectedCandidateDetail, setSelectedCandidateDetail] = useState(null);
   const [showDetailSidebar, setShowDetailSidebar] = useState(false);
 
-  const onDragEnd = async (result) => {
-    const { destination, source, draggableId } = result;
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+  const handleDragEnd = async (event, info, candidate) => {
+    const x = info.point.x;
+    const windowWidth = window.innerWidth;
+    const boardWidth = windowWidth - 280; // Account for sidebar
+    const colWidth = boardWidth / 4;
+    
+    let newStage = candidate.stage;
+    if (x < 280 + colWidth) newStage = stageOrder[0];
+    else if (x < 280 + colWidth * 2) newStage = stageOrder[1];
+    else if (x < 280 + colWidth * 3) newStage = stageOrder[2];
+    else newStage = stageOrder[3];
 
-    const candidateId = draggableId;
-    const newStage = destination.droppableId;
-    const now = new Date().toISOString().split('T')[0];
+    if (newStage !== candidate.stage) {
+      const now = new Date().toISOString().split('T')[0];
+      setCandidates(prev => prev.map(c => 
+        String(c.id) === String(candidate.id) 
+          ? { ...c, stage: newStage, lastActivity: now, stageChangedAt: now } 
+          : c
+      ));
 
-    setCandidates(prev => prev.map(c => String(c.id) === String(candidateId) ? { ...c, stage: newStage, lastActivity: now, stageChangedAt: now } : c));
-
-    try {
-      await updateCandidateStatus(candidateId, { stage: newStage });
-    } catch (error) {
-      console.error('Failed to update candidate stage after drag:', error);
+      try {
+        await updateCandidateStatus(candidate.id, { stage: newStage });
+        toast.success(`Candidate moved to ${newStage}`);
+      } catch (error) {
+        console.error('Failed to update candidate status:', error);
+      }
     }
   };
 
@@ -738,154 +749,145 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         </div>
 
         {/* Unified Filter Bar */}
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex flex-col md:flex-row gap-4 px-2 mb-8">
           {/* Search Bar */}
-          <div className="flex-1 min-w-[300px]">
-            <div className="relative flex items-center group">
-              <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
-              <input 
-                type="text" 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by candidate, role or host..."
-                className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-bold focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] text-[#1A1A2E]"
-              />
-              {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <FiX className="w-[14px] h-[14px] text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors" />
-                </button>
-              )}
-            </div>
+          <div className="flex-1 relative">
+            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9CA3AF]" size={18} />
+            <input 
+              type="text"
+              placeholder="Search by name, role, email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-[#FDFCF8] border border-[#E5E7EB] rounded-2xl py-4 pl-14 pr-6 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-[#1B4DA0]/10 focus:border-[#1B4DA0] transition-all shadow-sm"
+            />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex gap-3">
             {/* Job Opening Filter */}
-            <div className="relative">
+            <div className="relative group">
               <select
                 value={filterJob}
                 onChange={(e) => setFilterJob(e.target.value)}
-                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[160px]"
+                className="h-14 px-6 bg-white border border-[#E5E7EB] rounded-2xl text-[10px] font-bold text-[#111827] tracking-[1px] flex items-center justify-between gap-8 hover:bg-[#F9FAFB] transition-all shadow-sm min-w-[160px] appearance-none cursor-pointer outline-none uppercase"
               >
                 <option value="all">All Job Openings</option>
                 {jobOpenings.map(job => (
                   <option key={job.id} value={job.id}>{job.title}</option>
                 ))}
               </select>
+              <FiChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none" />
             </div>
 
             {/* Stage Filter */}
-            <div className="relative">
+            <div className="relative group">
               <select
                 value={filterStage}
                 onChange={(e) => setFilterStage(e.target.value)}
-                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+                className="h-14 px-6 bg-white border border-[#E5E7EB] rounded-2xl text-[10px] font-bold text-[#111827] tracking-[1px] flex items-center justify-between gap-8 hover:bg-[#F9FAFB] transition-all shadow-sm min-w-[140px] appearance-none cursor-pointer outline-none uppercase"
               >
                 <option value="all">All Stages</option>
                 {fullStageOrder.map(stage => (
                   <option key={stage} value={stage}>{stage}</option>
                 ))}
               </select>
+              <FiChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none" />
             </div>
 
             {/* Client Filter */}
-            <div className="relative">
+            <div className="relative group">
               <select
                 value={filterClient}
                 onChange={(e) => setFilterClient(e.target.value)}
-                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+                className="h-14 px-6 bg-white border border-[#E5E7EB] rounded-2xl text-[10px] font-bold text-[#111827] tracking-[1px] flex items-center justify-between gap-8 hover:bg-[#F9FAFB] transition-all shadow-sm min-w-[140px] appearance-none cursor-pointer outline-none uppercase"
               >
                 <option value="all">All Clients</option>
                 {[...new Set(jobOpenings.map(j => j.client).filter(Boolean))].map(client => (
                   <option key={client} value={client}>{client}</option>
                 ))}
               </select>
+              <FiChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none" />
             </div>
           </div>
         </div>
 
         {isKanbanView ? (
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex gap-6 overflow-x-auto pb-10 custom-scrollbar items-start" style={{ minHeight: '600px' }}>
-              {stageOrder.map(stage => {
-                const stageCandidates = filteredCandidates.filter(c => {
-                  if (stage === 'Interview') return ['Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Interview'].includes(c.stage);
-                  if (stage === 'Screening') return c.stage === 'Screening' || c.stage === 'Applied' || !c.stage;
-                  if (stage === 'Offer') return c.stage === 'Offer Sent' || c.stage === 'Offer';
-                  return c.stage === stage;
-                });
-                const config = stageConfig[stage] || stageConfig.Screening;
-                return (
-                  <Droppable key={stage} droppableId={stage}>
-                    {(provided, snapshot) => (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        className={`flex-shrink-0 w-[320px] rounded-[32px] transition-all duration-300 ${snapshot.isDraggingOver ? 'bg-blue-50/50 ring-2 ring-blue-100' : 'bg-[#F8FAFF]/40 border border-[#F4F3EF]'}`}
-                      >
-                        <div className="px-7 py-6 flex items-center justify-between border-b border-[#F4F3EF]/50">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${config.dotColor}`} />
-                            <h3 className="text-[13px] font-black text-[#1A1A2E] tracking-tight uppercase font-syne">{stage}</h3>
+          <div className="flex gap-6 overflow-x-auto pb-10 custom-scrollbar items-start" style={{ minHeight: '600px' }}>
+            {stageOrder.map(stage => {
+              const stageCandidates = filteredCandidates.filter(c => {
+                if (stage === 'Interview') return ['Phone Interview', 'Technical Round', 'HR Round', 'Client Interview', 'Interview'].includes(c.stage);
+                if (stage === 'Screening') return c.stage === 'Screening' || c.stage === 'Applied' || !c.stage;
+                if (stage === 'Offer') return c.stage === 'Offer Sent' || c.stage === 'Offer';
+                return c.stage === stage;
+              });
+              const config = stageConfig[stage] || stageConfig.Screening;
+              return (
+                <div
+                  key={stage}
+                  className="flex-shrink-0 w-[320px] rounded-[32px] bg-[#F8FAFF]/40 border border-[#F4F3EF] transition-all duration-300"
+                >
+                  <div className="px-7 py-6 flex items-center justify-between border-b border-[#F4F3EF]/50">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${config.dotColor}`} />
+                      <h3 className="text-[13px] font-black text-[#1A1A2E] tracking-tight uppercase font-syne">{stage}</h3>
+                    </div>
+                    <div className="min-w-[24px] h-[24px] flex items-center justify-center bg-white rounded-lg text-[10px] font-black text-[#1B4DA0] shadow-sm border border-[#F4F3EF]">
+                      {stageCandidates.length}
+                    </div>
+                  </div>
+                  <div className="px-4 py-6 space-y-4 min-h-[600px] custom-scrollbar max-h-[70vh] overflow-y-auto">
+                    <AnimatePresence mode="popLayout">
+                      {stageCandidates.map((candidate) => (
+                        <motion.div
+                          key={candidate.id.toString()}
+                          layoutId={candidate.id.toString()}
+                          drag
+                          dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                          dragElastic={0.7}
+                          onDragEnd={(e, info) => handleDragEnd(e, info, candidate)}
+                          whileDrag={{ scale: 1.05, rotate: 2, zIndex: 100, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
+                          whileHover={{ y: -4 }}
+                          onClick={() => openDetail(candidate)}
+                          className="bg-white border border-[#F4F3EF] rounded-[28px] p-5 shadow-sm hover:shadow-xl transition-all group relative cursor-grab active:cursor-grabbing touch-none"
+                        >
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="relative">
+                              <div className="w-12 h-12 rounded-[18px] text-white flex items-center justify-center text-sm font-black shadow-lg transform group-hover:scale-105 transition-transform" style={{ background: getAvatarGradient(candidate.name) }}>
+                                {getInitials(candidate.name)}
+                              </div>
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-md">
+                                <div className={`w-2 h-2 rounded-full ${candidate.pipelineStatus === 'hold' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-[14px] font-black text-[#1A1A2E] truncate font-syne uppercase tracking-tight group-hover:text-blue-600 transition-colors flex items-center gap-2">
+                                {candidate.name}
+                                {candidate.isSharePoint && <FiDatabase className="text-blue-500 w-3 h-3" title="Synced from SharePoint" />}
+                              </h4>
+                              <p className="text-[10px] font-bold text-[#9B9BAD] truncate uppercase tracking-widest mt-0.5">{candidate.jobTitle}</p>
+                            </div>
                           </div>
-                          <div className="min-w-[24px] h-[24px] flex items-center justify-center bg-white rounded-lg text-[10px] font-black text-[#1B4DA0] shadow-sm border border-[#F4F3EF]">
-                            {stageCandidates.length}
+                          <div className="flex flex-wrap gap-1.5 mb-5">
+                            {(candidate.skills || []).slice(0, 3).map((s, idx) => (
+                              <span key={idx} className="text-[8px] font-black text-[#1B4DA0] bg-blue-50/50 px-2 py-1 rounded-lg uppercase border border-blue-100/50">{s}</span>
+                            ))}
                           </div>
-                        </div>
-                        <div className="px-4 py-6 space-y-4 min-h-[600px] custom-scrollbar max-h-[70vh] overflow-y-auto">
-                          {stageCandidates.map((candidate, index) => (
-                            <Draggable key={candidate.id.toString()} draggableId={candidate.id.toString()} index={index}>
-                              {(provided, snapshot) => (
-                                <motion.div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  onClick={() => openDetail(candidate)}
-                                  className={`bg-white border rounded-[28px] p-5 shadow-sm hover:shadow-xl transition-all group relative ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-400' : 'border-[#F4F3EF]'}`}
-                                >
-                                  <div className="flex items-center gap-4 mb-4">
-                                    <div className="relative">
-                                      <div className="w-12 h-12 rounded-[18px] text-white flex items-center justify-center text-sm font-black shadow-lg transform group-hover:scale-105 transition-transform" style={{ background: getAvatarGradient(candidate.name) }}>
-                                        {getInitials(candidate.name)}
-                                      </div>
-                                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-md">
-                                        <div className={`w-2 h-2 rounded-full ${candidate.pipelineStatus === 'hold' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                                      </div>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <h4 className="text-[14px] font-black text-[#1A1A2E] truncate font-syne uppercase tracking-tight group-hover:text-blue-600 transition-colors flex items-center gap-2">
-                                        {candidate.name}
-                                        {candidate.isSharePoint && <FiDatabase className="text-blue-500 w-3 h-3" title="Synced from SharePoint" />}
-                                      </h4>
-                                      <p className="text-[10px] font-bold text-[#9B9BAD] truncate uppercase tracking-widest mt-0.5">{candidate.jobTitle}</p>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-wrap gap-1.5 mb-5">
-                                    {(candidate.skills || []).slice(0, 3).map((s, idx) => (
-                                      <span key={idx} className="text-[8px] font-black text-[#1B4DA0] bg-blue-50/50 px-2 py-1 rounded-lg uppercase border border-blue-100/50">{s}</span>
-                                    ))}
-                                  </div>
-                                  <div className="flex items-center justify-between pt-4 border-t border-dashed border-[#F4F3EF]">
-                                    <div className="flex items-center gap-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">
-                                      <FiClock className="text-blue-400" /> {getStageDuration(candidate)}
-                                    </div>
-                                    <div className="flex items-center -space-x-2">
-                                      <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center"><FiUserCheck size={10} className="text-[#9B9BAD]" /></div>
-                                      <button className="w-6 h-6 rounded-full border-2 border-white bg-white shadow-sm flex items-center justify-center text-[#9B9BAD] hover:text-blue-500 transition-colors"><FiMoreVertical size={10} /></button>
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </div>
-                      </div>
-                    )}
-                  </Droppable>
-                );
-              })}
-            </div>
-          </DragDropContext>
+                          <div className="flex items-center justify-between pt-4 border-t border-dashed border-[#F4F3EF]">
+                            <div className="flex items-center gap-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">
+                              <FiClock className="text-blue-400" /> {getStageDuration(candidate)}
+                            </div>
+                            <div className="flex items-center -space-x-2">
+                              <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center pointer-events-none"><FiUserCheck size={10} className="text-[#9B9BAD]" /></div>
+                              <button className="w-6 h-6 rounded-full border-2 border-white bg-white shadow-sm flex items-center justify-center text-[#9B9BAD] hover:text-blue-500 transition-colors pointer-events-auto"><FiMoreVertical size={10} /></button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className="space-y-3 pb-10">
             {filteredCandidates.map((candidate, idx) => (
