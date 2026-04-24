@@ -157,39 +157,79 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
           <AnimatePresence>
             {selectedNote && (
               <>
-                <div
-                  className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100] transition-opacity"
-                  onClick={() => setSelectedNote(null)}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => {
+                    if (isEditingDetail) handleDetailSave();
+                    setSelectedNote(null);
+                    setIsEditingDetail(false);
+                  }}
+                  className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
                 />
                 <motion.div
-                  initial={{ x: "100%" }}
+                  initial={{ x: '100%' }}
                   animate={{ x: 0 }}
-                  exit={{ x: "100%" }}
-                  transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                  className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white dark:bg-slate-950 shadow-2xl z-[1101] border-l border-[#F4F3EF] dark:border-slate-800 flex flex-col overflow-hidden text-left"
+                  exit={{ x: '100%', opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="fixed right-0 top-0 h-full w-full max-w-[650px] bg-white dark:bg-slate-950 z-[1101] shadow-2xl flex flex-col overflow-hidden border-l border-[#F4F3EF] dark:border-slate-800"
+                  style={{ boxShadow: '-20px 0 50px rgba(0,0,0,0.15)' }}
                 >
-                  {/* Drawer Header */}
-                  <div className="sticky top-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-[#F4F3EF] dark:border-slate-800 px-8 py-6 flex items-center justify-between z-20">
-                    <div className="flex-1 mr-4 text-left">
+                  {/* Header */}
+                  <div className="p-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-between z-10">
+                    <div className="text-left flex-1 mr-4">
                       {isEditingDetail ? (
                         <input
+                          autoFocus
                           type="text"
                           value={detailEditForm.title}
                           onChange={(e) => setDetailEditForm({ ...detailEditForm, title: e.target.value })}
-                          className="w-full text-2xl font-bold text-[#1A1A2E] dark:text-white font-syne bg-transparent border-none focus:ring-0 p-0 placeholder:text-slate-300"
-                          placeholder="Note Title..."
-                          autoFocus
+                          className="text-2xl font-bold text-[#1A1A2E] dark:text-white font-syne bg-transparent border-none focus:ring-0 p-0 w-full"
+                          placeholder="Note Title"
                         />
                       ) : (
-                        <h2 className="text-2xl font-bold text-[#1A1A2E] dark:text-white font-syne truncate">
-                          {selectedNote.title}
-                        </h2>
-                      )}                      <p className="text-xs font-medium text-[#9B9BAD] mt-1 flex items-center gap-1.5">
-                        <Clock size={12} />
-                        {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
-                      </p>                    </div>
+                        <h2 className="text-2xl font-bold text-[#1A1A2E] dark:text-white font-syne text-left">{selectedNote.title}</h2>
+                      )}
+                      <div className="flex items-center gap-2 mt-1.5 justify-start">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] text-left">
+                          {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-3">
-                      {isEditingDetail ? (
+                      {!isEditingDetail ? (
+                        <>
+                          <button
+                            onClick={() => { setDeleteConfirmId(selectedNote?._id || selectedNote?.id); setSelectedNote(null); }}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:text-rose-500 transition-all flex items-center justify-center shadow-sm"
+                            title="Delete Note"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDetailEditForm({ title: selectedNote.title, content: selectedNote.content });
+                              setIsEditingDetail(true);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-[#1B4DA0] transition-all flex items-center justify-center shadow-sm"
+                            title="Edit Note"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedNote(null);
+                              setIsEditingDetail(false);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 text-[#6B6B7E] hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+                            title="Close Note"
+                          >
+                            <X size={18} />
+                          </button>
+                        </>
+                      ) : (
                         <>
                           <button
                             onClick={() => setIsEditingDetail(false)}
@@ -206,62 +246,32 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                             Save Changes
                           </button>
                         </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => { setDeleteConfirmId(selectedNote._id || selectedNote.id); setSelectedNote(null); }}
-                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:text-rose-500 transition-all active:scale-90 shadow-sm"
-                            title="Delete Note"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setIsEditingDetail(true);
-                              setDetailEditForm({ title: selectedNote.title, content: selectedNote.content });
-                            }}
-                            className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-[#1B4DA0] transition-all active:scale-90 shadow-sm"
-                            title="Edit Note"
-                          >
-                            <Pencil size={18} />
-                          </button>
-                        </>
                       )}
-                      
-                      {/* Close Button */}
-                      <button
-                        onClick={() => setSelectedNote(null)}
-                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-900 text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 transition-all active:scale-90 shadow-sm"
-                        title="Close"
-                      >
-                        <X size={18} />
-                      </button>
                     </div>
                   </div>
 
-                  {/* Drawer Content */}
-                  <div className="flex-1 p-10 pt-6 space-y-10 overflow-y-auto pb-10 custom-scrollbar text-left scroll-smooth">
-                    {/* Full Description */}
-                    <div className="flex flex-col gap-6 text-left">
-                      <div className="flex items-center gap-3 px-2 justify-start text-left">
-                        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0]">
+                  {/* Content */}
+                  <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-8 text-left">
+                    <div className="flex flex-col gap-5">
+                      <div className="flex items-center gap-2 px-2">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-slate-900 flex items-center justify-center text-[#1B4DA0]">
                           <FileText size={16} />
                         </div>
-                        <h4 className="text-[10px] font-black text-[#9B9BAD] dark:text-slate-400 uppercase tracking-[3px] text-left">DESCRIPTION</h4>
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Description</span>
                       </div>
-                      
-                      <div className="bg-[#FAFAFA] dark:bg-slate-900 p-10 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm text-left min-h-[300px] transition-all duration-300">
+
+                      <div className="bg-[#FAFAFA] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 p-10 min-h-[300px] transition-all duration-300">
                         {isEditingDetail ? (
                           <textarea
                             value={detailEditForm.content}
                             onChange={(e) => setDetailEditForm({ ...detailEditForm, content: e.target.value })}
-                            className="w-full min-h-[300px] text-[#475569] dark:text-slate-300 text-[15px] underline-offset-4 leading-[1.8] font-medium bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
-                            placeholder="Type your findings here..."
+                            className="w-full min-h-[250px] text-[15px] text-[#4B4B5E] dark:text-slate-300 font-medium leading-[1.8] bg-transparent border-none focus:ring-0 p-0 resize-none custom-scrollbar"
+                            placeholder="Type note content here..."
                           />
                         ) : (
-                          <p className="text-[#475569] dark:text-slate-300 text-[14.5px] leading-[1.8] font-medium whitespace-pre-wrap text-left opacity-90">
+                          <div className="text-[15px] text-[#4B4B5E] dark:text-slate-300 font-medium leading-[1.8] whitespace-pre-wrap">
                             {selectedNote.content}
-                          </p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -408,70 +418,70 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
           {createPortal(
             <AnimatePresence>
               {(view === 'add' || view === 'edit') && (
-              <motion.div key="add-edit-note" className="fixed inset-0 z-[10001] pointer-events-none">
-                <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 pointer-events-auto"
-                  onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}>
-                  <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500"
-                    onClick={(e) => e.stopPropagation()}>
-                  {/* Header */}
-                  <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                    <div>
-                      <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                        {view === 'edit' ? 'Update Note' : 'Create Note'}
-                      </h3>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
-                        Strategy Protocol Entry
-                      </p>
-                    </div>
-                    <button onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}
-                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
-                      <X size={18} />
-                    </button>
-                  </div>
+                <motion.div key="add-edit-note" className="fixed inset-0 z-[10001] pointer-events-none">
+                  <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 pointer-events-auto"
+                    onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}>
+                    <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500"
+                      onClick={(e) => e.stopPropagation()}>
+                      {/* Header */}
+                      <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
+                        <div>
+                          <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
+                            {view === 'edit' ? 'Update Note' : 'Create Note'}
+                          </h3>
+                          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
+                            Strategy Protocol Entry
+                          </p>
+                        </div>
+                        <button onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}
+                          className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
+                          <X size={18} />
+                        </button>
+                      </div>
 
-                  {/* Body */}
-                  <form onSubmit={handleSaveNote} className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-8">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Title *</label>
-                      <input
-                        type="text"
-                        value={newNote.title}
-                        onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                        placeholder="Enter note title..."
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
-                        required
-                      />
-                    </div>
+                      {/* Body */}
+                      <form onSubmit={handleSaveNote} className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-8">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Title *</label>
+                          <input
+                            type="text"
+                            value={newNote.title}
+                            onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                            placeholder="Enter note title..."
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 placeholder:text-[#9B9BAD]/50"
+                            required
+                          />
+                        </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Content *</label>
-                      <textarea
-                        rows={6}
-                        value={newNote.content}
-                        onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-                        placeholder="Write your note content here..."
-                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 resize-none placeholder:text-[#9B9BAD]/50"
-                        required
-                      />
-                    </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Content *</label>
+                          <textarea
+                            rows={6}
+                            value={newNote.content}
+                            onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                            placeholder="Write your note content here..."
+                            className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 resize-none placeholder:text-[#9B9BAD]/50"
+                            required
+                          />
+                        </div>
 
-                    {/* Footer Buttons */}
-                    <div className="pt-4 flex gap-4">
-                      <button type="button"
-                        onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}
-                        className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
-                        Cancel
-                      </button>
-                      <button type="submit" disabled={saving}
-                        className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                        {saving && <Loader2 size={14} className="animate-spin" />}
-                        {view === 'edit' ? 'Save Changes' : 'Create Note'}
-                      </button>
+                        {/* Footer Buttons */}
+                        <div className="pt-4 flex gap-4">
+                          <button type="button"
+                            onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}
+                            className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all">
+                            Cancel
+                          </button>
+                          <button type="submit" disabled={saving}
+                            className="flex-[2] bg-[#1B4DA0] text-white py-5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            {saving && <Loader2 size={14} className="animate-spin" />}
+                            {view === 'edit' ? 'Save Changes' : 'Create Note'}
+                          </button>
+                        </div>
+                      </form>
                     </div>
-                  </form>
-                </div>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
               )}
             </AnimatePresence>, document.body
           )}
@@ -480,42 +490,42 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
           {createPortal(
             <AnimatePresence>
               {deleteConfirmId && (
-              <motion.div key="delete-note-modal" className="fixed inset-0 z-[10001] pointer-events-none">
-                <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 pointer-events-auto"
-                  onClick={() => setDeleteConfirmId(null)}>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                  <div className="p-10 text-center space-y-6">
-                    <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto">
-                      <Trash2 size={28} className="text-rose-500" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Delete Note</h3>
-                      <p className="text-sm text-[#9B9BAD] mt-2">Are you sure you want to delete this note? This action cannot be undone.</p>
-                    </div>
-                    <div className="flex gap-4 pt-2">
-                      <button
-                        onClick={() => setDeleteConfirmId(null)}
-                        className="flex-1 py-4 rounded-2xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleDelete(deleteConfirmId)}
-                        className="flex-1 py-4 rounded-2xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    </div>
+                <motion.div key="delete-note-modal" className="fixed inset-0 z-[10001] pointer-events-none">
+                  <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 pointer-events-auto"
+                    onClick={() => setDeleteConfirmId(null)}>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                      className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="p-10 text-center space-y-6">
+                        <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto">
+                          <Trash2 size={28} className="text-rose-500" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Delete Note</h3>
+                          <p className="text-sm text-[#9B9BAD] mt-2">Are you sure you want to delete this note? This action cannot be undone.</p>
+                        </div>
+                        <div className="flex gap-4 pt-2">
+                          <button
+                            onClick={() => setDeleteConfirmId(null)}
+                            className="flex-1 py-4 rounded-2xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDelete(deleteConfirmId)}
+                            className="flex-1 py-4 rounded-2xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
                   </motion.div>
                 </motion.div>
-              </motion.div>
               )}
             </AnimatePresence>, document.body
           )}

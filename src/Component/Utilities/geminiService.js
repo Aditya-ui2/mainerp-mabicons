@@ -123,15 +123,23 @@ export const rankCandidatesWithAI = async (candidates, jobTitle) => {
     }));
 
     const prompt = `
-      You are an elite talent scout. 
-      Analyze these ${candidates.length} candidates and pick the top 3 best matches for the position: "${jobTitle}".
+      You are an expert talent scout. 
+      Analyze the following candidates and identify the top 3 best matches for this specific Job Opening.
       
-      Candidates:
+      JOB DESCRIPTION / CONTEXT:
+      "${jobTitle}"
+
+      CANDIDATES FROM BANK:
       ${JSON.stringify(candidateData)}
 
-      Return ONLY a JSON array of objects with: 
-      id (from input), score (0-100), reason (short 5-7 word explanation why they match).
-      Sort by score descending.
+      TASK:
+      1. Evaluate each candidate based on their role, skills, and experience against the JD.
+      2. Assign a match score from 0 to 100.
+      3. Provide a concise (5-8 words) professional reason for the match.
+      
+      Return ONLY a JSON array of objects with these keys: 
+      id (from the input), score (number), reason (string).
+      Sort the array by score in descending order.
     `;
 
     const result = await model.generateContent(prompt);

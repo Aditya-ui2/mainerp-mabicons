@@ -128,8 +128,9 @@ const INITIAL_PIPELINE_CLIENTS = [
 const sidebarConfig = [
   {
     items: [
-
+      { id: 1, title: 'Dashboard', icon: FiLayout },
       { id: 2, title: 'Client', icon: FiUsers },
+      { id: 8, title: 'Leads', icon: FiTarget },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
       { id: 7, title: 'Notes', icon: FiEdit3 },
       { id: 6, title: 'My Team', icon: FiUserPlus },
@@ -285,6 +286,7 @@ const CRMDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedClients, setSelectedClients] = useState([]);
   const [selectedClientDetail, setSelectedClientDetail] = useState(null);
+  const [selectedLeadDetail, setSelectedLeadDetail] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState({});
   const [isOfferOpen, setIsOfferOpen] = useState(false);
@@ -826,8 +828,8 @@ const CRMDashboard = () => {
                       }).map((c) => (
                         <div
                           key={c._id || c.id}
-                          onClick={() => { 
-                            setSelectedClientDetail(c); 
+                          onClick={() => {
+                            setSelectedClientDetail(c);
                             toast.success(`Viewing ${c.companyName || c.name || 'Client'}`);
                           }}
                           className="grid grid-cols-[40px_2.5fr_1.5fr_2fr_1.5fr_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
@@ -948,11 +950,15 @@ const CRMDashboard = () => {
                 transition={{ duration: 0.4 }}
                 className="space-y-6"
               >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="text-left">
-                    <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>CRM Dashboard</h1>
-                  </div>
-                  <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
+                  {/* Sticky Welcome Header */}
+                  <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-6 -mx-8 px-8 py-8 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/50">
+                    <div className="flex flex-col items-start text-left">
+                      <h2 className="text-3xl font-black text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>
+                        Welcome {userInfo.name.split(' ')[0]}
+                      </h2>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[4px] mt-1">CRM Overview & Intelligence</p>
+                    </div>
+                    <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
                     {/* Date Filter Component */}
                     <div className="relative" ref={mainDateFilterRef}>
                       <button
@@ -1155,6 +1161,65 @@ const CRMDashboard = () => {
                   </div>
                 </div>
 
+                {/* Recent Leads Section */}
+                <div className="bg-white rounded-[40px] p-10 shadow-sm border border-[#F4F3EF]">
+                  <div className="flex items-center justify-between mb-8 text-left">
+                    <div>
+                      <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Recent Leads</h3>
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">Latest business opportunities</p>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('Leads')}
+                      className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest hover:underline"
+                    >
+                      View All Leads
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-[#F4F3EF]">
+                          {["Company", "Contact", "Status", "Date"].map((h, i) => (
+                            <th key={i} className="pb-4 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-left">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#F4F3EF]">
+                        {filteredLeads.slice(0, 5).map((l) => (
+                          <tr
+                            key={l._id || l.id}
+                            onClick={() => setSelectedLeadDetail(l)}
+                            className="group cursor-pointer hover:bg-[#F8FAFF] transition-all"
+                          >
+                            <td className="py-4 text-left">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black ${getAvatarColor(l.companyDetails?.name || l.companyName)}`}>
+                                  {(l.companyDetails?.name || l.companyName || 'L').substring(0, 1).toUpperCase()}
+                                </div>
+                                <span className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">
+                                  {l.companyDetails?.name || l.companyName || 'Unknown'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 text-sm font-medium text-[#6B6B7E] text-left">
+                              {l.contactPerson?.name || l.personName || 'N/A'}
+                            </td>
+                            <td className="py-4 text-left">
+                              <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100">
+                                {l.status || 'New'}
+                              </span>
+                            </td>
+                            <td className="py-4 text-sm font-bold text-[#1A1A2E] text-left">
+                              {new Date(l.createdAt || l.date || Date.now()).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
               </motion.div>
             )}
 
@@ -1212,6 +1277,81 @@ const CRMDashboard = () => {
               <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Notes...</div>}>
                 <NotesTab department="CRM" />
               </Suspense>
+            )}
+
+            {activeTab === 'Leads' && (
+              <motion.div
+                key="leads"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-8"
+              >
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="text-left">
+                    <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Business Leads</h1>
+                    <p className="text-sm font-medium text-[#9B9BAD] mt-1">Manage and track potential business opportunities</p>
+                  </div>
+                </div>
+
+                {/* Leads Table */}
+                <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden relative">
+                  <div className="overflow-x-auto min-h-[400px]">
+                    <div className="grid grid-cols-[2fr_1.5fr_1.5fr_1fr_1.5fr_80px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-transparent">
+                      {["Company", "Contact", "Source", "Status", "Created At", ""].map((h, i) => (
+                        <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">
+                          {h}
+                        </div>
+                      ))}
+                    </div>
+
+                    {filteredLeads.length > 0 ? filteredLeads.map((l) => (
+                      <div
+                        key={l._id || l.id}
+                        onClick={() => setSelectedLeadDetail(l)}
+                        className="grid grid-cols-[2fr_1.5fr_1.5fr_1fr_1.5fr_80px] gap-4 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
+                      >
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-sm ${getAvatarColor(l.companyDetails?.name || l.companyName || 'Lead')}`}>
+                            {(l.companyDetails?.name || l.companyName || 'L').substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#1B4DA0] transition-colors">{l.companyDetails?.name || l.companyName || 'Unknown'}</p>
+                            <p className="text-[11px] text-[#64748b] truncate font-medium">{l.companyDetails?.location || l.location || 'Remote'}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-left">
+                          <p className="text-[13px] font-bold text-[#0f172a]">{l.contactPerson?.name || l.personName || 'N/A'}</p>
+                          <p className="text-[11px] text-[#64748b] truncate">{l.contactPerson?.email || l.personEmail || ''}</p>
+                        </div>
+
+                        <div className="text-left text-[12px] font-bold text-[#64748b] uppercase tracking-wider">
+                          {l.source || 'Direct'}
+                        </div>
+
+                        <div className="text-left">
+                          <span className="px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100">
+                            {l.status || 'New'}
+                          </span>
+                        </div>
+
+                        <div className="text-left text-[12px] font-bold text-[#64748b]">
+                          {new Date(l.createdAt || l.date || Date.now()).toLocaleDateString()}
+                        </div>
+
+                        <div className="flex justify-end">
+                          <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all" />
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="py-24 text-center">
+                        <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest">No leads found in this period</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
 
@@ -1832,6 +1972,109 @@ const CRMDashboard = () => {
                             <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Record</p>
                             <p className="text-sm font-black text-[#1A1A2E]">{selectedClientDetail.phone || 'N/A'}</p>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </>,
+              document.body
+            )}
+          </AnimatePresence>
+
+          {/* Lead Detail Drawer */}
+          <AnimatePresence>
+            {selectedLeadDetail && createPortal(
+              <>
+                <motion.div
+                  key="lead-drawer-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-[12px] z-[99998]"
+                  onClick={() => setSelectedLeadDetail(null)}
+                />
+                <motion.div
+                  key="lead-drawer-content"
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                  className="fixed right-0 top-0 h-full w-full sm:w-[680px] bg-white z-[99999] overflow-y-auto shadow-[-20px_0_80px_rgba(0,0,0,0.2)] flex flex-col"
+                >
+                  <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-8 flex items-center justify-between z-20">
+                    <div className="flex-1 text-left">
+                      <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
+                        Lead Details
+                      </h2>
+                    </div>
+                    <button
+                      onClick={() => setSelectedLeadDetail(null)}
+                      className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm outline-none"
+                    >
+                      <FiX size={24} />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 p-8 space-y-10 custom-scrollbar">
+                    <div className="flex flex-col items-center justify-center text-center py-4">
+                      <div className="relative group">
+                        <div className={`w-32 h-32 rounded-[40px] flex items-center justify-center text-white text-4xl font-black shadow-2xl transition-transform duration-500 border-4 border-white ${getAvatarColor(selectedLeadDetail.companyDetails?.name || selectedLeadDetail.companyName)}`}>
+                          {(selectedLeadDetail.companyDetails?.name || selectedLeadDetail.companyName || 'L').substring(0, 2).toUpperCase()}
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-[#1B4DA0] border-4 border-white shadow-lg flex items-center justify-center text-white">
+                          <FiTarget size={18} />
+                        </div>
+                      </div>
+                      <div className="mt-8 space-y-1 w-full text-center">
+                        <h3 className="text-3xl font-black text-[#1A1A2E] tracking-tight text-center" style={{ fontFamily: "'Syne', sans-serif" }}>
+                          {selectedLeadDetail.companyDetails?.name || selectedLeadDetail.companyName}
+                        </h3>
+                        <div className="flex items-center justify-center gap-3 mt-1.5 overflow-hidden">
+                          <span className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px]">{selectedLeadDetail.status || 'NEW LEAD'}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2]" />
+                          <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[4px]">{selectedLeadDetail.source || 'DIRECT'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-10 shadow-sm">
+                      <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                        <div className="space-y-2 text-left">
+                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Company Website</span>
+                          <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                            <FiActivity size={16} className="text-[#1B4DA0] shrink-0" /> {selectedLeadDetail.companyDetails?.website || selectedLeadDetail.website || "N/A"}
+                          </p>
+                        </div>
+                        <div className="space-y-2 text-left">
+                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Primary Location</span>
+                          <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                            <FiMapPin size={16} className="text-[#1B4DA0] shrink-0" /> {selectedLeadDetail.companyDetails?.location || selectedLeadDetail.location || "N/A"}
+                          </p>
+                        </div>
+                        <div className="space-y-2 text-left">
+                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Contact Person</span>
+                          <p className="text-base font-black text-[#1A1A2E] flex items-center gap-2">
+                            <FiUser size={16} className="text-[#1B4DA0] shrink-0" /> {selectedLeadDetail.contactPerson?.name || selectedLeadDetail.personName || "N/A"}
+                          </p>
+                        </div>
+                        <div className="space-y-2 text-left">
+                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">Est. Deal Value</span>
+                          <p className="text-base font-black text-emerald-600 flex items-center gap-2">
+                            <FiDollarSign size={16} className="shrink-0" /> {selectedLeadDetail.dealValue?.estimatedValue || selectedLeadDetail.value || '₹0'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-8 bg-[#FAFAF9] rounded-[32px] border border-[#F4F3EF] gap-6">
+                      <div className="flex items-center gap-4 flex-1 text-left text-left">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0]">
+                          <FiMail size={18} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address</p>
+                          <p className="text-sm font-black text-[#1A1A2E] leading-tight break-all">{selectedLeadDetail.contactPerson?.email || selectedLeadDetail.personEmail || 'N/A'}</p>
                         </div>
                       </div>
                     </div>

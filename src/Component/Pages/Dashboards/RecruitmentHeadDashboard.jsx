@@ -384,8 +384,8 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
   };
   return (
     <div className="min-h-screen" style={{ fontFamily: "'Calibri', sans-serif" }}>
-      {/* Header Section - Same as Job Openings */}
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+      {/* Sticky Header Section */}
+      <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-4 -mx-8 px-8 py-6 mb-8 flex items-center justify-between flex-wrap gap-4 border-b border-slate-100/50">
         <div className="text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
         </div>
@@ -705,8 +705,8 @@ const KAMPerformanceContent = ({
           -webkit-appearance: none;
         }
       `}</style>
-      {/* ── Premium Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 relative z-[20]">
+      {/* Sticky Header Section */}
+      <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-10 -mx-8 px-8 py-8 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
         <div className="text-left">
           <motion.h1
             variants={itemVariants}
@@ -1127,6 +1127,299 @@ const KAMPerformanceContent = ({
 };
 
 /* ── Client Distribution Modal ── */
+const TeamListModal = ({ team, onClose }) => {
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberAssignments, setMemberAssignments] = useState([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  const handleMemberSelect = async (member) => {
+    setSelectedMember(member);
+    setLoadingDetails(true);
+    setMemberAssignments([]);
+
+    try {
+      // 1. Fetch Member-specific Stats
+      const statsRes = await getRecruitmentStats({ teamMember: member.id });
+      if (statsRes.success) {
+        const s = statsRes.data;
+        const detailedStats = {
+          activePositions: s.positions?.open ?? 0,
+          candidatesPipeline: s.candidates?.total ?? 0,
+          interviewsScheduled: s.interviews?.scheduled ?? 0,
+          offersExtended: s.funnel?.offerSent ?? 0,
+          thisWeekHires: s.funnel?.joined ?? 0,
+          profilesShared: s.candidates?.sharedCVs ?? 0,
+          callsDone: s.funnel?.phoneInterview ?? 0,
+          shortlisted: s.candidates?.shortlisted ?? 0,
+        };
+        setSelectedMember(prev => ({ ...prev, stats: detailedStats }));
+      }
+
+      // 2. Fetch Assignments
+      const positionsRes = await getAllRecruitmentPositions();
+      if (positionsRes.success) {
+        const allJobs = positionsRes.data || [];
+        const kamJobs = allJobs.filter(job =>
+          job.assignedToId === member.id ||
+          job.assignedToName === member.name ||
+          (Array.isArray(job.assignedKams) && job.assignedKams.some(k => k.id === member.id))
+        ).map(job => ({
+          id: job.id || job._id,
+          title: job.title,
+          clientName: job.client?.companyName || job.client?.name || job.client || 'Client',
+          assignedPositions: job.openings || 1,
+          shortlisted: job.stats?.shortlisted || 0,
+          interviewed: job.stats?.interviewed || 0,
+          hired: job.stats?.hired || 0,
+          pipeline: job.stats?.pipeline || 0
+        }));
+        setMemberAssignments(kamJobs);
+      }
+    } catch (error) {
+      console.error('Failed to fetch member details:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+      {/* Root Modal Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 30 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="relative w-full max-w-[1240px] bg-[#FFFFFF] rounded-[48px] shadow-2xl overflow-hidden border border-white flex h-[85vh] animate-in fade-in slide-in-from-bottom-8 duration-500"
+      >
+        {/* Detail Panel Backdrop (Internal to Modal) */}
+        <AnimatePresence>
+          {selectedMember && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-white/20 backdrop-blur-[2px] z-[50]"
+              onClick={() => setSelectedMember(null)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Left Side: Member List Section */}
+        <div className={`flex flex-col h-full overflow-hidden transition-all duration-500 ${selectedMember ? 'w-1/3 border-r border-[#F4F3EF]' : 'w-full'}`}>
+          {/* Header */}
+          <div className="px-12 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#FBFCFF]">
+            <div className="text-left">
+              <h3 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne text-left">
+                Team Members
+              </h3>
+            </div>
+            {!selectedMember && (
+              <button
+                onClick={onClose}
+                className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
+              >
+                <FiX size={20} />
+              </button>
+            )}
+          </div>
+
+          {/* List Content */}
+          <div className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
+            <div className="space-y-4">
+              {team.length === 0 ? (
+                <div className="py-20 text-center">
+                  <FiUsers size={48} className="mx-auto text-[#C5C5D2] mb-4 opacity-20" />
+                  <p className="text-lg font-bold text-[#9B9BAD]">No team members found</p>
+                </div>
+              ) : (
+                team.map((member) => (
+                  <div
+                    key={member.id}
+                    onClick={() => handleMemberSelect(member)}
+                    className={`group flex items-center justify-between p-5 rounded-[32px] border transition-all cursor-pointer ${selectedMember?.id === member.id
+                        ? 'border-[#1B4DA0] bg-blue-50 shadow-md ring-1 ring-blue-100'
+                        : 'bg-[#FAFAF8] border-transparent hover:border-[#1B4DA0]/30 hover:bg-blue-50/40 hover:shadow-lg'
+                      }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-lg font-bold shadow-sm"
+                        style={{ background: member.color?.gradient || 'linear-gradient(to right, #3b82f6, #06b6d4)' }}
+                      >
+                        {member.avatar || (member.name || 'U')[0]}
+                      </div>
+                      <div className="text-left">
+                        <h4 className={`text-base font-bold transition-colors ${selectedMember?.id === member.id ? 'text-[#1B4DA0]' : 'text-[#1A1A2E] group-hover:text-[#1B4DA0]'}`}>
+                          {member.name}
+                        </h4>
+                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-wider">
+                          {member.role}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!selectedMember && (
+                      <div className="flex items-center gap-8 pr-4">
+                        <div className="text-right">
+                          <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-0.5">Jobs</p>
+                          <p className="text-sm font-bold text-[#1A1A2E]">{member.stats?.activePositions || 0}</p>
+                        </div>
+                        <FiChevronRight size={16} className={`transition-all ${selectedMember?.id === member.id ? 'text-[#1B4DA0] rotate-90' : 'text-[#C5C5D2] group-hover:text-[#1B4DA0]'}`} />
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Detail Panel */}
+        <AnimatePresence>
+          {selectedMember && (
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 35, stiffness: 250 }}
+              className="w-2/3 bg-white h-full flex flex-col z-[60] overflow-hidden border-l border-[#F4F3EF]"
+            >
+              {/* Detail Header */}
+              <div className="p-8 border-b border-[#F4F3EF] bg-gradient-to-r from-blue-50/30 to-white flex items-center justify-between">
+                <div className="text-left">
+                  <h3 className="text-2xl font-bold text-[#1A1A2E] font-syne">My Team</h3>
+                </div>
+                <div className="flex items-center gap-4">
+                  <button onClick={onClose} className="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                    <FiX size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Detail Content */}
+              <div className="flex-1 overflow-y-auto px-10 py-10 space-y-12 custom-scrollbar">
+
+                {/* Identity & Bio */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-24 h-24 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-3xl font-extrabold shadow-2xl mb-6 ring-4 ring-white border border-blue-200">
+                    {selectedMember.avatar || (selectedMember.name || 'U')[0]}
+                  </div>
+                  <div className="space-y-1.5">
+                    <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne">{selectedMember.name}</h4>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="px-3 py-1 bg-blue-50 text-[#1B4DA0] rounded-full text-[10px] font-black uppercase tracking-[2px] border border-blue-100">
+                        {selectedMember.role}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Portfolio Summary badge */}
+                  <div className="flex items-center gap-6 pt-4">
+                    <div className="text-center">
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Total Clients</p>
+                      <div className="px-5 py-2 bg-indigo-50 text-[#1B4DA0] rounded-2xl text-sm font-black border border-indigo-100 shadow-sm">
+                        {[...new Set(memberAssignments.map(j => j.clientName))].length} Clients
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Total Openings</p>
+                      <div className="px-5 py-2 bg-blue-50 text-blue-600 rounded-2xl text-sm font-black border border-blue-100 shadow-sm">
+                        {memberAssignments.reduce((sum, j) => sum + (j.assignedPositions || 0), 0)} Positions
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance Matrix */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between px-1">
+                    <h5 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Performance Overview</h5>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{selectedMember.stats?.thisWeekHires || 0} Hires Total</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { label: 'Shortlisted', value: selectedMember.stats?.shortlisted || 0, Icon: FiCheckSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
+                      { label: 'Interviews', value: selectedMember.stats?.interviewsScheduled || 0, Icon: FiCalendar, color: 'text-blue-600', bg: 'bg-blue-50' },
+                      { label: 'Offers', value: selectedMember.stats?.offersExtended || 0, Icon: FiAward, color: 'text-blue-600', bg: 'bg-blue-50' },
+                      { label: 'Calls', value: selectedMember.stats?.callsDone || 0, Icon: FiPhone, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    ].map((stat, i) => (
+                      <div key={i} className="bg-white rounded-3xl border border-[#F4F3EF] p-5 shadow-sm hover:shadow-md transition-all group hover:border-blue-100">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`w-8 h-8 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                            <stat.Icon size={14} />
+                          </div>
+                          <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">{stat.label}</p>
+                        </div>
+                        <p className="text-2xl font-black text-[#1A1A2E]">{stat.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Client-wise Breakdown */}
+                <div className="space-y-6 pb-10">
+                  <div className="flex items-center justify-between px-1">
+                    <h5 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Client</h5>
+                  </div>
+
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    {Object.entries(
+                      memberAssignments.reduce((acc, job) => {
+                        const client = job.clientName || 'Other';
+                        if (!acc[client]) acc[client] = 0;
+                        acc[client] += (job.assignedPositions || 0);
+                        return acc;
+                      }, {})
+                    ).length === 0 ? (
+                      <div className="py-8 text-center bg-[#FAFAF8] rounded-[32px] border border-dashed border-[#F4F3EF]">
+                         <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">No active client</p>
+                      </div>
+                    ) : (
+                      Object.entries(
+                        memberAssignments.reduce((acc, job) => {
+                          const client = job.clientName || 'Other';
+                          if (!acc[client]) acc[client] = 0;
+                          acc[client] += (job.assignedPositions || 0);
+                          return acc;
+                        }, {})
+                      ).map(([client, openings], idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-[#FAFAF8] rounded-2xl border border-transparent hover:border-blue-100 hover:bg-white hover:shadow-sm transition-all group">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-white shadow-sm border border-[#F4F3EF] flex items-center justify-center text-[10px] font-black text-[#1B4DA0]">
+                              {client[0]}
+                            </div>
+                            <span className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{client}</span>
+                          </div>
+                          <div className="px-3 py-1 bg-white border border-[#F4F3EF] rounded-xl shadow-sm">
+                             <span className="text-[11px] font-black text-[#1B4DA0]">{openings} Openings</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </div>
+  );
+};
+
 const ClientDistributionModal = ({ distribution, onClose }) => {
   const [selectedClient, setSelectedClient] = useState(null);
 
@@ -1351,6 +1644,7 @@ const RecruitmentHeadDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [selectedKAM, setSelectedKAM] = useState(null);
   const [showKAMModal, setShowKAMModal] = useState(false);
+  const [showTeamModal, setShowTeamModal] = useState(false);
   const [showCallsBreakdownModal, setShowCallsBreakdownModal] = useState(false);
   const [showStatsInsightModal, setShowStatsInsightModal] = useState(false);
   const [showClientsModal, setShowClientsModal] = useState(false);
@@ -1371,6 +1665,8 @@ const RecruitmentHeadDashboard = () => {
     profilePhotoPreview: null
   });
   const [kamTeam, setKamTeam] = useState([]);
+  const [kamAssignments, setKamAssignments] = useState([]);
+  const [kamAssignmentsLoading, setKamAssignmentsLoading] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState(null);
   const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'error' }
   const [performanceKam, setPerformanceKam] = useState(null);
@@ -2025,16 +2321,65 @@ const RecruitmentHeadDashboard = () => {
     }
   };
 
-  const handleViewKAM = (kam) => {
+  const handleViewKAM = async (kam) => {
+    // Set basic data first for immediate UI response
     const memberData = {
       ...kam,
       stats: getEffectiveKamStats(kam),
-      recentActivity: kam.recentActivity || []
+      recentActivity: kam.recentActivity || [],
+      assignedJobs: []
     };
     setSelectedKAM(memberData);
     setEditableMember({ ...kam });
     setIsEditingInDetail(false);
     setShowKAMModal(true);
+    setKamAssignmentsLoading(true);
+
+    try {
+      // 1. Fetch KAM-specific Stats
+      const statsRes = await getRecruitmentStats({ teamMember: kam.id });
+      if (statsRes.success) {
+        const s = statsRes.data;
+        const detailedStats = {
+          activePositions: s.positions?.open ?? 0,
+          candidatesPipeline: s.candidates?.total ?? 0,
+          interviewsScheduled: s.interviews?.scheduled ?? 0,
+          offersExtended: s.funnel?.offerSent ?? 0,
+          thisWeekHires: s.funnel?.joined ?? 0,
+          profilesShared: s.candidates?.sharedCVs ?? 0,
+          callsDone: s.funnel?.phoneInterview ?? 0,
+          shortlisted: s.candidates?.shortlisted ?? 0,
+        };
+        setSelectedKAM(prev => ({ ...prev, stats: detailedStats }));
+      }
+
+      // 2. Fetch Assignments
+      const positionsRes = await getAllRecruitmentPositions();
+      if (positionsRes.success) {
+        const allJobs = positionsRes.data || [];
+        // Filter jobs assigned to this KAM
+        const kamJobs = allJobs.filter(job =>
+          job.assignedToId === kam.id ||
+          job.assignedToName === kam.name ||
+          (Array.isArray(job.assignedKams) && job.assignedKams.some(k => k.id === kam.id))
+        ).map(job => ({
+          id: job.id || job._id,
+          title: job.title,
+          clientName: job.client?.companyName || job.client?.name || job.client || 'Client',
+          assignedPositions: job.openings || 1,
+          shortlisted: job.stats?.shortlisted || 0,
+          interviewed: job.stats?.interviewed || 0,
+          hired: job.stats?.hired || 0,
+          pipeline: job.stats?.pipeline || 0
+        }));
+        setKamAssignments(kamJobs);
+        setSelectedKAM(prev => ({ ...prev, assignedJobs: kamJobs }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch KAM details:', error);
+    } finally {
+      setKamAssignmentsLoading(false);
+    }
   };
 
   const handleViewCallsBreakdown = () => {
@@ -2397,14 +2742,12 @@ const RecruitmentHeadDashboard = () => {
             default:
               return (
                 <>
-                  {/* Simple Welcome Header */}
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                  {/* Sticky Welcome Header */}
+                  <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-6 -mx-6 px-6 py-6 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/50">
                     <div className="flex flex-col items-start text-left">
                       <h2 className="text-3xl font-bold text-slate-900 mb-1">
                         Welcome {userInfo.name.split(' (')[0]}
                       </h2>
-
-
                     </div>
                     <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
                       {/* Date Filter */}
@@ -2555,13 +2898,21 @@ const RecruitmentHeadDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                    <StatCard
+                      title="All KAM"
+                      value={kamTeam.length || 0}
+                      icon={FiTarget}
+                      trend={`${kamTeam.length > 0 ? 'Active Team' : 'No members'}`}
+                      color="white"
+                      onClick={() => setShowTeamModal(true)}
+                    />
                     <StatCard
                       title="All Clients"
                       value={clients.length || 0}
                       icon={FiUsers}
                       trend={`${clients.length > 0 ? 'Active' : 'No Clients'}`}
-                      color="bg-rose-500"
+                      color="white"
                       onClick={() => setShowClientsModal(true)}
                     />
                     <StatCard
@@ -2569,7 +2920,7 @@ const RecruitmentHeadDashboard = () => {
                       value={stats.activePositions || 0}
                       icon={FiBriefcase}
                       trend="+2 this week"
-                      color="bg-blue-500"
+                      color="white"
                       onClick={() => setActiveTab('Job Openings')}
                     />
 
@@ -2578,7 +2929,7 @@ const RecruitmentHeadDashboard = () => {
                       value={stats.interviewsScheduled || 0}
                       icon={FiCalendar}
                       trend="4 today"
-                      color="bg-amber-500"
+                      color="white"
                       onClick={() => setActiveTab('Interview Schedule')}
                     />
                     <StatCard
@@ -2586,7 +2937,7 @@ const RecruitmentHeadDashboard = () => {
                       value={stats.thisMonthHires || 0}
                       icon={FiAward}
                       trend="On track"
-                      color="bg-indigo-500"
+                      color="white"
                       onClick={() => setActiveTab('KAM Performance')}
                     />
                   </div>
@@ -2597,7 +2948,6 @@ const RecruitmentHeadDashboard = () => {
                       <div className="flex items-center justify-between mb-6 w-full">
                         <div className="flex flex-col text-left">
                           <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Staff Applications Pipeline</h3>
-                          <p className="text-[#6B6B7E] text-xs font-medium">Real-time tracking of candidate progression</p>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -2616,7 +2966,7 @@ const RecruitmentHeadDashboard = () => {
                                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                  className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                  className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-y-auto max-h-64 custom-scrollbar py-1"
                                 >
                                   {['All Team', ...kamTeam.map(k => k.name)].map((team) => (
                                     <button
@@ -2651,7 +3001,7 @@ const RecruitmentHeadDashboard = () => {
                                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                  className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-1"
+                                  className="absolute left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-y-auto max-h-64 custom-scrollbar py-1"
                                 >
                                   {['All Client', ...clients.map(c => c.companyName || c.name)].map((client) => (
                                     <button
@@ -2724,7 +3074,6 @@ const RecruitmentHeadDashboard = () => {
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 w-full gap-4">
                         <div className="flex flex-col text-left">
                           <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne mb-1">Annual Recruitment Summary</h3>
-                          <p className="text-[#6B6B7E] text-xs font-medium">Yearly hiring performance and trend analysis</p>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
@@ -3103,6 +3452,16 @@ const RecruitmentHeadDashboard = () => {
         bottomTabName="My Profile"
       >
         {renderContent()}
+
+        {/* Team Members Modal - Global */}
+        <AnimatePresence>
+          {showTeamModal && (
+            <TeamListModal
+              team={kamTeam}
+              onClose={() => setShowTeamModal(false)}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Client Job Distribution Modal - Global */}
         <AnimatePresence>
@@ -3557,9 +3916,53 @@ const RecruitmentHeadDashboard = () => {
                   {/* Total Hires */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-[#9B9BAD]">Total Hires</span>
-                    <span className="text-sm font-bold text-[#1A1A2E]">{selectedKAM.stats?.thisWeekHires || 0}</span>
+                    <span className="text-sm font-bold text-emerald-600">{selectedKAM.stats?.thisWeekHires || 0}</span>
                   </div>
                 </div>
+
+                {/* Performance Matrix Section */}
+                <div className="space-y-6 mt-4">
+                  <h5 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-1">Performance Overview</h5>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white rounded-3xl border border-[#F4F3EF] p-5 shadow-sm hover:border-blue-100 transition-all group">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FiCheckSquare size={14} />
+                        </div>
+                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">Shortlisted</p>
+                      </div>
+                      <p className="text-2xl font-black text-[#1A1A2E]">{selectedKAM.stats?.shortlisted || 0}</p>
+                    </div>
+                    <div className="bg-white rounded-3xl border border-[#F4F3EF] p-5 shadow-sm hover:border-blue-100 transition-all group">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FiCalendar size={14} />
+                        </div>
+                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">Interviews</p>
+                      </div>
+                      <p className="text-2xl font-black text-[#1A1A2E]">{selectedKAM.stats?.interviewsScheduled || 0}</p>
+                    </div>
+                    <div className="bg-white rounded-3xl border border-[#F4F3EF] p-5 shadow-sm hover:border-blue-100 transition-all group">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FiAward size={14} />
+                        </div>
+                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">Offers</p>
+                      </div>
+                      <p className="text-2xl font-black text-[#1A1A2E]">{selectedKAM.stats?.offersExtended || 0}</p>
+                    </div>
+                    <div className="bg-white rounded-3xl border border-[#F4F3EF] p-5 shadow-sm hover:border-blue-100 transition-all group">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FiPhone size={14} />
+                        </div>
+                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">Calls Done</p>
+                      </div>
+                      <p className="text-2xl font-black text-[#1A1A2E]">{selectedKAM.stats?.callsDone || 0}</p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </motion.div>
           </React.Fragment>

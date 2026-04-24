@@ -391,11 +391,11 @@ const AdminLayout = ({
  */
 export const StatCard = ({ title, value, change, changeType = 'increase', icon: Icon, color = 'blue', onClick }) => {
   const colors = {
-    blue: "bg-blue-50/50 text-[#1B4DA0]",
-    emerald: "bg-emerald-50/50 text-emerald-600",
-    rose: "bg-rose-50/50 text-rose-600",
-    amber: "bg-amber-50/50 text-amber-600",
-    violet: "bg-violet-50/50 text-violet-600",
+    blue: "bg-blue-100 text-[#1B4DA0]",
+    emerald: "bg-emerald-100 text-emerald-600",
+    rose: "bg-rose-100 text-rose-600",
+    amber: "bg-amber-100 text-amber-600",
+    violet: "bg-violet-100 text-violet-600",
     white: "bg-white text-[#1A1A2E] border border-[#F4F3EF] shadow-sm",
   };
 
@@ -403,10 +403,10 @@ export const StatCard = ({ title, value, change, changeType = 'increase', icon: 
     <motion.div
       whileHover={{ y: -4 }}
       onClick={onClick}
-      className={`bg-white rounded-[32px] p-8 shadow-sm border border-[#F4F3EF] transition-all group ${onClick ? 'cursor-pointer active:scale-[0.98]' : 'cursor-default'}`}
+      className={`bg-white rounded-[40px] p-8 shadow-sm border border-[#F4F3EF] transition-all duration-300 group ${onClick ? 'cursor-pointer active:scale-[0.98] hover:shadow-xl hover:shadow-blue-500/5 hover:border-transparent' : 'cursor-default'}`}
     >
       <div className="flex items-center justify-between">
-        <div className={`p-4 rounded-2xl ${colors[color] || colors.blue} transition-all duration-300`}>
+        <div className={`p-4 rounded-[20px] ${colors[color] || colors.blue} transition-all duration-500 group-hover:bg-[#1B4DA0] group-hover:text-white group-hover:scale-110 shadow-sm`}>
           {Icon && <Icon size={24} />}
         </div>
         {change && (

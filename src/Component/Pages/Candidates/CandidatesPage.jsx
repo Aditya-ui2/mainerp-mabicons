@@ -398,25 +398,41 @@ export default function CandidatesPage({ setActiveTab }) {
     setIsDiscovering(true);
     try {
       const selectedJob = positions.find(p => p.id === candidateForm.positionId);
-      if (!selectedJob) return;
+      if (!selectedJob) {
+        toast.error("Please select a job opening first");
+        return;
+      }
+
+      // If candidates list is empty, try to fetch them first
+      if (candidates.length === 0) {
+        await fetchCandidates();
+      }
 
       const jobTitle = selectedJob.title;
-      const jobContext = `${jobTitle} ${selectedJob.skills ? (Array.isArray(selectedJob.skills) ? selectedJob.skills.join(" ") : selectedJob.skills) : ""} ${selectedJob.description || ""}`;
+      const jobDescription = selectedJob.description || "";
+      const jobSkills = selectedJob.skills ? (Array.isArray(selectedJob.skills) ? selectedJob.skills.join(" ") : selectedJob.skills) : "";
+      
+      // Combine everything for deep AI matching
+      const jobContext = `
+        POSITION: ${jobTitle}
+        REQUIRED SKILLS: ${jobSkills}
+        JOB DESCRIPTION: ${jobDescription}
+        EXTRA SEARCH CONTEXT: ${searchSkills}
+      `;
       
       const pool = candidates.filter(c => String(c.id) !== String(candidateForm.id));
-      console.log("Candidate Discovery Started. Pool size:", pool.length);
+      console.log(`AI Discovery: Searching pool of ${pool.length} candidates for "${jobTitle}"`);
       
       if (pool.length === 0) {
-        toast.info("Resume Bank is currently empty. Add more candidates first!");
+        toast.info("No candidates found in the bank to match against.");
         return;
       }
 
       // Use AI to rank them with full JD context
-      const rankings = await rankCandidatesWithAI(pool, jobContext + " " + searchSkills);
-      console.log("AI Rankings received:", rankings);
+      const rankings = await rankCandidatesWithAI(pool, jobContext);
       
       if (rankings && rankings.length > 0) {
-        // Map the rankings back to our candidate objects (Enforce string comparison for ID)
+        // Map the rankings back to our candidate objects
         const matches = rankings.map(rank => {
           const candidate = pool.find(c => String(c.id) === String(rank.id));
           if (candidate) {
@@ -431,9 +447,7 @@ export default function CandidatesPage({ setActiveTab }) {
 
         setSuggestedCandidates(matches);
         if (matches.length > 0) {
-            toast.success(`AI suggested ${matches.length} matches!`);
-        } else {
-            toast.info("AI suggested some people, but we couldn't find them in the list.");
+            toast.success(`AI found ${matches.length} matching candidates from the Resume Bank!`);
         }
       } else {
         // Fallback to basic search
