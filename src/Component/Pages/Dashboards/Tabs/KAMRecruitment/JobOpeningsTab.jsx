@@ -1498,8 +1498,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
         const token = localStorage.getItem('token');
         if (token) {
           const payload = JSON.parse(atob(token.split('.')[1]));
+          const uId = payload.id || payload.userId || payload._id;
           // Only use ID if it's not a mock string to prevent UUID errors
-          departmentTeamId = (payload.id && !String(payload.id).startsWith('mock-')) ? payload.id : undefined;
+          departmentTeamId = (uId && !String(uId).startsWith('mock-')) ? uId : undefined;
         }
       } catch (e) {
         departmentTeamId = undefined;
@@ -2249,7 +2250,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
         {/* Table Interface */}
         <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
-          <div className="grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+          <div className={`grid ${isKAM ? 'grid-cols-[40px_2fr_1.5fr_120px_130px_100px_40px]' : 'grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px]'} gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent`}>
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -2261,7 +2262,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 }}
               />
             </div>
-            {["Position", "Client", "Status", "Posted", "Applicants", "Assign To", ""].map((h, i) => {
+            {["Position", "Client", "Status", "Posted", "Applicants", !isKAM && "Assign To", ""].filter(Boolean).map((h, i) => {
               let alignClass = "text-left flex items-start justify-start";
               if (["Status", "Posted", "Applicants"].includes(h)) {
                 alignClass = "text-center flex items-center justify-center";
@@ -2283,7 +2284,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <div
                 key={job.id}
                 onClick={() => setSelectedJob(job)}
-                className={`grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative job-selection-row ${selectedJob?.id === job.id ? 'bg-blue-50/50' : ''}`}
+                className={`grid ${isKAM ? 'grid-cols-[40px_2fr_1.5fr_120px_130px_100px_40px]' : 'grid-cols-[40px_2fr_1.5fr_120px_130px_100px_140px_40px]'} gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative job-selection-row ${selectedJob?.id === job.id ? 'bg-blue-50/50' : ''}`}
               >
                 <div className="flex items-center" onClick={e => e.stopPropagation()}>
                   <input
@@ -2343,7 +2344,8 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                   <span className="text-[13px] font-black text-[#1A1A2E]">{job.candidateCount}</span>
                   <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[1px] ml-0.5">Applicants</span>
                 </div>
-                <div className="relative" onClick={e => e.stopPropagation()}>
+                {!isKAM && (
+                  <div className="relative" onClick={e => e.stopPropagation()}>
                   {canAssignJobs ? (
                     jobAssignments[job.id] ? (
                       <button
@@ -2435,6 +2437,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     document.body
                   )}
                 </div>
+                )}
                 <div className="flex justify-end items-center">
                   <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
                     <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />

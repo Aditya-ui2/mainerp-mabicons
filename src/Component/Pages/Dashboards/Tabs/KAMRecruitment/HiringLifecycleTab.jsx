@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   FiSearch,
@@ -12,39 +12,351 @@ import {
   FiUser,
   FiChevronRight,
   FiChevronDown,
-  FiX
+  FiX,
+  FiPlus,
+  FiUserPlus,
+  FiBriefcase,
+  FiMapPin,
+  FiDollarSign
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { getAllCandidates, getSharePointCandidates } from '../../../service/api';
+import { getAllCandidates, getSharePointCandidates, addCandidate, getAllRecruitmentPositions, getRecruitmentClients, getSharePointClients, getAllClients } from '../../../service/api';
 import { format } from 'date-fns';
+
+// Modal for adding a joined candidate
+const AddCandidateModal = ({ isOpen, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    clientId: '',
+    positionId: '',
+    joiningDate: format(new Date(), 'yyyy-MM-dd'),
+    offeredCTC: '',
+    location: '',
+    experience: ''
+  });
+
+  const [clients, setClients] = useState([]);
+  const [allPositions, setAllPositions] = useState([]);
+  const [filteredPositions, setFilteredPositions] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen]);
+
+  const fetchData = async () => {
+    try {
+      // Individually catch each request to prevent one failure from blocking everything
+      const [allClientsRes, recClientsRes, positionsRes, spClientsRes] = await Promise.all([
+        getAllClients().catch(err => { console.error("getAllClients failed:", err); return { success: false }; }),
+        getRecruitmentClients().catch(err => { console.error("getRecruitmentClients failed:", err); return { success: false }; }),
+        getAllRecruitmentPositions().catch(err => { console.error("getAllRecruitmentPositions failed:", err); return { success: false }; }),
+        getSharePointClients().catch(err => { console.error("getSharePointClients failed:", err); return { success: true, data: [] }; })
+      ]);
+      
+      // 1. Process ERP Clients (Combine from both endpoints for maximum coverage)
+      let erpClients = [];
+      const extractClients = (res) => {
+        if (!res || !res.success) return [];
+        const data = res.data?.clients || res.clients || res.data || [];
+        return Array.isArray(data) ? data : [];
+      };
+
+      const clientsA = extractClients(allClientsRes);
+      const clientsB = extractClients(recClientsRes);
+      
+      // Combine and filter duplicates by ID
+      const combinedErp = [...clientsA];
+      clientsB.forEach(cb => {
+        if (!combinedErp.some(ca => ca.id === cb.id)) {
+          combinedErp.push(cb);
+        }
+      });
+
+      // 2. Process SharePoint Clients
+      let spClients = [];
+      if (spClientsRes && spClientsRes.data) {
+        spClients = Array.isArray(spClientsRes.data) ? spClientsRes.data : [];
+      }
+
+      // 3. Final Client Merge (ERP takes priority)
+      const finalClients = [...combinedErp];
+      spClients.forEach(spc => {
+        const name = (spc.companyName || spc.name || '').toLowerCase();
+        const exists = finalClients.some(ec => 
+          (ec.companyName || ec.name || '').toLowerCase() === name
+        );
+        if (!exists && name) {
+          finalClients.push({
+            ...spc,
+            id: spc.id || spc.sharePointId || spc.name, // Ensure we have an ID for the value attribute
+            isSharePoint: true
+          });
+        }
+      });
+
+      setClients(finalClients.sort((a,b) => (a.companyName || a.name || '').localeCompare(b.companyName || b.name || '')));
+      
+      // 4. Process Positions
+      if (positionsRes && positionsRes.success) {
+        const posData = positionsRes.data?.positions || positionsRes.data || [];
+        setAllPositions(Array.isArray(posData) ? posData : []);
+      }
+    } catch (err) {
+      console.error("Critical error in fetchData:", err);
+      toast.error("Failed to load data from server");
+    }
+  };
+
+  useEffect(() => {
+    if (formData.clientId) {
+      const selectedId = String(formData.clientId);
+      const filtered = allPositions.filter(p => 
+        String(p.clientId) === selectedId || 
+        (p.client?.id && String(p.client.id) === selectedId)
+      );
+      setFilteredPositions(filtered);
+    } else {
+      setFilteredPositions([]);
+    }
+  }, [formData.clientId, allPositions]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.clientId || !formData.positionId || !formData.joiningDate) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const res = await addCandidate({
+        ...formData,
+        stage: 'Joined',
+        status: 'Selected'
+      });
+      if (res.success) {
+        toast.success("Joined candidate added successfully");
+        onSuccess();
+        onClose();
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          clientId: '',
+          positionId: '',
+          joiningDate: format(new Date(), 'yyyy-MM-dd'),
+          offeredCTC: '',
+          location: '',
+          experience: ''
+        });
+      }
+    } catch (err) {
+      console.error("Error adding candidate:", err);
+      toast.error(err.message || "Failed to add candidate");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-6 font-jakarta">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-[#1A1A2E66] backdrop-blur-md"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        className="relative w-full max-w-[640px] bg-white rounded-[40px] shadow-[0_40px_80px_rgba(0,0,0,0.25)] overflow-hidden border border-white/20"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-10">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-3xl font-bold text-[#1A1A2E] font-syne">Add Joined Candidate</h2>
+              <p className="text-sm text-[#9B9BAD] mt-1">Register a candidate who has already joined a client.</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-12 h-12 rounded-2xl flex items-center justify-center border border-[#F4F3EF] text-[#6B6B7E] hover:bg-rose-50 hover:text-rose-500 transition-all duration-300"
+            >
+              <FiX size={24} />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Candidate Name *</label>
+                <div className="relative group">
+                  <FiUser className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <input
+                    required
+                    type="text"
+                    placeholder="Enter full name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-[#F4F3EF] border-2 border-transparent focus:border-[#1B4DA0]/20 focus:bg-white rounded-2xl py-4 pl-14 pr-5 text-sm font-semibold outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Joining Date *</label>
+                <div className="relative group">
+                  <FiCalendar className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <input
+                    required
+                    type="date"
+                    value={formData.joiningDate}
+                    onChange={(e) => setFormData({ ...formData, joiningDate: e.target.value })}
+                    className="w-full bg-[#F4F3EF] border-2 border-transparent focus:border-[#1B4DA0]/20 focus:bg-white rounded-2xl py-4 pl-14 pr-5 text-sm font-semibold outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Client *</label>
+                <div className="relative group">
+                  <FiBriefcase className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <select
+                    required
+                    value={formData.clientId}
+                    onChange={(e) => setFormData({ ...formData, clientId: e.target.value, positionId: '' })}
+                    className="w-full bg-[#F4F3EF] border-2 border-transparent focus:border-[#1B4DA0]/20 focus:bg-white rounded-2xl py-4 pl-14 pr-10 text-sm font-semibold outline-none appearance-none transition-all"
+                  >
+                    <option value="">Select Client</option>
+                    {clients.map(c => (
+                      <option key={c.id} value={c.id}>{c.companyName || c.name}</option>
+                    ))}
+                  </select>
+                  <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Position *</label>
+                <div className="relative group">
+                  <FiUserPlus className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <select
+                    required
+                    disabled={!formData.clientId}
+                    value={formData.positionId}
+                    onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
+                    className="w-full bg-[#F4F3EF] border-2 border-transparent focus:border-[#1B4DA0]/20 focus:bg-white rounded-2xl py-4 pl-14 pr-10 text-sm font-semibold outline-none appearance-none transition-all disabled:opacity-50"
+                  >
+                    <option value="">Select Position</option>
+                    {filteredPositions.map(p => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                  <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Email</label>
+                <div className="relative group">
+                  <FiMail className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <input
+                    type="email"
+                    placeholder="example@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-[#F4F3EF] border-2 border-transparent focus:border-[#1B4DA0]/20 focus:bg-white rounded-2xl py-4 pl-14 pr-5 text-sm font-semibold outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Phone</label>
+                <div className="relative group">
+                  <FiPhone className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <input
+                    type="tel"
+                    placeholder="+91 XXXXX XXXXX"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full bg-[#F4F3EF] border-2 border-transparent focus:border-[#1B4DA0]/20 focus:bg-white rounded-2xl py-4 pl-14 pr-5 text-sm font-semibold outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Offered CTC / Salary</label>
+                <div className="relative group">
+                  <FiDollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <input
+                    type="text"
+                    placeholder="e.g. 12 LPA"
+                    value={formData.offeredCTC}
+                    onChange={(e) => setFormData({ ...formData, offeredCTC: e.target.value })}
+                    className="w-full bg-[#F4F3EF] border-2 border-transparent focus:border-[#1B4DA0]/20 focus:bg-white rounded-2xl py-4 pl-14 pr-5 text-sm font-semibold outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Location</label>
+                <div className="relative group">
+                  <FiMapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <input
+                    type="text"
+                    placeholder="e.g. Noida, Delhi"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className="w-full bg-[#F4F3EF] border-2 border-transparent focus:border-[#1B4DA0]/20 focus:bg-white rounded-2xl py-4 pl-14 pr-5 text-sm font-semibold outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-[#1B4DA0] text-white py-5 rounded-2xl text-xs font-black uppercase tracking-[3px] shadow-lg shadow-blue-500/20 hover:bg-blue-800 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-3"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <FiCheckCircle size={18} />
+                    Confirm Joining
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </div>,
+    document.body
+  );
+};
 
 // Sub-component defined above to avoid any hoisting confusion
 const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLeft }) => {
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingMonth, setPendingMonth] = useState(null);
-  const [isMarkLeft, setIsMarkLeft] = useState(false);
-
   if (!candidate) return null;
 
-  const handleActionClick = (month, left) => {
-    if (!left && candidate.completedMilestones?.includes(month)) {
-      toast.info("This milestone is already secured");
-      return;
-    }
-    setPendingMonth(month);
-    setIsMarkLeft(left);
-    setShowConfirm(true);
-  };
-
-  const handleConfirmAction = () => {
-    if (isMarkLeft) {
-      onMarkLeft();
-    } else {
-      onUpdateMilestone(pendingMonth);
-    }
-    setShowConfirm(false);
-  };
 
   return createPortal(
     <div className="fixed inset-0 z-[10001] flex justify-end font-jakarta pointer-events-none">
@@ -102,147 +414,13 @@ const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLe
               <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Performance Score</p>
               <p className="text-[15px] font-black text-emerald-600">{candidate.performance}</p>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Review Cycle</p>
-              <p className="text-[15px] font-black text-[#1A1A2E]">Every 3 Months</p>
-            </div>
           </div>
-
-          <div className="border-t border-[#F4F3EF]" />
-
-          {/* Retention Timeline */}
-          <section className="px-2">
-            <div className="flex items-center gap-2 mb-8">
-              <FiClock size={16} className="text-[#1B4DA0]" />
-              <h3 className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-[0.2em]">Retention Protocol Status</h3>
-            </div>
-
-            {/* Quick Actions Panel */}
-            <div className="mb-10 p-8 bg-slate-100/50 rounded-[2.5rem] border border-slate-200/50 backdrop-blur-sm">
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mb-6 px-4">Secure Milestones</p>
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                {[1, 2, 3].map(month => {
-                  const isCompleted = candidate.completedMilestones?.includes(month);
-                  return (
-                    <button
-                      key={month}
-                      onClick={() => handleActionClick(month, false)}
-                      className={`flex flex-col items-center justify-center py-6 rounded-[2rem] border transition-all duration-300 group relative overflow-hidden cursor-pointer shadow-md active:scale-95 ${isCompleted
-                        ? 'bg-white border-[#10B981] text-[#10B981] shadow-lg shadow-emerald-500/15 scale-[1.02]'
-                        : 'bg-white border-slate-200 text-slate-400 hover:border-[#1B4DA0] hover:text-[#1B4DA0]'
-                        }`}
-                    >
-                      <span className="text-[9px] font-black uppercase tracking-widest leading-none mb-1 pointer-events-none">Month</span>
-                      <span className="text-2xl font-black group-hover:scale-110 transition-transform pointer-events-none">0{month}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                onClick={() => handleActionClick(null, true)}
-                className="w-full py-5 bg-rose-50 text-rose-600 border border-rose-100 rounded-[2rem] text-xs font-black uppercase tracking-[3px] shadow-sm transition-all cursor-pointer text-center active:scale-[0.98] font-bold"
-              >
-                Mark Candidate as Left
-              </button>
-            </div>
-
-            <div className="relative pl-8 space-y-12 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2.5px] before:bg-slate-100">
-              <div className="relative">
-                <div className="absolute -left-9 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white border-4 border-white shadow-md ring-4 ring-emerald-50 scale-110">
-                  <FiCheckCircle size={10} />
-                </div>
-                <div>
-                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">Joined {candidate.client}</p>
-                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-0.5">{candidate.joiningDate}</p>
-                </div>
-              </div>
-
-              {/* Dynamic Milestones */}
-              {candidate.completedMilestones?.map(month => (
-                <div key={month} className="relative">
-                  <div className="absolute -left-9 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white border-4 border-white shadow-md ring-4 ring-emerald-50 scale-110">
-                    <FiCheckCircle size={10} />
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">{month} Month Check-in</p>
-                    <p className="text-[11px] font-black text-emerald-500 mt-1 uppercase tracking-widest">Milestone Secured</p>
-                  </div>
-                </div>
-              ))}
-
-              <div className="relative">
-                <div className={`absolute -left-9 w-6 h-6 rounded-full flex items-center justify-center text-white border-4 border-white shadow-md ring-4 ${(candidate.completedMilestones?.length || 0) > 0 ? 'bg-emerald-500 ring-emerald-50' : 'bg-amber-500 ring-amber-50'}`}>
-                  {(candidate.completedMilestones?.length || 0) > 0 ? <FiCheckCircle size={10} /> : <FiClock size={10} />}
-                </div>
-                <div>
-                  <p className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-tight">Current Status</p>
-                  <p className="text-[11px] font-bold text-[#9B9BAD] mt-1">{(candidate.completedMilestones?.length || 0) > 0 ? 'Documentation in progress' : 'Awaiting first milestone'}</p>
-                </div>
-              </div>
-            </div>
-          </section>
 
           <div className="border-t border-[#F4F3EF] pt-8" />
         </div>
-
       </motion.div>
 
-      {/* Confirmation Modal - Moved outside to be centered globally */}
-      <AnimatePresence>
-        {showConfirm && (
-          <div className="fixed inset-0 z-[10100] flex items-center justify-center p-6 pointer-events-auto">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[#0a0a1a]/60 backdrop-blur-md"
-              onClick={() => setShowConfirm(false)}
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-[420px] bg-white rounded-[48px] p-12 shadow-[0_40px_80px_rgba(0,0,0,0.25)] overflow-hidden border border-white/20 flex flex-col items-center"
-            >
-              {/* Premium Glow Effect */}
-              <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/5 blur-[80px] rounded-full" />
-              <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/5 blur-[80px] rounded-full" />
 
-              <div className={`w-24 h-24 rounded-[32px] flex items-center justify-center mb-8 ${isMarkLeft ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-[#1B4DA0]'} shadow-inner`}>
-                {isMarkLeft ? <FiAlertCircle size={44} /> : <FiClock size={44} />}
-              </div>
-
-              <h3 className="text-[32px] font-bold text-[#1A1A2E] text-center mb-4 font-syne tracking-tight leading-tight">
-                Are you sure?
-              </h3>
-
-              <p className="text-[15px] leading-relaxed text-[#6B6B7E] text-center mb-10 font-jakarta font-medium px-4 max-w-[320px]">
-                {isMarkLeft
-                  ? `You are about to mark ${candidate.candidate} as resigned. This action will update their retention status.`
-                  : `Confirm Month ${pendingMonth} milestone for ${candidate.candidate}? This will secure their recruitment cycle.`
-                }
-              </p>
-
-              <div className="flex flex-col gap-4 w-full">
-                <button
-                  onClick={handleConfirmAction}
-                  className={`w-full py-5 rounded-[24px] text-[13px] font-black uppercase tracking-[3px] text-white shadow-lg transition-all active:scale-[0.95] flex items-center justify-center gap-3 ${isMarkLeft ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200' : 'bg-[#1B4DA0] hover:bg-blue-800 shadow-blue-200'
-                    }`}
-                >
-                  {isMarkLeft ? 'Confirm Departure' : 'Mark as Active'}
-                </button>
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  className="w-full py-5 bg-[#F4F3EF] text-[#6B6B7E] rounded-[24px] text-[13px] font-black uppercase tracking-[3px] hover:bg-slate-200 transition-all active:scale-[0.95]"
-                >
-                  Take Me Back
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>,
     document.body
   );
@@ -253,6 +431,7 @@ const HiringLifecycleTab = () => {
   const [filterClient, setFilterClient] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const [lifecycleData, setLifecycleData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -309,34 +488,7 @@ const HiringLifecycleTab = () => {
     }
   };
 
-  const handleUpdateMilestone = (month) => {
-    if (!selectedCandidate) return;
-    setLifecycleData(prev => prev.map(item => {
-      if (item.id === selectedCandidate.id) {
-        const currentMilestones = item.completedMilestones || [];
-        if (!currentMilestones.includes(month)) {
-          const newMilestones = [...currentMilestones, month].sort((a, b) => a - b);
-          const updated = { ...item, completedMilestones: newMilestones };
-          setSelectedCandidate(updated);
-          return updated;
-        }
-      }
-      return item;
-    }));
-    toast.success(`Milestone Month ${month} SECURED`);
-  };
 
-  const handleMarkAsLeft = () => {
-    if (!selectedCandidate) return;
-    setLifecycleData(prev => prev.map(item => {
-      if (item.id === selectedCandidate.id) {
-        return { ...item, status: 'Left' };
-      }
-      return item;
-    }));
-    toast.error(`${selectedCandidate.candidate} marked as Left`);
-    setSelectedCandidate(null);
-  };
 
   const filteredData = lifecycleData.filter(item => {
     const matchesSearch = item.candidate.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -350,6 +502,13 @@ const HiringLifecycleTab = () => {
     <div className="space-y-8 animate-in fade-in duration-500 font-jakarta">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Joined Candidates</h1>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[13px] font-black uppercase tracking-[3px] shadow-lg shadow-blue-500/20 hover:bg-blue-800 transition-all active:scale-[0.95]"
+        >
+          <FiPlus size={20} />
+          Add Join Candidate
+        </button>
       </div>
 
       <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
@@ -430,8 +589,16 @@ const HiringLifecycleTab = () => {
           <CandidateDetailDrawer
             candidate={selectedCandidate}
             onClose={() => setSelectedCandidate(null)}
-            onUpdateMilestone={handleUpdateMilestone}
-            onMarkLeft={handleMarkAsLeft}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAddModal && (
+          <AddCandidateModal
+            isOpen={showAddModal}
+            onClose={() => setShowAddModal(false)}
+            onSuccess={fetchJoinedCandidates}
           />
         )}
       </AnimatePresence>

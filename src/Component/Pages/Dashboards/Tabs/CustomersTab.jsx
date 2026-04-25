@@ -23,6 +23,7 @@ import {
   getClientDocuments,
   getClientDetails,
   editClient,
+  getAllTeamLeaders,
 } from "../../service/api";
 import { jwtDecode } from "jwt-decode";
 import { DocumentUpload } from "./DocumentUpload";
@@ -70,6 +71,11 @@ const CustomersTab = ({ isDarkMode }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
 
+  // Add new state for KAM assignment
+  const [isAssignKAMModalOpen, setIsAssignKAMModalOpen] = useState(false);
+  const [selectedClientForKAM, setSelectedClientForKAM] = useState(null);
+  const [isAssigning, setIsAssigning] = useState(false);
+
   useEffect(() => {
     fetchCustomers();
     // Only fetch assignee options if user is not SuperAdmin
@@ -77,7 +83,7 @@ const CustomersTab = ({ isDarkMode }) => {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        if (decoded.role !== 'SuperAdmin') {
+        if (decoded.role === 'SuperAdmin' || decoded.role === 'Admin') {
           fetchAssigneeOptions();
         }
       } catch (e) {
@@ -91,10 +97,17 @@ const CustomersTab = ({ isDarkMode }) => {
       const token = localStorage.getItem("token");
       if (!token) return;
       const decoded = jwtDecode(token);
-      const response = await getAdminHierarchy(decoded.id);
-      if (response.adminHierarchy && response.adminHierarchy.teamLeaders) {
-        setAssigneeOptions(response.adminHierarchy.teamLeaders);
+      
+      let teamLeaders = [];
+      if (decoded.role === 'SuperAdmin') {
+        const response = await getAllTeamLeaders();
+        teamLeaders = response.teamLeaders || [];
+      } else {
+        const response = await getAdminHierarchy(decoded.id);
+        teamLeaders = response.adminHierarchy?.teamLeaders || [];
       }
+      
+      setAssigneeOptions(teamLeaders);
     } catch (error) {
       console.error("Error fetching team leaders:", error);
     }
@@ -740,6 +753,27 @@ const CustomersTab = ({ isDarkMode }) => {
     }
   };
 
+  const handleAssignKAM = async (teamLeaderId) => {
+    try {
+      setIsAssigning(true);
+      const res = await editClient({
+        clientId: selectedClientForKAM.id,
+        teamLeaderId: teamLeaderId
+      });
+      
+      if (res.success) {
+        toast.success(`Client assigned to new KAM successfully!`);
+        setIsAssignKAMModalOpen(false);
+        fetchCustomers();
+      }
+    } catch (err) {
+      console.error('Assign KAM failed:', err);
+      toast.error(err.message || 'Failed to assign KAM');
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   if (isLoading) {
     return <LoadingAnimation />;
   }
@@ -910,9 +944,16 @@ const CustomersTab = ({ isDarkMode }) => {
                       </button>
                     )}
                     {customer.status === "Accepted" && (
-                      <span className="px-2 py-1 text-xs rounded bg-gray-100 text-gray-800">
-                        Already Onboarded
-                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedClientForKAM(customer);
+                          setIsAssignKAMModalOpen(true);
+                        }}
+                        className="px-2 py-1 text-xs rounded bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors duration-200 font-bold"
+                      >
+                        Assign KAM
+                      </button>
                     )}
                     <button
                       onClick={(e) => {
@@ -1926,6 +1967,121 @@ const CustomersTab = ({ isDarkMode }) => {
               )}
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Assign KAM Modal */}
+      <AnimatePresence>
+        {isAssignKAMModalOpen && selectedClientForKAM && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAssignKAMModalOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className={`relative w-full max-w-lg overflow-hidden rounded-3xl shadow-2xl ${
+                isDarkMode ? "bg-slate-900 border border-slate-700" : "bg-white"
+              }`}
+            >
+              {/* Header */}
+              <div className="px-8 py-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                    <FiUserPlus size={24} />
+                  </div>
+                  <div>
+                    <h3 className={`text-xl font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                      Assign KAM
+                    </h3>
+                    <p className={`text-sm ${isDarkMode ? "text-slate-400" : "text-gray-500"}`}>
+                      For {selectedClientForKAM.company}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsAssignKAMModalOpen(false)}
+                  className={`p-2 rounded-xl transition-colors ${
+                    isDarkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-8">
+                <div className="space-y-4">
+                  <p className={`text-sm font-medium ${isDarkMode ? "text-slate-300" : "text-gray-600"}`}>
+                    Choose a Key Account Manager (KAM) to assign to this client. This person will manage all operation and recruitment tasks.
+                  </p>
+                  
+                  <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                    {assigneeOptions.length > 0 ? (
+                      assigneeOptions.map((kam) => (
+                        <button
+                          key={kam._id || kam.id}
+                          onClick={() => handleAssignKAM(kam._id || kam.id)}
+                          disabled={isAssigning}
+                          className={`w-full group flex items-center justify-between p-4 rounded-2xl border transition-all text-left ${
+                            isDarkMode
+                              ? "bg-slate-800/50 border-slate-700 hover:border-purple-500 hover:bg-slate-800"
+                              : "bg-gray-50 border-gray-100 hover:border-purple-300 hover:bg-white hover:shadow-md"
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                              {kam.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className={`font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                                {kam.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {kam.email}
+                              </div>
+                            </div>
+                          </div>
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                            isDarkMode ? "bg-slate-700 text-slate-400" : "bg-white text-purple-600 shadow-sm"
+                          } group-hover:scale-110`}>
+                            {isAssigning ? (
+                              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <FiUserPlus size={16} />
+                            )}
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="text-center py-10">
+                        <p className="text-sm text-gray-500 italic">No available Team Leaders/KAMs found.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className={`px-8 py-4 border-t flex justify-end ${
+                isDarkMode ? "bg-slate-900/50 border-slate-800" : "bg-gray-50 border-gray-100"
+              }`}>
+                <button
+                  onClick={() => setIsAssignKAMModalOpen(false)}
+                  className={`px-6 py-2 rounded-xl font-bold text-sm transition-colors ${
+                    isDarkMode ? "text-slate-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </motion.div>

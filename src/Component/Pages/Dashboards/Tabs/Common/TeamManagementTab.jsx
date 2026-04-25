@@ -33,6 +33,7 @@ import {
   updateDepartmentTeamMember,
   deleteDepartmentTeamMember,
   getDepartmentStats,
+  getWorkHandovers
 } from '../../../service/api';
 
 const MOCK_MEMBERS = [
@@ -168,6 +169,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
   const [editingMember, setEditingMember] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [stats, setStats] = useState({ total: 0, active: 0, onLeave: 0 });
+  const [activeHandovers, setActiveHandovers] = useState([]);
   const [isEditingInDetail, setIsEditingInDetail] = useState(false);
   const [isSavingDetail, setIsSavingDetail] = useState(false);
   const [editableMember, setEditableMember] = useState(null);
@@ -214,12 +216,16 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      const response = await getDepartmentTeamMembers(department);
+      const [response, hRes] = await Promise.all([
+        getDepartmentTeamMembers(department),
+        getWorkHandovers({ status: 'Active' })
+      ]);
       const apiMembers = response.members || [];
       const filteredMocks = MOCK_MEMBERS.filter(m => m.department === department);
       setMembers([...filteredMocks, ...apiMembers]);
+      if (hRes?.success) setActiveHandovers(hRes.data || []);
     } catch (error) {
-      console.error('Error fetching team members:', error);
+      console.error('Error fetching data:', error);
       setMembers(MOCK_MEMBERS.filter(m => m.department === department));
     } finally {
       setLoading(false);
@@ -306,12 +312,12 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
     try {
       setIsSavingDetail(true);
       await updateDepartmentTeamMember(editableMember._id, editableMember);
-      
+
       // Update local state
       setMembers(prev => prev.map(m => m._id === editableMember._id ? editableMember : m));
       setSelectedMemberForDetail(editableMember);
       setIsEditingInDetail(false);
-      
+
       fetchStats();
     } catch (error) {
       console.error('Error updating member:', error);
@@ -381,19 +387,19 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
           </button>
           <button
             onClick={() => {
-                setEditingMember(null);
-                setFormData({
-                    name: '',
-                    email: '',
-                    phone: '',
-                    employeeId: '',
-                    department: department,
-                    joiningDate: '',
-                    profilePhoto: null,
-                    profilePhotoPreview: null,
-                    status: 'Active'
-                });
-                setShowModal(true);
+              setEditingMember(null);
+              setFormData({
+                name: '',
+                email: '',
+                phone: '',
+                employeeId: '',
+                department: department,
+                joiningDate: '',
+                profilePhoto: null,
+                profilePhotoPreview: null,
+                status: 'Active'
+              });
+              setShowModal(true);
             }}
             className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
           >
@@ -424,11 +430,11 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
           </div>
         </div>
         <div className="hidden lg:flex items-center gap-3">
-            {['ALL DATES', 'ALL CLIENTS', 'ALL STATUS'].map(f => (
-                <button key={f} className="flex items-center gap-3 px-6 py-3 bg-[#F4F3EF] hover:bg-[#EEEFED] text-[#4B4B5E] text-[10px] font-black uppercase tracking-[2px] rounded-2xl transition-all shadow-sm">
-                    {f}
-                </button>
-            ))}
+          {['ALL DATES', 'ALL CLIENTS', 'ALL STATUS'].map(f => (
+            <button key={f} className="flex items-center gap-3 px-6 py-3 bg-[#F4F3EF] hover:bg-[#EEEFED] text-[#4B4B5E] text-[10px] font-black uppercase tracking-[2px] rounded-2xl transition-all shadow-sm">
+              {f}
+            </button>
+          ))}
         </div>
       </div>
       {/* Team Directory Table */}
@@ -437,7 +443,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[#F4F3EF] text-left">
-                <th className="px-8 py-10 w-12 text-center">
+                <th className="px-8 py-10 w-12 text-left">
                   <input
                     type="checkbox"
                     checked={selectedIds.length > 0 && selectedIds.length === filteredMembers.length}
@@ -445,11 +451,11 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                     className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] cursor-pointer focus:ring-[#1B4DA0]"
                   />
                 </th>
-                <th className="px-8 py-10 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Member</th>
-                <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Department</th>
-                <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Email Address</th>
-                <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] w-32">Connect</th>
-                <th className="px-8 py-10 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] w-12">Actions</th>
+                <th className="px-8 py-10 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Member</th>
+                <th className="px-8 py-10 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Department</th>
+                <th className="px-8 py-10 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Email Address</th>
+                <th className="px-8 py-10 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] w-32">Connect</th>
+                <th className="px-8 py-10 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px] w-12">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-left">
@@ -464,71 +470,102 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                     </div>
                   </td>
                 </tr>
-              ) : (                filteredMembers.map((member) => (
-                  <tr
-                    key={member._id}
-                    onClick={() => setSelectedMemberForDetail(member)}
-                    className="group hover:bg-[#F9F9F8] transition-all border-b border-[#F4F3EF] last:border-0 cursor-pointer"
-                  >
-                    <td className="px-8 py-8 text-center" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(member._id)}
-                        onChange={() => setSelectedIds(prev => prev.includes(member._id) ? prev.filter(id => id !== member._id) : [...prev, member._id])}
-                        className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-8 py-12 whitespace-nowrap text-center">
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-lg font-black shadow-xl border border-[#F4F3EF] group-hover:scale-110 transition-transform overflow-hidden">
-                          {member.profilePhoto && (String(member.profilePhoto).includes('data:image') || String(member.profilePhoto).includes('http')) ? (
-                            <img src={member.profilePhoto} alt={member.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                          ) : null}
-                          <span style={{ display: member.profilePhoto && (String(member.profilePhoto).includes('data:image') || String(member.profilePhoto).includes('http')) ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>{(member.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
-                        </div>
-                        <div className="min-w-0 text-center">
+              ) : (filteredMembers.map((member) => (
+                <tr
+                  key={member._id}
+                  onClick={() => setSelectedMemberForDetail(member)}
+                  className="group hover:bg-[#F9F9F8] transition-all border-b border-[#F4F3EF] last:border-0 cursor-pointer"
+                >
+                  <td className="px-8 py-8 text-left" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(member._id)}
+                      onChange={() => setSelectedIds(prev => prev.includes(member._id) ? prev.filter(id => id !== member._id) : [...prev, member._id])}
+                      className="w-4 h-4 rounded-md border-[#E8E7E2] text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-8 py-12 whitespace-nowrap text-left">
+                    <div className="flex items-center justify-start gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-lg font-black shadow-xl border border-[#F4F3EF] group-hover:scale-110 transition-transform overflow-hidden shrink-0">
+                        {member.profilePhoto && (String(member.profilePhoto).includes('data:image') || String(member.profilePhoto).includes('http')) ? (
+                          <img src={member.profilePhoto} alt={member.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                        ) : null}
+                        <span style={{ display: member.profilePhoto && (String(member.profilePhoto).includes('data:image') || String(member.profilePhoto).includes('http')) ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>{(member.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                      </div>
+                      <div className="min-w-0 text-left flex flex-col">
+                        <div className="flex items-center gap-2">
                           <p className="text-base font-black text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors tracking-tight">{member.name}</p>
-                          <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mt-0.5">MEMBER SINCE {member.joiningDate?.split('-')[0] || '2023'}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-12 whitespace-nowrap text-center">
-                      <div className="flex flex-col items-center justify-center h-full">
-                        <span className="text-sm font-bold text-[#1A1A2E]">{member.department}</span>
-                        <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] flex items-center justify-center gap-1.5 mt-0.5">
-                           <FiActivity size={10} className="text-[#1B4DA0]" /> {member.stats?.interviewsScheduled || 0} Active Status
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-12 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center h-full">
-                        <span className="text-sm font-bold text-[#4B4B5E]">{member.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-3">
-                        <button 
-                             onClick={(e) => { e.stopPropagation(); window.location.href = `mailto:${member.email}`; }}
-                             className="p-3 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl transition-all shadow-sm"
-                        >
-                            <FiMail size={16} />
-                        </button>
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${member.phone}`; }}
-                            className="p-3 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl transition-all shadow-sm"
-                        >
-                            <FiPhone size={16} />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-center">
-                      <button className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-[#1A1A2E] group-hover:text-white transition-all shadow-sm">
-                        <FiChevronRight size={20} className="transition-transform group-hover:translate-x-0.5" />
-                      </button>
-                    </td>
-                  </tr>
+                          {(() => {
+                            const mId = (member.id || member._id || '').toString().trim();
+                            const mName = (member.name || '').toLowerCase().trim();
+                            const activeHandover = activeHandovers.find(h => {
+                              const targetId = (h.toUserId || '').toString().trim();
+                              const targetName = (h.toUser?.name || '').toLowerCase().trim();
+                              return (targetId === mId || (targetName && targetName === mName)) && h.status === 'Active';
+                            });
+                            if (!activeHandover) return null;
 
-                ))
+                            const currentUserId = (localStorage.getItem('userId') || localStorage.getItem('id') || localStorage.getItem('_id') || '').toString().trim();
+                            const currentUserName = (localStorage.getItem('userName') || '').toLowerCase().trim();
+                            const fromId = (activeHandover.fromUserId || '').toString().trim();
+                            const fromName = (activeHandover.fromUser?.name || '').toLowerCase().trim();
+                            const isFromMe = (fromId === currentUserId) || (currentUserName && fromName === currentUserName);
+
+                            return (
+                              <div className={`px-2 py-0.5 rounded-full flex items-center gap-1.5 border shadow-sm ${isFromMe ? 'bg-blue-50 border-blue-100' : 'bg-amber-50 border-amber-100'
+                                }`}>
+                                <span className="relative flex h-1.5 w-1.5">
+                                  <span className={`${isFromMe ? 'bg-blue-500' : 'bg-amber-500'} animate-ping absolute inline-flex h-full w-full rounded-full opacity-75`}></span>
+                                  <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isFromMe ? 'bg-blue-600' : 'bg-amber-600'}`}></span>
+                                </span>
+                                <span className={`text-[8px] font-black uppercase tracking-tighter ${isFromMe ? 'text-blue-700' : 'text-amber-700'}`}>
+                                  {isFromMe ? 'Handed Over' : 'Delegated'}
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mt-0.5">MEMBER SINCE {member.joiningDate?.split('-')[0] || '2023'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-12 whitespace-nowrap text-left">
+                    <div className="flex flex-col items-start justify-center h-full">
+                      <span className="text-sm font-bold text-[#1A1A2E]">{member.department}</span>
+                      <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px] flex items-center justify-start gap-1.5 mt-0.5">
+                        <FiActivity size={10} className="text-[#1B4DA0]" /> {member.stats?.interviewsScheduled || 0} Active Status
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-12 whitespace-nowrap text-left">
+                    <div className="flex items-center justify-start h-full">
+                      <span className="text-sm font-bold text-[#4B4B5E]">{member.email}</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-8 whitespace-nowrap text-left">
+                    <div className="flex items-center justify-start gap-3">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); window.location.href = `mailto:${member.email}`; }}
+                        className="p-3 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl transition-all shadow-sm"
+                      >
+                        <FiMail size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${member.phone}`; }}
+                        className="p-3 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-xl transition-all shadow-sm"
+                      >
+                        <FiPhone size={16} />
+                      </button>
+                    </div>
+                  </td>
+                  <td className="px-8 py-8 whitespace-nowrap text-right">
+                    <button className="ml-auto w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-[#1A1A2E] group-hover:text-white transition-all shadow-sm">
+                      <FiChevronRight size={20} className="transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                  </td>
+                </tr>
+
+              ))
               )}
             </tbody>
           </table>
@@ -537,45 +574,51 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
         {/* Floating Action Bar */}
         <AnimatePresence>
           {selectedIds.length > 0 && (
-            <div className="absolute bottom-6 left-0 w-full flex justify-center z-[100] pointer-events-none px-4">
-              <motion.div
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 30, scale: 0.95 }}
-                className="bg-[#111827] text-white px-5 py-2.5 rounded-[12px] shadow-2xl flex items-center pointer-events-auto gap-4"
-              >
-                <span className="text-[12px] font-semibold pr-4 border-r border-gray-700 whitespace-nowrap">
-                  {selectedIds.length} members selected
-                </span>
-                <div className="flex items-center gap-4">
-                  <button 
-                    onClick={() => {
-                      if (selectedIds.length === 1) {
-                        const memberToEdit = members.find(m => m._id === selectedIds[0]);
-                        if (memberToEdit) handleEdit(memberToEdit);
-                      }
-                    }}
-                    className="text-[12px] font-bold text-gray-300 hover:text-white transition-colors flex items-center gap-2"
-                  >
-                    <FiEdit2 className="w-3.5 h-3.5" /> Edit
-                  </button>
-                  <button
-                    onClick={() => {
-                      setConfirmDelete('bulk');
-                    }}
-                    className="text-[12px] font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center gap-2"
-                  >
-                    <FiTrash2 className="w-3.5 h-3.5" /> Remove
-                  </button>
+            <motion.div
+              initial={{ opacity: 0, y: 100, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: 100, x: '-50%' }}
+              className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-6 px-10 py-5 bg-[#1A1A2E] rounded-[32px] shadow-2xl shadow-slate-900/40 min-w-[500px] border border-white/5"
+            >
+              <div className="flex items-center gap-4 pr-8 border-r border-white/10">
+                <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] flex items-center justify-center text-white font-black shadow-lg">
+                  {selectedIds.length}
                 </div>
+                <div className="text-left">
+                  <p className="text-[14px] font-black text-white tracking-tight">Members Selected</p>
+                  <button onClick={() => setSelectedIds([])} className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-400 transition-colors">Deselect All</button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-8 flex-1 justify-center text-white">
                 <button
-                  onClick={() => setSelectedIds([])}
-                  className="p-1 text-gray-500 hover:text-white transition-colors"
+                  onClick={() => {
+                    if (selectedIds.length === 1) {
+                      const memberToEdit = members.find(m => m._id === selectedIds[0]);
+                      if (memberToEdit) handleEdit(memberToEdit);
+                    }
+                  }}
+                  className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
                 >
-                  <FiX className="w-4 h-4" />
+                  <FiEdit2 size={16} className="text-blue-400 group-hover:text-white transition-colors" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Edit</span>
                 </button>
-              </motion.div>
-            </div>
+                <button
+                  onClick={() => setConfirmDelete('bulk')}
+                  className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                >
+                  <FiTrash2 size={16} className="text-red-400 group-hover:text-white transition-colors" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Remove</span>
+                </button>
+              </div>
+
+              <button
+                onClick={() => setSelectedIds([])}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white"
+              >
+                <FiX size={20} />
+              </button>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -605,11 +648,11 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                     <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne outline-none">{selectedMemberForDetail.name}</h2>
                     <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
                       <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] outline-none truncate">
-                          {selectedMemberForDetail.role || selectedMemberForDetail.department}
+                        {selectedMemberForDetail.role || selectedMemberForDetail.department}
                       </span>
                       <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2] flex-shrink-0" />
                       <span className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[3px] outline-none">
-                          {selectedMemberForDetail.status}
+                        {selectedMemberForDetail.status}
                       </span>
                     </div>
                   </div>
@@ -665,43 +708,43 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
 
                   {/* Professional Records */}
                   <div className="space-y-8">
-                     <div className="flex items-center justify-between px-2">
-                        <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Member Information</span>
-                        <div className="h-px bg-[#F4F3EF] flex-1 ml-6" />
-                     </div>
-                     
-                     <div className="grid grid-cols-2 gap-6 px-2">
-                        <div className="space-y-2">
-                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Email Address</span>
-                            <div className="flex items-center gap-2 p-4 bg-[#FAFAF9] rounded-2xl border border-[#F4F3EF]">
-                                <FiMail className="text-[#1B4DA0]" size={14} />
-                                <span className="text-sm font-bold text-[#1A1A2E] truncate overflow-hidden">{selectedMemberForDetail.email}</span>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Contact Number</span>
-                            <div className="flex items-center gap-2 p-4 bg-[#FAFAF9] rounded-2xl border border-[#F4F3EF]">
-                                <FiPhone className="text-[#1B4DA0]" size={14} />
-                                <span className="text-sm font-bold text-[#1A1A2E]">{selectedMemberForDetail.phone}</span>
-                            </div>
-                        </div>
-                     </div>
+                    <div className="flex items-center justify-between px-2">
+                      <span className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Member Information</span>
+                      <div className="h-px bg-[#F4F3EF] flex-1 ml-6" />
+                    </div>
 
-                     {/* Performance Matrix (Stats) */}
-                     <div className="px-2">
-                        <div className="grid grid-cols-3 gap-4">
-                            {[
-                                { label: 'Assigned', value: selectedMemberForDetail.stats?.candidatesPipeline || 0, color: 'text-violet-600', bg: 'bg-violet-50' },
-                                { label: 'Scheduled', value: selectedMemberForDetail.stats?.interviewsScheduled || 0, color: 'text-blue-600', bg: 'bg-blue-50' },
-                                { label: 'Active', value: selectedMemberForDetail.stats?.activePositions || 0, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                            ].map((stat, sidx) => (
-                                <div key={sidx} className="p-5 rounded-[24px] border border-[#F4F3EF] bg-white shadow-sm hover:shadow-md transition-all">
-                                    <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">{stat.label}</p>
-                                    <p className={`text-xl font-black ${stat.color} font-syne`}>{stat.value}</p>
-                                </div>
-                            ))}
+                    <div className="grid grid-cols-2 gap-6 px-2">
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Email Address</span>
+                        <div className="flex items-center gap-2 p-4 bg-[#FAFAF9] rounded-2xl border border-[#F4F3EF]">
+                          <FiMail className="text-[#1B4DA0]" size={14} />
+                          <span className="text-sm font-bold text-[#1A1A2E] truncate overflow-hidden">{selectedMemberForDetail.email}</span>
                         </div>
-                     </div>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block">Contact Number</span>
+                        <div className="flex items-center gap-2 p-4 bg-[#FAFAF9] rounded-2xl border border-[#F4F3EF]">
+                          <FiPhone className="text-[#1B4DA0]" size={14} />
+                          <span className="text-sm font-bold text-[#1A1A2E]">{selectedMemberForDetail.phone}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Performance Matrix (Stats) */}
+                    <div className="px-2">
+                      <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { label: 'Assigned', value: selectedMemberForDetail.stats?.candidatesPipeline || 0, color: 'text-violet-600', bg: 'bg-violet-50' },
+                          { label: 'Scheduled', value: selectedMemberForDetail.stats?.interviewsScheduled || 0, color: 'text-blue-600', bg: 'bg-blue-50' },
+                          { label: 'Active', value: selectedMemberForDetail.stats?.activePositions || 0, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                        ].map((stat, sidx) => (
+                          <div key={sidx} className="p-5 rounded-[24px] border border-[#F4F3EF] bg-white shadow-sm hover:shadow-md transition-all">
+                            <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">{stat.label}</p>
+                            <p className={`text-xl font-black ${stat.color} font-syne`}>{stat.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -709,7 +752,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                 <div className="p-10 border-t border-[#F4F3EF] bg-[#FBFBFF] flex gap-4">
                   {isEditingInDetail ? (
                     <>
-                      <button 
+                      <button
                         disabled={isSavingDetail}
                         onClick={handleSaveInline}
                         className="flex-1 py-4 bg-[#0D47A1] text-white rounded-xl text-xs font-bold hover:bg-[#0a3a82] transition-all flex items-center justify-center gap-2"
@@ -717,7 +760,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                         {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiSave className="w-3.5 h-3.5" />}
                         Save Changes
                       </button>
-                      <button 
+                      <button
                         onClick={() => setIsEditingInDetail(false)}
                         className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
                       >
@@ -725,7 +768,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                       </button>
                     </>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => setSelectedMemberForDetail(null)}
                       className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-xs font-bold hover:bg-[#EEF2FB] transition-all"
                     >
@@ -849,7 +892,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                         <FiPhone className="absolute left-4 text-[#C5C5D2]" />
                         <input type="tel" required placeholder="9876543210" maxLength="10"
                           className="w-full pl-11 pr-4 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#0D47A1]/10"
-                          value={formData.phone} 
+                          value={formData.phone}
                           onChange={(e) => {
                             const value = e.target.value.replace(/[^0-9]/g, '');
                             setFormData({ ...formData, phone: value });
@@ -943,8 +986,8 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                   {confirmDelete === 'bulk' ? `Remove ${selectedIds.length} Members?` : 'Remove Team Member?'}
                 </h3>
                 <p className="text-sm text-[#9B9BAD] mb-8">
-                  {confirmDelete === 'bulk' 
-                    ? 'Are you sure you want to remove all selected members? This action is permanent.' 
+                  {confirmDelete === 'bulk'
+                    ? 'Are you sure you want to remove all selected members? This action is permanent.'
                     : 'This action is permanent and cannot be undone.'}
                 </p>
                 <div className="flex flex-col gap-3">

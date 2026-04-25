@@ -1697,7 +1697,7 @@ export const createLead = async (leadData) => {
 // Get all leads
 export const getAllLeads = async () => {
   try {
-    const response = await axios.get('http://localhost:3000/leads', {
+    const response = await axiosInstance.get('/leads', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -2997,7 +2997,7 @@ export const getClientsForTeamLeader = async (payload) => {
 
 export const getClosedDeals = async () => {
   try {
-    const response = await axios.get('http://localhost:3000/deals/closed', {
+    const response = await axiosInstance.get('/deals/closed', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3012,7 +3012,7 @@ export const getClosedDeals = async () => {
 
 export const getPendingAgreements = async () => {
   try {
-    const response = await axios.get('http://localhost:3000/agreements/pending', {
+    const response = await axiosInstance.get('/agreements/pending', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3027,7 +3027,7 @@ export const getPendingAgreements = async () => {
 
 export const getUpcomingActivities = async () => {
   try {
-    const response = await axios.get('http://localhost:3000/activities/upcoming', {
+    const response = await axiosInstance.get('/activities/upcoming', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3042,7 +3042,7 @@ export const getUpcomingActivities = async () => {
 
 export const getBDMetrics = async () => {
   try {
-    const response = await axios.get('http://localhost:3000/bd/metrics', {
+    const response = await axiosInstance.get('/bd/metrics', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3057,7 +3057,7 @@ export const getBDMetrics = async () => {
 
 export const bdExecutiveLogin = async (credentials) => {
   try {
-    const response = await axios.post('http://localhost:3000/bd/login', credentials, {
+    const response = await axiosInstance.post('/bd/login', credentials, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

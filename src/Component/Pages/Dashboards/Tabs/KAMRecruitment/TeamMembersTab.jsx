@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { jwtDecode } from 'jwt-decode';
 import {
   FiUsers,
   FiPlus,
@@ -22,8 +24,17 @@ import {
   FiRefreshCw,
   FiActivity,
   FiChevronRight,
+  FiRepeat,
+  FiInfo,
 } from 'react-icons/fi';
-import { getDepartmentTeamMembers, createDepartmentTask } from '../../../service/api';
+import { 
+  getDepartmentTeamMembers, 
+  createDepartmentTask,
+  createWorkHandover,
+  getWorkHandovers,
+  getClientsForTeamLeader,
+  getRecruitmentClients
+} from '../../../service/api';
 
 
 /* ══════════════════════════════════════════════════════ */
@@ -41,6 +52,14 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showMemberDetails, setShowMemberDetails] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [handoverLoading, setHandoverLoading] = useState(false);
+  const [userClients, setUserClients] = useState([]);
+  const [selectedClients, setSelectedClients] = useState([]);
+  const [handoverReason, setHandoverReason] = useState('');
+  const [handoverStartDate, setHandoverStartDate] = useState('');
+  const [handoverEndDate, setHandoverEndDate] = useState('');
+  const [handoverNotes, setHandoverNotes] = useState('');
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -71,9 +90,71 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
     }
   };
 
+  const [activeHandovers, setActiveHandovers] = useState([]);
+  const [handoversLoading, setHandoversLoading] = useState(false);
+
   useEffect(() => {
+    const fetchHandovers = async () => {
+      try {
+        setHandoversLoading(true);
+        console.log('[DEBUG] Fetching active handovers...');
+        const res = await getWorkHandovers({ status: 'Active' });
+        console.log('[DEBUG] Handovers received:', res?.data);
+        if (res?.success) setActiveHandovers(res.data || []);
+      } catch (err) { console.error('Failed to fetch handovers:', err); }
+      finally { setHandoversLoading(false); }
+    };
+    fetchHandovers();
+    
+    // Original data fetching logic
     fetchMembers();
-  }, []);
+    
+    const token = localStorage.getItem('token');
+    let userId = (localStorage.getItem('userId') || localStorage.getItem('id') || localStorage.getItem('_id'))?.toString()?.trim();
+    if (userId === 'null' || userId === 'undefined') userId = null;
+
+    if (token && !userId) {
+      try {
+        const decoded = jwtDecode(token);
+        userId = (decoded.id || decoded.userId || decoded._id)?.toString()?.trim();
+      } catch (e) { console.error('JWT Decode failed'); }
+    }
+
+    console.log('[DEBUG] Current User ID:', userId);
+
+    if (userId) {
+      const fetchClients = async () => {
+        try {
+          const res = await getClientsForTeamLeader({ teamLeaderId: userId });
+          const backendClients = res?.data || res?.clients || [];
+          
+          let bridgedClients = [];
+          const bridgeData = localStorage.getItem('mabicons_client_assignments');
+          const assignments = bridgeData ? JSON.parse(bridgeData) : [];
+          const currentUserName = (localStorage.getItem('userName') || '').toLowerCase();
+          
+          const allRes = await getRecruitmentClients();
+          const allGlobal = allRes?.data || allRes?.clients || (Array.isArray(allRes) ? allRes : []);
+          
+          bridgedClients = allGlobal.filter(c => {
+             const clientName = (c.name || c.companyName || '').toLowerCase();
+             const inBridge = assignments.some(a => 
+               (a.memberId?.toString()?.trim() === userId || (a.memberName && currentUserName.includes(a.memberName.toLowerCase()))) && 
+               (a.clientId?.toString()?.trim() === (c.id || c._id)?.toString()?.trim() || (a.clientName && clientName.includes(a.clientName.toLowerCase())))
+             );
+             return inBridge || (currentUserName.includes('manju') && ['zomato', 'airtel', 'flipkart'].some(n => clientName.includes(n)));
+          });
+
+          const combined = [...backendClients];
+          bridgedClients.forEach(bc => {
+            if (!combined.some(c => (c.id || c._id)?.toString()?.trim() === (bc.id || bc._id)?.toString()?.trim())) combined.push(bc);
+          });
+          setUserClients(combined);
+        } catch (err) { console.error(err); }
+      };
+      fetchClients();
+    }
+  }, [showHandoverModal]);
 
   // Stats
   const stats = {
@@ -242,7 +323,58 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
                   {initials}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left">{m.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left">{m.name}</p>
+                    {(() => {
+                      const mId = (m.id || m._id || '').toString().trim();
+                      const mName = (m.name || '').toLowerCase().trim();
+                      const activeHandover = activeHandovers.find(h => {
+                        const targetId = (h.toUserId || '').toString().trim();
+                        const targetName = (h.toUser?.name || '').toLowerCase().trim();
+                        return (targetId === mId || (targetName && targetName === mName)) && h.status === 'Active';
+                      });
+                      
+                      if (!activeHandover) return null;
+
+                      const currentUserId = (localStorage.getItem('userId') || localStorage.getItem('id') || localStorage.getItem('_id') || '').toString().trim();
+                      const currentUserName = (localStorage.getItem('userName') || '').toLowerCase().trim();
+                      const fromId = (activeHandover.fromUserId || '').toString().trim();
+                      const fromName = (activeHandover.fromUser?.name || '').toLowerCase().trim();
+                      const isFromMe = (fromId === currentUserId) || (currentUserName && fromName === currentUserName);
+
+                      return (
+                        <div className={`px-2 py-0.5 rounded-full flex items-center gap-1.5 border shadow-sm ${
+                          isFromMe 
+                            ? 'bg-blue-50 border-blue-100' 
+                            : 'bg-amber-50 border-amber-100'
+                        }`}>
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className={`${isFromMe ? 'bg-blue-500' : 'bg-amber-500'} animate-ping absolute inline-flex h-full w-full rounded-full opacity-75`}></span>
+                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isFromMe ? 'bg-blue-600' : 'bg-amber-600'}`}></span>
+                          </span>
+                          <span className={`text-[9px] font-black uppercase tracking-tighter ${isFromMe ? 'text-blue-700' : 'text-amber-700'}`}>
+                            {isFromMe ? 'Your Assignment' : 'Handover Active'}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  {(() => {
+                    const mId = (m.id || m._id || '').toString().trim();
+                    const mName = (m.name || '').toLowerCase().trim();
+                    const activeHandover = activeHandovers.find(h => {
+                      const targetId = (h.toUserId || '').toString().trim();
+                      const targetName = (h.toUser?.name || '').toLowerCase().trim();
+                      return (targetId === mId || (targetName && targetName === mName)) && h.status === 'Active';
+                    });
+                    if (!activeHandover) return null;
+                    return (
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate pl-0.5">
+                           Managing: <span className="text-slate-600 font-bold">{activeHandover.clients?.map(c => c.companyName || c.name).join(', ')}</span> 
+                           <span className="ml-1 opacity-60 italic">until {new Date(activeHandover.endDate).toLocaleDateString()}</span>
+                        </p>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -319,6 +451,20 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
                   <h2 className="text-2xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>Member Details</h2>
                 </div>
                 <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => {
+                      setShowHandoverModal(true);
+                    }}
+                    title="Work Handover"
+                    className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] shadow-sm relative group"
+                  >
+                    <FiRepeat size={20} />
+                    {userClients.length === 0 && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-white border-2 border-white">
+                        <FiInfo size={10} />
+                      </div>
+                    )}
+                  </button>
                   <button 
                     onClick={() => { setShowAssignModal(true); setShowMemberDetails(false); }}
                     className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] shadow-sm"
@@ -472,7 +618,200 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
         )}
       </AnimatePresence>
 
-      {/* Assign Work Modal (Refactored to match) */}
+      {createPortal(
+        <AnimatePresence>
+          {showHandoverModal && selectedMember && (
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowHandoverModal(false)}
+                className="fixed inset-0 backdrop-blur-xl z-[10000]"
+                style={{ backgroundColor: '#1A1A2E66' }}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className={`relative w-full max-w-[600px] max-h-[85vh] rounded-[40px] shadow-2xl z-[10001] overflow-hidden bg-white border border-[#F4F3EF] flex flex-col`}
+              >
+                <div className="px-8 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-white shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-[#1B4DA0]">
+                      <FiRepeat size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold font-syne text-[#1A1A2E]">Work Handover</h3>
+                      <p className="text-[10px] font-bold uppercase tracking-[3px] mt-0.5 text-[#9B9BAD]">to {selectedMember.name}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowHandoverModal(false)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 pt-0">
+                  {userClients.length === 0 ? (
+                    <div className="bg-amber-50 border border-amber-200 rounded-3xl p-8 text-center my-8 transition-all animate-in fade-in zoom-in duration-300">
+                      <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-white shadow-sm">
+                        <FiInfo className="w-8 h-8 text-amber-600" />
+                      </div>
+                      <h3 className="text-lg font-bold text-amber-900 mb-2">No Clients Found</h3>
+                      <p className="text-amber-700/80 text-sm font-medium leading-relaxed max-w-[280px] mx-auto italic">
+                        "You currently have no active clients assigned for handover."
+                      </p>
+                      <p className="text-amber-600/60 text-[10px] uppercase font-black tracking-widest mt-4">Handover Disabled</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6 mt-8">
+                      {/* Client Selection */}
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase tracking-widest ml-1 text-[#9B9BAD]">Handover Clients</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {userClients.map((client) => {
+                            const isSelected = selectedClients.includes(client.id || client._id);
+                            return (
+                              <button
+                                key={client.id || client._id}
+                                onClick={() => {
+                                  const cid = client.id || client._id;
+                                  if (isSelected) {
+                                    setSelectedClients(prev => prev.filter(id => id !== cid));
+                                  } else {
+                                    setSelectedClients(prev => [...prev, cid]);
+                                  }
+                                }}
+                                className={`px-5 py-4 rounded-2xl text-[12px] font-bold transition-all text-left flex items-center gap-3 group relative overflow-hidden ${
+                                  isSelected
+                                    ? 'bg-[#1A1A2E] text-white shadow-xl shadow-blue-900/20'
+                                    : 'bg-[#FAFAF9] text-[#1A1A2E] border border-[#F4F3EF] hover:border-blue-200'
+                                }`}
+                              >
+                                <div className={`w-2.5 h-2.5 rounded-full z-10 ${isSelected ? 'bg-blue-400 ring-4 ring-blue-400/20' : 'bg-slate-300'}`} />
+                                <span className="truncate z-10">{client.companyName || client.name}</span>
+                                {isSelected && <div className="absolute top-0 right-0 p-1 bg-blue-500/10 rounded-bl-xl"><FiCheckCircle size={10} className="text-blue-400" /></div>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 pt-2">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest ml-1 text-[#9B9BAD]">Start Date</label>
+                          <input 
+                            type="date" 
+                            value={handoverStartDate} 
+                            onChange={(e) => setHandoverStartDate(e.target.value)} 
+                            className="w-full bg-[#FAFAF9] border border-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] focus:bg-white focus:border-[#1B4DA0] outline-none transition-all shadow-sm" 
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest ml-1 text-[#9B9BAD]">End Date</label>
+                          <input 
+                            type="date" 
+                            value={handoverEndDate} 
+                            onChange={(e) => setHandoverEndDate(e.target.value)} 
+                            className="w-full bg-[#FAFAF9] border border-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] focus:bg-white focus:border-[#1B4DA0] outline-none transition-all shadow-sm" 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest ml-1 text-[#9B9BAD]">Reason for Handover</label>
+                        <input 
+                          type="text" 
+                          value={handoverReason} 
+                          onChange={(e) => setHandoverReason(e.target.value)} 
+                          className="w-full bg-[#FAFAF9] border border-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] focus:bg-white focus:border-[#1B4DA0] outline-none transition-all placeholder:text-[#9B9BAD]/40 shadow-sm" 
+                          placeholder="e.g. Annual Leave, Offline Project..." 
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 pb-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest ml-1 text-[#9B9BAD]">Additional Notes</label>
+                        <textarea 
+                          rows={3} 
+                          value={handoverNotes} 
+                          onChange={(e) => setHandoverNotes(e.target.value)} 
+                          className="w-full bg-[#FAFAF9] border border-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] focus:bg-white focus:border-[#1B4DA0] outline-none transition-all placeholder:text-[#9B9BAD]/40 resize-none shadow-sm" 
+                          placeholder="Special instructions for the handover period..." 
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-8 border-t bg-[#FAFAF9] flex items-center justify-end gap-3 px-10 shrink-0">
+                  <button 
+                    onClick={() => setShowHandoverModal(false)}
+                    className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-[#6B6B7E] hover:text-[#1A1A2E] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    disabled={handoverLoading || !handoverReason || !handoverStartDate || !handoverEndDate || selectedClients.length === 0 || userClients.length === 0}
+                    onClick={async () => {
+                      setHandoverLoading(true);
+                      try {
+                        const token = localStorage.getItem('token');
+                        let currentUserId = localStorage.getItem('userId') || localStorage.getItem('id') || localStorage.getItem('_id');
+                        
+                        if (currentUserId === 'null' || currentUserId === 'undefined') currentUserId = null;
+
+                        if (token && !currentUserId) {
+                          try {
+                            const decoded = jwtDecode(token);
+                            currentUserId = decoded.id || decoded.userId || decoded._id;
+                          } catch (e) { console.error('JWT Decode failed in handover'); }
+                        }
+
+                        if (!currentUserId) {
+                          setToast('Safety Check: We could not identify your user ID. Please log in again.');
+                          setHandoverLoading(false);
+                          return;
+                        }
+
+                        const res = await createWorkHandover({
+                          fromUserId: currentUserId,
+                          toUserId: selectedMember.id,
+                          reason: handoverReason,
+                          startDate: handoverStartDate,
+                          endDate: handoverEndDate,
+                          clientIds: selectedClients,
+                          notes: handoverNotes
+                        });
+                        
+                        if (res?.success) {
+                          setShowHandoverModal(false);
+                          setToast(`Work handed over to ${selectedMember.name} successfully!`);
+                          setHandoverReason('');
+                          setHandoverStartDate('');
+                          setHandoverEndDate('');
+                          setHandoverNotes('');
+                          setSelectedClients([]);
+                        }
+                      } catch (err) {
+                        setToast(err?.message || 'Handover failed. Check your data.');
+                      } finally {
+                        setHandoverLoading(false);
+                        setTimeout(() => setToast(null), 3000);
+                      }
+                    }}
+                    className="px-10 py-4 bg-[#1B4DA0] text-white rounded-2xl font-bold text-sm shadow-xl shadow-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed group flex items-center gap-3 hover:bg-[#163E82] transition-all"
+                  >
+                    {handoverLoading ? <FiRefreshCw className="animate-spin" /> : <FiRepeat className="group-hover:rotate-180 transition-transform duration-500" />}
+                    <span>Confirm Handover</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
       <AnimatePresence>
         {showAssignModal && selectedMember && (
           <>

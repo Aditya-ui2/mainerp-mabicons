@@ -137,12 +137,7 @@ export const teamLeaderLogin = async (credentials) => {
 
 export const employeeLogin = async (credentials) => {
   try {
-    const response = await axiosInstance.post('/employee/login', credentials, {
-      headers: {
-        'Referer': 'http://localhost:5173/',
-        'Origin': 'http://localhost:5173'
-      }
-    });
+    const response = await axiosInstance.post('/employee/login', credentials);
     if (response.data.token) {
       saveToken(response.data.token, 'employee');
     }
@@ -231,6 +226,19 @@ export const uploadAdminImage = async (adminId, image) => {
   }
 };
 
+
+export const getAllTeamLeaders = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/teamLeader/all', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch all team leaders:', error);
+    throw error.response?.data || { message: 'Failed to fetch team leaders.' };
+  }
+};
 
 export const createAdmin = async (adminData) => {
   try {
@@ -567,7 +575,7 @@ export const getAdminHierarchy = async (id, role) => {
 // Add this new API endpoint to get all clients
 export const getAllClients = async () => {
   try {
-    const token = localStorage.getItem('token');
+    const token = getStoredAuthToken();
     const response = await axiosInstance.get('/client/all', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1454,12 +1462,13 @@ export const editClient = async (clientData) => {
       cinNumber: clientData.cinNumber,
       numberOfCompanies: clientData.numberOfCompanies,
       website: clientData.website,
-      authorizedSignatory: {
+      authorizedSignatory: clientData.authorizedSignatory ? {
         name: clientData.authorizedSignatory.name,
         email: clientData.authorizedSignatory.email,
         contact: clientData.authorizedSignatory.contact
-      },
-      ownerDirectorDetails: clientData.ownerDirectorDetails
+      } : undefined,
+      ownerDirectorDetails: clientData.ownerDirectorDetails,
+      teamLeaderId: clientData.teamLeaderId
     }, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1885,7 +1894,7 @@ export const createLead = async (leadData) => {
 export const getAllLeads = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/leads', {
+    const response = await axios.get('http://15.206.67.102:3000/leads', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3408,7 +3417,7 @@ export const getClientsForTeamLeader = async (payload) => {
 export const getClosedDeals = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/deals/closed', {
+    const response = await axios.get('http://15.206.67.102:3000/deals/closed', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3424,7 +3433,7 @@ export const getClosedDeals = async () => {
 export const getPendingAgreements = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/agreements/pending', {
+    const response = await axios.get('http://15.206.67.102:3000/agreements/pending', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3440,7 +3449,7 @@ export const getPendingAgreements = async () => {
 export const getUpcomingActivities = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/activities/upcoming', {
+    const response = await axios.get('http://15.206.67.102:3000/activities/upcoming', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3456,7 +3465,7 @@ export const getUpcomingActivities = async () => {
 export const getBDMetrics = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3000/bd/metrics', {
+    const response = await axios.get('http://15.206.67.102:3000/bd/metrics', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3472,7 +3481,7 @@ export const getBDMetrics = async () => {
 export const bdExecutiveLogin = async (credentials) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.post('http://localhost:3000/bd/login', credentials, {
+    const response = await axios.post('http://15.206.67.102:3000/bd/login', credentials, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
