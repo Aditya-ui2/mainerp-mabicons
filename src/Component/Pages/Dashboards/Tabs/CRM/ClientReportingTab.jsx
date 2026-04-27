@@ -1,5 +1,6 @@
-import React, { useState, lazy, Suspense } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
   Download,
@@ -13,34 +14,191 @@ import {
   MoreVertical,
   ArrowRight,
   Mail,
-  Filter
+  Filter,
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { getClientReports, seedReports, createReport } from '../../../service/api';
+import { toast } from 'react-hot-toast';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const CreateReportModal = ({ isOpen, onClose, clients, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    reportName: '',
+    clientId: '',
+    status: 'PENDING'
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.reportName || !formData.clientId) {
+      return toast.error("Please fill all required fields");
+    }
+
+    try {
+      setLoading(true);
+      const res = await createReport(formData);
+      if (res.success) {
+        toast.success("Report generated successfully");
+        onSuccess();
+        onClose();
+        setFormData({ reportName: '', clientId: '', status: 'PENDING' });
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to generate report");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl overflow-hidden text-left"
+          >
+            <div className="px-10 py-10 border-b border-[#F4F3EF] flex items-center justify-between">
+              <h2 className="text-2xl font-black text-[#1A1A2E]" style={{ fontFamily: '"Syne", sans-serif' }}>New Report</h2>
+              <button onClick={onClose} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-10 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Report Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Monthly Performance"
+                  className="w-full px-5 py-4 bg-[#F4F3EF] border-none rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  value={formData.reportName}
+                  onChange={(e) => setFormData({ ...formData, reportName: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Select Client</label>
+                <select
+                  required
+                  className="w-full px-5 py-4 bg-[#F4F3EF] border-none rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  value={formData.clientId}
+                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                >
+                  <option value="">Choose a client...</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>{c.companyName || c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest ml-1">Initial Status</label>
+                <select
+                  className="w-full px-5 py-4 bg-[#F4F3EF] border-none rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                >
+                  <option value="DRAFT">DRAFT</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="VERIFIED">VERIFIED</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-5 bg-[#1B4DA0] text-white font-black text-[11px] uppercase tracking-[3px] rounded-2xl shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+              >
+                {loading ? 'Generating...' : 'Confirm Generation'}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 const ClientReportingTab = ({ clients = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [reports, setReports] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const res = await getClientReports();
+      if (res.success) {
+        setReports(res.data);
+        
+        // Auto-seed if empty
+        if (res.data.length === 0) {
+           await seedReports();
+           const res2 = await getClientReports();
+           if (res2.success) setReports(res2.data);
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to load reports");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const stats = [
-    { label: 'Reports Shared', value: '124', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Pending Review', value: '08', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Avg. Accuracy', value: '98.5%', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Active Schedules', value: '42', icon: Calendar, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Reports Shared', value: reports.length, icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Pending Review', value: reports.filter(r => r.status === 'PENDING').length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Verified', value: reports.filter(r => r.status === 'VERIFIED').length, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Active Drafts', value: reports.filter(r => r.status === 'DRAFT').length, icon: FileText, color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
 
-  const recentReports = [
-    { id: 'R-2024-001', client: 'TechNova Solutions', type: 'Monthly Performance', date: '2024-03-20', status: 'Verified', size: '2.4 MB' },
-    { id: 'R-2024-002', client: 'Global Retail Corp', type: 'Strategy Review', date: '2024-03-18', status: 'Pending', size: '1.8 MB' },
-    { id: 'R-2024-003', client: 'Zenith Manufacturing', type: 'Audit Sync', date: '2024-03-15', status: 'Verified', size: '3.1 MB' },
-    { id: 'R-2024-004', client: 'BlueSky Logistics', type: 'Quarterly Analysis', date: '2024-03-12', status: 'Draft', size: '4.2 MB' },
-    { id: 'R-2024-005', client: 'Evergreen Wellness', type: 'Onboarding Report', date: '2024-03-10', status: 'Verified', size: '1.2 MB' },
-  ];
+  const filteredReports = reports.filter(r => 
+    (r.reportName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (r.companyName || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const chartData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
         label: 'Reports Generated',
-        data: [45, 52, 63, 48, 70, 85],
+        data: [45, 52, 63, 48, 70, reports.length ? reports.length * 5 : 85],
         backgroundColor: '#1B4DA0',
         borderRadius: 12,
         barThickness: 20,
@@ -57,18 +215,39 @@ const ClientReportingTab = ({ clients = [] }) => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Client Performance Reports</h1>
-
+          <p className="text-sm font-medium text-[#9B9BAD] mt-1 italic">Real-time deliverables tracking and audit logs</p>
         </div>
-        <button className="flex items-center justify-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-[2px] shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all">
-          <Plus size={16} strokeWidth={3} />
-          Generate New Report
-        </button>
+        <div className="flex gap-4">
+           <button 
+            onClick={fetchData}
+            className="w-14 h-14 bg-white border border-[#F4F3EF] text-[#6B6B7E] rounded-2xl flex items-center justify-center hover:bg-[#F8FAFF] transition-all shadow-sm"
+          >
+             <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center justify-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-[2px] shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+          >
+            <Plus size={16} strokeWidth={3} />
+            Generate New Report
+          </button>
+        </div>
       </div>
 
-      {/* KPI Stats */}
-
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {stats.map((stat, i) => (
+          <div key={i} className="bg-white p-6 rounded-[32px] border border-[#F4F3EF] shadow-sm flex items-center gap-4">
+            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center`}>
+              <stat.icon size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">{stat.label}</p>
+              <p className="text-xl font-black text-[#1A1A2E]">{stat.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Chart Section */}
@@ -110,69 +289,82 @@ const ClientReportingTab = ({ clients = [] }) => {
               <Search size={16} className="text-[#9B9BAD]" />
               <input
                 type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search reports..."
                 className="bg-transparent border-none outline-none text-xs font-bold text-[#1A1A2E] w-full placeholder:text-[#9B9BAD]/50"
               />
             </div>
           </div>
 
-          <div className="overflow-x-auto -mx-8">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#F4F3EF]">
-                  <th className="px-8 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Report Detail</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Client</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Status</th>
-                  <th className="px-8 py-4 text-right text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F8FAFC]">
-                {recentReports.map((report, idx) => (
-                  <motion.tr
-                    key={idx}
-                    whileHover={{ backgroundColor: '#FDFDFD' }}
-                    className="group"
-                  >
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-slate-50 text-[#6B6B7E] rounded-xl flex items-center justify-center shrink-0">
-                          <FileText size={18} />
+          <div className="overflow-x-auto -mx-8 min-h-[300px]">
+            {loading ? (
+               <div className="py-20 text-center">
+                 <RefreshCw className="w-8 h-8 text-[#1B4DA0] animate-spin mx-auto mb-4" />
+                 <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Mapping report database...</p>
+               </div>
+            ) : filteredReports.length === 0 ? (
+               <div className="py-20 text-center">
+                 <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">No records found</p>
+               </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#F4F3EF]">
+                    <th className="px-8 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Report Detail</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Client</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Status</th>
+                    <th className="px-8 py-4 text-right text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F8FAFC]">
+                  {filteredReports.map((report, idx) => (
+                    <motion.tr
+                      key={idx}
+                      whileHover={{ backgroundColor: '#FDFDFD' }}
+                      className="group"
+                    >
+                      <td className="px-8 py-5 text-left">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-slate-50 text-[#6B6B7E] rounded-xl flex items-center justify-center shrink-0">
+                            <FileText size={18} />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[13px] font-black text-[#1A1A2E]">{report.reportName}</p>
+                            <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-0.5">{report.reportNumber} • {report.size}</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <p className="text-[13px] font-black text-[#1A1A2E]">{report.type}</p>
-                          <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mt-0.5">{report.id} • {report.size}</p>
+                      </td>
+                      <td className="px-6 py-5 text-left">
+                        <p className="text-[12px] font-bold text-[#6B6B7E]">{report.companyName}</p>
+                        <p className="text-[10px] font-bold text-[#9B9BAD] uppercase mt-0.5">{new Date(report.createdAt).toDateString()}</p>
+                      </td>
+                      <td className="px-6 py-5 text-left">
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${report.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-600' :
+                          report.status === 'PENDING' ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-[#9B9BAD]'
+                          }`}>
+                          {report.status === 'VERIFIED' ? <CheckCircle size={10} /> : <Clock size={10} />}
+                          <span className="text-[9px] font-black uppercase tracking-wider">{report.status}</span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <p className="text-[12px] font-bold text-[#6B6B7E]">{report.client}</p>
-                      <p className="text-[10px] font-bold text-[#9B9BAD] uppercase mt-0.5">{report.date}</p>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${report.status === 'Verified' ? 'bg-emerald-50 text-emerald-600' :
-                        report.status === 'Pending' ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-[#9B9BAD]'
-                        }`}>
-                        {report.status === 'Verified' ? <CheckCircle size={10} /> : <Clock size={10} />}
-                        <span className="text-[9px] font-black uppercase tracking-wider">{report.status}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="p-2 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50 rounded-lg transition-all" title="View">
-                          <Eye size={16} />
-                        </button>
-                        <button className="p-2 text-[#9B9BAD] hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Download">
-                          <Download size={16} />
-                        </button>
-                        <button className="p-2 text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-slate-100 rounded-lg transition-all">
-                          <MoreVertical size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button className="p-2 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50 rounded-lg transition-all" title="View">
+                            <Eye size={16} />
+                          </button>
+                          <button className="p-2 text-[#9B9BAD] hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Download">
+                            <Download size={16} />
+                          </button>
+                          <button className="p-2 text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-slate-100 rounded-lg transition-all">
+                            <MoreVertical size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
 
           <button className="mt-6 w-full py-4 border-2 border-dashed border-[#F4F3EF] rounded-2xl text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] hover:border-[#1B4DA0] hover:text-[#1B4DA0] hover:bg-blue-50/20 transition-all">
@@ -180,6 +372,16 @@ const ClientReportingTab = ({ clients = [] }) => {
           </button>
         </div>
       </div>
+
+      {createPortal(
+        <CreateReportModal 
+          isOpen={showCreateModal} 
+          onClose={() => setShowCreateModal(false)}
+          clients={clients}
+          onSuccess={fetchData}
+        />,
+        document.body
+      )}
     </motion.div>
   );
 };

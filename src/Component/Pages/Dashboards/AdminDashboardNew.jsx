@@ -63,7 +63,11 @@ const sidebarConfig = [
 
 const AdminDashboardNew = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('admin_active_tab') || 'Dashboard');
+
+  useEffect(() => {
+    localStorage.setItem('admin_active_tab', activeTab);
+  }, [activeTab]);
   const [chartRange, setChartRange] = useState('Month');
   
   // Data States

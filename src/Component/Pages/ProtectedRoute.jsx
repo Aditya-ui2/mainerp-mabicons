@@ -13,7 +13,14 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   try {
     // Decode the token to get user information
     const decoded = jwtDecode(token);
-    const userRole = decoded.role.toLowerCase(); // Convert to lowercase for consistent comparison
+    const userRole = decoded.role.toLowerCase();
+    const userEmail = (decoded.email || localStorage.getItem('userEmail') || '').toLowerCase();
+
+    // Special restriction: Ashwin can ONLY access the CRM dashboard
+    if (userEmail.includes('ashwin') && !window.location.pathname.includes('/crm-dashboard')) {
+      console.log('Restriction: Ashwin redirected to CRM Dashboard');
+      return <Navigate to="/crm-dashboard" />;
+    }
 
     // Check if user's role is allowed to access this route
     if (!allowedRoles.map(role => role.toLowerCase()).includes(userRole)) {
@@ -35,6 +42,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
           return <Navigate to="/crm-dashboard" />;
         case 'candidate':
           return <Navigate to="/candidate-dashboard" />;
+        case 'kamrecruitment':
+        case 'hr executive':
+        case 'hr recruitment':
+          return <Navigate to="/kam-member-dashboard" />;
         default:
           return <Navigate to="/login" />;
       }

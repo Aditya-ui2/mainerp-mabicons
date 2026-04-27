@@ -266,7 +266,7 @@ const AdminLayout = ({
         {/* User Footer Profile */}
         <div className="p-3 border-t border-[#F4F3EF] dark:border-gray-800">
           <div className={`flex items-center gap-2.5 p-2 rounded-2xl transition-all ${sidebarCollapsed ? 'justify-center border-0' : 'bg-[#FAFAFA] dark:bg-gray-800/50 border border-[#F4F3EF] dark:border-gray-700'}`}>
-            <div className="h-9 w-9 rounded-2xl bg-[#1B4DA0] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-lg shadow-blue-500/20 overflow-hidden">
+            <div className="h-9 w-9 rounded-2xl bg-[#EEF2FB] text-[#1B4DA0] flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden border border-[#DBEAFE]">
               {userInfo.avatar ? (
                 <img src={userInfo.avatar} alt="Profile" className="w-full h-full object-cover" />
               ) : (
@@ -376,9 +376,32 @@ const AdminLayout = ({
         )}
 
         {/* Dynamic Page Surface */}
-        <main ref={contentRef} className="flex-1 overflow-auto bg-[#FDFDFD] dark:bg-gray-950 p-4 lg:p-6 pb-20">
+        <main ref={contentRef} className="flex-1 overflow-auto bg-[#FDFDFD] dark:bg-gray-950 p-4 lg:p-6 pb-20 relative">
           <div className="max-w-[1600px] mx-auto">
-            {children}
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div
+                  key="loader"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex items-center justify-center bg-[#FDFDFD]/80 backdrop-blur-sm z-50"
+                  style={{ minHeight: '400px' }}
+                >
+                  <Loader />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="content"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {children}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </main>
       </div>

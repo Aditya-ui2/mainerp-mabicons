@@ -140,7 +140,11 @@ const sidebarConfig = [
 
 const HROperationsDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('hroperations_active_tab') || 'Dashboard');
+
+  useEffect(() => {
+    localStorage.setItem('hroperations_active_tab', activeTab);
+  }, [activeTab]);
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: 'HR Operations', role: 'HR Operations Head' });
 

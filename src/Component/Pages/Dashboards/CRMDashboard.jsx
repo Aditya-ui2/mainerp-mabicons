@@ -132,7 +132,6 @@ const sidebarConfig = [
     items: [
       { id: 6, title: 'Manage team', icon: FiUserPlus },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
-      { id: 2, title: 'All clients', icon: FiUsers },
       { id: 9, title: 'Accounts', icon: FiBriefcase },
       { id: 5, title: 'Report to Client', icon: FiClipboard },
       { id: 10, title: 'Meeting with client', icon: FiCalendar },
@@ -199,8 +198,12 @@ const dashboardStyles = `
 
 const CRMDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Dashboard');
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('crm_active_tab') || 'Dashboard');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem('crm_active_tab', activeTab);
+  }, [activeTab]);
   const [clients, setClients] = useState([]);
   const [pipelineClients, setPipelineClients] = useState(INITIAL_PIPELINE_CLIENTS);
   const [leads, setLeads] = useState([]);
@@ -411,15 +414,22 @@ const CRMDashboard = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    const rawToken = localStorage.getItem('token');
+    if (rawToken) {
       try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        setUserInfo({
-          name: decoded.name || decoded.email?.split('@')[0] || 'User',
-          role: decoded.role || 'CRM',
-        });
-      } catch (_) { }
+        const token = String(rawToken).replace(/^"|"$/g, '').trim();
+        const base64Url = token.split('.')[1];
+        if (base64Url) {
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const decoded = JSON.parse(window.atob(base64));
+          setUserInfo({
+            name: decoded.name || decoded.email?.split('@')[0] || 'User',
+            role: decoded.role || 'CRM',
+          });
+        }
+      } catch (err) {
+        console.error('Error parsing token:', err);
+      }
     }
   }, []);
 
@@ -730,215 +740,6 @@ const CRMDashboard = () => {
         <style>{dashboardStyles}</style>
         <div className="space-y-6 pt-0">
           <AnimatePresence mode="wait">
-            {activeTab === 'All clients' && (
-              <motion.div
-                key="client"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
-                className="space-y-10"
-              >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="text-left">
-                    <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Client</h1>
-                  </div>
-
-                </div>
-
-                {/* Search Bar */}
-                <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-6">
-                  <div className="relative flex-1 group min-w-[200px]">
-                    <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
-                    <input
-                      type="text"
-                      value={clientQuery}
-                      onChange={e => setClientQuery(e.target.value)}
-                      placeholder="Search by client name, location, email..."
-                      className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-[#F4F3EF] text-[10px] font-black uppercase tracking-[2.5px] text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[160px] shadow-sm hover:bg-[#EEF2FB] transition-all"
-                      >
-                        <option value="All">All Clients</option>
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                      </select>
-                      <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden relative">
-                  <div className="overflow-x-auto min-h-[300px]">
-                    {/* Grid Header */}
-                    <div className="grid grid-cols-[40px_2.5fr_1.5fr_2fr_1.5fr_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={clients.length > 0 && selectedClients.length === clients.length}
-                          onChange={toggleAll}
-                          className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
-                        />
-                      </div>
-                      {["Company", "Industry", "Location", "Login Access", ""].map((h, i) => (
-                        <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start">
-                          {h}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Grid Rows */}
-                    {loading ? (
-                      <div className="py-24 text-center">
-                        <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">Loading Clients...</p>
-                      </div>
-                    ) : (() => {
-                      const finalDirectoryClients = [
-                        ...clients,
-                        ...pipelineClients.filter(c => c.stage === "Generate Password")
-                      ];
-
-                      if (finalDirectoryClients.length === 0) {
-                        return (
-                          <div className="py-24 text-center">
-                            <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No Clients found</p>
-                          </div>
-                        );
-                      }
-
-                      return finalDirectoryClients.filter(c => {
-                        const rowData = {
-                          company: (c.companyName || c.name || '').toLowerCase(),
-                          industry: (c.industry || '').toLowerCase(),
-                          location: (c.location || '').toLowerCase(),
-                          email: (c.email || c.portalEmail || '').toLowerCase()
-                        };
-                        const matchesQuery = clientQuery
-                          ? Object.values(rowData).some(v => v.includes(clientQuery.toLowerCase()))
-                          : true;
-                        const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
-                        return matchesQuery && matchesStatus;
-                      }).map((c) => (
-                        <div
-                          key={c._id || c.id}
-                          onClick={() => {
-                            setSelectedClientDetail(c);
-                            toast.success(`Viewing ${c.companyName || c.name || 'Client'}`);
-                          }}
-                          className="grid grid-cols-[40px_2.5fr_1.5fr_2fr_1.5fr_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
-                        >
-                          {/* Checkbox */}
-                          <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
-                              checked={selectedClients.includes(c._id || c.id)}
-                              onChange={() => toggleSelection(c._id || c.id)}
-                              className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
-                            />
-                          </div>
-
-                          {/* Company column */}
-                          <div className="flex items-center gap-4 min-w-0 py-1">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-sm font-black border border-[#F4F3EF] group-hover:scale-105 transition-transform shrink-0 overflow-hidden">
-                              {c.logoUrl ? (
-                                <img src={c.logoUrl} alt={c.companyName} className="w-full h-full object-contain" />
-                              ) : (
-                                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                  {String(c.companyName || 'C').charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left uppercase">
-                              {c.companyName || c.name}
-                            </p>
-                          </div>
-
-                          {/* Industry */}
-                          <div className="text-[13px] font-medium text-[#64748b] truncate py-1 text-left uppercase">
-                            {c.industry || '—'}
-                          </div>
-
-                          {/* Location */}
-                          <div className="text-[13px] font-medium text-slate-500 truncate py-1 text-left flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                            {c.location || 'N/A'}
-                          </div>
-
-                          {/* Login Access / Credentials */}
-                          <div className="py-1 flex flex-col items-start justify-center min-w-0">
-                            {c.portalEmail ? (
-                              <>
-                                <p className="text-[11px] font-bold text-slate-700 truncate lowercase text-left w-full">
-                                  {c.portalEmail}
-                                </p>
-                                <div className="flex items-center gap-1.5 mt-0.5 border-l-2 border-emerald-500/20 pl-2">
-                                  <FiLock size={10} className="text-emerald-500 shrink-0" />
-                                  <p className="text-[10px] font-black text-emerald-600 tracking-widest uppercase">
-                                    {c.portalPassword}
-                                  </p>
-                                </div>
-                              </>
-                            ) : (
-                              <span className="text-[11px] text-slate-400 font-medium italic opacity-70">No Access Account</span>
-                            )}
-                          </div>
-
-                          {/* Arrow */}
-                          <div className="flex justify-end items-center">
-                            <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
-                              <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    })()}
-                  </div>
-
-                  {/* Floating Action Bar */}
-                  <AnimatePresence>
-                    {selectedClients.length > 0 && (
-                      <div className="absolute bottom-6 left-0 w-full flex justify-center z-[100] pointer-events-none">
-                        <motion.div
-                          initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 30, scale: 0.95 }}
-                          className="bg-[#111827] text-white px-5 py-2.5 rounded-[12px] shadow-2xl flex items-center pointer-events-auto"
-                        >
-                          <div className="flex items-center">
-                            <span className="text-[13.5px] font-semibold pr-4 border-r border-[#374151]">
-                              {selectedClients.length} clients selected
-                            </span>
-                            <div className="flex items-center gap-5 pl-4 text-[13px] font-semibold">
-                              <button
-                                onClick={() => deleteMultipleClients(selectedClients)}
-                                className="text-rose-400 hover:text-rose-300 flex items-center gap-2 transition-colors"
-                              >
-                                <FiTrash className="w-4 h-4 stroke-[2.5]" /> Remove
-                              </button>
-                            </div>
-                            <button
-                              onClick={() => setSelectedClients([])}
-                              className="ml-6 p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-md transition-all"
-                              title="Clear Selection"
-                            >
-                              <FiX className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </motion.div>
-                      </div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            )}
-
             {/* Other tabs will render placeholders below */}
 
             {activeTab === 'Dashboard' && (
@@ -1236,7 +1037,7 @@ const CRMDashboard = () => {
 
             {activeTab === 'Meeting with client' && (
               <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Meetings...</div>}>
-                <MeetingWithClientTab />
+                <MeetingWithClientTab clients={clients} />
               </Suspense>
             )}
 
@@ -1258,7 +1059,7 @@ const CRMDashboard = () => {
 
             {activeTab === 'Report to Client' && (
               <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Preparing Analytics...</div>}>
-                <ClientReportingTab />
+                <ClientReportingTab clients={clients} />
               </Suspense>
             )}
 

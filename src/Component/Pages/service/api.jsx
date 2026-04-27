@@ -1003,6 +1003,163 @@ export const deleteNotification = async (notificationId) => {
   }
 };
 
+// FINANCE / ACCOUNTS API
+export const getClientAccounts = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/finance/accounts', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching client accounts:', error);
+    throw error.response?.data || { message: 'Failed to fetch accounts' };
+  }
+};
+
+export const getAccountDetails = async (clientId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get(`/finance/account/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching account details:', error);
+    throw error.response?.data || { message: 'Failed to fetch account details' };
+  }
+};
+
+export const seedFinanceData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axiosInstance.post('/finance/seed', {}, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (error) {
+       console.error('Error seeding finance data:', error);
+    }
+};
+
+export const createReport = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/reports/create', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating report:', error);
+    throw error.response?.data || { message: 'Failed to create report' };
+  }
+};
+
+export const getClientReports = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/reports/all', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    throw error.response?.data || { message: 'Failed to fetch reports' };
+  }
+};
+
+export const seedReports = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/reports/seed', {}, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error seeding reports:', error);
+    throw error.response?.data || { message: 'Failed to seed reports' };
+  }
+};
+
+export const getClientMeetings = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get('/meetings/all', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching meetings:', error);
+    throw error.response?.data || { message: 'Failed to fetch meetings' };
+  }
+};
+
+export const createClientMeeting = async (meetingData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/meetings/create', meetingData, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating meeting:', error);
+    throw error.response?.data || { message: 'Failed to create meeting' };
+  }
+};
+
+export const seedClientMeetings = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/meetings/seed', {}, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error seeding meetings:', error);
+    throw error.response?.data || { message: 'Failed to seed meetings' };
+  }
+};
+
+export const updateMeetingStatus = async (meetingId, status) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put('/meetings/update-status', { meetingId, status }, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating meeting status:', error);
+    throw error.response?.data || { message: 'Failed to update meeting status' };
+  }
+};
+
+export const deleteMeeting = async (meetingId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete('/meetings/delete', {
+      headers: { 'Authorization': `Bearer ${token}` },
+      data: { meetingId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting meeting:', error);
+    throw error.response?.data || { message: 'Failed to delete meeting' };
+  }
+};
+
+export const createClient = async (clientData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/client/create', clientData, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating client:', error);
+    throw error.response?.data || { message: 'Failed to create client' };
+  }
+};
+
 // Add this new API endpoint to delete all notifications
 export const deleteAllNotifications = async (userId) => {
   try {
@@ -1894,7 +2051,7 @@ export const createLead = async (leadData) => {
 export const getAllLeads = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://15.206.67.102:3000/leads', {
+    const response = await axiosInstance.get('/leads', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3417,7 +3574,7 @@ export const getClientsForTeamLeader = async (payload) => {
 export const getClosedDeals = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://15.206.67.102:3000/deals/closed', {
+    const response = await axiosInstance.get('/deals/closed', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3433,7 +3590,7 @@ export const getClosedDeals = async () => {
 export const getPendingAgreements = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://15.206.67.102:3000/agreements/pending', {
+    const response = await axiosInstance.get('/agreements/pending', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3449,7 +3606,7 @@ export const getPendingAgreements = async () => {
 export const getUpcomingActivities = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://15.206.67.102:3000/activities/upcoming', {
+    const response = await axiosInstance.get('/activities/upcoming', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3465,7 +3622,7 @@ export const getUpcomingActivities = async () => {
 export const getBDMetrics = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://15.206.67.102:3000/bd/metrics', {
+    const response = await axiosInstance.get('/bd/metrics', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -3481,7 +3638,7 @@ export const getBDMetrics = async () => {
 export const bdExecutiveLogin = async (credentials) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.post('http://15.206.67.102:3000/bd/login', credentials, {
+    const response = await axiosInstance.post('/bd/login', credentials, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

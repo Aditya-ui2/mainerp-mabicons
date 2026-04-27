@@ -269,79 +269,92 @@ export default function CandidatesPage({ setActiveTab }) {
       ]);
 
       let mappedERP = [];
-      if (erpRes.success) {
-        mappedERP = erpRes.data.map(c => ({
-          id: c.id,
-          name: c.name,
-          email: c.email,
-          phone: c.phone || "N/A",
-          role: c.position?.title || "Unknown Position",
-          positionId: c.positionId,
-          clientId: c.client || c.clientId || c.position?.client || c.position?.clientId,
-          clientName: c.client?.companyName || c.client?.name || c.clientName || c.position?.client?.companyName || c.position?.client?.name,
-          stage: mapBackendToFrontendStage(c.stage, c.status),
-          appliedDate: c.createdAt,
-          location: c.location || "Remote",
-          currentSalary: c.currentSalary,
-          expectedSalary: c.expectedSalary,
-          noticePeriod: c.noticePeriod,
-          experience: c.experience,
-          skills: c.skills ? (Array.isArray(c.skills) ? c.skills : c.skills.split(',')) : ["General"],
-          avatar: c.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
-          lastMovedDate: c.updatedAt,
-          cvUrl: c.cvUrl || null,
-          cvFileName: c.cvFileName || null,
-          stageHistory: c.stageHistory || [{ stage: mapBackendToFrontendStage(c.stage, c.status), date: c.createdAt }],
-          source: 'erp',
-          raw: c
-        }));
+      if (erpRes && erpRes.success && Array.isArray(erpRes.data)) {
+        mappedERP = erpRes.data.map(c => {
+          if (!c) return null;
+          return {
+            id: c.id,
+            name: c.name || "Unknown Candidate",
+            email: c.email || "N/A",
+            phone: c.phone || "N/A",
+            role: c.position?.title || c.role || "Unknown Position",
+            positionId: c.positionId,
+            clientId: c.client || c.clientId || c.position?.client || c.position?.clientId,
+            clientName: c.client?.companyName || c.client?.name || c.clientName || c.position?.client?.companyName || c.position?.client?.name || "N/A",
+            stage: mapBackendToFrontendStage(c.stage, c.status),
+            appliedDate: c.createdAt,
+            location: c.location || "Remote",
+            currentSalary: c.currentSalary,
+            expectedSalary: c.expectedSalary,
+            noticePeriod: c.noticePeriod,
+            experience: c.experience,
+            skills: c.skills ? (Array.isArray(c.skills) ? c.skills : String(c.skills).split(',')) : ["General"],
+            avatar: (c.name || "U").split(" ").map(n => n ? n[0] : "").join("").toUpperCase().slice(0, 2) || "U",
+            lastMovedDate: c.updatedAt,
+            cvUrl: c.cvUrl || null,
+            cvFileName: c.cvFileName || null,
+            stageHistory: c.stageHistory || [{ stage: mapBackendToFrontendStage(c.stage, c.status), date: c.createdAt }],
+            source: 'erp',
+            raw: c
+          };
+        }).filter(Boolean);
+      } else {
+        console.warn("ERP candidates fetch failed or returned invalid data:", erpRes);
       }
 
       let mappedSP = [];
-      if (spRes.success && spRes.data) {
-        mappedSP = spRes.data.map(c => ({
-          id: c.sharePointId, // Use SharePoint ID
-          name: c.name,
-          email: c.email,
-          phone: c.phone || "N/A",
-          role: c.position || "Unknown Role",
-          positionId: null, // SharePoint candidates don't have ERP position IDs initially
-          clientId: null,
-          clientName: c.client || "SharePoint Client",
-          stage: c.stage || "Screening",
-          appliedDate: c.sharePointCreatedAt,
-          location: "Sync from SP",
-          experience: "N/A",
-          skills: ["SharePoint Sync"],
-          avatar: (c.name || 'SP').split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
-          lastMovedDate: c.updatedAt,
-          source: 'sharepoint',
-          raw: c
-        }));
+      if (spRes && spRes.success && Array.isArray(spRes.data)) {
+        mappedSP = spRes.data.map(c => {
+          if (!c) return null;
+          return {
+            id: c.sharePointId || `sp_${Math.random()}`,
+            name: c.name || "SP Candidate",
+            email: c.email || "",
+            phone: c.phone || "N/A",
+            role: c.position || "Unknown Role",
+            positionId: null,
+            clientId: null,
+            clientName: c.client || "SharePoint Client",
+            stage: c.stage || "Screening",
+            appliedDate: c.sharePointCreatedAt,
+            location: "Sync from SP",
+            experience: "N/A",
+            skills: ["SharePoint Sync"],
+            avatar: (c.name || 'SP').split(" ").map(n => n ? n[0] : "").join("").toUpperCase().slice(0, 2) || "SP",
+            lastMovedDate: c.updatedAt,
+            source: 'sharepoint',
+            raw: c
+          };
+        }).filter(Boolean);
       }
 
-      // 3. Map Resume Bank candidates
-      const bankData = bankRes.data || bankRes || [];
-      const mappedBank = (Array.isArray(bankData) ? bankData : []).map(c => ({
-        id: c.userId || c.id || `bank_${Math.random()}`,
-        name: c.candidateName || c.name,
-        email: c.email || "",
-        phone: c.contactNo || c.phone || "N/A",
-        role: c.position || c.role || "Resume Bank",
-        stage: "Resume Bank",
-        location: c.location || "Remote",
-        experience: c.experience || "N/A",
-        skills: c.skills || [],
-        avatar: (c.candidateName || c.name || "U")[0].toUpperCase()
-      }));
+      const bankData = bankRes?.data || bankRes || [];
+      const mappedBank = (Array.isArray(bankData) ? bankData : []).map(c => {
+        if (!c) return null;
+        return {
+          id: c.userId || c.id || `bank_${Math.random()}`,
+          name: c.candidateName || c.name || "Unknown Bank",
+          email: c.email || "",
+          phone: c.contactNo || c.phone || "N/A",
+          role: c.position || c.role || "Resume Bank",
+          stage: "Resume Bank",
+          location: c.location || "Remote",
+          experience: c.experience || "N/A",
+          skills: Array.isArray(c.skills) ? c.skills : (c.skills ? String(c.skills).split(',') : []),
+          avatar: (c.candidateName || c.name || "U")[0]?.toUpperCase() || "U"
+        };
+      }).filter(Boolean);
 
-      // Merge all sources
       const allMerged = [...mappedERP, ...mappedSP, ...mappedBank];
+      console.log(`[DEBUG] Final Merged Candidates Count: ${allMerged.length}`, {
+        erp: mappedERP.length,
+        sp: mappedSP.length,
+        bank: mappedBank.length
+      });
       setCandidates(allMerged);
-      console.log(`Synced Candidates: ERP(${mappedERP.length}), SP(${mappedSP.length}), Bank(${mappedBank.length})`);
     } catch (error) {
-      toast.error("Failed to load candidates");
-      console.error(error);
+      console.error("fetchCandidates CRASH:", error);
+      toast.error("Failed to load candidates checklist");
     } finally {
       setLoading(false);
     }

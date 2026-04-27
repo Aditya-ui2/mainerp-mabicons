@@ -18,21 +18,17 @@ import {
   FiSend,
   FiHash,
   FiCalendar,
-  FiBriefcase
+  FiBriefcase,
+  FiUser,
+  FiTrash
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
-const MOCK_TEAM = [
-  { id: '1', name: 'Aditya Singh', email: 'singhpratap.aditya@gmail.com', phone: '9876543210', role: 'CRM Manager', status: 'Active', joinDate: '2024-01-15' },
-  { id: '2', name: 'Jyoti Verma', email: 'jyoti.crm@gmail.com', phone: '9876543211', role: 'CRM Executive', status: 'Active', joinDate: '2024-02-10' },
-  { id: '3', name: 'Manju Sharma', email: 'manju.crm@gmail.com', phone: '9876543212', role: 'CRM Executive', status: 'Active', joinDate: '2024-03-05' },
-  { id: '4', name: 'Sachin Kumar', email: 'crm.head@mabicons.com', phone: '9876543213', role: 'CRM Head', status: 'Active', joinDate: '2023-11-20' },
-  { id: '5', name: 'Priyanshi Sharma', email: 'priyanshi.crm@mabicons.com', phone: '9876543214', role: 'Senior CRM', status: 'Active', joinDate: '2024-04-01' },
-];
+import { getDepartmentTeamMembers, deleteDepartmentTeamMember } from '../../../service/api';
 
 const CRMTeamTab = () => {
-  const [members, setMembers] = useState(MOCK_TEAM);
-  const [loading, setLoading] = useState(false);
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRowIds, setSelectedRowIds] = useState([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -40,11 +36,59 @@ const CRMTeamTab = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignment, setAssignment] = useState({ title: '', type: 'client', notes: '' });
+  const [roleFilter, setRoleFilter] = useState('all');
+
+  const fetchMembers = async () => {
+    setLoading(true);
+    try {
+      // Superadmin access: Fetches all members across departments using generic param or empty
+      const res = await getDepartmentTeamMembers(''); 
+      if (res?.success && res.data) {
+        const mapped = res.data.map(m => ({
+          id: m.id?.toString() || m._id,
+          name: m.name,
+          email: m.email,
+          phone: m.phone || 'N/A',
+          role: m.role || 'Team Member',
+          department: m.department || 'N/A',
+          status: m.status || 'Active',
+          joinDate: m.joinDate ? new Date(m.joinDate).toISOString().split('T')[0] : 'N/A',
+        }));
+        setMembers(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to fetch CRM team members:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  const currentUserEmail = (() => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return (payload.email || '').toLowerCase();
+      }
+    } catch (_) {}
+    return (localStorage.getItem('userEmail') || '').toLowerCase();
+  })();
 
   const filteredMembers = members.filter(m =>
-    m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.email.toLowerCase().includes(searchTerm.toLowerCase())
+    // Exclude the currently logged-in user from the team list
+    m.email?.toLowerCase() !== currentUserEmail &&
+    (m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (roleFilter === 'all' || m.role === roleFilter)
   );
+
+  // Build unique role list from actual data
+  const uniqueRoles = ['all', ...Array.from(new Set(members.map(m => m.role).filter(Boolean)))];
+
 
   return (
     <div className="min-h-screen" style={{ fontFamily: "'Calibri', sans-serif" }}>
@@ -79,11 +123,14 @@ const CRMTeamTab = () => {
         </div>
 
         <div className="relative">
-          <select className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]">
-            <option value="all">All Roles</option>
-            <option value="CRM Executive">CRM Executive</option>
-            <option value="CRM Manager">CRM Manager</option>
-            <option value="Senior CRM">Senior CRM</option>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+          >
+            {uniqueRoles.map(r => (
+              <option key={r} value={r}>{r === 'all' ? 'All Roles' : r}</option>
+            ))}
           </select>
           <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
@@ -179,62 +226,180 @@ const CRMTeamTab = () => {
         )}
       </div>
 
-      {/* Member Details Drawer */}
-      <AnimatePresence>
-        {showMemberDetails && selectedMember && (
-          <>
+      {/* Bulk action bar */}
+      {createPortal(
+        <AnimatePresence>
+          {selectedRowIds.length > 0 && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowMemberDetails(false)}
-              className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 right-0 w-full max-w-[600px] bg-white z-[1101] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+              initial={{ opacity: 0, y: 100, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: 100, x: '-50%' }}
+              className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1500] flex items-center gap-6 px-10 py-5 bg-[#1A1A2E] rounded-[32px] shadow-2xl shadow-slate-900/40 min-w-[520px] border border-white/5 active:cursor-grabbing"
             >
-              <div className="px-10 py-10 border-b border-[#F4F3EF] flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Team Member</h2>
-                <div className="flex gap-3">
-                  <button onClick={() => setShowMemberDetails(false)} className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"><FiX size={24} /></button>
+              {/* Count badge */}
+              <div className="flex items-center gap-4 pr-8 border-r border-white/10">
+                <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] flex items-center justify-center text-white font-black shadow-lg text-lg">
+                  {selectedRowIds.length}
+                </div>
+                <div className="text-left">
+                  <p className="text-[14px] font-black text-white tracking-tight">Member{selectedRowIds.length > 1 ? 's' : ''} Selected</p>
+                  <button
+                    onClick={() => setSelectedRowIds([])}
+                    className="text-[10px] font-bold text-red-400 uppercase tracking-widest hover:text-red-300 transition-colors"
+                  >
+                    Deselect All
+                  </button>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-10 space-y-10">
-                <div className="flex flex-col items-center">
-                  <div className="w-32 h-32 rounded-[40px] bg-[#1B4DA0] flex items-center justify-center text-white text-4xl font-black shadow-2xl border-4 border-white mb-6">
-                    {selectedMember.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
-                  <h3 className="text-3xl font-black text-[#1A1A2E]">{selectedMember.name}</h3>
-                  <p className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px] mt-1">{selectedMember.role}</p>
-                </div>
+              {/* Action buttons */}
+              <div className="flex items-center gap-6 flex-1 justify-center text-white">
+                <button
+                  onClick={() => {
+                    const emails = members
+                      .filter(m => selectedRowIds.includes(m.id))
+                      .map(m => m.email)
+                      .join(',');
+                    window.location.href = `mailto:${emails}`;
+                  }}
+                  className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                >
+                  <FiMail size={16} className="text-blue-400 group-hover:text-white" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Email</span>
+                </button>
 
-                <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-8">
-                  {[
-                    { label: 'Role Profile', value: selectedMember.role },
-                    { label: 'Account Status', value: selectedMember.status, isStatus: true },
-                    { label: 'Official Mail', value: selectedMember.email },
-                    { label: 'Contact Phone', value: selectedMember.phone },
-                    { label: 'Induction Date', value: selectedMember.joinDate }
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{item.label}</span>
-                      <div className="flex items-center gap-2">
-                        {item.isStatus && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
-                        <span className="text-sm font-black text-[#1A1A2E]">{item.value}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <button
+                  onClick={() => {
+                    if (selectedRowIds.length === 1) {
+                      const m = members.find(x => x.id === selectedRowIds[0]);
+                      if (m) { setSelectedMember(m); setShowMemberDetails(true); }
+                    }
+                  }}
+                  className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                >
+                  <FiEye size={16} className="text-emerald-400 group-hover:text-white" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">View</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Remove ${selectedRowIds.length} member(s)?`)) {
+                      setMembers(prev => prev.filter(m => !selectedRowIds.includes(m.id)));
+                      toast.success(`${selectedRowIds.length} member(s) removed`);
+                      setSelectedRowIds([]);
+                    }
+                  }}
+                  className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                >
+                  <FiTrash size={16} className="text-red-400 group-hover:text-white" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Remove</span>
+                </button>
               </div>
+
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedRowIds([])}
+                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white transition-all text-[#9B9BAD]"
+              >
+                <FiX size={20} />
+              </button>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+
+      {/* Member Detail Drawer */}
+      {createPortal(
+        <AnimatePresence>
+          {showMemberDetails && selectedMember && (
+            <div key="member-drawer-portal" className="fixed inset-0 z-[1100]">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowMemberDetails(false)}
+                className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="absolute inset-y-0 right-0 w-full max-w-[600px] bg-white shadow-2xl flex flex-col border-l border-[#F4F3EF]"
+              >
+                {/* Header */}
+                <div className="px-10 py-10 border-b border-[#F4F3EF] flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Team Member</h2>
+                  <button
+                    onClick={() => setShowMemberDetails(false)}
+                    className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-red-500 transition-all shadow-sm"
+                  >
+                    <FiX size={24} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+                  <div className="flex flex-col items-center">
+                    <div className="w-32 h-32 rounded-[40px] bg-[#EEF2FB] border-2 border-[#DBEAFE] flex items-center justify-center text-[#1B4DA0] text-4xl font-black shadow-xl mb-6">
+                      {selectedMember.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
+                    <h3 className="text-3xl font-black text-[#1A1A2E]">{selectedMember.name}</h3>
+                    <p className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px] mt-1">{selectedMember.role}</p>
+                  </div>
+
+                  {/* Profile Cards */}
+                  <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-8">
+                    {[
+                      { label: 'Role', value: selectedMember.role },
+                      { label: 'Status', value: selectedMember.status || 'Active', isStatus: true },
+                      { label: 'Email', value: selectedMember.email },
+                      { label: 'Phone', value: selectedMember.phone },
+                      { label: 'Department', value: selectedMember.department },
+                      { label: 'Join Date', value: selectedMember.joinDate || selectedMember.joiningDate },
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{item.label}</span>
+                        <div className="flex items-center gap-2">
+                          {item.isStatus && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
+                          <span className="text-sm font-black text-[#1A1A2E]">{item.value || '—'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    {selectedMember.email && (
+                      <a href={`mailto:${selectedMember.email}`} className="flex-1 py-4 bg-[#EEF2FB] text-[#1B4DA0] rounded-2xl text-[11px] font-black uppercase tracking-[3px] flex items-center justify-center gap-2 hover:bg-[#DBEAFE] transition-all">
+                        <FiMail size={16} /> Send Email
+                      </a>
+                    )}
+                    {selectedMember.phone && (
+                      <a href={`tel:${selectedMember.phone}`} className="flex-1 py-4 bg-[#EEF2FB] text-[#1B4DA0] rounded-2xl text-[11px] font-black uppercase tracking-[3px] flex items-center justify-center gap-2 hover:bg-[#DBEAFE] transition-all">
+                        <FiPhone size={16} /> Call
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-10 border-t border-[#F4F3EF]">
+                  <button
+                    onClick={() => setShowMemberDetails(false)}
+                    className="w-full py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-[11px] font-black uppercase tracking-[3px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95"
+                  >
+                    Close Profile
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Add/Invite Team Member Modal */}
       {createPortal(

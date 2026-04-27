@@ -6,6 +6,79 @@ import {
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
+const SectionHeader = ({ num, title, badge = "Required", skippable = false }) => (
+  <div className="flex items-center gap-3 mb-6 mt-10 first:mt-0">
+    <div className="flex items-center gap-2">
+      <span className="text-[13px] font-black text-[#9B9BAD]">{num}.</span>
+      <h3 className="text-[15px] font-black text-[#1A1A2E] uppercase tracking-tight">{title}</h3>
+    </div>
+    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${skippable ? 'bg-[#F4F3EF] text-[#9B9BAD]' : 'bg-[#1B4DA0]/10 text-[#1B4DA0]'}`}>
+      {badge}
+    </span>
+  </div>
+);
+
+const InputField = ({ label, name, value, onChange, placeholder, type = "text", skippable = false }) => (
+  <div className="space-y-1.5 text-left">
+    <div className="flex items-center gap-2">
+      <label className="text-[11px] font-bold text-[#6B6B7E]">{label}</label>
+      {skippable && <span className="px-1.5 py-0.5 rounded bg-[#F4F3EF] text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest">Skippable</span>}
+    </div>
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3 px-5 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all placeholder:text-[#BDBDC7]"
+    />
+  </div>
+);
+
+const SelectField = ({ label, name, value, onChange, options, skippable = false }) => (
+  <div className="space-y-1.5 text-left">
+    <div className="flex items-center gap-2">
+      <label className="text-[11px] font-bold text-[#6B6B7E]">{label}</label>
+      {skippable && <span className="px-1.5 py-0.5 rounded bg-[#F4F3EF] text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest">Skippable</span>}
+    </div>
+    <div className="relative">
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3 pl-5 pr-10 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer"
+      >
+        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+      </select>
+      <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={16} />
+    </div>
+  </div>
+);
+
+const StepIndicator = ({ step, steps }) => (
+  <div className="flex items-center justify-center gap-4 mb-10">
+    {steps.map((s, idx) => (
+      <React.Fragment key={s.n}>
+        <div className="flex flex-col items-center gap-2 relative">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${step >= s.n ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white shadow-lg shadow-blue-500/20' : 'bg-white border-[#F4F3EF] text-[#9B9BAD]'}`}>
+            {step > s.n ? <FiCheck size={20} /> : s.n}
+          </div>
+          <span className={`text-[10px] font-black uppercase tracking-widest ${step >= s.n ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'}`}>{s.title}</span>
+        </div>
+        {idx < steps.length - 1 && (
+          <div className="w-20 h-[2px] bg-[#F4F3EF] -mt-6">
+            <motion.div 
+              className="h-full bg-[#1B4DA0]"
+              initial={{ width: 0 }}
+              animate={{ width: step > s.n ? '100%' : '0%' }}
+            />
+          </div>
+        )}
+      </React.Fragment>
+    ))}
+  </div>
+);
+
 const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -63,85 +136,16 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
 
   const handleSubmit = async () => {
-    setSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setSubmitting(false);
-    onComplete(formData);
-    onClose();
+    try {
+      setSubmitting(true);
+      await onComplete(formData);
+      onClose();
+    } catch (err) {
+      toast.error("Failed to onboard client");
+    } finally {
+      setSubmitting(false);
+    }
   };
-
-  const SectionHeader = ({ num, title, badge = "Required", skippable = false }) => (
-    <div className="flex items-center gap-3 mb-6 mt-10 first:mt-0">
-      <div className="flex items-center gap-2">
-        <span className="text-[13px] font-black text-[#9B9BAD]">{num}.</span>
-        <h3 className="text-[15px] font-black text-[#1A1A2E] uppercase tracking-tight">{title}</h3>
-      </div>
-      <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${skippable ? 'bg-[#F4F3EF] text-[#9B9BAD]' : 'bg-[#1B4DA0]/10 text-[#1B4DA0]'}`}>
-        {badge}
-      </span>
-    </div>
-  );
-
-  const InputField = ({ label, name, value, onChange, placeholder, type = "text", skippable = false }) => (
-    <div className="space-y-1.5 text-left">
-      <div className="flex items-center gap-2">
-        <label className="text-[11px] font-bold text-[#6B6B7E]">{label}</label>
-        {skippable && <span className="px-1.5 py-0.5 rounded bg-[#F4F3EF] text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest">Skippable</span>}
-      </div>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3 px-5 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all placeholder:text-[#BDBDC7]"
-      />
-    </div>
-  );
-
-  const SelectField = ({ label, name, value, onChange, options, skippable = false }) => (
-    <div className="space-y-1.5 text-left">
-      <div className="flex items-center gap-2">
-        <label className="text-[11px] font-bold text-[#6B6B7E]">{label}</label>
-        {skippable && <span className="px-1.5 py-0.5 rounded bg-[#F4F3EF] text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest">Skippable</span>}
-      </div>
-      <div className="relative">
-        <select
-          name={name}
-          value={value}
-          onChange={onChange}
-          className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3 pl-5 pr-10 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer"
-        >
-          {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-        <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={16} />
-      </div>
-    </div>
-  );
-
-  const StepIndicator = () => (
-    <div className="flex items-center justify-center gap-4 mb-10">
-      {steps.map((s, idx) => (
-        <React.Fragment key={s.n}>
-          <div className="flex flex-col items-center gap-2 relative">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${step >= s.n ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white shadow-lg shadow-blue-500/20' : 'bg-white border-[#F4F3EF] text-[#9B9BAD]'}`}>
-              {step > s.n ? <FiCheck size={20} /> : s.n}
-            </div>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${step >= s.n ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'}`}>{s.title}</span>
-          </div>
-          {idx < steps.length - 1 && (
-            <div className="w-20 h-[2px] bg-[#F4F3EF] -mt-6">
-              <motion.div 
-                className="h-full bg-[#1B4DA0]"
-                initial={{ width: 0 }}
-                animate={{ width: step > s.n ? '100%' : '0%' }}
-              />
-            </div>
-          )}
-        </React.Fragment>
-      ))}
-    </div>
-  );
 
   const modalContent = (
     <AnimatePresence>
@@ -173,7 +177,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white">
-              <StepIndicator />
+              <StepIndicator step={step} steps={steps} />
 
               <div className="min-h-[450px]">
                 <AnimatePresence mode="wait">
@@ -283,7 +287,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
                     type="button"
                     onClick={handleSubmit} 
                     disabled={submitting} 
-                    className="px-10 py-3.5 bg-emerald-500 text-white font-black text-[13px] rounded-xl hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/10 active:scale-95"
+                    className="px-10 py-3.5 bg-[#10b981] text-white font-black text-[13px] rounded-xl hover:bg-[#059669] transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/10 active:scale-95"
                   >
                     {submitting ? 'Processing...' : 'Finish Onboarding'} <FiCheck />
                   </button>

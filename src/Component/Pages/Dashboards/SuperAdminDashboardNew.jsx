@@ -57,7 +57,11 @@ const sidebarConfig = [
 
 const SuperAdminDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('superadmin_active_tab') || 'Dashboard');
+
+  useEffect(() => {
+    localStorage.setItem('superadmin_active_tab', activeTab);
+  }, [activeTab]);
   const [chartRange, setChartRange] = useState('Month');
   
   // Data States

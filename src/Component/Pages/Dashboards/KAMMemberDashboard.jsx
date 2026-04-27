@@ -550,21 +550,25 @@ const KAMMemberDashboard = () => {
         const today = new Date().toDateString();
         const tasks = (res.tasks || [])
           .filter(task => {
-            if (task.deadline) {
-              return new Date(task.deadline).toDateString() === today;
+            const taskDate = task.dueDate || task.deadline;
+            if (taskDate) {
+              return new Date(taskDate).toDateString() === today;
             }
             return task.status === 'Pending' || task.status === 'In Progress';
           })
           .slice(0, 5)
-          .map(task => ({
-            id: task._id || task.id,
-            title: task.title,
-            priority: task.priority || 'Medium',
-            status: task.status === 'Completed' ? 'completed' : 'pending',
-            dueTime: task.deadline
-              ? new Date(task.deadline).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
-              : 'Today'
-          }));
+          .map(task => {
+            const taskDate = task.dueDate || task.deadline;
+            return {
+              id: task._id || task.id,
+              title: task.title,
+              priority: task.priority || 'Medium',
+              status: task.status === 'Completed' ? 'completed' : 'pending',
+              dueTime: taskDate
+                ? new Date(taskDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+                : 'Today'
+            };
+          });
         setTodayTasks(tasks.length > 0 ? tasks : []);
       }
     } catch (e) {

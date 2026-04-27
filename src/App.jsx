@@ -97,7 +97,7 @@ function App() {
         </ProtectedRoute>
       } />
       <Route path='/crm-dashboard' element={
-        <ProtectedRoute allowedRoles={['admin', 'bd', 'superadmin', 'teamleader', 'crm']}>
+        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
           <CRMDashboard />
         </ProtectedRoute>
       } />
@@ -111,7 +111,7 @@ function App() {
       
       {/* KAM Member Dashboard - Priyanshi, Manju, Jyoti */}
       <Route path='/kam-member-dashboard' element={
-        <ProtectedRoute allowedRoles={['HR Recruitment', 'kamRecruitment', 'admin', 'teamleader', 'superadmin']}>
+        <ProtectedRoute allowedRoles={['HR Recruitment', 'HR Executive', 'kamRecruitment', 'admin', 'teamleader', 'superadmin']}>
           <KAMMemberDashboard />
         </ProtectedRoute>
       } />

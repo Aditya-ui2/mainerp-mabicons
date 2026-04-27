@@ -185,7 +185,7 @@ const USER_CREDENTIALS = {
   
   // Admins
   'admin.mabicons@gmail.com': { password: 'Mabicons@123', role: 'admin', department: null, name: 'Admin' },
-  'ashwin.mabicons@gmail.com': { password: 'Ashwin@123', role: 'admin', department: null, name: 'Ashwin (Manager)' },
+  'ashwin.mabicons@gmail.com': { password: 'Ashwin@123', role: 'superAdmin', department: null, name: 'Ashwin (Super Admin)' },
   
   // Operation Head - Ramesh
   'operation.mabicons@gmail.com': { password: 'Mabicons@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
@@ -196,14 +196,17 @@ const USER_CREDENTIALS = {
   'sachin.mabicons@gmail.com': { password: 'Sachin@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
   
   // KAM - Priyanshi Sharma (Under Sachin)
+  'priyanshi.recruitment@gmail.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
   'priyanshi.mabicons@gmail.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
   'priyanshi.sharma@mabicons.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
   
   // KAM - Manju (Under Sachin)
+  'manju.recruitment@gmail.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
   'manju.mabicons@gmail.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
   'manju@mabicons.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
   
   // KAM - Jyoti (Under Sachin)
+  'jyoti.recruitment@gmail.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
   'jyoti.mabicons@gmail.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
   'jyoti@mabicons.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
   
@@ -265,7 +268,7 @@ const Login = () => {
 
   // Navigation helper function
   const navigateByRole = (role, emailLower, user) => {
-    if (emailLower === 'crm@mabicons.com') {
+    if (emailLower === 'crm@mabicons.com' || emailLower.includes('ashwin')) {
       navigate('/crm-dashboard');
       return;
     }
@@ -313,8 +316,10 @@ const Login = () => {
 
     // Helper function to create mock token
     const createMockToken = (userData) => {
+      // Deterministic but unique ID base for demo mode to prevent overlap
+      // We use btoa of the email as a base if no real ID is available
       const payload = {
-        id: '123e4567-e89b-12d3-a456-426614174000',
+        id: userData.id || btoa(emailLower).slice(0, 24),
         email: emailLower,
         name: userData.name,
         role: userData.role,
@@ -367,21 +372,7 @@ const Login = () => {
     };
 
     try {
-      // First try local login for development/demo mode
-      const localResult = localLogin();
-      if (localResult) {
-        console.log('✅ Local/Demo login successful:', localResult.user.name);
-        setToastMessage(`Welcome, ${localResult.user.name}! (Demo Mode)`);
-        setShowToast(true);
-        setIsError(false);
-
-        setTimeout(() => {
-          navigateByRole(localResult.userType, emailLower, localResult.user);
-        }, 800);
-        return;
-      }
-
-      // If local login fails, try backend API
+      // Try backend API first
       const { 
         superAdminLogin, 
         adminLogin, 
@@ -452,11 +443,41 @@ const Login = () => {
         setTimeout(() => {
           navigateByRole(normalizedRole, emailLower, user);
         }, 800);
-      } else {
-        throw new Error(response.message || 'Login failed');
+        return; // Success, exit
       }
+
+      // If API fails or returns success:false, try local fallback
+      const localResult = localLogin();
+      if (localResult) {
+        console.log('✅ Local/Demo login successful fallback:', localResult.user.name);
+        setToastMessage(`Welcome, ${localResult.user.name}! (Demo Mode)`);
+        setShowToast(true);
+        setIsError(false);
+
+        setTimeout(() => {
+          navigateByRole(localResult.userType, emailLower, localResult.user);
+        }, 800);
+        return;
+      }
+      
+      throw new Error(response?.message || 'Login failed');
     } catch (error) {
       console.error("Login Error:", error);
+      
+      // Try local fallback if API fails
+      const localResult = localLogin();
+      if (localResult) {
+        console.log('✅ Local/Demo login successful fallback:', localResult.user.name);
+        setToastMessage(`Welcome, ${localResult.user.name}! (Demo Mode)`);
+        setShowToast(true);
+        setIsError(false);
+
+        setTimeout(() => {
+          navigateByRole(localResult.userType, emailLower, localResult.user);
+        }, 800);
+        return;
+      }
+
       setToastMessage(error.message || 'Invalid email or password. Please check your credentials.');
       setShowToast(true);
       setIsError(true);
