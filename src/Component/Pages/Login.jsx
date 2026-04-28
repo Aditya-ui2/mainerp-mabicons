@@ -185,15 +185,15 @@ const USER_CREDENTIALS = {
   
   // Admins
   'admin.mabicons@gmail.com': { password: 'Mabicons@123', role: 'admin', department: null, name: 'Admin' },
-  'ashwin.mabicons@gmail.com': { password: 'Ashwin@123', role: 'superAdmin', department: null, name: 'Ashwin (Super Admin)' },
+  'ashwin.mabicons@gmail.com': { id: '28e15eed-8297-440a-b8cd-976be26bc048', password: 'Ashwin@123', role: 'manager', department: 'Management', name: 'Ashwin (Manager)' },
   
   // Operation Head - Ramesh
   'operation.mabicons@gmail.com': { password: 'Mabicons@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
   'ramesh.mabicons@gmail.com': { password: 'Ramesh@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
   
   // Recruitment Head - Sachin
-  'recruitment.mabicons@gmail.com': { password: 'Mabicons@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
-  'sachin.mabicons@gmail.com': { password: 'Sachin@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
+  'recruitment.mabicons@gmail.com': { id: '60de4380-0140-49ff-b26d-a8d06333af11', password: 'Mabicons@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
+  'sachin.mabicons@gmail.com': { id: '60de4380-0140-49ff-b26d-a8d06333af11', password: 'Sachin@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
   
   // KAM - Priyanshi Sharma (Under Sachin)
   'priyanshi.recruitment@gmail.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
@@ -292,8 +292,8 @@ const Login = () => {
       navigate('/kam-member-dashboard');
     } else if (isOperations) {
       navigate('/kam-operations-dashboard');
-    } else if (role === 'superAdmin' || role === 'super_admin') {
-      navigate('/superadmin-dashboard');
+    } else if (role === 'superAdmin' || role === 'super_admin' || role === 'manager') {
+      navigate('/manager-dashboard');
     } else if (role === 'admin') {
       navigate('/admin-dashboard');
     } else if (role === 'teamLeader' || role === 'team_leader') {
@@ -441,6 +441,16 @@ const Login = () => {
         setIsError(false);
   
         setTimeout(() => {
+          // Clear dashboard tab persistence for a clean login experience
+          const dashKeys = [
+            'admin_active_tab', 
+            'crm_active_tab', 
+            'hroperations_active_tab', 
+            'rh_active_tab', 
+            'superadmin_active_tab'
+          ];
+          dashKeys.forEach(key => localStorage.removeItem(key));
+          
           navigateByRole(normalizedRole, emailLower, user);
         }, 800);
         return; // Success, exit
@@ -455,6 +465,15 @@ const Login = () => {
         setIsError(false);
 
         setTimeout(() => {
+          // Clear dashboard tab persistence
+          [
+            'admin_active_tab', 
+            'crm_active_tab', 
+            'hroperations_active_tab', 
+            'rh_active_tab', 
+            'superadmin_active_tab'
+          ].forEach(key => localStorage.removeItem(key));
+          
           navigateByRole(localResult.userType, emailLower, localResult.user);
         }, 800);
         return;

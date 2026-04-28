@@ -56,7 +56,7 @@ import {
 import { toast } from "sonner";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import * as pdfjsLib from 'pdfjs-dist';
-import { BASE_URL, getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer, saveOfferTemplate, getOfferTemplate, generateCandidateCredentials, updateCandidateStatus } from '../../../service/api';
+import { BASE_URL, getAllOffers, saveOffer, getOfferCandidateSuggestions, deleteOffer, saveOfferTemplate, getOfferTemplate, generateCandidateCredentials, updateCandidateStatus, getAllClients, getAllRecruitmentPositions } from '../../../service/api';
 import {
   OFFER_STATUS_COLORS,
   STATUS_ICONS,
@@ -64,7 +64,7 @@ import {
   statusOrder
 } from './OfferConstants';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 /* ── Status Badge ── */
 const StatusBadge = ({ status }) => {
@@ -135,6 +135,12 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
           </div>
           <div className="flex items-center gap-3">
             <button
+              onClick={() => onEdit(offer)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm ${isDarkMode ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-[#1B4DA0] text-white hover:bg-[#153e82]'}`}
+            >
+              <Edit2 size={14} /> Edit Details
+            </button>
+            <button
               onClick={onClose}
               className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isDarkMode ? 'text-slate-400 border-slate-700 hover:bg-red-500/20 hover:text-red-500' : 'text-[#6B6B7E] border-[#F4F3EF] hover:text-red-500 hover:bg-red-50'}`}
             >
@@ -165,11 +171,11 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
               <p className={`text-[15px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.client || 'Internal'}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Current CTC (LPA)</p>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Current Monthly</p>
               <p className={`text-[15px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.currentCTC || '₹0.00'}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Proposed CTC (LPA)</p>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Proposed Monthly</p>
               <p className={`text-[15px] font-black ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>{offer.offeredCTC || '₹0.00'}</p>
             </div>
             <div>
@@ -214,12 +220,21 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
 
           <div className={`border-t ${isDarkMode ? 'border-slate-800' : 'border-[#F4F3EF]'}`} />
 
-           
+
         </div>
 
         {/* Footer Actions - Fixed at bottom */}
         <div className={`p-8 border-t ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-[#F4F3EF]'}`}>
           <div className="flex flex-col gap-4">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => onEdit(offer)}
+              className={`w-full py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${isDarkMode ? 'bg-slate-800 text-blue-400 hover:bg-slate-700' : 'bg-[#FAFBFF] text-[#1B4DA0] border border-blue-100/50 hover:bg-[#F0F4FF]'}`}
+            >
+              <Edit2 size={16} /> Edit Offer Details
+            </motion.button>
+
             {offer.status === 'Generated' && (
               <div className="flex gap-3 mb-2">
                 <motion.button
@@ -266,6 +281,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
       bgvStatus: 'Verified'
     }
   ]);
+  const [allClientsList, setAllClientsList] = useState([]);
+  const [allPositionsList, setAllPositionsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploadingOfferId, setUploadingOfferId] = useState(null);
   const [actionNotice, setActionNotice] = useState(null);
@@ -286,6 +303,84 @@ const OfferManagementTab = ({ isDarkMode }) => {
   const [dateFilter, setDateFilter] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+
+  const handleCsvSync = async (file) => {
+    setLoading(true);
+    const toastId = toast.loading("Processing CSV synchronization...");
+
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+      if (lines.length < 2) {
+        toast.error("CSV file is empty or missing headers", { id: toastId });
+        setLoading(false);
+        return;
+      }
+
+      // Basic CSV Parser (handles comma in quotes)
+      const parseCSVLine = (line) => {
+        const result = [];
+        let cur = '';
+        let inQuote = false;
+        for (let char of line) {
+          if (char === '"') inQuote = !inQuote;
+          else if (char === ',' && !inQuote) {
+            result.push(cur.trim());
+            cur = '';
+          } else cur += char;
+        }
+        result.push(cur.trim());
+        return result;
+      };
+
+      const headers = parseCSVLine(lines[0]).map(l => l.toLowerCase());
+      const dataRows = lines.slice(1);
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const row of dataRows) {
+        const values = parseCSVLine(row);
+        const entry = {};
+        headers.forEach((h, i) => { entry[h] = values[i]; });
+
+        // Map standard fields (adjust mapping based on common headers)
+        const payload = {
+          candidateName: entry.name || entry.candidate || entry.candidatename || "",
+          email: entry.email || entry.emailaddress || "",
+          position: entry.position || entry.role || entry.designation || "",
+          client: entry.client || entry.company || "Internal",
+          offeredCTC: entry.salary || entry.ctc || entry.monthly_salary || "0",
+          offerDate: entry.date || entry.offer_date || new Date().toISOString().split('T')[0],
+          joiningDate: entry.joining || entry.joining_date || "TBD",
+          address: entry.address || ""
+        };
+
+        if (!payload.candidateName || !payload.email) {
+          failCount++;
+          continue;
+        }
+
+        try {
+          await saveOffer(payload);
+          successCount++;
+        } catch (err) {
+          console.error("Bulk save error for:", payload.candidateName, err);
+          failCount++;
+        }
+      }
+
+      toast.success(`Sync Complete: ${successCount} saved, ${failCount} skipped`, { id: toastId });
+      fetchOffers();
+    } catch (error) {
+      console.error("Sync File Error:", error);
+      toast.error("Failed to process CSV file", { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+  const [generatingBgvId, setGeneratingBgvId] = useState(null);
+  const [isSavingOffer, setIsSavingOffer] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
   const previewWrapRef = useRef(null);
@@ -528,6 +623,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
         ...c,
         id: c._id || c.id,
         candidateId: c.candidateId || c._id || c.id,
+        offerDate: c.offerDate || c.updatedAt || c.createdAt, // Fallback to meta dates if missing
         status: c.status === 'Draft' ? 'Sent' : c.status,
         hikePercent: calculateHike(c.currentCTC, c.offeredCTC),
         bgvStatus: c.bgvStatus || 'Not Started'
@@ -556,7 +652,41 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
   useEffect(() => {
     fetchOffers();
+    // Fetch all clients to populate the filter dropdown comprehensively
+    const fetchAllClients = async () => {
+      try {
+        const response = await getAllClients();
+        if (response.success && response.data) {
+          // Handle both array and object {clients: []} formats
+          const clientArray = Array.isArray(response.data) ? response.data : (response.data.clients || []);
+          const names = clientArray.map(c => c.companyName || c.name);
+          setAllClientsList(names);
+        }
+      } catch (error) {
+        console.error('Failed to fetch full client list for filter:', error);
+      }
+    };
+    const fetchAllPositions = async () => {
+      try {
+        const response = await getAllRecruitmentPositions();
+        setAllPositionsList(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch full position list:', error);
+      }
+    };
+    fetchAllClients();
+    fetchAllPositions();
   }, []);
+
+  const availableStatuses = useMemo(() => {
+    // Get unique statuses present in current data
+    return [...new Set(offers.map(o => o.status))].filter(Boolean);
+  }, [offers]);
+
+  const isOfferIncomplete = (offer) => {
+    const ctc = String(offer.offeredCTC || '0').replace(/[^\d.]/g, '');
+    return parseFloat(ctc) === 0 || !offer.position || offer.position === 'TBD';
+  };
 
   useEffect(() => {
     if (!showFullPageForm || editingOffer) return;
@@ -646,11 +776,17 @@ const OfferManagementTab = ({ isDarkMode }) => {
   };
 
   const handleSaveOffer = async () => {
-    if (!formData.candidateId && !editingOffer) {
-      toast.error("Please select a candidate from the suggestions dropdown first");
+    console.log('--- ATTEMPTING TO SAVE OFFER ---');
+    console.log('Form State:', formData);
+
+    if (!formData.candidateId && !editingOffer && (!formData.candidateName || !formData.email)) {
+      console.warn('❌ Cannot save: No candidateId and missing name/email');
+      toast.error("Please either select a candidate from the list or provide both Name and Email.");
       return;
     }
     try {
+      setIsSavingOffer(true);
+      console.log('🚀 Starting save process...');
       const payload = new FormData();
       payload.append('candidateId', formData.candidateId || editingOffer?.candidateId || editingOffer?.id || '');
       payload.append('candidateName', formData.candidateName || '');
@@ -690,6 +826,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
       console.error('Failed to save offer:', error);
       const errorMsg = error.response?.data?.message || error.message || "Failed to save offer";
       toast.error(errorMsg);
+    } finally {
+      setIsSavingOffer(false);
     }
   };
 
@@ -795,63 +933,91 @@ const OfferManagementTab = ({ isDarkMode }) => {
   };
 
   const statCards = [
-    { label: "Pipeline Value", value: `₹${(offers.reduce((acc, current) => acc + parseFloat(String(current.offeredCTC || 0).replace(/[^\d.]/g, '') || 0), 0) / 100).toFixed(1)}Cr`, sub: "Active & Accepted", icon: DollarSign, color: "text-blue-600", bg: "bg-blue-50" },
+    {
+      label: "Monthly Pipeline",
+      value: (() => {
+        const total = offers.reduce((acc, current) => acc + parseFloat(String(current.offeredCTC || 0).replace(/[^\d.]/g, '') || 0), 0);
+        return total >= 100000 ? `₹${(total / 100000).toFixed(2)}L` : `₹${total.toLocaleString()}`;
+      })(),
+      sub: "Total Monthly Outflow",
+      icon: DollarSign,
+      color: "text-blue-600",
+      bg: "bg-blue-50"
+    },
     { label: "Negotiating", value: offers.filter(o => o.status === 'Negotiating').length, sub: "Action Required", icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50" },
     { label: "Acceptance", value: `${Math.round((offers.filter(o => o.status === 'Accepted').length / (offers.length || 1)) * 100)}%`, sub: "Historical Rate", icon: BadgeCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Total Offers", value: offers.length, sub: "Total Generations", icon: Briefcase, color: "text-purple-600", bg: "bg-purple-50" },
   ];
 
   const activeClientNames = useMemo(() => {
-    const names = new Set(offers.map(o => o.client).filter(Boolean));
-    return Array.from(names).sort();
-  }, [offers]);
+    const namesFromOffers = offers.map(o => o.client || 'Internal');
+    const combined = new Set([...namesFromOffers, ...allClientsList]);
+    return Array.from(combined).filter(Boolean).sort();
+  }, [offers, allClientsList]);
 
-  const filteredOffers = offers.filter(o => {
-    const matchesSearch = (o.candidateName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (o.position || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (o.client || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || o.status === filterStatus;
-    const matchesClient = filterClient === 'all' || o.client === filterClient;
-    const matchesJob = filterJob === 'all' || o.position === filterJob;
+  const filteredOffers = useMemo(() => {
+    return offers.filter(o => {
+      const s = searchTerm.toLowerCase().trim();
+      const matchesSearch = s === '' ||
+        (o.candidateName || '').toLowerCase().includes(s) ||
+        (o.position || '').toLowerCase().includes(s) ||
+        (o.client || 'Internal').toLowerCase().includes(s);
 
-    // Date filter on offerDate
-    let matchesDate = true;
-    if (dateFilter !== "all" && o.offerDate) {
-      const offerTime = new Date(o.offerDate);
-      const now = new Date();
-      if (dateFilter === "today") {
-        matchesDate = o.offerDate === now.toISOString().split('T')[0];
-      } else if (dateFilter === "week") {
-        const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0, 0, 0, 0);
-        const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23, 59, 59, 999);
-        matchesDate = offerTime >= weekStart && offerTime <= weekEnd;
-      } else if (dateFilter === "month") {
-        matchesDate = offerTime.getMonth() === now.getMonth() && offerTime.getFullYear() === now.getFullYear();
-      } else if (dateFilter === "year") {
-        matchesDate = offerTime.getFullYear() === now.getFullYear();
-      } else if (dateFilter === "custom") {
-        if (customStartDate) matchesDate = offerTime >= new Date(customStartDate);
-        if (customEndDate && matchesDate) matchesDate = offerTime <= new Date(customEndDate + 'T23:59:59');
+      const matchesStatus = filterStatus === 'all' ||
+        String(o.status || '').toLowerCase().trim() === String(filterStatus).toLowerCase().trim();
+
+      const matchesClient = filterClient === 'all' ||
+        String(o.client || 'Internal').toLowerCase().trim() === String(filterClient).toLowerCase().trim();
+
+      const matchesJob = filterJob === 'all' ||
+        String(o.position || '').toLowerCase().trim() === String(filterJob).toLowerCase().trim();
+
+      // Date filter on offerDate
+      let matchesDate = true;
+      if (dateFilter !== "all" && o.offerDate) {
+        const offerTime = new Date(o.offerDate);
+        if (isNaN(offerTime.getTime())) {
+          matchesDate = dateFilter === "all";
+        } else {
+          const now = new Date();
+          const todayStr = now.toISOString().split('T')[0];
+          const offerStr = offerTime.toISOString().split('T')[0];
+
+          if (dateFilter === "today") {
+            matchesDate = offerStr === todayStr;
+          } else if (dateFilter === "week") {
+            const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0, 0, 0, 0);
+            const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23, 59, 59, 999);
+            matchesDate = offerTime >= weekStart && offerTime <= weekEnd;
+          } else if (dateFilter === "month") {
+            matchesDate = offerTime.getMonth() === now.getMonth() && offerTime.getFullYear() === now.getFullYear();
+          } else if (dateFilter === "year") {
+            matchesDate = offerTime.getFullYear() === now.getFullYear();
+          } else if (dateFilter === "custom") {
+            if (customStartDate) matchesDate = offerTime >= new Date(customStartDate);
+            if (customEndDate && matchesDate) matchesDate = offerTime <= new Date(customEndDate + 'T23:59:59');
+          }
+        }
       }
-    }
 
-    return matchesSearch && matchesStatus && matchesClient && matchesJob && matchesDate;
-  }).sort((a, b) => {
-    const { key, direction } = sortConfig;
-    let valA = a[key], valB = b[key];
+      return matchesSearch && matchesStatus && matchesClient && matchesJob && matchesDate;
+    }).sort((a, b) => {
+      const { key, direction } = sortConfig;
+      let valA = a[key], valB = b[key];
 
-    if (key === 'offeredCTC') {
-      valA = parseFloat(String(valA || 0).replace(/[^\d.]/g, '')) || 0;
-      valB = parseFloat(String(valB || 0).replace(/[^\d.]/g, '')) || 0;
-    } else if (key === 'offerDate' || key === 'joiningDate') {
-      valA = new Date(valA || 0).getTime();
-      valB = new Date(valB || 0).getTime();
-    }
+      if (key === 'offeredCTC') {
+        valA = parseFloat(String(valA || 0).replace(/[^\d.]/g, '')) || 0;
+        valB = parseFloat(String(valB || 0).replace(/[^\d.]/g, '')) || 0;
+      } else if (key === 'offerDate' || key === 'joiningDate') {
+        valA = new Date(valA || 0).getTime();
+        valB = new Date(valB || 0).getTime();
+      }
 
-    if (valA < valB) return direction === 'asc' ? -1 : 1;
-    if (valA > valB) return direction === 'asc' ? 1 : -1;
-    return 0;
-  });
+      if (valA < valB) return direction === 'asc' ? -1 : 1;
+      if (valA > valB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [offers, searchTerm, filterStatus, filterClient, filterJob, dateFilter, customStartDate, customEndDate, sortConfig]);
 
   const getInitials = (name) => (name || '').split(' ').map(n => n[0]).join('').toUpperCase();
 
@@ -898,8 +1064,19 @@ const OfferManagementTab = ({ isDarkMode }) => {
               </h1>
             </div>
             <div className="flex gap-2">
+              <input
+                type="file"
+                id="csvSyncInput"
+                accept=".csv"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleCsvSync(file);
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
               <button
-                onClick={fetchOffers}
+                onClick={() => document.getElementById('csvSyncInput').click()}
                 disabled={loading}
                 className="group flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#1B4DA0] border border-blue-100/30 rounded-xl text-sm font-bold hover:bg-[#E3F2FD] hover:text-[#0D47A1] transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[170px]"
               >
@@ -908,7 +1085,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 ) : (
                   <FiDatabase className="text-[#1B4DA0] group-hover:text-[#0D47A1] transition-colors" />
                 )}
-                {loading ? 'Syncing...' : 'Sync Data'}
+                {loading ? 'Processing CSV...' : 'Sync Data'}
               </button>
               <button
                 onClick={handleCreateOffer}
@@ -970,12 +1147,11 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
               >
                 <option value="all">All Status</option>
-                <option value="Generated">Offer Created</option>
-                <option value="Sent">Sent</option>
-                <option value="Negotiating">Negotiating</option>
-                <option value="Accepted">Accepted</option>
-                <option value="Declined">Declined</option>
-                <option value="Joined">Joined</option>
+                {availableStatuses.map(status => (
+                  <option key={status} value={status}>
+                    {status === 'Generated' ? 'Offer Created' : status}
+                  </option>
+                ))}
               </select>
               <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
             </div>
@@ -1020,7 +1196,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
                     />
                   </div>
-                  {["Offer Date", "Candidate", "Client", "Position", "Offered CTC", "BGV Protocol", "Verify Status", ""].map((h, i) => (
+                  {["Offer Date", "Candidate", "Client", "Position", "Monthly Salary", "BGV Protocol", "Verify Status", ""].map((h, i) => (
                     <div key={i} className={`text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start ${h === 'BGV Protocol' || h === 'Verify Status' ? 'justify-center' : ''}`}>
                       {h}
                     </div>
@@ -1070,6 +1246,17 @@ const OfferManagementTab = ({ isDarkMode }) => {
                               {offer.candidateName}
                             </p>
                             <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest truncate w-full">{offer.email || 'No Email'}</p>
+                            {isOfferIncomplete(offer) && (
+                              <motion.button
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                onClick={(e) => { e.stopPropagation(); handleEditOffer(offer); }}
+                                className="mt-2 flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-200 text-[8.5px] font-black rounded-lg uppercase tracking-[0.1em] hover:bg-amber-100 transition-all shadow-sm group/btn"
+                              >
+                                <AlertCircle size={10} className="group-hover/btn:animate-pulse" />
+                                Incomplete • Add Details
+                              </motion.button>
+                            )}
                           </div>
                         </div>
 
@@ -1084,35 +1271,47 @@ const OfferManagementTab = ({ isDarkMode }) => {
                           <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest opacity-60 truncate w-full">Joining: {offer.joiningDate || 'TBD'}</span>
                         </div>
 
-                        {/* CTC */}
                         <div className="flex items-center py-1 text-left">
-                          <span className="text-[13px] font-bold text-[#1A1A2E]">₹{offer.offeredCTC} LPA</span>
+                          <span className="text-[13px] font-bold text-[#1A1A2E]">₹{offer.offeredCTC} /mo</span>
                         </div>
 
                         {/* BGV Protocol */}
                         <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
-                          {offer.bgvStatus === 'Not Started' ? (
+                          {!offer.tempUsername ? (
                             <button
                               onClick={async (e) => {
-                                e.preventDefault();
                                 e.stopPropagation();
-                                const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
                                 const targetId = offer.candidateId || offer.id;
+                                if (!targetId) {
+                                  toast.error("System Error: Reference missing.");
+                                  return;
+                                }
+
                                 try {
-                                  if (!targetId) {
-                                    toast.error("System Error: Reference missing.", { id: loadingId });
-                                    return;
-                                  }
+                                  setGeneratingBgvId(offer.id);
+                                  const loadingId = toast.loading("📡 Initiating Protocol Handshake...");
                                   const response = await generateCandidateCredentials(targetId);
                                   if (response && response.success && response.data) {
                                     setOffers(prev => prev.map(o => (o.id === offer.id || o._id === offer.id) ? { ...o, bgvStatus: 'Sent', tempUsername: response.data.username, tempPassword: response.data.password } : o));
                                     toast.success(`Success: Credentials sent`, { id: loadingId });
+                                  } else {
+                                    toast.error("Gateway protocol failed", { id: loadingId });
                                   }
-                                } catch (err) { toast.error("Gateway protocol failed", { id: loadingId }); }
+                                } catch (err) {
+                                  toast.error("Gateway protocol failed");
+                                } finally {
+                                  setGeneratingBgvId(null);
+                                }
                               }}
-                              className="bg-[#1B4DA0] text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+                              disabled={generatingBgvId === offer.id}
+                              className={`bg-[#1B4DA0] text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 ${generatingBgvId === offer.id ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                              Generate
+                              {generatingBgvId === offer.id ? (
+                                <>
+                                  <RefreshCw size={10} className="animate-spin" />
+                                  Processing
+                                </>
+                              ) : 'Generate'}
                             </button>
                           ) : (
                             <div className="flex flex-col items-center gap-0.5">
@@ -1239,15 +1438,31 @@ const OfferManagementTab = ({ isDarkMode }) => {
                               placeholder="email@example.com"
                             />
                           </div>
-                          <div>
+                          <div className="relative">
                             <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Target Position *</label>
-                            <input
-                              type="text"
-                              value={formData.position}
-                              onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                              className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 placeholder:text-[#9B9BAD]/40 focus:bg-white focus:border-blue-100"
-                              placeholder="e.g. Senior Architect"
-                            />
+                            <div className="relative">
+                              <select
+                                value={formData.position}
+                                onChange={(e) => {
+                                  const selectedTitle = e.target.value;
+                                  const pos = allPositionsList.find(p => p.title === selectedTitle);
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    position: selectedTitle,
+                                    client: pos?.clientName || prev.client
+                                  }));
+                                }}
+                                className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer focus:bg-white focus:border-blue-100"
+                              >
+                                <option value="">Select Position</option>
+                                {[...new Set(allPositionsList.map(p => p.title))].map(title => (
+                                  <option key={title} value={title}>{title}</option>
+                                ))}
+                              </select>
+                              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-[#9B9BAD]">
+                                <ChevronDown size={16} />
+                              </div>
+                            </div>
                           </div>
                           <div>
                             <label className="text-[10px] font-bold text-[#9B9BAD] mb-2 block text-left uppercase tracking-wider">Client *</label>
@@ -1258,7 +1473,6 @@ const OfferManagementTab = ({ isDarkMode }) => {
                                 className="w-full bg-[#F4F3EF]/60 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer focus:bg-white focus:border-blue-100"
                               >
                                 <option value="">Select Client</option>
-                                <option value="Voltiq Energy">Voltiq Energy</option>
                                 {activeClientNames.map(name => (
                                   <option key={name} value={name}>{name}</option>
                                 ))}
@@ -1404,10 +1618,20 @@ const OfferManagementTab = ({ isDarkMode }) => {
                           whileHover={{ scale: 1.02, x: 5 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={handleSaveOffer}
-                          className="flex-[2] bg-[#1B4DA0] text-white py-4 rounded-[20px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-3"
+                          disabled={isSavingOffer}
+                          className="flex-[2] bg-[#1B4DA0] text-white py-4 rounded-[20px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                          <Send size={16} />
-                          {editingOffer ? 'Finalize Changes' : 'Execute Generation'}
+                          {isSavingOffer ? (
+                            <>
+                              <RefreshCw size={16} className="animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <Send size={16} />
+                              {editingOffer ? 'Finalize Changes' : 'Execute Generation'}
+                            </>
+                          )}
                         </motion.button>
                       </div>
                     </div>

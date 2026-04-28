@@ -150,6 +150,28 @@ export default function CandidatesPage({ setActiveTab }) {
     resume: null
   });
 
+  const resetCandidateForm = () => {
+    setCandidateForm({
+      name: "",
+      email: "",
+      phone: "",
+      location: "",
+      positionId: "",
+      roleType: "",
+      displayJobTitle: "",
+      clientId: "",
+      clientName: "",
+      experience: "",
+      noticePeriod: "",
+      currentSalary: "",
+      expectedSalary: "",
+      skills: "",
+      source: "",
+      resume: null
+    });
+    setSuggestedCandidates([]);
+  };
+
   const [isParsing, setIsParsing] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [suggestedCandidates, setSuggestedCandidates] = useState([]);
@@ -705,14 +727,20 @@ export default function CandidatesPage({ setActiveTab }) {
 
   const handlePositionChange = (posId) => {
     const pos = positions.find(p => p.id === posId);
+    
+    // When position changes, clear previous data to avoid contamination
+    // especially after AI parsing for a specific JD
     if (pos) {
-      setCandidateForm(prev => ({
-        ...prev,
+      setCandidateForm({
+        name: "", email: "", phone: "", location: "",
+        experience: "", noticePeriod: "", currentSalary: "",
+        expectedSalary: "", skills: "", source: "", resume: null,
         positionId: posId,
-        clientId: pos.clientId || prev.clientId,
-        clientName: pos.clientName || prev.clientName,
-        displayJobTitle: pos.title || prev.displayJobTitle
-      }));
+        clientId: pos.clientId || "",
+        clientName: pos.clientName || "",
+        displayJobTitle: pos.title || ""
+      });
+      setSuggestedCandidates([]);
     } else {
       setCandidateForm(prev => ({ ...prev, positionId: posId }));
     }
@@ -746,13 +774,7 @@ export default function CandidatesPage({ setActiveTab }) {
       if (response && response.success) {
         toast.success(`${candidateForm.name} added successfully!`);
         setIsCreateModalOpen(false);
-        setCandidateForm({
-          name: "", email: "", phone: "", location: "",
-          positionId: "", roleType: "", displayJobTitle: "",
-          clientId: "", clientName: "", experience: "", noticePeriod: "",
-          currentSalary: "", expectedSalary: "", skills: "", source: "",
-          resume: null
-        });
+        resetCandidateForm();
         fetchCandidates();
       } else {
         toast.error(response?.message || "Failed to add candidate");
@@ -1811,7 +1833,7 @@ Mabicons Recruitment Team`);
       {isCreateModalOpen && createPortal(
         <div 
           className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl transition-all duration-300 cursor-pointer"
-          onClick={() => setIsCreateModalOpen(false)}
+          onClick={() => { setIsCreateModalOpen(false); resetCandidateForm(); }}
         >
           <div 
             className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-[0_20px_70px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-500 cursor-default"
@@ -1825,7 +1847,7 @@ Mabicons Recruitment Team`);
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={() => { setIsCreateModalOpen(false); resetCandidateForm(); }}
                   className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
                 >
                   <X size={20} />
@@ -2090,7 +2112,7 @@ Mabicons Recruitment Team`);
               <div className="pt-4 flex gap-4">
                 <button
                   type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={() => { setIsCreateModalOpen(false); resetCandidateForm(); }}
                   className="flex-1 py-5 rounded-3xl border-2 border-[#F4F3EF] text-sm font-bold text-[#6B6B7E] hover:bg-[#F4F3EF] transition-all"
                 >
                   Cancel

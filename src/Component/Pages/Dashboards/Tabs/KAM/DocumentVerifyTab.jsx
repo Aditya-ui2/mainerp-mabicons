@@ -18,10 +18,12 @@ import {
   User,
   AlertCircle,
   Database,
-  RefreshCw
+  RefreshCw,
+  CheckSquare,
+  CheckCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAllCandidates, verifyCandidateKYC, BASE_URL, syncSharePointAll } from '../../../service/api';
+import { getAllCandidates, verifyCandidateKYC, BASE_URL, syncSharePointAll, bulkVerifyCandidateKYC } from '../../../service/api';
 import { toast } from 'sonner';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -113,6 +115,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [rejectingDoc, setRejectingDoc] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isApprovingAll, setIsApprovingAll] = useState(false);
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -130,7 +133,11 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
           ['Selected', 'Document Verification', 'Offer Sent', 'Hired', 'Joined'].includes(c.stage) ||
           (c.kycDocuments && Object.keys(c.kycDocuments).length > 0)
         );
-        setCandidates(filtered);
+        const normalized = filtered.map(c => ({
+          ...c,
+          id: c.id || c._id
+        }));
+        setCandidates(normalized);
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -177,16 +184,39 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
       const status = action === 'verified' ? 'verified' : 'rejected';
       const res = await verifyCandidateKYC({ candidateId, docType, status });
       if (res && res.success) {
-        toast.success(`Document ${status}`);
-        fetchCandidates();
-        // Update selected candidate
-        if (selectedCandidate?.id === candidateId) {
-          const updated = candidates.find(c => c.id === candidateId);
-          if (updated) setSelectedCandidate({ ...updated });
+        toast.success('Document Approved Successfully!', {
+          description: `Verification status updated for ${selectedDocType.replace(/_/g, ' ').toUpperCase()}`,
+          duration: 4000,
+        });
+        
+        // Optimistically update local state for immediate feedback
+        const updateState = (prev) => {
+          if (!prev) return null;
+          const newDocs = { ...(prev.kycDocuments || {}) };
+          newDocs[docType] = { 
+            ...(newDocs[docType] || {}), 
+            verified: status === 'verified',
+            verifiedAt: new Date() 
+          };
+          return { ...prev, kycDocuments: newDocs };
+        };
+
+        setCandidates(prev => prev.map(c => 
+          (String(c.id) === String(candidateId) || String(c._id) === String(candidateId)) 
+            ? updateState(c) 
+            : c
+        ));
+        
+        if (selectedCandidate && (String(selectedCandidate.id) === String(candidateId) || String(selectedCandidate._id) === String(candidateId))) {
+          setSelectedCandidate(prev => updateState(prev));
         }
+
+        // Still fetch to keep in sync with database (e.g. for server-generated fields)
+        fetchCandidates();
       }
     } catch (err) {
-      toast.error('Verification failed');
+      console.error('KYC Verification Error:', err);
+      toast.error(err.message || 'Verification failed');
     }
   };
 
@@ -194,6 +224,68 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
     setRejectingDoc({ candidateId, docType });
     setRejectionReason('');
     setShowRejectModal(true);
+  };
+
+  const handleApproveAll = async (candidate) => {
+    if (!candidate?.kycDocuments) return;
+    
+    // Get all documents that are uploaded but not verified
+    const docsToApprove = Object.keys(candidate.kycDocuments).filter(
+      type => candidate.kycDocuments[type]?.url && candidate.kycDocuments[type]?.verified !== true
+    );
+    
+    if (docsToApprove.length === 0) {
+      toast.info("No new documents to approve");
+      return;
+    }
+
+    try {
+      setIsApprovingAll(true);
+      const loadingId = toast.loading(`Approving ${docsToApprove.length} documents...`);
+      
+      const res = await bulkVerifyCandidateKYC({ 
+        candidateId: candidate.id, 
+        docTypes: docsToApprove, 
+        status: 'verified' 
+      });
+      
+      if (res && res.success) {
+        toast.success(`Successfully approved ${docsToApprove.length} documents`, { id: loadingId });
+      
+        // Update selected candidate optimistically
+        const updateDocStates = (prev) => {
+          if (!prev) return null;
+          const newDocs = { ...(prev.kycDocuments || {}) };
+          docsToApprove.forEach(type => {
+            newDocs[type] = {
+              ...(newDocs[type] || {}),
+              verified: true,
+              verifiedAt: new Date()
+            };
+          });
+          return { ...prev, kycDocuments: newDocs };
+        };
+
+        setCandidates(prev => prev.map(c => 
+          (String(c.id) === String(candidate.id) || String(c._id) === String(candidate.id)) 
+            ? updateDocStates(c) 
+            : c
+        ));
+        
+        if (selectedCandidate && (String(selectedCandidate.id) === String(candidate.id) || String(selectedCandidate._id) === String(candidate.id))) {
+          setSelectedCandidate(prev => updateDocStates(prev));
+        }
+
+        // Final sync with database
+        await fetchCandidates();
+      }
+      
+    } catch (err) {
+      console.error("Bulk Approval Error:", err);
+      toast.error("Failed to approve all documents");
+    } finally {
+      setIsApprovingAll(false);
+    }
   };
 
   const handleRejectWithEmail = async () => {
@@ -210,6 +302,26 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
 
       if (res && res.success) {
         toast.success('Document rejected & email sent', { id: loadingId });
+        
+        // Optimistically update local state for immediate feedback
+        const { candidateId, docType } = rejectingDoc;
+        const updateState = (prev) => {
+          if (!prev) return null;
+          const newDocs = { ...(prev.kycDocuments || {}) };
+          newDocs[docType] = { 
+            ...(newDocs[docType] || {}), 
+            verified: false,
+            verifiedAt: new Date() 
+          };
+          return { ...prev, kycDocuments: newDocs };
+        };
+
+        setCandidates(prev => prev.map(c => (c.id === candidateId || c._id === candidateId) ? updateState(c) : c));
+        
+        if (selectedCandidate?.id === candidateId || selectedCandidate?._id === candidateId) {
+          setSelectedCandidate(prev => updateState(prev));
+        }
+
         fetchCandidates();
         setShowRejectModal(false);
         setRejectingDoc(null);
@@ -418,8 +530,15 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
 
                 {/* Documents Status */}
                 <div className="flex items-center justify-center">
-                  <div className={`px-3 py-1.5 rounded-lg font-bold text-[12px] ${docStats.uploaded === TOTAL_DOCS ? 'bg-emerald-100 text-emerald-700' : docStats.uploaded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
-                    {docStats.uploaded}/{TOTAL_DOCS}
+                  <div className={`px-2.5 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 ${
+                    docStats.verified === TOTAL_DOCS && TOTAL_DOCS > 0 
+                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                      : docStats.verified > 0 
+                        ? 'bg-blue-50 text-blue-600 border border-blue-100' 
+                        : 'bg-slate-50 text-slate-400 border border-slate-100 opacity-60'
+                  }`}>
+                    {docStats.verified === TOTAL_DOCS && TOTAL_DOCS > 0 && <CheckCircle size={10} />}
+                    {docStats.verified}/{TOTAL_DOCS} Verified
                   </div>
                 </div>
 
@@ -494,12 +613,25 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                   </button>
                 </div>
 
-                {/* Download All Button */}
-                <div className="mt-4">
+                {/* Quick Actions */}
+                <div className="mt-4 flex flex-col gap-3">
+                  <button
+                    onClick={() => handleApproveAll(selectedCandidate)}
+                    disabled={isApprovingAll || getDocumentStats(selectedCandidate).uploaded === 0}
+                    className="w-full py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/20"
+                  >
+                    {isApprovingAll ? (
+                      <RefreshCw className="animate-spin" size={16} />
+                    ) : (
+                      <CheckCheck size={16} />
+                    )}
+                    Approve All Uploaded Documents
+                  </button>
+
                   <button
                     onClick={() => handleDownloadAllAsZip(selectedCandidate)}
                     disabled={downloadingZip || getDocumentStats(selectedCandidate).uploaded === 0}
-                    className="w-full py-3 bg-[#1B4DA0] text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#164088] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
+                    className="w-full py-3 bg-[#1B4DA0] text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#164088] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20 border border-white/10"
                   >
                     {downloadingZip ? (
                       <>
@@ -708,14 +840,22 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Verification Actions</p>
                       <div className="flex gap-3">
                         <button
-                          onClick={() => handleVerify(selectedCandidate.id, selectedDocType, 'verified')}
-                          className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/20"
+                          onClick={() => handleApproveAll(selectedCandidate)}
+                          disabled={isApprovingAll}
+                          className="flex-1 py-3 bg-[#10B981] text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#059669] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                          style={{ backgroundColor: '#10B981', color: '#FFFFFF' }}
                         >
-                          <CheckCircle size={16} /> Approve
+                          {isApprovingAll ? (
+                            <RefreshCw size={16} className="animate-spin" />
+                          ) : (
+                            <CheckCheck size={16} />
+                          )}
+                          Approve All Documents
                         </button>
                         <button
                           onClick={() => openRejectModal(selectedCandidate.id, selectedDocType)}
-                          className="flex-1 py-3 bg-rose-500 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-rose-600 transition-all shadow-md shadow-rose-500/20"
+                          className="flex-1 py-3 bg-[#F43F5E] text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E11D48] transition-all shadow-lg shadow-rose-500/20 active:scale-95"
+                          style={{ backgroundColor: '#F43F5E', color: '#FFFFFF' }}
                         >
                           <Mail size={16} /> Reject & Notify
                         </button>
@@ -803,10 +943,12 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
                 <button
                   onClick={handleRejectWithEmail}
                   disabled={!rejectionReason.trim()}
-                  className={`flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${rejectionReason.trim()
-                    ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/20'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    }`}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
+                  style={{
+                    backgroundColor: rejectionReason.trim() ? '#F43F5E' : '#E2E8F0',
+                    color: rejectionReason.trim() ? '#FFFFFF' : '#94A3B8',
+                    cursor: rejectionReason.trim() ? 'pointer' : 'not-allowed'
+                  }}
                 >
                   <Mail size={16} /> Reject & Send Email
                 </button>

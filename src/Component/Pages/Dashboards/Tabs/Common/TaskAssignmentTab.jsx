@@ -981,7 +981,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
               </div>
 
               {/* Form Content */}
-              <div className="px-8 pb-8 overflow-y-auto">
+              <div className="px-8 pt-6 pb-8 overflow-y-auto">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Task Title */}
                   <div className="space-y-1.5 w-full">

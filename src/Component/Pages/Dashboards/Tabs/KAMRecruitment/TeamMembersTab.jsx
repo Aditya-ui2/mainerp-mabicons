@@ -174,6 +174,15 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
     setShowAssignModal(true);
   };
 
+  // Reliable link opener - bypasses React event system issues
+  const triggerLink = (url) => {
+    const a = document.createElement('a');
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleViewDetails = (member) => {
     // Navigate to member details or open modal
     console.log('View details for:', member);
@@ -389,16 +398,30 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
               </div>
 
               {/* Contact */}
-              <div className="flex items-center justify-start gap-2 py-1" onClick={(e) => e.stopPropagation()}>
-                <button 
-                    onClick={(e) => { e.stopPropagation(); window.location.href = `mailto:${m.email}`; }}
-                    className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
+              <div className="flex items-center justify-start gap-2 py-1" onClick={(e) => { e.stopPropagation(); e.nativeEvent?.stopImmediatePropagation?.(); }}>
+                <button
+                    onClick={(e) => { 
+                        e.stopPropagation(); 
+                        e.nativeEvent?.stopImmediatePropagation?.();
+                        window.location.href = `mailto:${m.email}`;
+                    }}
+                    title={`Email ${m.name}: ${m.email}`}
+                    className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50 rounded-lg transition-all inline-flex items-center justify-center"
                 >
                     <FiMail size={14} />
                 </button>
-                <button 
-                    onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone}`; }}
-                    className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
+                <button
+                    onClick={(e) => { 
+                        e.stopPropagation(); 
+                        e.nativeEvent?.stopImmediatePropagation?.();
+                        if (m.phone && m.phone !== 'N/A') window.location.href = `tel:${m.phone}`;
+                    }}
+                    title={m.phone && m.phone !== 'N/A' ? `Call ${m.phone}` : 'No phone number'}
+                    className={`p-2 rounded-lg transition-all inline-flex items-center justify-center ${
+                      m.phone && m.phone !== 'N/A'
+                        ? 'bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50'
+                        : 'bg-[#F4F3EF] text-[#C5C5D2] cursor-not-allowed opacity-50'
+                    }`}
                 >
                     <FiPhone size={14} />
                 </button>

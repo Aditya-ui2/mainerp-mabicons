@@ -499,8 +499,8 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
   };
 
   const fieldClasses = `w-full bg-transparent rounded-xl px-2 py-1 transition-all outline-none border ${isEditing
-      ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white'
-      : 'border-transparent cursor-default'
+    ? 'border-[#0D47A1]/20 bg-[#0D47A1]/5 hover:bg-[#0D47A1]/10 focus:border-[#0D47A1] focus:bg-white'
+    : 'border-transparent cursor-default'
     }`;
 
   return (
@@ -564,7 +564,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
                 onChange={e => setEditableJob(p => ({ ...p, title: e.target.value }))}
               />
             ) : (
-              <h4 
+              <h4
                 onClick={() => setIsEditing(true)}
                 className="text-2xl font-bold text-[#1A1A2E] tracking-tight cursor-pointer hover:text-[#0D47A1] transition-colors group flex items-center justify-center gap-3"
                 style={{ fontFamily: "'Syne', sans-serif" }}
@@ -671,11 +671,10 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
               </select>
             ) : (
               <span className="flex items-center gap-2">
-                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
-                  editableJob.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' :
-                  editableJob.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' : 
-                  'bg-blue-50 text-[#0D47A1] border-blue-100'
-                }`}>
+                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${editableJob.priority === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' :
+                    editableJob.priority === 'High' ? 'bg-amber-50 text-amber-500 border-amber-100' :
+                      'bg-blue-50 text-[#0D47A1] border-blue-100'
+                  }`}>
                   {editableJob.priority}
                 </span>
                 <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />
@@ -685,7 +684,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
 
           <div className="flex items-center justify-between group cursor-pointer" onClick={() => !isEditing && setIsEditing(true)}>
             <span className="text-sm font-medium text-[#9B9BAD]">Deadline</span>
-             {isEditing ? (
+            {isEditing ? (
               <input
                 type="date"
                 autoFocus
@@ -712,7 +711,7 @@ const JobDetailView = ({ isDarkMode, job, onBack, onAssignTask, onEdit, jobAssig
 
         {/* Requirements & Description (Full Width) */}
         <div className="space-y-8">
-           <div className="space-y-3 group cursor-pointer" onClick={() => !isEditing && setIsEditing(true)}>
+          <div className="space-y-3 group cursor-pointer" onClick={() => !isEditing && setIsEditing(true)}>
             <div className="flex items-center justify-between ml-1 pr-2">
               <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Key Requirements</p>
               {!isEditing && <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-[#9B9BAD]" />}
@@ -2346,97 +2345,97 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 </div>
                 {!isKAM && (
                   <div className="relative" onClick={e => e.stopPropagation()}>
-                  {canAssignJobs ? (
-                    jobAssignments[job.id] ? (
-                      <button
-                        id={`assign-btn-${job.id}`}
-                        onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all max-w-[160px]"
-                        title={jobAssignments[job.id]}
-                      >
-                        <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex shrink-0 items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
-                        <span className="truncate">{jobAssignments[job.id]}</span>
-                      </button>
+                    {canAssignJobs ? (
+                      jobAssignments[job.id] ? (
+                        <button
+                          id={`assign-btn-${job.id}`}
+                          onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D47A1]/10 text-[#0D47A1] rounded-lg text-xs font-bold hover:bg-[#0D47A1]/20 transition-all max-w-[160px]"
+                          title={jobAssignments[job.id]}
+                        >
+                          <span className="w-5 h-5 rounded-full bg-[#0D47A1] text-white text-[9px] font-black flex shrink-0 items-center justify-center">{jobAssignments[job.id].charAt(0)}</span>
+                          <span className="truncate">{jobAssignments[job.id]}</span>
+                        </button>
+                      ) : (
+                        <button
+                          id={`assign-btn-${job.id}`}
+                          onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-[#0D47A1] text-white rounded-lg text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
+                        >
+                          <UserPlus size={13} /> Assign
+                        </button>
+                      )
                     ) : (
-                      <button
-                        id={`assign-btn-${job.id}`}
-                        onClick={() => setAssignDropdownJobId(assignDropdownJobId === job.id ? null : job.id)}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-[#0D47A1] text-white rounded-lg text-xs font-bold hover:bg-[#0a3a82] transition-all shadow-md shadow-[#0D47A1]/20 active:scale-95"
-                      >
-                        <UserPlus size={13} /> Assign
-                      </button>
-                    )
-                  ) : (
-                    <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold max-w-[160px]" title={jobAssignments[job.id] || job.assignedToName || (isKAM ? 'KAM cannot assign' : 'Not assignable')}>
-                      <span className="truncate">{jobAssignments[job.id] || job.assignedToName || (isKAM ? 'KAM cannot assign' : 'Not assignable')}</span>
-                    </div>
-                  )}
-                  {canAssignJobs && assignDropdownJobId === job.id && createPortal(
-                    <>
-                      <div className="fixed inset-0 z-[1100] bg-[#1A1A2E]/10 backdrop-blur-[2px]" onClick={() => setAssignDropdownJobId(null)} />
-                      <div
-                        className="fixed z-[1101] w-64 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] py-3 flex flex-col"
-                        style={(() => {
-                          const btn = document.getElementById(`assign-btn-${job.id}`);
-                          if (!btn) return { top: 0, left: 0 };
-                          const rect = btn.getBoundingClientRect();
-                          const spaceBelow = window.innerHeight - rect.bottom;
-                          if (spaceBelow < 300) {
-                            return { bottom: window.innerHeight - rect.top + 8, left: rect.left };
-                          }
-                          return { top: rect.bottom + 8, left: rect.left };
-                        })()}
-                      >
-                        <div className="px-5 py-2 border-b border-[#F4F3EF] mb-2 flex items-center justify-between">
-                          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Members</p>
-                          <span className="text-[10px] font-bold text-[#0D47A1] bg-[#0D47A1]/5 px-2 py-0.5 rounded-full">{tempListAssignments.length} Selected</span>
-                        </div>
-
-                        <div className="max-h-[250px] overflow-y-auto custom-scrollbar px-1">
-                          {teamMembers.map(member => {
-                            const name = member.name;
-                            const isSelected = tempListAssignments.includes(name);
-                            return (
-                              <button key={member.id}
-                                onClick={() => toggleTempListMember(name)}
-                                className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'}`}
-                              >
-                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white shadow-md' : 'bg-[#F4F3EF] text-[#6B6B7E]'}`}>
-                                  {member.avatar || name.charAt(0)}
-                                </div>
-                                <span className="truncate flex-1">{name}</span>
-                                {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
-                              </button>
-                            );
-                          })}
-                          {teamMembers.length === 0 && (
-                            <div className="px-5 py-4 text-center">
-                              <p className="text-[10px] font-bold text-[#9B9BAD]">No members found</p>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-3 border-t border-[#F4F3EF] mt-2 space-y-2">
-                          <button
-                            onClick={() => handleCommitListAssignments(job.id)}
-                            className="w-full py-3.5 bg-[#0D47A1] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#0a3a82] transition-all shadow-xl shadow-blue-500/10 flex items-center justify-center gap-2 active:scale-[0.98]"
-                          >
-                            <Check size={16} /> Confirm Assign {tempListAssignments.length > 0 ? `(${tempListAssignments.length})` : ''}
-                          </button>
-                          {tempListAssignments.length > 0 && (
-                            <button
-                              onClick={() => setTempListAssignments([])}
-                              className="w-full py-2 text-[10px] font-bold text-rose-500 hover:bg-rose-50 rounded-xl transition-all flex items-center justify-center gap-2"
-                            >
-                              <X size={12} /> Clear Selection
-                            </button>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold max-w-[160px]" title={jobAssignments[job.id] || job.assignedToName || (isKAM ? 'KAM cannot assign' : 'Not assignable')}>
+                        <span className="truncate">{jobAssignments[job.id] || job.assignedToName || (isKAM ? 'KAM cannot assign' : 'Not assignable')}</span>
                       </div>
-                    </>,
-                    document.body
-                  )}
-                </div>
+                    )}
+                    {canAssignJobs && assignDropdownJobId === job.id && createPortal(
+                      <>
+                        <div className="fixed inset-0 z-[1100] bg-[#1A1A2E]/10 backdrop-blur-[2px]" onClick={() => setAssignDropdownJobId(null)} />
+                        <div
+                          className="fixed z-[1101] w-64 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] py-3 flex flex-col"
+                          style={(() => {
+                            const btn = document.getElementById(`assign-btn-${job.id}`);
+                            if (!btn) return { top: 0, left: 0 };
+                            const rect = btn.getBoundingClientRect();
+                            const spaceBelow = window.innerHeight - rect.bottom;
+                            if (spaceBelow < 300) {
+                              return { bottom: window.innerHeight - rect.top + 8, left: rect.left };
+                            }
+                            return { top: rect.bottom + 8, left: rect.left };
+                          })()}
+                        >
+                          <div className="px-5 py-2 border-b border-[#F4F3EF] mb-2 flex items-center justify-between">
+                            <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px]">Select Members</p>
+                            <span className="text-[10px] font-bold text-[#0D47A1] bg-[#0D47A1]/5 px-2 py-0.5 rounded-full">{tempListAssignments.length} Selected</span>
+                          </div>
+
+                          <div className="max-h-[250px] overflow-y-auto custom-scrollbar px-1">
+                            {teamMembers.map(member => {
+                              const name = member.name;
+                              const isSelected = tempListAssignments.includes(name);
+                              return (
+                                <button key={member.id}
+                                  onClick={() => toggleTempListMember(name)}
+                                  className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${isSelected ? 'bg-[#0D47A1]/5 text-[#0D47A1]' : 'text-[#1A1A2E] hover:bg-[#FAFAF8]'}`}
+                                >
+                                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black ${isSelected ? 'bg-[#0D47A1] text-white shadow-md' : 'bg-[#F4F3EF] text-[#6B6B7E]'}`}>
+                                    {member.avatar || name.charAt(0)}
+                                  </div>
+                                  <span className="truncate flex-1">{name}</span>
+                                  {isSelected && <span className="ml-auto text-[#0D47A1] text-lg">✓</span>}
+                                </button>
+                              );
+                            })}
+                            {teamMembers.length === 0 && (
+                              <div className="px-5 py-4 text-center">
+                                <p className="text-[10px] font-bold text-[#9B9BAD]">No members found</p>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="p-3 border-t border-[#F4F3EF] mt-2 space-y-2">
+                            <button
+                              onClick={() => handleCommitListAssignments(job.id)}
+                              className="w-full py-3.5 bg-[#0D47A1] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#0a3a82] transition-all shadow-xl shadow-blue-500/10 flex items-center justify-center gap-2 active:scale-[0.98]"
+                            >
+                              <Check size={16} /> Confirm Assign {tempListAssignments.length > 0 ? `(${tempListAssignments.length})` : ''}
+                            </button>
+                            {tempListAssignments.length > 0 && (
+                              <button
+                                onClick={() => setTempListAssignments([])}
+                                className="w-full py-2 text-[10px] font-bold text-rose-500 hover:bg-rose-50 rounded-xl transition-all flex items-center justify-center gap-2"
+                              >
+                                <X size={12} /> Clear Selection
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </>,
+                      document.body
+                    )}
+                  </div>
                 )}
                 <div className="flex justify-end items-center">
                   <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
@@ -2480,41 +2479,46 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       {hasOpen && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Hold')}
-                          className="h-10 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#856404] bg-[#FFE082] hover:bg-[#FFD54F] transition-all border border-[#FFD54F] active:scale-95 whitespace-nowrap shadow-lg shadow-amber-500/10"
+                          className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white"
                         >
-                          Mark As Hold
+                          <Clock size={16} className="text-[#3B82F6]" />
+                          <span className="text-[11px] font-black uppercase tracking-widest">Mark As Hold</span>
                         </button>
                       )}
                       {hasHold && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Open')}
-                          className="h-10 px-5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-100 bg-blue-600 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                          className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white"
                         >
-                          Mark As Open
+                          <Check size={16} className="text-[#3B82F6]" />
+                          <span className="text-[11px] font-black uppercase tracking-widest">Mark As Open</span>
                         </button>
                       )}
                       {hasNotUrgent && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Urgent')}
-                          className="h-10 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-[#FF9800] hover:bg-[#F57C00] transition-all shadow-lg shadow-orange-500/20 active:scale-95 whitespace-nowrap"
+                          className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white"
                         >
-                          Mark As Urgent
+                          <Target size={16} className="text-[#3B82F6]" />
+                          <span className="text-[11px] font-black uppercase tracking-widest">Mark As Urgent</span>
                         </button>
                       )}
                       {hasUrgent && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Medium')}
-                          className="h-10 px-5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white bg-slate-600 hover:bg-slate-700 transition-all active:scale-95 whitespace-nowrap"
+                          className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white"
                         >
-                          Mark As Normal
+                          <XCircle size={16} className="text-[#3B82F6]" />
+                          <span className="text-[11px] font-black uppercase tracking-widest">Mark As Normal</span>
                         </button>
                       )}
                       {hasNotComplete && (
                         <button
                           onClick={() => handleBulkStatusUpdate('Complete')}
-                          className="h-10 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-[#2E7D32] hover:bg-[#1B5E20] transition-all shadow-lg shadow-green-500/20 active:scale-95 whitespace-nowrap"
+                          className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white"
                         >
-                          Mark As Complete
+                          <CheckCircle size={16} className="text-[#10B981]" />
+                          <span className="text-[11px] font-black uppercase tracking-widest">Mark As Complete</span>
                         </button>
                       )}
                     </>
@@ -2535,7 +2539,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                       }
                     }
                   }}
-                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-red-600 hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 active:scale-95 whitespace-nowrap"
+                  className="transition-all hover:opacity-80 active:scale-95 text-red-500 font-black text-[11px] uppercase tracking-widest ml-4"
                 >
                   Delete Selected
                 </button>

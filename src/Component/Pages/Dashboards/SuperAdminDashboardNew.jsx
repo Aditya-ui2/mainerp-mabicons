@@ -75,7 +75,7 @@ const SuperAdminDashboard = () => {
     totalTasks: 0,
     totalRevenue: 0,
   });
-  const [userInfo, setUserInfo] = useState({ name: 'Super Admin', role: 'Super Administrator' });
+  const [userInfo, setUserInfo] = useState({ name: 'Manager', role: 'Manager' });
 
   // Fetch data from API
   useEffect(() => {
@@ -110,8 +110,8 @@ const SuperAdminDashboard = () => {
           try {
             const decoded = JSON.parse(atob(token.split('.')[1]));
             setUserInfo({
-              name: decoded.name || decoded.email?.split('@')[0] || 'Super Admin',
-              role: 'Super Administrator'
+              name: decoded.name || decoded.email?.split('@')[0] || 'Manager',
+              role: 'Manager'
             });
           } catch (e) {
             console.log('Token decode error');
@@ -181,7 +181,7 @@ const SuperAdminDashboard = () => {
 
   const breadcrumbs = [
     { label: 'Home', path: '/' },
-    { label: 'Dashboard', path: '/superadmin-dashboard' },
+    { label: 'Dashboard', path: '/manager-dashboard' },
     { label: activeTab }
   ];
 
@@ -391,7 +391,7 @@ const SuperAdminDashboard = () => {
       sidebarItems={sidebarConfig}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
-      dashboardTitle="Super Admin Dashboard"
+      dashboardTitle="Manager Dashboard"
       breadcrumbs={breadcrumbs}
       userInfo={userInfo}
       notifications={notifications}

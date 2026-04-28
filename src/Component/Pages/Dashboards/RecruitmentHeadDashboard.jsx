@@ -25,6 +25,7 @@ import {
   FiSend,
   FiEdit2,
   FiEye,
+  FiEyeOff,
   FiShare2,
   FiRefreshCw,
   FiSave,
@@ -136,19 +137,17 @@ const hasMeaningfulStats = (stats = {}) =>
   (stats.completedTasks || 0) > 0;
 
 const getEffectiveKamStats = (kam) =>
-  hasMeaningfulStats(kam?.stats)
-    ? kam.stats
-    : {
-      activePositions: 0,
-      candidatesPipeline: 0,
-      interviewsScheduled: 0,
-      offersExtended: 0,
-      thisWeekHires: 0,
-      profilesShared: 0,
-      callsDone: 0,
-      pendingTasks: 0,
-      completedTasks: 0,
-    };
+  (kam?.stats && typeof kam.stats === 'object') ? kam.stats : {
+    activePositions: 0,
+    candidatesPipeline: 0,
+    interviewsScheduled: 0,
+    offersExtended: 0,
+    thisWeekHires: 0,
+    profilesShared: 0,
+    callsDone: 0,
+    pendingTasks: 0,
+    completedTasks: 0,
+  };
 
 const getKamCallsBreakdown = (teamData = []) =>
   teamData
@@ -191,6 +190,11 @@ const transformKAMData = (apiData) => {
     profilePhoto: member.profilePhoto || null,
     status: member.status || 'Active',
     color: AVATAR_COLORS[idx % AVATAR_COLORS.length],
+    // Client assignment fields - needed for client filter to work
+    client: member.client || member.clientName || member.assignedClient || member.companyName || null,
+    clients: Array.isArray(member.clients)
+      ? member.clients.map(c => typeof c === 'object' ? (c.companyName || c.name) : c)
+      : (member.client || member.clientName || member.companyName ? [member.client || member.clientName || member.companyName] : []),
     stats: {
       activePositions: member.stats?.activePositions || 0,
       candidatesPipeline: member.stats?.candidatesPipeline || 0,
@@ -325,8 +329,9 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
 };
 
 // Team Overview Tab Content
-const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, onDeleteMultiple, globalStats, onViewCallsBreakdown }) => {
-  const [activeFilter, setActiveFilter] = useState('All');
+const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, onDeleteMultiple, onToggleStatusMultiple, globalStats, onViewCallsBreakdown }) => {
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedKAMs, setSelectedKAMs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -334,16 +339,21 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
   const toggleAll = () => setSelectedKAMs(selectedKAMs.length === filteredTeamData.length && filteredTeamData.length > 0 ? [] : filteredTeamData.map(k => k.id));
 
   const filteredTeamData = teamData.filter(kam => {
-    if (activeFilter !== 'All') {
-      const role = kam.role?.toLowerCase() || '';
-      if (activeFilter === 'Recruiters' && !(role.includes('recruit') || role.includes('hr'))) return false;
-      if (activeFilter === 'KAMs' && !role.includes('kam')) return false;
-      if (activeFilter === 'Admins' && !(role.includes('admin') || role.includes('manager'))) return false;
-      if (activeFilter === 'Engineering' && !(role.includes('engin') || role.includes('dev'))) return false;
+    if (activeFilter !== 'all') {
+      if (kam.role !== activeFilter) return false;
     }
+
+    if (statusFilter !== 'all') {
+      const kamStatus = (kam.status || 'Active').toLowerCase();
+      if (kamStatus !== statusFilter.toLowerCase()) return false;
+    }
+
     if (searchQuery && !kam.name.toLowerCase().includes(searchQuery.toLowerCase()) && !kam.email.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
+
+  // Dynamically get unique roles from teamData
+  const uniqueRoles = Array.from(new Set(teamData.map(kam => kam.role).filter(role => role && role !== 'Department Head')));
 
   const teamAggregatedStats = teamData.reduce(
     (acc, kam) => ({
@@ -403,18 +413,26 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
 
         {/* Role Filter */}
         <div className="relative">
-          <select className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]">
+          <select
+            value={activeFilter}
+            onChange={(e) => setActiveFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+          >
             <option value="all">All Roles</option>
-            <option value="HR Executive">HR Executive</option>
-            <option value="KAM - Recruitment">KAM - Recruitment</option>
-            <option value="Department Head">Department Head</option>
+            {uniqueRoles.map(role => (
+              <option key={role} value={role}>{role}</option>
+            ))}
           </select>
           <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
 
         {/* Status Filter */}
         <div className="relative">
-          <select className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+          >
             <option value="all">All Status</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
@@ -427,7 +445,7 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
       <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden relative">
         <div className="overflow-x-auto min-h-[300px]">
           {/* Grid Header */}
-          <div className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+          <div className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_100px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -436,7 +454,7 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
                 className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
               />
             </div>
-            {["Member", "Role", "Email", "Contact", ""].map((h, i) => (
+            {["Member", "Role", "Email", "Contact", "Status", ""].map((h, i) => (
               <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start">
                 {h}
               </div>
@@ -457,7 +475,7 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
               <div
                 key={kam.id}
                 onClick={() => onViewKAM(kam)}
-                className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
+                className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_100px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
               >
                 {/* Checkbox */}
                 <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
@@ -493,12 +511,30 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
 
                 {/* Contact */}
                 <div className="flex items-center justify-start gap-2 py-1" onClick={(e) => e.stopPropagation()}>
-                  <button className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all">
+                  <button
+                    onClick={() => window.location.href = `mailto:${kam.email}`}
+                    className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
+                    title={`Email ${kam.name}`}
+                  >
                     <FiMail size={14} />
                   </button>
-                  <button className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all">
+                  <button
+                    onClick={() => window.location.href = `tel:${kam.phone}`}
+                    className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
+                    title={`Call ${kam.name}`}
+                  >
                     <FiPhone size={14} />
                   </button>
+                </div>
+
+                {/* Status Column */}
+                <div className="flex items-center justify-start py-1">
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${(kam.status || 'Active') === 'Active'
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : 'bg-rose-50 text-rose-600'
+                    }`}>
+                    {kam.status || 'Active'}
+                  </span>
                 </div>
 
                 {/* Arrow */}
@@ -520,32 +556,65 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
                 initial={{ opacity: 0, y: 30, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 30, scale: 0.95 }}
-                className="bg-[#111827] text-white px-5 py-2.5 rounded-[12px] shadow-2xl flex items-center pointer-events-auto"
+                className="bg-[#1A1A2E]/95 backdrop-blur-md text-white px-8 py-4 rounded-[32px] shadow-2xl flex items-center pointer-events-auto border border-white/5"
               >
-                <div className="flex items-center">
-                  <span className="text-[13.5px] font-semibold pr-4 border-r border-[#374151]">
-                    {selectedKAMs.length} members selected
-                  </span>
-                  <div className="flex items-center gap-5 pl-4 text-[13px] font-semibold">
+                <div className="flex items-center gap-4 pr-10 border-r border-white/10 shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-black shadow-lg">
+                    {selectedKAMs.length}
+                  </div>
+                  <span className="text-[14px] font-bold tracking-tight whitespace-nowrap">Members Selected</span>
+                </div>
 
+                <div className="flex items-center gap-8 pl-10">
+                  {selectedKAMs.every(id => {
+                    const kam = teamData.find(k => k.id === id);
+                    return kam && (kam.status || 'Active') === 'Inactive';
+                  }) ? (
                     <button
                       onClick={async () => {
-                        const success = await onDeleteMultiple(selectedKAMs);
-                        if (success) setSelectedKAMs([]);
+                        if (window.confirm(`Mark ${selectedKAMs.length} members as Active?`)) {
+                          const success = await onToggleStatusMultiple(selectedKAMs, 'Active');
+                          if (success) setSelectedKAMs([]);
+                        }
                       }}
-                      className="text-rose-400 hover:text-rose-300 flex items-center gap-2 transition-colors"
+                      className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
                     >
-                      <FiTrash2 className="w-4 h-4 stroke-[2.5]" /> Remove
+                      <FiEye size={18} className="text-[#3B82F6]" />
+                      <span>Active</span>
                     </button>
-                  </div>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(`Mark ${selectedKAMs.length} members as Inactive?`)) {
+                          const success = await onToggleStatusMultiple(selectedKAMs, 'Inactive');
+                          if (success) setSelectedKAMs([]);
+                        }
+                      }}
+                      className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
+                    >
+                      <FiEyeOff size={18} className="text-[#3B82F6]" />
+                      <span>Hold</span>
+                    </button>
+                  )}
+
                   <button
-                    onClick={() => setSelectedKAMs([])}
-                    className="ml-6 p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-md transition-all"
-                    title="Clear Selection"
+                    onClick={async () => {
+                      const success = await onDeleteMultiple(selectedKAMs);
+                      if (success) setSelectedKAMs([]);
+                    }}
+                    className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-[#EF4444] font-bold text-[13px]"
                   >
-                    <FiX className="w-4 h-4" />
+                    <FiTrash2 size={18} className="text-[#EF4444]" />
+                    <span>Remove</span>
                   </button>
                 </div>
+
+                <button
+                  onClick={() => setSelectedKAMs([])}
+                  className="ml-10 w-10 h-10 flex items-center justify-center shrink-0 rounded-full bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white"
+                >
+                  <FiX size={20} />
+                </button>
               </motion.div>
             </div>
           )}
@@ -596,10 +665,9 @@ const KAMPerformanceContent = ({
 
   const clientNames = ['All Client', ...clients.map(c => c.companyName || c.name)];
 
-  const filteredData = (clientFilter === 'All Client'
-    ? teamData
-    : teamData.filter(kam => kam.client === clientFilter || (Array.isArray(kam.clients) && kam.clients.includes(clientFilter)))
-  ).filter(kam => {
+  // Keep all team members visible regardless of client filter to satisfy user request
+  // Data for them will naturally show 0 if they don't belong to that client
+  const filteredData = teamData.filter(kam => {
     if (!perfSearchQuery) return true;
     return (kam.name || '').toLowerCase().includes(perfSearchQuery.toLowerCase()) ||
       (kam.role || '').toLowerCase().includes(perfSearchQuery.toLowerCase());
@@ -875,8 +943,13 @@ const KAMPerformanceContent = ({
 
       {/* ── Top 3 Leaderboard ── */}
       {(() => {
-        const topKAMs = [...teamData].sort((a, b) => b.stats.thisWeekHires - a.stats.thisWeekHires);
-        if (topKAMs.length < 3) return null;
+        // Use all available team members for leaderboard to ensure it's never empty
+        const topKAMs = [...teamData].sort((a, b) => (b.stats?.thisWeekHires || 0) - (a.stats?.thisWeekHires || 0));
+        if (topKAMs.length === 0) return null;
+
+        // Ensure we always have at least 3 elements for the layout even if they are empty objects
+        const fullTopKAMs = [...topKAMs];
+        while (fullTopKAMs.length < 3) fullTopKAMs.push({ name: '---', stats: { thisWeekHires: 0 }, avatar: '?' });
 
         const renderAvatar = (kam, size = 16) => {
           const isImage = kam.avatar && (String(kam.avatar).includes('http') || String(kam.avatar).includes('data:'));
@@ -897,35 +970,35 @@ const KAMPerformanceContent = ({
               <div className="flex flex-col md:flex-row items-center justify-around gap-6">
                 {/* 2nd Place */}
                 <div
-                  onClick={() => onViewPerformance(topKAMs[1])}
+                  onClick={() => fullTopKAMs[1].id && onViewPerformance(fullTopKAMs[1])}
                   className="flex items-center gap-4 group cursor-pointer hover:bg-[#FAFAF8] p-4 rounded-2xl transition-all"
                 >
                   <div className="relative">
                     <div className="w-14 h-14 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E] text-base border border-[#E8E7E2] overflow-hidden group-hover:border-[#0D47A1]/20 transition-colors">
-                      {renderAvatar(topKAMs[1])}
+                      {fullTopKAMs[1].id ? renderAvatar(fullTopKAMs[1]) : <span className="font-bold">?</span>}
                     </div>
                     <div className="absolute -top-1 -right-1 bg-gradient-to-br from-amber-400 to-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center border-[3px] border-white font-black text-xs shadow-lg">2</div>
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors">{topKAMs[1].name}</p>
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-wider">{topKAMs[1].stats.thisWeekHires} Hires</p>
+                    <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors">{fullTopKAMs[1].name}</p>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-wider">{(fullTopKAMs[1].stats?.thisWeekHires || 0)} Hires</p>
                   </div>
                 </div>
 
                 {/* 1st Place — Hero */}
                 <div
-                  onClick={() => onViewPerformance(topKAMs[0])}
+                  onClick={() => fullTopKAMs[0].id && onViewPerformance(fullTopKAMs[0])}
                   className="flex items-center gap-5 group py-5 px-8 bg-gradient-to-r from-[#0D47A1]/5 to-[#0D47A1]/10 rounded-[24px] border-2 border-[#0D47A1]/10 relative cursor-pointer hover:border-[#0D47A1]/25 transition-all shadow-sm"
                 >
                   <div className="relative">
                     <div className="w-[72px] h-[72px] rounded-[22px] bg-white flex items-center justify-center text-[#0D47A1] text-2xl font-bold border-[3px] border-white shadow-xl overflow-hidden ring-4 ring-[#0D47A1]/5">
-                      {renderAvatar(topKAMs[0])}
+                      {fullTopKAMs[0].id ? renderAvatar(fullTopKAMs[0]) : <span className="font-bold">?</span>}
                     </div>
                     <div className="absolute -top-1 -right-1 bg-gradient-to-br from-amber-400 to-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center border-[3px] border-white font-black text-xs shadow-lg">1</div>
                   </div>
                   <div className="text-left">
-                    <p className="text-[17px] font-bold text-[#1A1A2E] leading-tight">{topKAMs[0].name}</p>
-                    <p className="text-xs font-black text-[#0D47A1] uppercase tracking-widest mt-0.5">{topKAMs[0].stats.thisWeekHires} Hires</p>
+                    <p className="text-[17px] font-bold text-[#1A1A2E] leading-tight">{fullTopKAMs[0].name}</p>
+                    <p className="text-xs font-black text-[#0D47A1] uppercase tracking-widest mt-0.5">{(fullTopKAMs[0].stats?.thisWeekHires || 0)} Hires</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <FiStar size={11} className="text-amber-500 fill-amber-500" />
                       <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Top Performer</span>
@@ -935,18 +1008,18 @@ const KAMPerformanceContent = ({
 
                 {/* 3rd Place */}
                 <div
-                  onClick={() => onViewPerformance(topKAMs[2])}
+                  onClick={() => fullTopKAMs[2].id && onViewPerformance(fullTopKAMs[2])}
                   className="flex items-center gap-4 group cursor-pointer hover:bg-[#FAFAF8] p-4 rounded-2xl transition-all"
                 >
                   <div className="relative">
                     <div className="w-14 h-14 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#1A1A2E] text-base border border-[#E8E7E2] overflow-hidden group-hover:border-[#0D47A1]/20 transition-colors">
-                      {renderAvatar(topKAMs[2])}
+                      {fullTopKAMs[2].id ? renderAvatar(fullTopKAMs[2]) : <span className="font-bold">?</span>}
                     </div>
                     <div className="absolute -top-1.5 -right-1.5 bg-amber-700 text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white font-black text-[10px] shadow-sm">3</div>
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors">{topKAMs[2].name}</p>
-                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-wider">{topKAMs[2].stats.thisWeekHires} Hires</p>
+                    <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#0D47A1] transition-colors">{fullTopKAMs[2].name}</p>
+                    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-wider">{(fullTopKAMs[2].stats?.thisWeekHires || 0)} Hires</p>
                   </div>
                 </div>
               </div>
@@ -989,13 +1062,14 @@ const KAMPerformanceContent = ({
                 <th className="py-4 px-6 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Current Hires</th>
                 <th className="py-4 px-6 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Progress</th>
                 <th className="py-4 px-6 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Calls</th>
-                <th className="py-4 px-8 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-right">Offers</th>
+                <th className="py-4 px-6 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">Offers</th>
+                <th className="py-4 px-8 text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest text-right">Contact</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F4F3EF]">
               {filteredData.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-12 text-center text-[#9B9BAD] font-medium">No members found matching your search.</td>
+                  <td colSpan="6" className="py-12 text-center text-[#9B9BAD] font-medium">No members found matching your search.</td>
                 </tr>
               ) : (
                 filteredData.map((kam, idx) => {
@@ -1041,10 +1115,28 @@ const KAMPerformanceContent = ({
                       <td className="px-6 py-5 text-center">
                         <span className="text-[14px] font-bold text-[#1A1A2E]">{kam.stats.callsDone || 0}</span>
                       </td>
-                      <td className="px-8 py-5 text-right">
+                      <td className="px-6 py-5 text-center">
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[12px] font-black border border-emerald-100">
                           +{kam.stats.offersExtended}
                         </span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => window.location.href = `mailto:${kam.email}`}
+                            className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
+                            title={`Email ${kam.name}`}
+                          >
+                            <FiMail size={14} />
+                          </button>
+                          <button
+                            onClick={() => window.location.href = `tel:${kam.phone}`}
+                            className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
+                            title={`Call ${kam.name}`}
+                          >
+                            <FiPhone size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1130,14 +1222,14 @@ const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssign
   };
 
   const toggleSelectClient = (id) => {
-    setSelectedClients(prev => 
+    setSelectedClients(prev =>
       prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
     );
   };
 
   const filteredDistribution = distribution.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        (item.industry && item.industry.toLowerCase().includes(searchQuery.toLowerCase()));
+      (item.industry && item.industry.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesIndustry = industryFilter === 'all' || (item.industry && item.industry.toLowerCase() === industryFilter.toLowerCase());
     return matchesSearch && matchesIndustry;
   });
@@ -1201,8 +1293,8 @@ const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssign
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
         <div className="grid grid-cols-[40px_2.5fr_1.2fr_100px_110px_90px_130px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
           <div className="flex items-center">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
               checked={filteredDistribution.length > 0 && selectedClients.length === filteredDistribution.length}
               onChange={toggleSelectAll}
@@ -1228,14 +1320,14 @@ const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssign
                 className="grid grid-cols-[40px_2.5fr_1.2fr_100px_110px_90px_130px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
               >
                 <div className="flex items-center" onClick={e => e.stopPropagation()}>
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer" 
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
                     checked={selectedClients.includes(item.id)}
                     onChange={() => toggleSelectClient(item.id)}
                   />
                 </div>
-                
+
                 {/* Client Portfolio */}
                 <div className="flex flex-col justify-center items-start min-w-0 py-1">
                   <div className="flex items-center gap-3">
@@ -1312,7 +1404,7 @@ const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssign
                             const spaceBelow = window.innerHeight - rect.bottom;
                             const dropdownWidth = 256; // w-64
                             const leftPos = rect.right - dropdownWidth;
-                            
+
                             if (spaceBelow < 300) return { bottom: window.innerHeight - rect.top + 8, left: leftPos };
                             return { top: rect.bottom + 8, left: leftPos };
                           })()}
@@ -1398,7 +1490,7 @@ const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssign
                     className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-all group"
                   >
                     <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm">
-                       {member.avatar && member.avatar.length > 2 ? <img src={member.avatar} className="w-full h-full object-cover rounded-full" /> : member.name.charAt(0)}
+                      {member.avatar && member.avatar.length > 2 ? <img src={member.avatar} className="w-full h-full object-cover rounded-full" /> : member.name.charAt(0)}
                     </div>
                     <div className="text-left flex-1">
                       <p className="text-sm font-bold text-[#1A1A2E] group-hover:text-blue-600 transition-colors">{member.name}</p>
@@ -1409,7 +1501,7 @@ const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssign
                 ))}
               </div>
               <div className="p-6 bg-slate-50 flex justify-end">
-                <button 
+                <button
                   onClick={() => setShowBulkAssignModal(false)}
                   className="px-6 py-2.5 text-sm font-bold text-[#64748b] hover:text-[#1A1A2E] transition-colors"
                 >
@@ -1428,52 +1520,46 @@ const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssign
             initial={{ opacity: 0, y: 100, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: 100, x: '-50%' }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-6 px-10 py-5 bg-[#1A1A2E] rounded-[32px] shadow-2xl shadow-slate-900/40 min-w-[500px] border border-white/5"
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-10 px-10 py-5 bg-[#1A1A2E]/95 backdrop-blur-md rounded-[32px] shadow-2xl border border-white/5"
           >
-            <div className="flex items-center gap-4 pr-8 border-r border-white/10">
-              <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] flex items-center justify-center text-white font-black shadow-lg">
+            <div className="flex items-center gap-4 pr-10 border-r border-white/10 shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-black shadow-lg">
                 {selectedClients.length}
               </div>
-              <div className="text-left">
-                <p className="text-[14px] font-black text-white tracking-tight">Clients Selected</p>
-                <button onClick={() => setSelectedClients([])} className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-400 transition-colors">Deselect All</button>
-              </div>
+              <span className="text-[14px] font-bold text-white tracking-tight whitespace-nowrap">Clients Selected</span>
             </div>
 
             <div className="flex items-center gap-8 flex-1 justify-center">
-              {/* Bulk Assign Action */}
               <button
                 onClick={() => setShowBulkAssignModal(true)}
-                className="flex flex-row items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95 text-white"
+                className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
               >
-                <FiUserPlus size={18} className="text-blue-400 group-hover:text-white transition-colors" />
-                <span className="text-[11px] font-bold uppercase tracking-widest">Bulk Assign</span>
+                <FiUserPlus size={18} className="text-[#3B82F6]" />
+                <span>Bulk Assign</span>
               </button>
 
-              {/* Smart Status Toggle */}
               <button
                 onClick={() => {
-                  // Optimization: Toggle status logic for demo
                   console.log('Toggling status for', selectedClients.length, 'clients');
                 }}
-                className="flex flex-row items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95 text-white"
+                className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
               >
                 {(() => {
                   const firstClient = distribution.find(c => c.id === selectedClients[0]);
                   const isCurrentlyActive = firstClient?.status?.toLowerCase() === 'active';
                   return (
                     <>
-                      {isCurrentlyActive ? <FiClock size={18} className="text-amber-400 group-hover:text-white transition-colors" /> : <FiCheckCircle size={18} className="text-emerald-400 group-hover:text-white transition-colors" />}
-                      <span className="text-[11px] font-bold uppercase tracking-widest">{isCurrentlyActive ? 'Hold' : 'Active'}</span>
+                      {isCurrentlyActive ? <FiClock size={18} className="text-[#3B82F6]" /> : <FiCheckCircle size={18} className="text-[#3B82F6]" />}
+                      <span>{isCurrentlyActive ? 'Hold' : 'Active'}</span>
                     </>
                   );
                 })()}
               </button>
             </div>
 
-            <button 
+            <button
               onClick={() => setSelectedClients([])}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white"
+              className="w-10 h-10 flex items-center justify-center shrink-0 rounded-full bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white"
             >
               <FiX size={20} />
             </button>
@@ -1507,10 +1593,10 @@ const ClientDetailsDrawer = ({ client, onClose }) => {
         {/* Detail Header */}
         <div className="p-6 border-b border-[#F4F3EF] bg-gradient-to-r from-blue-50/30 to-white flex items-center justify-between">
           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] text-white flex items-center justify-center font-bold text-lg">
-                {client.name.slice(0, 1).toUpperCase()}
-             </div>
-             <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
+            <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] text-white flex items-center justify-center font-bold text-lg">
+              {client.name.slice(0, 1).toUpperCase()}
+            </div>
+            <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
           </div>
           <button onClick={onClose} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm">
             <FiX size={20} />
@@ -1678,8 +1764,8 @@ const TeamListModal = ({ team, onClose }) => {
                     key={member.id}
                     onClick={() => handleMemberSelect(member)}
                     className={`group flex items-center justify-between p-5 rounded-[32px] border transition-all cursor-pointer ${selectedMember?.id === member.id
-                        ? 'border-[#1B4DA0] bg-blue-50 shadow-md ring-1 ring-blue-100'
-                        : 'bg-[#FAFAF8] border-transparent hover:border-[#1B4DA0]/30 hover:bg-blue-50/40 hover:shadow-lg'
+                      ? 'border-[#1B4DA0] bg-blue-50 shadow-md ring-1 ring-blue-100'
+                      : 'bg-[#FAFAF8] border-transparent hover:border-[#1B4DA0]/30 hover:bg-blue-50/40 hover:shadow-lg'
                       }`}
                   >
                     <div className="flex items-center gap-4">
@@ -1816,7 +1902,7 @@ const TeamListModal = ({ team, onClose }) => {
                       }, {})
                     ).length === 0 ? (
                       <div className="py-8 text-center bg-[#FAFAF8] rounded-[32px] border border-dashed border-[#F4F3EF]">
-                         <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">No active client</p>
+                        <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">No active client</p>
                       </div>
                     ) : (
                       Object.entries(
@@ -1835,7 +1921,7 @@ const TeamListModal = ({ team, onClose }) => {
                             <span className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{client}</span>
                           </div>
                           <div className="px-3 py-1 bg-white border border-[#F4F3EF] rounded-xl shadow-sm">
-                             <span className="text-[11px] font-black text-[#1B4DA0]">{openings} Openings</span>
+                            <span className="text-[11px] font-black text-[#1B4DA0]">{openings} Openings</span>
                           </div>
                         </div>
                       ))
@@ -2045,20 +2131,52 @@ const Toast = ({ message, type, onClose }) => {
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const bgColor = type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-  const Icon = type === 'success' ? FiCheckCircle : type === 'error' ? FiAlertCircle : FiAlertCircle;
+  const config = {
+    success: {
+      bg: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+      icon: FiCheckCircle,
+      shadow: 'rgba(16, 185, 129, 0.2)'
+    },
+    error: {
+      bg: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
+      icon: FiAlertCircle,
+      shadow: 'rgba(239, 68, 68, 0.2)'
+    },
+    info: {
+      bg: 'linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)',
+      icon: FiAlertCircle,
+      shadow: 'rgba(59, 130, 246, 0.2)'
+    }
+  }[type] || {
+    bg: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
+    icon: FiAlertCircle,
+    shadow: 'rgba(71, 85, 105, 0.2)'
+  };
+
+  const Icon = config.icon;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 12, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.9 }}
-      className={`fixed top-0 left-1/2 -translate-x-1/2 z-[200] ${bgColor} text-white px-8 py-4 rounded-b-2xl shadow-2xl flex items-center gap-3 min-w-[320px] max-w-md border-b border-x border-white/20`}
+      initial={{ opacity: 0, y: -20, x: '-50%', scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, x: '-50%', scale: 1 }}
+      exit={{ opacity: 0, y: -20, x: '-50%', scale: 0.95 }}
+      className="fixed top-8 left-1/2 z-[10002] text-white px-6 py-4 rounded-2xl flex items-center gap-4 min-w-[340px] max-w-md border border-white/20 shadow-2xl"
+      style={{
+        background: config.bg,
+        boxShadow: `0 20px 40px -10px ${config.shadow}, 0 10px 20px -5px rgba(0,0,0,0.1)`
+      }}
     >
-      <Icon className="w-6 h-6 flex-shrink-0" />
-      <p className="text-sm font-medium">{message}</p>
-      <button onClick={onClose} className="ml-2 p-1 hover:bg-white/20 rounded-lg transition-colors">
-        <FiX className="w-4 h-4" />
+      <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-bold tracking-wide">{message}</p>
+      </div>
+      <button
+        onClick={onClose}
+        className="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded-lg transition-all"
+      >
+        <FiX className="w-5 h-5" />
       </button>
     </motion.div>
   );
@@ -2070,7 +2188,7 @@ const RecruitmentHeadDashboard = () => {
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('rh_active_tab') || 'Dashboard';
   });
-  
+
   useEffect(() => {
     localStorage.setItem('rh_active_tab', activeTab);
   }, [activeTab]);
@@ -2150,8 +2268,8 @@ const RecruitmentHeadDashboard = () => {
   const [handoverEndDate, setHandoverEndDate] = useState('');
   const [handoverSubmitting, setHandoverSubmitting] = useState(false);
 
-  const showToast = (message, type = 'success') => setToast({ message, type });
-  const hideToast = () => setToast(null);
+  const showToast = React.useCallback((message, type = 'success') => setToast({ message, type }), []);
+  const hideToast = React.useCallback(() => setToast(null), []);
 
   // Live Time Display
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -2496,16 +2614,22 @@ const RecruitmentHeadDashboard = () => {
       // Inject client filter if selected
       if (client && client !== 'All Client') {
         // Find existing client ID from clients list
-        const clientObj = clients.find(c => (c.companyName || c.name) === client);
+        const clientObj = clients.find(c => String(c.companyName || c.name).toLowerCase() === String(client).toLowerCase());
         if (clientObj) {
-          filterParams.client = clientObj.id;
+          filterParams.client = clientObj.id || clientObj._id;
         }
       }
 
       console.log('Fetching KAM team with filter:', filterParams);
       const response = await getAllKAMMembers(filterParams);
       if (response.success && response.data?.length > 0) {
-        const transformedData = transformKAMData(response.data);
+        // Filter out logged in user from team members
+        const currentUserEmail = (userInfo.email || localStorage.getItem('userEmail') || '').toLowerCase();
+        const filteredMembers = response.data.filter(m =>
+          (m.email || '').toLowerCase() !== currentUserEmail
+        );
+
+        const transformedData = transformKAMData(filteredMembers);
         setKamTeam(transformedData);
         console.log('KAM team loaded from API:', transformedData.length, 'members');
       }
@@ -2597,7 +2721,9 @@ const RecruitmentHeadDashboard = () => {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
         setUserInfo({
+          id: decoded.id || decoded.userId || '',
           name: decoded.name || localStorage.getItem('userName') || '',
+          email: decoded.email || localStorage.getItem('userEmail') || '',
           role: 'Recruitment Head',
           avatar: localStorage.getItem('userPicture') || decoded.picture || ''
         });
@@ -2638,7 +2764,7 @@ const RecruitmentHeadDashboard = () => {
   useEffect(() => {
     // Refresh core dashboard data strictly on mount or when tab changes back to Dashboard
     if (activeTab === 'Dashboard') {
-      fetchDashboardData(dateFilter, teamFilter, clientFilter);
+      fetchDashboardData(dateFilter, teamFilter, clientFilter, activityFilter);
       fetchRecentNotes();
     }
   }, [activeTab]);
@@ -2996,6 +3122,22 @@ const RecruitmentHeadDashboard = () => {
     }
   };
 
+  const handleToggleStatusMultipleKAMs = React.useCallback(async (ids, newStatus) => {
+    try {
+      setLoading(true);
+      await Promise.all(ids.map(id => updateKAMMember(id, { status: newStatus })));
+      setKamTeam(prev => prev.map(k => ids.includes(k.id) ? { ...k, status: newStatus } : k));
+      showToast(`Successfully marked ${ids.length} members as ${newStatus}`, 'success');
+      return true;
+    } catch (error) {
+      console.error('Error updating status:', error);
+      showToast('Failed to update status for some members', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [dateFilter, showToast]);
+
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -3128,7 +3270,7 @@ const RecruitmentHeadDashboard = () => {
 
     // Check for Sachin's specific access to Clients
     const isSachin = userInfo.name && (
-      userInfo.name.toLowerCase().includes('sachin') || 
+      userInfo.name.toLowerCase().includes('sachin') ||
       localStorage.getItem('userName')?.toLowerCase().includes('sachin')
     );
 
@@ -3157,6 +3299,7 @@ const RecruitmentHeadDashboard = () => {
               return (
                 <TeamOverviewContent
                   onDeleteMultiple={handleDeleteMultipleKAMs}
+                  onToggleStatusMultiple={handleToggleStatusMultipleKAMs}
                   teamData={kamTeam}
                   loading={teamLoading}
                   onViewKAM={handleViewKAM}
@@ -3207,7 +3350,7 @@ const RecruitmentHeadDashboard = () => {
               return <SelectionMISTab />;
             case 'Clients':
               return (
-                <ClientsTab 
+                <ClientsTab
                   distribution={clientJobDistribution}
                   teamMembers={kamTeam}
                   clientAssignments={clientAssignments}
@@ -3224,7 +3367,7 @@ const RecruitmentHeadDashboard = () => {
                       return updated;
                     });
                   }}
-                  onViewClient={(client) => setSelectedClientForDrawer(client)} 
+                  onViewClient={(client) => setSelectedClientForDrawer(client)}
                 />
               );
             case 'Activity Feed':
@@ -3947,9 +4090,9 @@ const RecruitmentHeadDashboard = () => {
 
       <AnimatePresence>
         {selectedClientForDrawer && (
-          <ClientDetailsDrawer 
-            client={selectedClientForDrawer} 
-            onClose={() => setSelectedClientForDrawer(null)} 
+          <ClientDetailsDrawer
+            client={selectedClientForDrawer}
+            onClose={() => setSelectedClientForDrawer(null)}
           />
         )}
       </AnimatePresence>
@@ -4990,10 +5133,25 @@ const RecruitmentHeadDashboard = () => {
                         </div>
                       </div>
 
-
-
-
-
+                      <div className="space-y-2">
+                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Role</label>
+                        <div className="relative flex items-center">
+                          <FiBriefcase className="absolute left-4 text-[#C5C5D2]" />
+                          <select
+                            className="w-full pl-11 pr-12 py-4 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10 appearance-none cursor-pointer"
+                            value={kamFormData.role || 'KAM - Recruitment'}
+                            onChange={(e) => setKamFormData({ ...kamFormData, role: e.target.value })}
+                            disabled={formSubmitting}
+                          >
+                            <option value="KAM - Recruitment">KAM - Recruitment</option>
+                            <option value="HR Executive">HR Executive</option>
+                            <option value="HR Senior Executive">HR Senior Executive</option>
+                            <option value="Department Head">Department Head</option>
+                            <option value="Manager">Manager</option>
+                          </select>
+                          <FiChevronDown className="absolute right-4 text-[#C5C5D2] pointer-events-none" />
+                        </div>
+                      </div>
 
                       <div className="space-y-2">
                         <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>

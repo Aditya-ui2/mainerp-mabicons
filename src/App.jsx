@@ -29,12 +29,15 @@ import DepartmentProtectedRoute from './Component/Pages/DepartmentProtectedRoute
 import ProtectedRoute from './Component/Pages/ProtectedRoute'
 import CandidatesPage from './Component/Pages/Candidates/CandidatesPage'
 import InterviewsPage from './Component/Pages/Candidates/InterviewsPage'
+import { Toaster } from 'sonner'
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
-    <Routes>
+    <>
+      <Toaster richColors position="top-right" />
+      <Routes>
       <Route path='/' element={<Home />} />
       <Route path='/login' element={<Login />} />
       <Route path='/signup' element={<SignUp />} />
@@ -86,8 +89,8 @@ function App() {
           <TeamleaderDashboard />
         </ProtectedRoute>
       } />
-      <Route path='/superadmin-dashboard' element={
-        <ProtectedRoute allowedRoles={['superadmin']}>
+      <Route path='/manager-dashboard' element={
+        <ProtectedRoute allowedRoles={['superadmin', 'manager']}>
           <SuperAdminDashboard />
         </ProtectedRoute>
       } />
@@ -97,7 +100,7 @@ function App() {
         </ProtectedRoute>
       } />
       <Route path='/crm-dashboard' element={
-        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+        <ProtectedRoute allowedRoles={['admin', 'superadmin', 'manager']}>
           <CRMDashboard />
         </ProtectedRoute>
       } />
@@ -132,6 +135,7 @@ function App() {
       } />
      
     </Routes>
+    </>
   )
 }
 

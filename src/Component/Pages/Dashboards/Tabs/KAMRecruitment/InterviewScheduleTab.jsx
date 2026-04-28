@@ -1257,30 +1257,30 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
             <p className={`text-xs font-bold uppercase tracking-[4px] mt-2 ${isDarkMode ? 'text-slate-400' : 'text-[#9B9BAD]'}`}>Premium Recruitment Dashboard</p>
           </div>
           <div className="flex items-center gap-3">
-              <button
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    await syncSharePointAll();
-                    await fetchInterviews();
-                    setToast('Data synced from SharePoint!');
-                    setTimeout(() => setToast(null), 3000);
-                  } catch (err) {
-                    setToast('Sync failed: ' + err.message);
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="group flex items-center justify-center gap-2.5 px-6 py-3.5 bg-white text-[#1B4DA0] border border-blue-100/30 rounded-2xl text-[13px] font-bold hover:bg-[#E3F2FD] hover:text-[#0D47A1] transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[170px]"
-              >
-                {loading ? (
-                  <div className="w-4 h-4 border-2 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <FiDatabase className="w-4 h-4 text-[#1B4DA0] group-hover:text-[#0D47A1] transition-transform group-hover:scale-110" />
-                )}
-                <span className="tracking-tight">{loading ? 'Syncing...' : 'Sync Data'}</span>
-              </button>
+            <button
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  await syncSharePointAll();
+                  await fetchInterviews();
+                  setToast('Data synced from SharePoint!');
+                  setTimeout(() => setToast(null), 3000);
+                } catch (err) {
+                  setToast('Sync failed: ' + err.message);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="group flex items-center justify-center gap-2.5 px-6 py-3.5 bg-white text-[#1B4DA0] border border-blue-100/30 rounded-2xl text-[13px] font-bold hover:bg-[#E3F2FD] hover:text-[#0D47A1] transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[170px]"
+            >
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <FiDatabase className="w-4 h-4 text-[#1B4DA0] group-hover:text-[#0D47A1] transition-transform group-hover:scale-110" />
+              )}
+              <span className="tracking-tight">{loading ? 'Syncing...' : 'Sync Data'}</span>
+            </button>
             <button
               onClick={() => { resetForm(); setShowFullPageForm(true); }}
               className="flex items-center gap-2 px-6 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[13px] font-bold shadow-lg shadow-blue-500/20 hover:bg-[#153D80] transition-all active:scale-95"
@@ -1340,11 +1340,19 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                           transition={{ delay: idx * 0.05 }}
                           whileHover={{ scale: 1.01 }}
                           onClick={() => setDetailInterview(interview)}
-                          className={`rounded-2xl border-2 p-4 transition-shadow cursor-pointer ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200'}`}
+                          className={`rounded-2xl border-2 p-4 transition-shadow cursor-pointer relative ${selectedRowIds.includes(interview.id) ? 'bg-blue-50/50 border-blue-200' : (isDarkMode ? 'bg-slate-800/80 border-slate-700/50 hover:border-slate-600' : 'bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200')}`}
                         >
                           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                            {/* Left: Time & Candidate */}
+                            {/* Left: Checkbox, Time & Candidate */}
                             <div className="flex items-start gap-4">
+                              <div className="flex items-center pt-3" onClick={e => e.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                                  checked={selectedRowIds.includes(interview.id)}
+                                  onChange={(e) => toggleSelectRow(interview.id, e)}
+                                />
+                              </div>
                               <div className={`text-left px-3 py-2 rounded-xl ${isDarkMode ? 'bg-slate-700' : 'bg-blue-50'}`}>
                                 <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>{interview.time}</p>
                                 <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-blue-500'}`}>{interview.duration}</p>
@@ -1618,34 +1626,44 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
         )}
       </AnimatePresence>
 
-      {/* ── Selection Action Bar ── */}
+      {/* ── Selection Action Bar (Snackbar Style) ── */}
       <AnimatePresence>
         {selectedRowIds.length > 0 && (
-          <div className="fixed bottom-10 inset-x-0 flex justify-center z-[200] pointer-events-none pl-72">
+          <div className="fixed bottom-10 inset-x-0 flex justify-center z-[9999] pointer-events-none pl-64">
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
-              className="bg-[#1A1A2E] text-white px-8 py-4 rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] flex items-center gap-8 border border-white/10 pointer-events-auto"
+              className="bg-[#1A1A2E]/95 backdrop-blur-md text-white px-8 py-4 rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.5)] flex items-center gap-8 border border-white/10 pointer-events-auto"
             >
               <div className="flex items-center gap-3 border-r border-white/10 pr-8">
-                <div className="w-6 h-6 rounded-full bg-[#3B82F6] flex items-center justify-center text-[10px] font-black">
+                <div className="w-6 h-6 rounded-lg bg-[#3B82F6] flex items-center justify-center text-[10px] font-black shadow-lg shadow-blue-500/20">
                   {selectedRowIds.length}
                 </div>
-                <span className="text-[13px] font-bold tracking-wide">Interviews Selected</span>
+                <span className="text-xs font-bold uppercase tracking-widest whitespace-nowrap">Interviews Selected</span>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-8 flex-1">
                 <button
                   onClick={() => {
                     const first = interviews.find(i => i.id === selectedRowIds[0]);
                     if (first) handleEditInterview(first);
                     setSelectedRowIds([]);
                   }}
-                  className="flex items-center gap-2 hover:bg-white/10 px-4 py-2 rounded-xl transition-all active:scale-95 text-xs font-bold"
+                  className="flex items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
                 >
-                  <FiClock size={16} className="text-[#3B82F6]" />
-                  Reschedule
+                  <FiClock size={18} className="text-[#3B82F6]" />
+                  <span>Reschedule</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    // Logic to open assign modal
+                  }}
+                  className="flex items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
+                >
+                  <FiUser size={18} className="text-[#3B82F6]" />
+                  <span>Re-assign</span>
                 </button>
 
                 <button
@@ -1662,10 +1680,10 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                     }
                     setSelectedRowIds([]);
                   }}
-                  className="flex items-center gap-2 hover:bg-white/10 px-4 py-2 rounded-xl transition-all active:scale-95 text-xs font-bold"
+                  className="flex items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
                 >
-                  <FiPlus size={16} className="text-[#3B82F6]" />
-                  Schedule Again
+                  <FiPlus size={18} className="text-[#3B82F6]" />
+                  <span>Schedule Again</span>
                 </button>
 
                 <button
@@ -1673,23 +1691,22 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                     if (selectedRowIds.length === 1) {
                       handleOpenActionModal(selectedRowIds[0], 'cancel');
                     } else {
-                      // Quick bulk cancel
                       setToast(`${selectedRowIds.length} Interviews marked as Cancelled`);
                       setInterviews(prev => prev.map(i => selectedRowIds.includes(i.id) ? { ...i, status: 'Cancelled' } : i));
                       setTimeout(() => setToast(null), 3000);
                     }
                     setSelectedRowIds([]);
                   }}
-                  className="flex items-center gap-2 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl transition-all active:scale-95 text-xs font-bold"
+                  className="flex items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-[#EF4444] font-bold text-[13px]"
                 >
-                  <FiXCircle size={16} />
-                  Cancel Interview
+                  <FiXCircle size={18} className="text-[#EF4444]" />
+                  <span>Cancel Interview</span>
                 </button>
               </div>
 
               <button
                 onClick={() => setSelectedRowIds([])}
-                className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-red-500/20 hover:text-red-400 transition-all ml-4"
+                className="ml-4 p-1 text-gray-400 hover:text-white transition-colors"
               >
                 <FiX size={20} />
               </button>

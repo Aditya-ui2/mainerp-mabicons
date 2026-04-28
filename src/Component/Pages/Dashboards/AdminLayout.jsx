@@ -99,6 +99,17 @@ const AdminLayout = ({
     localStorage.removeItem('userEmail');
     localStorage.removeItem('department');
     localStorage.removeItem('recruitmentTabAuth');
+    
+    // Clear all dashboard active tabs so the next login starts at 'Dashboard'
+    const tabKeys = [
+      'admin_active_tab', 
+      'crm_active_tab', 
+      'hroperations_active_tab', 
+      'rh_active_tab', 
+      'superadmin_active_tab'
+    ];
+    tabKeys.forEach(key => localStorage.removeItem(key));
+    
     window.location.href = '/login';
   };
 

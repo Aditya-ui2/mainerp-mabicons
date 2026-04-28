@@ -132,7 +132,7 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
 
   const filteredDistribution = distribution.filter(item => {
     const matchesSearch = item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        (item.industry && item.industry.toLowerCase().includes(searchQuery.toLowerCase()));
+      (item.industry && item.industry.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesIndustry = industryFilter === 'all' || (item.industry && item.industry.toLowerCase() === industryFilter.toLowerCase());
     return matchesSearch && matchesIndustry;
   });
@@ -149,11 +149,11 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
           </h1>
         </div>
         <div className="flex gap-2">
-           <button 
-             onClick={handleSync}
-             disabled={isSyncing}
-             className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-[#1B4DA0] border border-[#E8E7E2] rounded-2xl text-[13px] font-bold hover:bg-blue-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
-           >
+          <button
+            onClick={handleSync}
+            disabled={isSyncing}
+            className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-[#1B4DA0] border border-[#E8E7E2] rounded-2xl text-[13px] font-bold hover:bg-blue-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
+          >
             <FiRefreshCw className={`w-4 h-4 text-emerald-500 transition-all duration-700 ${isSyncing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
             <span className="tracking-tight">{isSyncing ? 'Updating...' : 'Sync Data'}</span>
           </button>
@@ -193,9 +193,9 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
             <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]" />
           </div>
           {["Client Portfolio", "Industry", "Status", "Last Active", "Jobs", ""].map((h, i) => (
-             <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start justify-start">
-               {h}
-             </div>
+            <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start justify-start">
+              {h}
+            </div>
           ))}
         </div>
 
@@ -222,8 +222,8 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
                     <div className="flex flex-col min-w-0">
                       <p className="text-[14px] font-bold text-[#0f172a] transition-colors truncate text-left">{item.name}</p>
                       {(() => {
-                        const h = handovers.find(hand => 
-                          Array.isArray(hand.clientIds) && 
+                        const h = handovers.find(hand =>
+                          Array.isArray(hand.clientIds) &&
                           hand.clientIds.some(cid => cid === item.id || cid === item._id) &&
                           hand.status === 'Active'
                         );
@@ -293,10 +293,10 @@ const ClientDetailsDrawer = ({ client, onClose }) => {
       >
         <div className="p-6 border-b border-[#F4F3EF] bg-gradient-to-r from-blue-50/30 to-white flex items-center justify-between">
           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] text-white flex items-center justify-center font-bold text-lg">
-                {client.name?.slice(0, 1).toUpperCase()}
-             </div>
-             <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
+            <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] text-white flex items-center justify-center font-bold text-lg">
+              {client.name?.slice(0, 1).toUpperCase()}
+            </div>
+            <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
           </div>
           <button onClick={onClose} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm">
             <FiX size={20} />
@@ -343,7 +343,7 @@ const KAMMemberDashboard = () => {
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('kam_active_tab') || 'Dashboard';
   });
-  
+
   useEffect(() => {
     localStorage.setItem('kam_active_tab', activeTab);
   }, [activeTab]);
@@ -720,7 +720,7 @@ const KAMMemberDashboard = () => {
   const fetchClients = async () => {
     try {
       const response = await getRecruitmentClients();
-      
+
       // Fetch handovers separately so they don't block the client list
       getWorkHandovers({ status: 'Active' })
         .then(hRes => {
@@ -732,7 +732,7 @@ const KAMMemberDashboard = () => {
       if (response && response.success && response.data && response.data.length > 0) {
         allClients = response.data.map(c => ({
           ...c,
-          id: c.id || c._id, 
+          id: c.id || c._id,
           name: c.companyName || c.name || 'Unknown Client',
           industry: 'Technology',
           jobCount: Math.floor(Math.random() * 8) + 1,
@@ -753,13 +753,13 @@ const KAMMemberDashboard = () => {
       const fullName = (userInfo.name || '').toLowerCase().trim();
       const currentUserName = fullName.split(' ')[0].split('(')[0].trim();
       const currentUserID = userInfo.id;
-      
+
       const savedAssignments = JSON.parse(localStorage.getItem('mabicons_client_assignments') || '{}');
-      
+
       const assignedToMe = allClients.filter(client => {
         const clientIDStr = String(client.id);
         const clientName = (client.name || '').toLowerCase().trim();
-        
+
         // 1. Direct ID match (Highest Priority)
         const matchedKAMID = savedAssignments[`idmatch_${clientIDStr}`];
         if (matchedKAMID && currentUserID && String(matchedKAMID) === String(currentUserID)) {
@@ -771,27 +771,27 @@ const KAMMemberDashboard = () => {
         if (assignedTo && (assignedTo.includes(currentUserName) || currentUserName.includes(assignedTo))) {
           return true;
         }
-        
+
         // 3. Global Fuzzy match (Name match)
         for (const [key, value] of Object.entries(savedAssignments)) {
           const entryKey = key.toLowerCase().replace('name_', '').trim();
           const entryValue = (value || '').toLowerCase().trim();
-          
+
           if (entryValue && (entryValue.includes(currentUserName) || currentUserName.includes(entryValue))) {
             if (entryKey.includes(clientName) || clientName.includes(entryKey)) {
               return true;
             }
           }
         }
-        
+
         // 4. Ultimate Demo Fallback for Manju
         if (currentUserName.includes('manju') && ['zomato', 'airtel', 'flipkart'].some(n => clientName.includes(n))) {
-           return true; 
+          return true;
         }
 
         return false;
       });
-      
+
       setClientJobDistribution(assignedToMe);
     } catch (error) {
       console.error('Failed to fetch clients:', error);
@@ -802,7 +802,7 @@ const KAMMemberDashboard = () => {
     if (activeTab === 'Clients') {
       fetchClients();
     }
-    
+
     // Listen for storage changes from other tabs (Head Dashboard)
     const handleStorageChange = (e) => {
       if (e.key === 'mabicons_client_assignments' && activeTab === 'Clients') {
@@ -854,10 +854,10 @@ const KAMMemberDashboard = () => {
               return <DocumentVerifyTab isDarkMode={false} />;
             case 'Clients':
               return (
-                <ClientsTab 
+                <ClientsTab
                   distribution={clientJobDistribution}
                   handovers={activeHandovers}
-                  onViewClient={(client) => setSelectedClientForDrawer(client)} 
+                  onViewClient={(client) => setSelectedClientForDrawer(client)}
                   onSync={fetchClients}
                 />
               );
@@ -1052,8 +1052,8 @@ const KAMMemberDashboard = () => {
                               <button
                                 onClick={() => toggleTaskStatus(task.id)}
                                 className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${task.status === 'completed'
-                                    ? 'bg-emerald-500 border-emerald-500 text-white'
-                                    : 'border-gray-300 hover:border-emerald-500'
+                                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                                  : 'border-gray-300 hover:border-emerald-500'
                                   }`}
                               >
                                 {task.status === 'completed' && <FiCheckCircle className="w-4 h-4" />}
@@ -1065,8 +1065,8 @@ const KAMMemberDashboard = () => {
                                 <p className="text-sm text-gray-500">{task.dueTime}</p>
                               </div>
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${task.priority === 'High' || task.priority === 'Urgent' ? 'bg-red-100 text-red-700' :
-                                  task.priority === 'Medium' ? 'bg-amber-100 text-amber-700' :
-                                    'bg-blue-100 text-blue-700'
+                                task.priority === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-blue-100 text-blue-700'
                                 }`}>
                                 {task.priority}
                               </span>
@@ -1083,90 +1083,90 @@ const KAMMemberDashboard = () => {
                     </div>
 
                     {/* Upcoming Interviews Section */}
-                      <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-blue-500/5">
-                        
-                        <div className="flex items-center justify-between mb-8">
-                          <div className="flex items-center gap-3">
-                            <div className="p-3 rounded-2xl bg-blue-50/50 text-blue-600 shadow-sm border border-blue-50">
-                              <FiCalendar className="w-5 h-5" />
-                            </div>
-                            <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">
-                              Upcoming Interviews
-                            </h3>
-                          </div>
+                    <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 flex flex-col h-full transition-all hover:shadow-xl hover:shadow-blue-500/5">
 
-                          <button
-                            onClick={() => setActiveTab('Interview Schedule')}
-                            className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline"
-                          >
-                            View All
-                          </button>
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 rounded-2xl bg-blue-50/50 text-blue-600 shadow-sm border border-blue-50">
+                            <FiCalendar className="w-5 h-5" />
+                          </div>
+                          <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight font-syne">
+                            Upcoming Interviews
+                          </h3>
                         </div>
 
-                        <div className="flex-1 overflow-x-auto custom-scrollbar">
-                          <table className="w-full text-left">
-                            <thead>
-                              <tr className="border-b border-[#F4F3EF]">
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Position</th>
-                                <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Date & Time</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-[#F4F3EF]">
-                              {upcomingInterviews.length > 0 ? (
-                                upcomingInterviews.map((interview) => {
-                                  let formattedDate = 'TBD';
-                                  let timePart = 'TBD';
+                        <button
+                          onClick={() => setActiveTab('Interview Schedule')}
+                          className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline"
+                        >
+                          View All
+                        </button>
+                      </div>
 
-                                  if (interview.dateTime && interview.dateTime.includes(' | ')) {
-                                    [formattedDate, timePart] = interview.dateTime.split(' | ');
-                                  } else {
-                                    const rawDate = interview.date || interview.dateTime;
-                                    if (rawDate) {
-                                      const d = new Date(rawDate);
-                                      if (!isNaN(d)) {
-                                        formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-                                        timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-                                      }
+                      <div className="flex-1 overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="border-b border-[#F4F3EF]">
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Candidate</th>
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Position</th>
+                              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9B9BAD]">Date & Time</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#F4F3EF]">
+                            {upcomingInterviews.length > 0 ? (
+                              upcomingInterviews.map((interview) => {
+                                let formattedDate = 'TBD';
+                                let timePart = 'TBD';
+
+                                if (interview.dateTime && interview.dateTime.includes(' | ')) {
+                                  [formattedDate, timePart] = interview.dateTime.split(' | ');
+                                } else {
+                                  const rawDate = interview.date || interview.dateTime;
+                                  if (rawDate) {
+                                    const d = new Date(rawDate);
+                                    if (!isNaN(d)) {
+                                      formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                                      timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
                                     }
                                   }
+                                }
 
-                                  return (
-                                    <tr 
-                                      key={interview.id} 
-                                      onClick={() => setSelectedInterview(interview)} 
-                                      className="group cursor-pointer transition-all hover:bg-[#F8FAFF]"
-                                    >
-                                      <td className="px-6 py-5">
-                                        <p className="text-sm font-semibold text-slate-700 group-hover:text-[#1B4DA0] transition-colors">{interview.candidate}</p>
-                                      </td>
-                                      <td className="px-6 py-5">
-                                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{interview.position || 'Recruitment Drive'}</p>
-                                      </td>
-                                      <td className="px-6 py-5">
-                                        <div className="flex flex-col items-start gap-0.5">
-                                          <span className="text-sm font-semibold text-slate-600">
-                                            {formattedDate}
-                                          </span>
-                                          <span className="text-[11px] font-semibold text-[#1B4DA0] uppercase">
-                                            {timePart}
-                                          </span>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  );
-                                })
-                              ) : (
-                                <tr>
-                                  <td colSpan="3" className="py-12 text-center text-slate-400 text-[10px] uppercase font-medium">
-                                    No upcoming sessions
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
+                                return (
+                                  <tr
+                                    key={interview.id}
+                                    onClick={() => setSelectedInterview(interview)}
+                                    className="group cursor-pointer transition-all hover:bg-[#F8FAFF]"
+                                  >
+                                    <td className="px-6 py-5">
+                                      <p className="text-sm font-semibold text-slate-700 group-hover:text-[#1B4DA0] transition-colors">{interview.candidate}</p>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{interview.position || 'Recruitment Drive'}</p>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                      <div className="flex flex-col items-start gap-0.5">
+                                        <span className="text-sm font-semibold text-slate-600">
+                                          {formattedDate}
+                                        </span>
+                                        <span className="text-[11px] font-semibold text-[#1B4DA0] uppercase">
+                                          {timePart}
+                                        </span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            ) : (
+                              <tr>
+                                <td colSpan="3" className="py-12 text-center text-slate-400 text-[10px] uppercase font-medium">
+                                  No upcoming sessions
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
+                    </div>
 
                     {/* Upcoming Joinings */}
                     <div className="bg-white rounded-[32px] shadow-sm overflow-hidden flex flex-col border border-[#F4F3EF]">
@@ -1202,37 +1202,36 @@ const KAMMemberDashboard = () => {
                                 const formattedDate = joining.date ? new Date(joining.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'TBD';
 
                                 return (
-                                   <tr 
-                                     key={joining.id} 
-                                     onClick={() => setActiveTab('Offer Management')} 
-                                     className="group cursor-pointer transition-all hover:bg-emerald-50/20"
-                                   >
-                                     <td className="px-6 py-5">
-                                       <p className="text-sm font-semibold text-slate-700">{joining.candidate}</p>
-                                     </td>
-                                     <td className="px-6 py-5">
-                                       <div className="flex flex-col">
-                                         <span className="text-[11px] font-semibold text-[#1B4DA0] uppercase tracking-wider mb-0.5">
-                                           {joining.client}
-                                         </span>
-                                         <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest leading-relaxed">
-                                           {joining.position}
-                                         </span>
-                                       </div>
-                                     </td>
-                                     <td className="px-6 py-5">
-                                       <div className="flex items-center gap-2">
-                                         <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{formattedDate}</span>
-                                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${
-                                           joining.status === 'Joined' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100'
-                                         }`}>
-                                           {joining.status}
-                                         </span>
-                                       </div>
-                                     </td>
-                                   </tr>
-                                 );
-                               })
+                                  <tr
+                                    key={joining.id}
+                                    onClick={() => setActiveTab('Offer Management')}
+                                    className="group cursor-pointer transition-all hover:bg-emerald-50/20"
+                                  >
+                                    <td className="px-6 py-5">
+                                      <p className="text-sm font-semibold text-slate-700">{joining.candidate}</p>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                      <div className="flex flex-col">
+                                        <span className="text-[11px] font-semibold text-[#1B4DA0] uppercase tracking-wider mb-0.5">
+                                          {joining.client}
+                                        </span>
+                                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest leading-relaxed">
+                                          {joining.position}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-semibold text-slate-600 uppercase tracking-widest">{formattedDate}</span>
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${joining.status === 'Joined' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100'
+                                          }`}>
+                                          {joining.status}
+                                        </span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })
                             ) : (
                               <tr>
                                 <td colSpan="4" className="py-12 text-center text-slate-400 font-semibold uppercase tracking-widest text-[10px]">
@@ -1246,7 +1245,7 @@ const KAMMemberDashboard = () => {
                     </div>
                   </div>
 
-                    
+
 
                 </div>
               );
@@ -1275,9 +1274,9 @@ const KAMMemberDashboard = () => {
       {/* Client Details Drawer */}
       <AnimatePresence>
         {selectedClientForDrawer && (
-          <ClientDetailsDrawer 
-            client={selectedClientForDrawer} 
-            onClose={() => setSelectedClientForDrawer(null)} 
+          <ClientDetailsDrawer
+            client={selectedClientForDrawer}
+            onClose={() => setSelectedClientForDrawer(null)}
           />
         )}
       </AnimatePresence>
@@ -1306,14 +1305,14 @@ const KAMMemberDashboard = () => {
                     {selectedInterview.position || 'RECRUITMENT DRIVE'}
                   </p>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedInterview(null)}
                   className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
                 >
                   <FiX size={24} />
                 </button>
               </div>
-              
+
               <div className="p-8 space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1.5 p-4 rounded-2xl bg-blue-50/30 border border-blue-100/30">
@@ -1331,26 +1330,26 @@ const KAMMemberDashboard = () => {
                 </div>
 
                 <div className="pt-6 border-t border-[#F4F3EF] text-left">
-                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3">Interview Details</span>
-                    <div className="space-y-3">
-                      <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
-                        <span className="text-[#9B9BAD]">Host:</span> {String(selectedInterview.interviewer || 'Host')}
-                      </p>
-                      <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
-                        Standard technical evaluation session scheduled for the proposed position. Please ensure the candidate is notified of the connection details.
-                      </p>
-                    </div>
+                  <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-3">Interview Details</span>
+                  <div className="space-y-3">
+                    <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
+                      <span className="text-[#9B9BAD]">Host:</span> {String(selectedInterview.interviewer || 'Host')}
+                    </p>
+                    <p className="text-sm text-[#4B4B5E] leading-relaxed font-medium">
+                      Standard technical evaluation session scheduled for the proposed position. Please ensure the candidate is notified of the connection details.
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="p-8 bg-[#F4F3EF]/30 flex gap-4">
-                <button 
+                <button
                   onClick={() => setSelectedInterview(null)}
                   className="flex-1 py-4 bg-white border border-[#E8E7E2] text-[#1A1A2E] rounded-[20px] font-bold text-sm hover:bg-[#F4F3EF] transition-all shadow-sm"
                 >
                   Close
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setSelectedInterview(null);
                     setActiveTab('Interview Schedule');

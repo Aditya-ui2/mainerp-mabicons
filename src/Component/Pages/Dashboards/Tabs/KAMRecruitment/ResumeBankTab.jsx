@@ -5,7 +5,7 @@ import {
   Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye, ChevronDown, Pencil, Check,
   Sparkles, Bot, Wand2
 } from 'lucide-react';
-import { searchResumesWithAI } from '../../../../Utilities/geminiService';
+// import { searchResumesWithAI } from '../../../../Utilities/geminiService';
 import { toast } from "sonner";
 import {
   getResumeBankStats,
@@ -20,6 +20,7 @@ import {
   getAllClients,
   syncResumesFromSharePoint,
   syncResumesFromSharePointDrive,
+  aiSearchResumes
 } from '../../../service/api';
 
 // --- Helper Functions ---
@@ -128,7 +129,7 @@ const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onRefresh }) => {
   const fieldClasses = `w-full bg-transparent rounded-xl px-2 py-1 transition-all outline-none border ${isEditing
     ? 'border-[#1B4DA0]/20 bg-[#1B4DA0]/5 hover:bg-[#1B4DA0]/10 focus:border-[#1B4DA0] focus:bg-white'
     : 'border-transparent cursor-default'
-  }`;
+    }`;
 
   return (
     <div className="fixed inset-0 z-[1100] flex justify-end overflow-hidden pointer-events-none">
@@ -562,22 +563,17 @@ const ResumeBankTab = () => {
     if (!aiQuery.trim()) return;
     setIsAiSearching(true);
     try {
-      // Get all current resumes for context
-      const allResumesResponse = await getResumeBankResumes({ limit: 100 });
-      const allData = allResumesResponse.resumes || [];
-      
-      const matchingIds = await searchResumesWithAI(allData, aiQuery);
-      
-      if (matchingIds && Array.isArray(matchingIds)) {
-        const filtered = allData.filter(r => matchingIds.includes(r.id));
-        setResumes(filtered);
-        setAiResults(filtered.length);
-        toast.success(`AI found ${filtered.length} matching candidates`);
-      }
+        const response = await aiSearchResumes(aiQuery);
+        if (response.success && response.data) {
+            setResumes(response.data);
+            setAiResults(response.data.length);
+            toast.success(`AI found ${response.data.length} matching candidates`);
+        }
     } catch (err) {
-      toast.error("AI Search failed. Check if API Key is set.");
+        console.error('AI search error:', err);
+        toast.error(err.message || "AI Search failed. Check server logs.");
     } finally {
-      setIsAiSearching(false);
+        setIsAiSearching(false);
     }
   };
 
@@ -817,7 +813,7 @@ const ResumeBankTab = () => {
       <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-3 flex-wrap relative overflow-hidden">
         {/* AI Mode Toggle Background Glow */}
         {isAiMode && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="absolute inset-0 bg-gradient-to-r from-violet-500/5 via-fuchsia-500/5 to-blue-500/5 pointer-events-none"
           />
@@ -830,7 +826,7 @@ const ResumeBankTab = () => {
           ) : (
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           )}
-          
+
           <input
             type="text"
             value={isAiMode ? aiQuery : filters.search}
@@ -858,8 +854,8 @@ const ResumeBankTab = () => {
           onClick={() => {
             setIsAiMode(!isAiMode);
             if (isAiMode) {
-                setAiResults(null);
-                fetchResumes();
+              setAiResults(null);
+              fetchResumes();
             }
           }}
           className={`px-4 py-2.5 rounded-xl border-2 flex items-center gap-2 transition-all active:scale-95 ${isAiMode ? 'bg-violet-50 border-violet-200 text-violet-600' : 'bg-white border-[#F4F3EF] text-[#9B9BAD] hover:border-violet-200 hover:text-violet-500'}`}
@@ -895,10 +891,10 @@ const ResumeBankTab = () => {
         {(filters.search || filters.roleType || aiResults !== null) && (
           <button
             onClick={() => {
-                handleResetFilters();
-                setIsAiMode(false);
-                setAiResults(null);
-                setAiQuery('');
+              handleResetFilters();
+              setIsAiMode(false);
+              setAiResults(null);
+              setAiQuery('');
             }}
             className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
           >
@@ -967,7 +963,7 @@ const ResumeBankTab = () => {
 
       {/* Bottom Info */}
       <div className="mt-6 py-10 border-t border-[#F4F3EF] dark:border-slate-700 text-center">
-         
+
       </div>
 
       {/* Overlays */}
@@ -1065,9 +1061,9 @@ const ResumeBankTab = () => {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Role Type</label>
                 <div className="relative group">
-                  <select 
-                    value={selectedUploadRoleType} 
-                    onChange={(e) => setSelectedUploadRoleType(e.target.value)} 
+                  <select
+                    value={selectedUploadRoleType}
+                    onChange={(e) => setSelectedUploadRoleType(e.target.value)}
                     className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm font-bold focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white cursor-pointer transition-all appearance-none bg-[#F4F3EF]/50 hover:bg-white dark:hover:bg-slate-700"
                   >
                     <option value="">Select Role (Optional)</option>

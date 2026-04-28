@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiX, FiMail, FiPhone, FiPlus, FiSearch, FiChevronDown,
   FiChevronRight, FiUser, FiGrid, FiList, FiRefreshCw,
-  FiEye, FiTrash, FiMapPin, FiActivity, FiLock
+  FiEye, FiTrash, FiMapPin, FiActivity, FiLock, FiEdit2, FiSave
 } from 'react-icons/fi';
 import ClientOnboardingForm from "./ClientOnboardingForm";
 import { toast } from "react-hot-toast";
-import { getAllClients, createClient } from "../../../service/api";
+import { getAllClients, createClient, editClient } from "../../../service/api";
 
 const PIPELINE_STAGES = ["All Clients", "Finalize", "Generate Password"];
 
@@ -35,6 +35,9 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
   const [stageFilter, setStageFilter] = useState("All");
   const [viewMode, setViewMode] = useState("list");
   const [selectedClient, setSelectedClient] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
   const dragItem = useRef(null);
@@ -70,6 +73,52 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
   };
 
   useEffect(() => { fetchClients(); }, []);
+
+  useEffect(() => {
+    if (selectedClient) {
+      setEditForm({
+        ...selectedClient,
+        clientId: selectedClient.id
+      });
+      setIsEditing(false);
+    }
+  }, [selectedClient]);
+
+  const handleEditChange = (field, value) => {
+    setEditForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Map frontend fields back to database fields
+      const payload = {
+        ...editForm,
+        spocName: editForm.contactPerson,
+        spocEmail: editForm.email,
+        contactNumber: editForm.phone,
+        corporateAddress: editForm.location,
+        category: [editForm.industry]
+      };
+
+      const res = await editClient(payload);
+      if (res.success) {
+        toast.success("Client updated successfully!");
+        // Update local state with the mapped fields
+        const updatedClient = {
+          ...selectedClient,
+          ...editForm
+        };
+        setClients(prev => prev.map(c => c.id === selectedClient.id ? updatedClient : c));
+        setSelectedClient(updatedClient);
+        setIsEditing(false);
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to update client");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const filteredClients = useMemo(() => {
     return clients.filter(c => {
@@ -433,13 +482,37 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
               >
                 {/* Header */}
                 <div className="px-10 py-10 border-b border-[#F4F3EF] flex items-center justify-between">
-                  <h2 className="text-2xl font-black text-[#1A1A2E]" style={{ fontFamily: '"Syne", sans-serif' }}>Client Detail</h2>
-                  <button
-                    onClick={() => setSelectedClient(null)}
-                    className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
-                  >
-                    <FiX size={24} />
-                  </button>
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-2xl font-black text-[#1A1A2E]" style={{ fontFamily: '"Syne", sans-serif' }}>Client Detail</h2>
+                    {isEditing && <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Editing Mode</p>}
+                  </div>
+                  <div className="flex gap-4">
+                    {!isEditing ? (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="w-12 h-12 rounded-xl bg-blue-50 text-[#1B4DA0] flex items-center justify-center hover:bg-blue-100 transition-all shadow-sm"
+                      >
+                        <FiEdit2 size={20} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-all shadow-sm"
+                      >
+                        {isSaving ? <FiRefreshCw className="animate-spin" size={20} /> : <FiSave size={20} />}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSelectedClient(null);
+                        setIsEditing(false);
+                      }}
+                      className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
+                    >
+                      <FiX size={24} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Content */}
@@ -449,10 +522,29 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                       className="w-24 h-24 rounded-[40px] flex items-center justify-center text-3xl font-black shadow-xl mb-6 border-2 border-white ring-4 ring-[#EEF2FB]"
                       style={{ backgroundColor: '#EEF2FB', color: '#1B4DA0' }}
                     >
-                      {(selectedClient.companyName || '?').slice(0, 2).toUpperCase()}
+                      {(editForm.companyName || selectedClient.companyName || '?').slice(0, 2).toUpperCase()}
                     </div>
-                    <h3 className="text-2xl font-black text-[#1A1A2E]">{selectedClient.companyName}</h3>
-                    <p className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[3px] mt-1">{selectedClient.industry}</p>
+                    {isEditing ? (
+                      <div className="w-full max-w-[300px] space-y-4">
+                        <input
+                          className="w-full text-center text-2xl font-black text-[#1A1A2E] bg-slate-50 rounded-xl py-2 border border-slate-100 outline-none focus:ring-2 focus:ring-blue-100 transition-all font-syne"
+                          value={editForm.companyName || ''}
+                          onChange={(e) => handleEditChange('companyName', e.target.value)}
+                          placeholder="Company Name"
+                        />
+                        <input
+                          className="w-full text-center text-[11px] font-black text-[#1B4DA0] uppercase tracking-[3px] bg-white border-b border-dashed border-slate-200 outline-none hover:border-blue-300 transition-colors"
+                          value={editForm.industry || ''}
+                          onChange={(e) => handleEditChange('industry', e.target.value)}
+                          placeholder="Industry"
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <h3 className="text-2xl font-black text-[#1A1A2E]">{selectedClient.companyName}</h3>
+                        <p className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[3px] mt-1">{selectedClient.industry}</p>
+                      </>
+                    )}
                     <span className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['All Clients']).badge}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['All Clients']).dot}`} />
                       {selectedClient.stage}
@@ -462,12 +554,12 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                   {/* Info Table */}
                   <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-8">
                     {[
-                      { label: 'Contact Person', val: selectedClient.contactPerson, icon: <FiUser size={14} /> },
-                      { label: 'Assigned KAM', val: selectedClient.assignKAM || 'Not Assigned', icon: <FiUser size={14} />, highlight: true },
-                      { label: 'Location', val: selectedClient.location || '—', icon: <FiMapPin size={14} /> },
-                      { label: 'GST Number', val: selectedClient.gstNumber || '—', icon: <FiActivity size={14} /> },
-                      { label: 'CIN Number', val: selectedClient.cinNumber || '—', icon: <FiActivity size={14} /> },
-                    ].map(({ label, val, icon, highlight }) => (
+                      { label: 'Contact Person', key: 'contactPerson', val: selectedClient.contactPerson, icon: <FiUser size={14} /> },
+                      { label: 'Assigned KAM', key: 'assignKAM', val: selectedClient.assignKAM || 'Not Assigned', icon: <FiUser size={14} />, highlight: true },
+                      { label: 'Location', key: 'location', val: selectedClient.location || '—', icon: <FiMapPin size={14} /> },
+                      { label: 'GST Number', key: 'gstNumber', val: selectedClient.gstNumber || '—', icon: <FiActivity size={14} /> },
+                      { label: 'CIN Number', key: 'cinNumber', val: selectedClient.cinNumber || '—', icon: <FiActivity size={14} /> },
+                    ].map(({ label, key, val, icon, highlight }) => (
                       <div key={label} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-lg ${highlight ? 'bg-[#1B4DA0]/10 text-[#1B4DA0]' : 'bg-white text-[#9B9BAD] shadow-sm'}`}>
@@ -475,7 +567,15 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                           </div>
                           <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{label}</span>
                         </div>
-                        <span className={`text-[13px] font-black ${highlight ? 'text-[#1B4DA0]' : 'text-[#1A1A2E]'}`}>{val}</span>
+                        {isEditing ? (
+                          <input
+                            className={`text-[13px] font-black text-right bg-white px-3 py-1 rounded-lg border border-slate-100 outline-none focus:ring-2 focus:ring-blue-50 transition-all ${highlight ? 'text-[#1B4DA0]' : 'text-[#1A1A2E]'}`}
+                            value={editForm[key] || ''}
+                            onChange={(e) => handleEditChange(key, e.target.value)}
+                          />
+                        ) : (
+                          <span className={`text-[13px] font-black ${highlight ? 'text-[#1B4DA0]' : 'text-[#1A1A2E]'}`}>{val}</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -486,12 +586,27 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                     <div className="space-y-4">
                       <h4 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-4">Agreement & Compliance</h4>
                       <div className="grid grid-cols-2 gap-4">
-                        <DetailCard label="Agreement" value={selectedClient.agreementType} />
-                        <DetailCard label="Effective" value={selectedClient.agreementEffectiveDate} />
-                        <DetailCard label="Fee" value={selectedClient.feeAmount} />
-                        <DetailCard label="Payment" value={selectedClient.paymentTerms} />
-                        <DetailCard label="MSME" value={selectedClient.msmeRegistered} />
-                        <DetailCard label="Shops" value={selectedClient.shopsLicense || 'NA'} />
+                        {[
+                          { label: 'Agreement', key: 'agreementType' },
+                          { label: 'Effective', key: 'agreementEffectiveDate' },
+                          { label: 'Fee', key: 'feeAmount' },
+                          { label: 'Payment', key: 'paymentTerms' },
+                          { label: 'MSME', key: 'msmeRegistered' },
+                          { label: 'Shops', key: 'shopsLicense' },
+                        ].map(field => (
+                          isEditing ? (
+                            <div key={field.key} className="p-4 bg-white rounded-2xl border-2 border-dashed border-slate-100 space-y-1 hover:border-blue-200 transition-all group/field">
+                              <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-wider group-hover/field:text-blue-400 transition-colors">{field.label}</p>
+                              <input
+                                className="w-full text-[13px] font-bold text-[#1A1A2E] bg-transparent outline-none"
+                                value={editForm[field.key] || ''}
+                                onChange={(e) => handleEditChange(field.key, e.target.value)}
+                              />
+                            </div>
+                          ) : (
+                            <DetailCard key={field.key} label={field.label} value={selectedClient[field.key]} />
+                          )
+                        ))}
                       </div>
                     </div>
 
@@ -499,18 +614,42 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                     <div className="space-y-4">
                       <h4 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] ml-4">Payroll & Workforce</h4>
                       <div className="grid grid-cols-2 gap-4">
-                        <DetailCard label="Employees" value={selectedClient.totalEmployees} />
-                        <DetailCard label="Cycle" value={selectedClient.payrollCycle} />
-                        <DetailCard label="PF" value={selectedClient.pfApplicable} />
-                        <DetailCard label="ESIC" value={selectedClient.esicApplicable} />
+                        {[
+                          { label: 'Employees', key: 'totalEmployees' },
+                          { label: 'Cycle', key: 'payrollCycle' },
+                          { label: 'PF', key: 'pfApplicable' },
+                          { label: 'ESIC', key: 'esicApplicable' },
+                        ].map(field => (
+                          isEditing ? (
+                            <div key={field.key} className="p-4 bg-[#FAFAF9] rounded-2xl border border-[#F4F3EF] space-y-1">
+                              <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-wider">{field.label}</p>
+                              <input
+                                className="w-full text-[13px] font-bold text-[#1A1A2E] bg-transparent outline-none"
+                                value={editForm[field.key] || ''}
+                                onChange={(e) => handleEditChange(field.key, e.target.value)}
+                              />
+                            </div>
+                          ) : (
+                            <DetailCard key={field.key} label={field.label} value={selectedClient[field.key]} />
+                          )
+                        ))}
                       </div>
                     </div>
                     
                     {/* Notes */}
-                    {selectedClient.onboardingNotes && (
+                    {(selectedClient.onboardingNotes || isEditing) && (
                       <div className="p-6 bg-[#FAFAF9] rounded-3xl border border-[#F4F3EF] space-y-2">
                          <h4 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Onboarding Notes</h4>
-                         <p className="text-sm text-[#4B4B5E] leading-relaxed italic">"{selectedClient.onboardingNotes}"</p>
+                         {isEditing ? (
+                           <textarea
+                             className="w-full text-sm text-[#4B4B5E] leading-relaxed bg-white p-4 rounded-2xl border border-slate-100 outline-none focus:ring-2 focus:ring-blue-50 min-h-[100px] transition-all"
+                             value={editForm.onboardingNotes || ''}
+                             onChange={(e) => handleEditChange('onboardingNotes', e.target.value)}
+                             placeholder="Add internal notes about this client..."
+                           />
+                         ) : (
+                           <p className="text-sm text-[#4B4B5E] leading-relaxed italic">"{selectedClient.onboardingNotes}"</p>
+                         )}
                       </div>
                     )}
                   </div>
@@ -519,7 +658,10 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                 {/* Footer */}
                 <div className="p-10 border-t border-[#F4F3EF]">
                   <button
-                    onClick={() => setSelectedClient(null)}
+                    onClick={() => {
+                        setSelectedClient(null);
+                        setIsEditing(false);
+                    }}
                     className="w-full py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-[11px] font-black uppercase tracking-[3px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95"
                   >
                     Close Details

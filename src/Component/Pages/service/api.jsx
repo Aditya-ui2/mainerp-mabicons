@@ -361,6 +361,15 @@ export const verifyCandidateKYC = async (data) => {
   }
 };
 
+export const bulkVerifyCandidateKYC = async (data) => {
+  try {
+    const response = await axiosInstance.post('/recruitment/candidate/bulk-verify-kyc', data);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 export const attachFinalOfferLetter = async (formData) => {
   try {
     const response = await axiosInstance.post('/recruitment/candidate/attach-final-offer', formData, {
@@ -1608,7 +1617,7 @@ export const deleteWorkHandover = async (id) => {
 export const editClient = async (clientData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.put('/client/edit-Client', {
+    const response = await axiosInstance.put('/client/edit', {
       clientId: clientData.clientId,
       name: clientData.name,
       companyName: clientData.companyName,
@@ -1625,7 +1634,25 @@ export const editClient = async (clientData) => {
         contact: clientData.authorizedSignatory.contact
       } : undefined,
       ownerDirectorDetails: clientData.ownerDirectorDetails,
-      teamLeaderId: clientData.teamLeaderId
+      teamLeaderId: clientData.teamLeaderId,
+      city: clientData.city,
+      pinCode: clientData.pinCode,
+      ownerName: clientData.ownerName,
+      ownerEmail: clientData.ownerEmail,
+      agreementType: clientData.agreementType,
+      agreementEffectiveDate: clientData.agreementEffectiveDate,
+      feeAmount: clientData.feeAmount,
+      paymentTerms: clientData.paymentTerms,
+      shopsLicense: clientData.shopsLicense,
+      factoryLicense: clientData.factoryLicense,
+      msmeRegistered: clientData.msmeRegistered,
+      totalEmployees: clientData.totalEmployees,
+      payrollCycle: clientData.payrollCycle,
+      pfApplicable: clientData.pfApplicable,
+      esicApplicable: clientData.esicApplicable,
+      leadSource: clientData.leadSource,
+      onboardingNotes: clientData.onboardingNotes,
+      assignKAM: clientData.assignKAM
     }, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -2497,6 +2524,18 @@ export const getResumeRoleTypes = async () => {
 };
 
 // Get resumes with filters
+// AI search resumes
+export const aiSearchResumes = async (query) => {
+  try {
+    const response = await axiosInstance.post('/api/resumebank/ai-search', { query });
+    return response.data;
+  } catch (error) {
+    console.error('AI search failed:', error);
+    throw error.response?.data || { message: 'AI search failed' };
+  }
+};
+
+// Get resumes with filters and pagination
 export const getResumeBankResumes = async (params = {}) => {
   try {
     const queryParams = new URLSearchParams(params).toString();
