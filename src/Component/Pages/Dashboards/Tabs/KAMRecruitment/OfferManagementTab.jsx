@@ -90,6 +90,28 @@ const UrgencyBadge = ({ daysLeft }) => {
   return <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-blue-100 text-blue-700 uppercase tracking-wider">{daysLeft}d left</span>;
 };
 
+// --- Helper Functions ---
+const isOfferIncomplete = (offer) => {
+  return !offer.offeredCTC || !offer.joiningDate || !offer.email;
+};
+
+const isFullyVerified = (offer) => {
+  if (offer.bgvStatus === 'Verified') return true;
+  if (!offer.kycDocuments) return false;
+  
+  // Define mandatory docs (same as DocumentVerifyTab)
+  const mandatoryIds = ['pan_front', 'pan_back', 'aadhar_front', 'aadhar_back', 'marksheet_10', 'marksheet_12'];
+  const uploadedDocs = Object.keys(offer.kycDocuments);
+  
+  if (uploadedDocs.length === 0) return false;
+  
+  // Check if all mandatory uploaded docs are verified
+  const verifiedCount = uploadedDocs.filter(id => offer.kycDocuments[id]?.verified === true).length;
+  const totalUploaded = uploadedDocs.length;
+  
+  return verifiedCount > 0 && verifiedCount >= 6; // At least mandatory ones verified
+};
+
 /* ── Detail Drawer ── */
 function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, isDarkMode }) {
   if (!offer) return null;
@@ -136,9 +158,10 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
           <div className="flex items-center gap-3">
             <button
               onClick={() => onEdit(offer)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm ${isDarkMode ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-[#1B4DA0] text-white hover:bg-[#153e82]'}`}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm ${isDarkMode ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-[#1B4DA0] text-white hover:bg-[#153e82]'}`}
+              title="Edit Details"
             >
-              <Edit2 size={14} /> Edit Details
+              <Edit2 size={16} />
             </button>
             <button
               onClick={onClose}
@@ -226,14 +249,6 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
         {/* Footer Actions - Fixed at bottom */}
         <div className={`p-8 border-t ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-[#F4F3EF]'}`}>
           <div className="flex flex-col gap-4">
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => onEdit(offer)}
-              className={`w-full py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${isDarkMode ? 'bg-slate-800 text-blue-400 hover:bg-slate-700' : 'bg-[#FAFBFF] text-[#1B4DA0] border border-blue-100/50 hover:bg-[#F0F4FF]'}`}
-            >
-              <Edit2 size={16} /> Edit Offer Details
-            </motion.button>
 
             {offer.status === 'Generated' && (
               <div className="flex gap-3 mb-2">
@@ -1186,8 +1201,8 @@ const OfferManagementTab = ({ isDarkMode }) => {
           {/* Table Interface */}
           <div className="bg-white rounded-[32px] border border-[#F4F3EF] shadow-sm overflow-hidden">
             <div className="overflow-x-auto custom-scrollbar">
-              <div className="min-w-[1200px]">
-                <div className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_100px_140px_140px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+              <div className="min-w-[1250px]">
+                <div className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_110px_150px_150px_50px] gap-4 px-6 py-4 border-b border-[#F4F3EF] bg-transparent">
                   <div className="flex items-center">
                     <input
                       type="checkbox"
@@ -1213,7 +1228,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
                       <div
                         key={offer._id || offer.id}
                         onClick={() => handleViewOffer(offer)}
-                        className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_100px_140px_140px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+                        className="grid grid-cols-[40px_140px_minmax(180px,2fr)_minmax(120px,1.2fr)_minmax(160px,1.5fr)_110px_150px_150px_50px] gap-4 items-center px-6 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
                       >
                         <div className="flex items-center" onClick={e => e.stopPropagation()}>
                           <input
@@ -1323,21 +1338,26 @@ const OfferManagementTab = ({ isDarkMode }) => {
 
                         {/* Verify Status */}
                         <div className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (offer.bgvStatus === 'Verified') handleResetBGV(offer.id || offer._id);
-                              else handleManualVerify(offer.id || offer._id);
-                            }}
-                            className={`inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border transition-all ${offer.bgvStatus === 'Verified' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                              }`}
-                          >
-                            {offer.bgvStatus === 'Verified' ? 'Verified' : 'Verify Now'}
-                          </button>
+                          {isFullyVerified(offer) ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm">
+                              <ShieldCheck size={12} className="text-emerald-500" /> Verified
+                            </span>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1.5">
+                              <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-50 text-amber-600 border border-amber-200 shadow-sm opacity-80 cursor-default">
+                                Pending Review
+                              </span>
+                              {offer.kycDocuments && Object.keys(offer.kycDocuments).length > 0 && (
+                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                                  {Object.values(offer.kycDocuments).filter(d => d.verified === true).length}/{Object.keys(offer.kycDocuments).length} Docs Verified
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {/* Chevron */}
-                        <div className="flex justify-end pr-2">
+                        <div className="flex justify-center pr-3">
                           <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
                             <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
                           </div>

@@ -1040,15 +1040,15 @@ export const getAccountDetails = async (clientId) => {
 };
 
 export const seedFinanceData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axiosInstance.post('/finance/seed', {}, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      return response.data;
-    } catch (error) {
-       console.error('Error seeding finance data:', error);
-    }
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post('/finance/seed', {}, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error seeding finance data:', error);
+  }
 };
 
 export const createReport = async (data) => {
@@ -2524,18 +2524,6 @@ export const getResumeRoleTypes = async () => {
 };
 
 // Get resumes with filters
-// AI search resumes
-export const aiSearchResumes = async (query) => {
-  try {
-    const response = await axiosInstance.post('/api/resumebank/ai-search', { query });
-    return response.data;
-  } catch (error) {
-    console.error('AI search failed:', error);
-    throw error.response?.data || { message: 'AI search failed' };
-  }
-};
-
-// Get resumes with filters and pagination
 export const getResumeBankResumes = async (params = {}) => {
   try {
     const queryParams = new URLSearchParams(params).toString();
@@ -3491,10 +3479,10 @@ export const getDepartmentTeamMembers = async (department = 'HR Recruitment') =>
     const response = await axiosInstance.get('/department/members', {
       params: { department }
     });
-    
+
     // Normalize response data
     let members = response.data?.data || response.data?.members || (Array.isArray(response.data) ? response.data : []);
-    
+
     // Merge with mock members
     const mockMembers = JSON.parse(localStorage.getItem('mock_kam_members') || '[]');
     const isRecruitment = department && (department.toLowerCase().includes('recruitment') || department.toLowerCase().includes('kam'));
@@ -3503,11 +3491,11 @@ export const getDepartmentTeamMembers = async (department = 'HR Recruitment') =>
       if (!department) return true;
       const normalizedDept = department.toLowerCase().trim();
       const memberDept = (m.department || '').toLowerCase().trim();
-      
+
       if (memberDept === normalizedDept) return true;
       if (isRecruitment && (memberDept.includes('recruitment') || memberDept.includes('kam') || memberDept === '')) return true;
       if (memberDept === normalizedDept.replace('hr ', '')) return true;
-      
+
       return false;
     });
 
@@ -3537,7 +3525,7 @@ export const getDepartmentTeamMembers = async (department = 'HR Recruitment') =>
       if (isRecruitment && (memberDept.includes('recruitment') || memberDept.includes('kam') || memberDept === '')) return true;
       return false;
     });
-    
+
     return { success: true, members: filteredMocks, data: filteredMocks };
   }
 };

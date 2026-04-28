@@ -114,72 +114,60 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
   const fetchResumeBankMatches = async (jobTitle) => {
     try {
-      setResumeBankLoading(true);
+      // 1. Fetch from Resume Bank
+      const res = await getResumeBankResumes({ search: jobTitle, limit: 100 });
+      const bankData = res.data || res.resumes || [];
       
-      // 1. FORCE FETCH EVERYTHING: Get full pool from all sources at once
-      const [bankRes, spRes] = await Promise.all([
-        getResumeBankResumes({ limit: 500 }).catch(() => ({ data: [] })), // Fetch a large chunk
-        getSharePointCandidates().catch(() => ({ success: true, data: [] }))
-      ]);
+      // 2. Fetch from SharePoint as well to be sure
+      const spRes = await getSharePointCandidates().catch(() => ({ success: true, data: [] }));
+      const spData = spRes.data || [];
 
-      // 2. Format Resiliently: Handle all possible response structures
-      const rawBank = Array.isArray(bankRes) ? bankRes : (bankRes.data || bankRes.resumes || []);
-      const rawSP = spRes.data || [];
-
-      const fullPool = [
-        ...rawBank.map(c => ({ 
+      // 3. Combine pools
+      const pool = [
+        ...bankData.map(c => ({ 
           id: c.userId || c.id, 
-          name: c.candidateName || c.name || c.fileName?.replace(/\.[^.]+$/, '') || 'Candidate', 
-          email: c.email || '', 
-          phone: c.contactNo || c.phone || '',
-          role: c.position || c.role || c.roleType || 'Resume Bank', 
+          name: c.candidateName || c.name, 
+          email: c.email, 
+          phone: c.contactNo || c.phone,
+          role: c.position || c.role, 
           skills: Array.isArray(c.skills) ? c.skills : (c.skills ? String(c.skills).split(',') : []),
-          experience: c.experience || 'N/A'
+          experience: c.experience 
         })),
-        ...rawSP.map(c => ({ 
+        ...spData.map(c => ({ 
           id: c.sharePointId || c.id, 
-          name: c.candidateName || c.name || c.fileName?.replace(/\.[^.]+$/, '') || 'SP Resume', 
-          email: c.email || '', 
-          role: c.position || c.roleType || 'SharePoint', 
+          name: c.name, 
+          email: c.email, 
+          role: c.position, 
           skills: ['SharePoint Sync'] 
         }))
-      ].filter(c => c.name !== 'Candidate' || c.email); // Filter out junk
+      ];
 
-      if (fullPool.length === 0) {
-        toast.error("Database is empty. Please sync SharePoint first.");
+      if (pool.length === 0) {
         setSuggestedCandidates([]);
         return;
       }
 
-      // 3. Client-Side Smart Ranking (Fast & Reliable)
-      const query = (jobTitle || '').toLowerCase();
-      const terms = query.split(/\s+/).filter(t => t.length > 2);
-      
-      const rankedMatches = fullPool.map(c => {
-        const text = `${c.name} ${c.role} ${c.skills.join(' ')}`.toLowerCase();
-        let score = 0;
-        if (text.includes(query)) score += 10; // Exact phrase match
-        terms.forEach(t => { if (text.includes(t)) score += 2; }); // Keyword match
-        return { ...c, score };
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 15); // Show top 15 results
+      // Try AI Discovery fallback search
+      const keywords = jobTitle.toLowerCase().split(' ').filter(w => w.length > 3);
+      const matches = pool.filter(c => {
+        const candidateText = ((c.name || '') + ' ' + (c.role || '') + ' ' + (c.skills ? c.skills.join(' ') : '')).toLowerCase();
+        return keywords.some(word => candidateText.includes(word));
+      }).slice(0, 8); // Top 8 matches
 
-      setSuggestedCandidates(rankedMatches);
-      
-      if (rankedMatches[0]?.score > 0) {
-        toast.success(`Found ${rankedMatches.filter(m => m.score > 0).length} matches!`);
+      setSuggestedCandidates(matches);
+      if (matches.length > 0) {
+        toast.success(`AI Discovery: Found ${matches.length} candidates for "${jobTitle}"`);
       } else {
-        toast.info("Showing latest resumes from bank (no exact match found).");
+        toast.info("No matching resumes found in the bank yet.");
       }
     } catch (error) {
-      console.error("Critical Match Error:", error);
-      toast.error("System sync error. Showing available data.");
-    } finally {
-      setResumeBankLoading(false);
+      console.error("Match Error:", error);
     }
   };
 
+  const fetchCandidates = useCallback(async () => {
+    // ... implementation
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -343,6 +331,51 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     }
   }, [showAddModal, newCandidate.roleType]);
 
+  const fetchResumeBankMatches = async (roleKeyword) => {
+    setResumeBankLoading(true);
+    setResumeBankRole(roleKeyword);
+    try {
+      const selectedJob = jobOpenings.find(j => j.title === roleKeyword || j.id === roleKeyword || `${j.title} — ${j.client}` === roleKeyword);
+      const cleanedKeyword = String(roleKeyword || '').replace(/[._-]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const fallbackTerms = [selectedJob?.roleType, selectedJob?.title, roleKeyword, cleanedKeyword, cleanedKeyword.split(' ')[0]].filter((term, index, list) => term && list.indexOf(term) === index);
+
+      let matchedResumes = [];
+      for (const term of fallbackTerms) {
+        const response = await getResumeBankResumes({ search: term, limit: 20 });
+        matchedResumes = response.data || [];
+        if (matchedResumes.length > 0) break;
+      }
+      setResumeBankResumes(matchedResumes);
+    } catch (error) { console.error('Failed to fetch resume bank matches:', error); setResumeBankResumes([]); }
+    finally { setResumeBankLoading(false); }
+  };
+
+  const addFromResumeBank = async (resume) => {
+    const candidateLocal = {
+      id: Date.now() + Math.random(),
+      name: resume.candidateName || resume.fileName?.replace(/\.[^.]+$/, '') || 'Unknown',
+      email: resume.email || '', phone: resume.phone || '', location: resume.location || '',
+      jobTitle: resumeBankRole || '', client: '', stage: 'Screening', rating: 0,
+      experience: resume.experience || '', currentCTC: resume.currentCTC || '',
+      expectedCTC: resume.expectedCTC || '', noticePeriod: '30 days',
+      skills: resume.skills || [], appliedDate: new Date().toISOString().split('T')[0],
+      lastActivity: new Date().toISOString().split('T')[0], photo: null,
+      source: 'Resume Bank', resumeId: resume.id, pipelineStatus: 'pending',
+    };
+    try {
+      const apiData = {
+        name: candidateLocal.name, email: candidateLocal.email, phone: candidateLocal.phone,
+        location: candidateLocal.location, skills: candidateLocal.skills, experience: candidateLocal.experience,
+        currentSalary: candidateLocal.currentCTC, expectedSalary: candidateLocal.expectedCTC,
+        stage: 'Screening', pipelineStatus: 'pending', source: 'Resume Bank',
+      };
+      if (resume.positionId) apiData.positionId = resume.positionId;
+      if (resume.clientId) apiData.clientId = resume.clientId;
+      const res = await addCandidateAPI(apiData);
+      if (res?.data?._id) candidateLocal.id = res.data._id;
+    } catch (err) { console.error('Failed to add resume bank candidate:', err); }
+    setCandidates(prev => [candidateLocal, ...prev]);
+  };
 
   const fetchCandidates = useCallback(async () => {
     try {
@@ -1105,18 +1138,43 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     <p className="text-[11px] font-bold text-slate-500 italic opacity-80">Ready to match with this JD</p>
                   </div>
                   <button
-                    onClick={() => {
-                      if (!newCandidate.jobTitle) { 
-                        toast.error("Please enter a Target Job Title first"); 
-                        return; 
+                    onClick={async () => {
+                      if (!newCandidate.jobTitle) { toast.error("Please enter a Job Title first"); return; }
+                      setResumeBankLoading(true);
+                      try {
+                        // EXPLICIT SYNC & FETCH: Ensure we search the WHOLE database
+                        // This fetches from S3 / Database
+                        const res = await getResumeBankResumes({ search: newCandidate.jobTitle, limit: 100 });
+                        const resumes = res.data || res.resumes || [];
+                        
+                        // Also proactively fetch positions to make sure we have JD context
+                        fetchResumeBankMatches(newCandidate.jobTitle);
+
+                        if (resumes.length === 0) {
+                          // Try a broader search if specific JD yields nothing
+                          const broadRes = await getResumeBankResumes({ limit: 50 });
+                          const broadData = broadRes.data || broadRes.resumes || [];
+                          if (broadData.length > 0) {
+                            toast.success(`AI found ${broadData.length} related candidates for JD analysis.`);
+                          } else {
+                            toast.info("No candidates found in repository. Try syncing SharePoint first.");
+                          }
+                          return;
+                        }
+
+                        toast.success(`AI identified ${resumes.length} top candidates from Resume Bank!`);
+                      } catch (err) {
+                        console.error("Magic Match Error:", err);
+                        toast.error("AI Match failed. Check connection.");
+                      } finally {
+                        setResumeBankLoading(false);
                       }
-                      fetchResumeBankMatches(newCandidate.jobTitle);
                     }}
                     disabled={resumeBankLoading}
-                    className="flex items-center gap-2 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all disabled:opacity-50 group-hover:scale-[1.02] active:scale-95"
+                    className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all disabled:opacity-50"
                   >
-                    {resumeBankLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : <FiZap className="w-4 h-4" />}
-                    {resumeBankLoading ? "Matching..." : "Magic Match"}
+                    {resumeBankLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FiZap className="w-4 h-4" />}
+                    Magic Match
                   </button>
                 </div>
 

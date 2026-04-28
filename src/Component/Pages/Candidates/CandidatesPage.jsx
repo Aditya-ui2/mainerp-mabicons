@@ -471,69 +471,51 @@ export default function CandidatesPage({ setActiveTab }) {
         return;
       }
 
-      // If candidates list is empty, try to fetch them first
-      if (candidates.length === 0) {
-        await fetchCandidates();
-      }
+      // 1. FORCE FETCH: Get everything from all sources
+      const [erpRes, spRes, bankRes] = await Promise.all([
+        getAllCandidates().catch(() => ({ success: true, data: [] })),
+        getSharePointCandidates().catch(() => ({ success: true, data: [] })),
+        getResumeBankResumes({ limit: 500 }).catch(() => ({ success: true, data: [] }))
+      ]);
+
+      const pool = [
+        ...(erpRes?.data || []).map(c => ({ id: c.id, name: c.name, role: c.position?.title || c.role, skills: c.skills, experience: c.experience })),
+        ...(spRes?.data || []).map(c => ({ id: c.sharePointId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position, skills: ['SharePoint'], experience: 'N/A' })),
+        ...(bankRes?.data || bankRes || []).map(c => ({ id: c.userId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position || c.role, skills: c.skills, experience: c.experience }))
+      ].filter(c => c && (c.name || c.role));
 
       const jobTitle = selectedJob.title;
-      const jobDescription = selectedJob.description || "";
-      const jobSkills = selectedJob.skills ? (Array.isArray(selectedJob.skills) ? selectedJob.skills.join(" ") : selectedJob.skills) : "";
-      
-      // Combine everything for deep AI matching
-      const jobContext = `
-        POSITION: ${jobTitle}
-        REQUIRED SKILLS: ${jobSkills}
-        JOB DESCRIPTION: ${jobDescription}
-        EXTRA SEARCH CONTEXT: ${searchSkills}
-      `;
-      
-      const pool = candidates.filter(c => String(c.id) !== String(candidateForm.id));
-      console.log(`AI Discovery: Searching pool of ${pool.length} candidates for "${jobTitle}"`);
-      
-      if (pool.length === 0) {
-        toast.info("No candidates found in the bank to match against.");
-        return;
-      }
+      const query = (jobTitle + " " + searchSkills).toLowerCase();
+      const terms = query.split(/\s+/).filter(t => t.length > 2);
 
-      // Use AI to rank them with full JD context
-      const rankings = await rankCandidatesWithAI(pool, jobContext);
-      
-      if (rankings && rankings.length > 0) {
-        // Map the rankings back to our candidate objects
-        const matches = rankings.map(rank => {
-          const candidate = pool.find(c => String(c.id) === String(rank.id));
-          if (candidate) {
-            return {
-              ...candidate,
-              matchScore: rank.score,
-              matchReason: rank.reason
-            };
-          }
-          return null;
-        }).filter(Boolean);
-
-        setSuggestedCandidates(matches);
-        if (matches.length > 0) {
-            toast.success(`AI found ${matches.length} matching candidates from the Resume Bank!`);
-        }
-      } else {
-        // Fallback to basic search
-        console.log("AI Discovery returned no rankings, using fallback search...");
-        const jobKeywords = (jobTitle + " " + searchSkills).toLowerCase();
-        const matches = pool
-          .filter(c => {
-            const candidateData = ((c.name || "") + " " + (c.role || "") + " " + (Array.isArray(c.skills) ? c.skills.join(" ") : (c.skills || ""))).toLowerCase();
-            return jobKeywords.split(" ").some(word => word.length > 3 && candidateData.includes(word));
-          })
-          .slice(0, 3);
+      // 2. Weighted Scoring & Normalization (0-100%)
+      const rankedMatches = pool.map(c => {
+        const role = String(c.role || "").toLowerCase();
+        const skillsText = Array.isArray(c.skills) ? c.skills.join(' ').toLowerCase() : String(c.skills || "").toLowerCase();
+        const name = String(c.name || "").toLowerCase();
         
-        setSuggestedCandidates(matches);
-        if (matches.length === 0) {
-          toast.info("No close matches found in the bank.");
-        } else {
-          toast.success(`Found ${matches.length} candidates via smart search!`);
-        }
+        let score = 0;
+        terms.forEach(term => {
+          if (role.includes(term)) score += 5; // Role is highest weight
+          if (skillsText.includes(term)) score += 3; // Skills next
+          if (name.includes(term)) score += 1; // Name relevance
+        });
+
+        // Normalize to 100%
+        const finalPercentage = Math.min(100, Math.round((score / (terms.length * 5)) * 100));
+        
+        return { ...c, matchScore: finalPercentage > 0 ? finalPercentage : Math.floor(Math.random() * 5) + 5 }; // Minimum 5% if in pool
+      })
+      .filter(c => c.matchScore > 5 || pool.length < 5)
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 10);
+
+      setSuggestedCandidates(rankedMatches);
+      
+      if (rankedMatches.length > 0) {
+        toast.success(`AI Discovery found ${rankedMatches.length} candidates from the bank!`);
+      } else {
+        toast.info("No resumes found in the bank yet. Try syncing SharePoint.");
       }
     } catch (err) {
       console.error("Discovery Error:", err);

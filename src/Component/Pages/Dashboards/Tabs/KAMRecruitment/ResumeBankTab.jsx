@@ -5,7 +5,7 @@ import {
   Database, RefreshCw, X, Star, Share, Clock, User, Briefcase, Eye, ChevronDown, Pencil, Check,
   Sparkles, Bot, Wand2
 } from 'lucide-react';
-// import { searchResumesWithAI } from '../../../../Utilities/geminiService';
+import { searchResumesWithAI } from '../../../../Utilities/geminiService';
 import { toast } from "sonner";
 import {
   getResumeBankStats,
@@ -20,7 +20,6 @@ import {
   getAllClients,
   syncResumesFromSharePoint,
   syncResumesFromSharePointDrive,
-  aiSearchResumes
 } from '../../../service/api';
 
 // --- Helper Functions ---
@@ -563,17 +562,22 @@ const ResumeBankTab = () => {
     if (!aiQuery.trim()) return;
     setIsAiSearching(true);
     try {
-        const response = await aiSearchResumes(aiQuery);
-        if (response.success && response.data) {
-            setResumes(response.data);
-            setAiResults(response.data.length);
-            toast.success(`AI found ${response.data.length} matching candidates`);
-        }
+      // Get all current resumes for context
+      const allResumesResponse = await getResumeBankResumes({ limit: 100 });
+      const allData = allResumesResponse.resumes || [];
+
+      const matchingIds = await searchResumesWithAI(allData, aiQuery);
+
+      if (matchingIds && Array.isArray(matchingIds)) {
+        const filtered = allData.filter(r => matchingIds.includes(r.id));
+        setResumes(filtered);
+        setAiResults(filtered.length);
+        toast.success(`AI found ${filtered.length} matching candidates`);
+      }
     } catch (err) {
-        console.error('AI search error:', err);
-        toast.error(err.message || "AI Search failed. Check server logs.");
+      toast.error("AI Search failed. Check if API Key is set.");
     } finally {
-        setIsAiSearching(false);
+      setIsAiSearching(false);
     }
   };
 
