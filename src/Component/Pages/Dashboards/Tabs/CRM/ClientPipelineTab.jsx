@@ -4,18 +4,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiX, FiMail, FiPhone, FiPlus, FiSearch, FiChevronDown,
   FiChevronRight, FiUser, FiGrid, FiList, FiRefreshCw,
-  FiEye, FiTrash, FiMapPin, FiActivity, FiLock, FiEdit2, FiSave
+  FiEye, FiTrash, FiMapPin, FiActivity, FiLock, FiEdit2, FiSave, FiCheckSquare, FiCheck
 } from 'react-icons/fi';
 import ClientOnboardingForm from "./ClientOnboardingForm";
 import { toast } from "react-hot-toast";
 import { getAllClients, createClient, editClient } from "../../../service/api";
 
-const PIPELINE_STAGES = ["All Clients", "Finalize", "Generate Password"];
+const PIPELINE_STAGES = ["Lead Stage", "Finalize", "Onboarding Complete"];
 
 const STAGE_STYLE = {
-  "All Clients":       { dot: "bg-slate-400",   badge: "bg-slate-100 text-slate-600",   bar: "bg-slate-400" },
-  "Finalize":          { dot: "bg-amber-400",   badge: "bg-amber-100 text-amber-700",   bar: "bg-amber-400" },
-  "Generate Password": { dot: "bg-blue-400",    badge: "bg-blue-100 text-blue-700",     bar: "bg-blue-400"  },
+  "Onboarding Complete": { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-600", label: "Onboarding", icon: true, bar: "bg-emerald-500" },
+  "Lead Stage":          { dot: "bg-amber-400",   badge: "bg-amber-100 text-amber-700",   label: "Lead Stage", bar: "bg-amber-400" },
+  "Finalize":            { dot: "bg-blue-400",    badge: "bg-blue-100 text-blue-700",     label: "Finalize", bar: "bg-blue-400"  },
 };
 
 const AVATAR_BG = '#EEF2FB';
@@ -39,6 +39,8 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
   const [editForm, setEditForm] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
+  const [finalizingClient, setFinalizingClient] = useState(null);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
   const dragItem = useRef(null);
   const dragOverStage = useRef(null);
@@ -48,20 +50,23 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
     try {
       const res = await getAllClients();
       const raw = res?.data?.clients || res?.clients || res || [];
-      const mapped = (Array.isArray(raw) ? raw : []).map(c => ({
-        ...c,
-        id: c._id || c.id,
-        companyName: c.companyName || c.name || 'Unknown',
-        contactPerson: c.spocName || c.contactPerson || c.name || '',
-        email: c.spocEmail || c.email || '',
-        phone: c.contactNumber || c.phone || '',
-        industry: c.category?.[0] || c.industry || 'General',
-        location: c.corporateAddress || c.location || '',
-        stage: c.stage || 'All Clients',
-        assignKAM: c.assignKAM || c.owner || 'Not Assigned',
-        probability: c.probability || 25,
-        lastContact: c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : '',
-      }));
+      const mapped = (Array.isArray(raw) ? raw : []).map(c => {
+        const stage = c.stage || (c.status === 'Requested' ? 'Lead Stage' : 'Onboarding Complete');
+        return {
+          ...c,
+          id: c._id || c.id,
+          companyName: c.companyName || c.name || 'Unknown',
+          contactPerson: c.spocName || c.contactPerson || c.name || '',
+          email: c.spocEmail || c.email || '',
+          phone: c.contactNumber || c.phone || '',
+          industry: c.category?.[0] || c.industry || 'General',
+          location: c.corporateAddress || c.location || '',
+          stage: stage,
+          assignKAM: c.assignKAM || c.owner || 'Not Assigned',
+          probability: stage === 'Onboarding Complete' ? 100 : (stage === 'Finalize' ? 50 : 25),
+          lastContact: c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : '',
+        };
+      });
       setClients(mapped);
     } catch (err) {
       console.error('Failed to fetch clients:', err);
@@ -137,11 +142,31 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
   const handleDragOver = (e, stage) => { e.preventDefault(); dragOverStage.current = stage; };
   const handleDrop = (e, stage) => {
     e.preventDefault();
-    if (dragItem.current && dragOverStage.current && dragItem.current !== stage) {
-      setClients(prev => prev.map(c =>
-        c.id === dragItem.current ? { ...c, stage: dragOverStage.current } : c
-      ));
-      toast.success(`Moved to ${dragOverStage.current}`);
+    const clientId = dragItem.current;
+    if (clientId) {
+      const client = clients.find(c => c.id === clientId);
+      if (client && client.stage !== stage) {
+        if (stage === 'Onboarding Complete') {
+          setFinalizingClient(client);
+          setIsFinalizeOpen(true);
+        } else {
+          const newProb = stage === 'Finalize' ? 50 : 25;
+          
+          // Optimistically update local state
+          setClients(prev => prev.map(c =>
+            c.id === clientId ? { ...c, stage: stage, probability: newProb } : c
+          ));
+          
+          // Persist to backend
+          editClient({ clientId: clientId, stage: stage, probability: newProb })
+            .then(() => toast.success(`Moved to ${stage}`))
+            .catch(() => {
+              toast.error(`Failed to update stage`);
+              // Rollback on failure
+              fetchClients();
+            });
+        }
+      }
     }
     dragItem.current = null;
     dragOverStage.current = null;
@@ -219,7 +244,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
       {viewMode === 'list' && (
         <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
           {/* Table header */}
-          <div className="grid grid-cols-[40px_2.5fr_1.5fr_2fr_1.5fr_1fr_40px] gap-4 px-8 py-5 border-b border-[#F4F3EF]">
+          <div className="grid grid-cols-[40px_220px_120px_200px_150px_100px_40px] gap-6 px-8 py-5 border-b border-[#F4F3EF] bg-[#FAFAFA]/30">
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -228,9 +253,12 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                 className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
               />
             </div>
-            {["Company", "Industry", "Contact", "Stage", "Progress", ""].map((h, i) => (
-              <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">{h}</div>
-            ))}
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left pl-[56px]">Company</div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Industry</div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Contact</div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Stage</div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Progress</div>
+            <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left"></div>
           </div>
 
           {/* Rows */}
@@ -245,12 +273,12 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
           ) : filteredClients.map((c) => {
             const isSelected = selectedRowIds.includes(c.id);
             const initials = (c.companyName || '?').slice(0, 2).toUpperCase();
-            const stageStyle = STAGE_STYLE[c.stage] || STAGE_STYLE["All Clients"];
+            const stageStyle = STAGE_STYLE[c.stage] || STAGE_STYLE["Onboarding Complete"];
             return (
               <div
                 key={c.id}
                 onClick={() => setSelectedClient(c)}
-                className={`grid grid-cols-[40px_2.5fr_1.5fr_2fr_1.5fr_1fr_40px] gap-4 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group ${isSelected ? 'bg-blue-50/30' : ''}`}
+                className={`grid grid-cols-[40px_220px_120px_200px_150px_100px_40px] gap-6 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group ${isSelected ? 'bg-blue-50/30' : ''}`}
               >
                 <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                   <input
@@ -279,17 +307,27 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                   <p className="text-[13px] font-medium text-[#64748b] truncate">{c.contactPerson}</p>
                   <p className="text-[11px] text-[#9B9BAD] truncate">{c.email}</p>
                 </div>
-                <div className="text-left">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${stageStyle.badge}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${stageStyle.dot}`} />
-                    {c.stage}
-                  </span>
+                <div className="text-left min-w-[140px] space-y-1">
+                  {(() => {
+                    const sName = c.stage === 'All Clients' ? 'Onboarding Complete' : c.stage;
+                    const stageStyle = STAGE_STYLE[sName] || STAGE_STYLE["Onboarding Complete"];
+                    const isLead = sName === 'Lead Stage';
+                    const isFinalize = sName === 'Finalize';
+                    return (
+                      <div className="flex flex-col gap-1">
+                        <span className={`inline-flex items-center gap-1.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${(isLead || isFinalize) ? (isLead ? 'text-amber-600' : 'text-blue-600') + ' bg-transparent border-none' : stageStyle.badge} !pl-0`}>
+                          {stageStyle.label || sName}
+                          {stageStyle.icon && <FiCheck size={12} className="shrink-0" />}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-[#F4F3EF] rounded-full overflow-hidden">
-                    <div className={`h-full ${stageStyle.bar}`} style={{ width: `${c.probability || 25}%` }} />
+                    <div className={`h-full ${stageStyle.bar}`} style={{ width: `${c.probability}%` }} />
                   </div>
-                  <span className="text-[10px] font-bold text-[#9B9BAD] w-8 text-right">{c.probability || 25}%</span>
+                  <span className="text-[10px] font-bold text-[#9B9BAD] w-8 text-right">{c.probability}%</span>
                 </div>
                 <div className="flex justify-end">
                   <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all" />
@@ -316,7 +354,10 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                 <div className="p-5 flex items-center justify-between border-b border-[#F4F3EF]">
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${stageStyle.dot}`} />
-                    <h3 className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-[1px]">{stage}</h3>
+                    <h3 className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-[1px] flex items-center gap-1.5">
+                      {stageStyle.label || stage}
+                      {stageStyle.icon && <FiCheck size={14} className="text-emerald-500 shrink-0" />}
+                    </h3>
                   </div>
                   <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${stageStyle.badge}`}>{stageClients.length}</span>
                 </div>
@@ -344,7 +385,9 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-left">
-                          <span className="text-[11px] text-[#9B9BAD]">{c.contactPerson}</span>
+                          <div className="flex flex-col">
+                            <span className="text-[11px] text-[#9B9BAD]">{c.contactPerson}</span>
+                          </div>
                           <FiChevronRight size={14} className="text-[#C5C5D2] group-hover:text-[#1B4DA0]" />
                         </div>
                         <div className="mt-3">
@@ -439,24 +482,72 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
         document.body
       )}
 
-      {/* Add Client Modal */}
+      {/* Add Client Modal (Minimal) */}
       <ClientOnboardingForm
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
+        mode="minimal"
         onComplete={async (newClientData) => {
           try {
-            const res = await createClient(newClientData);
+            // Map the minimal data to what the API expects
+            const payload = {
+              companyName: newClientData.companyName,
+              spocName: newClientData.spocName,
+              ownerEmail: newClientData.spocEmail, // Use SPOC email as base email
+              spocPhone: newClientData.spocPhone,
+              industry: newClientData.industry,
+              stage: 'Lead Stage',
+              status: 'Requested',
+              probability: 25
+            };
+
+            const res = await createClient(payload);
             if (res.success) {
               setClients(prev => [{
                 ...res.data,
-                stage: 'All Clients',
+                stage: 'Lead Stage', // Set to Lead Stage stage immediately
                 probability: 10
               }, ...prev]);
               setIsAddOpen(false);
-              toast.success("Client added successfully!");
+              toast.success("Client added to pipeline for finalization!");
             }
           } catch (error) {
             toast.error(error.message || "Failed to add client");
+          }
+        }}
+      />
+
+      {/* Finalize Onboarding Modal (Full) */}
+      <ClientOnboardingForm
+        isOpen={isFinalizeOpen}
+        onClose={() => setIsFinalizeOpen(false)}
+        mode="full"
+        initialData={finalizingClient}
+        onComplete={async (completeData) => {
+          try {
+            const payload = {
+              ...completeData,
+              clientId: finalizingClient.id,
+              stage: 'Onboarding Complete',
+              status: 'Accepted',
+              probability: 100
+            };
+
+            const res = await editClient(payload);
+            if (res.success) {
+              const updated = {
+                ...res.data,
+                stage: 'Onboarding Complete',
+                status: 'Accepted',
+                probability: 100
+              };
+              setClients(prev => prev.map(c => c.id === finalizingClient.id ? { ...c, ...updated } : c));
+              setIsFinalizeOpen(false);
+              setFinalizingClient(null);
+              toast.success("Client onboarding completed!");
+            }
+          } catch (error) {
+            toast.error(error.message || "Failed to complete onboarding");
           }
         }}
       />
@@ -545,9 +636,10 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                         <p className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[3px] mt-1">{selectedClient.industry}</p>
                       </>
                     )}
-                    <span className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['All Clients']).badge}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['All Clients']).dot}`} />
-                      {selectedClient.stage}
+                    <span className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).badge}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).dot}`} />
+                      {(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).label || selectedClient.stage}
+                      {(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).icon && <FiCheck size={14} className="shrink-0" />}
                     </span>
                   </div>
 
@@ -635,21 +727,21 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                         ))}
                       </div>
                     </div>
-                    
+
                     {/* Notes */}
                     {(selectedClient.onboardingNotes || isEditing) && (
                       <div className="p-6 bg-[#FAFAF9] rounded-3xl border border-[#F4F3EF] space-y-2">
-                         <h4 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Onboarding Notes</h4>
-                         {isEditing ? (
-                           <textarea
-                             className="w-full text-sm text-[#4B4B5E] leading-relaxed bg-white p-4 rounded-2xl border border-slate-100 outline-none focus:ring-2 focus:ring-blue-50 min-h-[100px] transition-all"
-                             value={editForm.onboardingNotes || ''}
-                             onChange={(e) => handleEditChange('onboardingNotes', e.target.value)}
-                             placeholder="Add internal notes about this client..."
-                           />
-                         ) : (
-                           <p className="text-sm text-[#4B4B5E] leading-relaxed italic">"{selectedClient.onboardingNotes}"</p>
-                         )}
+                        <h4 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Onboarding Notes</h4>
+                        {isEditing ? (
+                          <textarea
+                            className="w-full text-sm text-[#4B4B5E] leading-relaxed bg-white p-4 rounded-2xl border border-slate-100 outline-none focus:ring-2 focus:ring-blue-50 min-h-[100px] transition-all"
+                            value={editForm.onboardingNotes || ''}
+                            onChange={(e) => handleEditChange('onboardingNotes', e.target.value)}
+                            placeholder="Add internal notes about this client..."
+                          />
+                        ) : (
+                          <p className="text-sm text-[#4B4B5E] leading-relaxed italic">"{selectedClient.onboardingNotes}"</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -659,8 +751,8 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                 <div className="p-10 border-t border-[#F4F3EF]">
                   <button
                     onClick={() => {
-                        setSelectedClient(null);
-                        setIsEditing(false);
+                      setSelectedClient(null);
+                      setIsEditing(false);
                     }}
                     className="w-full py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-[11px] font-black uppercase tracking-[3px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95"
                   >

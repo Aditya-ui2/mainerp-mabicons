@@ -79,23 +79,22 @@ const StepIndicator = ({ step, steps }) => (
   </div>
 );
 
-const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
+const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", initialData = null }) => {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
-    // Step 1: Infor
     companyName: '',
+    industry: 'General',
+    spocName: '',
+    spocEmail: '',
+    spocPhone: '',
     gstNumber: '',
     registeredAddress: '',
     city: '',
     pinCode: '',
     ownerName: '',
     ownerEmail: '',
-    spocName: '',
-    spocPhone: '',
-    
-    // Step 2: Docs
     agreementType: 'Select agreement',
     agreementEffectiveDate: '',
     feeAmount: '',
@@ -103,8 +102,6 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
     shopsLicense: '',
     factoryLicense: '',
     msmeRegistered: 'Yes',
-    
-    // Step 3: Detail
     totalEmployees: '',
     payrollCycle: 'Monthly',
     pfApplicable: 'Yes',
@@ -114,11 +111,47 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
     onboardingNotes: ''
   });
 
-  const steps = [
-    { n: 1, title: 'Infor', icon: <FiInfo /> },
-    { n: 2, title: 'Docs', icon: <FiFileText /> },
-    { n: 3, title: 'Detail', icon: <FiActivity /> }
-  ];
+  // Update form data when initialData changes
+  React.useEffect(() => {
+    if (initialData) {
+      setFormData({
+        companyName: initialData.companyName || '',
+        industry: initialData.industry || 'General',
+        spocName: initialData.spocName || '',
+        spocEmail: initialData.spocEmail || initialData.email || '',
+        spocPhone: initialData.spocPhone || initialData.phone || '',
+        gstNumber: initialData.gstNumber || '',
+        registeredAddress: initialData.registeredAddress || initialData.location || '',
+        city: initialData.city || '',
+        pinCode: initialData.pinCode || '',
+        ownerName: initialData.ownerName || '',
+        ownerEmail: initialData.ownerEmail || '',
+        agreementType: initialData.agreementType || 'Select agreement',
+        agreementEffectiveDate: initialData.agreementEffectiveDate || '',
+        feeAmount: initialData.feeAmount || '',
+        paymentTerms: initialData.paymentTerms || 'Net 15',
+        shopsLicense: initialData.shopsLicense || '',
+        factoryLicense: initialData.factoryLicense || '',
+        msmeRegistered: initialData.msmeRegistered || 'Yes',
+        totalEmployees: initialData.totalEmployees || '',
+        payrollCycle: initialData.payrollCycle || 'Monthly',
+        pfApplicable: initialData.pfApplicable || 'Yes',
+        esicApplicable: initialData.esicApplicable || 'Yes',
+        assignKAM: initialData.assignKAM || 'Priya Mehta',
+        leadSource: initialData.leadSource || 'Reference',
+        onboardingNotes: initialData.onboardingNotes || ''
+      });
+      setStep(1); // Reset step when new data loaded
+    }
+  }, [initialData]);
+
+  const steps = mode === "minimal" 
+    ? [{ n: 1, title: 'Basic Info', icon: <FiInfo /> }]
+    : [
+        { n: 1, title: 'Identity', icon: <FiInfo /> },
+        { n: 2, title: 'Docs', icon: <FiFileText /> },
+        { n: 3, title: 'Detail', icon: <FiActivity /> }
+      ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -126,11 +159,11 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
   };
 
   const nextStep = () => {
-    if (step === 1 && (!formData.companyName || !formData.gstNumber)) {
-      toast.error('Company Name and GST Number are required');
+    if (step === 1 && !formData.companyName) {
+      toast.error('Company Name is required to proceed');
       return;
     }
-    setStep(s => Math.min(s + 1, 3));
+    setStep(s => Math.min(s + 1, steps.length));
   };
 
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
@@ -141,7 +174,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
       await onComplete(formData);
       onClose();
     } catch (err) {
-      toast.error("Failed to onboard client");
+      toast.error("Failed to save client details");
     } finally {
       setSubmitting(false);
     }
@@ -166,10 +199,9 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
           >
             <div className="px-10 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-white">
               <div className="flex items-center gap-4">
-                <h2 className="text-[18px] font-black text-[#1A1A2E] tracking-tight">Step to onboard Client</h2>
-                <div className="px-3 py-1 bg-[#F4F3EF] rounded-full">
-                  <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest">Step {step} of 3</span>
-                </div>
+                <h2 className="text-[18px] font-black text-[#1A1A2E] tracking-tight">
+                  {mode === 'minimal' ? 'Add New Client' : 'Finalize Client Onboarding'}
+                </h2>
               </div>
               <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#F4F3EF] text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center">
                 <FiX size={18} />
@@ -177,78 +209,96 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white">
-              <StepIndicator step={step} steps={steps} />
 
               <div className="min-h-[450px]">
                 <AnimatePresence mode="wait">
-                  {step === 1 && (
-                    <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-2">
-                      <SectionHeader num="1" title="Company Identity" />
+                  {mode === "minimal" ? (
+                    <motion.div key="minimal" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                      <SectionHeader num="1" title="Basic Client Info" />
                       <div className="grid grid-cols-1 gap-5">
                         <InputField label="Company name" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="Registered company name" />
-                        <div className="grid grid-cols-2 gap-5">
-                          <InputField label="GST number" name="gstNumber" value={formData.gstNumber} onChange={handleInputChange} placeholder="27AABCU9603R1ZX" />
-                          <InputField label="CIN number" name="cinNumber" value={formData.cinNumber} onChange={handleInputChange} placeholder="U74999MH2020PTC..." skippable />
-                        </div>
+                        <InputField label="Industry" name="industry" value={formData.industry} onChange={handleInputChange} placeholder="e.g. IT, Healthcare" />
                       </div>
 
-                      <SectionHeader num="2" title="Address Details" />
-                      <div className="grid grid-cols-2 gap-5">
-                        <div className="col-span-full">
-                          <InputField label="Registered address" name="registeredAddress" value={formData.registeredAddress} onChange={handleInputChange} placeholder="Full address" />
-                        </div>
-                        <InputField label="City" name="city" value={formData.city} onChange={handleInputChange} placeholder="City" />
-                        <InputField label="PIN code" name="pinCode" value={formData.pinCode} onChange={handleInputChange} placeholder="400001" />
-                      </div>
-
-                      <SectionHeader num="3" title="Key Contacts" />
-                      <div className="grid grid-cols-2 gap-5">
-                        <InputField label="Owner Name" name="ownerName" value={formData.ownerName} onChange={handleInputChange} placeholder="Name" />
-                        <InputField label="Owner Email" name="ownerEmail" value={formData.ownerEmail} onChange={handleInputChange} placeholder="owner@email.com" />
+                      <SectionHeader num="2" title="Contact Details" />
+                      <div className="grid grid-cols-1 gap-5">
                         <InputField label="SPOC Name" name="spocName" value={formData.spocName} onChange={handleInputChange} placeholder="Name" />
+                        <InputField label="SPOC Email" name="spocEmail" value={formData.spocEmail} onChange={handleInputChange} placeholder="spoc@company.com" />
                         <InputField label="SPOC Phone" name="spocPhone" value={formData.spocPhone} onChange={handleInputChange} placeholder="+91 XXXXX XXXXX" />
                       </div>
                     </motion.div>
-                  )}
+                  ) : (
+                    <>
+                      {step === 1 && (
+                        <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-2">
+                          <SectionHeader num="1" title="Company Identity" />
+                          <div className="grid grid-cols-1 gap-5">
+                            <InputField label="Company name" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="Registered company name" />
+                            <div className="grid grid-cols-2 gap-5">
+                              <InputField label="GST number" name="gstNumber" value={formData.gstNumber} onChange={handleInputChange} placeholder="27AABCU9603R1ZX" />
+                              <InputField label="CIN number" name="cinNumber" value={formData.cinNumber} onChange={handleInputChange} placeholder="U74999MH2020PTC..." skippable />
+                            </div>
+                          </div>
 
-                  {step === 2 && (
-                    <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-2">
-                      <SectionHeader num="4" title="Agreement & Documents" />
-                      <div className="grid grid-cols-2 gap-5">
-                        <SelectField label="Agreement type" name="agreementType" value={formData.agreementType} onChange={handleInputChange} options={['Select agreement', 'MSA', 'SLA']} />
-                        <InputField label="Effective date" name="agreementEffectiveDate" value={formData.agreementEffectiveDate} onChange={handleInputChange} type="date" />
-                        <InputField label="Fee % / amount" name="feeAmount" value={formData.feeAmount} onChange={handleInputChange} placeholder="e.g. 8.33%" />
-                        <SelectField label="Payment terms" name="paymentTerms" value={formData.paymentTerms} onChange={handleInputChange} options={['Net 15', 'Net 30', 'Net 45']} />
-                      </div>
+                          <SectionHeader num="2" title="Address Details" />
+                          <div className="grid grid-cols-2 gap-5">
+                            <div className="col-span-full">
+                              <InputField label="Registered address" name="registeredAddress" value={formData.registeredAddress} onChange={handleInputChange} placeholder="Full address" />
+                            </div>
+                            <InputField label="City" name="city" value={formData.city} onChange={handleInputChange} placeholder="City" />
+                            <InputField label="PIN code" name="pinCode" value={formData.pinCode} onChange={handleInputChange} placeholder="400001" />
+                          </div>
 
-                      <SectionHeader num="5" title="Compliance Licenses" />
-                      <div className="grid grid-cols-2 gap-5">
-                        <InputField label="Shops license" name="shopsLicense" value={formData.shopsLicense} onChange={handleInputChange} placeholder="No." skippable />
-                        <InputField label="Factory license" name="factoryLicense" value={formData.factoryLicense} onChange={handleInputChange} placeholder="No." skippable />
-                        <SelectField label="MSME registered?" name="msmeRegistered" value={formData.msmeRegistered} onChange={handleInputChange} options={['Yes', 'No']} />
-                      </div>
-                    </motion.div>
-                  )}
+                          <SectionHeader num="3" title="Key Contacts" />
+                          <div className="grid grid-cols-2 gap-5">
+                            <InputField label="Owner Name" name="ownerName" value={formData.ownerName} onChange={handleInputChange} placeholder="Name" />
+                            <InputField label="Owner Email" name="ownerEmail" value={formData.ownerEmail} onChange={handleInputChange} placeholder="owner@email.com" />
+                            <InputField label="SPOC Name" name="spocName" value={formData.spocName} onChange={handleInputChange} placeholder="Name" />
+                            <InputField label="SPOC Phone" name="spocPhone" value={formData.spocPhone} onChange={handleInputChange} placeholder="+91 XXXXX XXXXX" />
+                          </div>
+                        </motion.div>
+                      )}
 
-                  {step === 3 && (
-                    <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-2">
-                      <SectionHeader num="6" title="Workforce & Payroll" />
-                      <div className="grid grid-cols-2 gap-5">
-                        <InputField label="Total employees" name="totalEmployees" value={formData.totalEmployees} onChange={handleInputChange} placeholder="e.g. 500" />
-                        <SelectField label="Payroll cycle" name="payrollCycle" value={formData.payrollCycle} onChange={handleInputChange} options={['Monthly', 'Bi-weekly']} />
-                        <SelectField label="PF applicable" name="pfApplicable" value={formData.pfApplicable} onChange={handleInputChange} options={['Yes', 'No']} />
-                        <SelectField label="ESIC applicable" name="esicApplicable" value={formData.esicApplicable} onChange={handleInputChange} options={['Yes', 'No']} />
-                      </div>
+                      {step === 2 && (
+                        <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-2">
+                          <SectionHeader num="4" title="Agreement & Documents" />
+                          <div className="grid grid-cols-2 gap-5">
+                            <SelectField label="Agreement type" name="agreementType" value={formData.agreementType} onChange={handleInputChange} options={['Select agreement', 'MSA', 'SLA']} />
+                            <InputField label="Effective date" name="agreementEffectiveDate" value={formData.agreementEffectiveDate} onChange={handleInputChange} type="date" />
+                            <InputField label="Fee % / amount" name="feeAmount" value={formData.feeAmount} onChange={handleInputChange} placeholder="e.g. 8.33%" />
+                            <SelectField label="Payment terms" name="paymentTerms" value={formData.paymentTerms} onChange={handleInputChange} options={['Net 15', 'Net 30', 'Net 45']} />
+                          </div>
 
-                      <SectionHeader num="7" title="CRM Assignment" />
-                      <div className="grid grid-cols-2 gap-5">
-                        <SelectField label="Assign KAM" name="assignKAM" value={formData.assignKAM} onChange={handleInputChange} options={['Priya Mehta', 'Rahul Mehta']} />
-                        <SelectField label="Lead Source" name="leadSource" value={formData.leadSource} onChange={handleInputChange} options={['Reference', 'Direct']} />
-                        <div className="col-span-full">
-                          <InputField label="Onboarding notes" name="onboardingNotes" value={formData.onboardingNotes} onChange={handleInputChange} placeholder="Notes..." skippable />
-                        </div>
-                      </div>
-                    </motion.div>
+                          <SectionHeader num="5" title="Compliance Licenses" />
+                          <div className="grid grid-cols-2 gap-5">
+                            <InputField label="Shops license" name="shopsLicense" value={formData.shopsLicense} onChange={handleInputChange} placeholder="No." skippable />
+                            <InputField label="Factory license" name="factoryLicense" value={formData.factoryLicense} onChange={handleInputChange} placeholder="No." skippable />
+                            <SelectField label="MSME registered?" name="msmeRegistered" value={formData.msmeRegistered} onChange={handleInputChange} options={['Yes', 'No']} />
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {step === 3 && (
+                        <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-2">
+                          <SectionHeader num="6" title="Workforce & Payroll" />
+                          <div className="grid grid-cols-2 gap-5">
+                            <InputField label="Total employees" name="totalEmployees" value={formData.totalEmployees} onChange={handleInputChange} placeholder="e.g. 500" />
+                            <SelectField label="Payroll cycle" name="payrollCycle" value={formData.payrollCycle} onChange={handleInputChange} options={['Monthly', 'Bi-weekly']} />
+                            <SelectField label="PF applicable" name="pfApplicable" value={formData.pfApplicable} onChange={handleInputChange} options={['Yes', 'No']} />
+                            <SelectField label="ESIC applicable" name="esicApplicable" value={formData.esicApplicable} onChange={handleInputChange} options={['Yes', 'No']} />
+                          </div>
+
+                          <SectionHeader num="7" title="CRM Assignment" />
+                          <div className="grid grid-cols-2 gap-5">
+                            <SelectField label="Assign KAM" name="assignKAM" value={formData.assignKAM} onChange={handleInputChange} options={['Priya Mehta', 'Rahul Mehta']} />
+                            <SelectField label="Lead Source" name="leadSource" value={formData.leadSource} onChange={handleInputChange} options={['Reference', 'Direct']} />
+                            <div className="col-span-full">
+                              <InputField label="Onboarding notes" name="onboardingNotes" value={formData.onboardingNotes} onChange={handleInputChange} placeholder="Notes..." skippable />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </>
                   )}
                 </AnimatePresence>
               </div>
@@ -256,9 +306,9 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
 
             <div className="px-10 py-8 bg-white border-t border-[#F4F3EF] flex items-center justify-between relative z-[100]">
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${step === 3 ? 'bg-emerald-500 animate-pulse' : 'bg-[#1B4DA0]'}`} />
+                <div className={`w-2 h-2 rounded-full ${step === steps.length ? 'bg-emerald-500 animate-pulse' : 'bg-[#1B4DA0]'}`} />
                 <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest italic">
-                  {step === 3 ? 'Ready to finish' : 'Fill info to proceed'}
+                  {step === steps.length ? 'Ready to finish' : 'Fill info to proceed'}
                 </p>
               </div>
               <div className="flex gap-4">
@@ -271,13 +321,10 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
                     Back
                   </button>
                 )}
-                {step < 3 ? (
+                {step < steps.length ? (
                   <button 
                     type="button"
-                    onClick={() => {
-                      console.log('Next clicked, current step:', step);
-                      nextStep();
-                    }} 
+                    onClick={nextStep} 
                     className="px-10 py-3.5 bg-[#1B4DA0] text-white font-black text-[13px] rounded-xl hover:bg-[#153D80] transition-all flex items-center gap-2 shadow-lg shadow-blue-500/10 active:scale-95"
                   >
                     Next Step <FiChevronRight />
@@ -287,9 +334,9 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete }) => {
                     type="button"
                     onClick={handleSubmit} 
                     disabled={submitting} 
-                    className="px-10 py-3.5 bg-[#10b981] text-white font-black text-[13px] rounded-xl hover:bg-[#059669] transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/10 active:scale-95"
+                    className={`px-10 py-3.5 text-white font-black text-[13px] rounded-xl transition-all flex items-center gap-2 shadow-lg active:scale-95 ${mode === 'minimal' ? 'bg-[#1B4DA0] hover:bg-[#153D80] shadow-blue-500/10' : 'bg-[#10b981] hover:bg-[#059669] shadow-emerald-500/10'}`}
                   >
-                    {submitting ? 'Processing...' : 'Finish Onboarding'} <FiCheck />
+                    {submitting ? 'Processing...' : (mode === 'minimal' ? 'Add Client' : 'Finish Onboarding')} <FiCheck />
                   </button>
                 )}
               </div>

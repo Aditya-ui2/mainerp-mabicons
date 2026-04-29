@@ -1652,7 +1652,10 @@ export const editClient = async (clientData) => {
       esicApplicable: clientData.esicApplicable,
       leadSource: clientData.leadSource,
       onboardingNotes: clientData.onboardingNotes,
-      assignKAM: clientData.assignKAM
+      assignKAM: clientData.assignKAM,
+      stage: clientData.stage,
+      status: clientData.status,
+      probability: clientData.probability
     }, {
       headers: {
         'Authorization': `Bearer ${token}`,

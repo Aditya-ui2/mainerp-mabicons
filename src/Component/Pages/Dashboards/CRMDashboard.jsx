@@ -49,6 +49,8 @@ import AccountsTab from './Tabs/CRM/AccountsTab';
 const MeetingWithClientTab = lazy(() => import('./Tabs/CRM/MeetingWithClientTab'));
 const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 const ClientReportingTab = lazy(() => import('./Tabs/CRM/ClientReportingTab'));
+const CompleteOnboardingTab = lazy(() => import('./Tabs/CRM/CompleteOnboardingTab'));
+const ClientsTab = lazy(() => import('./Tabs/CRM/ClientsTab'));
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -130,7 +132,9 @@ const INITIAL_PIPELINE_CLIENTS = [
 const sidebarConfig = [
   {
     items: [
+      { id: 12, title: 'All Clients', icon: FiUsers },
       { id: 6, title: 'Manage team', icon: FiUserPlus },
+      { id: 11, title: 'Complete Onboarding', icon: FiCheckSquare },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
       { id: 9, title: 'Accounts', icon: FiBriefcase },
       { id: 5, title: 'Report to Client', icon: FiClipboard },
@@ -1027,6 +1031,12 @@ const CRMDashboard = () => {
               <ClientPipelineTab clients={pipelineClients} setClients={setPipelineClients} />
             )}
 
+            {activeTab === 'All Clients' && (
+              <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
+                <ClientsTab />
+              </Suspense>
+            )}
+
             {activeTab === 'Manage team' && (
               <CRMTeamTab />
             )}
@@ -1038,6 +1048,12 @@ const CRMDashboard = () => {
             {activeTab === 'Meeting with client' && (
               <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Meetings...</div>}>
                 <MeetingWithClientTab clients={clients} />
+              </Suspense>
+            )}
+
+            {activeTab === 'Complete Onboarding' && (
+              <Suspense fallback={<div className="py-20 text-center"><FiRefreshCw className="animate-spin mx-auto w-8 h-8 text-[#1B4DA0]" /></div>}>
+                <CompleteOnboardingTab />
               </Suspense>
             )}
 

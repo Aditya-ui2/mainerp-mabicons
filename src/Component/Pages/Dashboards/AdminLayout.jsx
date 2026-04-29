@@ -388,7 +388,7 @@ const AdminLayout = ({
 
         {/* Dynamic Page Surface */}
         <main ref={contentRef} className="flex-1 overflow-auto bg-[#FDFDFD] dark:bg-gray-950 p-4 lg:p-6 pb-20 relative">
-          <div className="max-w-[1600px] mx-auto">
+          <div className="w-full">
             <AnimatePresence mode="wait">
               {isLoading ? (
                 <motion.div
