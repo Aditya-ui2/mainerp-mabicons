@@ -1,251 +1,43 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, useAnimation, AnimatePresence } from 'framer-motion';
-// import { superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, bdExecutiveLogin, departmentTeamLogin } from './service/api';
-import { FiMail, FiEye, FiEyeOff, FiSun, FiMoon } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiCheck, FiArrowRight } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
+import loginMockup from '../../assets/login-mockup.png';
+import mabiconsLogo from '../../assets/images/mabicons logo blue.png';
 
-const BackgroundAnimation = () => {
-  // Memoize bubble data so it doesn't change on every render
-  const bubbles = useMemo(() => 
-    [...Array(15)].map((_, i) => ({
-      id: i,
-      width: Math.random() * 100 + 50,
-      height: Math.random() * 100 + 50,
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      duration: 5 + Math.random() * 5,
-    })), []
-  );
-
-  return (
-    <div className="relative w-full h-full">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700" />
-      
-      {/* Animated Grid */}
-      <div className="absolute inset-0" 
-        style={{
-          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), 
-                           linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px',
-          animation: 'moveGrid 20s linear infinite',
-        }}
-      />
-
-      {/* Floating Elements */}
-      {bubbles.map((bubble) => (
-        <motion.div
-          key={bubble.id}
-          className="absolute rounded-full bg-white bg-opacity-20"
-          style={{
-            width: bubble.width,
-            height: bubble.height,
-            left: bubble.left,
-            top: bubble.top,
-          }}
-          animate={{
-            y: [0, -20, 0],
-            opacity: [0.2, 0.5, 0.2],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: bubble.duration,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-
-      {/* Content Overlay */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center text-white">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-5xl font-bold mb-6"
-        >
-          Mabicons-ERP 
-        </motion.h1>
-    
-      </div>
-    </div>
-  );
-};
-
-const Star = ({ x, y, size, duration }) => (
-  <motion.div
-    className={`absolute rounded-full bg-white ${size}`}
-    style={{ x, y }}
-    animate={{
-      opacity: [0, 1, 0],
-      scale: [0, 1, 0],
-    }}
-    transition={{
-      duration: duration,
-      repeat: Infinity,
-      repeatType: "reverse",
-    }}
-  />
-);
-
-const Starfield = () => {
-  const [stars, setStars] = useState([]);
-
-  useEffect(() => {
-    const newStars = [...Array(200)].map(() => ({
-      x: Math.random() * 100 + '%',
-      y: Math.random() * 100 + '%',
-      size: Math.random() > 0.9 ? 'w-1 h-1' : 'w-0.5 h-0.5',
-      duration: 2 + Math.random() * 3,
-    }));
-    setStars(newStars);
-  }, []);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {stars.map((star, i) => (
-        <Star key={i} {...star} />
-      ))}
-    </div>
-  );
-};
-
-const Toast = ({ message, isVisible, onClose, isDarkMode }) => (
-  <AnimatePresence>
-    {isVisible && (
-      <motion.div
-        initial={{ opacity: 0, y: -50, x: '-50%' }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -50 }}
-        transition={{ duration: 0.5 }}
-        className={`fixed top-4 left-1/2 transform -translate-x-1/2 ${
-          isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
-        } px-6 py-3 rounded-lg shadow-lg z-50`}
-      >
-        <p>{message}</p>
-        <Rocket isDarkMode={isDarkMode} />
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 3 }}
-          onAnimationComplete={onClose}
-        />
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
-
-const Rocket = ({ isDarkMode }) => (
-  <motion.div
-    className="w-12 h-24 mx-auto mt-2"
-    initial={{ y: 16 }}
-    animate={{ y: -16 }}
-    transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-  >
-    <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Rocket body */}
-      <path d="M50 0L80 120H20L50 0Z" fill={isDarkMode ? "#D1D5DB" : "#4B5563"}/>
-      <path d="M50 0L65 120H35L50 0Z" fill={isDarkMode ? "#F3F4F6" : "#9CA3AF"}/>
-      
-      {/* Windows */}
-      <circle cx="50" cy="50" r="10" fill="#60A5FA"/>
-      <circle cx="50" cy="80" r="8" fill="#60A5FA"/>
-      
-      {/* Fins */}
-      <path d="M20 120L0 180V120H20Z" fill={isDarkMode ? "#9CA3AF" : "#6B7280"}/>
-      <path d="M80 120L100 180V120H80Z" fill={isDarkMode ? "#9CA3AF" : "#6B7280"}/>
-      
-      {/* Flame */}
-      <motion.path
-        d="M30 120C30 150 50 160 50 180C50 160 70 150 70 120H30Z"
-        fill="#FCD34D"
-        initial={{ scaleY: 0.8, y: 0 }}
-        animate={{ scaleY: 1.2, y: 10 }}
-        transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
-      />
-      <motion.path
-        d="M40 120C40 140 50 150 50 160C50 150 60 140 60 120H40Z"
-        fill="#F59E0B"
-        initial={{ scaleY: 0.8, y: 0 }}
-        animate={{ scaleY: 1.2, y: 5 }}
-        transition={{ duration: 0.3, repeat: Infinity, repeatType: "reverse" }}
-      />
-    </svg>
-  </motion.div>
-);
-
-// Predefined user credentials for Mabicons ERP
-// Super-Admin: Ashish (Boss) - Can see everything
-// Admins: Sachin (Recruitment Head), Ashwin (Manager), Ramesh (Operation Head)
-// KAMs under Sachin: Priyanshi Sharma, Manju, Jyoti
+// Predefined user credentials (kept from original)
 const USER_CREDENTIALS = {
-  // Super Admin - Ashish (Boss)
   'superadmin.mabicons@gmail.com': { password: 'Mabicons@123', role: 'superAdmin', department: null, name: 'Ashish (Super Admin)' },
   'ashish.mabicons@gmail.com': { password: 'Ashish@123', role: 'superAdmin', department: null, name: 'Ashish (Super Admin)' },
-  
-  // Admins
   'admin.mabicons@gmail.com': { password: 'Mabicons@123', role: 'admin', department: null, name: 'Admin' },
   'ashwin.mabicons@gmail.com': { id: '28e15eed-8297-440a-b8cd-976be26bc048', password: 'Ashwin@123', role: 'manager', department: 'Management', name: 'Ashwin (Manager)' },
-  
-  // Operation Head - Ramesh
   'operation.mabicons@gmail.com': { password: 'Mabicons@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
   'ramesh.mabicons@gmail.com': { password: 'Ramesh@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
-  
-  // Recruitment Head - Sachin
   'recruitment.mabicons@gmail.com': { id: '60de4380-0140-49ff-b26d-a8d06333af11', password: 'Mabicons@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
   'sachin.mabicons@gmail.com': { id: '60de4380-0140-49ff-b26d-a8d06333af11', password: 'Sachin@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
-  
-  // KAM - Priyanshi Sharma (Under Sachin)
   'priyanshi.recruitment@gmail.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
-  'priyanshi.mabicons@gmail.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
-  'priyanshi.sharma@mabicons.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
-  
-  // KAM - Manju (Under Sachin)
   'manju.recruitment@gmail.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
-  'manju.mabicons@gmail.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
-  'manju@mabicons.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
-  
-  // KAM - Jyoti (Under Sachin)
   'jyoti.recruitment@gmail.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
-  'jyoti.mabicons@gmail.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
-  'jyoti@mabicons.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
-  
-  // Other roles
   'employee.mabicons@gmail.com': { password: 'Employee@123', role: 'employee', department: null, name: 'Employee' },
   'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
   'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
   'crm@mabicons.com': { password: 'Crm@123', role: 'bd', department: null, name: 'CRM Executive' },
-  'client.mabicons@gmail.com': { password: 'Mabicons@123', role: 'client', department: null, name: 'Sample Client' },
 };
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [showToast, setShowToast] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  const ROLE_MAP = {
-    superAdmin: 'superadmin',
-    admin: 'admin',
-    teamLeader: 'teamleader',
-    employee: 'employee',
-    bdExecutive: 'bd',
-    hrOperations: 'hr',
-    hrRecruitment: 'hr',
-    recruitmentHead: 'recruitmentHead',
-    kamRecruitment: 'kamRecruitment'
-  };
 
   const normalizeRole = (role, department = '') => {
     const value = String(role || '').trim().toLowerCase();
     const dept = String(department || '').trim().toLowerCase();
-
     if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
     if (['admin'].includes(value)) return 'admin';
     if (['teamleader', 'team_leader', 'team leader'].includes(value)) return 'teamleader';
@@ -253,102 +45,51 @@ const Login = () => {
     if (['bdexecutive', 'bd_executive', 'bd executive', 'bd'].includes(value)) return 'bd';
     if (['hroperations', 'hr_operations', 'hr operations', 'operations'].includes(value)) return 'hrOperations';
     if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmentHead';
-    if (['department head', 'departmenthead', 'department_head'].includes(value)) {
-      if (dept === 'hr recruitment') return 'recruitmentHead';
-      if (dept === 'hr operations') return 'hrOperations';
-      return 'departmentHead';
-    }
-    if (['hr executive', 'hrexecutive', 'hr_executive'].includes(value)) {
-      return dept === 'hr operations' ? 'hrOperations' : 'kamRecruitment';
-    }
-    if (['hrrecruitment', 'hr_recruitment', 'hr recruitment', 'recruitmenthr', 'recruitment_hr', 'recruitment hr'].includes(value)) return 'hrRecruitment';
     if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam'].includes(value)) return 'kamRecruitment';
     return value;
   };
 
-  // Navigation helper function
   const navigateByRole = (role, emailLower, user) => {
     if (emailLower === 'crm@mabicons.com' || emailLower.includes('ashwin')) {
-      navigate('/crm-dashboard');
-      return;
+      navigate('/crm-dashboard'); return;
     }
-    const isRecruitmentHead = role === 'recruitmentHead' || 
-      role === 'departmentHead' && user?.department === 'HR Recruitment' || 
-      (role === 'hrRecruitment' && emailLower.includes('sachin')) || 
-      emailLower.includes('recruitment.mabicons');
-    const isKAM = role === 'kamRecruitment' || 
-      emailLower.includes('priyanshi') || 
-      emailLower.includes('manju') || 
-      emailLower.includes('jyoti');
-    const isOperations = role === 'hrOperations' || 
-      role === 'departmentHead' && user?.department === 'HR Operations' || 
-      role === 'hr_operations' || 
-      emailLower.includes('operation') || 
-      emailLower.includes('ramesh');
+    const isRecruitmentHead = role === 'recruitmentHead' || emailLower.includes('sachin') || emailLower.includes('recruitment.mabicons');
+    const isKAM = role === 'kamRecruitment' || emailLower.includes('priyanshi') || emailLower.includes('manju') || emailLower.includes('jyoti');
+    const isOperations = role === 'hrOperations' || emailLower.includes('operation') || emailLower.includes('ramesh');
 
-    if (isRecruitmentHead) {
-      navigate('/recruitment-head-dashboard');
-    } else if (isKAM) {
-      navigate('/kam-member-dashboard');
-    } else if (isOperations) {
-      navigate('/kam-operations-dashboard');
-    } else if (role === 'superAdmin' || role === 'super_admin' || role === 'manager') {
-      navigate('/manager-dashboard');
-    } else if (role === 'admin') {
-      navigate('/admin-dashboard');
-    } else if (role === 'teamLeader' || role === 'team_leader') {
-      navigate('/teamleader-dashboard');
-    } else if (role === 'bdExecutive' || role === 'bd') {
-      navigate('/bd-dashboard');
-    } else if (role === 'client' || role === 'customer') {
-      navigate('/client-dashboard');
-    } else {
-      navigate('/employee-dashboard');
-    }
+    if (isRecruitmentHead) navigate('/recruitment-head-dashboard');
+    else if (isKAM) navigate('/kam-member-dashboard');
+    else if (isOperations) navigate('/kam-operations-dashboard');
+    else if (role === 'superAdmin' || role === 'manager') navigate('/manager-dashboard');
+    else if (role === 'admin') navigate('/admin-dashboard');
+    else if (role === 'teamLeader') navigate('/teamleader-dashboard');
+    else if (role === 'bdExecutive') navigate('/bd-dashboard');
+    else navigate('/employee-dashboard');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    const emailLower = email.toLowerCase().trim();
-    const passTrim = password.trim();
+    setError('');
     setLoading(true);
 
-    // Helper function to create mock token
+    const emailLower = email.toLowerCase().trim();
+    const passTrim = password.trim();
+
+    // Helper function to create mock token (fallback)
     const createMockToken = (userData) => {
-      // Deterministic but unique ID base for demo mode to prevent overlap
-      // We use btoa of the email as a base if no real ID is available
       const payload = {
         id: userData.id || btoa(emailLower).slice(0, 24),
         email: emailLower,
         name: userData.name,
         role: userData.role,
         department: userData.department,
-        supervisor: userData.supervisor || null,
         exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
       };
       return btoa(JSON.stringify({ alg: 'HS256' })) + '.' + btoa(JSON.stringify(payload)) + '.mock-signature';
     };
 
-    // Helper function for local/development mode login
+    // Fallback logic
     const localLogin = () => {
-      // Direct check for CRM account
-      if (emailLower === 'crm@mabicons.com' && passTrim === 'Crm@123') {
-        const userData = USER_CREDENTIALS['crm@mabicons.com'] || { name: 'CRM Executive', role: 'bd' };
-        const mockToken = createMockToken(userData);
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('userType', 'bd');
-        localStorage.setItem('userName', userData.name);
-        localStorage.setItem('userEmail', emailLower);
-        return {
-          success: true,
-          user: userData,
-          userType: 'bd',
-          token: mockToken,
-          isLocal: true
-        };
-      }
-
       const userData = USER_CREDENTIALS[emailLower];
       if (userData && userData.password === passTrim) {
         const mockToken = createMockToken(userData);
@@ -357,33 +98,18 @@ const Login = () => {
         localStorage.setItem('userType', normalizedRole);
         localStorage.setItem('userName', userData.name);
         localStorage.setItem('userEmail', emailLower);
-        if (userData.department) {
-          localStorage.setItem('department', userData.department);
-        }
-        return {
-          success: true,
-          user: userData,
-          userType: normalizedRole,
-          token: mockToken,
-          isLocal: true
-        };
+        if (userData.department) localStorage.setItem('department', userData.department);
+        return { success: true, user: userData, userType: normalizedRole, token: mockToken };
       }
       return null;
     };
 
     try {
-      // Try backend API first
-      const { 
-        superAdminLogin, 
-        adminLogin, 
-        teamLeaderLogin, 
-        employeeLogin,
-        departmentTeamLogin 
+      const {
+        superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, departmentTeamLogin
       } = await import('./service/api');
-      
+
       let response;
-      
-      // Select the correct API based on the email
       if (emailLower.includes('superadmin') || emailLower.includes('ashish')) {
         response = await superAdminLogin({ email: emailLower, password });
       } else if (emailLower.includes('admin.') || emailLower.includes('ashwin')) {
@@ -392,32 +118,11 @@ const Login = () => {
         response = await teamLeaderLogin({ email: emailLower, password });
       } else if (emailLower.includes('employee')) {
         response = await employeeLogin({ email: emailLower, password });
-      } else if (emailLower.includes('recruitment') || emailLower.includes('operation') || 
-                 emailLower.includes('sachin') || emailLower.includes('ramesh')) {
-        response = await departmentTeamLogin({ email: emailLower, password });
-      } else if (emailLower.includes('priyanshi') || emailLower.includes('manju') || emailLower.includes('jyoti')) {
+      } else if (emailLower.includes('recruitment') || emailLower.includes('operation') ||
+        emailLower.includes('sachin') || emailLower.includes('ramesh') ||
+        emailLower.includes('priyanshi') || emailLower.includes('manju') || emailLower.includes('jyoti')) {
         response = await departmentTeamLogin({ email: emailLower, password });
       } else {
-        // Try candidate login first (for usernames without @), then fall back to admin
-        const { candidateLogin } = await import('./service/api');
-        try {
-          response = await candidateLogin({ email: emailLower, username: emailLower, password });
-          if (response && response.success) {
-            // Candidate login successful
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('userType', 'candidate');
-            localStorage.setItem('userName', response.data.name);
-            localStorage.setItem('userEmail', response.data.email || emailLower);
-            setToastMessage(`Welcome, ${response.data.name}!`);
-            setShowToast(true);
-            setIsError(false);
-            setTimeout(() => navigate('/candidate-dashboard'), 800);
-            return;
-          }
-        } catch (candidateErr) {
-          // Candidate login failed, try admin login
-          console.log('Candidate login failed, trying admin login...');
-        }
         response = await adminLogin({ email: emailLower, password });
       }
 
@@ -425,277 +130,229 @@ const Login = () => {
         const user = response.user;
         const role = response.userType || user.role || user.userType;
         const normalizedRole = normalizeRole(role, user.department);
-        console.log("✅ API Login SUCCESS! Role:", normalizedRole, "User:", user);
-        
-        // Save necessary info for ProtectedRoutes
+
         if (response.token) localStorage.setItem('token', response.token);
         localStorage.setItem('userType', normalizedRole);
         localStorage.setItem('userName', user.name);
         localStorage.setItem('userEmail', emailLower);
-        if (user.department) {
-          localStorage.setItem('department', user.department);
-        }
-        
-        setToastMessage(`Welcome, ${user.name}!`);
-        setShowToast(true);
-        setIsError(false);
-  
-        setTimeout(() => {
-          // Clear dashboard tab persistence for a clean login experience
-          const dashKeys = [
-            'admin_active_tab', 
-            'crm_active_tab', 
-            'hroperations_active_tab', 
-            'rh_active_tab', 
-            'superadmin_active_tab'
-          ];
-          dashKeys.forEach(key => localStorage.removeItem(key));
-          
-          navigateByRole(normalizedRole, emailLower, user);
-        }, 800);
-        return; // Success, exit
-      }
+        if (user.department) localStorage.setItem('department', user.department);
 
-      // If API fails or returns success:false, try local fallback
-      const localResult = localLogin();
-      if (localResult) {
-        console.log('✅ Local/Demo login successful fallback:', localResult.user.name);
-        setToastMessage(`Welcome, ${localResult.user.name}! (Demo Mode)`);
-        setShowToast(true);
-        setIsError(false);
+        // Clear dashboard tab persistence
+        ['admin_active_tab', 'crm_active_tab', 'hroperations_active_tab', 'rh_active_tab', 'superadmin_active_tab'].forEach(key => localStorage.removeItem(key));
 
-        setTimeout(() => {
-          // Clear dashboard tab persistence
-          [
-            'admin_active_tab', 
-            'crm_active_tab', 
-            'hroperations_active_tab', 
-            'rh_active_tab', 
-            'superadmin_active_tab'
-          ].forEach(key => localStorage.removeItem(key));
-          
-          navigateByRole(localResult.userType, emailLower, localResult.user);
-        }, 800);
+        setTimeout(() => navigateByRole(normalizedRole, emailLower, user), 800);
         return;
       }
-      
+
+      // Fallback
+      const localResult = localLogin();
+      if (localResult) {
+        setTimeout(() => navigateByRole(localResult.userType, emailLower, localResult.user), 800);
+        return;
+      }
+
       throw new Error(response?.message || 'Login failed');
-    } catch (error) {
-      console.error("Login Error:", error);
-      
-      // Try local fallback if API fails
+    } catch (err) {
+      console.error("Login Error:", err);
       const localResult = localLogin();
       if (localResult) {
-        console.log('✅ Local/Demo login successful fallback:', localResult.user.name);
-        setToastMessage(`Welcome, ${localResult.user.name}! (Demo Mode)`);
-        setShowToast(true);
-        setIsError(false);
-
-        setTimeout(() => {
-          navigateByRole(localResult.userType, emailLower, localResult.user);
-        }, 800);
+        setTimeout(() => navigateByRole(localResult.userType, emailLower, localResult.user), 800);
         return;
       }
-
-      setToastMessage(error.message || 'Invalid email or password. Please check your credentials.');
-      setShowToast(true);
-      setIsError(true);
+      setError(err.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
   return (
-    <div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} relative overflow-hidden`}>
-      <div className="hidden lg:block w-1/2 relative overflow-hidden">
-        <BackgroundAnimation />
-      </div>
-
-      {/* Right half - Login form */}
-      <div className={`w-full lg:w-1/2 flex items-center justify-center px-8 py-12 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} relative z-10`}>
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+    <div className="flex min-h-screen bg-white overflow-hidden font-outfit">
+      {/* Left Side - Login Form */}
+      <div className="w-full lg:w-1/2 flex flex-col px-8 md:px-16 lg:px-24 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-xl"
+          transition={{ duration: 0.6 }}
+          className="max-w-md w-full mx-auto flex-1 flex flex-col justify-center -mt-16"
         >
-          <form onSubmit={handleSubmit} className={`${
-            isDarkMode ? 'bg-gray-800/50 backdrop-blur-lg' : 'bg-white'
-          } rounded-2xl shadow-2xl px-8 pt-8 pb-8 border ${
-            isDarkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}>
-            {/* Dark Mode Toggle */}
-            <div className="flex justify-end mb-6">
-              <button
-                type="button"
-                onClick={toggleDarkMode}
-                className={`${
-                  isDarkMode 
-                    ? 'bg-gray-700 text-yellow-400' 
-                    : 'bg-gray-100 text-gray-600'
-                } px-4 py-2 rounded-full text-sm font-medium hover:shadow-md transition-all duration-300 flex items-center gap-2`}
-              >
-                {isDarkMode ? (
-                  <>
-                    <FiSun className="text-lg" />
-                    Light Mode
-                  </>
-                ) : (
-                  <>
-                    <FiMoon className="text-lg" />
-                    Dark Mode
-                  </>
-                )}
-              </button>
+          {/* Logo Section - Enhanced with animations */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
+            className="flex justify-center mb-10"
+          >
+            <div className="w-56 h-20 flex items-center justify-center relative">
+              <img src={mabiconsLogo} alt="Mabicons Logo" className="w-full h-full object-contain relative z-10" />
+              <motion.div 
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.1, 0.3]
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 bg-blue-400/20 blur-3xl rounded-full"
+              />
             </div>
+          </motion.div>
 
-            {/* Welcome Text */}
-            <div className="text-center mb-8">
-              <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Welcome 
-              </h2>
-              <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Please sign in to your account
-              </p>
-            </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mb-10 text-center"
+          >
+            <h1 className="text-3xl font-medium text-[#1A1A2E] mb-2 tracking-tight">Welcome Back</h1>
+            <p className="text-sm font-normal text-slate-500 tracking-wide">Please enter your credentials to log in.</p>
+          </motion.div>
 
-            {/* Email Field */}
-            <div className="mb-6">
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Email or Username
-              </label>
-              <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-slate-500 px-1 uppercase tracking-[2px]">Email Address</label>
+              <div className="relative group">
                 <input
-                  className={`w-full px-4 py-3 rounded-xl ${
-                    isDarkMode 
-                      ? 'bg-gray-700 text-white border-gray-600' 
-                      : 'bg-gray-50 text-gray-900 border-gray-200'
-                  } border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
-                  type="text"
-                  placeholder="Email or Username"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-[#F9FBFF] border border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300"
+                  placeholder="name@mabicons.com"
                   required
                 />
-                <FiMail className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                }`} />
               </div>
             </div>
 
-            {/* Password Field */}
-            <div className="mb-6">
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Password
-              </label>
-              <div className="relative">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-slate-500 px-1 uppercase tracking-[2px]">Password</label>
+              <div className="relative group">
                 <input
-                  className={`w-full px-4 py-3 rounded-xl ${
-                    isDarkMode 
-                      ? 'bg-gray-700 text-white border-gray-600' 
-                      : 'bg-gray-50 text-gray-900 border-gray-200'
-                  } border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-[#F9FBFF] border border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300"
+                  placeholder="••••••••"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
-                    isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'
-                  }`}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
                 >
-                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between mb-6">
-              <label className="flex items-center">
-               
-                
+            <div className="flex items-center justify-between px-1">
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${rememberMe ? 'bg-blue-600 border-blue-600' : 'border-slate-200 group-hover:border-blue-400 bg-white'}`} onClick={() => setRememberMe(!rememberMe)}>
+                  {rememberMe && <FiCheck className="text-white text-xs stroke-[3px]" />}
+                </div>
+                <span className="text-xs font-medium text-slate-500 group-hover:text-slate-700 transition-colors">Remember Me</span>
               </label>
-              <Link 
-                to="/forgot-password" 
-                className="text-sm text-blue-500 hover:text-blue-600 transition-colors duration-300"
-              >
-                Forgot Password?
-              </Link>
+              <Link to="/forgot-password" title="Forgot Password" className="text-xs font-semibold text-blue-600 hover:text-blue-700">Forgot Password?</Link>
             </div>
 
-            {/* Login Button */}
-            <button
+            <motion.button
+              whileHover={{ y: -2, shadow: "0 20px 40px rgba(37, 99, 235, 0.2)" }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className={`w-full ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-medium py-3 px-4 rounded-xl
-                transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none
-                focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg flex items-center justify-center`}
+              className="w-full bg-blue-600 text-white rounded-2xl py-4.5 text-sm font-bold uppercase tracking-[2px] shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4 flex items-center justify-center gap-2"
             >
               {loading ? (
-                <div className="flex items-center gap-2">
+                <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Signing In...
-                </div>
-              ) : "Sign In"}
-            </button>
+                  <span>Signing In...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <FiArrowRight size={18} />
+                </>
+              )}
+            </motion.button>
+            {error && <p className="text-rose-500 text-xs font-semibold text-center">{error}</p>}
 
-            {/* Client Login Link */}
-            <div className="mt-6 text-center">
-              <Link 
-                to="/client-login" 
-                className={`text-sm ${
-                  isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-800'
-                } transition-colors duration-300`}
-              >
-                Are you a client? Login here
-              </Link>
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-white px-4 text-slate-400 font-semibold">Or continue with</span></div>
             </div>
 
-            {/* Error Message */}
-            {isError && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm"
-              >
-                Invalid email or password. Please try again.
-              </motion.div>
-            )}
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button" className="flex items-center justify-center gap-2 py-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition-all text-xs font-semibold text-slate-600">
+                <FcGoogle size={18} /> Google
+              </button>
+              <button type="button" className="flex items-center justify-center gap-2 py-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition-all text-xs font-semibold text-slate-600">
+                <FaApple size={18} /> Apple
+              </button>
+            </div>
           </form>
         </motion.div>
       </div>
-      
-      <Toast 
-        message={toastMessage} 
-        isVisible={showToast} 
-        onClose={() => setShowToast(false)} 
-        isDarkMode={isDarkMode}
-      />
+
+      {/* Right Side - Marketing/Dashboard Mockup */}
+      <div className="hidden lg:flex w-1/2 bg-[#1B4DA0] relative overflow-hidden p-20 flex-col justify-center">
+        {/* Animated Background Elements */}
+        <motion.div
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.03, 0.06, 0.03]
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-white rounded-full -mr-[500px] -mt-[500px]"
+        />
+
+        <div className="relative z-10 space-y-12">
+          <div className="max-w-md">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+            >
+              <h2 className="text-[40px] font-bold text-white mb-6 leading-[1.2] font-syne tracking-tight">
+                Empower your recruitment operations.
+              </h2>
+              <div className="w-16 h-1 bg-blue-400 rounded-full mb-8" />
+              <p className="text-blue-100/70 text-base font-medium leading-relaxed">
+                Log in to access your unified ERP dashboard, manage candidate pipelines, and streamline your entire hiring lifecycle.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Mockup Container with premium animation */}
+          <motion.div
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.8, duration: 1.2, ease: "easeOut" }}
+            className="relative group"
+          >
+            <div className="bg-white/5 backdrop-blur-xl rounded-[40px] p-4 shadow-2xl border border-white/10 overflow-hidden">
+              <img
+                src={loginMockup}
+                alt="Dashboard Mockup"
+                className="rounded-[28px] w-full shadow-2xl transition-all duration-1000 group-hover:scale-[1.02]"
+              />
+            </div>
+
+            {/* Floating UI Elements */}
+            <motion.div
+              animate={{ y: [0, -12, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-6 -right-6 w-32 h-32 bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 hidden xl:flex items-center justify-center p-6"
+            >
+              <div className="space-y-3 w-full">
+                <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                  <motion.div animate={{ width: ["0%", "80%", "80%"] }} transition={{ duration: 2, delay: 1.5 }} className="h-full bg-blue-400" />
+                </div>
+                <div className="h-1.5 w-2/3 bg-white/20 rounded-full overflow-hidden">
+                  <motion.div animate={{ width: ["0%", "50%", "50%"] }} transition={{ duration: 2, delay: 1.7 }} className="h-full bg-blue-300" />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 };
-
-const styles = `
-@keyframes moveGrid {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(50px);
-  }
-}
-`;
 
 export default Login;

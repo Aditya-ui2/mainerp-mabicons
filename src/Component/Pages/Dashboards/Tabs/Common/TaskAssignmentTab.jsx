@@ -792,7 +792,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             />
           </div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Tasks</div>
-          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Assigned By</div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Assigned To</div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Status</div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Actions</div>
           <div></div>
@@ -840,12 +840,12 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
                 </div>
               </div>
 
-              {/* Assigned By */}
+              {/* Assigned To */}
               <div className="flex items-center justify-center gap-3 min-w-0 py-1">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] text-[#1B4DA0] flex items-center justify-center font-black text-xs border border-[#F4F3EF] shrink-0">
-                  {task.assignedByName?.split(' ').map(n => n[0]).join('') || '?'}
+                  {task.assignedToName?.split(' ').map(n => n[0]).join('') || '?'}
                 </div>
-                <span className="text-[13px] font-medium text-[#64748b] truncate">{task.assignedByName || 'Admin'}</span>
+                <span className="text-[13px] font-medium text-[#64748b] truncate">{task.assignedToName || 'Unassigned'}</span>
               </div>
 
               {/* Status */}

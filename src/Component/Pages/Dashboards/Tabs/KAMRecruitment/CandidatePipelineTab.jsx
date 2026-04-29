@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import {
   FiUsers,
@@ -49,7 +50,7 @@ import {
   FiActivity,
   FiZap,
 } from 'react-icons/fi';
-import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions, uploadResumes, getSharePointCandidates, syncSharePointAll } from '../../../service/api';
+import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions, uploadResumes, getSharePointCandidates, syncSharePointAll, getResumeDownloadUrl, BASE_URL } from '../../../service/api';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 
 /* ── Stage Badge ── */
@@ -111,11 +112,13 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
   const [showSyncMenu, setShowSyncMenu] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [suggestedCandidates, setSuggestedCandidates] = useState([]);
+  const [selectedSuggestedIds, setSelectedSuggestedIds] = useState(new Set());
+  const [isDiscovering, setIsDiscovering] = useState(false);
 
   const fetchResumeBankMatches = async (jobTitle) => {
     try {
       setResumeBankLoading(true);
-      
+
       // 1. FORCE FETCH EVERYTHING: Get full pool from all sources at once
       const [bankRes, spRes] = await Promise.all([
         getResumeBankResumes({ limit: 500 }).catch(() => ({ data: [] })), // Fetch a large chunk
@@ -127,23 +130,27 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       const rawSP = spRes.data || [];
 
       const fullPool = [
-        ...rawBank.map(c => ({ 
-          id: c.userId || c.id, 
-          name: c.candidateName || c.name || c.fileName?.replace(/\.[^.]+$/, '') || 'Candidate', 
-          email: c.email || '', 
+        ...rawBank.map(c => ({
+          id: c.userId || c.id || c._id,
+          name: c.candidateName || c.name || c.fileName?.replace(/\.[^.]+$/, '') || 'Candidate',
+          email: c.email || '',
           phone: c.contactNo || c.phone || '',
-          role: c.position || c.role || c.roleType || 'Resume Bank', 
+          role: c.position || c.role || c.roleType || 'Resume Bank',
           skills: Array.isArray(c.skills) ? c.skills : (c.skills ? String(c.skills).split(',') : []),
-          experience: c.experience || 'N/A'
+          experience: c.experience || 'N/A',
+          resumeId: c.id || c._id,
+          resumeUrl: c.resumeUrl || c.webUrl || c.downloadUrl || c.cvUrl
         })),
-        ...rawSP.map(c => ({ 
-          id: c.sharePointId || c.id, 
-          name: c.candidateName || c.name || c.fileName?.replace(/\.[^.]+$/, '') || 'SP Resume', 
-          email: c.email || '', 
-          role: c.position || c.roleType || 'SharePoint', 
-          skills: ['SharePoint Sync'] 
+        ...rawSP.map(c => ({
+          id: c.sharePointId || c.id || c._id,
+          name: c.candidateName || c.name || c.fileName?.replace(/\.[^.]+$/, '') || 'SP Resume',
+          email: c.email || '',
+          role: c.position || c.roleType || 'SharePoint',
+          skills: ['SharePoint Sync'],
+          resumeUrl: c.resumeUrl || c.webUrl || c.web_url || c.fileUrl || c.cvUrl,
+          resumeId: c.id || c._id
         }))
-      ].filter(c => c.name !== 'Candidate' || c.email); // Filter out junk
+      ].filter(c => c && (c.name !== 'Candidate' || c.email)); // Filter out junk
 
       if (fullPool.length === 0) {
         toast.error("Database is empty. Please sync SharePoint first.");
@@ -154,7 +161,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       // 3. Client-Side Smart Ranking (Fast & Reliable)
       const query = (jobTitle || '').toLowerCase();
       const terms = query.split(/\s+/).filter(t => t.length > 2);
-      
+
       const rankedMatches = fullPool.map(c => {
         const text = `${c.name} ${c.role} ${c.skills.join(' ')}`.toLowerCase();
         let score = 0;
@@ -162,11 +169,11 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         terms.forEach(t => { if (text.includes(t)) score += 2; }); // Keyword match
         return { ...c, score };
       })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 15); // Show top 15 results
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 15); // Show top 15 results
 
       setSuggestedCandidates(rankedMatches);
-      
+
       if (rankedMatches[0]?.score > 0) {
         toast.success(`Found ${rankedMatches.filter(m => m.score > 0).length} matches!`);
       } else {
@@ -224,7 +231,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     const windowWidth = window.innerWidth;
     const boardWidth = windowWidth - 280; // Account for sidebar
     const colWidth = boardWidth / 4;
-    
+
     let newStage = candidate.stage;
     if (x < 280 + colWidth) newStage = stageOrder[0];
     else if (x < 280 + colWidth * 2) newStage = stageOrder[1];
@@ -233,9 +240,9 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
     if (newStage !== candidate.stage) {
       const now = new Date().toISOString().split('T')[0];
-      setCandidates(prev => prev.map(c => 
-        String(c.id) === String(candidate.id) 
-          ? { ...c, stage: newStage, lastActivity: now, stageChangedAt: now } 
+      setCandidates(prev => prev.map(c =>
+        String(c.id) === String(candidate.id)
+          ? { ...c, stage: newStage, lastActivity: now, stageChangedAt: now }
           : c
       ));
 
@@ -371,7 +378,9 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           shortDescription: c.shortDescription || '',
           requirements: c.requirements || [],
           responsibilities: c.responsibilities || [],
-          isSharePoint: false
+          isSharePoint: false,
+          resumeUrl: c.cvUrl || c.resumeUrl || c.webUrl || '',
+          resumeId: c.id || c._id
         }));
       }
 
@@ -394,7 +403,9 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           source: 'SharePoint',
           isSharePoint: true,
           pipelineStatus: 'pending',
-          skills: []
+          skills: [],
+          resumeUrl: c.resumeUrl || c.webUrl || c.fileUrl || '',
+          resumeId: c.id || c._id
         }));
       }
 
@@ -402,7 +413,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       setCandidates(combined);
       setTotalCandidates(combined.length);
     } catch (error) {
-      console.error('Failed to fetch candidates:', error); }
+      console.error('Failed to fetch candidates:', error);
+    }
     finally { setRefreshing(false); }
   }, [filterStage, filterPipelineStatus, searchTerm]);
 
@@ -506,6 +518,46 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     setStageMenuId(null);
   };
 
+  const handleViewCV = async (candidate) => {
+    if (!candidate) return;
+    
+    // 1. Direct URL priority - handles both absolute and relative paths
+    if (candidate.resumeUrl) {
+      let url = candidate.resumeUrl;
+      if (typeof url === 'string' && url.trim() !== '') {
+        if (!url.startsWith('http') && !url.startsWith('https')) {
+          url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+    }
+
+    // 2. API Fallback - uses resumeId to fetch a secure signed URL
+    if (candidate.resumeId || candidate.id) {
+      const targetId = candidate.resumeId || candidate.id;
+      const toastId = toast.loading("Fetching secure CV link...");
+      try {
+        const res = await getResumeDownloadUrl(targetId);
+        if (res && res.downloadUrl) {
+          let url = res.downloadUrl;
+          if (!url.startsWith('http') && !url.startsWith('https')) {
+            url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+          }
+          window.open(url, '_blank', 'noopener,noreferrer');
+          toast.success("CV Opened", { id: toastId });
+        } else {
+          toast.error("No CV link found in database", { id: toastId });
+        }
+      } catch (err) {
+        console.error("CV Fetch Error:", err);
+        toast.error("Resume server unavailable", { id: toastId });
+      }
+    } else {
+      toast.error("No resume profile linked to this candidate");
+    }
+  };
+
   const openApproveModal = (candidateId) => {
     setApproveCandidateId(candidateId);
     setApproveInterviewRound('Phone Screening'); setApproveInterviewType('Video'); setApproveInterviewDate(''); setApproveInterviewTime(''); setApproveInterviewDuration('60 mins'); setApproveInterviewer(''); setApproveInterviewerRole(''); setApproveMeetLink('');
@@ -544,12 +596,23 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
     } catch (error) { console.error('Failed to complete approval process:', error); }
   };
 
-  const handleAddCandidate = async () => {
+  const closeAddModal = () => {
+    setShowAddModal(false);
+    setResumeFile(null);
+    setSelectedSuggestedIds(new Set());
+    setSuggestedCandidates([]);
+    setNewCandidate({
+      name: '', email: '', phone: '', location: '', jobTitle: '', client: '',
+      experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days',
+      skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: ''
+    });
+  };
+
+  const handleAddCandidate = async (stayOpen = false) => {
     if (!newCandidate.name || !newCandidate.email || !newCandidate.jobTitle) { alert('Please fill required fields (Name, Email, Job Title)'); return; }
     const skillsArr = (newCandidate.skills || '').split(',').map(s => s.trim()).filter(Boolean);
     // FOR UI FIX/TESTING: Add locally immediately
     try {
-      const skillsArr = (newCandidate.skills || '').split(',').map(s => s.trim()).filter(Boolean);
       const mapped = {
         id: Date.now().toString(),
         name: newCandidate.name,
@@ -585,13 +648,56 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
       const res = await addCandidateAPI(formData);
       if (res?.success && res.data) {
-        // Optional: Update with real ID from server
         setCandidates(prev => prev.map(c => c.id === mapped.id ? { ...c, id: res.data.id || res.data._id } : c));
       }
+      toast.success(`Candidate ${newCandidate.name} added successfully!`);
     } catch (err) {
       console.warn('API Offline - Running in Local Mode');
+      toast.success(`Candidate ${newCandidate.name} added (Local Mode)`);
     }
-    setShowAddModal(false); setResumeFile(null); setNewCandidate({ name: '', email: '', phone: '', location: '', jobTitle: '', client: '', experience: '', currentCTC: '', expectedCTC: '', noticePeriod: '30 days', skills: '', positionId: '', clientId: '', roleType: '', source: '', resumeId: '' });
+
+    if (stayOpen) {
+      setResumeFile(null);
+      setNewCandidate({
+        ...newCandidate,
+        name: '', email: '', phone: '', location: '',
+        experience: '', currentCTC: '', expectedCTC: '',
+        skills: '', resumeId: ''
+      });
+    } else {
+      closeAddModal();
+    }
+  };
+  
+  const handleBulkAdd = async () => {
+    const selectedItems = suggestedCandidates.filter(c => selectedSuggestedIds.has(c.id));
+    if (selectedItems.length === 0) return;
+    
+    toast.info(`Adding ${selectedItems.length} candidates...`);
+    
+    for (const c of selectedItems) {
+      const formData = new FormData();
+      formData.append('name', c.name);
+      formData.append('email', c.email || '');
+      formData.append('phone', c.phone || '');
+      formData.append('location', c.location || '');
+      formData.append('skills', Array.isArray(c.skills) ? c.skills.join(', ') : (c.skills || ''));
+      formData.append('experience', c.experience || '');
+      formData.append('stage', 'Screening');
+      formData.append('pipelineStatus', 'pending');
+      if (newCandidate.positionId) formData.append('positionId', newCandidate.positionId);
+      if (newCandidate.clientId) formData.append('clientId', newCandidate.clientId);
+      
+      try {
+        await addCandidateAPI(formData);
+      } catch (err) {
+        console.error("Bulk add failed for", c.name);
+      }
+    }
+    
+    toast.success(`Successfully added ${selectedItems.length} candidates`);
+    closeAddModal();
+    fetchCandidates();
   };
 
   const resetBulkUploadModal = () => { setBulkUploadFiles([]); setBulkUploadPositionId(''); setBulkUploading(false); };
@@ -781,7 +887,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           {/* Search Bar */}
           <div className="flex-1 relative">
             <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9CA3AF]" size={18} />
-            <input 
+            <input
               type="text"
               placeholder="Search by name, role, email..."
               value={searchTerm}
@@ -903,9 +1009,25 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                             <div className="flex items-center gap-1.5 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">
                               <FiClock className="text-blue-400" /> {getStageDuration(candidate)}
                             </div>
-                            <div className="flex items-center -space-x-2">
-                              <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center pointer-events-none"><FiUserCheck size={10} className="text-[#9B9BAD]" /></div>
-                              <button className="w-6 h-6 rounded-full border-2 border-white bg-white shadow-sm flex items-center justify-center text-[#9B9BAD] hover:text-blue-500 transition-colors pointer-events-auto"><FiMoreVertical size={10} /></button>
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewCV(candidate);
+                                }}
+                                className="w-16 h-6 rounded-lg bg-blue-50 text-[#1B4DA0] flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+                              >
+                                <FiEye size={10} /> VIEW CV
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setStageMenuId(candidate.id);
+                                }}
+                                className="w-6 h-6 rounded-full border-2 border-white bg-white shadow-sm flex items-center justify-center text-[#9B9BAD] hover:text-blue-500 transition-colors pointer-events-auto"
+                              >
+                                <FiMoreVertical size={10} />
+                              </button>
                             </div>
                           </div>
                         </motion.div>
@@ -919,13 +1041,13 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         ) : (
           <div className="space-y-3 pb-10">
             {filteredCandidates.map((candidate, idx) => (
-              <motion.div 
-                key={candidate.id} 
+              <motion.div
+                key={candidate.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.02 }}
                 whileHover={{ scale: 1.01 }}
-                onClick={() => openDetail(candidate)} 
+                onClick={() => openDetail(candidate)}
                 className={`rounded-2xl border-2 p-4 transition-all cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border-slate-200/50 hover:shadow-xl hover:border-blue-200`}
               >
                 <div className="flex items-center gap-4">
@@ -946,12 +1068,22 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <div className="hidden lg:flex flex-col items-end mr-4">
                     <p className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">Applied Date</p>
                     <p className="text-xs font-black text-[#1A1A2E]">{candidate.appliedDate}</p>
                   </div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewCV(candidate);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-[#1B4DA0] rounded-xl text-xs font-bold hover:bg-[#1B4DA0] hover:text-white transition-all"
+                  >
+                    <FiEye className="w-4 h-4" />
+                    View CV
+                  </button>
                   <button className="flex items-center gap-2 px-4 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-xs font-bold hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <FiEye className="w-4 h-4" />
                     View Details
@@ -966,18 +1098,18 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       <AnimatePresence>
         {drawerCandidate && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              onClick={() => setDrawerCandidate(null)} 
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]" 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDrawerCandidate(null)}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100]"
             />
-            <motion.div 
-              initial={{ x: '100%', opacity: 0.5 }} 
-              animate={{ x: 0, opacity: 1 }} 
-              exit={{ x: '100%', opacity: 0.5 }} 
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }} 
+            <motion.div
+              initial={{ x: '100%', opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0.5 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="fixed inset-y-0 right-0 w-full sm:w-[480px] md:w-[540px] bg-white shadow-2xl z-[110] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
             >
               {/* Header */}
@@ -1015,8 +1147,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     { label: 'Notice Period', value: drawerCandidate.noticePeriod, icon: FiClock, color: 'text-amber-500', bg: 'bg-amber-50' },
                     { label: 'Applied On', value: drawerCandidate.appliedDate, icon: FiCalendar, color: 'text-emerald-500', bg: 'bg-emerald-50' },
                   ].map((item, i) => (
-                    <motion.div 
-                      key={i} 
+                    <motion.div
+                      key={i}
                       whileHover={{ y: -2 }}
                       className="bg-[#FAFAF8] border border-[#F4F3EF] p-5 rounded-3xl flex items-center gap-4 transition-all hover:bg-white hover:shadow-md hover:border-blue-100"
                     >
@@ -1070,7 +1202,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne">Add New Candidate</h2>
                   <p className="text-[10px] font-bold text-[#9B9BAD] mt-1">Pipeline Registration</p>
                 </div>
-                <button onClick={() => setShowAddModal(false)} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
+                <button onClick={closeAddModal} className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
                   <FiX className="w-5 h-5" />
                 </button>
               </div>
@@ -1106,9 +1238,9 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   </div>
                   <button
                     onClick={() => {
-                      if (!newCandidate.jobTitle) { 
-                        toast.error("Please enter a Target Job Title first"); 
-                        return; 
+                      if (!newCandidate.jobTitle) {
+                        toast.error("Please enter a Target Job Title first");
+                        return;
                       }
                       fetchResumeBankMatches(newCandidate.jobTitle);
                     }}
@@ -1124,42 +1256,105 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                 {suggestedCandidates.length > 0 && (
                   <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="flex items-center justify-between px-2">
-                       <h4 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">AI Identified matches</h4>
-                       <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{suggestedCandidates.length} Found</span>
+                      <div className="flex items-center gap-4">
+                        <h4 className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">AI Identified matches</h4>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedSuggestedIds.size === suggestedCandidates.length) {
+                              setSelectedSuggestedIds(new Set());
+                            } else {
+                              setSelectedSuggestedIds(new Set(suggestedCandidates.map(c => c.id)));
+                            }
+                          }}
+                          className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+                        >
+                          {selectedSuggestedIds.size === suggestedCandidates.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{suggestedCandidates.length} Found</span>
                     </div>
                     <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
                       {suggestedCandidates.map((c, idx) => (
-                        <div key={idx} className="group flex items-center justify-between p-4 bg-white border border-[#F4F3EF] rounded-2xl hover:border-blue-200 hover:shadow-md transition-all">
+                        <div 
+                          key={idx} 
+                          className={`group flex items-center justify-between p-4 bg-white border rounded-2xl transition-all cursor-pointer ${selectedSuggestedIds.has(c.id) ? 'border-blue-500 bg-blue-50/20' : 'border-[#F4F3EF] hover:border-blue-200 hover:shadow-md'}`}
+                          onClick={() => {
+                            setSelectedSuggestedIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(c.id)) next.delete(c.id);
+                              else next.add(c.id);
+                              return next;
+                            });
+                          }}
+                        >
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1B4DA0] flex items-center justify-center font-bold text-xs uppercase group-hover:bg-[#1B4DA0] group-hover:text-white transition-all">
-                              {(c.name || 'U')[0]}
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${selectedSuggestedIds.has(c.id) ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-200 bg-white'}`}>
+                              {selectedSuggestedIds.has(c.id) && <FiCheck size={12} />}
                             </div>
-                            <div>
-                              <p className="text-sm font-bold text-[#1A1A2E]">{c.name}</p>
-                              <p className="text-[10px] font-bold text-[#6B6B7E] truncate max-w-[180px]">{c.role || c.skills?.join(', ') || 'Potential Match'}</p>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1B4DA0] flex items-center justify-center font-bold text-xs uppercase group-hover:bg-[#1B4DA0] group-hover:text-white transition-all">
+                                {(c.name || 'U')[0]}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-[#1A1A2E]">{c.name}</p>
+                                <p className="text-[10px] font-bold text-[#6B6B7E] truncate max-w-[180px]">{c.role || c.skills?.join(', ') || 'Potential Match'}</p>
+                              </div>
                             </div>
                           </div>
-                          <button 
-                            onClick={() => {
-                              setNewCandidate({
-                                ...newCandidate,
-                                name: c.name,
-                                email: c.email || '',
-                                phone: c.phone || '',
-                                experience: c.experience || '',
-                                skills: Array.isArray(c.skills) ? c.skills.join(', ') : (c.skills || '')
-                              });
-                              toast.info(`Autofilled details for ${c.name}`);
-                            }}
-                            className="px-4 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
-                          >
-                            Select & Quick Add
-                          </button>
+                          <div className="flex items-center gap-2">
+                             <button 
+                               type="button"
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleViewCV(c);
+                               }}
+                               className="px-4 py-2 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm flex items-center gap-2"
+                             >
+                               <FiEye size={14} /> VIEW CV
+                             </button>
+                             <button 
+                               type="button"
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setNewCandidate({
+                                   ...newCandidate,
+                                   name: c.name,
+                                   email: c.email || '',
+                                   phone: c.phone || '',
+                                   experience: c.experience || '',
+                                   skills: Array.isArray(c.skills) ? c.skills.join(', ') : (c.skills || ''),
+                                   resumeId: c.id
+                                 });
+                                 toast.info(`Autofilled details for ${c.name}`);
+                               }}
+                               className="px-4 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm"
+                             >
+                               Use
+                             </button>
+                          </div>
                         </div>
                       ))}
                     </div>
+                    {selectedSuggestedIds.size > 0 && (
+                      <div className="mt-4 p-4 bg-[#ECFDF5] rounded-[24px] border border-[#10B981]/20 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Ready to process</p>
+                          <p className="text-xs font-bold text-emerald-800">{selectedSuggestedIds.size} candidates selected</p>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={handleBulkAdd}
+                          className="px-8 py-3 bg-[#059669] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#047857] transition-all shadow-lg shadow-emerald-200 active:scale-95"
+                          style={{ backgroundColor: '#059669', color: 'white' }}
+                        >
+                          Add Selected Candidates
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
+                
                 <div className="space-y-4 pt-2">
                   <input type="text" placeholder="Skills (comma separated)" value={newCandidate.skills} onChange={e => setNewCandidate({ ...newCandidate, skills: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
                   <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-[#F4F3EF] rounded-[32px] p-10 text-center hover:bg-blue-50/30 transition-all cursor-pointer group">
@@ -1173,8 +1368,9 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                 </div>
               </div>
               <div className="px-10 py-8 border-t border-[#F4F3EF] bg-[#F8FAFF] flex gap-4">
-                <button onClick={() => setShowAddModal(false)} className="flex-1 py-4 bg-white border-2 border-[#E8E7E2] rounded-2xl text-sm font-bold text-[#6B6B7E] hover:bg-gray-50 transition-all">Cancel</button>
-                <button onClick={handleAddCandidate} className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-[#153e82] transition-all">Add Candidate</button>
+                <button onClick={closeAddModal} className="flex-1 py-4 bg-white border-2 border-[#E8E7E2] rounded-2xl text-sm font-bold text-[#6B6B7E] hover:bg-gray-50 transition-all">Cancel</button>
+                <button onClick={() => handleAddCandidate(true)} className="flex-1 py-4 bg-blue-50 border-2 border-blue-200 rounded-2xl text-sm font-bold text-[#1B4DA0] hover:bg-blue-100 transition-all">Add & New</button>
+                <button onClick={() => handleAddCandidate(false)} className="flex-[1.5] py-4 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-[#153e82] transition-all">Add Candidate</button>
               </div>
             </motion.div>
           </div>

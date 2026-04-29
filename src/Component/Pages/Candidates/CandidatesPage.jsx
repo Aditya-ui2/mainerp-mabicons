@@ -27,6 +27,7 @@ import {
   updateSharePointCandidate,
   syncSharePointAll,
   getResumeBankResumes,
+  getResumeDownloadUrl,
   getDepartmentTeamMembers,
   getAllKAMMembers,
   getAllAdmins,
@@ -66,13 +67,13 @@ const STAGE_COLORS = {
   },
 };
 
-const Edit2 = (props) => (
+const EditIconCustom = (props) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={props.className}>
     <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
   </svg>
 );
 
-const Pencil = Edit2;
+const Pencil = EditIconCustom;
 
 export default function CandidatesPage({ setActiveTab }) {
   const [candidates, setCandidates] = useState([]);
@@ -87,6 +88,7 @@ export default function CandidatesPage({ setActiveTab }) {
   const [dragOverStage, setDragOverStage] = useState(null);
   const [viewMode, setViewMode] = useState("kanban");
   const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedSuggestedIds, setSelectedSuggestedIds] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClientFilter, setSelectedClientFilter] = useState("All Clients");
   const [targetRoleFilter, setTargetRoleFilter] = useState("");
@@ -128,6 +130,10 @@ export default function CandidatesPage({ setActiveTab }) {
   // Offer Modal state
   const [isOfferOpen, setIsOfferOpen] = useState(false);
   const [offerForm, setOfferForm] = useState({ candidateId: '', candidateName: '', positionTitle: '', clientName: '', salary: '', joiningDate: '', offerDeadline: '', notes: '' });
+
+  // Bulk Assignment State
+  const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
+  const [isBulkAssigning, setIsBulkAssigning] = useState(false);
 
   // New Candidate Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -191,6 +197,59 @@ export default function CandidatesPage({ setActiveTab }) {
   }, []);
 
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Helper to handle CV viewing with multiple fallbacks
+  const handleViewCV = async (candidate) => {
+    if (!candidate) return;
+
+    // 1. Check direct URL fields (High priority)
+    let resumeUrl = candidate.cvUrl || candidate.resumeUrl || candidate.resume_url || candidate.resume;
+
+    // 2. Check source-specific raw data
+    if (!resumeUrl && candidate.raw) {
+      resumeUrl = candidate.raw.webUrl || candidate.raw.web_url || candidate.raw.downloadUrl;
+    }
+
+    if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.trim() !== '') {
+      let url = resumeUrl;
+      // Prepend BASE_URL if it's a relative path and doesn't look like a direct SharePoint/Drive link
+      if (!url.startsWith('http') && !url.startsWith('https') && !url.startsWith('blob:')) {
+        url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+      }
+      
+      // If it's a SharePoint link but we don't have authentication, this might still fail 
+      // but we try direct opening first as it's faster.
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // 3. API Fallback - uses resumeId, sharePointId or candidate id
+    const targetId = candidate.resumeId || candidate.sharePointId || (candidate.raw && candidate.raw.sharePointId) || candidate.id;
+    
+    if (targetId) {
+      const toastId = toast.loading("Connecting to resume server...");
+      try {
+        console.log(`[CV_DEBUG] Fetching for targetId: ${targetId}, Source: ${candidate.source}`);
+        const res = await getResumeDownloadUrl(targetId, candidate.email);
+        
+        if (res && (res.downloadUrl || res.data?.downloadUrl)) {
+          let url = res.downloadUrl || res.data?.downloadUrl;
+          if (!url.startsWith('http') && !url.startsWith('https')) {
+            url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+          }
+          window.open(url, '_blank', 'noopener,noreferrer');
+          toast.success("CV Opened Successfully", { id: toastId });
+        } else {
+          toast.error("Resume file not found in bank", { id: toastId });
+        }
+      } catch (err) {
+        console.error("CV Fetch Error:", err);
+        toast.error("Resume server unavailable", { id: toastId });
+      }
+    } else {
+      toast.error("No CV uploaded for this candidate");
+    }
+  };
 
   const handleSharePointSync = async () => {
     try {
@@ -296,6 +355,7 @@ export default function CandidatesPage({ setActiveTab }) {
           if (!c) return null;
           return {
             id: c.id,
+            sharePointId: c.sharePointId, // Preserve sharePointId if exists
             name: c.name || "Unknown Candidate",
             email: c.email || "N/A",
             phone: c.phone || "N/A",
@@ -310,6 +370,8 @@ export default function CandidatesPage({ setActiveTab }) {
             expectedSalary: c.expectedSalary,
             noticePeriod: c.noticePeriod,
             experience: c.experience,
+            addedByName: c.addedBy?.name || "Unassigned",
+            addedById: c.addedById,
             skills: c.skills ? (Array.isArray(c.skills) ? c.skills : String(c.skills).split(',')) : ["General"],
             avatar: (c.name || "U").split(" ").map(n => n ? n[0] : "").join("").toUpperCase().slice(0, 2) || "U",
             lastMovedDate: c.updatedAt,
@@ -345,6 +407,9 @@ export default function CandidatesPage({ setActiveTab }) {
             avatar: (c.name || 'SP').split(" ").map(n => n ? n[0] : "").join("").toUpperCase().slice(0, 2) || "SP",
             lastMovedDate: c.updatedAt,
             source: 'sharepoint',
+            resumeUrl: c.resumeUrl || c.cvUrl || c.webUrl,
+            cvUrl: c.cvUrl || c.resumeUrl || c.webUrl,
+            sharePointId: c.sharePointId,
             raw: c
           };
         }).filter(Boolean);
@@ -363,7 +428,10 @@ export default function CandidatesPage({ setActiveTab }) {
           location: c.location || "Remote",
           experience: c.experience || "N/A",
           skills: Array.isArray(c.skills) ? c.skills : (c.skills ? String(c.skills).split(',') : []),
-          avatar: (c.candidateName || c.name || "U")[0]?.toUpperCase() || "U"
+          avatar: (c.candidateName || c.name || "U")[0]?.toUpperCase() || "U",
+          resumeId: c.id || c._id,
+          cvUrl: c.resumeUrl || c.cvUrl || null,
+          source: 'bank'
         };
       }).filter(Boolean);
 
@@ -379,6 +447,40 @@ export default function CandidatesPage({ setActiveTab }) {
       toast.error("Failed to load candidates checklist");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBatchAssign = async (member) => {
+    if (selectedIds.length === 0) return;
+    
+    setIsBulkAssigning(true);
+    const toastId = toast.loading(`Assigning ${selectedIds.length} candidates to ${member.name}...`);
+    
+    try {
+      const promises = selectedIds.map(id => 
+        updateCandidate(id, { 
+          addedById: member.id,
+          addedByType: member.type || 'DepartmentTeam'
+        })
+      );
+      
+      await Promise.all(promises);
+      
+      // Update local state
+      setCandidates(prev => prev.map(c => 
+        selectedIds.includes(c.id) 
+          ? { ...c, addedByName: member.name, addedById: member.id } 
+          : c
+      ));
+      
+      toast.success(`Successfully assigned to ${member.name}`, { id: toastId });
+      setSelectedIds([]);
+      setShowBulkAssignModal(false);
+    } catch (error) {
+      console.error('Batch assignment failed:', error);
+      toast.error("Failed to assign some candidates", { id: toastId });
+    } finally {
+      setIsBulkAssigning(false);
     }
   };
 
@@ -479,9 +581,9 @@ export default function CandidatesPage({ setActiveTab }) {
       ]);
 
       const pool = [
-        ...(erpRes?.data || []).map(c => ({ id: c.id, name: c.name, role: c.position?.title || c.role, skills: c.skills, experience: c.experience })),
-        ...(spRes?.data || []).map(c => ({ id: c.sharePointId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position, skills: ['SharePoint'], experience: 'N/A' })),
-        ...(bankRes?.data || bankRes || []).map(c => ({ id: c.userId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position || c.role, skills: c.skills, experience: c.experience }))
+        ...(erpRes?.data || []).map(c => ({ id: c.id, name: c.name, role: c.position?.title || c.role, skills: c.skills, experience: c.experience, resumeUrl: c.cvUrl })),
+        ...(spRes?.data || []).map(c => ({ id: c.sharePointId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position, skills: ['SharePoint'], experience: 'N/A', resumeUrl: c.resumeUrl })),
+        ...(bankRes?.data || bankRes || []).map(c => ({ id: c.userId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position || c.role, skills: c.skills, experience: c.experience, resumeId: c.id }))
       ].filter(c => c && (c.name || c.role));
 
       const jobTitle = selectedJob.title;
@@ -1156,6 +1258,15 @@ Mabicons Recruitment Team`);
                           </div>
                         </div>
 
+                        {candidate.addedByName && (
+                          <div className="flex items-center gap-2 mt-2 px-1">
+                            <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center text-[8px] font-black text-blue-600 border border-blue-100">
+                              {candidate.addedByName.charAt(0)}
+                            </div>
+                            <span className="text-[9px] font-bold text-[#6B6B7E] uppercase tracking-wider">{candidate.addedByName}</span>
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap gap-1 mt-2.5 items-center">
                           {(candidate.skills || []).slice(0, 2).map((skill) => (
                             <span
@@ -1169,12 +1280,7 @@ Mabicons Recruitment Team`);
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (candidate.cvUrl) {
-                                  const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
-                                  window.open(url, '_blank');
-                                } else {
-                                  toast.error('No CV uploaded for this candidate');
-                                }
+                                handleViewCV(candidate);
                               }}
                               className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[#1B4DA0]/10 text-[#1B4DA0] rounded-lg text-[9px] font-bold hover:bg-[#1B4DA0] hover:text-white transition-all active:scale-95"
                             >
@@ -1237,7 +1343,7 @@ Mabicons Recruitment Team`);
                       {selectedIds.length === candidates.length ? <CheckSquare size={16} /> : <Square size={16} />}
                     </button>
                   </th>
-                  {["Candidate", "Job Title", "Client", "Source", "Skills", "Role Type", "Stage", "Actions"].map((h) => (
+                  {["Candidate", "Job Title", "Client", "Recruiter", "Source", "Skills", "Stage", "Actions"].map((h) => (
                     <th key={h} className={`py-3 text-[10px] font-black uppercase tracking-[2px] text-[#9B9BAD] text-center`}>{h}</th>
                   ))}
                 </tr>
@@ -1279,6 +1385,12 @@ Mabicons Recruitment Team`);
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-[11px] font-bold text-[#1A1A2E]">{candidate.addedByName || 'Unassigned'}</span>
+                        <span className="text-[8px] font-black text-[#9B9BAD] uppercase tracking-widest mt-0.5">Recruiter</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         {candidate.source === 'sharepoint' ? (
                           <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
@@ -1315,14 +1427,7 @@ Mabicons Recruitment Team`);
                     <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => {
-                            if (candidate.cvUrl) {
-                              const url = candidate.cvUrl.startsWith('http') ? candidate.cvUrl : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
-                              window.open(url, '_blank');
-                            } else {
-                              toast.error('No CV uploaded');
-                            }
-                          }}
+                          onClick={() => handleViewCV(candidate)}
                           className="p-2.5 bg-white text-[#6B6B7E] rounded-xl hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm border border-[#F4F3EF]"
                         >
                           <FileText size={16} />
@@ -1365,7 +1470,14 @@ Mabicons Recruitment Team`);
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 ml-4">
+                <button
+                  onClick={() => setShowBulkAssignModal(true)}
+                  className="px-6 py-2.5 bg-[#1B4DA0] hover:bg-[#1B4DA0]/90 rounded-xl text-[11px] font-black transition-all border border-blue-500/20 uppercase tracking-[2px] flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                >
+                  <User size={14} />
+                  Assign Recruiter
+                </button>
+
                 <button
                   onClick={async () => {
                     const count = selectedIds.length;
@@ -1427,13 +1539,12 @@ Mabicons Recruitment Team`);
                   onClick={() => setSelectedIds([])}
                   className="text-[10px] font-bold text-white/40 hover:text-white transition-all ml-4 uppercase tracking-[2px]"
                 >
-
+                  RESET
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Detail Drawer */}
       {selectedCandidate && createPortal(
@@ -1457,7 +1568,7 @@ Mabicons Recruitment Team`);
                   onClick={() => { setEditCandidate(selectedCandidate); setEditMode(true); }}
                   className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] shadow-sm"
                 >
-                  <Edit2 size={20} />
+                  <EditIconCustom size={20} />
                 </button>
                 <button
                   onClick={() => { setSelectedCandidate(null); setEditMode(false); }}
@@ -1897,26 +2008,42 @@ Mabicons Recruitment Team`);
                         className="mt-4 space-y-3"
                       >
                         <div className="flex items-center justify-between px-1">
-                          <span className="text-[9px] font-black text-indigo-600 uppercase tracking-[2px]">Resume Bank Matches</span>
-                          <button type="button" onClick={() => setSuggestedCandidates([])} className="text-[9px] font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest">Clear</button>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[9px] font-black text-indigo-600 uppercase tracking-[2px]">Resume Bank Matches</span>
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                if (selectedSuggestedIds.size === suggestedCandidates.length) {
+                                  setSelectedSuggestedIds(new Set());
+                                } else {
+                                  setSelectedSuggestedIds(new Set(suggestedCandidates.map(c => c.id)));
+                                }
+                              }}
+                              className="text-[9px] font-bold text-indigo-500 hover:underline uppercase tracking-widest"
+                            >
+                              {selectedSuggestedIds.size === suggestedCandidates.length ? 'Deselect All' : 'Select All'}
+                            </button>
+                          </div>
+                          <button type="button" onClick={() => { setSuggestedCandidates([]); setSelectedSuggestedIds(new Set()); }} className="text-[9px] font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest">Clear</button>
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                           {suggestedCandidates.map(c => (
-                            <div key={c.id} className="group relative flex items-center gap-3 p-4 bg-white border border-[#F4F3EF] rounded-[24px] hover:border-indigo-300 hover:shadow-xl transition-all cursor-pointer overflow-hidden"
+                            <div key={c.id} 
+                              className={`group relative flex items-center gap-3 p-4 bg-white border rounded-[24px] hover:shadow-xl transition-all cursor-pointer overflow-hidden ${selectedSuggestedIds.has(c.id) ? 'border-indigo-500 bg-indigo-50/20' : 'border-[#F4F3EF] hover:border-indigo-300'}`}
                               onClick={() => {
-                                setCandidateForm({
-                                  ...candidateForm,
-                                  name: c.name,
-                                  email: c.email,
-                                  phone: c.phone,
-                                  experience: c.experience,
-                                  location: c.location,
-                                  skills: Array.isArray(c.skills) ? c.skills.join(", ") : c.skills
+                                setSelectedSuggestedIds(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(c.id)) next.delete(c.id);
+                                  else next.add(c.id);
+                                  return next;
                                 });
-                                setSuggestedCandidates([]);
-                                toast.success(`Selected ${c.name} with AI Match!`);
                               }}
                             >
+                              {/* Selection Indicator */}
+                              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${selectedSuggestedIds.has(c.id) ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-200 bg-white'}`}>
+                                {selectedSuggestedIds.has(c.id) && <CheckSquare size={12} />}
+                              </div>
+
                               {/* Match Score Badge */}
                               <div className="absolute top-0 right-0 px-3 py-1 bg-indigo-600 text-white text-[9px] font-black rounded-bl-xl shadow-lg">
                                 {c.matchScore}% MATCH
@@ -1930,12 +2057,105 @@ Mabicons Recruitment Team`);
                                 <p className="text-[10px] text-indigo-600 font-black uppercase tracking-wider mb-0.5">{c.matchReason || c.role}</p>
                                 <p className="text-[9px] text-[#9B9BAD] font-bold uppercase truncate opacity-70">{c.experience} Exp • {c.location}</p>
                               </div>
-                              <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-                                <Plus size={18} />
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (c.resumeUrl) {
+                                      const url = c.resumeUrl.startsWith('http') ? c.resumeUrl : `${BASE_URL}${c.resumeUrl.startsWith('/') ? '' : '/'}${c.resumeUrl}`;
+                                      window.open(url, '_blank');
+                                    } else if (c.resumeId) {
+                                      toast.info("Opening resume...");
+                                      try {
+                                        const res = await getResumeDownloadUrl(c.resumeId);
+                                        if (res.success && res.downloadUrl) {
+                                          let url = res.downloadUrl;
+                                          if (url.startsWith('/uploads/')) url = `${BASE_URL}${url}`;
+                                          window.open(url, '_blank');
+                                        } else toast.error("Resume not found");
+                                      } catch (err) { toast.error("Failed to open CV"); }
+                                    } else {
+                                      toast.error("No CV link available");
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm flex items-center gap-2"
+                                >
+                                  <Eye size={14} /> CV
+                                </button>
+                                <button 
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCandidateForm({
+                                      ...candidateForm,
+                                      name: c.name,
+                                      email: c.email,
+                                      phone: c.phone,
+                                      experience: c.experience,
+                                      location: c.location,
+                                      skills: Array.isArray(c.skills) ? c.skills.join(", ") : c.skills
+                                    });
+                                    setSuggestedCandidates([]);
+                                    setSelectedSuggestedIds(new Set());
+                                    toast.success(`Selected ${c.name} with AI Match!`);
+                                  }}
+                                  className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                >
+                                  Use
+                                </button>
                               </div>
                             </div>
                           ))}
                         </div>
+                        {selectedSuggestedIds.size > 0 && (
+                          <div className="mt-4 p-4 bg-[#ECFDF5] rounded-[24px] border border-[#10B981]/20 flex items-center justify-between">
+                            <div>
+                              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Ready to process</p>
+                              <p className="text-xs font-bold text-emerald-800">{selectedSuggestedIds.size} candidates selected</p>
+                            </div>
+                            <button 
+                              type="button" 
+                              onClick={async () => {
+                                const selectedItems = suggestedCandidates.filter(c => selectedSuggestedIds.has(c.id));
+                                toast.info(`Adding ${selectedItems.length} candidates...`);
+                                
+                                for (const c of selectedItems) {
+                                  const formData = new FormData();
+                                  formData.append('name', c.name);
+                                  formData.append('email', c.email || '');
+                                  formData.append('phone', c.phone || '');
+                                  formData.append('location', c.location || '');
+                                  formData.append('skills', Array.isArray(c.skills) ? c.skills.join(', ') : (c.skills || ''));
+                                  formData.append('experience', c.experience || '');
+                                  formData.append('stage', 'Screening');
+                                  formData.append('pipelineStatus', 'pending');
+                                  if (candidateForm.positionId) formData.append('positionId', candidateForm.positionId);
+                                  if (candidateForm.clientId) formData.append('clientId', candidateForm.clientId);
+                                  
+                                  try {
+                                    await addCandidate(formData);
+                                  } catch (err) {
+                                    console.error("Bulk add failed for", c.name);
+                                  }
+                                }
+                                
+                                toast.success(`Successfully added ${selectedItems.length} candidates`);
+                                setSelectedSuggestedIds(new Set());
+                                setSuggestedCandidates([]);
+                                setIsCreateModalOpen(false);
+                                // Refresh candidates list
+                                getAllCandidates().then(res => {
+                                  if (res.success) setCandidates(res.data);
+                                });
+                              }}
+                              className="px-8 py-3 bg-[#059669] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#047857] transition-all shadow-lg shadow-emerald-200 active:scale-95"
+                              style={{ backgroundColor: '#059669', color: 'white' }}
+                            >
+                              Add Selected Matches
+                            </button>
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -2541,6 +2761,86 @@ Mabicons Recruitment Team`);
           </div>
         </div>
       )}
+
+      {/* Bulk Assign Modal */}
+      <AnimatePresence>
+        {showBulkAssignModal && (
+          <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-md"
+              onClick={() => setShowBulkAssignModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[32px] shadow-2xl overflow-hidden border border-[#F4F3EF]"
+            >
+              <div className="p-8 border-b border-[#F4F3EF] bg-gradient-to-br from-white to-[#F8FAFF]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight">Assign Recruiter</h3>
+                    <p className="text-sm text-[#9B9BAD] mt-1 font-medium">Batch assign {selectedIds.length} candidates</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowBulkAssignModal(false)}
+                    className="p-2 hover:bg-[#F4F3EF] rounded-xl transition-colors text-[#9B9BAD]"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 max-h-[450px] overflow-y-auto custom-scrollbar bg-white">
+                <div className="space-y-1">
+                  {availableInterviewers.length === 0 ? (
+                    <div className="py-10 text-center text-[#9B9BAD] text-xs font-bold uppercase tracking-widest">
+                      No recruiters available
+                    </div>
+                  ) : (
+                    availableInterviewers.map((member) => (
+                      <button
+                        key={member.id}
+                        disabled={isBulkAssigning}
+                        onClick={() => handleBatchAssign(member)}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F8FAFF] transition-all group border border-transparent hover:border-[#1B4DA0]/10 disabled:opacity-50"
+                      >
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-inner ${getAvatarColor(member.name)}`}>
+                          {member.name.charAt(0)}
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className="text-[14px] font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{member.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">{member.role}</span>
+                            <span className="w-1 h-1 rounded-full bg-[#C5C5D2]" />
+                            <span className="text-[9px] font-black text-[#1B4DA0] uppercase tracking-widest">{member.department}</span>
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-[#1B4DA0]/5 flex items-center justify-center text-[#1B4DA0] opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
+                          <ChevronRight size={16} />
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6 bg-[#F8FAFF] flex justify-end gap-3 border-t border-[#F4F3EF]">
+                <button
+                  disabled={isBulkAssigning}
+                  onClick={() => setShowBulkAssignModal(false)}
+                  className="px-6 py-2.5 text-[11px] font-black text-[#9B9BAD] hover:text-[#1A1A2E] transition-colors uppercase tracking-[2px]"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

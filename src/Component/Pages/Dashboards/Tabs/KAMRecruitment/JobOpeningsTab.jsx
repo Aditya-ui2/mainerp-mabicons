@@ -804,7 +804,18 @@ const JobOpeningsTab = ({ isDarkMode }) => {
   }, [assignDropdownJobId, jobAssignments]);
 
   const handleCommitListAssignments = async (jobId) => {
-    await handleAssignJob(jobId, tempListAssignments);
+    if (jobId === 'BULK') {
+      const toastId = toast.loading(`Assigning to ${selectedJobs.length} positions...`);
+      try {
+        await Promise.all(selectedJobs.map(id => handleAssignJob(id, tempListAssignments)));
+        toast.success('Bulk assignment complete', { id: toastId });
+        setSelectedJobs([]);
+      } catch (err) {
+        toast.error('Bulk assignment failed', { id: toastId });
+      }
+    } else {
+      await handleAssignJob(jobId, tempListAssignments);
+    }
     setAssignDropdownJobId(null);
   };
 
@@ -2521,6 +2532,16 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           <span className="text-[11px] font-black uppercase tracking-widest">Mark As Complete</span>
                         </button>
                       )}
+                      <button
+                        onClick={() => {
+                          setTempListAssignments([]);
+                          setAssignDropdownJobId('BULK');
+                        }}
+                        className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white"
+                      >
+                        <UserPlus size={16} className="text-[#3B82F6]" />
+                        <span className="text-[11px] font-black uppercase tracking-widest">Bulk Assign</span>
+                      </button>
                     </>
                   );
                 })()}

@@ -8,6 +8,7 @@ import {
 import { searchResumesWithAI } from '../../../../Utilities/geminiService';
 import { toast } from "sonner";
 import {
+  BASE_URL,
   getResumeBankStats,
   getResumeRoleTypes,
   getResumeBankResumes,
@@ -670,24 +671,26 @@ const ResumeBankTab = () => {
   };
 
   const handlePreviewResume = async (resumeId, fileName) => {
-    toast.info("Opening resume...");
+    const toastId = toast.loading("Opening resume...");
     try {
       const response = await getResumeDownloadUrl(resumeId);
       if (response && response.downloadUrl) {
         let url = response.downloadUrl;
-        // If it's a relative path (local file), prepend the backend base URL
-        if (url.startsWith('/uploads/')) {
-          const { BASE_URL } = await import('../../../service/api');
-          url = `${BASE_URL}${url}`;
+
+        // Prepend BASE_URL if it's a relative path (doesn't start with http/https)
+        if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('https')) {
+          url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
-        // Open directly in new tab — Edge blocks iframes for external URLs
+        
+        // Open directly in new tab
         window.open(url, '_blank', 'noopener,noreferrer');
+        toast.success("CV Opened", { id: toastId });
       } else {
-        toast.error("Could not retrieve preview URL");
+        toast.error("Could not retrieve preview URL", { id: toastId });
       }
     } catch (error) {
       console.error('Preview failed:', error);
-      toast.error(error.message || "Failed to load resume preview");
+      toast.error(error.message || "Failed to load resume preview", { id: toastId });
     }
   };
 
