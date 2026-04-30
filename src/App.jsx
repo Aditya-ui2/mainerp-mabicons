@@ -29,6 +29,7 @@ import DepartmentProtectedRoute from './Component/Pages/DepartmentProtectedRoute
 import ProtectedRoute from './Component/Pages/ProtectedRoute'
 import CandidatesPage from './Component/Pages/Candidates/CandidatesPage'
 import InterviewsPage from './Component/Pages/Candidates/InterviewsPage'
+import PrivacyPolicy from './Component/Pages/PrivacyPolicy'
 import { Toaster } from 'sonner'
 
 function App() {
@@ -133,6 +134,8 @@ function App() {
           <CandidateDashboard />
         </ProtectedRoute>
       } />
+      <Route path='/privacy' element={<PrivacyPolicy />} />
+      <Route path='/privacy-policy' element={<PrivacyPolicy />} />
      
     </Routes>
     </>
