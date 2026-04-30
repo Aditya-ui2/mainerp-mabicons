@@ -233,31 +233,14 @@ const Login = () => {
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-[#F3F4F6]"></div>
                 </div>
-                <div className="relative flex justify-center text-[12px] font-medium">
-                  <span className="bg-white px-4 text-[#9CA3AF] tracking-wide">Or Login With</span>
-                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <button type="button" className="flex items-center justify-center gap-3 px-6 py-3.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-[14px] font-bold text-[#1A1A2E] hover:bg-[#F3F4F6] transition-all">
-                  <FcGoogle size={20} /> Google
-                </button>
-                <button type="button" className="flex items-center justify-center gap-3 px-6 py-3.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-[14px] font-bold text-[#1A1A2E] hover:bg-[#F3F4F6] transition-all">
-                  <FaApple size={20} className="text-black" /> Apple
-                </button>
-              </div>
-
-              <div className="text-center mt-8">
-                <p className="text-[14px] font-medium text-[#6B7280]">
-                  Don't Have An Account? <Link to="/signup" className="text-[#3D37F1] font-bold hover:underline">Register Now.</Link>
-                </p>
-              </div>
             </form>
           </div>
 
           {/* Footer Copyright */}
           <div className="mt-auto pt-8 flex items-center justify-between border-t border-[#F3F4F6] shrink-0">
-            <p className="text-[11px] font-medium text-[#9CA3AF]">Copyright © 2025 Mabicons Enterprises Ltd.</p>
+            <p className="text-[11px] font-medium text-[#9CA3AF]">Copyright © 2026 Mabicons Enterprises Ltd.</p>
             <Link to="/privacy" className="text-[11px] font-medium text-[#9CA3AF] hover:text-[#1A1A2E]">Privacy Policy</Link>
           </div>
         </motion.div>
