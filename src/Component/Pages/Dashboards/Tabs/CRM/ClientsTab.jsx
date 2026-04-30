@@ -186,110 +186,104 @@ const ClientsTab = () => {
         </div>
       </motion.div>
 
-      <AnimatePresence>
-        {selectedClientDetail && (
-          <div className="fixed inset-0 z-[200000]">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[#0F172A]/40 backdrop-blur-[12px]"
-              onClick={() => setSelectedClientDetail(null)}
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="absolute right-0 top-0 h-full w-full sm:w-[850px] bg-white shadow-[-20px_0_80px_rgba(0,0,0,0.2)] flex flex-col"
-            >
-              {/* Header */}
-              <div className="sticky top-0 bg-white px-10 py-10 flex items-center justify-between z-20 border-b border-gray-100 shadow-sm">
-                <div className="flex items-center gap-8">
-                  <h2 className="text-[22px] font-bold text-[#1A1A2E] font-syne">Client Profile</h2>
-                  <Toggle 
-                    label={(selectedClientDetail.status || 'Active').toUpperCase()}
-                    active={(selectedClientDetail.status || 'Active') === 'Active'} 
-                    onChange={(val) => handleToggleStatus(selectedClientDetail, val)} 
-                  />
+      {createPortal(
+        <AnimatePresence>
+          {selectedClientDetail && (
+            <div className="fixed inset-0 z-[200000] flex justify-end">
+              <motion.div
+                key="client-drawer-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-[#0F172A]/40 backdrop-blur-[12px]"
+                onClick={() => setSelectedClientDetail(null)}
+              />
+              <motion.div
+                key="client-drawer-content"
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="relative h-full w-full sm:w-[680px] bg-white shadow-[-20px_0_80px_rgba(0,0,0,0.2)] flex flex-col"
+              >
+                {/* Header */}
+                <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
+                  <div className="flex-1 text-left">
+                    <h2 className="text-xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
+                      Client Detail
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedClientDetail(null)}
+                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm"
+                    >
+                      <FiX size={20} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <button className="w-11 h-11 rounded-xl bg-gray-50 text-gray-400 hover:text-[#1B4DA0] flex items-center justify-center transition-all border border-gray-100">
-                    <FiEdit3 size={20} />
-                  </button>
-                  <button
-                    onClick={() => setSelectedClientDetail(null)}
-                    className="w-11 h-11 rounded-xl bg-gray-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all border border-gray-100"
-                  >
-                    <FiX size={22} />
-                  </button>
-                </div>
-              </div>
 
-              {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
-                <div className="p-10 space-y-12">
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
                   {/* Top Profile Section */}
-                  <div className="flex flex-col items-center justify-center text-center py-4">
-                    <div className="w-32 h-32 rounded-[40px] bg-gradient-to-br from-[#1B4DA0] to-[#0D47A1] flex items-center justify-center text-5xl font-bold text-white shadow-[0_25px_50px_rgba(27,77,160,0.25)] mb-8 border-4 border-white">
-                      {(selectedClientDetail.companyName || 'C').substring(0, 2).toUpperCase()}
+                  <div className="flex flex-col items-center justify-center text-center py-6">
+                    <div className="relative group">
+                      <div className="w-28 h-28 rounded-full bg-[#EEF2FB] border-4 border-white flex items-center justify-center text-3xl font-bold text-[#1B4DA0] shadow-xl">
+                        {(selectedClientDetail.companyName || 'C').substring(0, 2).toUpperCase()}
+                      </div>
                     </div>
-                    <h3 className="text-3xl font-bold text-[#1A1A2E] mb-2 tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedClientDetail.companyName}</h3>
-                    <p className="text-[14px] font-bold text-[#1B4DA0] uppercase tracking-[5px]">{selectedClientDetail.industry || 'IT SERVICES'}</p>
+                    <div className="mt-8 space-y-2 w-full text-center">
+                      <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                        {selectedClientDetail.companyName}
+                      </h3>
+                      <p className="text-[11px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">
+                        {selectedClientDetail.industry || 'INFORMATION TECHNOLOGY'}
+                      </p>
+                      <div className="flex justify-center mt-2">
+                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest border border-blue-100">
+                          {selectedClientDetail.stage || 'Finalize'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Details List Card */}
-                  <div className="bg-[#FAFAFA] rounded-[48px] p-12 space-y-10 border border-gray-100 shadow-sm">
+                  {/* Info Cards */}
+                  <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-8">
                     {[
-                      { label: 'Location', value: selectedClientDetail.city || 'Bangalore', icon: FiMapPin },
-                      { label: 'Status', value: selectedClientDetail.status || 'Active', icon: FiActivity },
-                      { label: 'Email', value: selectedClientDetail.spocEmail || selectedClientDetail.email || 'N/A', icon: FiMail },
-                      { label: 'Contact', value: selectedClientDetail.spocName || 'Rajesh Kumar', icon: FiUser },
-                      { label: 'Deal Value', value: selectedClientDetail.value || '₹25,00,000', icon: FiDollarSign },
+                      { label: 'CONTACT PERSON', value: selectedClientDetail.spocName || 'N/A', icon: FiUser },
+                      { label: 'ASSIGNED KAM', value: 'Not Assigned', icon: FiUsers, color: 'text-blue-500' },
+                      { label: 'LOCATION', value: selectedClientDetail.city || 'Bangalore', icon: FiMapPin },
+                      { label: 'GST NUMBER', value: '—', icon: FiZap },
+                      { label: 'CIN NUMBER', value: '—', icon: FiDatabase },
                     ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between group pb-4 border-b border-gray-200/50 last:border-0 last:pb-0">
+                      <div key={idx} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <item.icon className="text-[#1B4DA0] opacity-50" size={16} />
-                          <span className="text-[13px] font-bold text-[#9B9BAD] uppercase tracking-[3px]">{item.label}</span>
+                          <item.icon className="text-gray-300" size={16} />
+                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{item.label}</span>
                         </div>
-                        <span className="text-[16px] font-bold text-[#1A1A2E] text-right">{item.value}</span>
+                        <span className={`text-sm font-black ${item.color || 'text-[#1A1A2E]'}`}>{item.value}</span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Performance Overview section */}
-                  <div className="space-y-10 pb-20">
-                    <div className="flex items-center justify-center gap-6">
-                      <div className="h-[1px] flex-1 bg-gray-100" />
-                      <span className="text-[12px] font-black text-[#9B9BAD] uppercase tracking-[6px]">Performance Overview</span>
-                      <div className="h-[1px] flex-1 bg-gray-100" />
+                  {/* Agreement & Compliance Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Agreement & Compliance</span>
+                      <div className="h-[1px] flex-1 bg-[#F4F3EF]" />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-8">
-                      {[
-                        { label: 'LAST CONTACT', value: '2 Days Ago', icon: FiClock, color: 'text-blue-500', bg: 'bg-blue-50' },
-                        { label: 'STAGE', value: selectedClientDetail.stage || 'Onboarding', icon: FiTarget, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-                        { label: 'PIPELINE', value: 'High Priority', icon: FiTrendingUp, color: 'text-amber-500', bg: 'bg-amber-50' },
-                        { label: 'DOCUMENTS', value: 'Verified', icon: FiCheckSquare, color: 'text-purple-500', bg: 'bg-purple-50' },
-                      ].map((stat, idx) => (
-                        <div key={idx} className="bg-white border border-gray-100 rounded-[40px] p-8 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group/card">
-                          <div className="flex items-center gap-4 mb-8">
-                            <div className={`w-12 h-12 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center shadow-inner group-hover/card:scale-110 transition-transform`}>
-                              <stat.icon size={20} />
-                            </div>
-                            <span className="text-[12px] font-bold text-[#9B9BAD] uppercase tracking-widest">{stat.label}</span>
-                          </div>
-                          <p className="text-3xl font-bold text-[#1A1A2E]">{stat.value}</p>
-                        </div>
-                      ))}
-                    </div>
+                    {/* Additional content could go here */}
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
 
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
