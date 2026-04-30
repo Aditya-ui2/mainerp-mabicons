@@ -52,42 +52,49 @@ const CompleteOnboardingTab = () => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
+      className="space-y-8 animate-in fade-in duration-500"
+      style={{ fontFamily: "'Calibri', sans-serif" }}
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-left px-2">
-        <div>
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight mb-1" style={{ fontFamily: '"Syne", sans-serif' }}>Pending Onboarding</h1>
-          <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Complete profiles for clients added with basic details</p>
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-4">
+        <div className="flex flex-col gap-1 text-left">
+          <h1 className="text-3xl font-black text-[#1A1A2E] tracking-tight uppercase" style={{ fontFamily: "'Syne', sans-serif" }}>
+            Pending Onboarding
+          </h1>
+          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.3em]">
+            {clients.length} Pending • Complete Profiles
+          </p>
         </div>
         <button 
           onClick={fetchData}
-          className="w-12 h-12 bg-white border border-[#F4F3EF] text-[#6B6B7E] rounded-2xl flex items-center justify-center hover:bg-[#F8FAFF] transition-all shadow-sm"
+          className="group flex items-center gap-3 px-6 py-3 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-[20px] text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
+          disabled={loading}
         >
-          <FiRefreshCw className={loading ? 'animate-spin' : ''} />
+          <FiDatabase size={18} className={`text-emerald-500 transition-transform group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
+          Sync Data
         </button>
       </div>
 
-      <div className="bg-white rounded-[40px] shadow-sm border border-[#F4F3EF] overflow-hidden">
-        <div className="px-10 py-8 border-b border-[#F4F3EF]">
-          <div className="relative group max-w-md text-left">
-            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors group-focus-within:text-[#1B4DA0]" size={18} />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by company or SPOC..."
-              className="w-full bg-[#F4F3EF]/50 border-2 border-transparent rounded-2xl py-4 pl-14 pr-5 text-sm font-bold text-[#1A1A2E] outline-none focus:border-[#1B4DA0]/20 focus:bg-white transition-all placeholder:text-[#9B9BAD] placeholder:font-medium"
-            />
-          </div>
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
+        <div className="relative flex-1 group min-w-[200px]">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by company or SPOC..."
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-4 pl-14 pr-5 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
+          />
         </div>
+      </div>
 
+      <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden">
         <div className="overflow-x-auto min-h-[400px]">
-          <div className="grid grid-cols-[250px_200px_180px_150px_1fr] gap-4 px-10 py-5 border-b border-[#F4F3EF] bg-[#FAFAFA]/50">
-            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left pl-[64px]">Company</div>
-            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left">SPOC Details</div>
-            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left">Location</div>
-            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left">Status</div>
-            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-wider text-left pl-4">Action</div>
+          <div className="grid grid-cols-[1.5fr_1.2fr_1fr_1fr_120px] gap-4 px-10 py-5 border-b border-[#F4F3EF] bg-gray-50/50">
+            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left pl-[64px]">Company</div>
+            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">SPOC Details</div>
+            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Location</div>
+            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Status</div>
+            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left pl-4">Action</div>
           </div>
 
           {loading ? (
@@ -103,7 +110,7 @@ const CompleteOnboardingTab = () => {
               <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">No pending onboardings found</p>
             </div>
           ) : filteredClients.map(c => (
-            <div key={c.id} className="grid grid-cols-[250px_200px_180px_150px_1fr] gap-4 items-center px-10 py-8 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] transition-all group">
+            <div key={c.id} className="grid grid-cols-[1.5fr_1.2fr_1fr_1fr_120px] gap-4 items-center px-10 py-8 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] transition-all group">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg group-hover:scale-110 transition-transform shrink-0">
                   {c.companyName?.charAt(0)}

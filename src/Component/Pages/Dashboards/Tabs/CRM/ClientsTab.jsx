@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FiSearch, FiFilter, FiDownload, FiPlus, FiChevronRight, 
+  FiSearch, FiFilter, FiDownload, FiPlus, FiChevronRight, FiChevronDown,
   FiMail, FiPhone, FiMapPin, FiActivity, FiBriefcase, FiUsers, FiTrash,
-  FiX, FiUser, FiDollarSign, FiClock, FiZap, FiCheckSquare
+  FiX, FiUser, FiDollarSign, FiClock, FiZap, FiCheckSquare, FiDatabase
 } from 'react-icons/fi';
+import { Plus } from 'lucide-react';
 import { getAllClients, deleteClient } from '../../../service/api';
 import { toast } from 'react-hot-toast';
 
@@ -20,6 +21,8 @@ const ClientsTab = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIndustry, setSelectedIndustry] = useState('ALL');
+  const [selectedStage, setSelectedStage] = useState('ALL');
   const [selectedClientDetail, setSelectedClientDetail] = useState(null);
 
   const fetchClients = async () => {
@@ -51,11 +54,19 @@ const ClientsTab = () => {
     }
   };
 
-  const filteredClients = clients.filter(c => 
-    (c.companyName || c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.spocName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.spocEmail || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredClients = clients.filter(c => {
+    const matchesSearch = (c.companyName || c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.spocName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.spocEmail || '').toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesIndustry = selectedIndustry === 'ALL' || c.industry === selectedIndustry;
+    const matchesStage = selectedStage === 'ALL' || c.stage === selectedStage;
+
+    return matchesSearch && matchesIndustry && matchesStage;
+  });
+
+  const industries = ['ALL', ...new Set(clients.map(c => c.industry).filter(Boolean))];
+  const stages = ['ALL', ...new Set(clients.map(c => c.stage).filter(Boolean))];
 
   const getAvatarColor = (name) => {
     return 'bg-[#EEF2FB] text-[#1B4DA0] border border-[#DBEAFE]';
@@ -68,25 +79,75 @@ const ClientsTab = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-8"
     >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="text-left">
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Client Directory</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1">Manage all your onboarded clients and their details</p>
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div className="flex flex-col gap-1 text-left">
+          <h1 className="text-3xl font-black text-[#1A1A2E] tracking-tight uppercase" style={{ fontFamily: "'Syne', sans-serif" }}>
+            Client Directory
+          </h1>
+          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.3em]">
+            {clients.length} Clients • Manage records
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD]" />
-            <input
-              type="text"
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 pr-6 py-2.5 bg-white border border-[#F4F3EF] rounded-xl text-sm font-medium focus:border-[#1B4DA0] outline-none w-64 transition-all"
-            />
-          </div>
-          <button className="p-2.5 bg-white border border-[#F4F3EF] rounded-xl text-[#6B6B7E] hover:bg-gray-50 transition-all">
-            <FiFilter />
+        <div className="flex gap-4 items-center flex-wrap">
+          <button 
+            onClick={fetchClients}
+            className="group flex items-center gap-3 px-6 py-3 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-[20px] text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
+            disabled={loading}
+          >
+            <FiDatabase size={18} className={`text-emerald-500 transition-transform group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
+            Sync Data
           </button>
+
+          {/* Add Client button - using the standardized style */}
+          <button
+            className="flex items-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-[20px] text-[13px] font-black uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-xl shadow-blue-500/20 active:scale-95"
+          >
+            <Plus size={20} /> Add Client
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
+        <div className="relative flex-1 group min-w-[200px]">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, company, email..."
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-4 pl-14 pr-5 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+            <select 
+              value={selectedIndustry}
+              onChange={(e) => setSelectedIndustry(e.target.value)}
+              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-5 pr-12 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[170px] hover:bg-[#EEF2FB] transition-all"
+            >
+              <option value="ALL">ALL INDUSTRIES</option>
+              {industries.filter(i => i !== 'ALL').map(ind => (
+                <option key={ind} value={ind}>{ind.toUpperCase()}</option>
+              ))}
+            </select>
+            <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
+          </div>
+
+          <div className="relative group">
+            <select 
+              value={selectedStage}
+              onChange={(e) => setSelectedStage(e.target.value)}
+              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-5 pr-12 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[170px] hover:bg-[#EEF2FB] transition-all"
+            >
+              <option value="ALL">ALL STAGES</option>
+              {stages.filter(s => s !== 'ALL').map(stg => (
+                <option key={stg} value={stg}>{stg.toUpperCase()}</option>
+              ))}
+            </select>
+            <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
+          </div>
         </div>
       </div>
 

@@ -1042,49 +1042,28 @@ const InterviewScheduleTab = ({ isDarkMode, quickAction, onQuickActionHandled })
                 </div>
 
                 <div className="space-y-1.5 relative">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Position</label>
-                  <input type="text" value={newInterview.position}
-                    onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, position: val })); setShowPositionSuggestions(val.length > 0); }}
-                    onFocus={() => setShowPositionSuggestions(newInterview.position.length > 0)}
-                    placeholder="e.g. Senior Software Engineer"
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                  />
-                  <AnimatePresence>
-                    {showPositionSuggestions && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                        className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
-                        {availablePositions.filter(p => (p.title || '').toLowerCase().includes((newInterview.position || '').toLowerCase().trim())).map((pos) => (
-                          <button key={pos.id} className="w-full text-left px-4 py-3 transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
-                            onClick={() => { setNewInterview(prev => ({ ...prev, positionId: pos.id, position: pos.title, clientId: pos.clientId || prev.clientId, client: pos.client?.companyName || pos.client?.name || prev.client })); setShowPositionSuggestions(false); }}>
-                            <span className="font-semibold text-sm text-[#1A1A2E]">{pos.title}</span>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <div className="space-y-1.5 relative">
-                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Client</label>
-                  <input type="text" value={newInterview.client}
-                    onChange={(e) => { const val = e.target.value; setNewInterview(prev => ({ ...prev, client: val })); setShowClientSuggestions(val.length > 0); }}
-                    onFocus={() => setShowClientSuggestions(newInterview.client.length > 0)}
-                    placeholder="e.g. TechCorp India"
-                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] placeholder:text-[#9B9BAD]/50"
-                  />
-                  <AnimatePresence>
-                    {showClientSuggestions && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                        className="absolute z-30 w-full mt-2 rounded-xl shadow-xl border overflow-hidden max-h-60 overflow-y-auto bg-white border-slate-200">
-                        {availableClients.filter(cl => (cl.companyName || cl.name || '').toLowerCase().includes((newInterview.client || '').toLowerCase().trim())).map((cl) => (
-                          <button key={cl.id} className="w-full text-left px-4 py-3 transition-colors hover:bg-blue-50 border-b border-slate-100 last:border-0"
-                            onClick={() => { setNewInterview(prev => ({ ...prev, clientId: cl.id, client: cl.companyName || cl.name })); setShowClientSuggestions(false); }}>
-                            <span className="font-semibold text-sm text-[#1A1A2E]">{cl.companyName || cl.name}</span>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Link to Opening Position *</label>
+                  <select 
+                    value={newInterview.positionId} 
+                    onChange={(e) => {
+                      const pos = availablePositions.find(p => p.id === e.target.value);
+                      setNewInterview(prev => ({ 
+                        ...prev, 
+                        positionId: e.target.value, 
+                        position: pos?.title || '', 
+                        clientId: pos?.clientId || prev.clientId, 
+                        client: pos?.client?.companyName || pos?.client?.name || prev.client 
+                      }));
+                      setShowPositionSuggestions(false);
+                    }} 
+                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none cursor-pointer transition-all focus:bg-[#EEF2FB] appearance-none pr-12"
+                  >
+                    <option value="">Select Opening Position</option>
+                    {availablePositions.map(pos => (
+                      <option key={pos.id} value={pos.id}>{pos.title} ({pos.client?.companyName || pos.client?.name})</option>
+                    ))}
+                  </select>
+                  <FiChevronDown className="absolute right-5 top-[42px] text-[#1B4DA0] pointer-events-none" />
                 </div>
 
                 <div className="space-y-1.5">

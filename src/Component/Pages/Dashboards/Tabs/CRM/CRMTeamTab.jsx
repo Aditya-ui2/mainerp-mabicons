@@ -26,7 +26,7 @@ import { toast } from 'react-hot-toast';
 
 import { getDepartmentTeamMembers, deleteDepartmentTeamMember } from '../../../service/api';
 
-const CRMTeamTab = () => {
+const CRMTeamTab = ({ department = '' }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,8 +41,8 @@ const CRMTeamTab = () => {
   const fetchMembers = async () => {
     setLoading(true);
     try {
-      // Superadmin access: Fetches all members across departments using generic param or empty
-      const res = await getDepartmentTeamMembers(''); 
+      // Fetch members based on the provided department
+      const res = await getDepartmentTeamMembers(department); 
       if (res?.success && res.data) {
         const mapped = res.data.map(m => ({
           id: m.id?.toString() || m._id,
@@ -54,10 +54,16 @@ const CRMTeamTab = () => {
           status: m.status || 'Active',
           joinDate: m.joinDate ? new Date(m.joinDate).toISOString().split('T')[0] : 'N/A',
         }));
-        setMembers(mapped);
+        
+        // Final fallback filtering to ensure visual consistency
+        const filtered = department 
+          ? mapped.filter(m => m.department === department || m.department === 'N/A')
+          : mapped;
+          
+        setMembers(filtered);
       }
     } catch (err) {
-      console.error('Failed to fetch CRM team members:', err);
+      console.error('Failed to fetch team members:', err);
     } finally {
       setLoading(false);
     }
@@ -65,7 +71,7 @@ const CRMTeamTab = () => {
 
   useEffect(() => {
     fetchMembers();
-  }, []);
+  }, [department]);
 
   const currentUserEmail = (() => {
     try {

@@ -2737,9 +2737,11 @@ export const assignResumesToPosition = async (resumeIds, positionId, assignedTo)
 };
 
 // Get download URL
-export const getResumeDownloadUrl = async (resumeId) => {
+export const getResumeDownloadUrl = async (resumeId, email = '') => {
   try {
-    const response = await axiosInstance.get(`/api/resumebank/${resumeId}/download`);
+    const response = await axiosInstance.get(`/api/resumebank/${resumeId}/download`, {
+      params: email ? { email } : {}
+    });
     return response.data;
   } catch (error) {
     console.error('Failed to get download URL:', error);

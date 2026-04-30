@@ -46,11 +46,30 @@ const SelectField = ({ label, name, value, onChange, options, skippable = false 
         name={name}
         value={value}
         onChange={onChange}
-        className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3 pl-5 pr-10 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer"
+        className="w-full bg-[#F4F3EF] border border-transparent rounded-xl py-3 pl-5 pr-10 text-[13px] font-bold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer placeholder:text-[#9B9BAD]"
       >
         {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
       </select>
-      <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={16} />
+      <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" size={16} />
+    </div>
+  </div>
+);
+
+const ToggleGroup = ({ label, value, onChange, options }) => (
+  <div className="space-y-1.5 text-left">
+    <label className="text-[11px] font-bold text-[#6B6B7E]">{label}</label>
+    <div className="flex p-1 bg-[#F4F3EF] rounded-[20px] gap-1 border border-[#F4F3EF]">
+      {options.map(opt => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(opt)}
+          className={`flex-1 py-3.5 rounded-[16px] text-[12px] font-bold transition-all flex items-center justify-center gap-2 ${value === opt ? 'bg-white text-[#1B4DA0] shadow-sm border border-[#1B4DA0]/10' : 'text-[#9B9BAD]'}`}
+        >
+          {value === opt && <div className="w-1.5 h-1.5 rounded-full bg-[#1B4DA0]" />}
+          {opt}
+        </button>
+      ))}
     </div>
   </div>
 );
@@ -273,7 +292,14 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                           <div className="grid grid-cols-2 gap-5">
                             <InputField label="Shops license" name="shopsLicense" value={formData.shopsLicense} onChange={handleInputChange} placeholder="No." skippable />
                             <InputField label="Factory license" name="factoryLicense" value={formData.factoryLicense} onChange={handleInputChange} placeholder="No." skippable />
-                            <SelectField label="MSME registered?" name="msmeRegistered" value={formData.msmeRegistered} onChange={handleInputChange} options={['Yes', 'No']} />
+                            <div className="col-span-full">
+                              <ToggleGroup 
+                                label="MSME registered?" 
+                                value={formData.msmeRegistered} 
+                                onChange={(val) => handleInputChange({ target: { name: 'msmeRegistered', value: val }})} 
+                                options={['Yes', 'No']} 
+                              />
+                            </div>
                           </div>
                         </motion.div>
                       )}
@@ -284,8 +310,18 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                           <div className="grid grid-cols-2 gap-5">
                             <InputField label="Total employees" name="totalEmployees" value={formData.totalEmployees} onChange={handleInputChange} placeholder="e.g. 500" />
                             <SelectField label="Payroll cycle" name="payrollCycle" value={formData.payrollCycle} onChange={handleInputChange} options={['Monthly', 'Bi-weekly']} />
-                            <SelectField label="PF applicable" name="pfApplicable" value={formData.pfApplicable} onChange={handleInputChange} options={['Yes', 'No']} />
-                            <SelectField label="ESIC applicable" name="esicApplicable" value={formData.esicApplicable} onChange={handleInputChange} options={['Yes', 'No']} />
+                            <ToggleGroup 
+                              label="PF applicable" 
+                              value={formData.pfApplicable} 
+                              onChange={(val) => handleInputChange({ target: { name: 'pfApplicable', value: val }})} 
+                              options={['Yes', 'No']} 
+                            />
+                            <ToggleGroup 
+                              label="ESIC applicable" 
+                              value={formData.esicApplicable} 
+                              onChange={(val) => handleInputChange({ target: { name: 'esicApplicable', value: val }})} 
+                              options={['Yes', 'No']} 
+                            />
                           </div>
 
                           <SectionHeader num="7" title="CRM Assignment" />
@@ -312,11 +348,18 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                 </p>
               </div>
               <div className="flex gap-4">
+                <button 
+                  type="button"
+                  onClick={onClose} 
+                  className="px-8 py-3.5 rounded-[20px] text-[#6B6B7E] font-black uppercase tracking-widest text-[11px] border border-[#F4F3EF] hover:bg-[#F8F9FA] transition-all"
+                >
+                  Cancel
+                </button>
                 {step > 1 && (
                   <button 
                     type="button"
                     onClick={prevStep} 
-                    className="px-8 py-3.5 rounded-xl text-[#6B6B7E] font-bold text-[13px] hover:bg-[#F8F9FA] transition-all"
+                    className="px-8 py-3.5 rounded-[20px] text-[#1B4DA0] font-black uppercase tracking-widest text-[11px] border border-[#F4F3EF] hover:bg-[#F8F9FA] transition-all"
                   >
                     Back
                   </button>
@@ -325,7 +368,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                   <button 
                     type="button"
                     onClick={nextStep} 
-                    className="px-10 py-3.5 bg-[#1B4DA0] text-white font-black text-[13px] rounded-xl hover:bg-[#153D80] transition-all flex items-center gap-2 shadow-lg shadow-blue-500/10 active:scale-95"
+                    className="px-10 py-3.5 bg-[#1B4DA0] text-white font-black uppercase tracking-widest text-[11px] rounded-[20px] hover:bg-[#153D80] transition-all flex items-center gap-3 shadow-xl shadow-blue-500/20 active:scale-95"
                   >
                     Next Step <FiChevronRight />
                   </button>
@@ -334,9 +377,9 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                     type="button"
                     onClick={handleSubmit} 
                     disabled={submitting} 
-                    className={`px-10 py-3.5 text-white font-black text-[13px] rounded-xl transition-all flex items-center gap-2 shadow-lg active:scale-95 ${mode === 'minimal' ? 'bg-[#1B4DA0] hover:bg-[#153D80] shadow-blue-500/10' : 'bg-[#10b981] hover:bg-[#059669] shadow-emerald-500/10'}`}
+                    className={`px-12 py-4 text-white font-black uppercase tracking-widest text-[12px] rounded-[20px] transition-all flex items-center gap-3 shadow-xl active:scale-95 ${mode === 'minimal' ? 'bg-[#1B4DA0] hover:bg-[#153D80] shadow-blue-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'}`}
                   >
-                    {submitting ? 'Processing...' : (mode === 'minimal' ? 'Add Client' : 'Finish Onboarding')} <FiCheck />
+                    {submitting ? 'Processing...' : (mode === 'minimal' ? 'Add Client' : 'Finish Onboarding')} <FiCheck size={18} />
                   </button>
                 )}
               </div>

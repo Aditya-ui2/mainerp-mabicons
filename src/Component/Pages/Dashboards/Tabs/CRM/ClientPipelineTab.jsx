@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiX, FiMail, FiPhone, FiPlus, FiSearch, FiChevronDown,
   FiChevronRight, FiUser, FiGrid, FiList, FiRefreshCw,
-  FiEye, FiTrash, FiMapPin, FiActivity, FiLock, FiEdit2, FiSave, FiCheckSquare, FiCheck
+  FiEye, FiTrash, FiMapPin, FiActivity, FiLock, FiEdit2, FiSave, FiCheckSquare, FiCheck, FiDatabase
 } from 'react-icons/fi';
+import { LayoutGrid, List, Plus } from 'lucide-react';
 import ClientOnboardingForm from "./ClientOnboardingForm";
 import { toast } from "react-hot-toast";
 import { getAllClients, createClient, editClient } from "../../../service/api";
@@ -13,9 +14,31 @@ import { getAllClients, createClient, editClient } from "../../../service/api";
 const PIPELINE_STAGES = ["Lead Stage", "Finalize", "Onboarding Complete"];
 
 const STAGE_STYLE = {
-  "Onboarding Complete": { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-600", label: "Onboarding", icon: true, bar: "bg-emerald-500" },
-  "Lead Stage":          { dot: "bg-amber-400",   badge: "bg-amber-100 text-amber-700",   label: "Lead Stage", bar: "bg-amber-400" },
-  "Finalize":            { dot: "bg-blue-400",    badge: "bg-blue-100 text-blue-700",     label: "Finalize", bar: "bg-blue-400"  },
+  "Lead Stage": { 
+    dot: "bg-[#F59E0B]", 
+    badge: "bg-[#FFF9EB] text-[#B45309]", 
+    label: "Lead Stage", 
+    bar: "bg-[#F59E0B]",
+    columnBg: "bg-[#FFF9EB]",
+    columnBorder: "border-[#FDE68A]"
+  },
+  "Finalize": { 
+    dot: "bg-[#3B82F6]", 
+    badge: "bg-[#EFF6FF] text-[#1D4ED8]", 
+    label: "Finalize", 
+    bar: "bg-[#3B82F6]",
+    columnBg: "bg-[#EFF6FF]",
+    columnBorder: "border-[#BFDBFE]"
+  },
+  "Onboarding Complete": { 
+    dot: "bg-[#8B5CF6]", 
+    badge: "bg-[#F5F3FF] text-[#6D28D9]", 
+    label: "Onboarding", 
+    icon: true, 
+    bar: "bg-[#8B5CF6]",
+    columnBg: "bg-[#F5F3FF]",
+    columnBorder: "border-[#DDD6FE]"
+  },
 };
 
 const AVATAR_BG = '#EEF2FB';
@@ -151,12 +174,12 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
           setIsFinalizeOpen(true);
         } else {
           const newProb = stage === 'Finalize' ? 50 : 25;
-          
+
           // Optimistically update local state
           setClients(prev => prev.map(c =>
             c.id === clientId ? { ...c, stage: stage, probability: newProb } : c
           ));
-          
+
           // Persist to backend
           editClient({ clientId: clientId, stage: stage, probability: newProb })
             .then(() => toast.success(`Moved to ${stage}`))
@@ -176,67 +199,86 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
     <div className="space-y-8 animate-in fade-in duration-500" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Header */}
       <div className="flex items-center justify-between gap-4 mb-2 flex-wrap">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
             Client Pipeline
           </h1>
-          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] text-left">
-            {clients.length} clients • MANAGE YOUR PIPELINE
+          <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-1">
+            {clients.length} Clients • Manage your pipeline
           </p>
         </div>
-        <div className="flex gap-3 items-center flex-wrap">
-          {/* View toggle */}
-          <div className="bg-[#F4F3EF] rounded-xl p-1 flex gap-1">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white text-[#1B4DA0] shadow-sm' : 'text-[#9B9BAD]'}`}
-            >
-              <FiList size={14} />
-            </button>
+        <div className="flex gap-4 items-center flex-wrap">
+          {/* View toggle — matching standardized format */}
+          <div className="bg-[#F4F3EF] rounded-2xl p-1.5 flex gap-1.5 border border-[#F4F3EF] shadow-sm">
             <button
               onClick={() => setViewMode('kanban')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'kanban' ? 'bg-white text-[#1B4DA0] shadow-sm' : 'text-[#9B9BAD]'}`}
+              className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-300 ${viewMode === 'kanban' ? 'bg-white text-[#1B4DA0] shadow-md' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}
             >
-              <FiGrid size={14} />
+              <LayoutGrid size={16} className={viewMode === 'kanban' ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'} /> Kanban
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-300 ${viewMode === 'list' ? 'bg-white text-[#1B4DA0] shadow-md' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}
+            >
+              <List size={16} className={viewMode === 'list' ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'} /> List
             </button>
           </div>
+
           <button
             onClick={fetchClients}
-            className="flex items-center gap-2 px-5 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
+            className="group flex items-center gap-2.5 px-7 py-4 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-2xl text-[13px] font-bold hover:bg-[#F8FAFF] hover:border-blue-100 transition-all duration-300 shadow-sm active:scale-95"
+            disabled={loading}
           >
-            <FiRefreshCw size={14} className={`text-[#1B4DA0] ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            <FiDatabase size={18} className={`text-[#1B4DA0] transition-transform group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
+            Sync Data
           </button>
+
           <button
             onClick={() => setIsAddOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#153e82] transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+            className="flex items-center gap-2.5 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[14px] font-bold hover:bg-[#153e82] transition-all duration-300 shadow-[0_10px_25px_rgba(27,77,160,0.25)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.35)] active:scale-95"
           >
-            <FiPlus size={18} /> Add Client
+            <Plus size={20} strokeWidth={3} /> Add Client
           </button>
         </div>
       </div>
 
-      {/* Filter Bar — same as My Team */}
-      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
-        <div className="relative flex-1 group min-w-[200px]">
-          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+      {/* Ultra-Premium Standardized Search & Filter Bar */}
+      <div className="bg-white border border-[#F4F3EF] rounded-[40px] p-2 shadow-sm mb-10 flex items-center gap-3">
+        {/* Search Field */}
+        <div className="relative flex-[2.5] group">
+          <FiSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by company, contact, email..."
-            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+            placeholder="Search by company, contact, or email..."
+            className="w-full bg-[#F4F3EF] border-none rounded-full py-4 pl-16 pr-6 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/5 outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
           />
         </div>
-        <div className="relative">
+
+        {/* Date Filter (Standardized UI) */}
+        <div className="relative flex-1 group">
+          <select
+            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-full pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
+          >
+            <option value="all">All Date</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
+        </div>
+
+        {/* Stage Filter */}
+        <div className="relative flex-1 group">
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-full pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
           >
-            {uniqueStages.map(s => <option key={s} value={s}>{s === 'All' ? 'All Stages' : s}</option>)}
+            {uniqueStages.map(s => <option key={s} value={s}>{s === 'All' ? 'ALL STAGES' : s.toUpperCase()}</option>)}
           </select>
-          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
         </div>
       </div>
 
@@ -244,7 +286,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
       {viewMode === 'list' && (
         <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
           {/* Table header */}
-          <div className="grid grid-cols-[40px_220px_120px_200px_150px_100px_40px] gap-6 px-8 py-5 border-b border-[#F4F3EF] bg-[#FAFAFA]/30">
+          <div className="grid grid-cols-[40px_2fr_1fr_1.5fr_1fr_1.2fr_40px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-[#FAFAFA]/30">
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -278,7 +320,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
               <div
                 key={c.id}
                 onClick={() => setSelectedClient(c)}
-                className={`grid grid-cols-[40px_220px_120px_200px_150px_100px_40px] gap-6 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group ${isSelected ? 'bg-blue-50/30' : ''}`}
+                className={`grid grid-cols-[40px_2fr_1fr_1.5fr_1fr_1.2fr_40px] gap-4 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group ${isSelected ? 'bg-blue-50/30' : ''}`}
               >
                 <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                   <input
@@ -347,19 +389,21 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
             return (
               <div
                 key={stage}
-                className="flex-1 min-w-[300px] bg-[#F8FAFF] rounded-[24px] border border-[#F4F3EF] flex flex-col"
+                className={`flex-1 min-w-[300px] ${stageStyle.columnBg} rounded-[24px] border ${stageStyle.columnBorder} flex flex-col shadow-sm`}
                 onDragOver={(e) => handleDragOver(e, stage)}
                 onDrop={(e) => handleDrop(e, stage)}
               >
-                <div className="p-5 flex items-center justify-between border-b border-[#F4F3EF]">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${stageStyle.dot}`} />
-                    <h3 className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-[1px] flex items-center gap-1.5">
+                <div className={`p-5 flex items-center justify-between border-b ${stageStyle.columnBorder}/50`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${stageStyle.dot} shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
+                    <h3 className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-[1.2px] flex items-center gap-2">
                       {stageStyle.label || stage}
-                      {stageStyle.icon && <FiCheck size={14} className="text-emerald-500 shrink-0" />}
+                      {stageStyle.icon && <FiCheck size={14} className="text-[#8B5CF6] shrink-0" />}
                     </h3>
                   </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${stageStyle.badge}`}>{stageClients.length}</span>
+                  <div className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black ${stageStyle.badge} shadow-sm border ${stageStyle.columnBorder}/30`}>
+                    {stageClients.length}
+                  </div>
                 </div>
                 <div className="p-4 space-y-3 flex-1 overflow-y-auto">
                   {stageClients.map(c => {

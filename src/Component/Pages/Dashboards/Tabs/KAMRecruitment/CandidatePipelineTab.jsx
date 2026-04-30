@@ -50,6 +50,7 @@ import {
   FiActivity,
   FiZap,
 } from 'react-icons/fi';
+import { LayoutGrid, List, Plus } from 'lucide-react';
 import { getResumeBankResumes, getResumeRoleTypes, getAllCandidates, addCandidate as addCandidateAPI, updateCandidateStatus, scheduleNewInterview, getAllRecruitmentPositions, uploadResumes, getSharePointCandidates, syncSharePointAll, getResumeDownloadUrl, BASE_URL } from '../../../service/api';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 
@@ -808,21 +809,23 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
             <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne tracking-tight">Candidate Pipeline</h1>
             <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-2">{stats.total} Total Candidates In Pipeline</p>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="bg-white rounded-2xl p-1 border border-[#F4F3EF] shadow-sm flex items-center">
+          <div className="flex gap-4 items-center flex-wrap">
+            {/* View toggle — matching standardized format */}
+            <div className="bg-[#F4F3EF] rounded-2xl p-1.5 flex gap-1.5 border border-[#F4F3EF] shadow-sm">
               <button
                 onClick={() => setIsKanbanView(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#6B6B7E] hover:text-[#1B4DA0]'}`}
+                className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-300 ${isKanbanView ? 'bg-white text-[#1B4DA0] shadow-md' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}
               >
-                <FiGrid /> Kanban
+                <LayoutGrid size={16} className={isKanbanView ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'} /> Kanban
               </button>
               <button
                 onClick={() => setIsKanbanView(false)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${!isKanbanView ? 'bg-[#F4F3EF] text-[#1B4DA0]' : 'text-[#6B6B7E] hover:text-[#1B4DA0]'}`}
+                className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-300 ${!isKanbanView ? 'bg-white text-[#1B4DA0] shadow-md' : 'text-[#9B9BAD] hover:text-[#1B4DA0]'}`}
               >
-                <FiList /> List
+                <List size={16} className={!isKanbanView ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'} /> List
               </button>
             </div>
+
             <button
               onClick={async () => {
                 try {
@@ -832,22 +835,18 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                 } catch (e) { console.error('Sync failed', e); }
                 finally { setRefreshing(false); }
               }}
-              className="group flex items-center gap-2.5 px-6 py-3.5 bg-white text-emerald-600 border border-emerald-100/50 rounded-2xl text-[13px] font-bold hover:bg-emerald-50/30 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50"
+              className="group flex items-center gap-2.5 px-7 py-4 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-2xl text-[13px] font-bold hover:bg-[#F8FAFF] hover:border-blue-100 transition-all duration-300 shadow-sm active:scale-95"
               disabled={refreshing}
             >
-              {refreshing ? (
-                <FiRefreshCw className="w-4 h-4 animate-spin text-[#1B4DA0]" />
-              ) : (
-                <FiDatabase className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
-              )}
-              <span className="tracking-tight">{refreshing ? 'Syncing...' : 'Sync Data'}</span>
+              <FiDatabase size={18} className={`text-[#1B4DA0] transition-transform group-hover:scale-110 ${refreshing ? 'animate-spin' : ''}`} />
+              Sync Data
             </button>
+
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg active:scale-95 text-center"
+              className="flex items-center gap-2.5 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[14px] font-bold hover:bg-[#153e82] transition-all duration-300 shadow-[0_10px_25px_rgba(27,77,160,0.25)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.35)] active:scale-95"
             >
-              <FiPlus size={18} />
-              Add Candidate
+              <Plus size={20} strokeWidth={3} /> Add Candidate
             </button>
           </div>
         </motion.div>
@@ -882,65 +881,61 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           ))}
         </div>
 
-        {/* Unified Filter Bar */}
-        <div className="flex flex-col md:flex-row gap-4 px-2 mb-8">
-          {/* Search Bar */}
-          <div className="flex-1 relative">
-            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9CA3AF]" size={18} />
+        {/* Ultra-Premium Standardized Search & Filter Bar */}
+        <div className="bg-white border border-[#F4F3EF] rounded-[40px] p-2 shadow-sm mb-10 flex items-center gap-3">
+          {/* Search Field */}
+          <div className="relative flex-[3] group">
+            <FiSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
             <input
               type="text"
-              placeholder="Search by name, role, email..."
+              placeholder="Search by name, role, or skill..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#FDFCF8] border border-[#E5E7EB] rounded-2xl py-4 pl-14 pr-6 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-[#1B4DA0]/10 focus:border-[#1B4DA0] transition-all shadow-sm"
+              className="w-full bg-[#F4F3EF] border-none rounded-full py-4 pl-16 pr-6 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/5 outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
             />
           </div>
 
-          <div className="flex gap-3">
-            {/* Job Opening Filter */}
-            <div className="relative group">
-              <select
-                value={filterJob}
-                onChange={(e) => setFilterJob(e.target.value)}
-                className="h-14 px-6 bg-white border border-[#E5E7EB] rounded-2xl text-[10px] font-bold text-[#111827] tracking-[1px] flex items-center justify-between gap-8 hover:bg-[#F9FAFB] transition-all shadow-sm min-w-[160px] appearance-none cursor-pointer outline-none uppercase"
-              >
-                <option value="all">All Job Openings</option>
-                {jobOpenings.map(job => (
-                  <option key={job.id} value={job.id}>{job.title}</option>
-                ))}
-              </select>
-              <FiChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none" />
-            </div>
+          {/* Date Filter (Mocked for UI Parity) */}
+          <div className="relative flex-1 group">
+            <select
+              className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-full pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
+            >
+              <option value="all">All Date</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+            <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
+          </div>
 
-            {/* Stage Filter */}
-            <div className="relative group">
-              <select
-                value={filterStage}
-                onChange={(e) => setFilterStage(e.target.value)}
-                className="h-14 px-6 bg-white border border-[#E5E7EB] rounded-2xl text-[10px] font-bold text-[#111827] tracking-[1px] flex items-center justify-between gap-8 hover:bg-[#F9FAFB] transition-all shadow-sm min-w-[140px] appearance-none cursor-pointer outline-none uppercase"
-              >
-                <option value="all">All Stages</option>
-                {fullStageOrder.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
-                ))}
-              </select>
-              <FiChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none" />
-            </div>
+          {/* Opening Filter */}
+          <div className="relative flex-[1.5] group">
+            <select
+              value={filterJob}
+              onChange={(e) => setFilterJob(e.target.value)}
+              className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-full pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
+            >
+              <option value="all">All Openings</option>
+              {jobOpenings.map(job => (
+                <option key={job.id} value={job.id}>{job.title.toUpperCase()}</option>
+              ))}
+            </select>
+            <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
+          </div>
 
-            {/* Client Filter */}
-            <div className="relative group">
-              <select
-                value={filterClient}
-                onChange={(e) => setFilterClient(e.target.value)}
-                className="h-14 px-6 bg-white border border-[#E5E7EB] rounded-2xl text-[10px] font-bold text-[#111827] tracking-[1px] flex items-center justify-between gap-8 hover:bg-[#F9FAFB] transition-all shadow-sm min-w-[140px] appearance-none cursor-pointer outline-none uppercase"
-              >
-                <option value="all">All Clients</option>
-                {[...new Set(jobOpenings.map(j => j.client).filter(Boolean))].map(client => (
-                  <option key={client} value={client}>{client}</option>
-                ))}
-              </select>
-              <FiChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none" />
-            </div>
+          {/* Client Filter */}
+          <div className="relative flex-1 group">
+            <select
+              value={filterClient}
+              onChange={(e) => setFilterClient(e.target.value)}
+              className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-full pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
+            >
+              <option value="all">All Clients</option>
+              {[...new Set(jobOpenings.map(j => j.client).filter(Boolean))].map(client => (
+                <option key={client} value={client}>{client.toUpperCase()}</option>
+              ))}
+            </select>
+            <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
           </div>
         </div>
 
@@ -1215,8 +1210,28 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                     <input type="text" placeholder="Location" value={newCandidate.location} onChange={e => setNewCandidate({ ...newCandidate, location: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
                   </div>
                   <div className="space-y-4">
-                    <input type="text" placeholder="Target Job Title *" value={newCandidate.jobTitle} onChange={e => setNewCandidate({ ...newCandidate, jobTitle: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
-                    <input type="text" placeholder="Client Name" value={newCandidate.client} onChange={e => setNewCandidate({ ...newCandidate, client: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Target Position *</label>
+                      <select 
+                        value={newCandidate.positionId} 
+                        onChange={e => {
+                          const pos = jobOpenings.find(p => p.id === e.target.value);
+                          setNewCandidate({ 
+                            ...newCandidate, 
+                            positionId: e.target.value,
+                            jobTitle: pos?.title || '',
+                            clientId: pos?.clientId || '',
+                            client: pos?.client || ''
+                          });
+                        }} 
+                        className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="">Select Opening Position</option>
+                        {jobOpenings.map(pos => (
+                          <option key={pos.id} value={pos.id}>{pos.title} ({pos.client})</option>
+                        ))}
+                      </select>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <input type="text" placeholder="Exp (Years)" value={newCandidate.experience} onChange={e => setNewCandidate({ ...newCandidate, experience: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
                       <select value={newCandidate.noticePeriod} onChange={e => setNewCandidate({ ...newCandidate, noticePeriod: e.target.value })} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer">
@@ -1402,8 +1417,31 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-bold text-[#9B9BAD] block">Interviewer Name</label>
-                  <input type="text" placeholder="e.g. John Doe" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none transition-all" />
+                  <label className="text-[10px] font-bold text-[#9B9BAD] block uppercase tracking-widest pl-1">Position & Client Details</label>
+                  {(!candidates.find(c => c.id === approveCandidateId)?.positionId) ? (
+                    <select 
+                      onChange={e => {
+                        const pos = jobOpenings.find(p => p.id === e.target.value);
+                        setCandidates(prev => prev.map(c => c.id === approveCandidateId ? { ...c, positionId: e.target.value, jobTitle: pos?.title, clientId: pos?.clientId, client: pos?.client } : c));
+                      }}
+                      className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none transition-all"
+                    >
+                      <option value="">Link to Open Position *</option>
+                      {jobOpenings.map(pos => <option key={pos.id} value={pos.id}>{pos.title} ({pos.client})</option>)}
+                    </select>
+                  ) : (
+                    <div className="bg-[#F4F3EF] rounded-2xl px-6 py-4 flex items-center justify-between opacity-70">
+                      <div>
+                        <p className="text-xs font-black text-[#1A1A2E] uppercase">{candidates.find(c => c.id === approveCandidateId)?.jobTitle}</p>
+                        <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest">{candidates.find(c => c.id === approveCandidateId)?.client}</p>
+                      </div>
+                      <FiCheckCircle className="text-emerald-500" />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-bold text-[#9B9BAD] block uppercase tracking-widest pl-1">Interviewer Details</label>
+                  <input type="text" placeholder="Interviewer Name *" value={approveInterviewer} onChange={e => setApproveInterviewer(e.target.value)} className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none transition-all" />
                 </div>
               </div>
               <div className="px-10 py-8 border-t border-[#F4F3EF] flex gap-4">
