@@ -540,6 +540,8 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
               ownerEmail: newClientData.spocEmail, // Use SPOC email as base email
               spocPhone: newClientData.spocPhone,
               industry: newClientData.industry,
+              location: newClientData.location,
+              serviceType: newClientData.serviceType,
               stage: 'Lead Stage',
               status: 'Requested',
               probability: 25

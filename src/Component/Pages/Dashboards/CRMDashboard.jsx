@@ -132,10 +132,10 @@ const INITIAL_PIPELINE_CLIENTS = [
 const sidebarConfig = [
   {
     items: [
-      { id: 12, title: 'All Clients', icon: FiUsers },
       { id: 6, title: 'My Team', icon: FiUserPlus },
-      { id: 11, title: 'Complete Onboarding', icon: FiCheckSquare },
+      { id: 12, title: 'All Clients', icon: FiUsers },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
+      { id: 11, title: 'Client Onboarding', icon: FiCheckSquare },
       { id: 9, title: 'Accounts', icon: FiBriefcase },
       { id: 5, title: 'Report to Client', icon: FiClipboard },
       { id: 10, title: 'Meeting with client', icon: FiCalendar },
@@ -1051,7 +1051,7 @@ const CRMDashboard = () => {
               </Suspense>
             )}
 
-            {activeTab === 'Complete Onboarding' && (
+            {activeTab === 'Client Onboarding' && (
               <Suspense fallback={<div className="py-20 text-center"><FiRefreshCw className="animate-spin mx-auto w-8 h-8 text-[#1B4DA0]" /></div>}>
                 <CompleteOnboardingTab />
               </Suspense>

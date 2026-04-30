@@ -105,6 +105,10 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
   const [formData, setFormData] = useState({
     companyName: '',
     industry: 'General',
+    location: '',
+    city: '',
+    pinCode: '',
+    serviceType: 'Recruitment',
     spocName: '',
     spocEmail: '',
     spocPhone: '',
@@ -136,6 +140,10 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
       setFormData({
         companyName: initialData.companyName || '',
         industry: initialData.industry || 'General',
+        location: initialData.location || '',
+        city: initialData.city || '',
+        pinCode: initialData.pinCode || '', 
+        serviceType: initialData.serviceType || 'Recruitment',
         spocName: initialData.spocName || '',
         spocEmail: initialData.spocEmail || initialData.email || '',
         spocPhone: initialData.spocPhone || initialData.phone || '',
@@ -236,7 +244,19 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                       <SectionHeader num="1" title="Basic Client Info" />
                       <div className="grid grid-cols-1 gap-5">
                         <InputField label="Company name" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="Registered company name" />
-                        <InputField label="Industry" name="industry" value={formData.industry} onChange={handleInputChange} placeholder="e.g. IT, Healthcare" />
+                        <div className="grid grid-cols-2 gap-5">
+                          <InputField label="Industry" name="industry" value={formData.industry} onChange={handleInputChange} placeholder="e.g. IT, Healthcare" />
+                          <InputField label="Location" name="location" value={formData.location} onChange={handleInputChange} placeholder="Location" />
+                          <InputField label="City" name="city" value={formData.city} onChange={handleInputChange} placeholder="City" />
+                          <InputField label="Pin Code" name="pinCode" value={formData.pinCode} onChange={handleInputChange} placeholder="Pin Code" />
+                        </div>
+                        <SelectField 
+                          label="Service Type" 
+                          name="serviceType" 
+                          value={formData.serviceType} 
+                          onChange={handleInputChange} 
+                          options={['Recruitment', 'Operation', 'Recruitment + Operation']} 
+                        />
                       </div>
 
                       <SectionHeader num="2" title="Contact Details" />
