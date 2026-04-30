@@ -166,75 +166,61 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white overflow-hidden font-outfit">
-      {/* Left Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex flex-col px-8 md:px-16 lg:px-24 py-12">
+    <div className="flex h-screen bg-white overflow-hidden font-inter">
+      {/* Left Side - Auth Form */}
+      <div className="w-full lg:w-[45%] flex flex-col px-12 md:px-20 lg:px-24 py-12 relative">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="max-w-md w-full mx-auto flex-1 flex flex-col justify-center -mt-16"
+          className="max-w-md w-full mx-auto flex-1 flex flex-col justify-center"
         >
-          {/* Logo Section - Enhanced with animations */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
-            className="flex justify-center mb-10"
-          >
-            <div className="w-56 h-20 flex items-center justify-center relative">
-              <img src={mabiconsLogo} alt="Mabicons Logo" className="w-full h-full object-contain relative z-10" />
-              <motion.div 
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.1, 0.3]
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 bg-blue-400/20 blur-3xl rounded-full"
-              />
-            </div>
-          </motion.div>
+          {/* Centered Logo */}
+          <div className="flex justify-center mb-10">
+            <img src={mabiconsLogo} alt="Mabicons Logo" className="h-12 object-contain" />
+          </div>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mb-10 text-center"
-          >
-            <h1 className="text-3xl font-medium text-[#1A1A2E] mb-2 tracking-tight">Welcome Back</h1>
-            <p className="text-sm font-normal text-slate-500 tracking-wide">Please enter your credentials to log in.</p>
-          </motion.div>
+          <div className="mb-10 text-center">
+            <h1 className="text-[36px] font-bold text-[#1A1A2E] mb-2 font-syne tracking-tight">Welcome Back</h1>
+            <p className="text-base font-medium text-[#9B9BAD]">Please enter your credentials to log in.</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-7">
             <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-500 px-1 uppercase tracking-[2px]">Email Address</label>
+              <label className="block text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] px-1">Email Address</label>
               <div className="relative group">
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
+                  <FiMail size={18} />
+                </div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#F9FBFF] border border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300"
-                  placeholder="name@mabicons.com"
+                  className="w-full bg-[#F3F5F9] border-none rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-4 focus:ring-[#1B4DA0]/5 placeholder:text-[#9B9BAD]/40"
+                  placeholder="ashwin.mabicons@gmail.com"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-500 px-1 uppercase tracking-[2px]">Password</label>
+              <label className="block text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] px-1">Password</label>
               <div className="relative group">
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
+                  <FiLock size={18} />
+                </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#F9FBFF] border border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300"
+                  className="w-full bg-[#F3F5F9] border-none rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-4 focus:ring-[#1B4DA0]/5 placeholder:text-[#9B9BAD]/40"
                   placeholder="••••••••"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                  className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] hover:text-[#1B4DA0] transition-colors"
                 >
                   {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
@@ -242,21 +228,21 @@ const Login = () => {
             </div>
 
             <div className="flex items-center justify-between px-1">
-              <label className="flex items-center gap-2.5 cursor-pointer group">
-                <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${rememberMe ? 'bg-blue-600 border-blue-600' : 'border-slate-200 group-hover:border-blue-400 bg-white'}`} onClick={() => setRememberMe(!rememberMe)}>
-                  {rememberMe && <FiCheck className="text-white text-xs stroke-[3px]" />}
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${rememberMe ? 'bg-[#1B4DA0] border-[#1B4DA0]' : 'border-[#E5E7EB] bg-white group-hover:border-[#1B4DA0]'}`} onClick={() => setRememberMe(!rememberMe)}>
+                  {rememberMe && <FiCheck className="text-white text-xs stroke-[4px]" />}
                 </div>
-                <span className="text-xs font-medium text-slate-500 group-hover:text-slate-700 transition-colors">Remember Me</span>
+                <span className="text-sm font-bold text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">Remember Me</span>
               </label>
-              <Link to="/forgot-password" title="Forgot Password" className="text-xs font-semibold text-blue-600 hover:text-blue-700">Forgot Password?</Link>
+              <Link to="/forgot-password" title="Forgot Password" className="text-sm font-bold text-[#1B4DA0] hover:underline transition-all">Forgot Password?</Link>
             </div>
 
             <motion.button
-              whileHover={{ y: -2, shadow: "0 20px 40px rgba(37, 99, 235, 0.2)" }}
+              whileHover={{ y: -2, shadow: "0 20px 40px rgba(27, 77, 160, 0.25)" }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white rounded-2xl py-4.5 text-sm font-bold uppercase tracking-[2px] shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4 flex items-center justify-center gap-2"
+              className="w-full bg-[#1B4DA0] text-white rounded-2xl py-5 text-sm font-black uppercase tracking-[2px] shadow-xl shadow-[#1B4DA0]/20 hover:bg-[#153e82] transition-all disabled:opacity-70 flex items-center justify-center gap-3"
             >
               {loading ? (
                 <>
@@ -265,87 +251,84 @@ const Login = () => {
                 </>
               ) : (
                 <>
-                  <span>Sign In</span>
-                  <FiArrowRight size={18} />
+                  SIGN IN <FiArrowRight size={18} strokeWidth={3} />
                 </>
               )}
             </motion.button>
-            {error && <p className="text-rose-500 text-xs font-semibold text-center">{error}</p>}
-
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-              <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-white px-4 text-slate-400 font-semibold">Or continue with</span></div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button type="button" className="flex items-center justify-center gap-2 py-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition-all text-xs font-semibold text-slate-600">
-                <FcGoogle size={18} /> Google
-              </button>
-              <button type="button" className="flex items-center justify-center gap-2 py-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition-all text-xs font-semibold text-slate-600">
-                <FaApple size={18} /> Apple
-              </button>
+            {error && <p className="text-rose-500 text-xs font-bold text-center mt-4 uppercase tracking-widest">{error}</p>}
+            <div className="grid grid-cols-2 gap-4">
             </div>
           </form>
+
+          {/* Footer Copyright */}
+          <div className="mt-16 text-center">
+            <p className="text-[12px] font-medium text-[#9B9BAD]">© 2024 Mabicons. All rights reserved.</p>
+          </div>
         </motion.div>
       </div>
 
-      {/* Right Side - Marketing/Dashboard Mockup */}
-      <div className="hidden lg:flex w-1/2 bg-[#1B4DA0] relative overflow-hidden p-20 flex-col justify-center">
+      {/* Right Side - Brand Showcase */}
+      <div className="hidden lg:flex flex-1 bg-[#1B4DA0] relative overflow-hidden px-16 py-12 flex-col justify-center items-center text-center">
         {/* Animated Background Elements */}
         <motion.div
           animate={{
             scale: [1, 1.1, 1],
-            opacity: [0.03, 0.06, 0.03]
+            opacity: [0.03, 0.05, 0.03]
           }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-white rounded-full -mr-[500px] -mt-[500px]"
+          className="absolute -top-[10%] -right-[10%] w-[800px] h-[800px] bg-white rounded-full blur-[100px]"
         />
 
-        <div className="relative z-10 space-y-12">
-          <div className="max-w-md">
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-            >
-              <h2 className="text-[40px] font-bold text-white mb-6 leading-[1.2] font-syne tracking-tight">
-                Empower your recruitment operations.
-              </h2>
-              <div className="w-16 h-1 bg-blue-400 rounded-full mb-8" />
-              <p className="text-blue-100/70 text-base font-medium leading-relaxed">
-                Log in to access your unified ERP dashboard, manage candidate pipelines, and streamline your entire hiring lifecycle.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Mockup Container with premium animation */}
+        <div className="relative z-10 w-full flex flex-col items-center flex-1 min-h-0">
           <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.8, duration: 1.2, ease: "easeOut" }}
-            className="relative group"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="max-w-xl mb-10 shrink-0"
           >
-            <div className="bg-white/5 backdrop-blur-xl rounded-[40px] p-4 shadow-2xl border border-white/10 overflow-hidden">
-              <img
-                src={loginMockup}
-                alt="Dashboard Mockup"
-                className="rounded-[28px] w-full shadow-2xl transition-all duration-1000 group-hover:scale-[1.02]"
-              />
+            <h2 className="text-[40px] font-bold text-white mb-6 leading-[1.1] font-syne tracking-tight">
+              Empower your recruitment operations.
+            </h2>
+            <div className="w-20 h-1.5 bg-blue-400 rounded-full mb-10 shadow-[0_0_20px_rgba(96,165,250,0.5)] mx-auto" />
+            <p className="text-lg text-blue-100/70 font-medium leading-relaxed">
+              Log in to access your unified ERP dashboard, manage candidate pipelines, and streamline your entire hiring lifecycle.
+            </p>
+          </motion.div>
+
+          {/* Dashboard Preview Mockup - Flex container to handle dynamic height */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 0.6, ease: "easeOut" }}
+            className="relative w-full flex-1 min-h-0 flex items-center justify-center"
+          >
+            {/* Glassmorphic Container with max-height to prevent overflow */}
+            <div className="p-4 bg-white/10 backdrop-blur-xl rounded-[40px] border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.3)] max-w-[85%] max-h-full overflow-hidden">
+              <div className="overflow-hidden rounded-[28px] relative group h-full">
+                <img
+                  src={loginMockup}
+                  alt="Dashboard Preview"
+                  className="w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-1000"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1B4DA0]/30 to-transparent pointer-events-none" />
+              </div>
             </div>
 
             {/* Floating UI Elements */}
             <motion.div
-              animate={{ y: [0, -12, 0] }}
+              animate={{ y: [0, -10, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-6 -right-6 w-32 h-32 bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 hidden xl:flex items-center justify-center p-6"
+              className="absolute top-0 -right-4 w-32 h-20 bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-2xl flex items-center justify-center p-4"
             >
-              <div className="space-y-3 w-full">
-                <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
-                  <motion.div animate={{ width: ["0%", "80%", "80%"] }} transition={{ duration: 2, delay: 1.5 }} className="h-full bg-blue-400" />
+              <div className="w-full space-y-3">
+                <div className="h-1.5 w-full bg-blue-400/30 rounded-full overflow-hidden">
+                  <motion.div
+                    animate={{ width: ["0%", "80%", "80%"] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                    className="h-full bg-blue-400 shadow-[0_0_15px_#60A5FA]"
+                  />
                 </div>
-                <div className="h-1.5 w-2/3 bg-white/20 rounded-full overflow-hidden">
-                  <motion.div animate={{ width: ["0%", "50%", "50%"] }} transition={{ duration: 2, delay: 1.7 }} className="h-full bg-blue-300" />
-                </div>
+                <div className="h-1.5 w-[60%] bg-white/20 rounded-full" />
               </div>
             </motion.div>
           </motion.div>
