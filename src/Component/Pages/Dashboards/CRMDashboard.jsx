@@ -873,33 +873,33 @@ const CRMDashboard = () => {
                     title="New Leads"
                     value={totalLeads}
                     icon={FiTrendingUp}
-                    color="blue"
+                    color="white"
                   />
                   <StatCard
                     title="Pipeline Open"
                     value={pipelineOpen}
                     icon={FiActivity}
-                    color="blue"
+                    color="white"
                     change={totalLeads ? `${Math.round(pipelineOpen / totalLeads * 100)}%` : '0%'}
                   />
                   <StatCard
                     title="Converted"
                     value={converted}
                     icon={FiZap}
-                    color="blue"
+                    color="white"
                     change={totalLeads ? `${Math.round(converted / totalLeads * 100)}%` : '0%'}
                   />
                   <StatCard
                     title="Conv. Rate"
                     value={`${conversionRate}%`}
                     icon={FiTarget}
-                    color="blue"
+                    color="white"
                   />
                   <StatCard
                     title="Sales Reps"
                     value={Math.max(0, reps.length - 1)}
                     icon={FiUsers}
-                    color="blue"
+                    color="white"
                   />
                 </div>
 

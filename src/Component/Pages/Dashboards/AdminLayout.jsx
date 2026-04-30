@@ -430,7 +430,7 @@ export const StatCard = ({ title, value, change, changeType = 'increase', icon: 
     rose: "bg-rose-100 text-rose-600",
     amber: "bg-amber-100 text-amber-600",
     violet: "bg-violet-100 text-violet-600",
-    white: "bg-white text-[#1A1A2E] border border-[#F4F3EF] shadow-sm",
+    white: "bg-white text-black border border-[#F4F3EF] shadow-sm",
   };
 
   return (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUsers, FiSearch, FiCheckSquare, FiMapPin, FiActivity, FiRefreshCw, FiArrowRight } from 'react-icons/fi';
+import { FiUsers, FiSearch, FiCheckSquare, FiMapPin, FiActivity, FiRefreshCw, FiArrowRight, FiDatabase } from 'react-icons/fi';
 import { getAllClients, editClient } from '../../../service/api';
 import ClientOnboardingForm from './ClientOnboardingForm';
 import { toast } from 'react-hot-toast';
@@ -26,7 +26,7 @@ const CompleteOnboardingTab = () => {
           spocName: c.spocName || c.contactPerson || c.name || 'N/A',
           location: c.corporateAddress || c.location || 'N/A'
         }));
-        
+
         // Filter only clients in 'Finalize' stage or 'Requested' status
         const pending = mapped.filter(c => c.stage === 'Lead Stage' || c.status === 'Requested');
         console.log("Filtered Pending Clients:", pending);
@@ -43,7 +43,7 @@ const CompleteOnboardingTab = () => {
     fetchData();
   }, []);
 
-  const filteredClients = clients.filter(c => 
+  const filteredClients = clients.filter(c =>
     (c.companyName || '').toLowerCase().includes(search.toLowerCase()) ||
     (c.spocName || '').toLowerCase().includes(search.toLowerCase())
   );
@@ -57,14 +57,14 @@ const CompleteOnboardingTab = () => {
     >
       <div className="flex items-center justify-between mb-2 flex-wrap gap-4">
         <div className="flex flex-col gap-1 text-left">
-          <h1 className="text-3xl font-black text-[#1A1A2E] tracking-tight uppercase" style={{ fontFamily: "'Syne', sans-serif" }}>
+
+
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
             Pending Onboarding
           </h1>
-          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.3em]">
-            {clients.length} Pending • Complete Profiles
-          </p>
+
         </div>
-        <button 
+        <button
           onClick={fetchData}
           className="group flex items-center gap-3 px-6 py-3 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-[20px] text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
           disabled={loading}
@@ -120,7 +120,7 @@ const CompleteOnboardingTab = () => {
                   <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-wider">{c.industry || 'General'}</span>
                 </div>
               </div>
-              
+
               <div className="text-left space-y-1">
                 <p className="text-sm font-bold text-[#1A1A2E]">{c.spocName}</p>
                 <p className="text-[11px] text-[#9B9BAD] font-medium truncate">{c.spocEmail || c.email}</p>
@@ -128,7 +128,7 @@ const CompleteOnboardingTab = () => {
 
               <div className="text-left">
                 <p className="text-xs font-bold text-[#6B6B7E] flex items-center gap-2">
-                  <FiMapPin size={14} className="text-[#1B4DA0] shrink-0" /> 
+                  <FiMapPin size={14} className="text-[#1B4DA0] shrink-0" />
                   <span className="truncate">{c.location || 'N/A'}</span>
                 </p>
               </div>
@@ -169,7 +169,7 @@ const CompleteOnboardingTab = () => {
               status: 'Accepted',
               probability: 100
             };
-            
+
             const res = await editClient(payload);
             if (res.success) {
               toast.success("Client onboarding completed!");

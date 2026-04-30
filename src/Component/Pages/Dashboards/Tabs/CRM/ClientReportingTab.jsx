@@ -162,12 +162,12 @@ const ClientReportingTab = ({ clients = [] }) => {
       const res = await getClientReports();
       if (res.success) {
         setReports(res.data);
-        
+
         // Auto-seed if empty
         if (res.data.length === 0) {
-           await seedReports();
-           const res2 = await getClientReports();
-           if (res2.success) setReports(res2.data);
+          await seedReports();
+          const res2 = await getClientReports();
+          if (res2.success) setReports(res2.data);
         }
       }
     } catch (error) {
@@ -188,7 +188,7 @@ const ClientReportingTab = ({ clients = [] }) => {
     { label: 'Active Drafts', value: reports.filter(r => r.status === 'DRAFT').length, icon: FileText, color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
 
-  const filteredReports = reports.filter(r => 
+  const filteredReports = reports.filter(r =>
     (r.reportName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (r.companyName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -216,16 +216,15 @@ const ClientReportingTab = ({ clients = [] }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Client Performance Reports</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1 italic">Real-time deliverables tracking and audit logs</p>
         </div>
         <div className="flex gap-4">
-           <button 
+          <button
             onClick={fetchData}
             className="w-14 h-14 bg-white border border-[#F4F3EF] text-[#6B6B7E] rounded-2xl flex items-center justify-center hover:bg-[#F8FAFF] transition-all shadow-sm"
           >
-             <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button 
+          <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center justify-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-[2px] shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
           >
@@ -299,14 +298,14 @@ const ClientReportingTab = ({ clients = [] }) => {
 
           <div className="overflow-x-auto -mx-8 min-h-[300px]">
             {loading ? (
-               <div className="py-20 text-center">
-                 <RefreshCw className="w-8 h-8 text-[#1B4DA0] animate-spin mx-auto mb-4" />
-                 <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Mapping report database...</p>
-               </div>
+              <div className="py-20 text-center">
+                <RefreshCw className="w-8 h-8 text-[#1B4DA0] animate-spin mx-auto mb-4" />
+                <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Mapping report database...</p>
+              </div>
             ) : filteredReports.length === 0 ? (
-               <div className="py-20 text-center">
-                 <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">No records found</p>
-               </div>
+              <div className="py-20 text-center">
+                <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">No records found</p>
+              </div>
             ) : (
               <table className="w-full">
                 <thead>
@@ -374,8 +373,8 @@ const ClientReportingTab = ({ clients = [] }) => {
       </div>
 
       {createPortal(
-        <CreateReportModal 
-          isOpen={showCreateModal} 
+        <CreateReportModal
+          isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           clients={clients}
           onSuccess={fetchData}

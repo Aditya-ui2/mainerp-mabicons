@@ -14,27 +14,27 @@ import { getAllClients, createClient, editClient } from "../../../service/api";
 const PIPELINE_STAGES = ["Lead Stage", "Finalize", "Onboarding Complete"];
 
 const STAGE_STYLE = {
-  "Lead Stage": { 
-    dot: "bg-[#F59E0B]", 
-    badge: "bg-[#FFF9EB] text-[#B45309]", 
-    label: "Lead Stage", 
+  "Lead Stage": {
+    dot: "bg-[#F59E0B]",
+    badge: "bg-[#FFF9EB] text-[#B45309]",
+    label: "Lead Stage",
     bar: "bg-[#F59E0B]",
     columnBg: "bg-[#FFF9EB]",
     columnBorder: "border-[#FDE68A]"
   },
-  "Finalize": { 
-    dot: "bg-[#3B82F6]", 
-    badge: "bg-[#EFF6FF] text-[#1D4ED8]", 
-    label: "Finalize", 
+  "Finalize": {
+    dot: "bg-[#3B82F6]",
+    badge: "bg-[#EFF6FF] text-[#1D4ED8]",
+    label: "Finalize",
     bar: "bg-[#3B82F6]",
     columnBg: "bg-[#EFF6FF]",
     columnBorder: "border-[#BFDBFE]"
   },
-  "Onboarding Complete": { 
-    dot: "bg-[#8B5CF6]", 
-    badge: "bg-[#F5F3FF] text-[#6D28D9]", 
-    label: "Onboarding", 
-    icon: true, 
+  "Onboarding Complete": {
+    dot: "bg-[#8B5CF6]",
+    badge: "bg-[#F5F3FF] text-[#6D28D9]",
+    label: "Onboarding",
+    icon: true,
     bar: "bg-[#8B5CF6]",
     columnBg: "bg-[#F5F3FF]",
     columnBorder: "border-[#DDD6FE]"
@@ -204,7 +204,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
             Client Pipeline
           </h1>
           <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mt-1">
-            {clients.length} Clients • Manage your pipeline
+            {clients.length} Total Clients in Pipeline
           </p>
         </div>
         <div className="flex gap-4 items-center flex-wrap">

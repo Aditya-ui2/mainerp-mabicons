@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from "react-dom";
-import { 
-  FiCalendar, 
-  FiClock, 
-  FiVideo, 
-  FiMapPin, 
-  FiUserPlus, 
-  FiMoreVertical, 
-  FiX, 
-  FiRefreshCw, 
+import {
+  FiCalendar,
+  FiClock,
+  FiVideo,
+  FiMapPin,
+  FiUserPlus,
+  FiMoreVertical,
+  FiX,
+  FiRefreshCw,
   FiPlus,
   FiLink,
   FiUsers,
@@ -17,12 +17,12 @@ import {
   FiTrash2,
   FiEdit2
 } from 'react-icons/fi';
-import { 
-  getClientMeetings, 
-  createClientMeeting, 
-  seedClientMeetings, 
-  updateMeetingStatus, 
-  deleteMeeting 
+import {
+  getClientMeetings,
+  createClientMeeting,
+  seedClientMeetings,
+  updateMeetingStatus,
+  deleteMeeting
 } from '../../../service/api';
 import { toast } from 'react-hot-toast';
 
@@ -215,7 +215,7 @@ const MeetingActionsDropdown = ({ meeting, onUpdate, onDelete }) => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-10 h-10 rounded-xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-slate-50 transition-all active:scale-95"
       >
@@ -275,9 +275,9 @@ const MeetingWithClientTab = ({ clients = [] }) => {
         setMeetings(res.data);
         // Auto-seed if empty
         if (res.data.length === 0) {
-           await seedClientMeetings();
-           const res2 = await getClientMeetings();
-           if (res2.success) setMeetings(res2.data);
+          await seedClientMeetings();
+          const res2 = await getClientMeetings();
+          if (res2.success) setMeetings(res2.data);
         }
       }
     } catch (error) {
@@ -336,7 +336,7 @@ const MeetingWithClientTab = ({ clients = [] }) => {
   const getVisibleMeetings = () => {
     return meetings
       .filter(m => m.status === 'Scheduled' || m.status === 'Completed')
-      .sort((a,b) => {
+      .sort((a, b) => {
         // Scheduled meetings first, then sorted by date and time
         if (a.status !== b.status) return a.status === 'Scheduled' ? -1 : 1;
         return new Date(a.meetingDate) - new Date(b.meetingDate);
@@ -353,20 +353,19 @@ const MeetingWithClientTab = ({ clients = [] }) => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-left">
         <div>
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Client Meetings</h1>
-          <p className="text-sm font-medium text-[#9B9BAD] mt-1 italic">Schedule, manage, and track all interactions with your clients</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={fetchMeetings}
             className="w-12 h-12 bg-white border border-[#F4F3EF] text-[#6B6B7E] rounded-2xl flex items-center justify-center hover:bg-[#F8FAFF] transition-all"
           >
-             <FiRefreshCw className={loading ? 'animate-spin' : ''} />
+            <FiRefreshCw className={loading ? 'animate-spin' : ''} />
           </button>
-          <button 
+          <button
             onClick={() => setShowModal(true)}
             className="px-6 py-3.5 bg-[#1B4DA0] text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all uppercase text-[11px] tracking-[2px]"
           >
-             <FiCalendar size={18} /> Schedule Meeting
+            <FiCalendar size={18} /> Schedule Meeting
           </button>
         </div>
       </div>
@@ -380,53 +379,53 @@ const MeetingWithClientTab = ({ clients = [] }) => {
               <div className="h-[1px] flex-1 bg-gradient-to-r from-[#F4F3EF] to-transparent" />
               <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black">{meetings.filter(m => m.status === 'Scheduled').length}</span>
             </div>
-            
+
             {loading ? (
-               <div className="py-20 text-center bg-white rounded-[40px] border border-[#F4F3EF]">
-                 <FiRefreshCw className="w-10 h-10 text-[#1B4DA0] animate-spin mx-auto mb-4 opacity-20" />
-                 <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Syncing with database...</p>
-               </div>
+              <div className="py-20 text-center bg-white rounded-[40px] border border-[#F4F3EF]">
+                <FiRefreshCw className="w-10 h-10 text-[#1B4DA0] animate-spin mx-auto mb-4 opacity-20" />
+                <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Syncing with database...</p>
+              </div>
             ) : meetings.filter(m => m.status === 'Scheduled').length === 0 ? (
-               <div className="py-12 text-center bg-[#F8FAFF]/50 rounded-[32px] border-2 border-dashed border-[#F4F3EF]">
-                  <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">No active meetings</p>
-               </div>
+              <div className="py-12 text-center bg-[#F8FAFF]/50 rounded-[32px] border-2 border-dashed border-[#F4F3EF]">
+                <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">No active meetings</p>
+              </div>
             ) : (
               meetings.filter(m => m.status === 'Scheduled').map(meeting => (
-                <motion.div 
-                  key={meeting.id} 
+                <motion.div
+                  key={meeting.id}
                   layout
                   className="bg-white rounded-[32px] p-6 shadow-sm border border-[#F4F3EF] hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all group flex flex-col md:flex-row gap-6 text-left relative overflow-hidden"
                 >
-                   <div className="flex flex-col items-center justify-center min-w-[120px] py-4 bg-[#F8FAFF] rounded-2xl border border-blue-50 relative z-10">
-                     <span className="text-[11px] font-black uppercase tracking-widest text-[#1B4DA0]">{formatDate(meeting.meetingDate).split(',')[0]}</span>
-                     <span className="text-xl font-black text-[#1A1A2E] mt-1">{meeting.meetingTime}</span>
-                   </div>
-                   <div className="flex-1 flex flex-col justify-center relative z-10">
-                     <div className="flex items-center gap-3">
-                       <h4 className="text-lg font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{meeting.title}</h4>
-                       <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[1px] bg-blue-50 text-blue-600 border border-blue-100">
-                          {meeting.meetingType}
-                       </span>
-                     </div>
-                     <p className="text-sm font-medium text-[#6B6B7E] mt-1">{meeting.companyName}</p>
-                     <div className="flex items-center gap-4 mt-4 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">
-                       <div className="flex items-center gap-1.5 bg-[#F4F3EF] px-3 py-1.5 rounded-xl">
-                         {meeting.meetingType === 'Virtual' ? <FiVideo size={12}/> : <FiMapPin size={12}/>}
-                         {meeting.platform}
-                       </div>
-                       <div className="flex items-center gap-1.5 bg-[#F4F3EF] px-3 py-1.5 rounded-xl">
-                         <FiUsers size={12}/>
-                         {meeting.attendees} Attendees
-                       </div>
-                     </div>
-                   </div>
-                   <div className="flex items-start justify-end relative z-10">
-                      <MeetingActionsDropdown 
-                        meeting={meeting} 
-                        onUpdate={handleUpdateStatus} 
-                        onDelete={handleDeleteMeeting} 
-                      />
-                   </div>
+                  <div className="flex flex-col items-center justify-center min-w-[120px] py-4 bg-[#F8FAFF] rounded-2xl border border-blue-50 relative z-10">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-[#1B4DA0]">{formatDate(meeting.meetingDate).split(',')[0]}</span>
+                    <span className="text-xl font-black text-[#1A1A2E] mt-1">{meeting.meetingTime}</span>
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center relative z-10">
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-lg font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">{meeting.title}</h4>
+                      <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[1px] bg-blue-50 text-blue-600 border border-blue-100">
+                        {meeting.meetingType}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-[#6B6B7E] mt-1">{meeting.companyName}</p>
+                    <div className="flex items-center gap-4 mt-4 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">
+                      <div className="flex items-center gap-1.5 bg-[#F4F3EF] px-3 py-1.5 rounded-xl">
+                        {meeting.meetingType === 'Virtual' ? <FiVideo size={12} /> : <FiMapPin size={12} />}
+                        {meeting.platform}
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-[#F4F3EF] px-3 py-1.5 rounded-xl">
+                        <FiUsers size={12} />
+                        {meeting.attendees} Attendees
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start justify-end relative z-10">
+                    <MeetingActionsDropdown
+                      meeting={meeting}
+                      onUpdate={handleUpdateStatus}
+                      onDelete={handleDeleteMeeting}
+                    />
+                  </div>
                 </motion.div>
               ))
             )}
@@ -440,7 +439,7 @@ const MeetingWithClientTab = ({ clients = [] }) => {
                 <div className="h-[1px] flex-1 bg-gradient-to-r from-[#F4F3EF] to-transparent" />
                 <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black">{meetings.filter(m => m.status === 'Completed').length}</span>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-4 opacity-75 grayscale-[0.5] hover:grayscale-0 transition-all">
                 {meetings.filter(m => m.status === 'Completed').map(meeting => (
                   <div key={meeting.id} className="bg-[#FAFAFA] rounded-[24px] p-5 border border-[#F4F3EF] flex items-center justify-between group">
@@ -456,10 +455,10 @@ const MeetingWithClientTab = ({ clients = [] }) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                       <span className="px-3 py-1.5 rounded-full text-[8px] font-black bg-emerald-100 text-emerald-700 uppercase tracking-widest">Completed</span>
-                       <button onClick={() => handleDeleteMeeting(meeting.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 hover:text-rose-500 text-[#9B9BAD] flex items-center justify-center transition-all">
-                         <FiTrash2 size={14} />
-                       </button>
+                      <span className="px-3 py-1.5 rounded-full text-[8px] font-black bg-emerald-100 text-emerald-700 uppercase tracking-widest">Completed</span>
+                      <button onClick={() => handleDeleteMeeting(meeting.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 hover:text-rose-500 text-[#9B9BAD] flex items-center justify-center transition-all">
+                        <FiTrash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -483,29 +482,29 @@ const MeetingWithClientTab = ({ clients = [] }) => {
             </div>
           </div>
           <div className="bg-gradient-to-br from-[#1B4DA0] to-indigo-600 rounded-[40px] p-10 shadow-lg text-white text-left relative overflow-hidden">
-             <div className="relative z-10">
-               <FiLink size={32} className="mb-4 opacity-50" />
-               <h4 className="text-xl font-bold mb-2">Google Sync</h4>
-               <p className="text-xs font-medium text-blue-100 mb-8 leading-relaxed italic">Automatically track all invites and responses directly in your CRM dashboard.</p>
-               <button 
+            <div className="relative z-10">
+              <FiLink size={32} className="mb-4 opacity-50" />
+              <h4 className="text-xl font-bold mb-2">Google Sync</h4>
+              <p className="text-xs font-medium text-blue-100 mb-8 leading-relaxed italic">Automatically track all invites and responses directly in your CRM dashboard.</p>
+              <button
                 onClick={handleConnectCalendar}
                 disabled={syncing}
                 className="w-full py-4 bg-white text-[#1B4DA0] rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-               >
-                 {syncing ? <FiRefreshCw className="animate-spin" /> : <FiCalendar />}
-                 {syncing ? 'Connecting...' : 'Connect Calendar'}
-               </button>
-             </div>
-             <div className="absolute right-[-20%] bottom-[-20%] opacity-10">
-                <FiCalendar size={220} />
-             </div>
+              >
+                {syncing ? <FiRefreshCw className="animate-spin" /> : <FiCalendar />}
+                {syncing ? 'Connecting...' : 'Connect Calendar'}
+              </button>
+            </div>
+            <div className="absolute right-[-20%] bottom-[-20%] opacity-10">
+              <FiCalendar size={220} />
+            </div>
           </div>
         </div>
       </div>
 
       {createPortal(
-        <ScheduleMeetingModal 
-          isOpen={showModal} 
+        <ScheduleMeetingModal
+          isOpen={showModal}
           onClose={() => setShowModal(false)}
           clients={clients}
           onSuccess={fetchMeetings}
