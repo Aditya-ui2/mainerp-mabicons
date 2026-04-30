@@ -42,7 +42,7 @@ const CRMTeamTab = ({ department = '' }) => {
     setLoading(true);
     try {
       // Fetch members based on the provided department
-      const res = await getDepartmentTeamMembers(department); 
+      const res = await getDepartmentTeamMembers(department);
       if (res?.success && res.data) {
         const mapped = res.data.map(m => ({
           id: m.id?.toString() || m._id,
@@ -54,12 +54,12 @@ const CRMTeamTab = ({ department = '' }) => {
           status: m.status || 'Active',
           joinDate: m.joinDate ? new Date(m.joinDate).toISOString().split('T')[0] : 'N/A',
         }));
-        
+
         // Final fallback filtering to ensure visual consistency
-        const filtered = department 
+        const filtered = department
           ? mapped.filter(m => m.department === department || m.department === 'N/A')
           : mapped;
-          
+
         setMembers(filtered);
       }
     } catch (err) {
@@ -80,7 +80,7 @@ const CRMTeamTab = ({ department = '' }) => {
         const payload = JSON.parse(atob(token.split('.')[1]));
         return (payload.email || '').toLowerCase();
       }
-    } catch (_) {}
+    } catch (_) { }
     return (localStorage.getItem('userEmail') || '').toLowerCase();
   })();
 
@@ -88,7 +88,7 @@ const CRMTeamTab = ({ department = '' }) => {
     // Exclude the currently logged-in user from the team list
     m.email?.toLowerCase() !== currentUserEmail &&
     (m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      m.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (roleFilter === 'all' || m.role === roleFilter)
   );
 
@@ -116,29 +116,29 @@ const CRMTeamTab = ({ department = '' }) => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
-        <div className="relative flex-1 group min-w-[200px]">
-          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+      <div className="bg-white border border-[#F4F3EF] rounded-[24px] p-2 shadow-sm mb-8 flex items-center gap-3 flex-wrap lg:flex-nowrap">
+        <div className="relative flex-[2.5] group min-w-[200px]">
+          <FiSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, role, email..."
-            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-4 pl-16 pr-6 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/5 outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
           />
         </div>
 
-        <div className="relative">
+        <div className="relative flex-1 group min-w-[140px]">
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
           >
             {uniqueRoles.map(r => (
-              <option key={r} value={r}>{r === 'all' ? 'All Roles' : r}</option>
+              <option key={r} value={r}>{r === 'all' ? 'ALL ROLES' : r.toUpperCase()}</option>
             ))}
           </select>
-          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
         </div>
       </div>
 
@@ -541,7 +541,7 @@ const CRMTeamTab = ({ department = '' }) => {
                       onClick={() => { setShowInviteModal(false); toast.success("Team member onboarded successfully"); }}
                       className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#1a3a82] transition-all shadow-lg shadow-[#1B4DA0]/20 active:scale-95"
                     >
-                      Onboard Member
+                      Add Member
                     </button>
                   </div>
                 </motion.div>

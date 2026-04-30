@@ -86,7 +86,9 @@ const ScheduleMeetingModal = ({ isOpen, onClose, clients, onSuccess }) => {
             className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden text-left"
           >
             <div className="px-10 py-10 border-b border-[#F4F3EF] flex items-center justify-between">
-              <h2 className="text-2xl font-black text-[#1A1A2E]" style={{ fontFamily: '"Syne", sans-serif' }}>Schedule Meeting</h2>
+              <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                Schedule Meeting
+              </h1>
               <button onClick={onClose} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
                 <FiX size={20} />
               </button>
@@ -355,12 +357,7 @@ const MeetingWithClientTab = ({ clients = [] }) => {
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Client Meetings</h1>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={fetchMeetings}
-            className="w-12 h-12 bg-white border border-[#F4F3EF] text-[#6B6B7E] rounded-2xl flex items-center justify-center hover:bg-[#F8FAFF] transition-all"
-          >
-            <FiRefreshCw className={loading ? 'animate-spin' : ''} />
-          </button>
+
           <button
             onClick={() => setShowModal(true)}
             className="px-6 py-3.5 bg-[#1B4DA0] text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all uppercase text-[11px] tracking-[2px]"

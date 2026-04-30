@@ -133,7 +133,7 @@ const sidebarConfig = [
   {
     items: [
       { id: 12, title: 'All Clients', icon: FiUsers },
-      { id: 6, title: 'Manage team', icon: FiUserPlus },
+      { id: 6, title: 'My Team', icon: FiUserPlus },
       { id: 11, title: 'Complete Onboarding', icon: FiCheckSquare },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
       { id: 9, title: 'Accounts', icon: FiBriefcase },
@@ -860,7 +860,7 @@ const CRMDashboard = () => {
                     </div>
 
                     <button
-                      onClick={() => setActiveTab('Manage team')}
+                      onClick={() => setActiveTab('My Team')}
                       className="px-6 py-2.5 bg-[#0D47A1] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/10 hover:bg-[#0a3a82] transition-all flex items-center justify-center min-w-max active:scale-95"
                     >
                       View Team
@@ -1037,7 +1037,7 @@ const CRMDashboard = () => {
               </Suspense>
             )}
 
-            {activeTab === 'Manage team' && (
+            {activeTab === 'My Team' && (
               <CRMTeamTab department="CRM Department" />
             )}
 

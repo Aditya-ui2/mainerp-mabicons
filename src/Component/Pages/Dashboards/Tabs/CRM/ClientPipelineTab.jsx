@@ -56,7 +56,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState("All");
-  const [viewMode, setViewMode] = useState("list");
+  const [viewMode, setViewMode] = useState("kanban");
   const [selectedClient, setSelectedClient] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
@@ -243,23 +243,23 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
       </div>
 
       {/* Ultra-Premium Standardized Search & Filter Bar */}
-      <div className="bg-white border border-[#F4F3EF] rounded-[40px] p-2 shadow-sm mb-10 flex items-center gap-3">
+      <div className="bg-white border border-[#F4F3EF] rounded-[24px] p-2 shadow-sm mb-8 flex items-center gap-3 flex-wrap lg:flex-nowrap">
         {/* Search Field */}
-        <div className="relative flex-[2.5] group">
+        <div className="relative flex-[2.5] group min-w-[200px]">
           <FiSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by company, contact, or email..."
-            className="w-full bg-[#F4F3EF] border-none rounded-full py-4 pl-16 pr-6 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/5 outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-4 pl-16 pr-6 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/5 outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
           />
         </div>
 
         {/* Date Filter (Standardized UI) */}
-        <div className="relative flex-1 group">
+        <div className="relative flex-1 group min-w-[140px]">
           <select
-            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-full pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
+            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
           >
             <option value="all">All Date</option>
             <option value="today">Today</option>
@@ -270,11 +270,11 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
         </div>
 
         {/* Stage Filter */}
-        <div className="relative flex-1 group">
+        <div className="relative flex-1 group min-w-[140px]">
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
-            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-full pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
+            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
           >
             {uniqueStages.map(s => <option key={s} value={s}>{s === 'All' ? 'ALL STAGES' : s.toUpperCase()}</option>)}
           </select>
@@ -286,7 +286,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
       {viewMode === 'list' && (
         <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
           {/* Table header */}
-          <div className="grid grid-cols-[40px_2fr_1fr_1.5fr_1fr_1.2fr_40px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-[#FAFAFA]/30">
+          <div className="grid grid-cols-[40px_2fr_1fr_1.5fr_1fr_1.2fr_40px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-[#FDFDFD]">
             <div className="flex items-center">
               <input
                 type="checkbox"

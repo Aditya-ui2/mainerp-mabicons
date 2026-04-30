@@ -55,7 +55,7 @@ const MOCK_REPORTS = [
     candidatesContacted: 28,
     interviewsArranged: 4,
     summary: 'Productive day focusing on the Senior React Developer role. Shortlisted 5 solid candidates.',
-    tasksCompleted: ['Screened 15 candidates', 'Client meeting for JD sync', 'Updated Recruitment Tracker'],
+    tasksCompleted: ['Screened 15 candidates', ' for JD sync', 'Updated Recruitment Tracker'],
     tasksPlanned: ['Focus on Backend roles', 'Interview scheduling for tomorrow'],
     blockers: 'None',
     headComment: 'Excellent performance today, keep it up!',

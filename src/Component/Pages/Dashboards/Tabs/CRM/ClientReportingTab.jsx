@@ -88,7 +88,9 @@ const CreateReportModal = ({ isOpen, onClose, clients, onSuccess }) => {
             className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl overflow-hidden text-left"
           >
             <div className="px-10 py-10 border-b border-[#F4F3EF] flex items-center justify-between">
-              <h2 className="text-2xl font-black text-[#1A1A2E]" style={{ fontFamily: '"Syne", sans-serif' }}>New Report</h2>
+              <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                New Report
+              </h1>
               <button onClick={onClose} className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
                 <X size={20} />
               </button>
@@ -218,12 +220,7 @@ const ClientReportingTab = ({ clients = [] }) => {
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Client Performance Reports</h1>
         </div>
         <div className="flex gap-4">
-          <button
-            onClick={fetchData}
-            className="w-14 h-14 bg-white border border-[#F4F3EF] text-[#6B6B7E] rounded-2xl flex items-center justify-center hover:bg-[#F8FAFF] transition-all shadow-sm"
-          >
-            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-          </button>
+
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center justify-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-[2px] shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
@@ -234,19 +231,7 @@ const ClientReportingTab = ({ clients = [] }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-[32px] border border-[#F4F3EF] shadow-sm flex items-center gap-4">
-            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center`}>
-              <stat.icon size={24} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">{stat.label}</p>
-              <p className="text-xl font-black text-[#1A1A2E]">{stat.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Chart Section */}

@@ -21,19 +21,53 @@ const ClientsTab = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedIndustry, setSelectedIndustry] = useState('ALL');
-  const [selectedStage, setSelectedStage] = useState('ALL');
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedClientDetail, setSelectedClientDetail] = useState(null);
 
   const fetchClients = async () => {
     setLoading(true);
+    
+    const mockClients = [
+      {
+        _id: 'mock1',
+        companyName: 'TechNova Solutions',
+        spocName: 'Rajesh Kumar',
+        spocEmail: 'rajesh@technova.com',
+        industry: 'IT Services',
+        city: 'Bangalore',
+        stage: 'Onboarding Complete',
+        status: 'Active'
+      },
+      {
+        _id: 'mock2',
+        companyName: 'Global Retail Corp',
+        spocName: 'Anita Sharma',
+        spocEmail: 'anita.s@globalretail.com',
+        industry: 'Retail',
+        city: 'Delhi',
+        stage: 'Finalize',
+        status: 'Active'
+      },
+      {
+        _id: 'mock3',
+        companyName: 'Zenith Manufacturing',
+        spocName: 'Vikram Singh',
+        spocEmail: 'vikram@zenithmfg.in',
+        industry: 'Manufacturing',
+        city: 'Pune',
+        stage: 'Lead Stage',
+        status: 'Inactive'
+      }
+    ];
+
     try {
       const res = await getAllClients();
-      const clientList = res.data?.clients || res.clients || res || [];
-      setClients(Array.isArray(clientList) ? clientList : []);
+      const apiClients = res.data?.clients || res.clients || res || [];
+      setClients([...mockClients, ...(Array.isArray(apiClients) ? apiClients : [])]);
     } catch (err) {
       console.error('Error fetching clients:', err);
-      toast.error('Failed to load clients');
+      // Even if API fails (like 403), show the mock data for UI testing
+      setClients(mockClients);
     } finally {
       setLoading(false);
     }
@@ -59,14 +93,11 @@ const ClientsTab = () => {
       (c.spocName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.spocEmail || '').toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesIndustry = selectedIndustry === 'ALL' || c.industry === selectedIndustry;
-    const matchesStage = selectedStage === 'ALL' || c.stage === selectedStage;
-
-    return matchesSearch && matchesIndustry && matchesStage;
+    const matchesStatus = selectedStatus === 'ALL' || (c.status || 'Active').toUpperCase() === selectedStatus;
+    return matchesSearch && matchesStatus;
   });
 
-  const industries = ['ALL', ...new Set(clients.map(c => c.industry).filter(Boolean))];
-  const stages = ['ALL', ...new Set(clients.map(c => c.stage).filter(Boolean))];
+
 
   const getAvatarColor = (name) => {
     return 'bg-[#EEF2FB] text-[#1B4DA0] border border-[#DBEAFE]';
@@ -86,23 +117,6 @@ const ClientsTab = () => {
               All Clients
             </h1>
           </div>
-          <div className="flex gap-4 items-center flex-wrap">
-            <button
-              onClick={fetchClients}
-              className="group flex items-center gap-3 px-6 py-3 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-[20px] text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
-              disabled={loading}
-            >
-              <FiDatabase size={18} className={`text-emerald-500 transition-transform group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
-              Sync Data
-            </button>
-
-            {/* Add Client button - using the standardized style */}
-            <button
-              className="flex items-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-[20px] text-[13px] font-black uppercase tracking-widest hover:bg-[#153e82] transition-all shadow-xl shadow-blue-500/20 active:scale-95"
-            >
-              <Plus size={20} /> Add Client
-            </button>
-          </div>
         </div>
 
         {/* Filter Bar */}
@@ -121,28 +135,13 @@ const ClientsTab = () => {
           <div className="flex items-center gap-3">
             <div className="relative group">
               <select
-                value={selectedIndustry}
-                onChange={(e) => setSelectedIndustry(e.target.value)}
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
                 className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-5 pr-12 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[170px] hover:bg-[#EEF2FB] transition-all"
               >
-                <option value="ALL">ALL INDUSTRIES</option>
-                {industries.filter(i => i !== 'ALL').map(ind => (
-                  <option key={ind} value={ind}>{ind.toUpperCase()}</option>
-                ))}
-              </select>
-              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
-            </div>
-
-            <div className="relative group">
-              <select
-                value={selectedStage}
-                onChange={(e) => setSelectedStage(e.target.value)}
-                className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-5 pr-12 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[170px] hover:bg-[#EEF2FB] transition-all"
-              >
-                <option value="ALL">ALL STAGES</option>
-                {stages.filter(s => s !== 'ALL').map(stg => (
-                  <option key={stg} value={stg}>{stg.toUpperCase()}</option>
-                ))}
+                <option value="ALL">ALL STATUS</option>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
               </select>
               <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
             </div>
@@ -151,15 +150,15 @@ const ClientsTab = () => {
 
         <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden">
           <div className="overflow-x-auto min-h-[400px]">
-            <table className="w-full">
+            <table className="w-full table-fixed">
               <thead>
-                <tr className="border-b border-[#F4F3EF] bg-gray-50/50">
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Company</th>
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">SPOC Details</th>
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Industry</th>
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Location</th>
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Stage</th>
-                  <th className="px-8 py-5 text-right"></th>
+                <tr className="border-b border-[#F4F3EF] bg-[#FDFDFD]">
+                  <th className="px-8 py-5 w-[25%] text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Company</th>
+                  <th className="px-8 py-5 w-[25%] text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">SPOC Details</th>
+                  <th className="px-8 py-5 w-[15%] text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Industry</th>
+                  <th className="px-8 py-5 w-[15%] text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Location</th>
+                  <th className="px-8 py-5 w-[15%] text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Stage</th>
+                  <th className="px-8 py-5 w-[5%] text-right"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F4F3EF]">
@@ -221,13 +220,7 @@ const ClientsTab = () => {
                         </span>
                       </td>
                       <td className="px-8 py-4">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(client.id || client._id); }}
-                            className="p-2 rounded-lg text-rose-500 hover:bg-rose-50 transition-all"
-                          >
-                            <FiTrash size={16} />
-                          </button>
+                        <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-all">
                           <button
                             onClick={(e) => { e.stopPropagation(); setSelectedClientDetail(client); }}
                             className="p-2 rounded-lg text-[#1B4DA0] hover:bg-blue-50 transition-all"

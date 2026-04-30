@@ -109,14 +109,12 @@ const AccountsTab = () => {
             className="w-full bg-[#F4F3EF] border-none rounded-2xl py-4 pl-14 pr-5 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
           />
         </div>
-        <button className="px-6 py-4 bg-[#F4F3EF] text-[#1A1A2E] text-[11px] font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 hover:bg-[#E8E7E2] transition-all">
-          <FiFilter size={18} /> Filters
-        </button>
+
       </div>
 
       <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden">
         <div className="overflow-x-auto min-h-[400px]">
-          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_100px] gap-4 px-10 py-5 border-b border-[#F4F3EF] bg-gray-50/50">
+          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_100px] gap-4 px-10 py-5 border-b border-[#F4F3EF] bg-[#FDFDFD]">
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left pl-[64px]">Client Name</div>
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Last Invoice</div>
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Balance</div>
