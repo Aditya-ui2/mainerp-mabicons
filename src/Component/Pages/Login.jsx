@@ -74,11 +74,24 @@ const Login = () => {
     const emailLower = email.toLowerCase().trim();
     const passTrim = password.trim();
 
-    const localLogin = () => {
+    // Check local credentials first for known users to ensure reliability
+    const localResult = (() => {
       const userData = USER_CREDENTIALS[emailLower];
       if (userData && userData.password === passTrim) {
         const normalizedRole = normalizeRole(userData.role, userData.department);
-        localStorage.setItem('token', 'mock-jwt-token');
+        
+        // Generate a valid-format mock JWT so jwt-decode doesn't throw in ProtectedRoute
+        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+        const payload = btoa(JSON.stringify({ 
+          role: userData.role, // Use original role from credentials
+          email: emailLower, 
+          name: userData.name,
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
+        }));
+        const mockToken = `${header}.${payload}.mock-signature`;
+
+        localStorage.setItem('token', mockToken);
         localStorage.setItem('userType', normalizedRole);
         localStorage.setItem('userName', userData.name);
         localStorage.setItem('userEmail', emailLower);
@@ -87,7 +100,15 @@ const Login = () => {
         return { success: true, user: userData, userType: normalizedRole };
       }
       return null;
-    };
+    })();
+
+    if (localResult) {
+      setTimeout(() => {
+        navigateByRole(localResult.userType, emailLower, localResult.user);
+        setLoading(false);
+      }, 800);
+      return;
+    }
 
     try {
       const {
@@ -125,18 +146,8 @@ const Login = () => {
         return;
       }
 
-      const localResult = localLogin();
-      if (localResult) {
-        setTimeout(() => navigateByRole(localResult.userType, emailLower, localResult.user), 800);
-        return;
-      }
       throw new Error(response?.message || 'Login failed');
     } catch (err) {
-      const localResult = localLogin();
-      if (localResult) {
-        setTimeout(() => navigateByRole(localResult.userType, emailLower, localResult.user), 800);
-        return;
-      }
       setError(err.message || 'Invalid email or password');
     } finally {
       setLoading(false);
