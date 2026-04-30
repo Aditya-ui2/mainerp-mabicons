@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Filter, Download, UserPlus, FileText, CheckCircle2, ChevronLeft, ChevronRight,
@@ -133,7 +134,7 @@ const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onRefresh }) => {
 
   return (
     <div className="fixed inset-0 z-[1100] flex justify-end overflow-hidden pointer-events-none">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md pointer-events-auto" />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-xl pointer-events-auto z-[1100]" />
       <motion.div
         initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
@@ -377,7 +378,7 @@ const AssignPositionModal = ({ isOpen, onClose, positions, onConfirm, isAssignin
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md pointer-events-auto" />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-xl pointer-events-auto z-[1100]" />
       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className={`relative z-[1101] w-full max-w-md rounded-[32px] p-8 shadow-2xl overflow-hidden pointer-events-auto ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-[#1A1A2E]'}`}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold font-syne">Assign to Position</h3>
@@ -974,37 +975,52 @@ const ResumeBankTab = () => {
       </div>
 
       {/* Overlays */}
-      <AnimatePresence>
-        {showDetailDrawer && selectedResume && (
-          <ResumeDetailDrawer
-            resume={selectedResume}
-            isDarkMode={isDarkMode}
-            onClose={() => setShowDetailDrawer(false)}
-            onRefresh={fetchResumes}
-          />
-        )}
-      </AnimatePresence>
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showDetailDrawer && selectedResume && (
+            <ResumeDetailDrawer
+              resume={selectedResume}
+              isDarkMode={isDarkMode}
+              onClose={() => setShowDetailDrawer(false)}
+              onRefresh={fetchResumes}
+            />
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <AnimatePresence>
-        {showAssignModal && (
-          <AssignPositionModal
-            isOpen={showAssignModal}
-            isDarkMode={isDarkMode}
-            onClose={() => setShowAssignModal(false)}
-            positions={allPositions}
-            selectedId={selectedPositionId}
-            onSelect={setSelectedPositionId}
-            onConfirm={handleConfirmAssign}
-            isAssigning={isAssigning}
-          />
-        )}
-      </AnimatePresence>
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showAssignModal && (
+            <AssignPositionModal
+              isOpen={showAssignModal}
+              isDarkMode={isDarkMode}
+              onClose={() => setShowAssignModal(false)}
+              positions={allPositions}
+              selectedId={selectedPositionId}
+              onSelect={setSelectedPositionId}
+              onConfirm={handleConfirmAssign}
+              isAssigning={isAssigning}
+            />
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <AnimatePresence>
-        {showPreviewModal && (
-          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPreviewModal(false)} className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md" />
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative z-[1101] w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden flex flex-col">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showPreviewModal && (
+            <div 
+              className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-xl transition-all duration-300"
+              onClick={() => setShowPreviewModal(false)}
+            >
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                exit={{ scale: 0.9, opacity: 0 }} 
+                className="relative z-[1101] w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden flex flex-col"
+                onClick={e => e.stopPropagation()}
+              >
               <div className="p-6 border-b flex items-center justify-between">
                 <h3 className="font-bold text-lg">{previewFileName}</h3>
                 <div className="flex items-center gap-2">
@@ -1022,15 +1038,27 @@ const ResumeBankTab = () => {
               <div className="flex-1 bg-slate-100 p-4">
                 <iframe src={previewUrl} className="w-full h-full rounded-2xl border-0" title="Resume Preview" allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" />
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <AnimatePresence>
-        {showUploadModal && (
-          <div className="fixed inset-0 z-[1100] bg-[#1A1A2E]/40 backdrop-blur-md flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative z-[1101] w-full max-w-lg bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-6">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showUploadModal && (
+            <div 
+              className="fixed inset-0 z-[1100] bg-[#1A1A2E]/40 backdrop-blur-xl transition-all duration-300 flex items-center justify-center p-4"
+              onClick={() => setShowUploadModal(false)}
+            >
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                exit={{ scale: 0.9, opacity: 0 }} 
+                className="relative z-[1101] w-full max-w-lg bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-6"
+                onClick={e => e.stopPropagation()}
+              >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-2xl font-bold font-syne text-[#1A1A2E] dark:text-white">Add Candidate</h3>
@@ -1113,15 +1141,18 @@ const ResumeBankTab = () => {
                 <button onClick={() => setShowUploadModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-xs uppercase tracking-widest text-[#6B6B7E] hover:bg-[#F4F3EF] dark:hover:bg-slate-800 transition-all">Cancel</button>
                 <button onClick={handleConfirmUploadResumes} disabled={uploading} className="flex-1 h-14 bg-[#1B4DA0] text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all disabled:opacity-50">{uploading ? 'Saving...' : 'Add Candidate'}</button>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Floating Bulk Action Bar */}
-      <AnimatePresence>
-        {selectedRowIds.length > 0 && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-3xl px-4">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedRowIds.length > 0 && (
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-3xl px-4">
             <motion.div
               initial={{ y: 100, opacity: 0, scale: 0.9 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -1163,9 +1194,11 @@ const ResumeBankTab = () => {
               </div>
             </motion.div>
           </div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
-    </div>
+      </div>
   );
 };
 

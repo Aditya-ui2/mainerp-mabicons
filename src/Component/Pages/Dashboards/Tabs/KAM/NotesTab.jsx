@@ -154,20 +154,21 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
       <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
         <>
           {/* Note Detail Drawer */}
-          <AnimatePresence>
-            {selectedNote && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => {
-                    if (isEditingDetail) handleDetailSave();
-                    setSelectedNote(null);
-                    setIsEditingDetail(false);
-                  }}
-                  className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[1100]"
-                />
+          {typeof document !== 'undefined' && createPortal(
+            <AnimatePresence>
+              {selectedNote && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => {
+                      if (isEditingDetail) handleDetailSave();
+                      setSelectedNote(null);
+                      setIsEditingDetail(false);
+                    }}
+                    className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-xl z-[1100]"
+                  />
                 <motion.div
                   initial={{ x: '100%' }}
                   animate={{ x: 0 }}
@@ -278,8 +279,10 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
                   </div>
                 </motion.div>
               </>
-            )}
-          </AnimatePresence>
+              )}
+            </AnimatePresence>,
+            document.body
+          )}
           <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
@@ -419,7 +422,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
             <AnimatePresence>
               {(view === 'add' || view === 'edit') && (
                 <motion.div key="add-edit-note" className="fixed inset-0 z-[10001] pointer-events-none">
-                  <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 pointer-events-auto"
+                  <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-xl transition-all duration-300 pointer-events-auto"
                     onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}>
                     <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500"
                       onClick={(e) => e.stopPropagation()}>
@@ -491,7 +494,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
             <AnimatePresence>
               {deleteConfirmId && (
                 <motion.div key="delete-note-modal" className="fixed inset-0 z-[10001] pointer-events-none">
-                  <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 pointer-events-auto"
+                  <motion.div className="absolute inset-0 flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-xl transition-all duration-300 pointer-events-auto"
                     onClick={() => setDeleteConfirmId(null)}>
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95, y: 20 }}

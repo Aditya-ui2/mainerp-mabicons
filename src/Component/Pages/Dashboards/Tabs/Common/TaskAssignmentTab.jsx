@@ -792,7 +792,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             />
           </div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Tasks</div>
-          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Assigned To</div>
+          <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left pl-2">Assigned To</div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Status</div>
           <div className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Actions</div>
           <div></div>
@@ -841,7 +841,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
               </div>
 
               {/* Assigned To */}
-              <div className="flex items-center justify-center gap-3 min-w-0 py-1">
+              <div className="flex items-center justify-start gap-3 min-w-0 py-1 pl-2">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] text-[#1B4DA0] flex items-center justify-center font-black text-xs border border-[#F4F3EF] shrink-0">
                   {task.assignedToName?.split(' ').map(n => n[0]).join('') || '?'}
                 </div>
@@ -945,9 +945,10 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
       </AnimatePresence>
 
       {/* Add/Edit Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {showModal && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1101,7 +1102,9 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
       {/* Right Side Drawer for Task Details */}
       {createPortal(

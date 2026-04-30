@@ -4113,24 +4113,30 @@ const RecruitmentHeadDashboard = () => {
         {renderContent()}
 
         {/* Team Members Modal - Global */}
-        <AnimatePresence>
-          {showTeamModal && (
-            <TeamListModal
-              team={kamTeam}
-              onClose={() => setShowTeamModal(false)}
-            />
-          )}
-        </AnimatePresence>
+        {createPortal(
+          <AnimatePresence>
+            {showTeamModal && (
+              <TeamListModal
+                team={kamTeam}
+                onClose={() => setShowTeamModal(false)}
+              />
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
 
         {/* Client Job Distribution Modal - Global */}
-        <AnimatePresence>
-          {showClientsModal && (
-            <ClientDistributionModal
-              distribution={clientJobDistribution}
-              onClose={() => setShowClientsModal(false)}
-            />
-          )}
-        </AnimatePresence>
+        {createPortal(
+          <AnimatePresence>
+            {showClientsModal && (
+              <ClientDistributionModal
+                distribution={clientJobDistribution}
+                onClose={() => setShowClientsModal(false)}
+              />
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
 
         {/* Note Detail Drawer Portal (Moved inside AdminLayout for reliable rendering) */}
         {createPortal(

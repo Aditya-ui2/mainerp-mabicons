@@ -1803,9 +1803,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
 
   return (
     <>
-      <AnimatePresence>
-        {showFullPageForm && (
-          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-md transition-all duration-300">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showFullPageForm && (
+            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-md transition-all duration-300">
             <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500">
               {/* Header */}
               <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
@@ -2157,7 +2158,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             </div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
       <div className="space-y-8" style={{ fontFamily: "'Calibri', sans-serif" }}>
         {/* Header */}
@@ -2578,9 +2581,10 @@ const JobOpeningsTab = ({ isDarkMode }) => {
       )}
 
       {/* Right Side Drawer for Job Details & Tasks */}
-      <AnimatePresence>
-        {(selectedJob || assignTaskJob) && (
-          <>
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {(selectedJob || assignTaskJob) && (
+            <>
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -2632,7 +2636,9 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
       {/* Delete Confirmation Modal */}
       {typeof document !== 'undefined' && createPortal(

@@ -944,9 +944,10 @@ export default function InterviewsPage() {
       </div>
 
       {/* Refined Detail Drawer */}
-      <AnimatePresence>
-        {selectedInterview && (
-          <>
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedInterview && (
+            <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1279,14 +1280,17 @@ export default function InterviewsPage() {
                 </div>
               </div>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* New Schedule Interview Modal */}
-      <AnimatePresence>
-        {isScheduleModalOpen && (
-          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isScheduleModalOpen && (
+            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1580,13 +1584,16 @@ export default function InterviewsPage() {
               {/* Feedback Modal Integration - Handled by standalone modal below */}
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Candidate Feedback Modal */}
-      <AnimatePresence>
-        {showFeedbackModal && feedbackInterview && (
-          <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showFeedbackModal && feedbackInterview && (
+            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1699,13 +1706,16 @@ export default function InterviewsPage() {
               </div>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Floating Bottom Action Bar */}
-      <AnimatePresence>
-        {selectedRowIds.length > 0 && (
-          <div className="fixed bottom-10 left-0 right-0 z-[150] flex justify-center pointer-events-none pl-72">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedRowIds.length > 0 && (
+            <div className="fixed bottom-10 left-0 right-0 z-[150] flex justify-center pointer-events-none pl-72">
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -1800,8 +1810,10 @@ export default function InterviewsPage() {
               </button>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

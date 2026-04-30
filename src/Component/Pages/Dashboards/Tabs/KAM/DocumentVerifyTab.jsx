@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   ChevronRight,
@@ -563,16 +564,17 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
       </div>
 
       {/* Detail Sidebar */}
-      <AnimatePresence>
-        {selectedCandidate && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1000] flex justify-end"
-            onClick={() => setSelectedCandidate(null)}
-          >
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedCandidate && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[1100] flex justify-end"
+              onClick={() => setSelectedCandidate(null)}
+            >
+              <div className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-xl" />
 
             <motion.div
               initial={{ x: '100%' }}
@@ -876,19 +878,22 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
               </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Rejection Modal */}
-      <AnimatePresence>
-        {showRejectModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowRejectModal(false)}
-          >
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showRejectModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-xl"
+              onClick={() => setShowRejectModal(false)}
+            >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -955,8 +960,10 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
               </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

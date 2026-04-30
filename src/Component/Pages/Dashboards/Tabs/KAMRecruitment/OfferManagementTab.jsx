@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -133,7 +134,7 @@ function OfferDetailDrawer({ offer, onClose, onEdit, onDelete, onStatusUpdate, i
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-xl z-[1100]"
       />
       <motion.div
         initial={{ x: "100%" }}
@@ -1371,16 +1372,13 @@ const OfferManagementTab = ({ isDarkMode }) => {
           </div>
         </div>
 
-        <AnimatePresence>
-          {showFullPageForm && (
-            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+        {typeof document !== 'undefined' && createPortal(
+          <AnimatePresence>
+            {showFullPageForm && (
+              <div 
+                className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-xl transition-all duration-300"
                 onClick={handleBackToOffers}
-                className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md"
-              />
+              >
 
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1737,12 +1735,15 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 </div>
               </motion.div>
             </div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
 
-        <AnimatePresence>
-          {viewingOffer && (
-            <OfferDetailDrawer
+        {typeof document !== 'undefined' && createPortal(
+          <AnimatePresence>
+            {viewingOffer && (
+              <OfferDetailDrawer
               offer={viewingOffer}
               onClose={() => setViewingOffer(null)}
               onEdit={handleEditOffer}
@@ -1750,13 +1751,16 @@ const OfferManagementTab = ({ isDarkMode }) => {
               onStatusUpdate={handleUpdateStatus}
               isDarkMode={isDarkMode}
             />
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
 
         {/* Floating Bulk Action Bar */}
-        <AnimatePresence>
-          {selectedRowIds.length > 0 && (
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl px-4">
+        {typeof document !== 'undefined' && createPortal(
+          <AnimatePresence>
+            {selectedRowIds.length > 0 && (
+              <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl px-4">
               <motion.div
                 initial={{ y: 100, opacity: 0, scale: 0.9 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -1835,8 +1839,10 @@ const OfferManagementTab = ({ isDarkMode }) => {
                 </div>
               </motion.div>
             </div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
       </div>
     </>
   );
