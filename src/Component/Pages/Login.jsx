@@ -37,7 +37,6 @@ const Login = () => {
 
   const normalizeRole = (role, department = '') => {
     const value = String(role || '').trim().toLowerCase();
-    const dept = String(department || '').trim().toLowerCase();
     if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
     if (['admin'].includes(value)) return 'admin';
     if (['teamleader', 'team_leader', 'team leader'].includes(value)) return 'teamleader';
@@ -75,31 +74,17 @@ const Login = () => {
     const emailLower = email.toLowerCase().trim();
     const passTrim = password.trim();
 
-    // Helper function to create mock token (fallback)
-    const createMockToken = (userData) => {
-      const payload = {
-        id: userData.id || btoa(emailLower).slice(0, 24),
-        email: emailLower,
-        name: userData.name,
-        role: userData.role,
-        department: userData.department,
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-      };
-      return btoa(JSON.stringify({ alg: 'HS256' })) + '.' + btoa(JSON.stringify(payload)) + '.mock-signature';
-    };
-
-    // Fallback logic
     const localLogin = () => {
       const userData = USER_CREDENTIALS[emailLower];
       if (userData && userData.password === passTrim) {
-        const mockToken = createMockToken(userData);
         const normalizedRole = normalizeRole(userData.role, userData.department);
-        localStorage.setItem('token', mockToken);
+        localStorage.setItem('token', 'mock-jwt-token');
         localStorage.setItem('userType', normalizedRole);
         localStorage.setItem('userName', userData.name);
         localStorage.setItem('userEmail', emailLower);
         if (userData.department) localStorage.setItem('department', userData.department);
-        return { success: true, user: userData, userType: normalizedRole, token: mockToken };
+        ['admin_active_tab', 'crm_active_tab', 'hroperations_active_tab', 'rh_active_tab', 'superadmin_active_tab'].forEach(key => localStorage.removeItem(key));
+        return { success: true, user: userData, userType: normalizedRole };
       }
       return null;
     };
@@ -130,30 +115,23 @@ const Login = () => {
         const user = response.user;
         const role = response.userType || user.role || user.userType;
         const normalizedRole = normalizeRole(role, user.department);
-
         if (response.token) localStorage.setItem('token', response.token);
         localStorage.setItem('userType', normalizedRole);
         localStorage.setItem('userName', user.name);
         localStorage.setItem('userEmail', emailLower);
         if (user.department) localStorage.setItem('department', user.department);
-
-        // Clear dashboard tab persistence
         ['admin_active_tab', 'crm_active_tab', 'hroperations_active_tab', 'rh_active_tab', 'superadmin_active_tab'].forEach(key => localStorage.removeItem(key));
-
         setTimeout(() => navigateByRole(normalizedRole, emailLower, user), 800);
         return;
       }
 
-      // Fallback
       const localResult = localLogin();
       if (localResult) {
         setTimeout(() => navigateByRole(localResult.userType, emailLower, localResult.user), 800);
         return;
       }
-
       throw new Error(response?.message || 'Login failed');
     } catch (err) {
-      console.error("Login Error:", err);
       const localResult = localLogin();
       if (localResult) {
         setTimeout(() => navigateByRole(localResult.userType, emailLower, localResult.user), 800);
@@ -168,172 +146,162 @@ const Login = () => {
   return (
     <div className="flex h-screen bg-white overflow-hidden font-inter">
       {/* Left Side - Auth Form */}
-      <div className="w-full lg:w-[45%] flex flex-col px-12 md:px-20 lg:px-24 py-12 relative">
+      <div className="w-full lg:w-[45%] flex flex-col px-12 md:px-20 lg:px-24 py-10 relative overflow-y-auto custom-scrollbar">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="max-w-md w-full mx-auto flex-1 flex flex-col justify-center"
+          className="max-w-[420px] w-full mx-auto flex flex-col h-full"
         >
-          {/* Centered Logo */}
-          <div className="flex justify-center mb-10">
-            <img src={mabiconsLogo} alt="Mabicons Logo" className="h-12 object-contain" />
+          {/* Logo */}
+          <div className="flex justify-start mb-16 shrink-0">
+            <img src={mabiconsLogo} alt="Mabicons Logo" className="h-8 object-contain" />
           </div>
 
-          <div className="mb-10 text-center">
-            <h1 className="text-[36px] font-bold text-[#1A1A2E] mb-2 font-syne tracking-tight">Welcome Back</h1>
-            <p className="text-base font-medium text-[#9B9BAD]">Please enter your credentials to log in.</p>
-          </div>
+          <div className="flex-1 flex flex-col justify-center">
+            <div className="mb-10 text-center">
+              <h1 className="text-[38px] font-bold text-[#1A1A2E] mb-3 font-syne tracking-tight">Welcome Back</h1>
+              <p className="text-[15px] font-medium text-[#9B9BAD]">Enter your email and password to access your account.</p>
+            </div>
 
-          <form onSubmit={handleSubmit} className="space-y-7">
-            <div className="space-y-2">
-              <label className="block text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] px-1">Email Address</label>
-              <div className="relative group">
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                  <FiMail size={18} />
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-[13px] font-bold text-[#1A1A2E] px-1">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#F3F5F9] border-none rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-4 focus:ring-[#1B4DA0]/5 placeholder:text-[#9B9BAD]/40"
-                  placeholder="ashwin.mabicons@gmail.com"
+                  className="w-full bg-white border border-[#E5E7EB] rounded-xl py-4 px-5 text-sm font-medium text-[#1A1A2E] outline-none transition-all focus:border-[#3D37F1] focus:ring-4 focus:ring-[#3D37F1]/5 placeholder:text-[#9B9BAD]/50"
+                  placeholder="sellostore@company.com"
                   required
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="block text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] px-1">Password</label>
-              <div className="relative group">
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors">
-                  <FiLock size={18} />
+              <div className="space-y-2">
+                <label className="block text-[13px] font-bold text-[#1A1A2E] px-1">Password</label>
+                <div className="relative group">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white border border-[#E5E7EB] rounded-xl py-4 px-5 text-sm font-medium text-[#1A1A2E] outline-none transition-all focus:border-[#3D37F1] focus:ring-4 focus:ring-[#3D37F1]/5 placeholder:text-[#9B9BAD]/50"
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] hover:text-[#3D37F1] transition-colors"
+                  >
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
                 </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#F3F5F9] border-none rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:ring-4 focus:ring-[#1B4DA0]/5 placeholder:text-[#9B9BAD]/40"
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] hover:text-[#1B4DA0] transition-colors"
-                >
-                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </div>
+
+              <div className="flex items-center justify-between px-1">
+                <label className="flex items-center gap-2.5 cursor-pointer group">
+                  <div className={`w-4.5 h-4.5 rounded border border-[#D1D5DB] flex items-center justify-center transition-all ${rememberMe ? 'bg-[#3D37F1] border-[#3D37F1]' : 'bg-white group-hover:border-[#3D37F1]'}`} onClick={() => setRememberMe(!rememberMe)}>
+                    {rememberMe && <FiCheck className="text-white text-[10px] stroke-[4px]" />}
+                  </div>
+                  <span className="text-[14px] font-medium text-[#6B7280] group-hover:text-[#1A1A2E] transition-colors">Remember Me</span>
+                </label>
+                <Link to="/forgot-password" title="Forgot Password" className="text-[14px] font-bold text-[#3D37F1] hover:underline transition-all">Forgot Your Password?</Link>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.005 }}
+                whileTap={{ scale: 0.995 }}
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#3D37F1] text-white rounded-xl py-4 text-[16px] font-bold shadow-lg shadow-[#3D37F1]/20 hover:bg-[#312BC7] transition-all disabled:opacity-70 flex items-center justify-center gap-3"
+              >
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Log In"}
+              </motion.button>
+
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[#F3F4F6]"></div>
+                </div>
+                <div className="relative flex justify-center text-[12px] font-medium">
+                  <span className="bg-white px-4 text-[#9CA3AF] tracking-wide">Or Login With</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button type="button" className="flex items-center justify-center gap-3 px-6 py-3.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-[14px] font-bold text-[#1A1A2E] hover:bg-[#F3F4F6] transition-all">
+                  <FcGoogle size={20} /> Google
+                </button>
+                <button type="button" className="flex items-center justify-center gap-3 px-6 py-3.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-[14px] font-bold text-[#1A1A2E] hover:bg-[#F3F4F6] transition-all">
+                  <FaApple size={20} className="text-black" /> Apple
                 </button>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between px-1">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${rememberMe ? 'bg-[#1B4DA0] border-[#1B4DA0]' : 'border-[#E5E7EB] bg-white group-hover:border-[#1B4DA0]'}`} onClick={() => setRememberMe(!rememberMe)}>
-                  {rememberMe && <FiCheck className="text-white text-xs stroke-[4px]" />}
-                </div>
-                <span className="text-sm font-bold text-[#6B6B7E] group-hover:text-[#1A1A2E] transition-colors">Remember Me</span>
-              </label>
-              <Link to="/forgot-password" title="Forgot Password" className="text-sm font-bold text-[#1B4DA0] hover:underline transition-all">Forgot Password?</Link>
-            </div>
-
-            <motion.button
-              whileHover={{ y: -2, shadow: "0 20px 40px rgba(27, 77, 160, 0.25)" }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#1B4DA0] text-white rounded-2xl py-5 text-sm font-black uppercase tracking-[2px] shadow-xl shadow-[#1B4DA0]/20 hover:bg-[#153e82] transition-all disabled:opacity-70 flex items-center justify-center gap-3"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Signing In...</span>
-                </>
-              ) : (
-                <>
-                  SIGN IN <FiArrowRight size={18} strokeWidth={3} />
-                </>
-              )}
-            </motion.button>
-            {error && <p className="text-rose-500 text-xs font-bold text-center mt-4 uppercase tracking-widest">{error}</p>}
-            <div className="grid grid-cols-2 gap-4">
-            </div>
-          </form>
+              <div className="text-center mt-8">
+                <p className="text-[14px] font-medium text-[#6B7280]">
+                  Don't Have An Account? <Link to="/signup" className="text-[#3D37F1] font-bold hover:underline">Register Now.</Link>
+                </p>
+              </div>
+            </form>
+          </div>
 
           {/* Footer Copyright */}
-          <div className="mt-16 text-center">
-            <p className="text-[12px] font-medium text-[#9B9BAD]">© 2024 Mabicons. All rights reserved.</p>
+          <div className="mt-auto pt-8 flex items-center justify-between border-t border-[#F3F4F6] shrink-0">
+            <p className="text-[11px] font-medium text-[#9CA3AF]">Copyright © 2025 Mabicons Enterprises Ltd.</p>
+            <Link to="/privacy" className="text-[11px] font-medium text-[#9CA3AF] hover:text-[#1A1A2E]">Privacy Policy</Link>
           </div>
         </motion.div>
       </div>
 
       {/* Right Side - Brand Showcase */}
-      <div className="hidden lg:flex flex-1 bg-[#1B4DA0] relative overflow-hidden px-16 py-12 flex-col justify-center items-center text-center">
-        {/* Animated Background Elements */}
-        <motion.div
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.03, 0.05, 0.03]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-[10%] -right-[10%] w-[800px] h-[800px] bg-white rounded-full blur-[100px]"
-        />
+      <div className="hidden lg:flex lg:flex-1 bg-[#3D37F1] relative overflow-hidden flex-col justify-center p-20">
+        <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-white/5 blur-[150px] rounded-full -mr-40 -mt-40" />
 
-        <div className="relative z-10 w-full flex flex-col items-center flex-1 min-h-0">
+        <div className="relative z-10 w-full max-w-2xl mx-auto flex flex-col items-start text-left">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="max-w-xl mb-10 shrink-0"
+            transition={{ duration: 0.8 }}
+            className="mb-12"
           >
-            <h2 className="text-[40px] font-bold text-white mb-6 leading-[1.1] font-syne tracking-tight">
-              Empower your recruitment operations.
+            <h2 className="text-[48px] font-bold text-white mb-6 leading-[1.1] font-syne tracking-tight">
+              Effortlessly manage your team and operations.
             </h2>
-            <div className="w-20 h-1.5 bg-blue-400 rounded-full mb-10 shadow-[0_0_20px_rgba(96,165,250,0.5)] mx-auto" />
-            <p className="text-lg text-blue-100/70 font-medium leading-relaxed">
-              Log in to access your unified ERP dashboard, manage candidate pipelines, and streamline your entire hiring lifecycle.
+            <p className="text-xl text-white/70 font-medium leading-relaxed max-w-lg">
+              Log in to access your CRM dashboard and manage your team.
             </p>
           </motion.div>
 
-          {/* Dashboard Preview Mockup - Flex container to handle dynamic height */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.6, ease: "easeOut" }}
-            className="relative w-full flex-1 min-h-0 flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, delay: 0.4 }}
+            className="relative w-full"
           >
-            {/* Glassmorphic Container with max-height to prevent overflow */}
-            <div className="p-4 bg-white/10 backdrop-blur-xl rounded-[40px] border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.3)] max-w-[85%] max-h-full overflow-hidden">
-              <div className="overflow-hidden rounded-[28px] relative group h-full">
+            <div className="p-2 bg-white/5 backdrop-blur-xl rounded-[32px] border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.3)]">
+              <div className="overflow-hidden rounded-[24px] bg-white p-2">
                 <img
                   src={loginMockup}
                   alt="Dashboard Preview"
-                  className="w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-1000"
+                  className="w-full h-auto object-cover rounded-[18px] shadow-sm"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1B4DA0]/30 to-transparent pointer-events-none" />
               </div>
             </div>
-
-            {/* Floating UI Elements */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-0 -right-4 w-32 h-20 bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-2xl flex items-center justify-center p-4"
-            >
-              <div className="w-full space-y-3">
-                <div className="h-1.5 w-full bg-blue-400/30 rounded-full overflow-hidden">
-                  <motion.div
-                    animate={{ width: ["0%", "80%", "80%"] }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                    className="h-full bg-blue-400 shadow-[0_0_15px_#60A5FA]"
-                  />
-                </div>
-                <div className="h-1.5 w-[60%] bg-white/20 rounded-full" />
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #F3F4F6;
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 };
