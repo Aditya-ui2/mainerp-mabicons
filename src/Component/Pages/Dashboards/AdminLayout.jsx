@@ -99,17 +99,17 @@ const AdminLayout = ({
     localStorage.removeItem('userEmail');
     localStorage.removeItem('department');
     localStorage.removeItem('recruitmentTabAuth');
-    
+
     // Clear all dashboard active tabs so the next login starts at 'Dashboard'
     const tabKeys = [
-      'admin_active_tab', 
-      'crm_active_tab', 
-      'hroperations_active_tab', 
-      'rh_active_tab', 
+      'admin_active_tab',
+      'crm_active_tab',
+      'hroperations_active_tab',
+      'rh_active_tab',
       'superadmin_active_tab'
     ];
     tabKeys.forEach(key => localStorage.removeItem(key));
-    
+
     window.location.href = '/login';
   };
 
@@ -351,35 +351,35 @@ const AdminLayout = ({
                         exit={{ opacity: 0, y: 12, scale: 0.95 }}
                         className="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-[#F4F3EF] dark:border-gray-700 overflow-hidden z-50"
                       >
-                      <div className="p-4 border-b border-[#F4F3EF] dark:border-gray-700 bg-[#FAFAFA] dark:bg-gray-900/50 flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest">Notifications</h3>
-                        <button className="text-[10px] font-bold text-[#1B4DA0] hover:underline">Mark all read</button>
-                      </div>
-                      <div className="max-h-80 overflow-y-auto divide-y divide-[#F4F3EF] dark:divide-gray-700">
-                        {notifications.length === 0 ? (
-                          <div className="p-8 text-center text-[#9B9BAD]">
-                            <Bell size={32} className="mx-auto mb-3 opacity-20" />
-                            <p className="text-sm font-medium">No new alerts</p>
-                          </div>
-                        ) : (
-                          notifications.map((n, idx) => (
-                            <div
-                              key={idx}
-                              onClick={() => onNotificationClick?.(n)}
-                              className={`p-4 hover:bg-[#F8FAFF] dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${!n.read ? 'bg-[#EEF2FB]/30' : ''}`}
-                            >
-                              <p className="text-[13px] text-[#1A1A2E] dark:text-gray-100 font-semibold">{n.message}</p>
-                              <p className="text-[10px] text-[#9B9BAD] mt-1 font-bold uppercase tracking-wider">{n.time}</p>
+                        <div className="p-4 border-b border-[#F4F3EF] dark:border-gray-700 bg-[#FAFAFA] dark:bg-gray-900/50 flex items-center justify-between">
+                          <h3 className="text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest">Notifications</h3>
+                          <button className="text-[10px] font-bold text-[#1B4DA0] hover:underline">Mark all read</button>
+                        </div>
+                        <div className="max-h-80 overflow-y-auto divide-y divide-[#F4F3EF] dark:divide-gray-700">
+                          {notifications.length === 0 ? (
+                            <div className="p-8 text-center text-[#9B9BAD]">
+                              <Bell size={32} className="mx-auto mb-3 opacity-20" />
+                              <p className="text-sm font-medium">No new alerts</p>
                             </div>
-                          ))
+                          ) : (
+                            notifications.map((n, idx) => (
+                              <div
+                                key={idx}
+                                onClick={() => onNotificationClick?.(n)}
+                                className={`p-4 hover:bg-[#F8FAFF] dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${!n.read ? 'bg-[#EEF2FB]/30' : ''}`}
+                              >
+                                <p className="text-[13px] text-[#1A1A2E] dark:text-gray-100 font-semibold">{n.message}</p>
+                                <p className="text-[10px] text-[#9B9BAD] mt-1 font-bold uppercase tracking-wider">{n.time}</p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        {notifications.length > 5 && (
+                          <button className="w-full py-3 text-[10px] font-bold text-[#1B4DA0] hover:bg-[#F8FAFF] uppercase tracking-widest border-t border-[#F4F3EF]">View All</button>
                         )}
-                      </div>
-                      {notifications.length > 5 && (
-                        <button className="w-full py-3 text-[10px] font-bold text-[#1B4DA0] hover:bg-[#F8FAFF] uppercase tracking-widest border-t border-[#F4F3EF]">View All</button>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

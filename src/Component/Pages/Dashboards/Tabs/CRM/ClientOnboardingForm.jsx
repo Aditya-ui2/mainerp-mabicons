@@ -80,7 +80,7 @@ const StepIndicator = ({ step, steps }) => (
       <React.Fragment key={s.n}>
         <div className="flex flex-col items-center gap-2 relative">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${step >= s.n ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white shadow-lg shadow-blue-500/20' : 'bg-white border-[#F4F3EF] text-[#9B9BAD]'}`}>
-            {step > s.n ? <FiCheck size={20} /> : s.n}
+            {step > s.n ? <FiCheck size={20} /> : (s.icon ? React.cloneElement(s.icon, { size: 18 }) : s.n)}
           </div>
           <span className={`text-[10px] font-black uppercase tracking-widest ${step >= s.n ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'}`}>{s.title}</span>
         </div>
@@ -114,8 +114,6 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
     spocPhone: '',
     gstNumber: '',
     registeredAddress: '',
-    city: '',
-    pinCode: '',
     ownerName: '',
     ownerEmail: '',
     agreementType: 'Select agreement',
@@ -149,8 +147,6 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
         spocPhone: initialData.spocPhone || initialData.phone || '',
         gstNumber: initialData.gstNumber || '',
         registeredAddress: initialData.registeredAddress || initialData.location || '',
-        city: initialData.city || '',
-        pinCode: initialData.pinCode || '',
         ownerName: initialData.ownerName || '',
         ownerEmail: initialData.ownerEmail || '',
         agreementType: initialData.agreementType || 'Select agreement',
@@ -275,7 +271,6 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                             <InputField label="Company name" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="Registered company name" />
                             <div className="grid grid-cols-2 gap-5">
                               <InputField label="GST number" name="gstNumber" value={formData.gstNumber} onChange={handleInputChange} placeholder="27AABCU9603R1ZX" />
-                              <InputField label="CIN number" name="cinNumber" value={formData.cinNumber} onChange={handleInputChange} placeholder="U74999MH2020PTC..." skippable />
                             </div>
                           </div>
 

@@ -1643,11 +1643,7 @@ const CustomersTab = ({ isDarkMode }) => {
                         label="PAN Number"
                         value={selectedCustomer.panNumber}
                       />
-                      <InfoItem
-                        isDarkMode={isDarkMode}
-                        label="CIN Number"
-                        value={selectedCustomer.cinNumber}
-                      />
+                      
                     </div>
                   </div>
 

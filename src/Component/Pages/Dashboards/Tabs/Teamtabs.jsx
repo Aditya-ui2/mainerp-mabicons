@@ -41,10 +41,19 @@ const TeamTabs = ({ isDarkMode }) => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
         const decoded = jwtDecode(token);
-        const { id, role } = decoded;
+        // Robust ID extraction
+        const id = decoded.id || decoded._id || decoded.adminId;
+        let role = decoded.role;
+        
+        // Map Super Admin to Admin for hierarchy purposes if needed
+        if (role === 'Super Admin') role = 'Admin';
         
         setUserRole(role);
         setCurrentUserId(id);
+
+        if (!id) {
+          throw new Error('User ID not found in token. Please log in again.');
+        }
         
         const response = await getAdminHierarchy(id, role);
         console.log('API Response:', response); // Debug log
@@ -168,7 +177,7 @@ const TeamTabs = ({ isDarkMode }) => {
         if (newMember.role === 'leader') {
           const token = localStorage.getItem('token');
           const decoded = jwtDecode(token);
-          const adminId = decoded.id;
+          const adminId = decoded.id || decoded._id || decoded.adminId;
 
           const teamLeaderData = {
             name: newMember.name,

@@ -20,7 +20,11 @@ import {
   FiCalendar,
   FiBriefcase,
   FiUser,
-  FiTrash
+  FiTrash,
+  FiFileText,
+  FiUpload,
+  FiShield,
+  FiActivity
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
@@ -525,6 +529,46 @@ const CRMTeamTab = ({ department = '' }) => {
                         <FiTarget className="absolute left-4 text-[#C5C5D2]" />
                         <input type="number" placeholder="e.g. 10"
                           className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
+                      </div>
+                    </div>
+
+                    {/* Documents Section */}
+                    <div className="pt-6 border-t border-[#F4F3EF] space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1B4DA0] flex items-center justify-center">
+                          <FiShield size={16} />
+                        </div>
+                        <h4 className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-[2px]">KYC & Compliance Documents</h4>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                          { id: 'aadhaar', label: 'Aadhaar Card', icon: FiFileText },
+                          { id: 'pan', label: 'PAN Card', icon: FiFileText },
+                          { id: 'bank', label: 'Passbook / Cheque', icon: FiActivity },
+                          { id: 'edu', label: 'Education Docs', icon: FiBriefcase }
+                        ].map((doc) => (
+                          <div key={doc.id} className="space-y-2">
+                            <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest px-1">{doc.label}</label>
+                            <div className="group relative">
+                              <div className="flex items-center justify-between p-4 bg-[#F8FAFF] border-2 border-dashed border-[#E2E8F0] rounded-2xl group-hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all shadow-sm">
+                                    <doc.icon size={20} />
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="text-[11px] font-bold text-[#1A1A2E]">Select File</p>
+                                    <p className="text-[9px] font-medium text-[#9B9BAD]">PDF, JPG (Max 2MB)</p>
+                                  </div>
+                                </div>
+                                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-all">
+                                  <FiUpload size={16} />
+                                </div>
+                              </div>
+                              <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept=".pdf,.jpg,.jpeg,.png" />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>

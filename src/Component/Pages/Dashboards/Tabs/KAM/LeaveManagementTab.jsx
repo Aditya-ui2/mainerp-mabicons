@@ -254,12 +254,6 @@ const EmployeeDetailsView = ({ employee, onBack, isDarkMode, getStatusConfig, on
             </div>
           </div>
         )}
-
-        <div className="flex max-w-2xl mx-auto">
-          <button onClick={onBack} className="w-full py-5 rounded-[24px] bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] text-sm font-bold hover:bg-[#F4F3EF] transition-all">
-            Close Detail View
-          </button>
-        </div>
       </div>
     </motion.div>
   );

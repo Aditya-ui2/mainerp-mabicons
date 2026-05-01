@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef, lazy, Suspense } from 'react';
+import { useEffect, useMemo, useState, useRef, lazy, Suspense, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -236,7 +236,9 @@ const CRMDashboard = () => {
     filterType: 'all',
     year: new Date().getFullYear(),
     month: new Date().getMonth(),
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
   });
   const mainDateFilterRef = useRef(null);
   const dashboardDateInputRef = useRef(null);
@@ -253,18 +255,80 @@ const CRMDashboard = () => {
     return d.toISOString().split('T')[0];
   };
 
+  const parseDate = (value) => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    const d = new Date(value);
+    if (!isNaN(d)) return d;
+    return null;
+  };
+
+  const inRange = useCallback((date) => {
+    const d = parseDate(date);
+    if (!d) return true;
+    const s = filters.startDate ? new Date(filters.startDate) : null;
+    const e = filters.endDate ? new Date(filters.endDate) : null;
+    if (s && d < s) return false;
+    if (e && d > e) return false;
+    return true;
+  }, [filters.startDate, filters.endDate]);
+
+  const getRepName = (lead) => {
+    return lead.owner?.name || lead.bdOwner?.name || lead.assignedTo?.name || lead.owner || lead.bdOwner || lead.assignedTo || 'Unassigned';
+  };
+
+  const getSegment = (lead) => {
+    return lead.segment || lead.status || 'Unknown';
+  };
+
   const getFilterLabel = () => {
     switch (dateFilter.filterType) {
       case 'all': return 'All Time';
       case 'last7days': return 'Last 7 Days';
       case 'year': return `${dateFilter.year}`;
       case 'month': return `${months[dateFilter.month]} ${dateFilter.year}`;
-      case 'date':
-        const [y, m, d] = dateFilter.date.split('-');
-        return `${d} ${months[parseInt(m) - 1].slice(0, 3)} ${y}`;
+      case 'date': return new Date(dateFilter.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      case 'range': return 'Custom Range';
       default: return 'All Time';
     }
   };
+
+  const filteredLeads = useMemo(() => {
+    return leads.filter(l => {
+      const created = l.createdAt || l.created_on || l.date || l.created_at || null;
+      if (!inRange(created)) return false;
+      if (filters.rep !== 'All' && getRepName(l) !== filters.rep) return false;
+      if (filters.segment !== 'All' && getSegment(l) !== filters.segment) return false;
+
+      const leadDate = parseDate(created);
+      if (!leadDate) return true;
+
+      if (dateFilter.filterType === 'last7days') {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        return leadDate >= sevenDaysAgo;
+      }
+      if (dateFilter.filterType === 'year') {
+        return leadDate.getFullYear() === dateFilter.year;
+      }
+      if (dateFilter.filterType === 'month') {
+        return leadDate.getFullYear() === dateFilter.year && leadDate.getMonth() === dateFilter.month;
+      }
+      if (dateFilter.filterType === 'date') {
+        const filterDateString = dateFilter.date; // YYYY-MM-DD
+        const leadDateString = leadDate.toISOString().split('T')[0];
+        return leadDateString === filterDateString;
+      }
+      if (dateFilter.filterType === 'range') {
+        const start = new Date(dateFilter.startDate);
+        const end = new Date(dateFilter.endDate);
+        end.setHours(23, 59, 59, 999);
+        return leadDate >= start && leadDate <= end;
+      }
+
+      return true;
+    });
+  }, [leads, filters, dateFilter, inRange]);
 
   const openDatePicker = (ref) => {
     if (ref.current) {
@@ -468,64 +532,6 @@ const CRMDashboard = () => {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const parseDate = (value) => {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    const d = new Date(value);
-    if (!isNaN(d)) return d;
-    return null;
-  };
-
-  const inRange = (date) => {
-    const d = parseDate(date);
-    if (!d) return true;
-    const s = filters.startDate ? new Date(filters.startDate) : null;
-    const e = filters.endDate ? new Date(filters.endDate) : null;
-    if (s && d < s) return false;
-    if (e && d > e) return false;
-    return true;
-  };
-
-  const getRepName = (lead) => {
-    return lead.owner?.name || lead.bdOwner?.name || lead.assignedTo?.name || lead.owner || lead.bdOwner || lead.assignedTo || 'Unassigned';
-  };
-
-  const getSegment = (lead) => {
-    return lead.segment || lead.status || 'Unknown';
-  };
-
-  const filteredLeads = useMemo(() => {
-    return leads.filter(l => {
-      const created = l.createdAt || l.created_on || l.date || l.created_at || null;
-      if (!inRange(created)) return false;
-      if (filters.rep !== 'All' && getRepName(l) !== filters.rep) return false;
-      if (filters.segment !== 'All' && getSegment(l) !== filters.segment) return false;
-
-      // Date Filtering Logic
-      const leadDate = parseDate(created);
-      if (!leadDate) return true;
-
-      if (dateFilter.filterType === 'last7days') {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        return leadDate >= sevenDaysAgo;
-      }
-      if (dateFilter.filterType === 'year') {
-        return leadDate.getFullYear() === dateFilter.year;
-      }
-      if (dateFilter.filterType === 'month') {
-        return leadDate.getFullYear() === dateFilter.year && leadDate.getMonth() === dateFilter.month;
-      }
-      if (dateFilter.filterType === 'date') {
-        const filterDateString = dateFilter.date; // YYYY-MM-DD
-        const leadDateString = leadDate.toISOString().split('T')[0];
-        return leadDateString === filterDateString;
-      }
-
-      return true;
-    });
-  }, [leads, filters, dateFilter]);
 
   const totalCustomers = clients.length;
   const totalLeads = filteredLeads.length;
@@ -788,70 +794,91 @@ const CRMDashboard = () => {
                             </div>
 
                             <div className="flex border-b border-[#F4F3EF] bg-[#FDFDFD]">
-                              {['all', 'last7days', 'year', 'month', 'date'].map((type) => (
+                              {[
+                                { key: 'all', label: 'All' },
+                                { key: 'last7days', label: '7 Days' },
+                                { key: 'year', label: 'Year' },
+                                { key: 'month', label: 'Month' },
+                                { key: 'date', label: 'Date' }
+                              ].map((tab) => (
                                 <button
-                                  key={type}
-                                  onClick={() => setDateFilter({ ...dateFilter, filterType: type })}
-                                  className={`flex-1 px-2 py-4 text-[9px] font-black uppercase tracking-widest transition-all ${dateFilter.filterType === type
+                                  key={tab.key}
+                                  onClick={() => setDateFilter({ ...dateFilter, filterType: tab.key })}
+                                  className={`flex-1 px-1 py-4 text-[9px] font-black uppercase tracking-widest transition-all ${dateFilter.filterType === tab.key
                                     ? 'text-[#1B4DA0] bg-white border-b-2 border-[#1B4DA0]'
                                     : 'text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-[#F4F3EF]'
                                     }`}
                                 >
-                                  {type === 'all' ? 'All' : type === 'last7days' ? 'Wk' : type}
+                                  {tab.label}
                                 </button>
                               ))}
                             </div>
 
                             <div className="p-6 space-y-6">
+                              {dateFilter.filterType === 'all' && (
+                                <div className="py-4 text-center">
+                                  <p className="text-xs font-bold text-[#6B6B7E]">Showing all available data.</p>
+                                </div>
+                              )}
+
+                              {dateFilter.filterType === 'last7days' && (
+                                <div className="py-4 text-center">
+                                  <p className="text-xs font-bold text-[#6B6B7E]">Showing data from last 7 days.</p>
+                                </div>
+                              )}
+
                               {(dateFilter.filterType === 'year' || dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
-                                <div className="space-y-2">
-                                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Target Year</label>
-                                  <select
-                                    value={dateFilter.year}
-                                    onChange={(e) => setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })}
-                                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all appearance-none cursor-pointer"
-                                  >
-                                    {years.map(y => <option key={y} value={y}>{y}</option>)}
-                                  </select>
-                                </div>
-                              )}
-
-                              {(dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
-                                <div className="space-y-2">
-                                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Focus Month</label>
-                                  <select
-                                    value={dateFilter.month}
-                                    onChange={(e) => setDateFilter({ ...dateFilter, month: parseInt(e.target.value) })}
-                                    className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all appearance-none cursor-pointer"
-                                  >
-                                    {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                                  </select>
-                                </div>
-                              )}
-
-                              {dateFilter.filterType === 'date' && (
-                                <div className="space-y-2">
-                                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Exact Date</label>
-                                  <div
-                                    className="w-full bg-[#F4F3EF] rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] cursor-pointer group"
-                                    onClick={() => openDatePicker(dashboardDateInputRef)}
-                                  >
-                                    <input
-                                      ref={dashboardDateInputRef}
-                                      type="date"
-                                      value={dateFilter.date}
-                                      onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
-                                      className="w-full bg-transparent border-0 outline-none cursor-pointer"
-                                    />
+                                <div className="space-y-4">
+                                  <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Year</label>
+                                    <select
+                                      value={dateFilter.year}
+                                      onChange={(e) => setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })}
+                                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all appearance-none cursor-pointer"
+                                    >
+                                      {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
                                   </div>
+
+                                  {(dateFilter.filterType === 'month' || dateFilter.filterType === 'date') && (
+                                    <div className="space-y-2">
+                                      <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Month</label>
+                                      <select
+                                        value={dateFilter.month}
+                                        onChange={(e) => setDateFilter({ ...dateFilter, month: parseInt(e.target.value) })}
+                                        className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none transition-all appearance-none cursor-pointer"
+                                      >
+                                        {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                                      </select>
+                                    </div>
+                                  )}
+
+                                  {dateFilter.filterType === 'date' && (
+                                    <div className="space-y-4">
+                                      <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Select Date</label>
+                                        <input
+                                          type="date"
+                                          value={dateFilter.date}
+                                          onChange={(e) => setDateFilter({ ...dateFilter, date: e.target.value })}
+                                          className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-5 py-3 text-sm font-bold text-[#1A1A2E] outline-none"
+                                        />
+                                      </div>
+                                      <div className="flex flex-wrap gap-2 pt-2">
+                                        <button onClick={() => setDateFilter({...dateFilter, date: getLocalISODate(), filterType: 'date'})} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">Today</button>
+                                        <button onClick={() => setDateFilter({...dateFilter, date: getLocalISODate(-1), filterType: 'date'})} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">Yesterday</button>
+                                        <button onClick={() => setDateFilter({...dateFilter, filterType: 'last7days'})} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">7 Days</button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               )}
 
                               <button
                                 onClick={() => setShowDateFilter(false)}
-                                className="w-full py-4 bg-[#1B4DA0] text-white rounded-[20px] text-xs font-black uppercase tracking-[3px] shadow-xl shadow-blue-500/20 hover:bg-[#0D47A1] transition-all"
+                                className="w-full py-4 bg-[#1B4DA0] text-white rounded-[20px] text-xs font-black uppercase tracking-[2px] shadow-xl shadow-blue-500/20 hover:bg-[#0D47A1] transition-all"
                               >
-                                Apply Analytics
+                                Apply Filter
                               </button>
                             </div>
                           </motion.div>
@@ -1014,8 +1041,11 @@ const CRMDashboard = () => {
                                 {l.status || 'New'}
                               </span>
                             </td>
-                            <td className="py-4 text-sm font-bold text-[#1A1A2E] text-left">
-                              {new Date(l.createdAt || l.date || Date.now()).toLocaleDateString()}
+                            <td className="py-4 text-[13px] font-bold text-[#1A1A2E] text-left">
+                              <div className="flex flex-col">
+                                <span>{new Date(l.createdAt || l.date || Date.now()).toLocaleDateString()}</span>
+                                <span className="text-[10px] text-[#9B9BAD] font-medium">{new Date(l.createdAt || l.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
                             </td>
                           </tr>
                         ))}

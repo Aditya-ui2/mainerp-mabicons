@@ -90,7 +90,7 @@ function App() {
           <TeamleaderDashboard />
         </ProtectedRoute>
       } />
-      <Route path='/manager-dashboard' element={
+      <Route path='/superadmin-dashboard' element={
         <ProtectedRoute allowedRoles={['superadmin', 'manager']}>
           <SuperAdminDashboard />
         </ProtectedRoute>

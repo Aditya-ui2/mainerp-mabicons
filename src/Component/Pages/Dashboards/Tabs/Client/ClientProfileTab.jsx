@@ -135,7 +135,7 @@ const ClientProfileTab = ({ isDarkMode }) => {
       items: [
         { icon: FiFileText, label: 'GST Number', key: 'gstNumber', value: profile?.gstNumber || 'N/A' },
         { icon: FiClipboard, label: 'PAN Number', key: 'panNumber', value: profile?.panNumber || 'N/A' },
-        { icon: FiShield, label: 'CIN Number', key: 'cinNumber', value: profile?.cinNumber || 'N/A' },
+        
       ]
     },
     {

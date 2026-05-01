@@ -696,7 +696,6 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                       { label: 'Assigned KAM', key: 'assignKAM', val: selectedClient.assignKAM || 'Not Assigned', icon: <FiUser size={14} />, highlight: true },
                       { label: 'Location', key: 'location', val: selectedClient.location || '—', icon: <FiMapPin size={14} /> },
                       { label: 'GST Number', key: 'gstNumber', val: selectedClient.gstNumber || '—', icon: <FiActivity size={14} /> },
-                      { label: 'CIN Number', key: 'cinNumber', val: selectedClient.cinNumber || '—', icon: <FiActivity size={14} /> },
                     ].map(({ label, key, val, icon, highlight }) => (
                       <div key={label} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -791,19 +790,6 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                       </div>
                     )}
                   </div>
-                </div>
-
-                {/* Footer */}
-                <div className="p-10 border-t border-[#F4F3EF]">
-                  <button
-                    onClick={() => {
-                      setSelectedClient(null);
-                      setIsEditing(false);
-                    }}
-                    className="w-full py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-[11px] font-black uppercase tracking-[3px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95"
-                  >
-                    Close Details
-                  </button>
                 </div>
               </motion.div>
             </div>

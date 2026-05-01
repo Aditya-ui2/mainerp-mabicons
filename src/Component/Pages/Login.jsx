@@ -59,7 +59,7 @@ const Login = () => {
     if (isRecruitmentHead) navigate('/recruitment-head-dashboard');
     else if (isKAM) navigate('/kam-member-dashboard');
     else if (isOperations) navigate('/kam-operations-dashboard');
-    else if (role === 'superAdmin' || role === 'manager') navigate('/manager-dashboard');
+    else if (role === 'superAdmin' || role === 'manager') navigate('/superadmin-dashboard');
     else if (role === 'admin') navigate('/admin-dashboard');
     else if (role === 'teamLeader') navigate('/teamleader-dashboard');
     else if (role === 'bdExecutive') navigate('/bd-dashboard');

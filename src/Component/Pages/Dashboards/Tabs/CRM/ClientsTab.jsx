@@ -12,16 +12,41 @@ import { toast } from 'react-hot-toast';
 
 const Toggle = ({ active, onChange, label }) => (
   <div className="flex items-center gap-3">
-    {label && <span className={`text-[11px] font-black uppercase tracking-widest ${active ? 'text-emerald-600' : 'text-gray-400'}`}>{label}</span>}
+    {label && (
+      <span 
+        style={{ color: active ? '#10B981' : '#94A3B8' }} 
+        className="text-[10px] font-black uppercase tracking-widest"
+      >
+        {label}
+      </span>
+    )}
+
     <button
-      onClick={(e) => { e.stopPropagation(); onChange(!active); }}
-      className={`relative w-12 h-6 rounded-full transition-all duration-300 ${active ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-gray-200'}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange(!active);
+      }}
+      style={{ 
+        backgroundColor: active ? '#10B981' : '#E2E8F0',
+        borderColor: active ? '#34D399' : '#CBD5E1',
+        boxShadow: active ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'inset 0 2px 4px rgba(0,0,0,0.05)'
+      }}
+      className="relative w-12 h-6 rounded-full transition-all duration-500 border-2"
     >
       <motion.div
-        animate={{ x: active ? 26 : 2 }}
+        animate={{
+          x: active ? 26 : 2,
+          scale: active ? 1 : 0.9
+        }}
         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        className="absolute top-1 left-0 w-4 h-4 bg-white rounded-full shadow-sm"
-      />
+        style={{ 
+          backgroundColor: active ? '#FFFFFF' : '#FFFFFF',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}
+        className="absolute top-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300"
+      >
+        {active && <div style={{ backgroundColor: '#10B981' }} className="w-1.5 h-1.5 rounded-full animate-pulse" />}
+      </motion.div>
     </button>
   </div>
 );
@@ -83,16 +108,18 @@ const ClientsTab = () => {
 
   const handleToggleStatus = async (client, newStatus) => {
     const statusLabel = newStatus ? 'Active' : 'Inactive';
+    const clientId = client?._id || client?.id;
+    
     try {
-      if (!client._id.startsWith('mock')) {
-        await editClient({ clientId: client._id, status: statusLabel });
+      if (clientId && !clientId.toString().startsWith('mock')) {
+        await editClient({ clientId, status: statusLabel });
       }
       
       setClients(prev => prev.map(c => 
-        c._id === client._id ? { ...c, status: statusLabel } : c
+        (c._id === clientId || c.id === clientId) ? { ...c, status: statusLabel } : c
       ));
 
-      if (selectedClientDetail?._id === client._id) {
+      if (selectedClientDetail && (selectedClientDetail._id === clientId || selectedClientDetail.id === clientId)) {
         setSelectedClientDetail(prev => ({ ...prev, status: statusLabel }));
       }
 
@@ -118,7 +145,6 @@ const ClientsTab = () => {
             <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
               All Clients
             </h1>
-            <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest mt-1">Directory Management</p>
           </div>
         </div>
 
@@ -171,7 +197,7 @@ const ClientsTab = () => {
                     </td>
                     <td className="px-8 py-4 text-left">
                       <Toggle 
-                        active={(client.status || 'Active') === 'Active'} 
+                        active={['active', 'accepted'].includes((client.status || 'Active').toLowerCase().trim())} 
                         onChange={(val) => handleToggleStatus(client, val)} 
                       />
                     </td>
@@ -254,7 +280,6 @@ const ClientsTab = () => {
                       { label: 'ASSIGNED KAM', value: 'Not Assigned', icon: FiUsers, color: 'text-blue-500' },
                       { label: 'LOCATION', value: selectedClientDetail.city || 'Bangalore', icon: FiMapPin },
                       { label: 'GST NUMBER', value: '—', icon: FiZap },
-                      { label: 'CIN NUMBER', value: '—', icon: FiDatabase },
                     ].map((item, idx) => (
                       <div key={idx} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">

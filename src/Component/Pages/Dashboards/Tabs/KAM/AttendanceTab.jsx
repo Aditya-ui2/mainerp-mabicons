@@ -113,13 +113,6 @@ const EmployeeDetailView = ({ employee, onBack, isDarkMode, getStatusConfig }) =
             </div>
           </div>
         </div>
-
-        {/* Simplified Actions */}
-        <div className="mt-10 flex justify-center">
-          <button onClick={onBack} className="w-full max-w-md py-5 rounded-[24px] bg-white border-2 border-[#F4F3EF] text-[#6B6B7E] text-sm font-bold hover:bg-[#F4F3EF] transition-all">
-            Close Details
-          </button>
-        </div>
       </div>
     </motion.div>
   );
