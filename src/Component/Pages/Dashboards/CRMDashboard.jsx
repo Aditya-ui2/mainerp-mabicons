@@ -865,9 +865,9 @@ const CRMDashboard = () => {
                                         />
                                       </div>
                                       <div className="flex flex-wrap gap-2 pt-2">
-                                        <button onClick={() => setDateFilter({...dateFilter, date: getLocalISODate(), filterType: 'date'})} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">Today</button>
-                                        <button onClick={() => setDateFilter({...dateFilter, date: getLocalISODate(-1), filterType: 'date'})} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">Yesterday</button>
-                                        <button onClick={() => setDateFilter({...dateFilter, filterType: 'last7days'})} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">7 Days</button>
+                                        <button onClick={() => setDateFilter({ ...dateFilter, date: getLocalISODate(), filterType: 'date' })} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">Today</button>
+                                        <button onClick={() => setDateFilter({ ...dateFilter, date: getLocalISODate(-1), filterType: 'date' })} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">Yesterday</button>
+                                        <button onClick={() => setDateFilter({ ...dateFilter, filterType: 'last7days' })} className="flex-1 px-3 py-2 bg-[#F4F3EF] text-[#1A1A2E] rounded-xl text-[9px] font-black uppercase hover:bg-blue-50 transition-all">7 Days</button>
                                       </div>
                                     </div>
                                   )}
@@ -936,7 +936,7 @@ const CRMDashboard = () => {
                     <div className="flex items-center justify-between mb-8 text-left">
                       <div>
                         <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Performance Trend</h3>
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">Lead volume over time</p>
+
                       </div>
                       <div className="w-12 h-12 rounded-2xl bg-[#F8FAFF] flex items-center justify-center text-[#1B4DA0]">
                         <FiActivity size={20} />
@@ -950,7 +950,7 @@ const CRMDashboard = () => {
                     <div className="flex items-center justify-between mb-8 text-left">
                       <div>
                         <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Market Segmentation</h3>
-                        <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">Lead distribution by sector</p>
+
                       </div>
                       <div className="w-12 h-12 rounded-2xl bg-[#F8FAFF] flex items-center justify-center text-[#1B4DA0]">
                         <FiGrid size={20} />
@@ -966,7 +966,7 @@ const CRMDashboard = () => {
                   <div className="flex items-center justify-between mb-8 text-left">
                     <div>
                       <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Team Performance Analysis</h3>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">Conversion metrics per representative</p>
+
                     </div>
                     <div className="flex gap-4">
                       <div className="flex items-center gap-2">
@@ -997,14 +997,8 @@ const CRMDashboard = () => {
                   <div className="flex items-center justify-between mb-8 text-left">
                     <div>
                       <h3 className="text-xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Recent Leads</h3>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] mt-1">Latest business opportunities</p>
                     </div>
-                    <button
-                      onClick={() => setActiveTab('Leads')}
-                      className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest hover:underline"
-                    >
-                      View All Leads
-                    </button>
+
                   </div>
 
                   <div className="overflow-x-auto">
