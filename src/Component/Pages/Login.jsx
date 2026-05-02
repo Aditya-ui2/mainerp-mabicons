@@ -159,11 +159,11 @@ const Login = () => {
       {/* Left Side - Auth Form */}
       <div className="w-full lg:w-[45%] flex flex-col p-8 lg:p-12 relative overflow-hidden">
         {/* Logo */}
-        <div className="absolute top-2 left-2 md:top-4 md:left-4 z-20">
-          <img src={mabiconsLogo} alt="Mabicons Logo" className="h-7 md:h-8 object-contain" />
+        <div className="absolute top-8 left-6 md:top-10 md:left-10 z-20">
+          <img src={mabiconsLogo} alt="Mabicons Logo" className="h-8 md:h-10 object-contain" />
         </div>
         {/* Spacer for logo */}
-        <div className="shrink-0 h-6 md:h-8 lg:mb-4" />
+        <div className="shrink-0 h-10 md:h-12 lg:mb-6" />
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
