@@ -231,29 +231,6 @@ const Login = () => {
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Log In"}
               </motion.button>
 
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center">
-
-                </div>
-
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <button type="button" className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-sm">
-                  <FcGoogle size={20} />
-                  <span className="text-[14px] font-bold text-[#4B5563]">Google</span>
-                </button>
-                <button type="button" className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-sm">
-                  <FaApple size={20} className="text-[#1A1A2E]" />
-                  <span className="text-[14px] font-bold text-[#4B5563]">Apple</span>
-                </button>
-              </div>
-
-              <div className="pt-2 text-center">
-                <p className="text-[13px] font-medium text-[#6B7280]">
-                  Don't Have An Account? <Link to="/register" className="text-[#3D37F1] font-bold hover:underline transition-all">Register Now.</Link>
-                </p>
-              </div>
 
             </form>
           </div>
