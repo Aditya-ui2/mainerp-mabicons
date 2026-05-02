@@ -157,20 +157,22 @@ const Login = () => {
   return (
     <div className="flex h-screen bg-white overflow-hidden font-inter">
       {/* Left Side - Auth Form */}
-      <div className="w-full lg:w-[45%] flex flex-col px-12 md:px-20 lg:px-24 py-10 relative overflow-hidden">
+      <div className="w-full lg:w-[45%] flex flex-col p-8 lg:p-12 relative overflow-hidden">
+        {/* Logo */}
+        <div className="absolute top-2 left-2 md:top-4 md:left-4 z-20">
+          <img src={mabiconsLogo} alt="Mabicons Logo" className="h-7 md:h-8 object-contain" />
+        </div>
+        {/* Spacer for logo */}
+        <div className="shrink-0 h-6 md:h-8 lg:mb-4" />
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="max-w-[420px] w-full mx-auto flex flex-col h-full"
+          className="max-w-[420px] w-full mx-auto flex flex-col flex-1"
         >
-          {/* Logo */}
-          <div className="flex justify-start mb-16 shrink-0">
-            <img src={mabiconsLogo} alt="Mabicons Logo" className="h-8 object-contain" />
-          </div>
-
           <div className="flex-1 flex flex-col justify-center">
-            <div className="mb-10 text-left">
+            <div className="mb-12 lg:mb-16 text-center">
               <h1 className="text-[38px] font-bold text-[#1A1A2E] mb-3 font-syne tracking-tight">Welcome Back</h1>
               <p className="text-[15px] font-medium text-[#4B5563]">Enter your email and password to access your account.</p>
             </div>
@@ -210,11 +212,11 @@ const Login = () => {
               </div>
 
               <div className="flex items-center justify-between px-1">
-                <label className="flex items-center gap-2.5 cursor-pointer group">
-                  <div className={`w-4.5 h-4.5 rounded border border-[#D1D5DB] flex items-center justify-center transition-all ${rememberMe ? 'bg-[#3D37F1] border-[#3D37F1]' : 'bg-white group-hover:border-[#3D37F1]'}`} onClick={() => setRememberMe(!rememberMe)}>
-                    {rememberMe && <FiCheck className="text-white text-[10px] stroke-[4px]" />}
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <div className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center transition-colors ${rememberMe ? 'bg-[#3D37F1] border-[#3D37F1]' : 'bg-white border-[#D1D5DB]'}`} onClick={() => setRememberMe(!rememberMe)}>
+                    {rememberMe && <FiCheck className="text-white text-[12px] stroke-[3px]" />}
                   </div>
-
+                  <span className="text-[14px] font-medium text-[#9CA3AF]">Remember Me</span>
                 </label>
                 <Link to="/forgot-password" title="Forgot Password" className="text-[14px] font-bold text-[#3D37F1] hover:underline transition-all">Forgot Your Password?</Link>
               </div>
@@ -229,26 +231,46 @@ const Login = () => {
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Log In"}
               </motion.button>
 
-              <div className="relative py-4">
+              <div className="relative py-2">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#F3F4F6]"></div>
+
                 </div>
+
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button type="button" className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-sm">
+                  <FcGoogle size={20} />
+                  <span className="text-[14px] font-bold text-[#4B5563]">Google</span>
+                </button>
+                <button type="button" className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-sm">
+                  <FaApple size={20} className="text-[#1A1A2E]" />
+                  <span className="text-[14px] font-bold text-[#4B5563]">Apple</span>
+                </button>
+              </div>
+
+              <div className="pt-2 text-center">
+                <p className="text-[13px] font-medium text-[#6B7280]">
+                  Don't Have An Account? <Link to="/register" className="text-[#3D37F1] font-bold hover:underline transition-all">Register Now.</Link>
+                </p>
               </div>
 
             </form>
           </div>
 
-          {/* Footer Copyright */}
-          <div className="mt-auto pt-8 flex items-center justify-between border-t border-[#F3F4F6] shrink-0">
-            <p className="text-[11px] font-medium text-[#9CA3AF]">Copyright © 2026 Mabicons Enterprises Ltd.</p>
-            <Link to="/privacy" className="text-[11px] font-medium text-[#9CA3AF] hover:text-[#1A1A2E]">Privacy Policy</Link>
-          </div>
         </motion.div>
+
+        {/* Footer Copyright */}
+        <div className="mt-auto pt-6 flex items-center justify-between border-t border-[#F3F4F6] shrink-0 w-full z-10">
+          <p className="text-[11px] font-medium text-[#9CA3AF]">Copyright © 2026 Mabicons Enterprises Ltd.</p>
+          <Link to="/privacy" className="text-[11px] font-medium text-[#9CA3AF] hover:text-[#1A1A2E]">Privacy Policy</Link>
+        </div>
       </div>
 
       {/* Right Side - Brand Showcase */}
-      <div className="hidden lg:flex lg:flex-1 bg-[#3D37F1] relative overflow-hidden flex-col justify-center p-8 lg:p-12 2xl:p-16">
-        <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-white/5 blur-[150px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-[#3D37F1] to-[#5937F1] relative overflow-hidden flex-col justify-center p-10 lg:p-16 2xl:p-20">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-white/10 blur-[100px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-white/5 blur-[80px] rounded-full -ml-20 -mb-20 pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-2xl mx-auto flex flex-col items-start text-left">
           <motion.div
@@ -257,10 +279,10 @@ const Login = () => {
             transition={{ duration: 0.8 }}
             className="mb-8 lg:mb-10"
           >
-            <h2 className="text-[36px] lg:text-[44px] font-bold text-white mb-4 leading-[1.1] font-syne tracking-tight">
+            <h2 className="text-[32px] lg:text-[38px] font-bold text-white mb-4 leading-[1.2] font-syne tracking-tight">
               Effortlessly manage your team and operations.
             </h2>
-            <p className="text-lg text-white/80 font-medium leading-relaxed max-w-lg">
+            <p className="text-[15px] text-white/80 font-medium leading-relaxed max-w-lg">
               Log in to access your CRM dashboard and manage your team.
             </p>
           </motion.div>
@@ -271,12 +293,12 @@ const Login = () => {
             transition={{ duration: 1.2, delay: 0.4 }}
             className="relative w-full"
           >
-            <div className="p-2 bg-white/5 backdrop-blur-xl rounded-[32px] border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.3)]">
-              <div className="overflow-hidden rounded-[24px] bg-white p-2 flex items-center justify-center">
+            <div className="p-3 bg-white/10 backdrop-blur-md rounded-[28px] border border-white/20 shadow-2xl">
+              <div className="overflow-hidden rounded-[20px] bg-white flex items-center justify-center">
                 <img
                   src={loginMockup}
                   alt="Dashboard Preview"
-                  className="w-full h-auto max-h-[45vh] object-contain rounded-[18px] shadow-sm"
+                  className="w-full h-auto max-h-[45vh] object-contain"
                 />
               </div>
             </div>
