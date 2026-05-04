@@ -62,42 +62,13 @@ const ClientsTab = () => {
   const fetchClients = async () => {
     setLoading(true);
     
-    const mockClients = [
-      {
-        _id: 'mock1',
-        companyName: 'TechNova Solutions',
-        spocName: 'Rajesh Kumar',
-        spocEmail: 'rajesh@technova.com',
-        industry: 'IT Services',
-        city: 'Bangalore',
-        stage: 'Onboarding Complete',
-        status: 'Active',
-        value: '₹25,00,000',
-        phone: '+91 98765 43210',
-        lastContact: '2024-03-20'
-      },
-      {
-        _id: 'mock2',
-        companyName: 'Global Retail Corp',
-        spocName: 'Anita Sharma',
-        spocEmail: 'anita.s@globalretail.com',
-        industry: 'Retail',
-        city: 'Delhi',
-        stage: 'Finalize',
-        status: 'Active',
-        value: '₹12,50,000',
-        phone: '+91 87654 32109',
-        lastContact: '2024-03-21'
-      }
-    ];
-
     try {
       const res = await getAllClients();
       const apiClients = res.data?.clients || res.clients || res || [];
-      setClients([...mockClients, ...(Array.isArray(apiClients) ? apiClients : [])]);
+      setClients(Array.isArray(apiClients) ? apiClients : []);
     } catch (err) {
       console.error('Error fetching clients:', err);
-      setClients(mockClients);
+      setClients([]);
     } finally {
       setLoading(false);
     }
@@ -178,7 +149,7 @@ const ClientsTab = () => {
               <tbody className="divide-y divide-[#F4F3EF]">
                 {filteredClients.map((client) => (
                   <tr
-                    key={client._id}
+                    key={client.id || client._id}
                     onClick={() => setSelectedClientDetail(client)}
                     className="hover:bg-[#F8FAFF] transition-all group cursor-pointer"
                   >
