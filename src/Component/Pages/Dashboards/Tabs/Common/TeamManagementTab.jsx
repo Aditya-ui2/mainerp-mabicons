@@ -173,6 +173,20 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
   const [isEditingInDetail, setIsEditingInDetail] = useState(false);
   const [isSavingDetail, setIsSavingDetail] = useState(false);
   const [editableMember, setEditableMember] = useState(null);
+
+  const [userRole, setUserRole] = useState(() => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.role || payload.userType || localStorage.getItem('userRole') || '';
+      }
+    } catch (_) { }
+    return localStorage.getItem('userRole') || '';
+  });
+
+  const canAddMember = (userRole || '').toLowerCase().includes('admin') || (userRole || '').toLowerCase().includes('crm');
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -385,27 +399,29 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
             <FiRefreshCw size={14} className={`text-[#1B4DA0] ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          <button
-            onClick={() => {
-              setEditingMember(null);
-              setFormData({
-                name: '',
-                email: '',
-                phone: '',
-                employeeId: '',
-                department: department,
-                joiningDate: '',
-                profilePhoto: null,
-                profilePhotoPreview: null,
-                status: 'Active'
-              });
-              setShowModal(true);
-            }}
-            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
-          >
-            <FiPlus size={14} />
-            Add Member
-          </button>
+          {canAddMember && (
+            <button
+              onClick={() => {
+                setEditingMember(null);
+                setFormData({
+                  name: '',
+                  email: '',
+                  phone: '',
+                  employeeId: '',
+                  department: department,
+                  joiningDate: '',
+                  profilePhoto: null,
+                  profilePhotoPreview: null,
+                  status: 'Active'
+                });
+                setShowModal(true);
+              }}
+              className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#153e82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+            >
+              <FiPlus size={14} />
+              Add Member
+            </button>
+          )}
         </div>
       </div>
 

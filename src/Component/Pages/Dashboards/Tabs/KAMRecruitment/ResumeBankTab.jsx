@@ -861,7 +861,7 @@ const ResumeBankTab = () => {
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
               placeholder="Search by name, expertise..."
-              className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3.5 pl-14 pr-4 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white focus:ring-2 focus:ring-[#1B4DA0]/10"
+              className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3.5 pl-14 pr-4 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white focus:ring-0"
             />
           </div>
 
@@ -899,15 +899,15 @@ const ResumeBankTab = () => {
 
         {/* Row 2: Smart AI Search - Natural Language & Content */}
         <div className="bg-white dark:bg-slate-900 rounded-[28px] p-2 border border-[#F4F3EF] dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4 mt-2">
-          <div className="flex-1 relative w-full">
-            <Bot className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+          <div className="flex-1 relative w-full group">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors group-focus-within:text-[#1B4DA0]" size={18} />
             <input
               type="text"
               value={aiQuery}
               onChange={(e) => setAiQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
               placeholder="Ask Smart AI: 'Find Java experts with 5+ years experience'..."
-              className="w-full bg-[#F4F3EF] dark:bg-slate-800 border-none rounded-2xl py-3.5 pl-14 pr-4 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white focus:ring-2 focus:ring-[#1B4DA0]/10"
+              className="w-full bg-[#F4F3EF] dark:bg-slate-800 border-none rounded-2xl py-3.5 pl-14 pr-4 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white focus:ring-0"
             />
           </div>
 

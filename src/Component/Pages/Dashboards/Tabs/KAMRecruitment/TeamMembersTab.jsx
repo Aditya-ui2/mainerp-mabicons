@@ -230,12 +230,14 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
             <FiRefreshCw size={14} className={`text-[#1B4DA0] group-hover:text-[#0D47A1] transition-colors ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
-          >
-            <FiPlus size={18} /> Add Team Member
-          </button>
+          {((userRole || '').toLowerCase().includes('admin') || (userRole || '').toLowerCase().includes('crm')) && (
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
+            >
+              <FiPlus size={18} /> Add Team Member
+            </button>
+          )}
         </div>
       </div>
 

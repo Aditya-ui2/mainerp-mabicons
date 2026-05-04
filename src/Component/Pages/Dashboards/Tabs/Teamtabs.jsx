@@ -41,12 +41,12 @@ const TeamTabs = ({ isDarkMode }) => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
         const decoded = jwtDecode(token);
-        // Robust ID extraction
-        const id = decoded.id || decoded._id || decoded.adminId;
-        let role = decoded.role;
+        // Robust ID extraction including potential fallbacks
+        const id = decoded.id || decoded._id || decoded.adminId || decoded.userId || localStorage.getItem('userId');
+        let role = decoded.role || decoded.userType || localStorage.getItem('userRole') || '';
         
         // Map Super Admin to Admin for hierarchy purposes if needed
-        if (role === 'Super Admin') role = 'Admin';
+        if (role.toLowerCase().includes('super admin') || role.toLowerCase() === 'superadmin') role = 'Admin';
         
         setUserRole(role);
         setCurrentUserId(id);

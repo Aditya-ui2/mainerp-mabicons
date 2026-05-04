@@ -329,11 +329,13 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
 };
 
 // Team Overview Tab Content
-const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, onDeleteMultiple, onToggleStatusMultiple, globalStats, onViewCallsBreakdown }) => {
+const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, onDeleteMultiple, onToggleStatusMultiple, globalStats, onViewCallsBreakdown, userRole }) => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedKAMs, setSelectedKAMs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const canAddMember = (userRole || '').toLowerCase().includes('admin') || (userRole || '').toLowerCase().includes('crm');
 
   const toggleSelection = (id) => setSelectedKAMs(prev => prev.includes(id) ? prev.filter(k => k !== id) : [...prev, id]);
   const toggleAll = () => setSelectedKAMs(selectedKAMs.length === filteredTeamData.length && filteredTeamData.length > 0 ? [] : filteredTeamData.map(k => k.id));
@@ -386,7 +388,7 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
         </div>
         <div className="flex items-center gap-2">
-          {onAddKAM && (
+          {onAddKAM && canAddMember && (
             <button
               onClick={onAddKAM}
               className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
@@ -2720,15 +2722,16 @@ const RecruitmentHeadDashboard = () => {
     if (token) {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
+        const userRole = decoded.role || decoded.userType || localStorage.getItem('userRole') || 'Recruitment Head';
         setUserInfo({
           id: decoded.id || decoded.userId || '',
           name: decoded.name || localStorage.getItem('userName') || '',
           email: decoded.email || localStorage.getItem('userEmail') || '',
-          role: 'Recruitment Head',
+          role: userRole,
           avatar: localStorage.getItem('userPicture') || decoded.picture || ''
         });
       } catch (e) {
-        setUserInfo({ name: localStorage.getItem('userName') || '', role: 'Recruitment Head', avatar: localStorage.getItem('userPicture') || '' });
+        setUserInfo({ name: localStorage.getItem('userName') || '', role: localStorage.getItem('userRole') || 'Recruitment Head', avatar: localStorage.getItem('userPicture') || '' });
       }
     } else {
       setUserInfo({ name: localStorage.getItem('userName') || '', role: 'Recruitment Head', avatar: localStorage.getItem('userPicture') || '' });
@@ -3310,6 +3313,7 @@ const RecruitmentHeadDashboard = () => {
                   onEditKAM={handleEditKAM}
                   globalStats={stats}
                   onViewCallsBreakdown={handleViewCallsBreakdown}
+                  userRole={userInfo.role}
                 />
               );
             case 'Team Performance':
