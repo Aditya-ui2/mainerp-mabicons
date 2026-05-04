@@ -413,15 +413,17 @@ const HROperationsDashboard = () => {
                     <div className="bg-white rounded-xl shadow-sm p-6">
                       <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
                       <div className="grid grid-cols-2 gap-3">
-                        <button
-                          onClick={() => setActiveTab('Onboarding')}
-                          className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all duration-200 text-left group"
-                        >
-                          <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 group-hover:scale-105 transition-transform">
-                            <FiUserPlus className="w-4 h-4" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-700">Add Employee</span>
-                        </button>
+                        {(localStorage.getItem('userType') === 'superadmin' || localStorage.getItem('userEmail') === 'ashwin.mabicons@gmail.com') && (
+                          <button
+                            onClick={() => setActiveTab('Onboarding')}
+                            className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all duration-200 text-left group"
+                          >
+                            <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 group-hover:scale-105 transition-transform">
+                              <FiUserPlus className="w-4 h-4" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">Add Employee</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => setActiveTab('Attendance')}
                           className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 text-left group"

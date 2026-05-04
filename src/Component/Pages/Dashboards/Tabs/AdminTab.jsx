@@ -116,17 +116,19 @@ const AdminTab = ({ isDarkMode }) => {
         </div>
 
         {/* Add Admin Button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowAddModal(true)}
-          className={`px-6 py-2.5 ${
-            isDarkMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'
-          } text-white rounded-lg flex items-center shadow-lg transition-colors duration-200`}
-        >
-          <FiUserPlus className="mr-2" />
-          Add New Admin
-        </motion.button>
+        {(localStorage.getItem('userType') === 'superadmin' || localStorage.getItem('userEmail') === 'ashwin.mabicons@gmail.com') && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowAddModal(true)}
+            className={`px-6 py-2.5 ${
+              isDarkMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'
+            } text-white rounded-lg flex items-center shadow-lg transition-colors duration-200`}
+          >
+            <FiUserPlus className="mr-2" />
+            Add New Admin
+          </motion.button>
+        )}
       </div>
 
       {/* Search and Filter Section */}

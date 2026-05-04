@@ -530,13 +530,15 @@ const Dashboard = () => {
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Business Development</h2>
-              <button
-                onClick={() => setIsCreateBDModalOpen(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center gap-2"
-              >
-                <FiUserPlus className="h-5 w-5" />
-                Add BD Executive
-              </button>
+              {(localStorage.getItem('userType') === 'superadmin' || localStorage.getItem('userEmail') === 'ashwin.mabicons@gmail.com') && (
+                <button
+                  onClick={() => setIsCreateBDModalOpen(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center gap-2"
+                >
+                  <FiUserPlus className="h-5 w-5" />
+                  Add BD Executive
+                </button>
+              )}
             </div>
             <BdTab />
           </div>

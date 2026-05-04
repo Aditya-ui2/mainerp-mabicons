@@ -384,7 +384,7 @@ const TeamTabs = ({ isDarkMode }) => {
             : 'Team Member'
         }
       </text>
-      {nodeDatum.name !== orgChart.name && (
+      {nodeDatum.name !== orgChart.name && (localStorage.getItem('userType') === 'superadmin' || localStorage.getItem('userEmail') === 'ashwin.mabicons@gmail.com') && (
         <>
           <circle
             r="10"
@@ -416,8 +416,7 @@ const TeamTabs = ({ isDarkMode }) => {
       <div className="w-full h-full bg-gray-100 dark:bg-gray-800 transition-colors duration-200 p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">Company Hierarchy</h2>
-          {((userRole?.toLowerCase()?.includes('super admin') || userRole?.toLowerCase()?.includes('crm')) && 
-            (currentUserName?.toLowerCase()?.includes('ashish') || currentUserName?.toLowerCase()?.includes('ashwin'))) && (
+          {(localStorage.getItem('userType') === 'superadmin' || localStorage.getItem('userEmail') === 'ashwin.mabicons@gmail.com') && (
             <button
               onClick={addNewMember}
               className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
@@ -633,12 +632,15 @@ const TeamTabs = ({ isDarkMode }) => {
             >
               Cancel
             </button>
-            <button
-              onClick={handleDeleteMember}
-              className="px-4 py-2 bg-red-600 text-white rounded-md"
-            >
-              Delete
-            </button>
+
+            {(localStorage.getItem('userType') === 'superadmin' || localStorage.getItem('userEmail') === 'ashwin.mabicons@gmail.com') && (
+              <button
+                onClick={handleDeleteMember}
+                className="px-4 py-2 bg-red-600 text-white rounded-md"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </div>
       </Modal>

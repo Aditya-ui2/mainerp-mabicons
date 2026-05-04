@@ -792,13 +792,15 @@ const BdTab = () => {
                     </Tab>
                   </TabsHeader>
                 </Tabs>
-                <Button 
-                  className="bg-blue-500 hover:bg-blue-600 transition-all duration-200 flex items-center gap-2 text-white"
-                  size="sm"
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  <FiPlus className="h-4 w-4" /> ADD MEMBER
-                </Button>
+                {(localStorage.getItem('userType') === 'superadmin' || localStorage.getItem('userEmail') === 'ashwin.mabicons@gmail.com') && (
+                  <Button 
+                    className="bg-blue-500 hover:bg-blue-600 transition-all duration-200 flex items-center gap-2 text-white"
+                    size="sm"
+                    onClick={() => setIsModalOpen(true)}
+                  >
+                    <FiPlus className="h-4 w-4" /> ADD MEMBER
+                  </Button>
+                )}
               </div>
             </div>
 

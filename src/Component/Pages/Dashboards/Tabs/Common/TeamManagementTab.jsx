@@ -185,7 +185,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
     return localStorage.getItem('userRole') || '';
   });
 
-  const canAddMember = (userRole || '').toLowerCase().includes('admin') || (userRole || '').toLowerCase().includes('crm');
+  const canAddMember = localStorage.getItem('userType') === 'superadmin' || localStorage.getItem('userEmail') === 'ashwin.mabicons@gmail.com';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -588,7 +588,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
         </div>        {/* Floating Action Bar */}
         {createPortal(
           <AnimatePresence>
-            {selectedIds.length > 0 && (
+            {selectedIds.length > 0 && canAddMember && (
               <motion.div
                 initial={{ opacity: 0, y: 100, x: '-50%' }}
                 animate={{ opacity: 1, y: 0, x: '-50%' }}
@@ -674,7 +674,7 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {!isEditingInDetail && (
+                    {!isEditingInDetail && canAddMember && (
                       <button
                         onClick={() => setIsEditingInDetail(true)}
                         className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] hover:border-blue-100 shadow-sm"
