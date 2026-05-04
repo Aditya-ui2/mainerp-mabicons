@@ -11,52 +11,44 @@ const genAI = new GoogleGenerativeAI(API_KEY);
  * @returns {Promise<Array>} - List of matching resume IDs
  */
 export const searchResumesWithAI = async (resumes, query) => {
-  if (!API_KEY) {
-    console.warn("Gemini API Key is missing. Please add VITE_GEMINI_API_KEY to your .env file.");
-    return null;
-  }
-
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.0-pro" // ✅ stable
+    });
 
-    // Prepare data for Gemini (keep it light to save tokens)
     const context = resumes.map(r => ({
       id: r.id,
       name: r.candidateName || r.fileName,
       role: r.roleType,
-      skills: r.skills || [] // Assuming skills are part of the object
+      phone: r.phone || r.mobile,
+      email: r.email,
+      experience: r.experience,
+      skills: Array.isArray(r.skills) ? r.skills.join(",") : (r.skills || "")
     }));
 
     const prompt = `
       You are an expert recruitment assistant. 
-      Given the following list of candidates from a resume bank and a search query, 
-      identify the best matching candidates.
+      Identify candidate IDs matching the query. 
       
-      CRITICAL: Return ONLY a JSON array of matching IDs. No text, no explanation.
-      Format: ["id1", "id2", ...]
+      RULES:
+      1. Check Name, Role, Skills, Phone, and Email.
+      2. For Phone Numbers: Ignore spaces, dashes, and country codes (e.g., match 9549440495 even if stored as +91 95494-40495).
+      3. Return ONLY a JSON array of matching IDs: ["id1", "id2"].
+      4. If no matches, return [].
 
-      Candidate List:
+      Candidates:
       ${JSON.stringify(context)}
 
-      User Query: "${query}"
+      Query: "${query}"
     `;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    // Attempt to parse JSON from response
-    try {
-      // Find the first [ and last ] to extract JSON if Gemini adds text
-      const jsonStr = text.substring(text.indexOf("["), text.lastIndexOf("]") + 1);
-      return JSON.parse(jsonStr);
-    } catch (e) {
-      console.error("AI response parsing failed:", text);
-      return [];
-    }
-  } catch (error) {
-    console.error("Gemini AI Search Error:", error);
-    throw error;
+    const text = result.response.text();
+
+    return JSON.parse(text);
+  } catch (err) {
+    console.error(err);
+    return [];
   }
 };
 
@@ -69,7 +61,7 @@ export const parseResumeWithAI = async (resumeText) => {
   if (!API_KEY) return null;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
 
     const prompt = `
       You are an expert recruitment assistant. 
@@ -87,7 +79,7 @@ export const parseResumeWithAI = async (resumeText) => {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     try {
       const jsonStr = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
       return JSON.parse(jsonStr);
@@ -111,7 +103,7 @@ export const rankCandidatesWithAI = async (candidates, jobTitle) => {
   if (!API_KEY || !candidates.length) return [];
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
 
     // Simplify candidates for the prompt to save tokens
     const candidateData = candidates.map(c => ({
@@ -145,7 +137,7 @@ export const rankCandidatesWithAI = async (candidates, jobTitle) => {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     try {
       const jsonStr = text.substring(text.indexOf("["), text.lastIndexOf("]") + 1);
       return JSON.parse(jsonStr);

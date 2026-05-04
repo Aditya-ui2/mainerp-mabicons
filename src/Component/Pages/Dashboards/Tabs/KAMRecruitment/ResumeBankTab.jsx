@@ -22,6 +22,7 @@ import {
   getAllClients,
   syncResumesFromSharePoint,
   syncResumesFromSharePointDrive,
+  deepSearchResumes,
 } from '../../../service/api';
 
 // --- Helper Functions ---
@@ -563,21 +564,52 @@ const ResumeBankTab = () => {
   const handleAiSearch = async () => {
     if (!aiQuery.trim()) return;
     setIsAiSearching(true);
+    setIsAiMode(true); // Enable AI mode to prevent standard fetches
     try {
-      // Get all current resumes for context
-      const allResumesResponse = await getResumeBankResumes({ limit: 100 });
-      const allData = allResumesResponse.resumes || [];
+      // Get a larger set of resumes for deeper AI context
+      const allResumesResponse = await getResumeBankResumes({ limit: 1000 });
+      const allData = allResumesResponse.resumes || allResumesResponse.data || [];
 
+      // Get AI matching IDs
       const matchingIds = await searchResumesWithAI(allData, aiQuery);
 
-      if (matchingIds && Array.isArray(matchingIds)) {
-        const filtered = allData.filter(r => matchingIds.includes(r.id));
+      let finalMatchingIds = matchingIds || [];
+      const isContactQuery = /^\d+$/.test(aiQuery.replace(/[-\s+]/g, '')) || aiQuery.includes('@');
+
+      // DEEP SEARCH FALLBACK: If AI finds nothing, or if it's a contact query, search INSIDE files via SharePoint
+      if (finalMatchingIds.length === 0 || isContactQuery) {
+        if (isContactQuery) toast.info("AI is performing a Deep-Scan of resume contents...");
+
+        const deepSearchResponse = await deepSearchResumes(aiQuery);
+        const deepMatches = deepSearchResponse.results || [];
+
+        if (deepMatches.length > 0) {
+          const deepIds = deepMatches.map(m => m.id || m.sharePointId);
+          finalMatchingIds = [...new Set([...finalMatchingIds, ...deepIds])];
+
+          // Merge deep results into our data pool
+          deepMatches.forEach(dm => {
+            if (!allData.find(a => a.id === dm.id || a.sharePointId === dm.sharePointId)) {
+              allData.push(dm);
+            }
+          });
+        }
+      }
+
+      if (finalMatchingIds.length > 0) {
+        const filtered = allData.filter(r => finalMatchingIds.includes(r.id) || finalMatchingIds.includes(r.sharePointId));
         setResumes(filtered);
         setAiResults(filtered.length);
-        toast.success(`AI found ${filtered.length} matching candidates`);
+        toast.success(`Found ${filtered.length} matches (including Deep-Scan)`);
+      } else {
+        setResumes([]);
+        setAiResults(0);
+        toast.info("No matching candidates found even after Deep-Scan");
       }
     } catch (err) {
-      toast.error("AI Search failed. Check if API Key is set.");
+      console.error("AI Search Detailed Error:", err);
+      toast.error(`AI Search failed: ${err.message || 'Please check your API key and connection'}`);
+      setIsAiMode(false); // Revert on failure
     } finally {
       setIsAiSearching(false);
     }
@@ -682,7 +714,7 @@ const ResumeBankTab = () => {
         if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('https')) {
           url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
-        
+
         // Open directly in new tab
         window.open(url, '_blank', 'noopener,noreferrer');
         toast.success("CV Opened", { id: toastId });
@@ -817,98 +849,85 @@ const ResumeBankTab = () => {
         )}
       </AnimatePresence>
 
-      {/* Control Bar (Unified with Job Openings Style) */}
-      <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 mb-8 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-3 flex-wrap relative overflow-hidden">
-        {/* AI Mode Toggle Background Glow */}
-        {isAiMode && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-gradient-to-r from-violet-500/5 via-fuchsia-500/5 to-blue-500/5 pointer-events-none"
-          />
-        )}
+      {/* Control Bar - Dual Search System */}
+      <div className="flex flex-col gap-4 mb-10">
+        {/* Row 1: Standard Search & Filters */}
+        <div className="bg-white dark:bg-slate-800 rounded-[24px] p-2 border border-[#F4F3EF] dark:border-slate-700 shadow-sm flex items-center gap-3 flex-wrap relative">
+          {/* Standard Search - Metadata & Tags */}
+          <div className="relative flex-1 group min-w-[280px]">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors group-focus-within:text-[#1B4DA0]" size={18} />
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+              placeholder="Search by name, expertise..."
+              className="w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3.5 pl-14 pr-4 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white focus:ring-2 focus:ring-[#1B4DA0]/10"
+            />
+          </div>
 
-        {/* Search Input Area */}
-        <div className="relative flex-1 group min-w-[300px]">
-          {isAiMode ? (
-            <Bot className="absolute left-5 top-1/2 -translate-y-1/2 text-violet-500 animate-pulse" size={18} />
-          ) : (
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
-          )}
-
-          <input
-            type="text"
-            value={isAiMode ? aiQuery : filters.search}
-            onChange={(e) => isAiMode ? setAiQuery(e.target.value) : handleFilterChange('search', e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && isAiMode && handleAiSearch()}
-            placeholder={isAiMode ? "Ask Gemini: 'Find me Java experts with 5+ years experience'..." : "Search by name, expertise, or tech stack..."}
-            className={`w-full bg-[#F4F3EF] dark:bg-slate-900 border-none rounded-2xl py-3 pl-14 pr-24 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white ${isAiMode ? 'ring-2 ring-violet-500/20' : 'focus:ring-2 focus:ring-[#F4F3EF]'}`}
-          />
-
-          {/* AI Search Action Button inside the input */}
-          {isAiMode && (
-            <button
-              onClick={handleAiSearch}
-              disabled={isAiSearching}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-700 transition-all flex items-center gap-2 shadow-lg shadow-violet-500/20"
-            >
-              {isAiSearching ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
-              Ask AI
-            </button>
-          )}
-        </div>
-
-        {/* AI Toggle Button */}
-        <button
-          onClick={() => {
-            setIsAiMode(!isAiMode);
-            if (isAiMode) {
-              setAiResults(null);
-              fetchResumes();
-            }
-          }}
-          className={`px-4 py-2.5 rounded-xl border-2 flex items-center gap-2 transition-all active:scale-95 ${isAiMode ? 'bg-violet-50 border-violet-200 text-violet-600' : 'bg-white border-[#F4F3EF] text-[#9B9BAD] hover:border-violet-200 hover:text-violet-500'}`}
-        >
-          <Sparkles size={16} className={isAiMode ? 'animate-bounce' : ''} />
-          <span className="text-[11px] font-black uppercase tracking-widest">{isAiMode ? 'AI ON' : 'Smart AI'}</span>
-        </button>
-
-        {/* Global Roles Filter (Hidden in AI mode to avoid confusion) */}
-        {!isAiMode && (
+          {/* Global Roles Filter */}
           <div className="relative group">
             <select
               value={filters.roleType}
               onChange={(e) => handleFilterChange('roleType', e.target.value)}
-              className="bg-[#F4F3EF] dark:bg-slate-900 text-[11px] font-black text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest hover:bg-[#EEF2FB] dark:hover:bg-slate-700 transition-all"
+              className="bg-[#F4F3EF] dark:bg-slate-900 text-[11px] font-black text-[#1A1A2E] dark:text-slate-400 rounded-xl pl-5 pr-12 py-3.5 outline-none border-0 cursor-pointer appearance-none min-w-[170px] uppercase tracking-widest hover:bg-[#EEF2FB] dark:hover:bg-slate-700 transition-all"
             >
               <option value="">Positions</option>
               {roleTypes.map(role => (
                 <option key={role.name} value={role.name}>{role.name} ({role.count})</option>
               ))}
             </select>
-            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
+            <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
           </div>
-        )}
 
-        {/* Reset / Status Labels */}
-        {aiResults !== null && (
-          <div className="px-4 py-1.5 bg-violet-50 text-violet-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-            AI matched: {aiResults}
+          {/* Reset System */}
+          {(filters.search || aiResults !== null || filters.roleType) && (
+            <button
+              onClick={() => {
+                handleResetFilters();
+                setIsAiMode(false);
+                setAiResults(null);
+                setAiQuery('');
+                fetchResumes();
+              }}
+              className="px-6 py-3 text-[10px] font-black text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl uppercase tracking-widest transition-all active:scale-95"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        {/* Row 2: Smart AI Search - Natural Language & Content */}
+        <div className="bg-white dark:bg-slate-900 rounded-[28px] p-2 border border-[#F4F3EF] dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4 mt-2">
+          <div className="flex-1 relative w-full">
+            <Bot className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+            <input
+              type="text"
+              value={aiQuery}
+              onChange={(e) => setAiQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
+              placeholder="Ask Smart AI: 'Find Java experts with 5+ years experience'..."
+              className="w-full bg-[#F4F3EF] dark:bg-slate-800 border-none rounded-2xl py-3.5 pl-14 pr-4 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD] dark:text-white focus:ring-2 focus:ring-[#1B4DA0]/10"
+            />
           </div>
-        )}
 
-        {(filters.search || filters.roleType || aiResults !== null) && (
-          <button
-            onClick={() => {
-              handleResetFilters();
-              setIsAiMode(false);
-              setAiResults(null);
-              setAiQuery('');
-            }}
-            className="px-4 py-2 text-xs font-bold text-[#1B4DA0] hover:underline uppercase tracking-widest transition-all active:scale-95"
-          >
-            Reset
-          </button>
-        )}
+          <div className="w-full md:w-72 flex items-center gap-2">
+            {aiResults !== null && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-[#F4F3EF] dark:bg-slate-800 text-[#1B4DA0] rounded-xl border border-transparent">
+                <Check size={12} className="stroke-[3px]" />
+                <span className="text-[10px] font-black uppercase tracking-widest">{aiResults}</span>
+              </div>
+            )}
+            <button
+              onClick={handleAiSearch}
+              disabled={isAiSearching}
+              className="flex-1 h-[52px] bg-[#1B4DA0] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#153e82] transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 shadow-sm"
+            >
+              {isAiSearching ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+              {isAiSearching ? 'Finding...' : 'Ask Smart AI'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Profile Deck - Table Interface */}
@@ -1010,34 +1029,34 @@ const ResumeBankTab = () => {
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {showPreviewModal && (
-            <div 
+            <div
               className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1A1A2E]/40 backdrop-blur-xl transition-all duration-300"
               onClick={() => setShowPreviewModal(false)}
             >
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }} 
-                exit={{ scale: 0.9, opacity: 0 }} 
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
                 className="relative z-[1101] w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden flex flex-col"
                 onClick={e => e.stopPropagation()}
               >
-              <div className="p-6 border-b flex items-center justify-between">
-                <h3 className="font-bold text-lg">{previewFileName}</h3>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold hover:bg-[#153e82] transition-all shadow-sm"
-                  >
-                    <Eye size={14} /> Open in New Tab
-                  </a>
-                  <button onClick={() => setShowPreviewModal(false)} className="w-10 h-10 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center"><X size={20} /></button>
+                <div className="p-6 border-b flex items-center justify-between">
+                  <h3 className="font-bold text-lg">{previewFileName}</h3>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-[#1B4DA0] text-white rounded-xl text-xs font-bold hover:bg-[#153e82] transition-all shadow-sm"
+                    >
+                      <Eye size={14} /> Open in New Tab
+                    </a>
+                    <button onClick={() => setShowPreviewModal(false)} className="w-10 h-10 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center"><X size={20} /></button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 bg-slate-100 p-4">
-                <iframe src={previewUrl} className="w-full h-full rounded-2xl border-0" title="Resume Preview" allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" />
-              </div>
+                <div className="flex-1 bg-slate-100 p-4">
+                  <iframe src={previewUrl} className="w-full h-full rounded-2xl border-0" title="Resume Preview" allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" />
+                </div>
               </motion.div>
             </div>
           )}
@@ -1048,99 +1067,99 @@ const ResumeBankTab = () => {
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {showUploadModal && (
-            <div 
+            <div
               className="fixed inset-0 z-[1100] bg-[#1A1A2E]/40 backdrop-blur-xl transition-all duration-300 flex items-center justify-center p-4"
               onClick={() => setShowUploadModal(false)}
             >
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }} 
-                exit={{ scale: 0.9, opacity: 0 }} 
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
                 className="relative z-[1101] w-full max-w-lg bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-6"
                 onClick={e => e.stopPropagation()}
               >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold font-syne text-[#1A1A2E] dark:text-white">Add Candidate</h3>
-                </div>
-                <button onClick={() => setShowUploadModal(false)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all flex-shrink-0">
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Candidate Name */}
-              <div>
-                <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Candidate Name *</label>
-                <input
-                  type="text"
-                  value={uploadCandidateName}
-                  onChange={(e) => setUploadCandidateName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
-                  className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white transition-colors"
-                />
-              </div>
-
-              {/* Mobile Number */}
-              <div>
-                <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Mobile Number</label>
-                <input
-                  type="tel"
-                  value={uploadPhone}
-                  onChange={(e) => setUploadPhone(e.target.value)}
-                  placeholder="+91 00000 00000"
-                  className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white transition-colors"
-                />
-              </div>
-
-              {/* Role Type */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Role Type</label>
-                <div className="relative group">
-                  <select
-                    value={selectedUploadRoleType}
-                    onChange={(e) => setSelectedUploadRoleType(e.target.value)}
-                    className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm font-bold focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white cursor-pointer transition-all appearance-none bg-[#F4F3EF]/50 hover:bg-white dark:hover:bg-slate-700"
-                  >
-                    <option value="">Select Role (Optional)</option>
-                    {roleTypes.map(role => (<option key={role.name} value={role.name}>{role.name}</option>))}
-                    <option value="__custom__">+ Custom Role</option>
-                  </select>
-                  <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
-                </div>
-                {selectedUploadRoleType === '__custom__' && (
-                  <input type="text" value={customUploadRoleType} onChange={(e) => setCustomUploadRoleType(e.target.value)} placeholder="Enter custom role name" className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm mt-3 font-bold focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white bg-[#F4F3EF]/50 transition-all" />
-                )}
-              </div>
-
-              {/* Resume Upload */}
-              <div>
-                <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Upload Resume *</label>
-                <label className="cursor-pointer block">
-                  <div className={`w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${pendingUploadFiles.length
-                    ? 'border-[#1B4DA0] bg-blue-50/50 dark:bg-blue-900/20'
-                    : 'border-[#F4F3EF] dark:border-slate-700 hover:border-[#1B4DA0]'
-                    }`}>
-                    {pendingUploadFiles.length ? (
-                      <>
-                        <FileText size={20} className="text-[#1B4DA0]" />
-                        <span className="text-xs font-bold text-[#1B4DA0]">{pendingUploadFiles[0].name}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Download size={20} className="text-[#9B9BAD]" />
-                        <span className="text-xs font-bold text-[#9B9BAD]">Click to upload PDF, DOC, DOCX</span>
-                      </>
-                    )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold font-syne text-[#1A1A2E] dark:text-white">Add Candidate</h3>
                   </div>
-                  <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length) setPendingUploadFiles(files); e.target.value = ''; }} className="hidden" />
-                </label>
-              </div>
+                  <button onClick={() => setShowUploadModal(false)} className="w-10 h-10 rounded-xl bg-[#F4F3EF] dark:bg-slate-800 flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all flex-shrink-0">
+                    <X size={18} />
+                  </button>
+                </div>
 
-              {/* Actions */}
-              <div className="flex gap-4 pt-2">
-                <button onClick={() => setShowUploadModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-xs uppercase tracking-widest text-[#6B6B7E] hover:bg-[#F4F3EF] dark:hover:bg-slate-800 transition-all">Cancel</button>
-                <button onClick={handleConfirmUploadResumes} disabled={uploading} className="flex-1 h-14 bg-[#1B4DA0] text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all disabled:opacity-50">{uploading ? 'Saving...' : 'Add Candidate'}</button>
-              </div>
+                {/* Candidate Name */}
+                <div>
+                  <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Candidate Name *</label>
+                  <input
+                    type="text"
+                    value={uploadCandidateName}
+                    onChange={(e) => setUploadCandidateName(e.target.value)}
+                    placeholder="e.g. Rahul Sharma"
+                    className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white transition-colors"
+                  />
+                </div>
+
+                {/* Mobile Number */}
+                <div>
+                  <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Mobile Number</label>
+                  <input
+                    type="tel"
+                    value={uploadPhone}
+                    onChange={(e) => setUploadPhone(e.target.value)}
+                    placeholder="+91 00000 00000"
+                    className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white transition-colors"
+                  />
+                </div>
+
+                {/* Role Type */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Role Type</label>
+                  <div className="relative group">
+                    <select
+                      value={selectedUploadRoleType}
+                      onChange={(e) => setSelectedUploadRoleType(e.target.value)}
+                      className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm font-bold focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white cursor-pointer transition-all appearance-none bg-[#F4F3EF]/50 hover:bg-white dark:hover:bg-slate-700"
+                    >
+                      <option value="">Select Role (Optional)</option>
+                      {roleTypes.map(role => (<option key={role.name} value={role.name}>{role.name}</option>))}
+                      <option value="__custom__">+ Custom Role</option>
+                    </select>
+                    <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
+                  </div>
+                  {selectedUploadRoleType === '__custom__' && (
+                    <input type="text" value={customUploadRoleType} onChange={(e) => setCustomUploadRoleType(e.target.value)} placeholder="Enter custom role name" className="w-full h-14 px-6 rounded-2xl border border-[#F4F3EF] dark:border-slate-700 text-sm mt-3 font-bold focus:outline-none focus:border-[#1B4DA0] dark:bg-slate-800 dark:text-white bg-[#F4F3EF]/50 transition-all" />
+                  )}
+                </div>
+
+                {/* Resume Upload */}
+                <div>
+                  <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest mb-2 block">Upload Resume *</label>
+                  <label className="cursor-pointer block">
+                    <div className={`w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${pendingUploadFiles.length
+                      ? 'border-[#1B4DA0] bg-blue-50/50 dark:bg-blue-900/20'
+                      : 'border-[#F4F3EF] dark:border-slate-700 hover:border-[#1B4DA0]'
+                      }`}>
+                      {pendingUploadFiles.length ? (
+                        <>
+                          <FileText size={20} className="text-[#1B4DA0]" />
+                          <span className="text-xs font-bold text-[#1B4DA0]">{pendingUploadFiles[0].name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download size={20} className="text-[#9B9BAD]" />
+                          <span className="text-xs font-bold text-[#9B9BAD]">Click to upload PDF, DOC, DOCX</span>
+                        </>
+                      )}
+                    </div>
+                    <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length) setPendingUploadFiles(files); e.target.value = ''; }} className="hidden" />
+                  </label>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-4 pt-2">
+                  <button onClick={() => setShowUploadModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-xs uppercase tracking-widest text-[#6B6B7E] hover:bg-[#F4F3EF] dark:hover:bg-slate-800 transition-all">Cancel</button>
+                  <button onClick={handleConfirmUploadResumes} disabled={uploading} className="flex-1 h-14 bg-[#1B4DA0] text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all disabled:opacity-50">{uploading ? 'Saving...' : 'Add Candidate'}</button>
+                </div>
               </motion.div>
             </div>
           )}
@@ -1153,52 +1172,52 @@ const ResumeBankTab = () => {
         <AnimatePresence>
           {selectedRowIds.length > 0 && (
             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-3xl px-4">
-            <motion.div
-              initial={{ y: 100, opacity: 0, scale: 0.9 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 100, opacity: 0, scale: 0.9 }}
-              className={`rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl border border-white/20 p-4 flex items-center justify-between gap-4 ${isDarkMode ? 'bg-slate-900/95' : 'bg-[#1A1A2E]/95'
-                } text-white`}
-            >
-              <div className="flex items-center gap-4 pl-2">
-                <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">
-                  {selectedRowIds.length}
+              <motion.div
+                initial={{ y: 100, opacity: 0, scale: 0.9 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 100, opacity: 0, scale: 0.9 }}
+                className={`rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl border border-white/20 p-4 flex items-center justify-between gap-4 ${isDarkMode ? 'bg-slate-900/95' : 'bg-[#1A1A2E]/95'
+                  } text-white`}
+              >
+                <div className="flex items-center gap-4 pl-2">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">
+                    {selectedRowIds.length}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-400">Selected</p>
+                    <p className="text-[10px] font-medium opacity-60">Talent Profiles</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-400">Selected</p>
-                  <p className="text-[10px] font-medium opacity-60">Talent Profiles</p>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      setAssigningResumeIds(selectedRowIds);
+                      setSelectedPositionId('');
+                      setShowAssignModal(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-xs font-bold"
+                  >
+                    <Briefcase size={14} className="text-emerald-400" />
+                    Assign Jobs
+                  </button>
+
+                  <div className="w-px h-8 bg-white/10 mx-1" />
+
+                  <button
+                    onClick={() => setSelectedRowIds([])}
+                    className="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center transition-all"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={async () => {
-                    setAssigningResumeIds(selectedRowIds);
-                    setSelectedPositionId('');
-                    setShowAssignModal(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-xs font-bold"
-                >
-                  <Briefcase size={14} className="text-emerald-400" />
-                  Assign Jobs
-                </button>
-
-                <div className="w-px h-8 bg-white/10 mx-1" />
-
-                <button
-                  onClick={() => setSelectedRowIds([])}
-                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center transition-all"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </motion.div>
-          </div>
-            )}
-          </AnimatePresence>,
-          document.body
-        )}
-      </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </div>
   );
 };
 

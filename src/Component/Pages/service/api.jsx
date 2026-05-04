@@ -2760,6 +2760,19 @@ export const getSharePointFolders = async () => {
   }
 };
 
+// Deep search resumes (searches inside file content)
+export const deepSearchResumes = async (query) => {
+  try {
+    const response = await axiosInstance.get('/api/resumebank/deep-search', {
+      params: { query }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Deep search failed:', error);
+    throw error.response?.data || { message: 'Deep search failed' };
+  }
+};
+
 // SharePoint Drive functions
 export const browseSharePointDrive = async (path = '') => {
   try {
@@ -4349,6 +4362,7 @@ const api = {
   getResumeDownloadUrl,
   getSharePointFolders,
   searchS3Resumes,
+  deepSearchResumes,
   getClientsForTeamLeader,
   getClosedDeals,
   getPendingAgreements,
