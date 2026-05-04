@@ -47,9 +47,9 @@ const sidebarConfig = [
   {
      
     items: [
+      { id: 'My Team', title: 'My Team', icon: FiUsers },
       { id: 'Clients', title: 'Clients', icon: FiUsers },
       { id: 'Billing', title: 'Billing', icon: FiCreditCard },
-      { id: 'My Team', title: 'My Team', icon: FiUsers },
       { id: 'Client Pipeline', title: 'Client Pipeline', icon: FiTrendingUp },
       { id: 'Employees', title: 'Employees', icon: FiUserPlus },
       { id: 'Team Leaders', title: 'Team Leaders', icon: FiUserPlus },

@@ -60,6 +60,7 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
   const [handoverStartDate, setHandoverStartDate] = useState('');
   const [handoverEndDate, setHandoverEndDate] = useState('');
   const [handoverNotes, setHandoverNotes] = useState('');
+  const [currentUserName, setCurrentUserName] = useState('');
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -117,6 +118,7 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
       try {
         const decoded = jwtDecode(token);
         userId = (decoded.id || decoded.userId || decoded._id)?.toString()?.trim();
+        setCurrentUserName(decoded.name || localStorage.getItem('userName') || '');
       } catch (e) { console.error('JWT Decode failed'); }
     }
 
@@ -230,7 +232,8 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
             <FiRefreshCw size={14} className={`text-[#1B4DA0] group-hover:text-[#0D47A1] transition-colors ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          {((userRole || '').toLowerCase().includes('admin') || (userRole || '').toLowerCase().includes('crm')) && (
+          {((userRole?.toLowerCase()?.includes('admin') || userRole?.toLowerCase()?.includes('crm')) && 
+            (currentUserName?.toLowerCase()?.includes('ashish') || currentUserName?.toLowerCase()?.includes('ashwin'))) && (
             <button
               onClick={() => setShowInviteModal(true)}
               className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"

@@ -34,6 +34,7 @@ const TeamTabs = ({ isDarkMode }) => {
   const [error, setError] = useState('');
   const [userRole, setUserRole] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserName, setCurrentUserName] = useState('');
 
   useEffect(() => {
     const fetchHierarchy = async () => {
@@ -43,19 +44,19 @@ const TeamTabs = ({ isDarkMode }) => {
         const decoded = jwtDecode(token);
         // Robust ID extraction including potential fallbacks
         const id = decoded.id || decoded._id || decoded.adminId || decoded.userId || localStorage.getItem('userId');
-        let role = decoded.role || decoded.userType || localStorage.getItem('userRole') || '';
-        
-        // Map Super Admin to Admin for hierarchy purposes if needed
-        if (role.toLowerCase().includes('super admin') || role.toLowerCase() === 'superadmin') role = 'Admin';
+        const role = decoded.role || decoded.userType || localStorage.getItem('userRole') || '';
+        const name = decoded.name || localStorage.getItem('userName') || '';
         
         setUserRole(role);
+        setCurrentUserName(name);
         setCurrentUserId(id);
 
         if (!id) {
           throw new Error('User ID not found in token. Please log in again.');
         }
-        
-        const response = await getAdminHierarchy(id, role);
+
+        const hierarchyRole = (role.toLowerCase().includes('super admin') || role.toLowerCase() === 'superadmin') ? 'Admin' : role;
+        const response = await getAdminHierarchy(id, hierarchyRole);
         console.log('API Response:', response); // Debug log
         
         let transformedData;
@@ -415,12 +416,15 @@ const TeamTabs = ({ isDarkMode }) => {
       <div className="w-full h-full bg-gray-100 dark:bg-gray-800 transition-colors duration-200 p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">Company Hierarchy</h2>
-          <button
-            onClick={addNewMember}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Add New Member
-          </button>
+          {((userRole?.toLowerCase()?.includes('super admin') || userRole?.toLowerCase()?.includes('crm')) && 
+            (currentUserName?.toLowerCase()?.includes('ashish') || currentUserName?.toLowerCase()?.includes('ashwin'))) && (
+            <button
+              onClick={addNewMember}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            >
+              Add New Member
+            </button>
+          )}
         </div>
         <div className="w-full h-[calc(100%-4rem)] bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4" id="treeWrapper">
           <Tree

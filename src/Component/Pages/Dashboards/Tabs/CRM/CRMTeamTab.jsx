@@ -78,16 +78,28 @@ const CRMTeamTab = ({ department = '' }) => {
     fetchMembers();
   }, [department]);
 
-  const currentUserEmail = (() => {
+  const currentUserData = (() => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return (payload.email || '').toLowerCase();
+        return {
+          email: (payload.email || '').toLowerCase(),
+          name: (payload.name || '').toLowerCase(),
+          role: (payload.role || payload.userType || '').toLowerCase()
+        };
       }
     } catch (_) { }
-    return (localStorage.getItem('userEmail') || '').toLowerCase();
+    return {
+      email: (localStorage.getItem('userEmail') || '').toLowerCase(),
+      name: (localStorage.getItem('userName') || '').toLowerCase(),
+      role: (localStorage.getItem('userRole') || '').toLowerCase()
+    };
   })();
+
+  const currentUserEmail = currentUserData.email;
+  const currentUserName = currentUserData.name;
+  const currentUserRole = currentUserData.role;
 
   const filteredMembers = members.filter(m =>
     // Exclude the currently logged-in user from the team list
@@ -111,12 +123,15 @@ const CRMTeamTab = ({ department = '' }) => {
           </h1>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#1a3a82] transition-all shadow-lg shadow-[#1B4DA0]/20 active:scale-95"
-          >
-            <FiPlus size={18} /> Add Team Member
-          </button>
+          {((currentUserRole?.includes('admin') || currentUserRole?.includes('crm')) && 
+            (currentUserName?.includes('ashish') || currentUserName?.includes('ashwin'))) && (
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#1a3a82] transition-all shadow-lg shadow-[#1B4DA0]/20 active:scale-95"
+            >
+              <FiPlus size={18} /> Add Team Member
+            </button>
+          )}
         </div>
       </div>
 
