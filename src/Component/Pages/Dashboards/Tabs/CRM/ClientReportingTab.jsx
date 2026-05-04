@@ -196,11 +196,38 @@ const ClientReportingTab = ({ clients = [] }) => {
   );
 
   const chartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: (() => {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const result = [];
+      const now = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        result.push(months[d.getMonth()]);
+      }
+      return result;
+    })(),
     datasets: [
       {
         label: 'Reports Generated',
-        data: [45, 52, 63, 48, 70, reports.length ? reports.length * 5 : 85],
+        data: (() => {
+          const counts = [0, 0, 0, 0, 0, 0];
+          const now = new Date();
+          const currentMonth = now.getMonth();
+          const currentYear = now.getFullYear();
+
+          reports.forEach(report => {
+            const date = new Date(report.createdAt);
+            const reportMonth = date.getMonth();
+            const reportYear = date.getFullYear();
+
+            // Calculate month difference
+            const diff = (currentYear - reportYear) * 12 + (currentMonth - reportMonth);
+            if (diff >= 0 && diff < 6) {
+              counts[5 - diff]++;
+            }
+          });
+          return counts;
+        })(),
         backgroundColor: '#1B4DA0',
         borderRadius: 12,
         barThickness: 20,

@@ -64,7 +64,9 @@ const ClientsTab = () => {
     
     try {
       const res = await getAllClients();
-      const apiClients = res.data?.clients || res.clients || res || [];
+      console.log('API Response:', res);
+      const apiClients = res.data?.clients || res.clients || (Array.isArray(res) ? res : []);
+      console.log('Setting clients to:', apiClients);
       setClients(Array.isArray(apiClients) ? apiClients : []);
     } catch (err) {
       console.error('Error fetching clients:', err);
@@ -135,51 +137,74 @@ const ClientsTab = () => {
         </div>
 
         <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden">
-          <div className="overflow-x-auto min-h-[400px]">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#F4F3EF] bg-[#FDFDFD]">
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Company</th>
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">SPOC</th>
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Location</th>
-                  <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Status</th>
-                  <th className="px-8 py-5"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F4F3EF]">
-                {filteredClients.map((client) => (
-                  <tr
-                    key={client.id || client._id}
-                    onClick={() => setSelectedClientDetail(client)}
-                    className="hover:bg-[#F8FAFF] transition-all group cursor-pointer"
-                  >
-                    <td className="px-8 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] text-[#1B4DA0] flex items-center justify-center font-black">
-                          {(client.companyName || 'C').substring(0, 2).toUpperCase()}
-                        </div>
-                        <p className="text-[14px] font-bold text-[#1A1A2E]">{client.companyName}</p>
-                      </div>
-                    </td>
-                    <td className="px-8 py-4 text-left">
-                      <p className="text-[13px] font-bold text-[#1A1A2E]">{client.spocName}</p>
-                    </td>
-                    <td className="px-8 py-4 text-left">
-                      <p className="text-[12px] font-bold text-[#6B6B7E]">{client.city}</p>
-                    </td>
-                    <td className="px-8 py-4 text-left">
-                      <Toggle 
-                        active={['active', 'accepted'].includes((client.status || 'Active').toLowerCase().trim())} 
-                        onChange={(val) => handleToggleStatus(client, val)} 
-                      />
-                    </td>
-                    <td className="px-8 py-4 text-right">
-                      <FiChevronRight className="inline-block text-[#9B9BAD]" size={18} />
-                    </td>
+          <div className="overflow-x-auto min-h-[400px] flex flex-col">
+            {loading ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-20">
+                <div className="w-12 h-12 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-[#6B6B7E] font-medium">Loading clients...</p>
+              </div>
+            ) : filteredClients.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-8">
+                <div className="w-20 h-20 bg-[#F4F3EF] rounded-full flex items-center justify-center mb-6 text-[#1B4DA0]">
+                  <FiDatabase size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1A1A2E] mb-2">No clients found</h3>
+                <p className="text-[#6B6B7E] max-w-xs mx-auto mb-8">
+                  {searchQuery ? `No clients match your search "${searchQuery}"` : "We couldn't find any clients in the database."}
+                </p>
+                <button 
+                  onClick={fetchClients}
+                  className="px-6 py-3 bg-[#1B4DA0] text-white rounded-xl font-bold text-sm hover:bg-[#153a7a] transition-all shadow-lg"
+                >
+                  Refresh Data
+                </button>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#F4F3EF] bg-[#FDFDFD]">
+                    <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Company</th>
+                    <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">SPOC</th>
+                    <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Location</th>
+                    <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Status</th>
+                    <th className="px-8 py-5"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[#F4F3EF]">
+                  {filteredClients.map((client) => (
+                    <tr
+                      key={client.id || client._id}
+                      onClick={() => setSelectedClientDetail(client)}
+                      className="hover:bg-[#F8FAFF] transition-all group cursor-pointer"
+                    >
+                      <td className="px-8 py-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] text-[#1B4DA0] flex items-center justify-center font-black">
+                            {(client.companyName || client.name || 'C').substring(0, 2).toUpperCase()}
+                          </div>
+                          <p className="text-[14px] font-bold text-[#1A1A2E]">{client.companyName || client.name}</p>
+                        </div>
+                      </td>
+                      <td className="px-8 py-4 text-left">
+                        <p className="text-[13px] font-bold text-[#1A1A2E]">{client.spocName || 'N/A'}</p>
+                      </td>
+                      <td className="px-8 py-4 text-left">
+                        <p className="text-[12px] font-bold text-[#6B6B7E]">{client.city || 'N/A'}</p>
+                      </td>
+                      <td className="px-8 py-4 text-left">
+                        <Toggle 
+                          active={['active', 'accepted'].includes((client.status || 'Active').toLowerCase().trim())} 
+                          onChange={(val) => handleToggleStatus(client, val)} 
+                        />
+                      </td>
+                      <td className="px-8 py-4 text-right">
+                        <FiChevronRight className="inline-block text-[#9B9BAD]" size={18} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </motion.div>

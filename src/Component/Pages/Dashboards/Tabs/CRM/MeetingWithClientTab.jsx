@@ -198,17 +198,27 @@ const ScheduleMeetingModal = ({ isOpen, onClose, clients, onSuccess }) => {
 
 const MeetingActionsDropdown = ({ meeting, onUpdate, onDelete }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && 
+          triggerRef.current && !triggerRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.right - 192 + window.scrollX // 192 is w-48 (48 * 4)
+      });
+    }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isOpen]);
 
   const handleAction = (action) => {
     setIsOpen(false);
@@ -216,49 +226,63 @@ const MeetingActionsDropdown = ({ meeting, onUpdate, onDelete }) => {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative">
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className="w-10 h-10 rounded-xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#9B9BAD] hover:text-[#1A1A2E] hover:bg-slate-50 transition-all active:scale-95"
       >
         <FiMoreVertical />
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[100] overflow-hidden"
-          >
-            <div className="p-2 space-y-1">
-              <button
-                onClick={() => handleAction(() => onUpdate(meeting.id, 'Completed'))}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-black text-[#6B6B7E] hover:text-[#10B981] hover:bg-emerald-50 rounded-xl transition-all"
-              >
-                <FiCheckCircle size={14} className="text-[#10B981]" />
-                MARK COMPLETED
-              </button>
-              <button
-                onClick={() => handleAction(() => onUpdate(meeting.id, 'Cancelled'))}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-black text-[#6B6B7E] hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
-              >
-                <FiClock size={14} className="text-amber-500" />
-                CANCEL MEETING
-              </button>
-              <div className="h-[1px] bg-[#F4F3EF] mx-2" />
-              <button
-                onClick={() => handleAction(() => onDelete(meeting.id))}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-black text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-              >
-                <FiTrash2 size={14} />
-                DELETE RECORD
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {isOpen && createPortal(
+        <div 
+          className="fixed inset-0 z-[10000]" 
+          onClick={() => setIsOpen(false)}
+        >
+          <AnimatePresence>
+            <motion.div
+              ref={dropdownRef}
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              style={{ 
+                position: 'absolute',
+                top: coords.top + 8,
+                left: coords.left,
+              }}
+              className="w-48 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-2 space-y-1">
+                <button
+                  onClick={() => handleAction(() => onUpdate(meeting.id, 'Completed'))}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-black text-[#6B6B7E] hover:text-[#10B981] hover:bg-emerald-50 rounded-xl transition-all"
+                >
+                  <FiCheckCircle size={14} className="text-[#10B981]" />
+                  MARK COMPLETED
+                </button>
+                <button
+                  onClick={() => handleAction(() => onUpdate(meeting.id, 'Cancelled'))}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-black text-[#6B6B7E] hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                >
+                  <FiClock size={14} className="text-amber-500" />
+                  CANCEL MEETING
+                </button>
+                <div className="h-[1px] bg-[#F4F3EF] mx-2" />
+                <button
+                  onClick={() => handleAction(() => onDelete(meeting.id))}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-black text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                >
+                  <FiTrash2 size={14} />
+                  DELETE RECORD
+                </button>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
@@ -429,30 +453,36 @@ const MeetingWithClientTab = ({ clients = [] }) => {
           </div>
 
           {/* History Section */}
-          {meetings.filter(m => m.status === 'Completed').length > 0 && (
+          {meetings.filter(m => ['Completed', 'Cancelled'].includes(m.status)).length > 0 && (
             <div className="space-y-6 pt-6">
               <div className="flex items-center gap-4">
                 <h3 className="text-sm font-black text-[#9B9BAD] tracking-widest uppercase text-left">Meeting History</h3>
                 <div className="h-[1px] flex-1 bg-gradient-to-r from-[#F4F3EF] to-transparent" />
-                <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black">{meetings.filter(m => m.status === 'Completed').length}</span>
+                <span className="px-3 py-1 bg-[#F4F3EF] text-[#9B9BAD] rounded-full text-[10px] font-black">{meetings.filter(m => ['Completed', 'Cancelled'].includes(m.status)).length}</span>
               </div>
 
               <div className="grid grid-cols-1 gap-4 opacity-75 grayscale-[0.5] hover:grayscale-0 transition-all">
-                {meetings.filter(m => m.status === 'Completed').map(meeting => (
+                {meetings.filter(m => ['Completed', 'Cancelled'].includes(m.status)).map(meeting => (
                   <div key={meeting.id} className="bg-[#FAFAFA] rounded-[24px] p-5 border border-[#F4F3EF] flex items-center justify-between group">
                     <div className="flex items-center gap-6">
-                      <div className="w-12 h-12 rounded-xl bg-white border border-[#F4F3EF] flex items-center justify-center text-emerald-500 shadow-sm">
-                        <FiCheckCircle size={20} />
+                      <div className={`w-12 h-12 rounded-xl bg-white border border-[#F4F3EF] flex items-center justify-center shadow-sm ${meeting.status === 'Completed' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                        {meeting.status === 'Completed' ? <FiCheckCircle size={20} /> : <FiClock size={20} />}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-[#1A1A2E] group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{meeting.title}</h4>
+                        <h4 className={`text-sm font-bold group-hover:text-emerald-600 transition-colors uppercase tracking-tight ${meeting.status === 'Completed' ? 'text-[#1A1A2E]' : 'text-[#9B9BAD] line-through'}`}>
+                          {meeting.title}
+                        </h4>
                         <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest flex items-center gap-2 mt-0.5">
                           {meeting.companyName} • {formatDate(meeting.meetingDate)} • {meeting.meetingTime}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="px-3 py-1.5 rounded-full text-[8px] font-black bg-emerald-100 text-emerald-700 uppercase tracking-widest">Completed</span>
+                      <span className={`px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                        meeting.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {meeting.status}
+                      </span>
                       <button onClick={() => handleDeleteMeeting(meeting.id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 hover:text-rose-500 text-[#9B9BAD] flex items-center justify-center transition-all">
                         <FiTrash2 size={14} />
                       </button>

@@ -24,7 +24,8 @@ import {
   FiFileText,
   FiUpload,
   FiShield,
-  FiActivity
+  FiActivity,
+  FiEye
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
