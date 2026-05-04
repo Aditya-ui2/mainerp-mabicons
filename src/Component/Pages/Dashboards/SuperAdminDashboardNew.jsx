@@ -20,6 +20,7 @@ import {
   FiClipboard,
   FiPieChart as FiChart,
   FiX,
+  FiUser,
   FiChevronRight,
   FiMail,
   FiCalendar,
@@ -45,15 +46,12 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 // Sidebar menu configuration matching User's Handwritten Notes
 const sidebarConfig = [
   {
-     
     items: [
       { id: 'My Team', title: 'My Team', icon: FiUsers },
-      { id: 'Clients', title: 'Clients', icon: FiUsers },
+      { id: 'Clients', title: 'Clients', icon: FiBriefcase },
       { id: 'Billing', title: 'Billing', icon: FiCreditCard },
-      { id: 'Client Pipeline', title: 'Client Pipeline', icon: FiTrendingUp },
-      { id: 'Employees', title: 'Employees', icon: FiUserPlus },
-      { id: 'Team Leaders', title: 'Team Leaders', icon: FiUserPlus },
-      { id: 'My Profile', title: 'My Profile', icon: FiUsers },
+      { id: 'Client Pipeline', title: 'Client Pipeline', icon: FiActivity },
+      { id: 'My Profile', title: 'My Profile', icon: FiUser },
     ]
   }
 ];
@@ -85,7 +83,7 @@ const ClientsExplorerModal = ({ isOpen, onClose, clientsList }) => {
                 <h3 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne text-left">
                   Clients
                 </h3>
-                <button 
+                <button
                   onClick={onClose}
                   className="w-14 h-14 rounded-3xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm group/close"
                 >
@@ -180,13 +178,13 @@ const ClientsExplorerModal = ({ isOpen, onClose, clientsList }) => {
                       </div>
 
                       <div className="flex gap-4">
-                        <button 
+                        <button
                           onClick={() => window.open(`mailto:contact@${selectedClient.name.toLowerCase().replace(/\s/g, '')}.com?subject=Inquiry from Super Admin`, '_blank')}
                           className="flex-1 flex items-center justify-center gap-3 py-4 bg-white border-2 border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#6B6B7E] hover:bg-slate-50 transition-all"
                         >
                           <FiMail size={16} /> Contact Client
                         </button>
-                        <button 
+                        <button
                           onClick={() => window.open('https://meet.google.com/', '_blank')}
                           className="flex-1 flex items-center justify-center gap-3 py-4 bg-[#0D47A1] rounded-2xl text-[11px] font-black uppercase tracking-widest text-white hover:bg-[#0a3a82] shadow-lg shadow-blue-500/10 transition-all"
                         >
@@ -248,7 +246,7 @@ const SuperAdminDashboard = () => {
             name: decoded.name || 'Ashish',
             role: 'Super Admin'
           });
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Fetch Clients for Modal
@@ -304,7 +302,7 @@ const SuperAdminDashboard = () => {
     switch (activeTab) {
       case 'Clients':
         return <ClientsTab />;
-      
+
       case 'Billing':
         return (
           <div className="space-y-8">
@@ -315,17 +313,17 @@ const SuperAdminDashboard = () => {
               <StatCard title="Salaries" value={summaryData.totalSalaries} icon={FiUsers} color="orange" />
               <StatCard title="Rent" value={summaryData.totalRent} icon={FiHome} color="indigo" />
             </div>
-            
+
             <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
               <h3 className="text-xl font-bold text-[#1A1A2E] mb-8 font-syne">Financial Performance</h3>
               <div className="h-80">
-                <Line 
-                  data={billingChartData} 
-                  options={{ 
-                    responsive: true, 
+                <Line
+                  data={billingChartData}
+                  options={{
+                    responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { position: 'top', labels: { usePointStyle: true, font: { weight: 'bold' } } } }
-                  }} 
+                  }}
                 />
               </div>
             </div>
@@ -333,66 +331,15 @@ const SuperAdminDashboard = () => {
         );
 
       case 'My Team':
-        return (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
-                <h3 className="text-xl font-bold text-[#1A1A2E] mb-6 font-syne">Team Performance</h3>
-                <div className="space-y-6">
-                  {['Recruitment Team', 'Operations Team'].map((team, idx) => (
-                    <div key={idx} className="space-y-2">
-                      <div className="flex justify-between text-sm font-bold">
-                        <span className="text-[#1A1A2E]">{team}</span>
-                        <span className="text-[#3D37F1]">{idx === 0 ? '92%' : '88%'}</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }} 
-                          animate={{ width: idx === 0 ? '92%' : '88%' }} 
-                          className={`h-full ${idx === 0 ? 'bg-[#3D37F1]' : 'bg-emerald-500'}`} 
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
-                <h3 className="text-xl font-bold text-[#1A1A2E] mb-6 font-syne">Activity Check-ins</h3>
-                <div className="space-y-4">
-                  {[
-                    { user: 'Priyanshi Sharma', action: 'Checked in at 09:15 AM', status: 'On Time' },
-                    { user: 'Ramesh Head', action: 'Checked in at 09:45 AM', status: 'Late' },
-                    { user: 'Sachin Head', action: 'Checked in at 09:00 AM', status: 'On Time' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center font-bold text-[#3D37F1]">
-                          {item.user.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="text-[13px] font-bold text-[#1A1A2E]">{item.user}</p>
-                          <p className="text-[11px] text-gray-400 font-medium">{item.action}</p>
-                        </div>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${item.status === 'On Time' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
-                        {item.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <TeamTabs />
-          </div>
-        );
+        return <TeamTabs />;
 
       case 'Client Pipeline':
         return <ClientPipelineTab />;
-      
+
       case 'Employees':
       case 'Team Leaders':
         return <TeamTabs />;
-      
+
       case 'Settings':
       case 'My Profile':
         return <MyProfileTab />;
@@ -466,21 +413,21 @@ const SuperAdminDashboard = () => {
                   </select>
                 </div>
                 <div className="h-80">
-                  <Bar 
-                    data={billingChartData} 
-                    options={{ 
-                      responsive: true, 
+                  <Bar
+                    data={billingChartData}
+                    options={{
+                      responsive: true,
                       maintainAspectRatio: false,
                       plugins: { legend: { display: false } },
                       scales: { x: { grid: { display: false } }, y: { border: { display: false } } }
-                    }} 
+                    }}
                   />
                 </div>
               </div>
               <div className="bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm">
                 <h3 className="text-xl font-bold text-[#1A1A2E] mb-8 font-syne">Team Distribution</h3>
                 <div className="h-64">
-                  <Doughnut 
+                  <Doughnut
                     data={{
                       labels: ['Ops', 'Recruitment', 'Admin', 'BD'],
                       datasets: [{
@@ -511,12 +458,12 @@ const SuperAdminDashboard = () => {
     >
       <div className="p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto">
         {renderContent()}
-      {/* Clients List Modal - PORTAL Component Match */}
-      <ClientsExplorerModal 
-        isOpen={showClientsModal} 
-        onClose={() => setShowClientsModal(false)} 
-        clientsList={clientsList} 
-      />
+        {/* Clients List Modal - PORTAL Component Match */}
+        <ClientsExplorerModal
+          isOpen={showClientsModal}
+          onClose={() => setShowClientsModal(false)}
+          clientsList={clientsList}
+        />
       </div>
     </AdminLayout>
   );
