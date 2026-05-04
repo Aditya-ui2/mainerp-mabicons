@@ -392,7 +392,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                     type="button"
                     onClick={handleSubmit} 
                     disabled={submitting} 
-                    className={`px-12 py-4 text-white font-black uppercase tracking-widest text-[12px] rounded-[20px] transition-all flex items-center gap-3 shadow-xl active:scale-95 ${mode === 'minimal' ? 'bg-[#1B4DA0] hover:bg-[#153D80] shadow-blue-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'}`}
+                    className="px-12 py-4 bg-[#1B4DA0] text-white font-black uppercase tracking-widest text-[12px] rounded-[20px] hover:bg-[#153D80] transition-all flex items-center gap-3 shadow-xl shadow-blue-500/20 active:scale-95 disabled:opacity-50"
                   >
                     {submitting ? 'Processing...' : (mode === 'minimal' ? 'Add Client' : 'Finish Onboarding')} <FiCheck size={18} />
                   </button>

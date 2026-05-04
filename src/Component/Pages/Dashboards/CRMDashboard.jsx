@@ -1062,7 +1062,7 @@ const CRMDashboard = () => {
             )}
 
             {activeTab === 'My Team' && (
-              <CRMTeamTab department="CRM Department" />
+              <CRMTeamTab department="" />
             )}
 
             {activeTab === 'Accounts' && (

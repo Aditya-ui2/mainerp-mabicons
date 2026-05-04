@@ -56,6 +56,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("all");
   const [viewMode, setViewMode] = useState("kanban");
   const [selectedClient, setSelectedClient] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -93,6 +94,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
       setClients(mapped);
     } catch (err) {
       console.error('Failed to fetch clients:', err);
+      toast.error(err.message || "Failed to fetch clients");
       // Fall back to prop clients if API fails
       if (propClients.length) setClients(propClients);
     } finally {
@@ -155,9 +157,25 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
         c.contactPerson?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.email?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchStage = stageFilter === 'All' || c.stage === stageFilter;
-      return matchSearch && matchStage;
+      
+      let matchDate = true;
+      if (dateFilter !== 'all' && c.createdAt) {
+        const date = new Date(c.createdAt);
+        const now = new Date();
+        if (dateFilter === 'today') {
+          matchDate = date.toDateString() === now.toDateString();
+        } else if (dateFilter === 'week') {
+          const weekAgo = new Date(now.setDate(now.getDate() - 7));
+          matchDate = date >= weekAgo;
+        } else if (dateFilter === 'month') {
+          const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+          matchDate = date >= monthAgo;
+        }
+      }
+      
+      return matchSearch && matchStage && matchDate;
     });
-  }, [clients, searchQuery, stageFilter]);
+  }, [clients, searchQuery, stageFilter, dateFilter]);
 
   const uniqueStages = ['All', ...Array.from(new Set(clients.map(c => c.stage).filter(Boolean)))];
 
@@ -259,6 +277,8 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
         {/* Date Filter (Standardized UI) */}
         <div className="relative flex-1 group min-w-[140px]">
           <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
             className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
           >
             <option value="all">All Date</option>

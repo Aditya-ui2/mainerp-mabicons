@@ -34,6 +34,7 @@ const Toggle = ({ active, onChange, label }) => (
       className="relative w-12 h-6 rounded-full transition-all duration-500 border-2"
     >
       <motion.div
+        initial={false}
         animate={{
           x: active ? 26 : 2,
           scale: active ? 1 : 0.9
