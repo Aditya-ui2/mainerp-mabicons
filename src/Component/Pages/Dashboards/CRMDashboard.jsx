@@ -165,17 +165,8 @@ const STAGE_COLORS = {
 };
 
 const getAvatarColor = (name) => {
-  const colors = [
-    'bg-gradient-to-br from-blue-500 to-indigo-600',
-    'bg-gradient-to-br from-emerald-500 to-teal-600',
-    'bg-gradient-to-br from-amber-500 to-orange-600',
-    'bg-gradient-to-br from-fuchsia-500 to-purple-600',
-    'bg-gradient-to-br from-rose-500 to-pink-600',
-    'bg-gradient-to-br from-cyan-500 to-blue-600'
-  ];
-  if (!name) return colors[0];
-  const charCode = name.charCodeAt(0);
-  return colors[charCode % colors.length];
+  // Returns a consistent light blue theme
+  return 'bg-[#EEF2FB] text-[#1B4DA0]';
 };
 
 const dashboardStyles = `
@@ -758,7 +749,7 @@ const CRMDashboard = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
                 {/* Sticky Welcome Header */}
@@ -1019,7 +1010,7 @@ const CRMDashboard = () => {
                           >
                             <td className="py-4 text-left">
                               <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black ${getAvatarColor(l.companyDetails?.name || l.companyName)}`}>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black ${getAvatarColor(l.companyDetails?.name || l.companyName)}`}>
                                   {(l.companyDetails?.name || l.companyName || 'L').substring(0, 1).toUpperCase()}
                                 </div>
                                 <span className="text-sm font-bold text-[#1A1A2E] group-hover:text-[#1B4DA0] transition-colors">
@@ -1052,33 +1043,81 @@ const CRMDashboard = () => {
             )}
 
             {activeTab === 'Client Pipeline' && (
-              <ClientPipelineTab clients={pipelineClients} setClients={setPipelineClients} />
+              <motion.div
+                key="pipeline"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ClientPipelineTab clients={pipelineClients} setClients={setPipelineClients} />
+              </motion.div>
             )}
 
             {activeTab === 'All Clients' && (
-              <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
-                <ClientsTab />
-              </Suspense>
+              <motion.div
+                key="all-clients"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
+                  <ClientsTab />
+                </Suspense>
+              </motion.div>
             )}
 
             {activeTab === 'My Team' && (
-              <CRMTeamTab department="" />
+              <motion.div
+                key="my-team"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <CRMTeamTab department="" />
+              </motion.div>
             )}
 
             {activeTab === 'Accounts' && (
-              <AccountsTab />
+              <motion.div
+                key="accounts"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <AccountsTab />
+              </motion.div>
             )}
 
             {activeTab === 'Meeting with client' && (
-              <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Meetings...</div>}>
-                <MeetingWithClientTab clients={clients} />
-              </Suspense>
+              <motion.div
+                key="meetings"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Meetings...</div>}>
+                  <MeetingWithClientTab clients={clients} />
+                </Suspense>
+              </motion.div>
             )}
 
             {activeTab === 'Client Onboarding' && (
-              <Suspense fallback={<div className="py-20 text-center"><FiRefreshCw className="animate-spin mx-auto w-8 h-8 text-[#1B4DA0]" /></div>}>
-                <CompleteOnboardingTab />
-              </Suspense>
+              <motion.div
+                key="onboarding"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Suspense fallback={<div className="py-20 text-center"><FiRefreshCw className="animate-spin mx-auto w-8 h-8 text-[#1B4DA0]" /></div>}>
+                  <CompleteOnboardingTab />
+                </Suspense>
+              </motion.div>
             )}
 
             {activeTab === 'Work Handover' && (
@@ -1098,13 +1137,29 @@ const CRMDashboard = () => {
             )}
 
             {activeTab === 'Report to Client' && (
-              <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Preparing Analytics...</div>}>
-                <ClientReportingTab clients={clients} />
-              </Suspense>
+              <motion.div
+                key="reporting"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Preparing Analytics...</div>}>
+                  <ClientReportingTab clients={clients} />
+                </Suspense>
+              </motion.div>
             )}
 
             {activeTab === 'My Profile' && (
-              <MyProfileTab onProfileUpdate={refreshUserInfo} />
+              <motion.div
+                key="profile"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4 }}
+              >
+                <MyProfileTab onProfileUpdate={refreshUserInfo} />
+              </motion.div>
             )}
 
             {activeTab === 'Reports' && (
@@ -1124,9 +1179,17 @@ const CRMDashboard = () => {
             )}
 
             {activeTab === 'Notes' && (
-              <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Notes...</div>}>
-                <NotesTab department="CRM" />
-              </Suspense>
+              <motion.div
+                key="notes"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Notes...</div>}>
+                  <NotesTab department="CRM" />
+                </Suspense>
+              </motion.div>
             )}
 
             {activeTab === 'Leads' && (
@@ -1162,7 +1225,7 @@ const CRMDashboard = () => {
                         className="grid grid-cols-[2fr_1.5fr_1.5fr_1fr_1.5fr_80px] gap-4 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group"
                       >
                         <div className="flex items-center gap-4 min-w-0">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-sm ${getAvatarColor(l.companyDetails?.name || l.companyName || 'Lead')}`}>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shadow-sm ${getAvatarColor(l.companyDetails?.name || l.companyName || 'Lead')}`}>
                             {(l.companyDetails?.name || l.companyName || 'L').substring(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0 text-left">
