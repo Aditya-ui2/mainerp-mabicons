@@ -133,22 +133,35 @@ const ClientsTab = () => {
         <div className="flex items-center justify-between mb-8 text-left">
           <div className="flex flex-col text-left">
             <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-              All Clients
+              Clients
             </h1>
           </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8">
-          <div className="relative flex-1 group">
-            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-8">
+          <div className="relative flex-1 group min-w-[200px]">
+            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search clients..."
-              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-4 pl-14 pr-5 text-sm font-bold text-[#1A1A2E] outline-none"
+              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
             />
+          </div>
+
+          <div className="relative group">
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px] hover:bg-[#EEF2FB] transition-all"
+            >
+              <option value="ALL">ALL STATUS</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
+            <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
           </div>
         </div>
 
@@ -178,12 +191,12 @@ const ClientsTab = () => {
             ) : (
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[#F4F3EF] bg-[#FDFDFD]">
-                    <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Company</th>
-                    <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">SPOC</th>
-                    <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Location</th>
-                    <th className="px-8 py-5 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Status</th>
-                    <th className="px-8 py-5"></th>
+                  <tr className="border-b border-[#F4F3EF] bg-transparent">
+                    <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Company</th>
+                    <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">SPOC</th>
+                    <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Location</th>
+                    <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Status</th>
+                    <th className="px-8 py-4"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F4F3EF]">
@@ -228,95 +241,70 @@ const ClientsTab = () => {
       {createPortal(
         <AnimatePresence>
           {selectedClientDetail && (
-            <div className="fixed inset-0 z-[200000] flex justify-end">
+            <React.Fragment>
               <motion.div
-                key="client-drawer-backdrop"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-[#0F172A]/40 backdrop-blur-[12px]"
+                className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200000]"
                 onClick={() => setSelectedClientDetail(null)}
               />
               <motion.div
-                key="client-drawer-content"
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                className="relative h-full w-full sm:w-[680px] bg-white shadow-[-20px_0_80px_rgba(0,0,0,0.2)] flex flex-col"
+                transition={{ type: "spring", damping: 35, stiffness: 250 }}
+                className="fixed inset-y-0 right-0 w-full max-w-[698px] bg-white shadow-2xl border-l border-[#F4F3EF] flex flex-col z-[200001] overflow-hidden"
               >
-                {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
-                  <div className="flex-1 text-left">
-                    <h2 className="text-xl font-bold text-[#1A1A2E] leading-none" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      Client Detail
-                    </h2>
+                {/* Detail Header */}
+                <div className="p-6 border-b border-[#F4F3EF] bg-gradient-to-r from-blue-50/30 to-white flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] text-white flex items-center justify-center font-bold text-lg">
+                      {selectedClientDetail.companyName ? selectedClientDetail.companyName.slice(0, 1).toUpperCase() : (selectedClientDetail.name ? selectedClientDetail.name.slice(0, 1).toUpperCase() : 'C')}
+                    </div>
+                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setSelectedClientDetail(null)}
-                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] shadow-sm"
-                    >
-                      <FiX size={20} />
-                    </button>
-                  </div>
+                  <button onClick={() => setSelectedClientDetail(null)} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm">
+                    <FiX size={20} />
+                  </button>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
-                  {/* Top Profile Section */}
-                  <div className="flex flex-col items-center justify-center text-center py-6">
-                    <div className="relative group">
-                      <div className="w-28 h-28 rounded-full bg-[#EEF2FB] border-4 border-white flex items-center justify-center text-3xl font-bold text-[#1B4DA0] shadow-xl">
-                        {(selectedClientDetail.companyName || 'C').substring(0, 2).toUpperCase()}
-                      </div>
+                {/* Detail Content */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
+
+                  {/* Identity Section */}
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-24 h-24 rounded-[32px] bg-[#F8FAFC] text-[#475569] flex items-center justify-center text-3xl font-extrabold shadow-xl border border-[#F1F5F9] mb-6">
+                      {selectedClientDetail.companyName ? selectedClientDetail.companyName.slice(0, 2).toUpperCase() : (selectedClientDetail.name ? selectedClientDetail.name.slice(0, 2).toUpperCase() : 'C')}
                     </div>
-                    <div className="mt-8 space-y-2 w-full text-center">
-                      <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                        {selectedClientDetail.companyName}
-                      </h3>
-                      <p className="text-[11px] font-bold text-[#1B4DA0] uppercase tracking-[3px]">
-                        {selectedClientDetail.industry || 'INFORMATION TECHNOLOGY'}
-                      </p>
-                      <div className="flex justify-center mt-2">
-                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest border border-blue-100">
-                          {selectedClientDetail.stage || 'Finalize'}
-                        </span>
-                      </div>
+                    <div className="space-y-1.5">
+                      <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedClientDetail.companyName || selectedClientDetail.name}</h4>
+                      <p className="text-[14px] font-bold text-[#1B4DA0] tracking-tight uppercase tracking-[3px]">{selectedClientDetail.industry || 'Enterprise'} Sector</p>
                     </div>
                   </div>
 
-                  {/* Info Cards */}
-                  <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-8">
-                    {[
-                      { label: 'CONTACT PERSON', value: selectedClientDetail.spocName || 'N/A', icon: FiUser },
-                      { label: 'ASSIGNED KAM', value: 'Not Assigned', icon: FiUsers, color: 'text-blue-500' },
-                      { label: 'LOCATION', value: selectedClientDetail.city || 'Bangalore', icon: FiMapPin },
-                      { label: 'GST NUMBER', value: '—', icon: FiZap },
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <item.icon className="text-gray-300" size={16} />
-                          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{item.label}</span>
-                        </div>
-                        <span className={`text-sm font-black ${item.color || 'text-[#1A1A2E]'}`}>{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Agreement & Compliance Section */}
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-4">
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Agreement & Compliance</span>
-                      <div className="h-[1px] flex-1 bg-[#F4F3EF]" />
+                  {/* Information Card */}
+                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-10 space-y-8 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-[#F4F3EF] pb-4">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Location HQ</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClientDetail.city || selectedClientDetail.location || 'Bangalore / Remote'}</span>
                     </div>
-                    {/* Additional content could go here */}
+                    <div className="flex items-center justify-between border-b border-[#F4F3EF] pb-4">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Active Openings</span>
+                      <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100">{selectedClientDetail.jobCount || 0} Positions</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-[#F4F3EF] pb-4">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Total Hires</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClientDetail.totalHired || '0'} Placements</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#9B9BAD]">Hiring SPOC</span>
+                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClientDetail.spocName || selectedClientDetail.hiringManager || 'N/A'}</span>
+                    </div>
                   </div>
                 </div>
-
-
               </motion.div>
-            </div>
+            </React.Fragment>
           )}
         </AnimatePresence>,
         document.body

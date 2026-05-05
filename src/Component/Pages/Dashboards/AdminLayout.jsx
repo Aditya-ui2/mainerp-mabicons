@@ -135,7 +135,7 @@ const AdminLayout = ({
         className={`
           fixed lg:static inset-y-0 left-0 z-[1000]
           ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${sidebarCollapsed ? 'w-24' : 'w-72'}
+          ${sidebarCollapsed ? 'w-16' : 'w-56'}
           bg-white dark:bg-gray-900 border-r border-[#F4F3EF] dark:border-gray-800
           flex flex-col transition-all duration-300 ease-in-out
         `}

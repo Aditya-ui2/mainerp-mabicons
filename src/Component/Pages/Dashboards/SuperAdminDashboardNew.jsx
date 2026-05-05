@@ -22,6 +22,7 @@ import {
   FiX,
   FiUser,
   FiChevronRight,
+  FiChevronDown,
   FiMail,
   FiCalendar,
   FiMapPin,
@@ -213,6 +214,10 @@ const SuperAdminDashboard = () => {
   }, [activeTab]);
 
   const [loading, setLoading] = useState(true);
+  const [revenueFilter, setRevenueFilter] = useState('This Year');
+  const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
+  const [customMonth, setCustomMonth] = useState('');
+  const [customYear, setCustomYear] = useState('');
   const [summaryData, setSummaryData] = useState({
     totalRevenue: '₹24.5L',
     activeClients: 156,
@@ -305,17 +310,24 @@ const SuperAdminDashboard = () => {
 
       case 'Billing':
         return (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <StatCard title="Outstanding" value={summaryData.outstandingPayment} icon={FiCreditCard} color="red" />
-              <StatCard title="Monthly MRR" value={summaryData.totalMRR} icon={FiTrendingUp} color="blue" />
-              <StatCard title="Projected ARR" value={summaryData.projectedARR} icon={FiDollarSign} color="emerald" />
-              <StatCard title="Salaries" value={summaryData.totalSalaries} icon={FiUsers} color="orange" />
-              <StatCard title="Rent" value={summaryData.totalRent} icon={FiHome} color="indigo" />
+          <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Sticky Header Section */}
+            <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-6 -mx-6 px-6 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/50">
+              <div className="flex flex-col items-start text-left">
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-syne">Billing</h1>
+              </div>
             </div>
 
-            <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
-              <h3 className="text-xl font-bold text-[#1A1A2E] mb-8 font-syne">Financial Performance</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+              <StatCard title="Outstanding" value={summaryData.outstandingPayment} icon={FiCreditCard} color="white" onClick={() => {}} />
+              <StatCard title="Monthly MRR" value={summaryData.totalMRR} icon={FiTrendingUp} color="white" onClick={() => {}} />
+              <StatCard title="Projected ARR" value={summaryData.projectedARR} icon={FiDollarSign} color="white" onClick={() => {}} />
+              <StatCard title="Salaries" value={summaryData.totalSalaries} icon={FiUsers} color="white" onClick={() => {}} />
+              <StatCard title="Rent" value={summaryData.totalRent} icon={FiHome} color="white" onClick={() => {}} />
+            </div>
+
+            <div className="bg-white rounded-[32px] p-8 border border-[#F4F3EF] shadow-sm">
+              <h3 className="text-xl font-bold text-[#1A1A2E] mb-8 font-syne text-left">Financial Performance</h3>
               <div className="h-80">
                 <Line
                   data={billingChartData}
@@ -346,71 +358,97 @@ const SuperAdminDashboard = () => {
 
       default:
         return (
-          <div className="space-y-8">
+          <div className="space-y-12">
+            {/* Sticky Welcome Header */}
+            <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-6 -mx-6 px-6 py-6 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/50">
+              <div className="flex flex-col items-start text-left">
+                <h2 className="text-3xl font-bold text-slate-900 mb-1">
+                  Welcome {userInfo.name.split(' ')[0]}
+                </h2>
+              </div>
+            </div>
+
             {/* Notebook Requirements Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-              <div onClick={() => setActiveTab('Billing')} className="cursor-pointer group">
-                <StatCard
-                  title="Total Revenue"
-                  subtitle="This Month"
-                  value={summaryData.totalRevenue}
-                  icon={FiDollarSign}
-                  color="blue"
-                  change="+14.2%"
-                  className="group-hover:translate-y-[-4px] transition-all duration-300 shadow-sm hover:shadow-xl"
-                />
-              </div>
-              <div onClick={() => setShowClientsModal(true)} className="cursor-pointer group">
-                <StatCard
-                  title="Active Clients"
-                  subtitle="Click to view list"
-                  value={summaryData.activeClients}
-                  icon={FiUsers}
-                  color="emerald"
-                  className="group-hover:translate-y-[-4px] transition-all duration-300 shadow-sm hover:shadow-xl"
-                />
-              </div>
-              <div onClick={() => setActiveTab('Employees')} className="cursor-pointer group">
-                <StatCard
-                  title="Total Admins"
-                  subtitle="Super Admin Team"
-                  value={summaryData.totalAdmins}
-                  icon={FiShield}
-                  color="purple"
-                  className="group-hover:translate-y-[-4px] transition-all duration-300 shadow-sm hover:shadow-xl"
-                />
-              </div>
-              <div onClick={() => setActiveTab('Employees')} className="cursor-pointer group">
-                <StatCard
-                  title="Total KAMs"
-                  subtitle="Key Accounts"
-                  value={summaryData.totalKAMs}
-                  icon={FiTarget}
-                  color="orange"
-                  className="group-hover:translate-y-[-4px] transition-all duration-300 shadow-sm hover:shadow-xl"
-                />
-              </div>
-              <div onClick={() => setActiveTab('My Team')} className="cursor-pointer group">
-                <StatCard
-                  title="Active Employees"
-                  subtitle="Team Overview"
-                  value={summaryData.activeEmployees}
-                  icon={FiActivity}
-                  color="indigo"
-                  className="group-hover:translate-y-[-4px] transition-all duration-300 shadow-sm hover:shadow-xl"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+              <StatCard
+                title="Total Revenue"
+                value={summaryData.totalRevenue}
+                icon={FiDollarSign}
+                color="white"
+                change="+14.2%"
+                onClick={() => setActiveTab('Billing')}
+              />
+              <StatCard
+                title="Active Clients"
+                value={summaryData.activeClients}
+                icon={FiUsers}
+                color="white"
+                onClick={() => setShowClientsModal(true)}
+              />
+              <StatCard
+                title="Total Admins"
+                value={summaryData.totalAdmins}
+                icon={FiShield}
+                color="white"
+                onClick={() => setActiveTab('Employees')}
+              />
+              <StatCard
+                title="Total KAMs"
+                value={summaryData.totalKAMs}
+                icon={FiTarget}
+                color="white"
+                onClick={() => setActiveTab('Employees')}
+              />
+              <StatCard
+                title="Active Employees"
+                value={summaryData.activeEmployees}
+                icon={FiActivity}
+                color="white"
+                onClick={() => setActiveTab('My Team')}
+              />
             </div>
 
             {/* Quick Insights Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
                   <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">Revenue Trend</h3>
-                  <select className="bg-gray-50 border-none rounded-xl px-4 py-2 text-xs font-bold text-gray-500 outline-none">
-                    <option>This Year</option>
-                    <option>Last Year</option>
-                  </select>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <AnimatePresence mode="wait">
+                      {revenueFilter === 'Custom Date' && (
+                        <motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="flex gap-2 items-center overflow-hidden">
+                          <input type="date" className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-600 outline-none focus:border-blue-500 transition-colors" value={customDateRange.start} onChange={(e) => setCustomDateRange({ ...customDateRange, start: e.target.value })} />
+                          <span className="text-gray-400 font-bold">-</span>
+                          <input type="date" className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-600 outline-none focus:border-blue-500 transition-colors" value={customDateRange.end} onChange={(e) => setCustomDateRange({ ...customDateRange, end: e.target.value })} />
+                        </motion.div>
+                      )}
+                      {revenueFilter === 'Month' && (
+                        <motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="overflow-hidden">
+                          <input type="month" className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-600 outline-none focus:border-blue-500 transition-colors" value={customMonth} onChange={(e) => setCustomMonth(e.target.value)} />
+                        </motion.div>
+                      )}
+                      {revenueFilter === 'Year' && (
+                        <motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="overflow-hidden">
+                          <input type="number" min="2000" max="2100" placeholder="YYYY" className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-600 outline-none w-24 focus:border-blue-500 transition-colors" value={customYear} onChange={(e) => setCustomYear(e.target.value)} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <div className="relative">
+                      <select 
+                        value={revenueFilter}
+                        onChange={(e) => setRevenueFilter(e.target.value)}
+                        className="bg-gray-50 border border-gray-100 rounded-xl pl-4 pr-8 py-2 text-xs font-bold text-gray-600 outline-none cursor-pointer appearance-none shadow-sm hover:bg-gray-100 transition-colors"
+                      >
+                        <option value="This Year">This Year</option>
+                        <option value="Last Year">Last Year</option>
+                        <option value="This Week">This Week</option>
+                        <option value="Month">Month</option>
+                        <option value="Year">Year</option>
+                        <option value="Custom Date">Custom Date</option>
+                      </select>
+                      <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                    </div>
+                  </div>
                 </div>
                 <div className="h-80">
                   <Bar
@@ -455,16 +493,16 @@ const SuperAdminDashboard = () => {
       dashboardTitle={activeTab}
       userInfo={userInfo}
       isLoading={loading}
+      showBottomTab={false}
+      showGlobalHeader={false}
     >
-      <div className="p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto">
-        {renderContent()}
-        {/* Clients List Modal - PORTAL Component Match */}
-        <ClientsExplorerModal
-          isOpen={showClientsModal}
-          onClose={() => setShowClientsModal(false)}
-          clientsList={clientsList}
-        />
-      </div>
+      {renderContent()}
+      {/* Clients List Modal - PORTAL Component Match */}
+      <ClientsExplorerModal
+        isOpen={showClientsModal}
+        onClose={() => setShowClientsModal(false)}
+        clientsList={clientsList}
+      />
     </AdminLayout>
   );
 };
