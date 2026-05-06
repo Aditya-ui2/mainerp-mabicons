@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,7 +25,9 @@ import {
   FiUpload,
   FiShield,
   FiActivity,
-  FiEye
+  FiEye,
+  FiCheck,
+  FiInfo
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
@@ -42,6 +44,8 @@ const CRMTeamTab = ({ department = '' }) => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignment, setAssignment] = useState({ title: '', type: 'client', notes: '' });
   const [roleFilter, setRoleFilter] = useState('all');
+  const [newMember, setNewMember] = useState({ name: '', role: 'employee', leader: '', department: 'Operations', otherRole: '', otherDepartment: '', email: '', phone: '' });
+  const [modalStep, setModalStep] = useState(1);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -49,7 +53,6 @@ const CRMTeamTab = ({ department = '' }) => {
       // Fetch members based on the provided department
       const res = await getDepartmentTeamMembers(department);
       let teamData = res?.data || [];
-      
       // Fallback mock data if API returns empty to keep UI premium
       if (!teamData || (Array.isArray(teamData) && teamData.length === 0)) {
         teamData = [
@@ -59,7 +62,6 @@ const CRMTeamTab = ({ department = '' }) => {
           { _id: 'mock_m4', name: 'Sachin', email: 'sachin@mabicons.com', phone: '9876543213', role: 'HR Recruitment Head', department: 'Recruitment', status: 'Active', joinDate: '2024-01-10' }
         ];
       }
-
       const mapped = (Array.isArray(teamData) ? teamData : []).map(m => ({
         id: m.id?.toString() || m._id,
         name: m.name,
@@ -70,7 +72,6 @@ const CRMTeamTab = ({ department = '' }) => {
         status: m.status || 'Active',
         joinDate: m.joinDate ? new Date(m.joinDate).toISOString().split('T')[0] : 'N/A',
       }));
-
       // Final fallback filtering to ensure visual consistency
       const filtered = department
         ? mapped.filter(m => m.department === department || m.department === 'N/A')
@@ -88,11 +89,9 @@ const CRMTeamTab = ({ department = '' }) => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchMembers();
   }, [department]);
-
   const currentUserData = (() => {
     try {
       const token = localStorage.getItem('token');
@@ -111,11 +110,9 @@ const CRMTeamTab = ({ department = '' }) => {
       role: (localStorage.getItem('userRole') || '').toLowerCase()
     };
   })();
-
   const currentUserEmail = currentUserData.email;
   const currentUserName = currentUserData.name;
   const currentUserRole = currentUserData.role;
-
   const filteredMembers = members.filter(m =>
     // Exclude the currently logged-in user from the team list
     m.email?.toLowerCase() !== currentUserEmail &&
@@ -123,149 +120,143 @@ const CRMTeamTab = ({ department = '' }) => {
       m.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (roleFilter === 'all' || m.role === roleFilter)
   );
-
   // Build unique role list from actual data
   const uniqueRoles = ['all', ...Array.from(new Set(members.map(m => m.role).filter(Boolean)))];
-
-
   return (
-    <div className="min-h-screen" style={{ fontFamily: "'Calibri', sans-serif" }}>
-      {/* Header Section */}
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+    <div className="space-y-8 animate-in fade-in duration-500 min-h-screen" style={{ fontFamily: "'Calibri', sans-serif" }}>
+      {/* Sticky Header Section */}
+      <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-4 -mx-8 px-8 py-6 mb-8 flex items-center justify-between flex-wrap gap-4 border-b border-slate-100/50">
         <div className="text-left">
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-            My Team
-          </h1>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
         </div>
-        <div className="flex gap-2">
-          {currentUserName?.toLowerCase()?.includes('ashish') && (
-            <button
-              onClick={() => setShowInviteModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-[#1a3a82] transition-all shadow-lg shadow-[#1B4DA0]/20 active:scale-95"
-            >
-              <FiPlus size={18} /> Add Team Member
-            </button>
-          )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setShowInviteModal(true); setModalStep(1); }}
+            className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
+          >
+            <FiPlus size={18} /> Add Team Member
+          </button>
         </div>
       </div>
-
       {/* Filter Bar */}
-      <div className="bg-white border border-[#F4F3EF] rounded-[24px] p-2 shadow-sm mb-8 flex items-center gap-3 flex-wrap lg:flex-nowrap">
-        <div className="relative flex-[2.5] group min-w-[200px]">
-          <FiSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
+      <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 mb-8 flex-wrap">
+        {/* Search Bar */}
+        <div className="relative flex-1 group min-w-[200px]">
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, role, email..."
-            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-4 pl-16 pr-6 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/5 outline-none transition-all placeholder:text-[#9B9BAD] placeholder:font-bold"
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
-
-        <div className="relative flex-1 group min-w-[140px]">
+        {/* Role Filter Placeholder */}
+        <div className="relative">
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
           >
             {uniqueRoles.map(r => (
-              <option key={r} value={r}>{r === 'all' ? 'ALL ROLES' : r.toUpperCase()}</option>
+              <option key={r} value={r}>{r === 'all' ? 'All Roles' : r}</option>
             ))}
           </select>
-          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
       </div>
-
       {/* Table Interface */}
-      <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
-        <div className="grid grid-cols-[40px_2fr_1.5fr_2fr_120px_40px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-transparent">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              checked={selectedRowIds.length === filteredMembers.length && filteredMembers.length > 0}
-              onChange={(e) => {
-                if (e.target.checked) setSelectedRowIds(filteredMembers.map(m => m.id));
-                else setSelectedRowIds([]);
-              }}
-              className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
-            />
-          </div>
-          {["Member", "Role", "Email", "Contact", ""].map((h, i) => (
-            <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start">
-              {h}
+      <div className="bg-white rounded-[32px] shadow-sm border border-[#F4F3EF] overflow-hidden relative">
+        <div className="overflow-x-auto min-h-[300px]">
+          {/* Grid Header */}
+          <div className="grid grid-cols-[40px_2fr_1.5fr_2fr_100px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={selectedRowIds.length === filteredMembers.length && filteredMembers.length > 0}
+                onChange={(e) => {
+                  if (e.target.checked) setSelectedRowIds(filteredMembers.map(m => m.id));
+                  else setSelectedRowIds([]);
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
+              />
             </div>
-          ))}
+            {["Member", "Role", "Email", "Contact", ""].map((h, i) => (
+              <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start">
+                {h}
+              </div>
+            ))}
+          </div>
+          {/* Grid Rows */}
+          {filteredMembers.length > 0 ? filteredMembers.map((m) => {
+            const isSelected = selectedRowIds.includes(m.id);
+            const initials = m.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??';
+            return (
+              <div
+                key={m.id}
+                onClick={() => {
+                  setSelectedMember(m);
+                  setShowMemberDetails(true);
+                }}
+                className={`grid grid-cols-[40px_2fr_1.5fr_2fr_100px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group ${isSelected ? 'bg-blue-50/30' : ''}`}
+              >
+                {/* Checkbox */}
+                <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedRowIds(prev => [...prev, m.id]);
+                      else setSelectedRowIds(prev => prev.filter(id => id !== m.id));
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
+                  />
+                </div>
+                {/* Member */}
+                <div className="flex items-center gap-4 min-w-0 py-1">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-sm font-black border border-[#F4F3EF] group-hover:scale-105 transition-transform shrink-0">
+                    {initials}
+                  </div>
+                  <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#0D47A1] transition-colors text-left">{m.name}</p>
+                </div>
+                {/* Role */}
+                <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
+                  {m.role}
+                </div>
+                {/* Email */}
+                <div className="flex items-start justify-start text-[13px] font-medium text-[#64748b] truncate py-1 text-left">
+                  {m.email}
+                </div>
+                {/* Contact */}
+                <div className="flex items-center justify-start gap-2 py-1" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => { window.location.href = `mailto:${m.email}`; }}
+                    className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
+                  >
+                    <FiMail size={14} />
+                  </button>
+                  <button
+                    onClick={() => { window.location.href = `tel:${m.phone}`; }}
+                    className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
+                  >
+                    <FiPhone size={14} />
+                  </button>
+                </div>
+                {/* Arrow */}
+                <div className="flex justify-end items-center">
+                  <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#0D47A1]/5 flex items-center justify-center transition-all">
+                    <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#0D47A1] transition-all" />
+                  </div>
+                </div>
+              </div>
+            );
+          }) : (
+            <div className="py-24 text-center">
+              <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No team members found</p>
+            </div>
+          )}
         </div>
-
-        {filteredMembers.length > 0 ? filteredMembers.map((m) => {
-          const isSelected = selectedRowIds.includes(m.id);
-          const initials = m.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '??';
-
-          return (
-            <div
-              key={m.id}
-              onClick={() => {
-                setSelectedMember(m);
-                setShowMemberDetails(true);
-              }}
-              className={`grid grid-cols-[40px_2fr_1.5fr_2fr_120px_40px] gap-4 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group ${isSelected ? 'bg-blue-50/30' : ''}`}
-            >
-              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={(e) => {
-                    if (e.target.checked) setSelectedRowIds(prev => [...prev, m.id]);
-                    else setSelectedRowIds(prev => prev.filter(id => id !== m.id));
-                  }}
-                  className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer shadow-sm"
-                />
-              </div>
-
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] text-sm font-black border border-[#F4F3EF] group-hover:scale-105 transition-transform shrink-0">
-                  {initials}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[14px] font-bold text-[#0f172a] truncate group-hover:text-[#1B4DA0] transition-colors">{m.name}</p>
-                </div>
-              </div>
-
-              <div className="text-[13px] font-medium text-[#64748b] truncate text-left">
-                {m.role}
-              </div>
-
-              <div className="text-[13px] font-medium text-[#64748b] truncate text-left">
-                {m.email}
-              </div>
-
-              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={() => { window.location.href = `mailto:${m.email}`; }}
-                  className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
-                >
-                  <FiMail size={14} />
-                </button>
-                <button
-                  onClick={() => { window.location.href = `tel:${m.phone}`; }}
-                  className="p-2 bg-[#F4F3EF] text-[#9B9BAD] hover:text-[#1B4DA0] rounded-lg transition-all"
-                >
-                  <FiPhone size={14} />
-                </button>
-              </div>
-
-              <div className="flex justify-end">
-                <FiChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all" />
-              </div>
-            </div>
-          );
-        }) : (
-          <div className="py-24 text-center">
-            <p className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest">No team members found</p>
-          </div>
-        )}
       </div>
-
       {/* Bulk action bar */}
       {createPortal(
         <AnimatePresence>
@@ -291,7 +282,6 @@ const CRMTeamTab = ({ department = '' }) => {
                   </button>
                 </div>
               </div>
-
               {/* Action buttons */}
               <div className="flex items-center gap-6 flex-1 justify-center text-white">
                 <button
@@ -350,8 +340,6 @@ const CRMTeamTab = ({ department = '' }) => {
         </AnimatePresence>,
         document.body
       )}
-
-
       {/* Member Detail Drawer */}
       {createPortal(
         <AnimatePresence>
@@ -361,80 +349,77 @@ const CRMTeamTab = ({ department = '' }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                onClick={() => setShowMemberDetails(false)}
                 className="absolute inset-0 bg-[#1A1A2E]/40 backdrop-blur-md"
+                onClick={() => setShowMemberDetails(false)}
               />
               <motion.div
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="absolute inset-y-0 right-0 w-full max-w-[600px] bg-white shadow-2xl flex flex-col border-l border-[#F4F3EF]"
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="absolute inset-y-0 right-0 w-full max-w-[698px] bg-white z-[1101] shadow-2xl flex flex-col"
+                style={{ boxShadow: "-12px 0 40px rgba(0,0,0,0.12)" }}
               >
-                {/* Header */}
-                <div className="px-10 py-10 border-b border-[#F4F3EF] flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Team Member</h2>
-                  <button
-                    onClick={() => setShowMemberDetails(false)}
-                    className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-red-500 transition-all shadow-sm"
-                  >
-                    <FiX size={24} />
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
-                  <div className="flex flex-col items-center">
-                    <div className="w-32 h-32 rounded-[40px] bg-[#EEF2FB] border-2 border-[#DBEAFE] flex items-center justify-center text-[#1B4DA0] text-4xl font-black shadow-xl mb-6">
-                      {selectedMember.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
-                    <h3 className="text-3xl font-black text-[#1A1A2E]">{selectedMember.name}</h3>
-                    <p className="text-[12px] font-black text-[#1B4DA0] uppercase tracking-[4px] mt-1">{selectedMember.role}</p>
+                {/* Drawer Header */}
+                <div className="p-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white">
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Member Details</h3>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowMemberDetails(false)}
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+                    >
+                      <FiX className="w-5 h-5" />
+                    </button>
                   </div>
+                </div>
+                {/* Drawer Content */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar text-left">
+                  {/* Profile Header (Centered) */}
+                  <div className="flex flex-col items-center text-center">
+                    <div className="relative group mb-6">
+                      <div
+                        className="w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden transition-all duration-300"
+                        style={{ background: 'linear-gradient(135deg, #1B4DA0 0%, #0D47A1 100%)' }}>
+                        <span>{(selectedMember.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 w-full flex flex-col items-center">
+                      <h2 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne">{selectedMember.name}</h2>
+                      <p className="text-[11px] font-bold text-[#0D47A1] uppercase tracking-[2px]">{selectedMember.role}</p>
 
-                  {/* Profile Cards */}
-                  <div className="bg-[#FAFAF9] rounded-[48px] border border-[#F4F3EF] p-10 space-y-8">
-                    {[
-                      { label: 'Role', value: selectedMember.role },
-                      { label: 'Status', value: selectedMember.status || 'Active', isStatus: true },
-                      { label: 'Email', value: selectedMember.email },
-                      { label: 'Phone', value: selectedMember.phone },
-                      { label: 'Department', value: selectedMember.department },
-                      { label: 'Join Date', value: selectedMember.joinDate || selectedMember.joiningDate },
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{item.label}</span>
-                        <div className="flex items-center gap-2">
-                          {item.isStatus && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
-                          <span className="text-sm font-black text-[#1A1A2E]">{item.value || '—'}</span>
+                      <div className="flex items-center justify-center gap-2 mt-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{selectedMember.status || 'Active'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Member Information Form */}
+                  <div className="space-y-6 bg-[#FAFAF8] p-8 rounded-[32px] border border-[#F4F3EF]">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Email Address</label>
+                        <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF] flex items-center gap-3">
+                          <FiMail className="text-[#9B9BAD]" />
+                          <span className="truncate">{selectedMember.email}</span>
                         </div>
                       </div>
-                    ))}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Phone Number</label>
+                        <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF] flex items-center gap-3">
+                          <FiPhone className="text-[#9B9BAD]" />
+                          <span>{selectedMember.phone}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Department</label>
+                        <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.department || 'N/A'}</div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Joining Date</label>
+                        <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.joinDate || selectedMember.joiningDate || 'N/A'}</div>
+                      </div>
+                    </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    {selectedMember.email && (
-                      <a href={`mailto:${selectedMember.email}`} className="flex-1 py-4 bg-[#EEF2FB] text-[#1B4DA0] rounded-2xl text-[11px] font-black uppercase tracking-[3px] flex items-center justify-center gap-2 hover:bg-[#DBEAFE] transition-all">
-                        <FiMail size={16} /> Send Email
-                      </a>
-                    )}
-                    {selectedMember.phone && (
-                      <a href={`tel:${selectedMember.phone}`} className="flex-1 py-4 bg-[#EEF2FB] text-[#1B4DA0] rounded-2xl text-[11px] font-black uppercase tracking-[3px] flex items-center justify-center gap-2 hover:bg-[#DBEAFE] transition-all">
-                        <FiPhone size={16} /> Call
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="p-10 border-t border-[#F4F3EF]">
-                  <button
-                    onClick={() => setShowMemberDetails(false)}
-                    className="w-full py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-[11px] font-black uppercase tracking-[3px] hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-95"
-                  >
-                    Close Profile
-                  </button>
                 </div>
               </motion.div>
             </div>
@@ -442,190 +427,442 @@ const CRMTeamTab = ({ department = '' }) => {
         </AnimatePresence>,
         document.body
       )}
-
-      {/* Add/Invite Team Member Modal */}
-      {createPortal(
-        <AnimatePresence>
-          {showInviteModal && (
-            <motion.div key="kam-invite-modal" className="fixed inset-0 z-[10001] pointer-events-none">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+      {/* Add New Member Modal - Ported from ClientOnboardingForm Style */}
+      {showInviteModal && createPortal(
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowInviteModal(false)}
+            className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            className="relative w-full max-w-[800px] bg-white rounded-[40px] shadow-2xl border border-[#F4F3EF] flex flex-col overflow-hidden max-h-[90vh]"
+          >
+            {/* Modal Header */}
+            <div className="px-10 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-white">
+              <h2 className="text-[18px] font-bold text-[#1A1A2E] tracking-tight font-syne">
+                Add New Member
+              </h2>
+              <button
                 onClick={() => setShowInviteModal(false)}
-                className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto z-[10001]"
+                className="w-10 h-10 rounded-full bg-[#F4F3EF] text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center"
               >
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden relative z-[10002]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Modal Header */}
-                  <div className="px-10 py-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-white to-[#F8FAFF]">
-                    <div>
-                      <h2 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                        Add Team Member
-                      </h2>
-
+                <FiX size={20} />
+              </button>
+            </div>
+            {/* Step Indicator */}
+            <div className="px-10 pt-8 flex items-center justify-center gap-4">
+              {[
+                { n: 1, title: 'Info', icon: <FiInfo size={18} /> },
+                { n: 2, title: 'Docs', icon: <FiFileText size={18} /> },
+                { n: 3, title: 'Review', icon: <FiCheck size={18} /> }
+              ].map((s, idx, arr) => (
+                <React.Fragment key={s.n}>
+                  <div className="flex flex-col items-center gap-2 relative">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${modalStep >= s.n ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white' : 'bg-white border-[#F4F3EF] text-[#9B9BAD]'}`}>
+                      {modalStep > s.n ? <FiCheck size={18} /> : s.icon}
                     </div>
-                    <button
-                      onClick={() => setShowInviteModal(false)}
-                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm"
-                    >
-                      <FiX size={18} />
-                    </button>
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${modalStep >= s.n ? 'text-[#1B4DA0]' : 'text-[#9B9BAD]'}`}>{s.title}</span>
                   </div>
-
-                  {/* Modal Body */}
-                  <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                    {/* Profile Photo Section */}
-                    <div className="flex flex-col items-center justify-center pb-4">
-                      <div className="relative group">
-                        <div className="w-24 h-24 rounded-[32px] bg-[#F4F3EF] border-2 border-dashed border-[#C5C5D2] flex items-center justify-center overflow-hidden transition-all group-hover:border-[#1B4DA0]/50">
-                          <FiUsers size={32} className="text-[#C5C5D2]" />
-                          <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                            <FiEdit2 className="text-white w-6 h-6 hover:scale-110 transition-transform" />
-                            <input type="file" className="hidden" accept="image/*" />
-                          </label>
-                        </div>
-                      </div>
-                      <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mt-3">Profile Photo (Max 1MB)</p>
+                  {idx < arr.length - 1 && (
+                    <div className="w-16 h-[2px] bg-[#F4F3EF] -mt-6">
+                      <motion.div
+                        className="h-full bg-[#1B4DA0]"
+                        initial={{ width: 0 }}
+                        animate={{ width: modalStep > s.n ? '100%' : '0%' }}
+                      />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Full Name *</label>
-                        <div className="relative flex items-center">
-                          <FiUsers className="absolute left-4 text-[#C5C5D2]" />
-                          <input type="text" required placeholder="e.g. John Doe"
-                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white">
+              <form onSubmit={(e) => e.preventDefault()} className="space-y-10">
+                <AnimatePresence mode="wait">
+                  {modalStep === 1 ? (
+                    <motion.div
+                      key="step1"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="space-y-10"
+                    >
+                      {/* Section 1 */}
+                      <div className="space-y-6 text-left">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-black text-[#9B9BAD]">1.</span>
+                            <h3 className="text-[15px] font-black text-[#1A1A2E] uppercase tracking-tight">Basic Member Info</h3>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-[#1B4DA0]/10 text-[#1B4DA0]">
+                            Required
+                          </span>
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Employee ID</label>
-                        <div className="relative flex items-center">
-                          <FiHash className="absolute left-4 text-[#C5C5D2]" />
-                          <input type="text" placeholder="e.g. CRM-0042"
-                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Email Address *</label>
-                        <div className="relative flex items-center">
-                          <FiMail className="absolute left-4 text-[#C5C5D2]" />
-                          <input type="email" required placeholder="john@mabicons.com"
-                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Phone Number *</label>
-                        <div className="relative flex items-center">
-                          <FiPhone className="absolute left-4 text-[#C5C5D2]" />
-                          <input type="tel" required placeholder="9876543210" maxLength="10"
-                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Department</label>
-                        <div className="relative flex items-center">
-                          <FiBriefcase className="absolute left-4 text-[#C5C5D2]" />
-                          <select className="w-full pl-11 pr-12 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all appearance-none cursor-pointer">
-                            <option value="CRM Department">CRM Department</option>
-                            <option value="Sales Team">Sales Team</option>
-                            <option value="Client Relations">Client Relations</option>
-                          </select>
-                          <FiChevronDown className="absolute right-4 text-[#9B9BAD] pointer-events-none" />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Joining Date</label>
-                        <div className="relative flex items-center">
-                          <FiCalendar className="absolute left-4 text-[#C5C5D2]" />
-                          <input type="date"
-                            className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Monthly CRM Target</label>
-                      <div className="relative flex items-center">
-                        <FiTarget className="absolute left-4 text-[#C5C5D2]" />
-                        <input type="number" placeholder="e.g. 10"
-                          className="w-full pl-11 pr-4 py-3 bg-[#F4F3EF] border-0 rounded-2xl text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10" />
-                      </div>
-                    </div>
-
-                    {/* Documents Section */}
-                    <div className="pt-6 border-t border-[#F4F3EF] space-y-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1B4DA0] flex items-center justify-center">
-                          <FiShield size={16} />
-                        </div>
-                        <h4 className="text-[11px] font-black text-[#1A1A2E] uppercase tracking-[2px]">KYC & Compliance Documents</h4>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {[
-                          { id: 'aadhaar', label: 'Aadhaar Card', icon: FiFileText },
-                          { id: 'pan', label: 'PAN Card', icon: FiFileText },
-                          { id: 'bank', label: 'Passbook / Cheque', icon: FiActivity },
-                          { id: 'edu', label: 'Education Docs', icon: FiBriefcase }
-                        ].map((doc) => (
-                          <div key={doc.id} className="space-y-2">
-                            <label className="block text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest px-1">{doc.label}</label>
-                            <div className="group relative">
-                              <div className="flex items-center justify-between p-4 bg-[#F8FAFF] border-2 border-dashed border-[#E2E8F0] rounded-2xl group-hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all shadow-sm">
-                                    <doc.icon size={20} />
-                                  </div>
-                                  <div className="text-left">
-                                    <p className="text-[11px] font-bold text-[#1A1A2E]">Select File</p>
-                                    <p className="text-[9px] font-medium text-[#9B9BAD]">PDF, JPG (Max 2MB)</p>
-                                  </div>
-                                </div>
-                                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-all">
-                                  <FiUpload size={16} />
-                                </div>
-                              </div>
-                              <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept=".pdf,.jpg,.jpeg,.png" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-[#6B6B7E] ml-1">Full Name</label>
+                            <input
+                              type="text"
+                              placeholder="Registered member name"
+                              value={newMember.name}
+                              onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                              className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3.5 px-5 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all placeholder:text-[#BDBDC7]"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-1.5 text-left">
+                            <label className="text-[11px] font-bold text-[#6B6B7E] ml-1">Department / Role</label>
+                            <div className="relative">
+                              <select
+                                value={newMember.role}
+                                onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
+                                className="w-full bg-[#F4F3EF] border border-transparent rounded-xl py-3.5 pl-5 pr-10 text-[13px] font-bold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer"
+                              >
+                                <optgroup label="Management">
+                                  <option value="leader">Department Head</option>
+                                  <option value="manager">Team Manager</option>
+                                </optgroup>
+                                <optgroup label="Operations">
+                                  <option value="employee">Operations Associate</option>
+                                  <option value="ops_kam">Operations KAM</option>
+                                </optgroup>
+                                <optgroup label="Recruitment">
+                                  <option value="recruiter">Recruiter</option>
+                                  <option value="recruitment_kam">Recruitment KAM</option>
+                                </optgroup>
+                                <optgroup label="Other">
+                                  <option value="crm">CRM Executive</option>
+                                  <option value="hr">HR Executive</option>
+                                  <option value="admin">Admin Staff</option>
+                                  <option value="other">Other (Specify...)</option>
+                                </optgroup>
+                              </select>
+                              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" size={16} />
                             </div>
                           </div>
-                        ))}
+                        </div>
+                        {newMember.role === 'other' && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-1.5 text-left"
+                          >
+                            <label className="text-[11px] font-bold text-[#6B6B7E] ml-1">Specify Other Role</label>
+                            <input
+                              type="text"
+                              placeholder="Enter custom role title"
+                              value={newMember.otherRole}
+                              onChange={(e) => setNewMember({ ...newMember, otherRole: e.target.value })}
+                              className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3.5 px-5 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all placeholder:text-[#BDBDC7]"
+                              required
+                            />
+                          </motion.div>
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-1.5 text-left">
+                            <label className="text-[11px] font-bold text-[#6B6B7E] ml-1">Department Name</label>
+                            <div className="relative">
+                              <select
+                                value={newMember.department}
+                                onChange={(e) => setNewMember({ ...newMember, department: e.target.value })}
+                                className="w-full bg-[#F4F3EF] border border-transparent rounded-xl py-3.5 pl-5 pr-10 text-[13px] font-bold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer"
+                              >
+                                <option value="Operations">Operations</option>
+                                <option value="Recruitment">Recruitment</option>
+                                <option value="CRM">CRM</option>
+                                <option value="HR">HR</option>
+                                <option value="Finance">Finance</option>
+                                <option value="other">Other (Specify...)</option>
+                              </select>
+                              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" size={16} />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5 text-left">
+                            <label className="text-[11px] font-bold text-[#6B6B7E] ml-1">Reporting Head</label>
+                            <div className="relative">
+                              <select
+                                value={newMember.leader}
+                                onChange={(e) => setNewMember({ ...newMember, leader: e.target.value })}
+                                className="w-full bg-[#F4F3EF] border border-transparent rounded-xl py-3.5 pl-5 pr-10 text-[13px] font-bold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer"
+                                required
+                              >
+                                <option value="">Select Department Head</option>
+                                {members.map((leader) => (
+                                  <option key={leader.id} value={leader.name}>{leader.name}</option>
+                                ))}
+                              </select>
+                              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" size={16} />
+                            </div>
+                          </div>
+                        </div>
+                        {newMember.department === 'other' && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-1.5 text-left"
+                          >
+                            <label className="text-[11px] font-bold text-[#6B6B7E] ml-1">Specify Other Department</label>
+                            <input
+                              type="text"
+                              placeholder="Enter custom department name"
+                              value={newMember.otherDepartment}
+                              onChange={(e) => setNewMember({ ...newMember, otherDepartment: e.target.value })}
+                              className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3.5 px-5 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all placeholder:text-[#BDBDC7]"
+                              required
+                            />
+                          </motion.div>
+                        )}
                       </div>
-                    </div>
-                  </div>
+                      {/* Section 2 */}
+                      <div className="space-y-6 text-left">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-black text-[#9B9BAD]">2.</span>
+                            <h3 className="text-[15px] font-black text-[#1A1A2E] uppercase tracking-tight">Contact Details</h3>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-[#1B4DA0]/10 text-[#1B4DA0]">
+                            Required
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-[#6B6B7E] ml-1">Email Address</label>
+                            <input
+                              type="email"
+                              placeholder="email@mabicons.com"
+                              value={newMember.email}
+                              onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                              className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3.5 px-5 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all placeholder:text-[#BDBDC7]"
+                              required
+                            />
+                          </div>
 
-                  {/* Modal Footer */}
-                  <div className="px-10 py-6 bg-white border-t border-[#F4F3EF] flex items-center gap-4">
-                    <button
-                      onClick={() => setShowInviteModal(false)}
-                      className="flex-1 py-4 bg-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-[#6B6B7E] ml-1">Phone Number</label>
+                            <input
+                              type="tel"
+                              placeholder="+91 XXXXX XXXXX"
+                              value={newMember.phone}
+                              onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
+                              className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3.5 px-5 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all placeholder:text-[#BDBDC7]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : modalStep === 2 ? (
+                    <motion.div
+                      key="step2"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="space-y-10"
                     >
-                      Cancel
+                      {/* Mandatory Documents Section */}
+                      <div className="space-y-6 text-left">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-black text-[#9B9BAD]">3.</span>
+                            <h3 className="text-[15px] font-black text-[#1A1A2E] uppercase tracking-tight">Mandatory Documents</h3>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-red-50 text-red-500">
+                            Required
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                          {[
+                            { label: 'PAN Card (Front)', id: 'pan_front' },
+                            { label: 'PAN Card (Back)', id: 'pan_back' },
+                            { label: 'Aadhaar Card (Front)', id: 'aadhaar_front' },
+                            { label: 'Aadhaar Card (Back)', id: 'aadhaar_back' },
+                            { label: '10th Marksheet', id: '10th_marksheet' },
+                            { label: '12th Marksheet', id: '12th_marksheet' }
+                          ].map((doc) => (
+                            <div key={doc.id} className="space-y-2">
+                              <label className="text-[10px] font-bold text-[#6B6B7E] uppercase tracking-wider ml-1">{doc.label}</label>
+                              <div className="group relative">
+                                <div className="flex items-center justify-between p-4 bg-[#F8FAFF] border-2 border-dashed border-[#E2E8F0] rounded-2xl group-hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all shadow-sm">
+                                      <FiFileText size={20} />
+                                    </div>
+                                    <div className="text-left">
+                                      <p className="text-[11px] font-bold text-[#1A1A2E]">Select File</p>
+                                      <p className="text-[9px] font-medium text-[#9B9BAD]">PDF, JPG (Max 2MB)</p>
+                                    </div>
+                                  </div>
+                                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-all">
+                                    <FiUpload size={16} />
+                                  </div>
+                                </div>
+                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Optional Documents Section */}
+                      <div className="space-y-6 text-left pt-6 border-t border-gray-50">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-black text-[#9B9BAD]">4.</span>
+                            <h3 className="text-[15px] font-black text-[#1A1A2E] uppercase tracking-tight">Optional Documents</h3>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-[#F4F3EF] text-[#9B9BAD]">
+                            Optional
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                          {[
+                            { label: 'Graduation Marksheets (Sem 1-8)', id: 'grad_marksheet' },
+                            { label: 'Degree Certificate', id: 'degree_cert' },
+                            { label: 'Pay Slips (Last 3 Months)', id: 'pay_slips' },
+                            { label: 'Bank Statement (Last 3 Months)', id: 'bank_statement' },
+                            { label: 'Experience/Relieving Letter', id: 'exp_letter' },
+                            { label: 'Appointment Letter', id: 'appt_letter' }
+                          ].map((doc) => (
+                            <div key={doc.id} className="space-y-2">
+                              <label className="text-[10px] font-bold text-[#6B6B7E] uppercase tracking-wider ml-1">{doc.label}</label>
+                              <div className="group relative">
+                                <div className="flex items-center justify-between p-4 bg-[#F8FAFF] border-2 border-dashed border-[#E2E8F0] rounded-2xl group-hover:border-[#1B4DA0]/30 transition-all cursor-pointer">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all shadow-sm">
+                                      <FiFileText size={20} />
+                                    </div>
+                                    <div className="text-left">
+                                      <p className="text-[11px] font-bold text-[#1A1A2E]">Select File</p>
+                                      <p className="text-[9px] font-medium text-[#9B9BAD]">PDF, JPG (Max 2MB)</p>
+                                    </div>
+                                  </div>
+                                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#9B9BAD] group-hover:text-[#1B4DA0] transition-all">
+                                    <FiUpload size={16} />
+                                  </div>
+                                </div>
+                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="step3"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="space-y-8"
+                    >
+                      <div className="bg-[#F8FAFF] rounded-[32px] p-10 text-center space-y-6">
+                        <div className="w-24 h-24 bg-[#1B4DA0] text-white rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/20">
+                          <FiCheck size={48} />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-[20px] font-black text-[#1A1A2E] tracking-tight">Review & Finalize</h3>
+                          <p className="text-[13px] font-medium text-[#9B9BAD]">Please confirm the member details before adding to hierarchy.</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-left pt-6">
+                          {[
+                            { label: 'Full Name', value: newMember.name },
+                            { label: 'Role', value: newMember.role === 'other' ? newMember.otherRole : newMember.role },
+                            { label: 'Department', value: newMember.department === 'other' ? newMember.otherDepartment : newMember.department },
+                            { label: 'Reporting to', value: newMember.leader || 'Admin' },
+                            { label: 'Email', value: newMember.email },
+                            { label: 'Phone', value: newMember.phone || 'Not provided' }
+                          ].map((item, idx) => (
+                            <div key={idx} className="p-4 bg-white rounded-2xl border border-[#F4F3EF]">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-[#9B9BAD] mb-1">{item.label}</p>
+                              <p className="text-[12px] font-bold text-[#1A1A2E]">{item.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </form>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-10 py-8 bg-white border-t border-[#F4F3EF] flex items-center justify-between relative z-[100]">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${modalStep === 3 ? 'bg-emerald-500 animate-pulse' : 'bg-[#1B4DA0]'}`} />
+                <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest italic">
+                  {modalStep === 1 ? 'Next: Documents' : modalStep === 2 ? 'Next: Review' : 'Final Step'}
+                </p>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(false)}
+                  className="px-8 py-3.5 rounded-[20px] text-[#6B6B7E] font-black uppercase tracking-widest text-[11px] border border-[#F4F3EF] hover:bg-[#F8F9FA] transition-all"
+                >
+                  Cancel
+                </button>
+                {modalStep < 3 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (modalStep === 1) {
+                        if (!newMember.name || !newMember.email) {
+                          toast.error('Please fill required information');
+                          return;
+                        }
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(newMember.email)) {
+                          toast.error('Please enter a valid email address');
+                          return;
+                        }
+                        if (newMember.phone && !/^\d{10}$/.test(newMember.phone)) {
+                          toast.error('Phone number must be exactly 10 digits');
+                          return;
+                        }
+                        if (newMember.role === 'employee' && !newMember.leader) {
+                          toast.error('Please select a Reporting Head');
+                          return;
+                        }
+                      }
+                      setModalStep(modalStep + 1);
+                    }}
+                    className="px-10 py-4 bg-[#1B4DA0] text-white font-black uppercase tracking-widest text-[12px] rounded-[20px] hover:bg-[#153D80] transition-all flex items-center gap-3 shadow-xl shadow-blue-500/20 active:scale-95"
+                  >
+                    Next Step <FiChevronRight size={18} />
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setModalStep(2)}
+                      className="px-8 py-3.5 rounded-[20px] text-[#1B4DA0] font-black uppercase tracking-widest text-[11px] border border-[#F4F3EF] hover:bg-[#F8F9FA] transition-all"
+                    >
+                      Back
                     </button>
                     <button
-                      onClick={() => { setShowInviteModal(false); toast.success("Team member onboarded successfully"); }}
-                      className="flex-[2] py-4 bg-[#1B4DA0] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#1a3a82] transition-all shadow-lg shadow-[#1B4DA0]/20 active:scale-95"
+                      type="button"
+                      onClick={() => { setShowInviteModal(false); toast.success('Team member added successfully!'); }}
+                      disabled={loading}
+                      className="px-12 py-4 bg-[#1B4DA0] text-white font-black uppercase tracking-widest text-[12px] rounded-[20px] hover:bg-[#153D80] transition-all flex items-center gap-3 shadow-xl shadow-blue-500/20 active:scale-95 disabled:opacity-50"
                     >
-                      Add Member
+                      {loading ? 'Processing...' : 'Add Member'} <FiCheck size={18} />
                     </button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        , document.body)}
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
