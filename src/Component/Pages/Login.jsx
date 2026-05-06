@@ -45,6 +45,7 @@ const Login = () => {
     if (['hroperations', 'hr_operations', 'hr operations', 'operations'].includes(value)) return 'hrOperations';
     if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmentHead';
     if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam'].includes(value)) return 'kamRecruitment';
+    if (['client', 'customer'].includes(value)) return 'client';
     return value;
   };
 
@@ -59,6 +60,7 @@ const Login = () => {
     if (isRecruitmentHead) navigate('/recruitment-head-dashboard');
     else if (isKAM) navigate('/kam-member-dashboard');
     else if (isOperations) navigate('/kam-operations-dashboard');
+    else if (role === 'client') navigate('/client-dashboard');
     else if (role === 'superAdmin' || role === 'manager') navigate('/superadmin-dashboard');
     else if (role === 'admin') navigate('/admin-dashboard');
     else if (role === 'teamLeader') navigate('/teamleader-dashboard');
@@ -112,7 +114,7 @@ const Login = () => {
 
     try {
       const {
-        superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, departmentTeamLogin
+        superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, departmentTeamLogin, clientLogin
       } = await import('./service/api');
 
       let response;
@@ -128,6 +130,8 @@ const Login = () => {
         emailLower.includes('sachin') || emailLower.includes('ramesh') ||
         emailLower.includes('priyanshi') || emailLower.includes('manju') || emailLower.includes('jyoti')) {
         response = await departmentTeamLogin({ email: emailLower, password });
+      } else if (emailLower.includes('client')) {
+        response = await clientLogin({ email: emailLower, password });
       } else {
         response = await adminLogin({ email: emailLower, password });
       }
@@ -231,6 +235,17 @@ const Login = () => {
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Log In"}
               </motion.button>
 
+
+              {/* Error Message */}
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-500 text-[13px] font-bold text-center"
+                >
+                  {error}
+                </motion.p>
+              )}
 
             </form>
           </div>
