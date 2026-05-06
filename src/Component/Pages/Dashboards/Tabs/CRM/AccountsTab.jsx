@@ -118,7 +118,7 @@ const AccountsTab = () => {
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left pl-[64px]">Client Name</div>
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Last Invoice</div>
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Balance</div>
-            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Status</div>
+            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Status</div>
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left pl-4">Action</div>
           </div>
           {loading ? (
@@ -143,7 +143,7 @@ const AccountsTab = () => {
               </div>
               <div className="text-left text-sm font-bold text-[#6B6B7E]">{acc.lastInvoiceNumber || '—'}</div>
               <div className="text-left text-sm font-black text-[#1A1A2E]">{formatCurrency(acc.totalOutstanding)}</div>
-              <div className="text-left">
+              <div className="flex justify-center">
                 <span className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-fit shadow-sm ${acc.status === 'Cleared' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : acc.status === 'Overdue' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                   <FiActivity size={10} /> {acc.status}
                 </span>

@@ -721,7 +721,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                 <tr className="border-b border-[#F4F3EF]">
                   <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Position</th>
                   <th className="pb-4 text-left text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Pipeline</th>
-                  <th className="pb-4 text-right text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Status</th>
+                   <th className="pb-4 text-center text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F4F3EF]">
@@ -742,7 +742,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                           <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Active Candidates</p>
                         </div>
                       </td>
-                      <td className="py-4 text-right">
+                      <td className="py-4 text-center">
                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${
                           job.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                           job.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :

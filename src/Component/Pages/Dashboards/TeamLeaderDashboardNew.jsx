@@ -241,7 +241,7 @@ const TeamLeaderDashboardNew = () => {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Task</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Assigned To</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Priority</th>
                     </tr>
                   </thead>
@@ -254,7 +254,7 @@ const TeamLeaderDashboardNew = () => {
                       <tr key={idx} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.task}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{item.assignee}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-center">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             item.status === 'Completed' ? 'bg-green-100 text-green-700' :
                             item.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :

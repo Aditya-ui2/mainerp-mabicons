@@ -49,7 +49,7 @@ const CRMTeamTab = ({ department = '' }) => {
       // Fetch members based on the provided department
       const res = await getDepartmentTeamMembers(department);
       let teamData = res?.data || [];
-      
+
       // Fallback mock data if API returns empty to keep UI premium
       if (!teamData || (Array.isArray(teamData) && teamData.length === 0)) {
         teamData = [

@@ -172,7 +172,7 @@ const AdminTab = ({ isDarkMode }) => {
                 <th className="px-6 py-4 text-left text-sm font-semibold">Name</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Email</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Role</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold">Status</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Actions</th>
               </tr>
             </thead>
@@ -218,7 +218,7 @@ const AdminTab = ({ isDarkMode }) => {
                           {admin.role || 'Admin'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-center">
                         <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                           {admin.status || 'Active'}
                         </span>

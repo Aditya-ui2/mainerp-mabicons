@@ -157,7 +157,7 @@ const RegularizationTab = () => {
                   <th className="px-8 py-6 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Member Info</th>
                   <th className="px-8 py-6 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Request Details</th>
                   <th className="px-8 py-6 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Proposed Timing</th>
-                  <th className="px-8 py-6 text-left text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Status</th>
+                  <th className="px-8 py-6 text-center text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Status</th>
                   <th className="px-8 py-6 text-right text-[11px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Actions</th>
                 </tr>
               </thead>
@@ -204,7 +204,7 @@ const RegularizationTab = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-8 py-6 text-center">
                         <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusStyle(request.status)}`}>
                           {request.status}
                         </span>

@@ -411,7 +411,7 @@ const CompleteOnboardingTab = () => {
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">SPOC Details</div>
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Location</div>
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Joined</div>
-            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Status</div>
+            <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-center">Status</div>
             <div className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Action</div>
           </div>
 
@@ -467,7 +467,7 @@ const CompleteOnboardingTab = () => {
                   <p className="text-[10px] font-medium text-[#9B9BAD] uppercase mt-0.5">{yearStr}</p>
                 </div>
 
-                <div className="text-left">
+                <div className="flex justify-center">
                   {c.stage === 'Onboarding Complete' ? (
                     <span className="px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-100/50 flex items-center gap-1.5 w-fit">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />

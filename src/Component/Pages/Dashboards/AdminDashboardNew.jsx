@@ -332,7 +332,7 @@ const AdminDashboardNew = () => {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Task</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Assigned By</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Due Date</th>
                     </tr>
                   </thead>
@@ -350,7 +350,7 @@ const AdminDashboardNew = () => {
                             <span className="text-sm text-gray-600">{task.assignee || 'Unassigned'}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-center">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             task.status === 'completed' ? 'bg-green-100 text-green-700' :
                             task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :

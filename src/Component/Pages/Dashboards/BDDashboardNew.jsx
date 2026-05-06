@@ -147,7 +147,7 @@ const BDDashboardNew = () => {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Company</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Contact</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Value</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
                     </tr>
@@ -162,7 +162,7 @@ const BDDashboardNew = () => {
                           <p className="text-sm text-gray-900">{lead.contactPerson || 'N/A'}</p>
                           <p className="text-xs text-gray-500">{lead.email || 'N/A'}</p>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-center">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             lead.status === 'Converted' ? 'bg-green-100 text-green-700' :
                             lead.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
@@ -353,7 +353,7 @@ const BDDashboardNew = () => {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Company</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Contact</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Value</th>
                     </tr>
                   </thead>
@@ -362,7 +362,7 @@ const BDDashboardNew = () => {
                       <tr key={idx} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm font-medium text-gray-900">{lead.companyName || 'N/A'}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{lead.contactPerson || 'N/A'}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-center">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             lead.status === 'Converted' ? 'bg-green-100 text-green-700' :
                             lead.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :

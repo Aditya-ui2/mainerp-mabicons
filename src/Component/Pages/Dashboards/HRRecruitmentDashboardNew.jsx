@@ -413,7 +413,7 @@ const HRRecruitmentDashboard = () => {
                             <th className="px-5 py-4 text-left text-sm font-bold text-gray-600 uppercase">Position</th>
                             <th className="px-5 py-4 text-left text-sm font-bold text-gray-600 uppercase">Department</th>
                             <th className="px-5 py-4 text-left text-sm font-bold text-gray-600 uppercase">Candidates</th>
-                            <th className="px-5 py-4 text-left text-sm font-bold text-gray-600 uppercase">Status</th>
+                            <th className="px-5 py-4 text-center text-sm font-bold text-gray-600 uppercase">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -426,7 +426,7 @@ const HRRecruitmentDashboard = () => {
                               <td className="px-5 py-4">
                                 <span className="text-base font-semibold text-gray-900">{job.candidateCount || 0}</span>
                               </td>
-                              <td className="px-5 py-4">
+                              <td className="px-5 py-4 text-center">
                                 <span className={`px-3 py-1.5 text-sm font-semibold rounded-full ${
                                   job.status === 'Active' || job.status === 'Open' ? 'bg-green-100 text-green-700' :
                                   job.status === 'Urgent' ? 'bg-red-100 text-red-700' :

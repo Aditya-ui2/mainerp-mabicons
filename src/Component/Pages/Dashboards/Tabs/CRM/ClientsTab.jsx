@@ -195,7 +195,7 @@ const ClientsTab = () => {
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Company</th>
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">SPOC</th>
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Location</th>
-                    <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Status</th>
+                    <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-center">Status</th>
                     <th className="px-8 py-4"></th>
                   </tr>
                 </thead>
@@ -220,7 +220,7 @@ const ClientsTab = () => {
                       <td className="px-8 py-4 text-left">
                         <p className="text-[12px] font-bold text-[#6B6B7E]">{client.city || 'N/A'}</p>
                       </td>
-                      <td className="px-8 py-4 text-left">
+                      <td className="px-8 py-4 flex justify-center">
                         <Toggle 
                           active={['active', 'accepted'].includes((client.status || 'Active').toLowerCase().trim())} 
                           onChange={(val) => handleToggleStatus(client, val)} 

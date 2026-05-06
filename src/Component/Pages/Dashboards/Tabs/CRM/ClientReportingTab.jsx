@@ -324,7 +324,7 @@ const ClientReportingTab = ({ clients = [] }) => {
                   <tr className="border-b border-[#F4F3EF]">
                     <th className="px-8 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Report Detail</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Client</th>
-                    <th className="px-6 py-4 text-left text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-center text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Status</th>
                     <th className="px-8 py-4 text-right text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
@@ -350,7 +350,7 @@ const ClientReportingTab = ({ clients = [] }) => {
                         <p className="text-[12px] font-bold text-[#6B6B7E]">{report.companyName}</p>
                         <p className="text-[10px] font-bold text-[#9B9BAD] uppercase mt-0.5">{new Date(report.createdAt).toDateString()}</p>
                       </td>
-                      <td className="px-6 py-5 text-left">
+                      <td className="px-6 py-5 flex justify-center">
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${report.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-600' :
                           report.status === 'PENDING' ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-[#9B9BAD]'
                           }`}>
