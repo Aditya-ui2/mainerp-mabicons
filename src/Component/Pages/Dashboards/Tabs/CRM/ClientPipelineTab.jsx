@@ -660,37 +660,51 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                 className="absolute inset-y-0 right-0 w-full max-w-[520px] bg-white shadow-2xl flex flex-col border-l border-[#F4F3EF]"
               >
                 {/* Header */}
-                <div className="px-10 py-10 border-b border-[#F4F3EF] flex items-center justify-between">
+                <div className="px-10 py-6 border-b border-[#F4F3EF] flex items-center justify-between">
                   <div className="flex flex-col gap-1">
-                    <h2 className="text-2xl font-black text-[#1A1A2E]" style={{ fontFamily: '"Syne", sans-serif' }}>Client Detail</h2>
+                    <h2 className="text-2xl font-medium text-[#1A1A2E]" style={{ fontFamily: '"Syne", sans-serif' }}>Client Detail</h2>
                     {isEditing && <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Editing Mode</p>}
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 items-center">
                     {!isEditing ? (
-                      <button
-                        onClick={() => setIsEditing(true)}
-                        className="w-12 h-12 rounded-xl bg-blue-50 text-[#1B4DA0] flex items-center justify-center hover:bg-blue-100 transition-all shadow-sm"
-                      >
-                        <FiEdit2 size={20} />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => setIsEditing(true)}
+                          className="w-12 h-12 rounded-xl bg-blue-50 text-[#1B4DA0] flex items-center justify-center hover:bg-blue-100 transition-all shadow-sm"
+                        >
+                          <FiEdit2 size={20} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedClient(null);
+                            setIsEditing(false);
+                          }}
+                          className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-all shadow-sm"
+                        >
+                          <FiX size={24} />
+                        </button>
+                      </>
                     ) : (
-                      <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-all shadow-sm"
-                      >
-                        {isSaving ? <FiRefreshCw className="animate-spin" size={20} /> : <FiSave size={20} />}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            setIsEditing(false);
+                            setEditForm({ ...selectedClient, clientId: selectedClient.id });
+                          }}
+                          className="px-6 py-2.5 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] text-[13px] font-bold hover:bg-[#E5E5EB] transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSave}
+                          disabled={isSaving}
+                          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1B4DA0] text-white text-[13px] font-bold hover:bg-[#153e82] transition-all shadow-md active:scale-95"
+                        >
+                          {isSaving ? <FiRefreshCw className="animate-spin" size={16} /> : <FiCheck size={16} strokeWidth={3} />}
+                          Save Changes
+                        </button>
+                      </>
                     )}
-                    <button
-                      onClick={() => {
-                        setSelectedClient(null);
-                        setIsEditing(false);
-                      }}
-                      className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
-                    >
-                      <FiX size={24} />
-                    </button>
                   </div>
                 </div>
 

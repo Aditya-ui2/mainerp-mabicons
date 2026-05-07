@@ -311,10 +311,10 @@ const SuperAdminDashboard = () => {
       case 'Billing':
         return (
           <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Sticky Header Section */}
-            <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-6 -mx-6 px-6 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/50">
-              <div className="flex flex-col items-start text-left">
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-syne">Billing</h1>
+            {/* Header Section */}
+            <div className="flex items-center justify-between mb-8 text-left">
+              <div className="flex flex-col text-left">
+                <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">Billing</h1>
               </div>
             </div>
 

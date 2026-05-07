@@ -540,8 +540,8 @@ const TeamTabs = ({ isDarkMode }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500" style={{ fontFamily: "'Calibri', sans-serif" }}>
-      {/* Sticky Header Section */}
-      <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-4 -mx-8 px-8 py-6 mb-8 flex items-center justify-between flex-wrap gap-4 border-b border-slate-100/50">
+      {/* Header Section */}
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4 text-left">
         <div className="text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
         </div>
