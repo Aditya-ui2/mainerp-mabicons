@@ -140,15 +140,15 @@ const Login = () => {
         const user = response.user || response.client || response.superAdmin || response.admin;
         const role = response.userType || (user && (user.role || user.userType)) || (emailLower.includes('client') ? 'client' : '');
         const normalizedRole = normalizeRole(role, user?.department);
-        
+
         if (response.token) localStorage.setItem('token', response.token);
         localStorage.setItem('userType', normalizedRole);
         if (user?.name) localStorage.setItem('userName', user.name);
         localStorage.setItem('userEmail', emailLower);
         if (user?.department) localStorage.setItem('department', user.department);
-        
+
         ['admin_active_tab', 'crm_active_tab', 'hroperations_active_tab', 'rh_active_tab', 'superadmin_active_tab'].forEach(key => localStorage.removeItem(key));
-        
+
         setTimeout(() => navigateByRole(normalizedRole, emailLower, user), 800);
         return;
       }
