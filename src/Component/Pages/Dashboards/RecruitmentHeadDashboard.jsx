@@ -551,76 +551,84 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
         </div>
 
         {/* Floating Action Bar */}
-        <AnimatePresence>
-          {selectedKAMs.length > 0 && (
-            <div className="absolute bottom-6 left-0 w-full flex justify-center z-[100] pointer-events-none">
+        {createPortal(
+          <AnimatePresence>
+            {selectedKAMs.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 30, scale: 0.95 }}
-                className="bg-[#1A1A2E]/95 backdrop-blur-md text-white px-8 py-4 rounded-[32px] shadow-2xl flex items-center pointer-events-auto border border-white/5"
+                initial={{ opacity: 0, y: 100, x: '-50%' }}
+                animate={{ opacity: 1, y: 0, x: '-50%' }}
+                exit={{ opacity: 0, y: 100, x: '-50%' }}
+                className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1500] flex items-center gap-6 px-10 py-5 bg-[#1A1A2E] rounded-[32px] shadow-2xl shadow-slate-900/40 min-w-[520px] border border-white/5 active:cursor-grabbing"
               >
-                <div className="flex items-center gap-4 pr-10 border-r border-white/10 shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-black shadow-lg">
+                {/* Count badge */}
+                <div className="flex items-center gap-4 pr-8 border-r border-white/10 shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] flex items-center justify-center text-white font-black shadow-lg text-lg shrink-0">
                     {selectedKAMs.length}
                   </div>
-                  <span className="text-[14px] font-bold tracking-tight whitespace-nowrap">Members Selected</span>
+                  <div className="text-left flex flex-col justify-center">
+                    <p className="text-[14px] font-black text-white tracking-tight whitespace-nowrap">Member{selectedKAMs.length > 1 ? 's' : ''} Selected</p>
+                    <button
+                      onClick={() => setSelectedKAMs([])}
+                      className="text-[10px] font-bold text-red-400 uppercase tracking-widest hover:text-red-300 transition-colors whitespace-nowrap text-left"
+                    >
+                      Deselect All
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-8 pl-10">
-                  {selectedKAMs.every(id => {
-                    const kam = teamData.find(k => k.id === id);
-                    return kam && (kam.status || 'Active') === 'Inactive';
-                  }) ? (
-                    <button
-                      onClick={async () => {
-                        if (window.confirm(`Mark ${selectedKAMs.length} members as Active?`)) {
-                          const success = await onToggleStatusMultiple(selectedKAMs, 'Active');
-                          if (success) setSelectedKAMs([]);
-                        }
-                      }}
-                      className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
-                    >
-                      <FiEye size={18} className="text-[#3B82F6]" />
-                      <span>Active</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        if (window.confirm(`Mark ${selectedKAMs.length} members as Inactive?`)) {
-                          const success = await onToggleStatusMultiple(selectedKAMs, 'Inactive');
-                          if (success) setSelectedKAMs([]);
-                        }
-                      }}
-                      className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-white font-bold text-[13px]"
-                    >
-                      <FiEyeOff size={18} className="text-[#3B82F6]" />
-                      <span>Hold</span>
-                    </button>
-                  )}
+                {/* Action buttons */}
+                <div className="flex items-center gap-6 flex-1 justify-center text-white">
+                  <button
+                    onClick={() => {
+                      const emails = teamData
+                        .filter(m => selectedKAMs.includes(m.id))
+                        .map(m => m.email)
+                        .join(',');
+                      window.location.href = `mailto:${emails}`;
+                    }}
+                    className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                  >
+                    <FiMail size={16} className="text-blue-400 group-hover:text-white" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">Email</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (selectedKAMs.length === 1) {
+                        const m = teamData.find(x => x.id === selectedKAMs[0]);
+                        if (m) { onViewKAM(m); }
+                      }
+                    }}
+                    className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                  >
+                    <FiEye size={16} className="text-emerald-400 group-hover:text-white" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">View</span>
+                  </button>
 
                   <button
                     onClick={async () => {
                       const success = await onDeleteMultiple(selectedKAMs);
                       if (success) setSelectedKAMs([]);
                     }}
-                    className="flex flex-row items-center gap-2.5 transition-all hover:opacity-80 active:scale-95 text-[#EF4444] font-bold text-[13px]"
+                    className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
                   >
-                    <FiTrash2 size={18} className="text-[#EF4444]" />
-                    <span>Remove</span>
+                    <FiTrash2 size={16} className="text-red-400 group-hover:text-white" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">Remove</span>
                   </button>
                 </div>
 
+                {/* Close button */}
                 <button
                   onClick={() => setSelectedKAMs([])}
-                  className="ml-10 w-10 h-10 flex items-center justify-center shrink-0 rounded-full bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white"
+                  className="p-3 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white transition-all text-[#9B9BAD]"
                 >
                   <FiX size={20} />
                 </button>
               </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
       </div>
 
     </div>
