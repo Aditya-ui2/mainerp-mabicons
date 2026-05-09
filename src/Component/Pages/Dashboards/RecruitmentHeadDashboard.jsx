@@ -528,7 +528,6 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
                     <FiPhone size={14} />
                   </button>
                 </div>
-
                 {/* Status Column */}
                 <div className="flex items-center justify-start py-1">
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${(kam.status || 'Active') === 'Active'
@@ -782,7 +781,7 @@ const KAMPerformanceContent = ({
 
         </div>
 
-        <motion.div variants={itemVariants} className="flex items-center gap-3 flex-wrap">
+        <motion.div variants={itemVariants} className="flex items-center gap-3 flex-wrap relative z-[100]">
           {/* Client Filter */}
           <div className="relative" ref={clientDropdownRef}>
             <button
@@ -974,7 +973,7 @@ const KAMPerformanceContent = ({
               <div className="flex items-center gap-2 mb-8 text-left">
 
                 <h3 className="text-lg font-bold text-[#1A1A2E]">Top Performers</h3>
-                <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest ml-auto">By Hires</span>
+
               </div>
 
               <div className="flex flex-col md:flex-row items-center justify-around gap-6">

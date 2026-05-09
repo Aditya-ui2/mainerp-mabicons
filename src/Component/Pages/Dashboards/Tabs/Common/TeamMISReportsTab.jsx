@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Phone, Eye, Share2, Calendar, Clock, MessageSquare, CheckCircle2, 
@@ -112,26 +113,22 @@ const CommentModal = ({ report, onClose, onSaved }) => {
   );
 };
 
-const ReportRow = ({ report, onComment }) => {
-  const [expanded, setExpanded] = useState(false);
-  const mc = moodConfig[report.mood] || moodConfig.Good;
-  const MoodIcon = mc.icon;
-
+const ReportRow = ({ report }) => {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative group text-left mb-6">
-      <div className="p-6 lg:p-8 cursor-pointer relative z-10" onClick={() => setExpanded(!expanded)}>
-        <div className="flex items-center justify-between flex-wrap gap-6">
+    <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative group text-left mb-4">
+      <div className="p-4 lg:p-5 relative z-10">
+        <div className="flex items-center justify-between flex-wrap gap-5">
           
           {/* Identity Block */}
-          <div className="flex items-center gap-5 min-w-[240px]">
-            <div className="w-14 h-14 rounded-[20px] flex items-center justify-center font-bold text-white text-xl flex-shrink-0 shadow-lg shadow-blue-500/20"
+          <div className="flex items-center gap-4 min-w-[200px]">
+            <div className="w-12 h-12 rounded-[16px] flex items-center justify-center font-bold text-white text-lg flex-shrink-0 shadow-md shadow-blue-500/20"
               style={{ background: '#1B4DA0' }}>
               {(report.memberName || '?').charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-[20px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2.5">{report.memberName}</p>
+              <p className="text-[18px] font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-2">{report.memberName}</p>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAFAFA] dark:bg-slate-800 border border-[#F4F3EF] dark:border-slate-700 rounded-lg">
-                <Clock size={12} className="text-[#9B9BAD]" />
+                <Clock size={10} className="text-[#9B9BAD]" />
                 <span className="text-[9px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-widest">
                   {formatTime(report.checkInTime)} — {formatTime(report.checkOutTime)}
                 </span>
@@ -140,105 +137,25 @@ const ReportRow = ({ report, onComment }) => {
           </div>
 
           {/* Core Metrics Palette */}
-          <div className="flex items-center gap-3 flex-wrap flex-1 justify-center lg:justify-start">
+          <div className="flex items-center gap-3 flex-wrap flex-1 justify-center lg:justify-end">
             <StatBadge icon={Phone}    value={report.callsCount}          label="Dials"      color="text-[#3B82F6]" bg="bg-[#EFF6FF]" />
-            <StatBadge icon={Eye}      value={report.profilesVisited}     label="Visits"     color="text-[#8B5CF6]" bg="bg-[#F5F3FF]" />
-            <StatBadge icon={Share2}   value={report.profilesShared}      label="Shares"     color="text-[#0891B2]" bg="bg-[#ECFEFF]" />
-            <StatBadge icon={Users}    value={report.candidatesContacted} label="Touches"    color="text-[#10B981]" bg="bg-[#ECFDF5]" />
-            <StatBadge icon={Calendar} value={report.interviewsArranged}  label="Books"      color="text-[#F59E0B]" bg="bg-[#FFFBEB]" />
-          </div>
-
-          {/* Operational Status */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              {report.workHours > 0 && (
-                <div className="inline-flex px-3 py-2 bg-[#F8FAFF] border border-[#EEF2FB] rounded-xl flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-[#1B4DA0] tracking-widest uppercase">
-                    {report.workHours} HRS Active
-                  </span>
-                </div>
-              )}
-              <div className={`inline-flex px-3 py-2 rounded-xl flex items-center gap-1.5 ${mc.bg}`}>
-                <MoodIcon size={14} className={mc.color} />
-                <span className={`text-[9px] font-bold tracking-[0.15em] uppercase ${mc.color}`}>{mc.label}</span>
+            <StatBadge icon={Eye}      value={report.profilesVisited}     label="Visits"     color="text-[#3B82F6]" bg="bg-[#EFF6FF]" />
+            <StatBadge icon={Share2}   value={report.profilesShared}      label="Shares"     color="text-[#3B82F6]" bg="bg-[#EFF6FF]" />
+            <StatBadge icon={Users}    value={report.candidatesContacted} label="Touches"    color="text-[#3B82F6]" bg="bg-[#EFF6FF]" />
+            <StatBadge icon={Calendar} value={report.interviewsArranged}  label="Books"      color="text-[#3B82F6]" bg="bg-[#EFF6FF]" />
+            
+            {report.workHours > 0 && (
+              <div className="inline-flex px-3 py-2 bg-[#EFF6FF] rounded-xl flex items-center justify-center border border-[#EFF6FF]">
+                <span className="text-[10px] font-bold text-[#3B82F6] tracking-widest uppercase">
+                  {report.workHours} HRS Active
+                </span>
               </div>
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); onComment(report); }}
-              className={`flex items-center gap-2 px-5 py-3 rounded-[16px] text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm ${
-                report.headComment 
-                  ? 'bg-[#1B4DA0] text-white shadow-blue-500/20 hover:bg-[#153e82]' 
-                  : 'bg-white border border-[#F4F3EF] text-[#9B9BAD] hover:bg-[#F8FAFF] hover:text-[#1A1A2E] hover:border-[#EEF2FB]'
-              }`}
-            >
-              <MessageSquare size={14} />
-              {report.headComment ? 'Edit Intel' : 'Log Intel'}
-            </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Expanded Metrics Area */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-t border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50 relative z-10 rounded-b-[32px]"
-          >
-            <div className="p-8 grid lg:grid-cols-2 gap-8">
-              {report.summary && (
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-[24px] border border-[#F4F3EF] dark:border-slate-800 hover:shadow-lg transition-all duration-300">
-                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em] mb-3">Field Action Summary</p>
-                  <p className="text-[14px] font-medium text-[#1A1A2E] dark:text-white leading-relaxed">{report.summary}</p>
-                </div>
-              )}
-              
-              {Array.isArray(report.tasksCompleted) && report.tasksCompleted.length > 0 && (
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-[24px] border border-[#F4F3EF] dark:border-slate-800 hover:shadow-lg transition-all duration-300">
-                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em] mb-4">Tactical Objectives Hit</p>
-                  <div className="space-y-4">
-                    {report.tasksCompleted.map((t, i) => (
-                      <div key={i} className="flex items-start gap-4 p-3 bg-[#FAFAFA] dark:bg-slate-800/50 rounded-xl">
-                        <CheckCircle2 size={18} className="text-[#10B981] flex-shrink-0" />
-                        <p className="text-[13px] font-bold text-[#1A1A2E] dark:text-white leading-tight">{t}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {report.blockers && (
-                <div className="bg-white dark:bg-amber-900/10 p-8 rounded-[24px] border border-[#FEF3C7] dark:border-amber-900 lg:col-span-2 shadow-sm hover:shadow-lg transition-all">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#FEF3C7] flex items-center justify-center text-[#F59E0B]">
-                       <AlertCircle size={16} />
-                    </div>
-                    <p className="text-[11px] font-bold text-[#F59E0B] uppercase tracking-[0.15em]">Detected Blockers</p>
-                  </div>
-                  <p className="text-[14px] font-bold text-[#B45309] dark:text-amber-500 leading-relaxed ml-10">{report.blockers}</p>
-                </div>
-              )}
-
-              {report.headComment && (
-                <div className="bg-[#1B4DA0] dark:bg-slate-800 p-8 rounded-[24px] border border-[#1B4DA0] dark:border-slate-700 lg:col-span-2 shadow-lg shadow-blue-900/10 text-white relative overflow-hidden group/intel">
-                  <div className="flex items-center gap-2 mb-4 relative z-10">
-                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white backdrop-blur-sm">
-                      <ShieldCheck size={16} />
-                    </div>
-                    <p className="text-[11px] font-bold text-blue-100 uppercase tracking-[0.2em]">
-                      Command Intel Logged {report.headCommentBy && `• BY ${report.headCommentBy}`}
-                    </p>
-                  </div>
-                  <p className="text-[15px] font-medium text-white leading-relaxed ml-10 relative z-10">{report.headComment}</p>
-                  
-                  {/* Intel Card Glow */}
-                  <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover/intel:bg-white/20 transition-all pointer-events-none -translate-y-1/2 translate-x-1/4" />
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Atmospheric Hover Glow (Behind everything) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#1B4DA0]/0 rounded-full blur-[80px] group-hover:bg-[#1B4DA0]/5 transition-colors duration-1000 pointer-events-none -z-10" />
@@ -246,11 +163,71 @@ const ReportRow = ({ report, onComment }) => {
   );
 };
 
+const MOCK_REPORTS = [
+  {
+    id: 'mock-0',
+    date: new Date().toISOString().split('T')[0], // Today
+    memberName: 'Priyanshi Sharma',
+    checkInTime: '09:00',
+    checkOutTime: '11:58',
+    workHours: 2.9,
+    callsCount: 15,
+    profilesVisited: 40,
+    profilesShared: 3,
+    candidatesContacted: 10,
+    interviewsArranged: 1,
+    summary: 'Morning progress: Focused on interview scheduling and initial candidate screening.',
+    tasksCompleted: ['Scheduled 2 interviews', 'Initial resume screening'],
+    tasksPlanned: ['Follow up with hiring managers'],
+    blockers: '',
+    headCommentBy: 'Manju'
+  },
+  {
+    id: 'mock-1',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
+    memberName: 'Priyanshi Sharma',
+    checkInTime: '09:05',
+    checkOutTime: '18:45',
+    workHours: 9.6,
+    callsCount: 45,
+    profilesVisited: 120,
+    profilesShared: 12,
+    candidatesContacted: 28,
+    interviewsArranged: 4,
+    summary: 'Productive day focusing on the Senior React Developer role. Shortlisted 5 solid candidates.',
+    tasksCompleted: ['Screened 15 candidates', ' for JD sync', 'Updated Recruitment Tracker'],
+    tasksPlanned: ['Focus on Backend roles', 'Interview scheduling for tomorrow'],
+    blockers: 'None',
+    headComment: 'Excellent performance today, keep it up!',
+    headCommentBy: 'Manju'
+  },
+  {
+    id: 'mock-2',
+    date: new Date(Date.now() - 172800000).toISOString().split('T')[0], // 2 days ago
+    memberName: 'Priyanshi Sharma',
+    checkInTime: '09:15',
+    checkOutTime: '18:15',
+    workHours: 9.0,
+    callsCount: 38,
+    profilesVisited: 95,
+    profilesShared: 8,
+    candidatesContacted: 22,
+    interviewsArranged: 2,
+    summary: 'Focused on sourcing for the Python lead role. Good traction on LinkedIn.',
+    tasksCompleted: ['LinkedIn Sourcing', 'Resume screening', 'Feedback sync with KAM'],
+    tasksPlanned: ['Sourcing for Java roles', 'Follow up with shortlisted candidates'],
+    blockers: 'Portal access was slow in the morning',
+    headComment: 'Good effort, try to increase candidate outreach tomorrow.',
+    headCommentBy: 'Manju'
+  }
+];
+
 const TeamMISReportsTab = () => {
   const [reports, setReports]         = useState([]);
   const [loading, setLoading]         = useState(true);
-  const [selectedDate, setSelectedDate] = useState(getLocalISODate());
+  const [selectedDate, setSelectedDate] = useState('All Dates');
   const [selectedKAM, setSelectedKAM] = useState('all');
+
   const [commentTarget, setCommentTarget] = useState(null);
   const [toast, setToast]             = useState(null);
   const dateInputRef = useRef(null);
@@ -263,14 +240,32 @@ const TeamMISReportsTab = () => {
   const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getMISReports({ date: selectedDate, department: 'HR Recruitment' });
-      setReports(res.reports || []);
-    } catch (err) {
-      if (err?.message?.toLowerCase().includes('authorization') || err?.message?.toLowerCase().includes('token') || err?.status === 401) {
-        showToast('Session expired. Please login again.', 'error');
-      } else {
-        showToast(err.message || 'Failed to fetch MIS reports', 'error');
+      let apiReports = [];
+      try {
+        const params = { department: 'HR Recruitment' };
+        if (selectedDate !== 'All Dates') {
+          params.date = selectedDate;
+        }
+        const res = await getMISReports(params);
+        apiReports = res.reports || [];
+      } catch (err) {
+        if (err?.message?.toLowerCase().includes('authorization') || err?.message?.toLowerCase().includes('token') || err?.status === 401) {
+          showToast('Session expired. Please login again.', 'error');
+        } else {
+          showToast(err.message || 'Failed to fetch MIS reports', 'error');
+        }
       }
+      
+      const mockReportsForDate = selectedDate === 'All Dates' ? MOCK_REPORTS : MOCK_REPORTS.filter(r => r.date === selectedDate);
+      const combined = [...apiReports];
+      mockReportsForDate.forEach(mock => {
+        if (!combined.some(r => r.id === mock.id || r.memberName === mock.memberName && r.date === mock.date)) {
+          combined.push(mock);
+        }
+      });
+      // Sort combined by date descending
+      combined.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+      setReports(combined);
     } finally {
       setLoading(false);
     }
@@ -292,9 +287,11 @@ const TeamMISReportsTab = () => {
     interviewsArranged:  acc.interviewsArranged  + (r.interviewsArranged  || 0),
   }), { callsCount: 0, profilesVisited: 0, profilesShared: 0, candidatesContacted: 0, interviewsArranged: 0 });
 
-  const formattedDate = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-IN', {
-    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-  });
+  const formattedDate = selectedDate === 'All Dates' 
+    ? 'All Dates'
+    : new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-IN', {
+        weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+      });
 
   const openDatePicker = () => {
     if (!dateInputRef.current) return;
@@ -351,6 +348,7 @@ const TeamMISReportsTab = () => {
       `}</style>
 
       <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
+
         <AnimatePresence>
           {toast && <Toast message={toast.message} type={toast.type} />}
         </AnimatePresence>
@@ -373,7 +371,7 @@ const TeamMISReportsTab = () => {
                 className="bg-[#FAFAFA] dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-xl pl-10 pr-10 py-3 text-[10px] font-bold uppercase tracking-widest text-[#1A1A2E] dark:text-white outline-none cursor-pointer shadow-sm hover:bg-[#F8FAFF] hover:border-[#1B4DA0]/20 transition-all appearance-none"
               >
                 <option value="all">All Members</option>
-                {[...new Set(reports.map(r => r.memberName))].filter(Boolean).map(name => (
+                {[...new Set(['Manju', 'Jyoti', ...reports.map(r => r.memberName)])].filter(Boolean).map(name => (
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
@@ -391,48 +389,27 @@ const TeamMISReportsTab = () => {
               <input
                 ref={dateInputRef}
                 type="date"
-                value={selectedDate}
+                value={selectedDate === 'All Dates' ? '' : selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
             </button>
+            {selectedDate !== 'All Dates' && (
+              <button
+                type="button"
+                onClick={() => setSelectedDate('All Dates')}
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#FAFAFA] dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all shadow-sm"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Main Timeline Container */}
         <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
           
-          {/* Timeline Header */}
-          <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] dark:border-slate-800 bg-[#FAFAFA]/50 dark:bg-slate-900/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
-                <BarChart2 size={20} strokeWidth={2} />
-              </div>
-              <h3 className="text-xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Performance</h3>
-            </div>
-            <div className="flex items-center gap-4">
-            </div>
-          </div>
 
-          {/* Totals Band */}
-          {!loading && filteredReports.length > 0 && (
-            <div className="px-8 py-6 border-b border-[#F4F3EF] dark:border-slate-800 bg-white dark:bg-slate-900/50 relative z-10">
-              <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-[#F4F3EF] dark:divide-slate-800">
-                {[
-                  { label: 'Outbound Dials', value: totals.callsCount,          color: 'text-[#3B82F6]' },
-                  { label: 'Profiles Visited',value: totals.profilesVisited,     color: 'text-[#8B5CF6]' },
-                  { label: 'Network Shares',  value: totals.profilesShared,      color: 'text-[#0891B2]' },
-                  { label: 'Talent Touches',  value: totals.candidatesContacted, color: 'text-[#10B981]' },
-                  { label: 'Verified Bookings',value: totals.interviewsArranged,  color: 'text-[#F59E0B]' },
-                ].map((m, idx) => (
-                  <div key={m.label} className="px-4 lg:px-6 text-center">
-                    <p className={`text-[28px] font-black font-syne leading-none mb-1 ${m.color}`}>{m.value}</p>
-                    <p className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[0.15em]">{m.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Vertical Bridge Line */}
           <div className="absolute left-[88px] lg:left-[108px] top-[200px] bottom-[40px] w-px bg-[#F4F3EF] dark:bg-slate-800 pointer-events-none hidden sm:block" />

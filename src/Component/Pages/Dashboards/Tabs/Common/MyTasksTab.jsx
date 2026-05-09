@@ -423,11 +423,11 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
         </div>
 
         {/* Priority Filter */}
-        <div className="relative">
+        <div className="relative group">
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] w-full"
           >
             <option value="all">All Priorities</option>
             <option value="Low">Low</option>
@@ -435,15 +435,15 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
             <option value="High">High</option>
             <option value="Urgent">Urgent</option>
           </select>
-          <Flag className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none transition-colors group-hover:text-[#1A1A2E]" size={16} />
         </div>
 
         {/* Status Filter */}
-        <div className="relative">
+        <div className="relative group">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[140px] w-full"
           >
             <option value="all">All Logs</option>
             <option value="Pending">Pending</option>
@@ -451,7 +451,7 @@ const MyTasksTab = ({ initialFilter = 'all' }) => {
             <option value="Completed">Completed</option>
             <option value="Overdue">Overdue</option>
           </select>
-          <Activity className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none transition-colors group-hover:text-[#1A1A2E]" size={16} />
         </div>
       </div>
 

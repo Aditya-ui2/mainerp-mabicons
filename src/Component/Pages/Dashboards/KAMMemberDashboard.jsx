@@ -864,27 +864,23 @@ const KAMMemberDashboard = () => {
             default:
               // Dashboard
               return (
-                <div className="space-y-8">
-                  {/* Modern Header Section */}
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
-                    <div className="flex flex-col">
-                      <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-jakarta">
+                <div className="space-y-8 bg-[#FDFDFD] -m-6 p-6 min-h-screen">
+                  {/* Sticky Welcome Header */}
+                  <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-6 -mx-6 px-6 py-6 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/50">
+                    <div className="flex flex-col items-start text-left">
+                      <h2 className="text-3xl font-bold text-slate-900 mb-1 font-syne">
                         Welcome {userInfo.name.split(' (')[0]}
-                      </h1>
-                      <p className="text-slate-500 font-medium mt-1">
-                        Today is {formattedHeaderDate}
-                      </p>
+                      </h2>
                     </div>
-
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
                       <div className="relative">
                         <button
                           onClick={() => setShowDateFilter(!showDateFilter)}
-                          className="px-5 py-2.5 bg-[#1B4DA0] text-white rounded-xl text-sm font-bold hover:bg-blue-800 transition-all flex items-center gap-2 active:scale-95"
+                          className="flex items-center gap-2 px-4 py-2.5 bg-[#0D47A1] text-white rounded-xl hover:bg-[#0a3a82] transition-all shadow-md hover:shadow-lg"
                         >
-                          <FiCalendar size={16} />
-                          <span>{getFilterLabel()}</span>
-                          <FiChevronDown className={`transition-transform duration-300 ${showDateFilter ? 'rotate-180' : ''}`} />
+                          <FiCalendar className="w-4 h-4" />
+                          <span className="font-medium text-sm">{getFilterLabel()}</span>
+                          <FiChevronDown className={`w-4 h-4 transition-transform ${showDateFilter ? 'rotate-180' : ''}`} />
                         </button>
 
                         <AnimatePresence>
@@ -969,17 +965,6 @@ const KAMMemberDashboard = () => {
                           )}
                         </AnimatePresence>
                       </div>
-
-                      <button
-                        onClick={() => fetchDashboardData(userInfo.id)}
-                        className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 hover:text-[#1B4DA0] hover:bg-white transition-all shadow-sm group"
-                      >
-                        <FiRefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
-                      </button>
-
-                      <div className="h-8 w-[1px] bg-slate-100 mx-1 hidden md:block"></div>
-
-
                     </div>
                   </div>
 

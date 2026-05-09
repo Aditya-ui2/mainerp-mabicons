@@ -239,14 +239,6 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
           </h1>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={fetchMembers}
-            disabled={loading}
-            className="group flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#6B6B7E] border border-[#F4F3EF] rounded-xl text-sm font-bold hover:bg-blue-50/50 hover:text-[#0D47A1] hover:border-[#0D47A1]/20 transition-all duration-300 shadow-sm active:scale-95 disabled:opacity-50 min-w-[120px]"
-          >
-            <FiRefreshCw size={14} className={`text-[#1B4DA0] group-hover:text-[#0D47A1] transition-colors ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
           {currentUserName?.toLowerCase()?.includes('ashish') && (
             <button
               onClick={() => setShowInviteModal(true)}
@@ -273,26 +265,28 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
         </div>
 
         {/* Role Filter */}
-        <div className="relative">
+        <div className="relative group">
           <select
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] w-full"
           >
             <option value="all">All Roles</option>
             <option value="HR Executive">HR Executive</option>
             <option value="KAM - Recruitment">KAM - Recruitment</option>
             <option value="Department Head">Department Head</option>
           </select>
+          <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none transition-colors group-hover:text-[#1A1A2E]" size={16} />
         </div>
 
         {/* Status Filter */}
-        <div className="relative">
+        <div className="relative group">
           <select
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[140px] w-full"
           >
             <option value="all">All Status</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
+          <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none transition-colors group-hover:text-[#1A1A2E]" size={16} />
         </div>
       </div>
 
