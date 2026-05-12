@@ -296,7 +296,8 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
         { field: 'ownerName', label: 'Owner Name' },
         { field: 'ownerEmail', label: 'Owner Email' },
         { field: 'spocName', label: 'SPOC Name' },
-        { field: 'spocPhone', label: 'SPOC Phone' }
+        { field: 'spocPhone', label: 'SPOC Phone' },
+        { field: 'serviceType', label: 'Service Type' }
       ];
 
       for (const item of required) {
@@ -314,23 +315,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
     }
 
     if (currentStep === 2) {
-      const required = [
-        { field: 'agreementType', label: 'Agreement Type', exclude: 'Select agreement' },
-        { field: 'agreementEffectiveDate', label: 'Effective Date' },
-        { field: 'feeAmount', label: 'Fee Amount' },
-        { field: 'paymentTerms', label: 'Payment Terms' },
-        { field: 'totalEmployees', label: 'Total Employees' },
-        { field: 'assignKAM', label: 'Assigned KAM' },
-        { field: 'serviceType', label: 'Service Type' }
-      ];
-
-      for (const item of required) {
-        if (!formData[item.field] || (item.exclude && formData[item.field] === item.exclude)) {
-          toast.error(`${item.label} is required`);
-          return false;
-        }
-      }
-      return true;
+      return true; // Stage 2 is now optional
     }
 
     return true;
@@ -509,6 +494,16 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                                 <InputField label="Owner Email" name="ownerEmail" value={formData.ownerEmail} onChange={handleInputChange} placeholder="owner@email.com" clientMode={clientMode} />
                                 <InputField label="SPOC Name" name="spocName" value={formData.spocName} onChange={handleInputChange} placeholder="Name" clientMode={clientMode} />
                                 <InputField label="SPOC Phone" name="spocPhone" value={formData.spocPhone} onChange={handleInputChange} placeholder="+91 XXXXX XXXXX" clientMode={clientMode} />
+                                <div className="col-span-full">
+                                  <SelectField
+                                    label="Service Type"
+                                    name="serviceType"
+                                    value={formData.serviceType}
+                                    onChange={handleInputChange}
+                                    options={['Recruitment', 'Operations', 'Recruitment + Operations']}
+                                    clientMode={clientMode}
+                                  />
+                                </div>
                               </div>
                             </div>
                           </motion.div>
@@ -523,16 +518,6 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                                 <InputField label="Effective date" name="agreementEffectiveDate" value={formData.agreementEffectiveDate} onChange={handleInputChange} type="date" clientMode={clientMode} />
                                 <InputField label="Fee % / amount" name="feeAmount" value={formData.feeAmount} onChange={handleInputChange} placeholder="e.g. 8.33%" clientMode={clientMode} />
                                 <SelectField label="Payment terms" name="paymentTerms" value={formData.paymentTerms} onChange={handleInputChange} options={['Net 15', 'Net 30', 'Net 45']} clientMode={clientMode} />
-                                <div className="col-span-full">
-                                  <SelectField
-                                    label="Service Type"
-                                    name="serviceType"
-                                    value={formData.serviceType}
-                                    onChange={handleInputChange}
-                                    options={['Recruitment', 'Operations', 'Recruitment + Operations']}
-                                    clientMode={clientMode}
-                                  />
-                                </div>
                               </div>
                             </div>
 
@@ -634,6 +619,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                       Back
                     </button>
                   )}
+
                   {step < steps.length ? (
                     <button
                       type="button"

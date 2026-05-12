@@ -143,20 +143,24 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
 
   // Onboarding progress state
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
-  const [onboardingDocs, setOnboardingDocs] = useState([
-    { id: 'pan', label: 'PAN Number', completed: true },
-    { id: 'gst', label: 'GST Number', completed: true },
-    { id: 'cin', label: 'CIN (Corporate ID)', completed: true },
-    { id: 'msme', label: 'MSME Certificate', completed: false },
-    { id: 'agreement', label: 'Agreement Signed Copy', completed: false },
-    { id: 'nda', label: 'NDA / Confidentiality Signed', completed: false },
-    { id: 'insurance', label: 'Insurance Details', completed: false },
-  ]);
+  const onboardingFields = [
+    { key: 'companyName', label: 'Identity' },
+    { key: 'gstNumber', label: 'GST Info' },
+    { key: 'pinCode', label: 'Location' },
+    { key: 'state', label: 'State' },
+    { key: 'city', label: 'City' },
+    { key: 'serviceType', label: 'Service Type' },
+    { key: 'registeredAddress', label: 'Address' },
+    { key: 'ownerName', label: 'Ownership' },
+    { key: 'ownerEmail', label: 'Owner Contact' },
+    { key: 'spocName', label: 'SPOC' },
+    { key: 'spocPhone', label: 'SPOC Phone' }
+  ];
 
-  const completedCount = onboardingDocs.filter(d => d.completed).length;
-  const totalCount = onboardingDocs.length;
-  const remainingCount = totalCount - completedCount;
-  const progressPercentage = Math.round((completedCount / totalCount) * 100);
+  const completedFieldsCount = onboardingFields.filter(f => clientData && clientData[f.key]).length;
+  const totalFieldsCount = onboardingFields.length;
+  const progressPercentage = Math.round((completedFieldsCount / totalFieldsCount) * 100);
+  const remainingCount = totalFieldsCount - completedFieldsCount;
 
   // Close dropdowns on outside click
   useEffect(() => {
