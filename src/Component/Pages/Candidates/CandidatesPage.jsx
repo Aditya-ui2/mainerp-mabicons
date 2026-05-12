@@ -217,6 +217,15 @@ export default function CandidatesPage({ setActiveTab }) {
         url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
       }
       
+      // Append auth token for the /view endpoint if needed
+      if (url.includes('/api/resumebank/') && (url.includes('/view') || url.includes('/download'))) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+          url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+        }
+      }
+      
       // If it's a SharePoint link but we don't have authentication, this might still fail 
       // but we try direct opening first as it's faster.
       window.open(url, '_blank', 'noopener,noreferrer');
@@ -237,6 +246,14 @@ export default function CandidatesPage({ setActiveTab }) {
           if (!url.startsWith('http') && !url.startsWith('https')) {
             url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
           }
+          // Append auth token for the /view endpoint if needed
+          if (url.includes('/api/resumebank/') && (url.includes('/view') || url.includes('/download'))) {
+            const token = localStorage.getItem('token');
+            if (token) {
+              const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+              url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+            }
+          }
           window.open(url, '_blank', 'noopener,noreferrer');
           toast.success("CV Opened Successfully", { id: toastId });
         } else {
@@ -244,7 +261,8 @@ export default function CandidatesPage({ setActiveTab }) {
         }
       } catch (err) {
         console.error("CV Fetch Error:", err);
-        toast.error("Resume server unavailable", { id: toastId });
+        const errorMsg = err.message || err.response?.data?.message || "Resume server unavailable";
+        toast.error(errorMsg, { id: toastId });
       }
     } else {
       toast.error("No CV uploaded for this candidate");
@@ -581,9 +599,9 @@ export default function CandidatesPage({ setActiveTab }) {
       ]);
 
       const pool = [
-        ...(erpRes?.data || []).map(c => ({ id: c.id, name: c.name, role: c.position?.title || c.role, skills: c.skills, experience: c.experience, resumeUrl: c.cvUrl })),
-        ...(spRes?.data || []).map(c => ({ id: c.sharePointId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position, skills: ['SharePoint'], experience: 'N/A', resumeUrl: c.resumeUrl })),
-        ...(bankRes?.data || bankRes || []).map(c => ({ id: c.userId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position || c.role, skills: c.skills, experience: c.experience, resumeId: c.id }))
+        ...(erpRes?.data || []).map(c => ({ id: c.id, name: c.name, role: c.position?.title || c.role, skills: c.skills, experience: c.experience, resumeUrl: c.cvUrl, email: c.email, sharePointId: c.sharePointId })),
+        ...(spRes?.data || []).map(c => ({ id: c.sharePointId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position, skills: ['SharePoint'], experience: 'N/A', resumeUrl: c.resumeUrl || c.cvUrl || c.webUrl || c.web_url, email: c.email, sharePointId: c.sharePointId })),
+        ...(bankRes?.data || bankRes || []).map(c => ({ id: c.userId || c.id, name: c.candidateName || c.name || c.fileName, role: c.position || c.role, skills: c.skills, experience: c.experience, resumeId: c.id, email: c.email, sharePointId: c.sharePointId, resumeUrl: c.resumeUrl || c.cvUrl || c.webUrl || c.web_url }))
       ].filter(c => c && (c.name || c.role));
 
       const jobTitle = selectedJob.title;
@@ -1522,7 +1540,17 @@ Mabicons Recruitment Team`);
                     withCV.forEach((c, index) => {
                       // Small delay to bypass some simple popup blockers
                       setTimeout(() => {
-                        const url = c.cvUrl.startsWith('http') ? c.cvUrl : `${BASE_URL}${c.cvUrl.startsWith('/') ? '' : '/'}${c.cvUrl}`;
+                        let url = c.cvUrl.startsWith('http') ? c.cvUrl : `${BASE_URL}${c.cvUrl.startsWith('/') ? '' : '/'}${c.cvUrl}`;
+                        
+                        // Append auth token for API URLs
+                        if (url.includes('/api/')) {
+                          const token = localStorage.getItem('token');
+                          if (token) {
+                            const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+                            url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+                          }
+                        }
+                        
                         window.open(url, '_blank');
                       }, index * 300);
                     });
@@ -1700,7 +1728,17 @@ Mabicons Recruitment Team`);
                         {selectedCandidate.cvUrl && (
                           <button
                             onClick={() => {
-                              const url = selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`;
+                              let url = selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`;
+                              
+                              // Append auth token for API URLs
+                              if (url.includes('/api/')) {
+                                const token = localStorage.getItem('token');
+                                if (token) {
+                                  const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+                                  url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+                                }
+                              }
+                              
                               window.open(url, '_blank');
                             }}
                             className="flex items-center gap-2 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-sm font-bold hover:bg-[#0D47A1] transition-all shadow-xl shadow-blue-500/20 active:scale-95"
@@ -1832,7 +1870,19 @@ Mabicons Recruitment Team`);
                       {showCvPreview ? (
                         <div className="space-y-3">
                           <iframe
-                            src={`${selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`}`}
+                            src={(() => {
+                              let url = selectedCandidate.cvUrl.startsWith('http') ? selectedCandidate.cvUrl : `${BASE_URL}${selectedCandidate.cvUrl.startsWith('/') ? '' : '/'}${selectedCandidate.cvUrl}`;
+                              
+                              // Append auth token for API URLs
+                              if (url.includes('/api/')) {
+                                const token = localStorage.getItem('token');
+                                if (token) {
+                                  const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+                                  url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+                                }
+                              }
+                              return url;
+                            })()}
                             className="w-full h-[400px] rounded-2xl border border-[#F4F3EF]"
                             title="CV Preview"
                           />
@@ -2062,22 +2112,7 @@ Mabicons Recruitment Team`);
                                   type="button"
                                   onClick={async (e) => {
                                     e.stopPropagation();
-                                    if (c.resumeUrl) {
-                                      const url = c.resumeUrl.startsWith('http') ? c.resumeUrl : `${BASE_URL}${c.resumeUrl.startsWith('/') ? '' : '/'}${c.resumeUrl}`;
-                                      window.open(url, '_blank');
-                                    } else if (c.resumeId) {
-                                      toast.info("Opening resume...");
-                                      try {
-                                        const res = await getResumeDownloadUrl(c.resumeId);
-                                        if (res.success && res.downloadUrl) {
-                                          let url = res.downloadUrl;
-                                          if (url.startsWith('/uploads/')) url = `${BASE_URL}${url}`;
-                                          window.open(url, '_blank');
-                                        } else toast.error("Resume not found");
-                                      } catch (err) { toast.error("Failed to open CV"); }
-                                    } else {
-                                      toast.error("No CV link available");
-                                    }
+                                    handleViewCV(c);
                                   }}
                                   className="px-4 py-2 bg-[#F4F3EF] text-[#6B6B7E] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm flex items-center gap-2"
                                 >

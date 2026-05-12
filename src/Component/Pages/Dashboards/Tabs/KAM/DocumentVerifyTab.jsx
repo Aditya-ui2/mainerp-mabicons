@@ -87,7 +87,18 @@ const TOTAL_DOCS = DOC_TYPES.length; // 23 documents
 
 const getDocUrl = (doc) => {
   if (!doc?.url) return null;
-  return doc.url.startsWith('http') ? doc.url : `${BASE_URL}${doc.url}`;
+  let url = doc.url.startsWith('http') ? doc.url : `${BASE_URL}${doc.url}`;
+  
+  // Append auth token for API URLs to pass verifyAuthToken in window.open/iframes
+  if (url.includes('/api/')) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+      url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+    }
+  }
+  
+  return url;
 };
 
 const StatusBadge = ({ status }) => {

@@ -325,11 +325,19 @@ const ScreeningTab = ({ isDarkMode }) => {
 
       // 1. If candidate already has a direct CV URL (locally uploaded), use it immediately
       if (candidate.cvUrl) {
-        // Ensure we have a full URL
-        const fullUrl = candidate.cvUrl.startsWith('http') 
+        let fullUrl = candidate.cvUrl.startsWith('http') 
           ? candidate.cvUrl 
           : `${BASE_URL}${candidate.cvUrl.startsWith('/') ? '' : '/'}${candidate.cvUrl}`;
         
+        // Append auth token for the /view endpoint if needed
+        if (fullUrl.includes('/api/resumebank/') && (fullUrl.includes('/view') || fullUrl.includes('/download'))) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+            fullUrl += `${fullUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+          }
+        }
+
         setCvPreviewUrl(fullUrl);
         setShowCVModal(true);
         return;
@@ -349,6 +357,15 @@ const ScreeningTab = ({ isDarkMode }) => {
         let downloadUrl = downloadResponse.downloadUrl;
         if (downloadUrl && !downloadUrl.startsWith('http')) {
           downloadUrl = `${BASE_URL}${downloadUrl.startsWith('/') ? '' : '/'}${downloadUrl}`;
+        }
+
+        // Append auth token for the /view endpoint if needed
+        if (downloadUrl.includes('/api/resumebank/') && (downloadUrl.includes('/view') || downloadUrl.includes('/download'))) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+            downloadUrl += `${downloadUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+          }
         }
         
         setCvPreviewUrl(downloadUrl);

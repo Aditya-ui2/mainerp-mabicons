@@ -529,6 +529,16 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         if (!url.startsWith('http') && !url.startsWith('https')) {
           url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
+        
+        // Append auth token for the /view endpoint if needed
+        if (url.includes('/api/resumebank/') && (url.includes('/view') || url.includes('/download'))) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+            url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+          }
+        }
+
         window.open(url, '_blank', 'noopener,noreferrer');
         return;
       }
@@ -545,6 +555,16 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
           if (!url.startsWith('http') && !url.startsWith('https')) {
             url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
           }
+
+          // Append auth token for the /view endpoint if needed
+          if (url.includes('/api/resumebank/') && (url.includes('/view') || url.includes('/download'))) {
+            const token = localStorage.getItem('token');
+            if (token) {
+              const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+              url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+            }
+          }
+
           window.open(url, '_blank', 'noopener,noreferrer');
           toast.success("CV Opened", { id: toastId });
         } else {

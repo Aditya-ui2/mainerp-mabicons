@@ -715,6 +715,15 @@ const ResumeBankTab = () => {
           url = `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
 
+        // Append auth token for the /view endpoint if needed to pass verifyAuthToken
+        if (url.includes('/api/resumebank/') && (url.includes('/view') || url.includes('/download'))) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const sanitizedToken = token.replace(/^"|"$/g, '').trim();
+            url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(sanitizedToken)}`;
+          }
+        }
+
         // Open directly in new tab
         window.open(url, '_blank', 'noopener,noreferrer');
         toast.success("CV Opened", { id: toastId });
