@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Search, Filter, X, MapPin, Users, Clock, ChevronRight, Pencil, Check, Plus, Download, Briefcase, Tag, Globe, AlignLeft, BarChart3, DollarSign, ShieldCheck, Share2, Compass, Waves, TrendingUp, MessageSquare, ExternalLink, Calendar, User, ArrowLeft, RefreshCw, Target, FileText, Clipboard, Award, Layers, Database, Mail, Phone, Star, AlertCircle, CheckCircle, Edit2, Send, Trash2, ChevronDown, UserPlus, FileUp
+  Search, Filter, X, XCircle, MapPin, Users, Clock, ChevronRight, Pencil, Check, Plus, Download, Briefcase, Tag, Globe, AlignLeft, BarChart3, DollarSign, ShieldCheck, Share2, Compass, Waves, TrendingUp, MessageSquare, ExternalLink, Calendar, User, ArrowLeft, RefreshCw, Target, FileText, Clipboard, Award, Layers, Database, Mail, Phone, Star, AlertCircle, CheckCircle, Edit2, Send, Trash2, ChevronDown, UserPlus, FileUp
 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, Tooltip } from 'recharts';
