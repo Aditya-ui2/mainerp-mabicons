@@ -36,7 +36,7 @@ import {
   Download,
   Grid as LuGrid,
 } from 'lucide-react';
-import AdminLayout from './AdminLayout';
+import AdminLayout, { StatCard } from './AdminLayout';
 import {
   BarChart,
   Bar,
@@ -53,10 +53,13 @@ import {
 import { jwtDecode } from 'jwt-decode';
 import logo from '../../../assets/images/mabicons logo blue.png';
 import { getClientDetails, getClientDashboardOverview } from '../service/api';
+import { toast } from 'react-hot-toast';
+import { createPortal } from 'react-dom';
 
 // Lazy load Client Tab Components
 const ClientAttendanceTab = lazy(() => import('./Tabs/Client/ClientAttendanceTab'));
 const ClientPayrollTab = lazy(() => import('./Tabs/Client/ClientPayrollTab'));
+import ClientOnboardingForm from './Tabs/CRM/ClientOnboardingForm';
 const ClientPolicyTab = lazy(() => import('./Tabs/Client/ClientPolicyTab'));
 const ClientMasterDataTab = lazy(() => import('./Tabs/Client/ClientMasterDataTab'));
 const ClientTaskTab = lazy(() => import('./Tabs/Client/ClientTaskTab'));
@@ -118,11 +121,10 @@ const TableItem = ({ name, date, status }) => (
     </div>
     <div className="text-sm text-[#9B9BAD] flex items-center">{date}</div>
     <div className="flex items-center">
-      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-        status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
         status === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-        'bg-rose-50 text-rose-600 border border-rose-100'
-      }`}>
+          'bg-rose-50 text-rose-600 border border-rose-100'
+        }`}>
         {status}
       </span>
     </div>
@@ -138,6 +140,23 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
   const [filterStatus, setFilterStatus] = useState('All');
   const [staffDateFilter, setStaffDateFilter] = useState('today');
   const filterPanelRef = useRef(null);
+
+  // Onboarding progress state
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [onboardingDocs, setOnboardingDocs] = useState([
+    { id: 'pan', label: 'PAN Number', completed: true },
+    { id: 'gst', label: 'GST Number', completed: true },
+    { id: 'cin', label: 'CIN (Corporate ID)', completed: true },
+    { id: 'msme', label: 'MSME Certificate', completed: false },
+    { id: 'agreement', label: 'Agreement Signed Copy', completed: false },
+    { id: 'nda', label: 'NDA / Confidentiality Signed', completed: false },
+    { id: 'insurance', label: 'Insurance Details', completed: false },
+  ]);
+
+  const completedCount = onboardingDocs.filter(d => d.completed).length;
+  const totalCount = onboardingDocs.length;
+  const remainingCount = totalCount - completedCount;
+  const progressPercentage = Math.round((completedCount / totalCount) * 100);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -226,7 +245,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
             date: c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('en-GB') : '-',
             status: c.stage === 'Rejected' ? 'Rejected'
               : (c.stage === 'Joined' || c.stage === 'Offer Sent') ? 'Approved'
-              : 'Pending',
+                : 'Pending',
           }));
 
           // ── Job progress from positions ──
@@ -235,7 +254,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
             date: String(p.candidateCount || 0),
             status: p.status === 'Open' || p.status === 'Urgent' ? 'Approved'
               : p.status === 'Closed' ? 'Rejected'
-              : 'Pending',
+                : 'Pending',
           }));
 
           // ── Bar chart: current candidate pipeline snapshot ──
@@ -360,25 +379,18 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Detached Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+      {/* Sticky Welcome Header */}
+      <div className="sticky top-0 z-[30] bg-[#FDFDFD]/80 backdrop-blur-md -mt-6 -mx-6 px-6 py-6 mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/50">
         <div className="flex flex-col items-start text-left">
-          <h2 className="text-3xl font-bold text-[#1E293B] mb-1" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Welcome, {cName}!</h2>
-          <p className="text-base font-medium text-[#64748b]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
-            {dateStr}
-          </p>
+          <h2 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>
+            Welcome, {cName}!
+          </h2>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* Main Actions */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setActiveTab('Job Positions')}
-              className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-2xl text-xs font-bold hover:bg-[#0a3a82] transition-all active:scale-95 shadow-lg shadow-blue-500/20"
-            >
-              <FiPlus className="w-5 h-5" strokeWidth="3" />
-              <span>Post New Job</span>
-            </button>
+
             <button
               onClick={handleExport}
               className="flex items-center gap-2 px-6 py-3 bg-white text-[#475569] border border-[#E2E8F0] rounded-2xl text-xs font-bold hover:bg-[#F8FAFC] transition-all active:scale-95 shadow-sm"
@@ -391,27 +403,53 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiCards.map((kpi, i) => {
-          const Icon = kpi.icon;
-          return (
-            <div key={i} className="bg-white p-7 rounded-[28px] border border-[#F0F0F2] shadow-sm hover:shadow-md transition-all duration-300 group text-left h-[236px]">
-              {/* Icon Box */}
-              <div className="w-12 h-12 rounded-[16px] flex items-center justify-center bg-[#F0F7FF] text-[#1B4DA0] mb-6 transition-transform group-hover:scale-105 duration-300">
-                <Icon size={24} strokeWidth={2.2} />
-              </div>
-              
-              {/* Label */}
-              <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[0.05em] mb-2">
-                {kpi.label}
-              </p>
-              
-              {/* Value */}
-              <h3 className="text-[32px] font-bold text-[#1E293B] leading-none tracking-tight">
-                {kpi.value}
-              </h3>
+        {kpiCards.map((kpi, i) => (
+          <StatCard
+            key={i}
+            title={kpi.label}
+            value={kpi.value}
+            icon={kpi.icon}
+            color="white"
+          />
+        ))}
+      </div>
+
+      {/* Onboarding Progress Section */}
+      <div className="bg-white rounded-[28px] border border-[#F0F0F2] shadow-sm p-8 flex items-center justify-between mt-2">
+        <div className="flex-1 mr-12 text-left">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: '"Syne", sans-serif' }}>Onboarding Progress</h3>
+              {progressPercentage < 100 && (
+                <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest">Action Required</span>
+              )}
+              {progressPercentage === 100 && (
+                <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest">Completed</span>
+              )}
             </div>
-          );
-        })}
+            <p className="text-sm font-bold text-[#1B4DA0]">{progressPercentage}% Completed</p>
+          </div>
+          <div className="w-full bg-[#F4F3EF] rounded-full h-2.5 overflow-hidden">
+            <motion.div
+              className="bg-[#1B4DA0] h-2.5 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercentage}%` }}
+              transition={{ duration: 1 }}
+            />
+          </div>
+
+        </div>
+        <button
+          onClick={() => setIsDocModalOpen(true)}
+          disabled={remainingCount === 0}
+          className={`flex-shrink-0 flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 ${remainingCount === 0
+            ? 'bg-[#F4F3EF] text-[#9B9BAD] shadow-none cursor-not-allowed'
+            : 'bg-[#1A1A2E] text-white hover:bg-[#2A2A4A]'
+            }`}
+        >
+          <FiPlus size={18} />
+          <span>Add Document</span>
+        </button>
       </div>
 
       {/* Charts Grid */}
@@ -470,8 +508,8 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 600 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 600 }} />
-                <Tooltip 
-                  cursor={{ fill: '#F4F3EF' }} 
+                <Tooltip
+                  cursor={{ fill: '#F4F3EF' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   formatter={(value) => [value, 'Candidates']}
                 />
@@ -514,7 +552,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                 <p className="text-sm text-slate-500 mt-1 mb-6 max-w-[280px]">
                   You haven't requested or been assigned any tasks for the selected period.
                 </p>
-                <button 
+                <button
                   onClick={() => setActiveTab('Assign Task to KAM')}
                   className="flex items-center gap-2 px-6 py-2.5 bg-[#8b5cf6] text-white rounded-xl font-bold text-sm hover:bg-[#7c4dff] transition-all shadow-lg shadow-indigo-100 active:scale-95"
                 >
@@ -525,17 +563,17 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={totalAcquisitionData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 700 }} 
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 700 }}
                     dy={12}
                     interval={0}
                   />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9B9BAD', fontSize: 10, fontWeight: 600 }} />
-                  <Tooltip 
-                    cursor={{ fill: '#F4F3EF' }} 
+                  <Tooltip
+                    cursor={{ fill: '#F4F3EF' }}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
                   <Bar dataKey="value" name="Tasks" fill="#8b5cf6" radius={[8, 8, 0, 0]} barSize={40} />
@@ -554,7 +592,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
               </div>
               <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Upcoming Interviews</h2>
             </div>
-            <button 
+            <button
               onClick={() => setActiveTab('Interviews')}
               className="text-xs font-black text-[#3FA9F5] uppercase tracking-widest hover:underline flex items-center gap-1"
             >
@@ -598,7 +636,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                             <span className="text-sm font-semibold text-blue-600">{int.time}</span>
                             <div className="flex items-center gap-1.5 text-[#9B9BAD]">
                               <FiCalendar size={12} className="opacity-70" />
-                               <span className="text-[10px] font-semibold uppercase tracking-widest">{formattedDate}</span>
+                              <span className="text-[10px] font-semibold uppercase tracking-widest">{formattedDate}</span>
                             </div>
                           </div>
                         </td>
@@ -610,7 +648,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                     <td colSpan="3" className="py-20 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-16 h-16 rounded-[24px] bg-slate-50 flex items-center justify-center text-slate-200">
-                           <FiCalendar size={24} />
+                          <FiCalendar size={24} />
                         </div>
                         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">No Scheduled Sessions</p>
                       </div>
@@ -635,8 +673,8 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-10">Candidates Onboarding Schedule</p>
             </div>
             <button
-               onClick={() => setActiveTab('Finalized')}
-               className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1"
+              onClick={() => setActiveTab('Finalized')}
+              className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1"
             >
               View All <FiExternalLink size={14} />
             </button>
@@ -677,7 +715,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                           <div className="flex flex-col gap-1.5 font-syne">
                             <div className="flex items-center gap-1.5 text-emerald-600">
                               <FiCalendar size={12} className="opacity-70" />
-                               <span className="text-sm font-semibold uppercase tracking-widest">{formattedDate}</span>
+                              <span className="text-sm font-semibold uppercase tracking-widest">{formattedDate}</span>
                             </div>
                             <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-tighter bg-blue-50 px-2 py-0.5 rounded-lg w-fit">
                               {join.status}
@@ -692,7 +730,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                     <td colSpan="3" className="py-20 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-16 h-16 rounded-[24px] bg-emerald-50 flex items-center justify-center text-emerald-200">
-                           <FiCheckCircle size={24} />
+                          <FiCheckCircle size={24} />
                         </div>
                         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">No Joinings Scheduled</p>
                       </div>
@@ -708,7 +746,7 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
         <div className="lg:col-span-6 bg-white rounded-[32px] p-8 border border-[#E8E7E2] shadow-sm flex flex-col min-h-[500px]">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Open Positions</h2>
-            <button 
+            <button
               onClick={() => setActiveTab('Job Positions')}
               className="text-sm font-bold text-[#3FA9F5] hover:text-[#2d8cd3] transition-colors flex items-center gap-1"
             >
@@ -743,11 +781,10 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
                         </div>
                       </td>
                       <td className="py-4 text-right">
-                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${
-                          job.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${job.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                           job.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                          'bg-rose-50 text-rose-600 border border-rose-100'
-                        }`}>
+                            'bg-rose-50 text-rose-600 border border-rose-100'
+                          }`}>
                           {job.status === 'Approved' ? 'ACTIVE' : job.status}
                         </span>
                       </td>
@@ -766,6 +803,20 @@ const PremiumOverview = ({ clientData, setActiveTab }) => {
           </div>
         </div>
       </div>
+
+      {/* Document Upload Modal */}
+      <ClientOnboardingForm
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        mode="full"
+        clientMode={true}
+        initialData={clientData}
+        onComplete={async (data) => {
+          // Handle client onboarding form completion if needed
+          toast.success("Document information updated successfully!");
+          setIsDocModalOpen(false);
+        }}
+      />
     </div>
   );
 };
@@ -848,9 +899,8 @@ const PageTransition = ({ children, tabKey }) => {
 
   return (
     <div
-      className={`transition-all duration-300 ease-out ${
-        show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-      }`}
+      className={`transition-all duration-300 ease-out ${show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+        }`}
     >
       {children}
     </div>
@@ -884,7 +934,7 @@ const ClientModularDashboard = () => {
               setAllowedServices(res.data.allowedServices);
             }
           }
-        }).catch(() => {});
+        }).catch(() => { });
       }
     } catch {
       // ignore
@@ -914,19 +964,19 @@ const ClientModularDashboard = () => {
   const renderTabContent = () => {
     const tabProps = { isDarkMode, clientData };
     switch (activeTab) {
-      case 'Dashboard Overview':        return <PremiumOverview clientData={clientData} setActiveTab={setActiveTab} />;
+      case 'Dashboard Overview': return <PremiumOverview clientData={clientData} setActiveTab={setActiveTab} />;
       case 'Attendance Share / Review': return <ClientAttendanceTab {...tabProps} />;
-      case 'Payroll':                   return <ClientPayrollTab {...tabProps} />;
-      case 'Policy & Documents':        return <ClientPolicyTab {...tabProps} />;
-      case 'Master Data':               return <ClientMasterDataTab {...tabProps} />;
-      case 'Assign Task to KAM':        return <ClientTaskTab {...tabProps} />;
+      case 'Payroll': return <ClientPayrollTab {...tabProps} />;
+      case 'Policy & Documents': return <ClientPolicyTab {...tabProps} />;
+      case 'Master Data': return <ClientMasterDataTab {...tabProps} />;
+      case 'Assign Task to KAM': return <ClientTaskTab {...tabProps} />;
 
-      case 'Recruitment Overview':      return <ClientRecruitmentProgressTab {...tabProps} setActiveTab={setActiveTab} />;
-      case 'Job Positions':              return <ClientJobsTab {...tabProps} />;
-      case 'Shortlisted Candidates':      return <ClientCandidatesTab {...tabProps} shortlistedOnly={true} />;
-      case 'Interviews':                 return <ClientInterviewsTab {...tabProps} />;
-      case 'Finalized & Offers':         return <ClientFinalizedTab {...tabProps} />;
-      case 'My Profile':                return <ClientProfileTab isDarkMode={isDarkMode} />;
+      case 'Recruitment Overview': return <ClientRecruitmentProgressTab {...tabProps} setActiveTab={setActiveTab} />;
+      case 'Job Positions': return <ClientJobsTab {...tabProps} />;
+      case 'Shortlisted Candidates': return <ClientCandidatesTab {...tabProps} shortlistedOnly={true} />;
+      case 'Interviews': return <ClientInterviewsTab {...tabProps} />;
+      case 'Finalized & Offers': return <ClientFinalizedTab {...tabProps} />;
+      case 'My Profile': return <ClientProfileTab isDarkMode={isDarkMode} />;
       default: return <p className="text-xl text-slate-500 font-medium">{activeTab}</p>;
     }
   };

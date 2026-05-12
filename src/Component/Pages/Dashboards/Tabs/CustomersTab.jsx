@@ -27,6 +27,7 @@ import {
 } from "../../service/api";
 import { jwtDecode } from "jwt-decode";
 import { DocumentUpload } from "./DocumentUpload";
+import ClientOnboardingForm from "./CRM/ClientOnboardingForm";
 import { toast } from "react-hot-toast";
 
 const CustomersTab = ({ isDarkMode }) => {
@@ -977,536 +978,62 @@ const CustomersTab = ({ isDarkMode }) => {
       </div>
 
       {/* Add Customer Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 z-[9999]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className={`fixed inset-0 ${
-                isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"
-              } overflow-y-auto`}
-              variants={modalVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-            >
-              {/* Header */}
-              <div
-                className={`sticky top-0 z-10 ${
-                  isDarkMode ? "bg-gray-800" : "bg-white"
-                } border-b ${
-                  isDarkMode ? "border-gray-700" : "border-gray-200"
-                } px-4 py-4`}
-              >
-                <div className="max-w-7xl mx-auto flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">Add New Client</h2>
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    className={`p-2 rounded-full ${
-                      isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                    } transition-colors duration-200`}
-                  >
-                    <FiX className="text-2xl" />
-                  </button>
-                </div>
-              </div>
+      <ClientOnboardingForm
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        mode="full"
+        onComplete={async (newClientData) => {
+          try {
+            setIsLoading(true);
+            toast.loading("Adding customer...");
 
-              {/* Form Content */}
-              <div className="max-w-7xl mx-auto px-4 py-6">
-                <form onSubmit={handleSubmit} className="space-y-8">
-                  {/* Form Sections */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Basic Information Section */}
-                    <div
-                      className={`col-span-1 p-6 rounded-xl ${
-                        isDarkMode ? "bg-gray-700" : "bg-gray-50"
-                      }`}
-                    >
-                      <h3 className="text-xl font-semibold mb-6">
-                        Basic Information
-                      </h3>
-                      <div className="space-y-4">
-                        {/* Company Name field */}
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            Company Name
-                          </label>
-                          <input
-                            type="text"
-                            name="companyName"
-                            value={newCustomer.companyName}
-                            onChange={handleInputChange}
-                            placeholder="Enter company name"
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600 text-white placeholder-gray-500"
-                                : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
+            const formData = {
+              name: newClientData.spocName,
+              email: newClientData.spocEmail,
+              companyName: newClientData.companyName,
+              corporateAddress: newClientData.registeredAddress, // map registered to corporate for now
+              contactNumber: newClientData.spocPhone,
+              gstNumber: newClientData.gstNumber,
+              panNumber: "", // not collected in new form
+              cinNumber: "", // not collected in new form
+              numberOfCompanies: "1", 
+              website: null,
+              authorizedSignatory: {
+                name: newClientData.ownerName,
+                email: newClientData.ownerEmail,
+                contact: newClientData.spocPhone,
+              },
+              ownerDirectorDetails: [{
+                name: newClientData.ownerName,
+                email: newClientData.ownerEmail,
+                contact: newClientData.spocPhone,
+              }],
+            };
 
-                        {/* Existing fields continue below */}
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            No. of Companies/Firms
-                          </label>
-                          <input
-                            type="number"
-                            name="numberOfCompanies"
-                            value={newCustomer.numberOfCompanies}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            Company PAN
-                          </label>
-                          <input
-                            type="text"
-                            name="companyPAN"
-                            value={newCustomer.companyPAN}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">GST</label>
-                          <input
-                            type="text"
-                            name="gst"
-                            value={newCustomer.gst}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">CIN</label>
-                          <input
-                            type="text"
-                            name="cin"
-                            value={newCustomer.cin}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            Assigned To
-                          </label>
-                          <div className="relative">
-                            <select
-                              name="assignedTo"
-                              value={newCustomer.assignedTo}
-                              onChange={handleInputChange}
-                              className={`w-full px-4 py-2 rounded-lg appearance-none ${
-                                isDarkMode
-                                  ? "bg-gray-800 border-gray-600 text-white"
-                                  : "bg-white border-gray-300 text-gray-900"
-                              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                              required
-                            >
-                              <option value="">Select an assignee</option>
-                              {assigneeOptions.map((assignee) => (
-                                <option key={assignee.id} value={assignee.id}>
-                                  {assignee.name} - {assignee.role}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                              <svg
-                                className="fill-current h-4 w-4"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            const response = await clientSignup(formData);
 
-                    {/* Contact Information Section */}
-                    <div
-                      className={`col-span-1 p-6 rounded-xl ${
-                        isDarkMode ? "bg-gray-700" : "bg-gray-50"
-                      }`}
-                    >
-                      <h3 className="text-xl font-semibold mb-6">
-                        Contact Information
-                      </h3>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            Company name
-                          </label>
-                          {newCustomer.ownerDirectorDetails.map(
-                            (owner, index) => (
-                              <div
-                                key={index}
-                                className="relative space-y-2 mb-4 p-4 border rounded-lg border-gray-200 dark:border-gray-600"
-                              >
-                                <div className="flex justify-between items-start">
-                                  <div className="flex-grow space-y-2">
-                                    <input
-                                      type="text"
-                                      value={owner.name}
-                                      onChange={(e) =>
-                                        handleOwnerDirectorChange(
-                                          index,
-                                          "name",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="Name"
-                                      className={`w-full px-4 py-2 rounded-lg ${
-                                        isDarkMode
-                                          ? "bg-gray-800 border-gray-600"
-                                          : "bg-white border-gray-300"
-                                      } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                                      required
-                                    />
-                                    <input
-                                      type="email"
-                                      value={owner.email}
-                                      onChange={(e) =>
-                                        handleOwnerDirectorChange(
-                                          index,
-                                          "email",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="Email"
-                                      className={`w-full px-4 py-2 rounded-lg ${
-                                        isDarkMode
-                                          ? "bg-gray-800 border-gray-600"
-                                          : "bg-white border-gray-300"
-                                      } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                                      required
-                                    />
-                                    <input
-                                      type="tel"
-                                      value={owner.contact}
-                                      onChange={(e) =>
-                                        handleOwnerDirectorChange(
-                                          index,
-                                          "contact",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="Contact"
-                                      className={`w-full px-4 py-2 rounded-lg ${
-                                        isDarkMode
-                                          ? "bg-gray-800 border-gray-600"
-                                          : "bg-white border-gray-300"
-                                      } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                                      required
-                                    />
-                                  </div>
-                                  {/* Only show delete button if there's more than one owner */}
-                                  {newCustomer.ownerDirectorDetails.length >
-                                    1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteOwner(index)}
-                                      className={`ml-2 p-2 rounded-full ${
-                                        isDarkMode
-                                          ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
-                                          : "bg-gray-200 hover:bg-red-500 text-gray-600 hover:text-white"
-                                      } transition-colors duration-200`}
-                                    >
-                                      <FiTrash2 className="text-sm" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                          )}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setNewCustomer((prev) => ({
-                                ...prev,
-                                ownerDirectorDetails: [
-                                  ...prev.ownerDirectorDetails,
-                                  { name: "", email: "", contact: "" },
-                                ],
-                              }))
-                            }
-                            className={`mt-2 px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-700 hover:bg-gray-600"
-                                : "bg-gray-200 hover:bg-gray-300"
-                            } transition-colors duration-200 flex items-center`}
-                          >
-                            <FiUserPlus className="mr-2" />
-                            Add Another Owner/Director
-                          </button>
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            Authorized Signatory
-                          </label>
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              name="authorizedSignatory"
-                              value={newCustomer.authorizedSignatory}
-                              onChange={handleInputChange}
-                              placeholder="Name"
-                              className={`w-full px-4 py-2 rounded-lg ${
-                                isDarkMode  
-                                  ? "bg-gray-800 border-gray-600"
-                                  : "bg-white border-gray-300"
-                              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                              required
-                            />
-                            <input
-                              type="email"
-                              name="authorizedSignatoryEmail"
-                              value={newCustomer.authorizedSignatoryEmail}
-                              onChange={handleInputChange}
-                              placeholder="Email"
-                              className={`w-full px-4 py-2 rounded-lg ${
-                                isDarkMode
-                                  ? "bg-gray-800 border-gray-600"
-                                  : "bg-white border-gray-300"
-                              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                              required
-                            />
-                            <input
-                              type="tel"
-                              name="authorizedSignatoryContact"
-                              value={newCustomer.authorizedSignatoryContact}
-                              onChange={handleInputChange}
-                              placeholder="Contact"
-                              className={`w-full px-4 py-2 rounded-lg ${
-                                isDarkMode
-                                  ? "bg-gray-800 border-gray-600"
-                                  : "bg-white border-gray-300"
-                              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            SPOC Name
-                          </label>
-                          <input
-                            type="text"
-                            name="spocName"
-                            value={newCustomer.spocName}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            SPOC Contact
-                          </label>
-                          <input
-                            type="tel"
-                            name="spocContact"
-                            value={newCustomer.spocContact}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            SPOC Email
-                          </label>
-                          <input
-                            type="email"
-                            name="spocEmail"
-                            value={newCustomer.spocEmail}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Additional Information Section */}
-                    <div
-                      className={`col-span-1 lg:col-span-3 p-6 rounded-xl ${
-                        isDarkMode ? "bg-gray-700" : "bg-gray-50"
-                      }`}
-                    >
-                      <h3 className="text-xl font-semibold mb-6">
-                        Additional Information
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            Compliance Information
-                          </label>
-                          <textarea
-                            name="complianceInfo"
-                            value={newCustomer.complianceInfo}
-                            onChange={handleInputChange}
-                            rows="4"
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block mb-2 font-medium">
-                            Leave Balance
-                          </label>
-                          <input
-                            type="text"
-                            name="leaveBalance"
-                            value={newCustomer.leaveBalance}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block mb-2 font-medium">
-                            Registered Address
-                          </label>
-                          <textarea
-                            name="registeredAddress"
-                            value={newCustomer.registeredAddress}
-                            onChange={handleInputChange}
-                            rows="3"
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block mb-2 font-medium">
-                            Corporate Address
-                          </label>
-                          <textarea
-                            name="corporateAddress"
-                            value={newCustomer.corporateAddress}
-                            onChange={handleInputChange}
-                            rows="3"
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            required
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block mb-2 font-medium">
-                            Website
-                            <span className="text-sm text-gray-500 ml-2">
-                              (Optional)
-                            </span>
-                          </label>
-                          <input
-                            type="url"
-                            name="website"
-                            value={newCustomer.website}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-2 rounded-lg ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600"
-                                : "bg-white border-gray-300"
-                            } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            placeholder="https://example.com"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Form Actions */}
-                  <div
-                    className={`sticky bottom-0 ${
-                      isDarkMode ? "bg-gray-800" : "bg-white"
-                    } py-4 border-t ${
-                      isDarkMode ? "border-gray-700" : "border-gray-200"
-                    }`}
-                  >
-                    <div className="max-w-7xl mx-auto px-4 flex justify-end space-x-4">
-                      <button
-                        type="button"
-                        onClick={() => setIsModalOpen(false)}
-                        className={`px-6 py-2 rounded-lg ${
-                          isDarkMode
-                            ? "bg-gray-700 hover:bg-gray-600"
-                            : "bg-gray-200 hover:bg-gray-300"
-                        } transition-colors duration-200`}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className={`px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 
-                          ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                      >
-                        {isLoading ? "Adding..." : "Add Customer"}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            if (response.message === response.client) {
+              setIsModalOpen(false);
+              await fetchCustomers();
+              toast.dismiss();
+              toast.success("Customer added successfully! 🎉", {
+                duration: 3000,
+                position: "top-center",
+              });
+            } else {
+              throw new Error("Failed to register client");
+            }
+          } catch (error) {
+            toast.dismiss();
+            toast.error(error.message || "Failed to add customer. Please try again.", {
+              duration: 4000,
+              position: "top-center",
+            });
+          } finally {
+            setIsLoading(false);
+          }
+        }}
+      />
 
       {/* Customer Details Modal */}
       <AnimatePresence>

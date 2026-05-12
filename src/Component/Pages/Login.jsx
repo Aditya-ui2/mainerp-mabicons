@@ -24,6 +24,7 @@ const USER_CREDENTIALS = {
   'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
   'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
   'crm@mabicons.com': { password: 'Crm@123', role: 'bd', department: null, name: 'CRM Executive' },
+  'client.mabicons@gmail.com': { password: 'Client@123', role: 'client', department: null, name: 'Client User' },
 };
 
 const Login = () => {

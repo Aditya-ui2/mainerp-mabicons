@@ -568,18 +568,18 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
         document.body
       )}
 
-      {/* Add Client Modal (Minimal) */}
+      {/* Add Client Modal (Full) */}
       <ClientOnboardingForm
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        mode="minimal"
+        mode="full"
         onComplete={async (newClientData) => {
           try {
-            // Map the minimal data to what the API expects
             const payload = {
+              ...newClientData,
               companyName: newClientData.companyName,
               spocName: newClientData.spocName,
-              ownerEmail: newClientData.spocEmail, // Use SPOC email as base email
+              ownerEmail: newClientData.ownerEmail || newClientData.spocEmail,
               spocPhone: newClientData.spocPhone,
               industry: newClientData.industry,
               location: newClientData.state,
