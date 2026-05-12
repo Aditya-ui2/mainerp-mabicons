@@ -6,6 +6,42 @@ import {
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
+const STATES_CITIES = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool"],
+  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat"],
+  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon"],
+  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia"],
+  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon"],
+  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar"],
+  "Haryana": ["Faridabad", "Gurgaon", "Panipat", "Ambala", "Yamunanagar"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Solan", "Mandi"],
+  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar"],
+  "Karnataka": ["Bangalore", "Hubli-Dharwad", "Mysore", "Gulbarga", "Belgaum"],
+  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam"],
+  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain"],
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Amravati", "Navi Mumbai"],
+  "Manipur": ["Imphal", "Bishnupur", "Thoubal"],
+  "Meghalaya": ["Shillong", "Tura", "Jowai"],
+  "Mizoram": ["Aizawl", "Lunglei", "Saiha"],
+  "Nagaland": ["Kohima", "Dimapur", "Mokokchung"],
+  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur"],
+  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer"],
+  "Sikkim": ["Gangtok", "Namchi", "Geyzing"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam"],
+  "Tripura": ["Agartala", "Udaipur", "Dharmanagar"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Meerut", "Varanasi", "Prayagraj", "Bareilly", "Aligarh", "Noida"],
+  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani"],
+  "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri", "Durgapur"],
+  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi"],
+  "Chandigarh": ["Chandigarh"],
+  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag"],
+  "Ladakh": ["Leh", "Kargil"],
+  "Puducherry": ["Puducherry", "Karaikal"]
+};
+
 const SectionHeader = ({ num, title, badge = "Required", skippable = false }) => (
   <div className="flex items-center gap-3 mb-6 mt-10 first:mt-0">
     <div className="flex items-center gap-2">
@@ -48,6 +84,7 @@ const SelectField = ({ label, name, value, onChange, options, skippable = false 
         onChange={onChange}
         className="w-full bg-[#F4F3EF] border border-transparent rounded-xl py-3 pl-5 pr-10 text-[13px] font-bold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer placeholder:text-[#9B9BAD]"
       >
+        <option value="">{label.includes('State') ? 'Select State' : 'Select City'}</option>
         {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
       </select>
       <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" size={16} />
@@ -105,8 +142,9 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
   const [formData, setFormData] = useState({
     companyName: '',
     industry: 'General',
-    location: '',
+    state: '',
     city: '',
+    otherCity: '',
     pinCode: '',
     serviceType: 'Recruitment',
     spocName: '',
@@ -138,8 +176,9 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
       setFormData({
         companyName: initialData.companyName || '',
         industry: initialData.industry || 'General',
-        location: initialData.location || '',
+        state: initialData.location || initialData.state || '',
         city: initialData.city || '',
+        otherCity: initialData.otherCity || '',
         pinCode: initialData.pinCode || '', 
         serviceType: initialData.serviceType || 'Recruitment',
         spocName: initialData.spocName || '',
@@ -242,8 +281,32 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                         <InputField label="Company name" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="Registered company name" />
                         <div className="grid grid-cols-2 gap-5">
                           <InputField label="Industry" name="industry" value={formData.industry} onChange={handleInputChange} placeholder="e.g. IT, Healthcare" />
-                          <InputField label="Location" name="location" value={formData.location} onChange={handleInputChange} placeholder="Location" />
-                          <InputField label="City" name="city" value={formData.city} onChange={handleInputChange} placeholder="City" />
+                          <SelectField 
+                            label="State" 
+                            name="state" 
+                            value={formData.state} 
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFormData(prev => ({ ...prev, state: val, city: '' }));
+                            }} 
+                            options={Object.keys(STATES_CITIES)} 
+                          />
+                          <SelectField 
+                            label="City" 
+                            name="city" 
+                            value={formData.city} 
+                            onChange={handleInputChange} 
+                            options={formData.state ? [...(STATES_CITIES[formData.state] || []), "Other"] : []} 
+                          />
+                          {formData.city === 'Other' && (
+                            <InputField 
+                              label="Other City" 
+                              name="otherCity" 
+                              value={formData.otherCity} 
+                              onChange={handleInputChange} 
+                              placeholder="Enter city name" 
+                            />
+                          )}
                           <InputField label="Pin Code" name="pinCode" value={formData.pinCode} onChange={handleInputChange} placeholder="Pin Code" />
                         </div>
                         <SelectField 
@@ -279,7 +342,34 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                             <div className="col-span-full">
                               <InputField label="Registered address" name="registeredAddress" value={formData.registeredAddress} onChange={handleInputChange} placeholder="Full address" />
                             </div>
-                            <InputField label="City" name="city" value={formData.city} onChange={handleInputChange} placeholder="City" />
+                            <SelectField 
+                              label="State" 
+                              name="state" 
+                              value={formData.state} 
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setFormData(prev => ({ ...prev, state: val, city: '' }));
+                              }} 
+                              options={Object.keys(STATES_CITIES)} 
+                            />
+                            <SelectField 
+                              label="City" 
+                              name="city" 
+                              value={formData.city} 
+                              onChange={handleInputChange} 
+                              options={formData.state ? [...(STATES_CITIES[formData.state] || []), "Other"] : []} 
+                            />
+                            {formData.city === 'Other' && (
+                              <div className="col-span-full">
+                                <InputField 
+                                  label="Other City" 
+                                  name="otherCity" 
+                                  value={formData.otherCity} 
+                                  onChange={handleInputChange} 
+                                  placeholder="Enter city name" 
+                                />
+                              </div>
+                            )}
                             <InputField label="PIN code" name="pinCode" value={formData.pinCode} onChange={handleInputChange} placeholder="400001" />
                           </div>
 

@@ -582,7 +582,8 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
               ownerEmail: newClientData.spocEmail, // Use SPOC email as base email
               spocPhone: newClientData.spocPhone,
               industry: newClientData.industry,
-              location: newClientData.location,
+              location: newClientData.state,
+              city: newClientData.city === 'Other' ? newClientData.otherCity : newClientData.city,
               serviceType: newClientData.serviceType,
               stage: 'Lead Stage',
               status: 'Requested',
@@ -615,6 +616,8 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
           try {
             const payload = {
               ...completeData,
+              location: completeData.state,
+              city: completeData.city === 'Other' ? completeData.otherCity : completeData.city,
               clientId: finalizingClient.id,
               stage: 'Onboarding Complete',
               status: 'Accepted',
