@@ -1467,7 +1467,7 @@ const TeamTabs = ({ isDarkMode }) => {
           </div>
         </div>
       </Modal>
-      <style jsx>{`
+      <style>{`
         .custom-link {
           stroke: #95a5a6;
           stroke-width: 2;

@@ -1698,7 +1698,7 @@ Format:
       )}
 
       {/* Add this CSS for custom scrollbar */}
-      <style jsx>{`
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
         }

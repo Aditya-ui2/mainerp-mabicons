@@ -564,7 +564,7 @@ export function Card({
   );
 }
 
-<style jsx>{`
+<style>{`
   @keyframes liquidFlow {
     0% {
       background-position: 100% 0;
