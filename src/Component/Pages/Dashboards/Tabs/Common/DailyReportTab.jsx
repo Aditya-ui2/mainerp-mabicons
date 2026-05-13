@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, ChevronDown, Plus, Send, Phone, Eye, Share2, Users, Calendar, Clock, X, FileText, CheckCircle, AlertCircle, Paperclip, ChevronRight
 } from "lucide-react";
-import { submitDailyReport, getMyReports } from '../../../service/api';
+import { submitDailyReport, getMyReports, uploadMISAttachment } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const SHIFT_START = '09:00';
@@ -234,6 +234,7 @@ const DailyReportTab = () => {
   const [kamFilter, setKamFilter] = useState('All KAMs');
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [showKamDropdown, setShowKamDropdown] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
   const dateInputRef = useRef(null);
 
   useEffect(() => {
@@ -314,10 +315,23 @@ const DailyReportTab = () => {
         candidatesContacted: parseInt(form.candidatesContacted) || 0,
         interviewsArranged: parseInt(form.interviewsArranged) || 0,
       };
-      await submitDailyReport(payload);
+      const res = await submitDailyReport(payload);
+      
+      // Handle file upload if present
+      if (pendingFile && res.report?.id) {
+        try {
+          await uploadMISAttachment(res.report.id, pendingFile);
+        } catch (uploadErr) {
+          console.error('File upload failed during submission:', uploadErr);
+          // We don't fail the whole submission if only the attachment fails, 
+          // but we should probably warn the user.
+        }
+      }
+
       showToast('MIS Report submitted successfully ✓');
       setShowForm(false);
       setForm(EMPTY_FORM);
+      setPendingFile(null);
       fetchReports();
     } catch (err) {
       showToast(err.message || 'Failed to submit report', 'error');
@@ -540,18 +554,38 @@ const DailyReportTab = () => {
 
                       {/* Action: Excel Attach */}
                       <div className="flex justify-end pr-2" onClick={e => e.stopPropagation()}>
-                        <label className="w-8 h-8 rounded-lg bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm cursor-pointer active:scale-95">
-                          <Paperclip size={14} />
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept=".xlsx, .xls"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (file) alert(`Excel file "${file.name}" attached successfully!`);
-                            }}
-                          />
-                        </label>
+                        <div className="flex items-center gap-2">
+                          {report.attachmentUrl && (
+                            <a 
+                              href={report.attachmentUrl.startsWith('http') ? report.attachmentUrl : `http://localhost:3000${report.attachmentUrl}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                              title={`View ${report.attachmentName || 'Attachment'}`}
+                            >
+                              <FileText size={14} />
+                            </a>
+                          )}
+                          <label className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shadow-sm cursor-pointer active:scale-95 ${report.attachmentUrl ? 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white' : 'bg-[#F4F3EF] text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white'}`}>
+                            <Paperclip size={14} />
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept=".xlsx, .xls, .pdf, .doc, .docx"
+                              onChange={async (e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                try {
+                                  await uploadMISAttachment(report.id, file);
+                                  showToast('Document attached successfully!');
+                                  fetchReports(); // Refresh reports to show attachment icon
+                                } catch (err) {
+                                  showToast(err.message || 'Upload failed', 'error');
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       {/* Chevron Indicator */}
@@ -783,6 +817,37 @@ const DailyReportTab = () => {
                           <input type="text" value={form.blockers} onChange={(e) => handleFieldChange('blockers', e.target.value)}
                             className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4DA0]"
                             placeholder="Any issues? e.g. Client not responding, JD unclear..." />
+                        </div>
+
+                        {/* Document Attachment Field */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-2">
+                            Document Attachment (Excel/PDF)
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <label className="flex-1 flex items-center gap-3 px-4 py-2.5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 hover:border-blue-300 transition-all group">
+                              <Paperclip className={`w-4 h-4 ${pendingFile ? 'text-green-600' : 'text-slate-400 group-hover:text-blue-500'}`} />
+                              <span className={`text-xs font-medium truncate ${pendingFile ? 'text-green-700' : 'text-slate-500'}`}>
+                                {pendingFile ? pendingFile.name : 'Click to attach tracker / document'}
+                                {todayReport?.attachmentUrl && !pendingFile && <span className="ml-2 text-[10px] text-blue-500 font-bold">(Has: {todayReport.attachmentName})</span>}
+                              </span>
+                              <input 
+                                type="file" 
+                                className="hidden" 
+                                accept=".xlsx, .xls, .pdf, .doc, .docx" 
+                                onChange={(e) => setPendingFile(e.target.files[0])} 
+                              />
+                            </label>
+                            {pendingFile && (
+                              <button 
+                                type="button" 
+                                onClick={() => setPendingFile(null)}
+                                className="p-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-all"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
 

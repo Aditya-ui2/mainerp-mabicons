@@ -17,9 +17,9 @@ const USER_CREDENTIALS = {
   'ramesh.mabicons@gmail.com': { password: 'Ramesh@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
   'recruitment.mabicons@gmail.com': { id: '60de4380-0140-49ff-b26d-a8d06333af11', password: 'Mabicons@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
   'sachin.mabicons@gmail.com': { id: '60de4380-0140-49ff-b26d-a8d06333af11', password: 'Sachin@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
-  'priyanshi.recruitment@gmail.com': { password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
-  'manju.recruitment@gmail.com': { password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
-  'jyoti.recruitment@gmail.com': { password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
+  'priyanshi.recruitment@gmail.com': { id: 'ffd606f2-459c-4bc1-8f4b-52b88663fed3', password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
+  'manju.recruitment@gmail.com': { id: 'bdcdd80c-4812-45f0-9862-39594bfe7475', password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
+  'jyoti.recruitment@gmail.com': { id: '13b9f804-91ea-4d5a-afc0-8a9da6e27e0f', password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
   'employee.mabicons@gmail.com': { password: 'Employee@123', role: 'employee', department: null, name: 'Employee' },
   'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
   'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
@@ -86,9 +86,11 @@ const Login = () => {
         // Generate a valid-format mock JWT so jwt-decode doesn't throw in ProtectedRoute
         const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
         const payload = btoa(JSON.stringify({
+          id: userData.id || '00000000-0000-0000-0000-000000000000', // Ensure ID is present
           role: userData.role, // Use original role from credentials
           email: emailLower,
           name: userData.name,
+          department: userData.department || 'HR Recruitment',
           iat: Math.floor(Date.now() / 1000),
           exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
         }));
@@ -97,6 +99,7 @@ const Login = () => {
         localStorage.setItem('token', mockToken);
         localStorage.setItem('userType', normalizedRole);
         localStorage.setItem('userName', userData.name);
+        localStorage.setItem('userId', userData.id || '00000000-0000-0000-0000-000000000000');
         localStorage.setItem('userEmail', emailLower);
         if (userData.department) localStorage.setItem('department', userData.department);
         ['admin_active_tab', 'crm_active_tab', 'hroperations_active_tab', 'rh_active_tab', 'superadmin_active_tab'].forEach(key => localStorage.removeItem(key));
@@ -145,6 +148,7 @@ const Login = () => {
         if (response.token) localStorage.setItem('token', response.token);
         localStorage.setItem('userType', normalizedRole);
         if (user?.name) localStorage.setItem('userName', user.name);
+        if (user?.id || user?._id) localStorage.setItem('userId', user?.id || user?._id);
         localStorage.setItem('userEmail', emailLower);
         if (user?.department) localStorage.setItem('department', user.department);
         

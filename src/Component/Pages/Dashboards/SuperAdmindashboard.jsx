@@ -26,6 +26,7 @@ import TaskTab from './Tabs/TaskTab';
 import AdminTab from './Tabs/AdminTab';
 import BdTab from './Tabs/BdTab';
 import SettingsTab from './Tabs/SettingsTab';
+import TeamMISReportsTab from './Tabs/Common/TeamMISReportsTab';
 import { createAdmin, createBDExecutive, getAllClients, getAllTasks, getAllNotifications, markNotificationRead, markAllNotificationsRead, logout } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -52,6 +53,7 @@ const sidebarItems = [
   { name: 'Dashboard', tab: 'Dashboard', icon: FiHome },
   { name: 'Clients', tab: 'Customers', icon: FiUsers },
   { name: 'Employee Work', tab: 'Reports', icon: FiBarChart2 },
+  { name: 'MIS Reports', tab: 'MIS Reports', icon: FiFolder },
   { name: 'Add Admin', tab: 'Manage Admins', icon: FiUserPlus },
 ];
 
@@ -543,6 +545,8 @@ const Dashboard = () => {
             <BdTab />
           </div>
         );
+      case 'MIS Reports':
+        return <TeamMISReportsTab />;
       case 'Settings':
         return <SettingsTab />;
       default:

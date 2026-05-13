@@ -4011,6 +4011,25 @@ export const submitDailyReport = async (data) => {
   }
 };
 
+export const uploadMISAttachment = async (reportId, file) => {
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await axiosInstance.post(`/department/daily-report/${reportId}/attachment`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('MIS Attachment upload failed:', error);
+    throw error.response?.data || { message: 'Failed to upload attachment' };
+  }
+};
+
 export const getMyReports = async () => {
   try {
     const token = localStorage.getItem('token');
@@ -4390,6 +4409,7 @@ const api = {
   getMyAttendance,
   getPerformanceStats,
   submitDailyReport,
+  uploadMISAttachment,
   getMyReports,
   getMISReports,
   addHeadComment,

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Phone, Eye, Share2, Calendar, Clock, MessageSquare, CheckCircle2, 
   RefreshCw, Smile, Meh, Frown, Star, X, Send, AlertCircle, BarChart2, 
-  Download, Activity, ShieldCheck, MoreVertical, ChevronDown
+  Download, Activity, ShieldCheck, MoreVertical, ChevronDown, Paperclip, FileText
 } from 'lucide-react';
 import { getMISReports, addHeadComment } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
@@ -151,6 +151,20 @@ const ReportRow = ({ report }) => {
                 </span>
               </div>
             )}
+
+            {/* Attachment Link */}
+            {report.attachmentUrl && (
+              <a 
+                href={report.attachmentUrl.startsWith('http') ? report.attachmentUrl : `http://localhost:3000${report.attachmentUrl}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition-all border border-green-200"
+                title={`View ${report.attachmentName || 'Annex'}`}
+              >
+                <Paperclip size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-widest">View Annex</span>
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -176,49 +190,38 @@ const MOCK_REPORTS = [
     profilesShared: 3,
     candidatesContacted: 10,
     interviewsArranged: 1,
-    summary: 'Morning progress: Focused on interview scheduling and initial candidate screening.',
-    tasksCompleted: ['Scheduled 2 interviews', 'Initial resume screening'],
-    tasksPlanned: ['Follow up with hiring managers'],
-    blockers: '',
-    headCommentBy: 'Manju'
+    summary: 'Focused on Senior Developer roles for TechCorp. Screening in progress.',
+    headCommentBy: 'Sachin'
   },
   {
-    id: 'mock-1',
-    date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
-    memberName: 'Priyanshi Sharma',
-    checkInTime: '09:05',
-    checkOutTime: '18:45',
-    workHours: 9.6,
-    callsCount: 45,
-    profilesVisited: 120,
-    profilesShared: 12,
-    candidatesContacted: 28,
-    interviewsArranged: 4,
-    summary: 'Productive day focusing on the Senior React Developer role. Shortlisted 5 solid candidates.',
-    tasksCompleted: ['Screened 15 candidates', ' for JD sync', 'Updated Recruitment Tracker'],
-    tasksPlanned: ['Focus on Backend roles', 'Interview scheduling for tomorrow'],
-    blockers: 'None',
-    headComment: 'Excellent performance today, keep it up!',
-    headCommentBy: 'Manju'
-  },
-  {
-    id: 'mock-2',
-    date: new Date(Date.now() - 172800000).toISOString().split('T')[0], // 2 days ago
-    memberName: 'Priyanshi Sharma',
-    checkInTime: '09:15',
+    id: 'mock-mj-1',
+    date: new Date().toISOString().split('T')[0], // Today
+    memberName: 'Manju Sharma',
+    checkInTime: '09:10',
     checkOutTime: '18:15',
-    workHours: 9.0,
-    callsCount: 38,
-    profilesVisited: 95,
-    profilesShared: 8,
-    candidatesContacted: 22,
+    workHours: 8.5,
+    callsCount: 35,
+    profilesVisited: 85,
+    profilesShared: 7,
+    candidatesContacted: 15,
     interviewsArranged: 2,
-    summary: 'Focused on sourcing for the Python lead role. Good traction on LinkedIn.',
-    tasksCompleted: ['LinkedIn Sourcing', 'Resume screening', 'Feedback sync with KAM'],
-    tasksPlanned: ['Sourcing for Java roles', 'Follow up with shortlisted candidates'],
-    blockers: 'Portal access was slow in the morning',
-    headComment: 'Good effort, try to increase candidate outreach tomorrow.',
-    headCommentBy: 'Manju'
+    summary: 'Focusing on Finance roles today. Good candidate pipeline.',
+    headCommentBy: 'Sachin'
+  },
+  {
+    id: 'mock-jy-1',
+    date: new Date().toISOString().split('T')[0], // Today
+    memberName: 'Jyoti Sharma',
+    checkInTime: '09:05',
+    checkOutTime: '18:00',
+    workHours: 8.0,
+    callsCount: 42,
+    profilesVisited: 110,
+    profilesShared: 10,
+    candidatesContacted: 25,
+    interviewsArranged: 3,
+    summary: 'Productive day with LinkedIn sourcing. Multiple interviews set for tomorrow.',
+    headCommentBy: 'Sachin'
   }
 ];
 
