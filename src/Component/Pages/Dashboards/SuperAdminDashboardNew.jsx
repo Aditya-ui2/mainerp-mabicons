@@ -40,6 +40,8 @@ import BdTab from './Tabs/BdTab';
 import SettingsTab from './Tabs/SettingsTab';
 import ClientPipelineTab from './Tabs/CRM/ClientPipelineTab';
 import MyProfileTab from './Tabs/Common/MyProfileTab';
+import HiringLifecycleTab from './Tabs/KAMRecruitment/HiringLifecycleTab';
+import TeamPerformanceTab from './Tabs/TeamPerformanceTab';
 import { getAllClients, getAllTasks, getAllNotifications, logout } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
@@ -51,6 +53,8 @@ const sidebarConfig = [
       { id: 'My Team', title: 'My Team', icon: FiUsers },
       { id: 'Client Pipeline', title: 'Client Pipeline', icon: FiActivity },
       { id: 'Clients', title: 'Clients', icon: FiBriefcase },
+      { id: 'Hiring', title: 'Hiring', icon: FiZap },
+      { id: 'Team Performance', title: 'Team Performance', icon: FiTrendingUp },
       { id: 'Billing', title: 'Billing', icon: FiCreditCard },
       { id: 'My Profile', title: 'My Profile', icon: FiUser },
     ]
@@ -307,6 +311,12 @@ const SuperAdminDashboard = () => {
     switch (activeTab) {
       case 'Clients':
         return <ClientsTab />;
+
+      case 'Hiring':
+        return <HiringLifecycleTab />;
+
+      case 'Team Performance':
+        return <TeamPerformanceTab />;
 
       case 'Billing':
         return (
