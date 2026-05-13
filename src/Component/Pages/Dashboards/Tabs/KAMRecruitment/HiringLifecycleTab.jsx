@@ -16,8 +16,7 @@ import {
   FiPlus,
   FiUserPlus,
   FiBriefcase,
-  FiMapPin,
-  FiDollarSign
+  FiMapPin
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -301,7 +300,7 @@ const AddCandidateModal = ({ isOpen, onClose, onSuccess }) => {
               <div className="space-y-2">
                 <label className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] ml-1">Offered CTC / Salary</label>
                 <div className="relative group">
-                  <FiDollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-focus-within:text-[#1B4DA0] transition-colors" size={18} />
+                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] font-bold text-lg group-focus-within:text-[#1B4DA0] transition-colors">₹</div>
                   <input
                     type="text"
                     placeholder="e.g. 12 LPA"

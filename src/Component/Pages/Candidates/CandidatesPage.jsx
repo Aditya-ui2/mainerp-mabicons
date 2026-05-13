@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { 
   Plus, Search, Filter, MoreHorizontal, FileText, CheckSquare, 
   Square, Eye, Briefcase, Zap, MapPin, ChevronRight, X, Sparkles, AlertCircle, 
-  Trash2, Mail, Phone, Download, Upload, Video, Star, Wand2, LayoutGrid, List, AlignLeft, Calendar, ChevronDown, DollarSign, Clock, Award, Send
+  Trash2, Mail, Phone, Download, Upload, Video, Star, Wand2, LayoutGrid, List, AlignLeft, Calendar, ChevronDown, DollarSign, Clock, Award, Send, User
 } from "lucide-react";
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from "framer-motion";

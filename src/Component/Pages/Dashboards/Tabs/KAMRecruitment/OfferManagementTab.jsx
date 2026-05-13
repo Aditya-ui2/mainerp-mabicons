@@ -9,7 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   Edit2,
-  DollarSign,
+  IndianRupee,
   Calendar,
   User,
   Briefcase,
@@ -956,7 +956,7 @@ const OfferManagementTab = ({ isDarkMode }) => {
         return total >= 100000 ? `₹${(total / 100000).toFixed(2)}L` : `₹${total.toLocaleString()}`;
       })(),
       sub: "Total Monthly Outflow",
-      icon: DollarSign,
+      icon: IndianRupee,
       color: "text-blue-600",
       bg: "bg-blue-50"
     },

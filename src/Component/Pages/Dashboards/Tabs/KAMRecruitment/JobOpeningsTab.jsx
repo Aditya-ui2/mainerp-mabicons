@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Filter, X, XCircle, MapPin, Users, Clock, ChevronRight, Pencil, Check, Plus, Download, Briefcase, Tag, Globe, AlignLeft, BarChart3, DollarSign, ShieldCheck, Share2, Compass, Waves, TrendingUp, MessageSquare, ExternalLink, Calendar, User, ArrowLeft, RefreshCw, Target, FileText, Clipboard, Award, Layers, Database, Mail, Phone, Star, AlertCircle, CheckCircle, Edit2, Send, Trash2, ChevronDown, UserPlus, FileUp
+  Search, Filter, X, XCircle, MapPin, Users, Clock, ChevronRight, Pencil, Check, Plus, Download, Briefcase, Tag, Globe, AlignLeft, BarChart3, IndianRupee, ShieldCheck, Share2, Compass, Waves, TrendingUp, MessageSquare, ExternalLink, Calendar, User, ArrowLeft, RefreshCw, Target, FileText, Clipboard, Award, Layers, Database, Mail, Phone, Star, AlertCircle, CheckCircle, Edit2, Send, Trash2, ChevronDown, UserPlus, FileUp
 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, Tooltip } from 'recharts';
@@ -1586,9 +1586,28 @@ const JobOpeningsTab = ({ isDarkMode }) => {
     setModalStep(2);
     setResumeFetchLoading(true);
     try {
-      const searchTerm = newJobForm.roleType || newJobForm.title;
-      const response = await getResumeBankResumes({ search: searchTerm, limit: 50 });
-      setMatchedResumes(response.data || []);
+      const finalRoleType = newJobForm.roleType === 'other' ? otherRole : newJobForm.roleType;
+      
+      // 1. Try matching by specific Role Type first
+      let response = await getResumeBankResumes({ 
+        roleType: (finalRoleType && finalRoleType !== 'other') ? finalRoleType : undefined,
+        limit: 20 
+      });
+
+      // 2. Fallback to broad search by Title if no role match or too few results
+      if (!response.data || response.data.length < 5) {
+        const broadResponse = await getResumeBankResumes({ 
+          search: newJobForm.title, 
+          limit: 20 
+        });
+        
+        // Merge or replace based on what's more relevant
+        const combined = [...(response.data || []), ...(broadResponse.data || [])];
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+        setMatchedResumes(unique.slice(0, 20));
+      } else {
+        setMatchedResumes(response.data);
+      }
     } catch (error) {
       console.error('Failed to fetch matching resumes:', error);
       setMatchedResumes([]);
@@ -2093,7 +2112,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                 <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-8">
                   <div className="flex items-center gap-4 bg-emerald-50 p-6 rounded-[32px] border border-emerald-100">
                     <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 animate-bounce">
-                      <Check size={24} />
+                      <FiCheckCircle size={28} />
                     </div>
                     <div>
                       <p className="text-lg font-bold text-emerald-900 leading-tight">Position Created Successfully</p>
@@ -2110,6 +2129,27 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                     <div className="grid grid-cols-1 gap-3">
                       {matchedResumes.map((resume, idx) => {
                         const isSelected = selectedResumes.has(resume.id);
+                        
+                        // Improved Name Parsing Logic
+                        const getBestName = () => {
+                          if (resume.candidateName && resume.candidateName.trim()) return resume.candidateName;
+                          if (!resume.fileName) return 'Unknown';
+                          
+                          // Handle SharePoint pattern: "123_Role_Name.pdf"
+                          const parts = resume.fileName.split('_');
+                          if (parts.length >= 3) {
+                            return parts[parts.length - 1].split('.')[0].trim();
+                          }
+                          // Handle "Role_Name.pdf"
+                          if (parts.length === 2) {
+                            return parts[1].split('.')[0].trim();
+                          }
+                          return resume.fileName.split('.')[0];
+                        };
+
+                        const displayName = getBestName();
+                        const displayInitial = (displayName || 'U').charAt(0).toUpperCase();
+
                         return (
                           <motion.div
                             key={resume.id || idx}
@@ -2124,11 +2164,11 @@ const JobOpeningsTab = ({ isDarkMode }) => {
                           >
                             <div className="flex items-center gap-4">
                               <div className="w-10 h-10 rounded-2xl bg-[#F4F3EF] flex items-center justify-center text-[#0D47A1] font-bold text-sm group-hover:scale-110 transition-transform">
-                                {(resume.candidateName || resume.fileName || 'U').charAt(0).toUpperCase()}
+                                {displayInitial}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-[#1A1A2E] truncate">{resume.candidateName || 'Unknown'}</p>
-                                <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5 truncate">{resume.email}</p>
+                                <p className="text-sm font-bold text-[#1A1A2E] truncate">{displayName}</p>
+                                <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-wider mt-0.5 truncate">{resume.email || 'No Email'}</p>
                               </div>
                               <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#0D47A1] border-[#1B4DA0]' : 'border-[#E8E7E2]'}`}>
                                 {isSelected && <Check size={14} className="text-white" />}

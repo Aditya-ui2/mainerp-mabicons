@@ -34,9 +34,28 @@ const getInitials = (name) => {
 };
 
 const cleanCandidateName = (name) => {
-  if (!name) return '';
-  // Remove "Naukri_" prefix and experience brackets like [3y_0m]
-  return name.replace(/^Naukri_/, '').replace(/\[.*?\]/, '').trim();
+  if (!name) return 'Unknown';
+  
+  // 1. Remove file extensions if present
+  let clean = name.replace(/\.[^/.]+$/, "");
+  
+  // 2. Remove "Naukri_" prefix and experience brackets like [3y_0m]
+  clean = clean.replace(/^Naukri_/, '').replace(/\[.*?\]/, '');
+  
+  // 3. Handle SharePoint pattern: "ID_Role_Name" or "ID_Name"
+  const parts = clean.split('_');
+  if (parts.length >= 3) {
+    // Usually the last part is the human name in "3886_Role_Name" pattern
+    clean = parts[parts.length - 1];
+  } else if (parts.length === 2) {
+    // Check if first part is just numbers (ID)
+    if (/^\d+$/.test(parts[0].trim())) {
+      clean = parts[1];
+    }
+  }
+
+  // 4. Final trim and fallback
+  return clean.trim() || 'Unknown';
 };
 
 const formatDate = (dateString) => {
@@ -79,7 +98,7 @@ const ResumeCard = ({ resume, isDarkMode, onPreviewResume, onViewProfile, isSele
     {/* Candidate Info */}
     <div className="flex flex-col justify-center">
       <h3 className="text-[14px] font-bold text-[#0f172a] dark:text-white group-hover:text-[#1B4DA0] transition-colors truncate text-left">
-        {cleanCandidateName(resume.candidateName || resume.fileName.split('.')[0])}
+        {cleanCandidateName(resume.candidateName || resume.fileName)}
       </h3>
     </div>
 

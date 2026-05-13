@@ -104,9 +104,14 @@ const CACHE_KEY_CANDIDATES = 'cache_kamCandidates';
 
 const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickActionHandled }) => {
   const getResumeDisplayName = (resume) => {
-    if (resume?.candidateName) return resume.candidateName;
-    if (resume?.fileName) return resume.fileName.replace(/\.[^.]+$/, '');
-    return 'Unknown';
+    const name = resume?.candidateName || resume?.name || resume?.fileName || 'Unknown';
+    // Remove extension
+    let clean = name.replace(/\.[^/.]+$/, "");
+    // Handle SharePoint patterns with underscores
+    const parts = clean.split('_');
+    if (parts.length >= 3) return parts[parts.length - 1].trim();
+    if (parts.length === 2 && /^\d+$/.test(parts[0].trim())) return parts[1].trim();
+    return clean.trim() || 'Unknown';
   };
 
   const [candidates, setCandidates] = useState([]);
@@ -133,7 +138,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
       const fullPool = [
         ...rawBank.map(c => ({
           id: c.userId || c.id || c._id,
-          name: c.candidateName || c.name || c.fileName?.replace(/\.[^.]+$/, '') || 'Candidate',
+          name: getResumeDisplayName(c),
           email: c.email || '',
           phone: c.contactNo || c.phone || '',
           role: c.position || c.role || c.roleType || 'Resume Bank',
@@ -144,7 +149,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         })),
         ...rawSP.map(c => ({
           id: c.sharePointId || c.id || c._id,
-          name: c.candidateName || c.name || c.fileName?.replace(/\.[^.]+$/, '') || 'SP Resume',
+          name: getResumeDisplayName(c),
           email: c.email || '',
           role: c.position || c.roleType || 'SharePoint',
           skills: ['SharePoint Sync'],
