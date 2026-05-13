@@ -275,6 +275,9 @@ const CRMDashboard = () => {
   const getFilterLabel = () => {
     switch (dateFilter.filterType) {
       case 'all': return 'All Time';
+      case 'today': return 'Today';
+      case 'week': return 'This Week';
+      case 'quarter': return 'This Quarter';
       case 'last7days': return 'Last 7 Days';
       case 'year': return `${dateFilter.year}`;
       case 'month': return `${months[dateFilter.month]} ${dateFilter.year}`;
@@ -294,6 +297,21 @@ const CRMDashboard = () => {
       const leadDate = parseDate(created);
       if (!leadDate) return true;
 
+      if (dateFilter.filterType === 'today') {
+        const today = new Date();
+        return leadDate.toDateString() === today.toDateString();
+      }
+      if (dateFilter.filterType === 'week') {
+        const now = new Date();
+        const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+        return leadDate >= weekStart;
+      }
+      if (dateFilter.filterType === 'quarter') {
+        const now = new Date();
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const itemQuarter = Math.floor(leadDate.getMonth() / 3);
+        return itemQuarter === currentQuarter && leadDate.getFullYear() === now.getFullYear();
+      }
       if (dateFilter.filterType === 'last7days') {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -787,10 +805,13 @@ const CRMDashboard = () => {
                             <div className="flex border-b border-[#F4F3EF] bg-[#FDFDFD]">
                               {[
                                 { key: 'all', label: 'All' },
+                                { key: 'today', label: 'Today' },
+                                { key: 'week', label: 'Week' },
                                 { key: 'last7days', label: '7 Days' },
-                                { key: 'year', label: 'Year' },
                                 { key: 'month', label: 'Month' },
-                                { key: 'date', label: 'Date' }
+                                { key: 'quarter', label: 'Quarter' },
+                                { key: 'year', label: 'Year' },
+                                { key: 'date', label: 'Day' }
                               ].map((tab) => (
                                 <button
                                   key={tab.key}

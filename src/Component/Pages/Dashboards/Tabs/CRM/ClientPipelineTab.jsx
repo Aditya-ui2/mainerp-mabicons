@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiX, FiMail, FiPhone, FiPlus, FiSearch, FiChevronDown,
   FiChevronRight, FiUser, FiGrid, FiList, FiRefreshCw,
-  FiEye, FiTrash, FiMapPin, FiActivity, FiLock, FiEdit2, FiSave, FiCheckSquare, FiCheck, FiDatabase
+  FiEye, FiTrash, FiMapPin, FiActivity, FiLock, FiEdit2, FiSave, FiCheckSquare, FiCheck, FiDatabase, FiCalendar
 } from 'react-icons/fi';
 import { LayoutGrid, List, Plus } from 'lucide-react';
 import ClientOnboardingForm from "./ClientOnboardingForm";
@@ -66,8 +66,12 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
   const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
   const [finalizingClient, setFinalizingClient] = useState(null);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const dragItem = useRef(null);
   const dragOverStage = useRef(null);
+  const mainDateFilterRef = useRef(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -140,6 +144,29 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
     setEditForm(prev => ({ ...prev, [field]: value }));
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mainDateFilterRef.current && !mainDateFilterRef.current.contains(event.target)) {
+        setShowDateFilter(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const getFilterLabel = () => {
+    switch (dateFilter) {
+      case 'today': return 'Today';
+      case 'week': return 'This Week';
+      case 'month': return 'This Month';
+      case 'quarter': return 'This Quarter';
+      case 'year': return 'This Year';
+      case 'custom': return 'Custom Range';
+      default: return 'All Date';
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -184,14 +211,36 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
       if (dateFilter !== 'all' && c.createdAt) {
         const date = new Date(c.createdAt);
         const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        
+        const itemDate = new Date(date);
+        itemDate.setHours(0, 0, 0, 0);
+
         if (dateFilter === 'today') {
-          matchDate = date.toDateString() === now.toDateString();
+          matchDate = itemDate.getTime() === now.getTime();
         } else if (dateFilter === 'week') {
-          const weekAgo = new Date(now.setDate(now.getDate() - 7));
-          matchDate = date >= weekAgo;
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay());
+          matchDate = itemDate >= weekStart;
         } else if (dateFilter === 'month') {
-          const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
-          matchDate = date >= monthAgo;
+          matchDate = itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === 'quarter') {
+          const currentQuarter = Math.floor(now.getMonth() / 3);
+          const itemQuarter = Math.floor(itemDate.getMonth() / 3);
+          matchDate = itemQuarter === currentQuarter && itemDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === 'year') {
+          matchDate = itemDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === 'custom') {
+          if (customStartDate) {
+            const start = new Date(customStartDate);
+            start.setHours(0, 0, 0, 0);
+            matchDate = matchDate && itemDate >= start;
+          }
+          if (customEndDate) {
+            const end = new Date(customEndDate);
+            end.setHours(23, 59, 59, 999);
+            matchDate = matchDate && itemDate <= end;
+          }
         }
       }
       
@@ -269,7 +318,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
             className="group flex items-center gap-2.5 px-7 py-4 bg-white text-[#1B4DA0] border border-[#F4F3EF] rounded-2xl text-[13px] font-bold hover:bg-[#F8FAFF] hover:border-blue-100 transition-all duration-300 shadow-sm active:scale-95"
             disabled={loading}
           >
-            <FiDatabase size={18} className={`text-[#1B4DA0] transition-transform group-hover:scale-110 ${loading ? 'animate-spin' : ''}`} />
+            <FiDatabase size={18} className="text-[#1B4DA0] transition-transform group-hover:scale-110" />
             Sync Data
           </button>
 
@@ -297,18 +346,87 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
         </div>
 
         {/* Date Filter (Standardized UI) */}
-        <div className="relative flex-1 group min-w-[140px]">
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full bg-[#F4F3EF] text-[10px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-2xl pl-6 pr-12 py-4 outline-none border-0 cursor-pointer appearance-none hover:bg-[#EEF2FB] transition-all"
+        <div className="relative group" ref={mainDateFilterRef}>
+          <button
+            onClick={() => setShowDateFilter(!showDateFilter)}
+            className="flex items-center justify-between gap-3 px-6 py-4 bg-[#F4F3EF] rounded-2xl min-w-[160px] hover:bg-[#EEF2FB] transition-all group/btn"
           >
-            <option value="all">All Date</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-          </select>
-          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" size={14} />
+            <div className="flex items-center gap-2.5">
+              <FiCalendar size={16} className="text-[#1B4DA0]" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#1A1A2E]">{getFilterLabel()}</span>
+            </div>
+            <FiChevronDown className={`text-[#1B4DA0] transition-transform duration-300 ${showDateFilter ? 'rotate-180' : ''}`} size={14} />
+          </button>
+
+          <AnimatePresence>
+            {showDateFilter && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute left-0 top-full mt-3 w-64 bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[#F4F3EF] z-[100] overflow-hidden p-2"
+              >
+                {[
+                  { id: 'all', label: 'All Date' },
+                  { id: 'today', label: 'Today' },
+                  { id: 'week', label: 'This Week' },
+                  { id: 'month', label: 'This Month' },
+                  { id: 'quarter', label: 'This Quarter' },
+                  { id: 'year', label: 'This Year' },
+                  { id: 'custom', label: 'Custom Range' }
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => {
+                      setDateFilter(option.id);
+                      if (option.id !== 'custom') setShowDateFilter(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-5 py-3.5 rounded-xl text-[11px] font-bold transition-all ${
+                      dateFilter === option.id 
+                        ? 'bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20' 
+                        : 'text-[#6B6B7E] hover:bg-[#F4F3EF] hover:text-[#1A1A2E]'
+                    }`}
+                  >
+                    {option.label.toUpperCase()}
+                    {dateFilter === option.id && <FiCheck size={14} />}
+                  </button>
+                ))}
+
+                {dateFilter === 'custom' && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    className="mt-2 p-4 bg-[#F8FAFF] rounded-2xl space-y-3 border border-blue-50"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-[#1B4DA0] uppercase tracking-widest ml-1">Start Date</p>
+                      <input 
+                        type="date" 
+                        value={customStartDate} 
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="w-full bg-white border border-blue-100 rounded-xl px-3 py-2 text-xs font-bold text-[#1A1A2E] outline-none focus:ring-2 focus:ring-blue-500/20" 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-[#1B4DA0] uppercase tracking-widest ml-1">End Date</p>
+                      <input 
+                        type="date" 
+                        value={customEndDate} 
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="w-full bg-white border border-blue-100 rounded-xl px-3 py-2 text-xs font-bold text-[#1A1A2E] outline-none focus:ring-2 focus:ring-blue-500/20" 
+                      />
+                    </div>
+                    <button 
+                      onClick={() => setShowDateFilter(false)}
+                      className="w-full py-2.5 bg-[#1B4DA0] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#153e82] transition-all"
+                    >
+                      Apply Range
+                    </button>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Stage Filter */}

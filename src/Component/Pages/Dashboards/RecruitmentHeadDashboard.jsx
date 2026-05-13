@@ -2407,10 +2407,12 @@ const RecruitmentHeadDashboard = () => {
 
   // Date Filter State - Default to All Time for total visibility
   const [dateFilter, setDateFilter] = useState({
-    filterType: 'date', // Default to Today
+    filterType: 'all',
     year: new Date().getFullYear(),
     month: new Date().getMonth(),
     date: getLocalISODate(),
+    startDate: '',
+    endDate: ''
   });
 
 
@@ -2519,6 +2521,12 @@ const RecruitmentHeadDashboard = () => {
   // Get filter label for display
   const getFilterLabel = () => {
     switch (dateFilter.filterType) {
+      case 'today':
+        return 'Today';
+      case 'week':
+        return 'This Week';
+      case 'quarter':
+        return 'This Quarter';
       case 'last7days':
         return 'Last 7 Days';
       case 'year':
@@ -2527,6 +2535,8 @@ const RecruitmentHeadDashboard = () => {
         return `${months[dateFilter.month]} ${dateFilter.year}`;
       case 'date':
         return new Date(dateFilter.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      case 'custom':
+        return 'Custom Range';
       default:
         return 'All Time';
     }
@@ -2550,11 +2560,30 @@ const RecruitmentHeadDashboard = () => {
   };
 
   const buildDateFilterParams = (filter = dateFilter) => {
-    if (filter.filterType === 'last7days') {
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 6);
+    if (filter.filterType === 'today') {
+      return { date: getLocalISODate() };
+    }
 
+    if (filter.filterType === 'week') {
+      const now = new Date();
+      const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+      return {
+        startDate: weekStart.toISOString().split('T')[0],
+        endDate: getLocalISODate()
+      };
+    }
+
+    if (filter.filterType === 'quarter') {
+      const now = new Date();
+      const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
+      const quarterStart = new Date(now.getFullYear(), quarterStartMonth, 1);
+      return {
+        startDate: quarterStart.toISOString().split('T')[0],
+        endDate: getLocalISODate()
+      };
+    }
+
+    if (filter.filterType === 'last7days') {
       return {
         startDate: getLocalISODate(-6),
         endDate: getLocalISODate(),
@@ -2571,6 +2600,13 @@ const RecruitmentHeadDashboard = () => {
 
     if (filter.filterType === 'date') {
       return { date: filter.date };
+    }
+
+    if (filter.filterType === 'custom') {
+      return {
+        startDate: filter.startDate,
+        endDate: filter.endDate
+      };
     }
 
     return {};
@@ -3435,10 +3471,13 @@ const RecruitmentHeadDashboard = () => {
                             <div className="flex border-b border-gray-100">
                               {[
                                 { key: 'all', label: 'All Time' },
-                                { key: 'last7days', label: 'Last 7 Days' },
-                                { key: 'year', label: 'Year' },
+                                { key: 'today', label: 'Today' },
+                                { key: 'week', label: 'Week' },
+                                { key: 'last7days', label: '7 Days' },
                                 { key: 'month', label: 'Month' },
-                                { key: 'date', label: 'Date' },
+                                { key: 'quarter', label: 'Quarter' },
+                                { key: 'year', label: 'Year' },
+                                { key: 'custom', label: 'Custom' },
                               ].map((tab) => (
                                 <button
                                   key={tab.key}
@@ -3510,31 +3549,26 @@ const RecruitmentHeadDashboard = () => {
                                 </div>
                               )}
 
-                              {/* Quick Date Buttons */}
-                              {dateFilter.filterType === 'date' && (
-                                <div className="flex flex-wrap gap-2 mb-3">
-                                  <button
-                                    onClick={() => setDateFilter({ ...dateFilter, date: getLocalISODate() })}
-                                    className="px-3 py-1.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors"
-                                  >
-                                    Today
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setDateFilter({ ...dateFilter, date: getLocalISODate(-1) });
-                                    }}
-                                    className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                                  >
-                                    Yesterday
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setDateFilter({ ...dateFilter, filterType: 'last7days' });
-                                    }}
-                                    className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                                  >
-                                    Last 7 Days
-                                  </button>
+                              {dateFilter.filterType === 'custom' && (
+                                <div className="space-y-3 mb-4">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Start Date</label>
+                                    <input
+                                      type="date"
+                                      value={dateFilter.startDate}
+                                      onChange={(e) => setDateFilter({ ...dateFilter, startDate: e.target.value })}
+                                      className="w-full bg-[#F8FAFC] border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-blue-200 transition-all"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">End Date</label>
+                                    <input
+                                      type="date"
+                                      value={dateFilter.endDate}
+                                      onChange={(e) => setDateFilter({ ...dateFilter, endDate: e.target.value })}
+                                      className="w-full bg-[#F8FAFC] border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-blue-200 transition-all"
+                                    />
+                                  </div>
                                 </div>
                               )}
 
