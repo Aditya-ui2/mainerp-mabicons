@@ -1,16 +1,51 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import {
-  X, Mail, Phone, Calendar, ChevronRight, ChevronDown, Plus, Download, Search, Filter,
-  User, Briefcase, Tag, AlignLeft, LayoutGrid, List, AlertCircle,
-  CheckSquare, Square, Trash2, Send, MapPin, DollarSign, Clock, Award,
-  FileText, Upload, Eye, Video, Star, Zap, Sparkles, Wand2
+import { 
+  Plus, Search, Filter, MoreHorizontal, FileText, CheckSquare, 
+  Square, Eye, Briefcase, Zap, MapPin, ChevronRight, X, Sparkles, AlertCircle, 
+  Trash2, Mail, Phone, Download, Upload, Video, Star, Wand2, LayoutGrid, List, AlignLeft, Calendar, ChevronDown, DollarSign, Clock, Award, Send
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import * as pdfjsLib from 'pdfjs-dist';
 import { parseResumeWithAI, rankCandidatesWithAI } from "../../Utilities/geminiService";
+
+const STATES_CITIES = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool"],
+  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat"],
+  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon"],
+  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia"],
+  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon"],
+  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar"],
+  "Haryana": ["Faridabad", "Gurgaon", "Panipat", "Ambala", "Yamunanagar"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Solan", "Mandi"],
+  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar"],
+  "Karnataka": ["Bangalore", "Hubli-Dharwad", "Mysore", "Gulbarga", "Belgaum"],
+  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam"],
+  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain"],
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Amravati", "Navi Mumbai"],
+  "Manipur": ["Imphal", "Bishnupur", "Thoubal"],
+  "Meghalaya": ["Shillong", "Tura", "Jowai"],
+  "Mizoram": ["Aizawl", "Lunglei", "Saiha"],
+  "Nagaland": ["Kohima", "Dimapur", "Mokokchung"],
+  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur"],
+  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer"],
+  "Sikkim": ["Gangtok", "Namchi", "Geyzing"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam"],
+  "Tripura": ["Agartala", "Udaipur", "Dharmanagar"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Meerut", "Varanasi", "Prayagraj", "Bareilly", "Aligarh", "Noida"],
+  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani"],
+  "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri", "Durgapur"],
+  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi"],
+  "Chandigarh": ["Chandigarh"],
+  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag"],
+  "Ladakh": ["Leh", "Kargil"],
+  "Puducherry": ["Puducherry", "Karaikal"]
+};
 
 import { PIPELINE_STAGES, AVATAR_COLORS, getAvatarColor } from "./candidatesConfig";
 import {
@@ -35,7 +70,7 @@ import {
 } from "../service/api";
 import {
   FiDatabase, FiRefreshCw, FiUser, FiMail, FiBriefcase, FiCalendar, FiClock,
-  FiVideo, FiCopy, FiCheckCircle, FiX, FiRefreshCcw
+  FiVideo, FiCopy, FiCheckCircle, FiX, FiRefreshCcw, FiLoader, FiCheck
 } from 'react-icons/fi';
 
 
@@ -153,6 +188,9 @@ export default function CandidatesPage({ setActiveTab }) {
     expectedSalary: "",
     skills: "",
     source: "",
+    state: "",
+    city: "",
+    otherCity: "",
     resume: null
   });
 
@@ -173,6 +211,9 @@ export default function CandidatesPage({ setActiveTab }) {
       expectedSalary: "",
       skills: "",
       source: "",
+      state: "",
+      city: "",
+      otherCity: "",
       resume: null
     });
     setSuggestedCandidates([]);
@@ -233,7 +274,14 @@ export default function CandidatesPage({ setActiveTab }) {
     }
 
     // 3. API Fallback - uses resumeId, sharePointId or candidate id
-    const targetId = candidate.resumeId || candidate.sharePointId || (candidate.raw && candidate.raw.sharePointId) || candidate.id;
+    const targetId = candidate.resumeId || 
+                    candidate.sharePointId || 
+                    (candidate.raw && candidate.raw.sharePointId) || 
+                    (candidate.id && candidate.id.length > 20 ? candidate.id : null) || // UUID check
+                    candidate.id;
+    
+    // Debug info
+    console.log(`[CV_DEBUG] Attempting to open CV for ${candidate.name}. TargetID: ${targetId}, Source: ${candidate.source}`);
     
     if (targetId) {
       const toastId = toast.loading("Connecting to resume server...");
@@ -289,8 +337,10 @@ export default function CandidatesPage({ setActiveTab }) {
     try {
       const posRes = await getAllRecruitmentPositions();
       const rawPositions = posRes.data || posRes.positions || (Array.isArray(posRes) ? posRes : []);
-      if (Array.isArray(rawPositions)) {
-        const mappedPositions = rawPositions.map(p => ({
+      
+      let finalPositions = [];
+      if (Array.isArray(rawPositions) && rawPositions.length > 0) {
+        finalPositions = rawPositions.map(p => ({
           id: p.id || p._id,
           title: p.title || 'Untitled Position',
           clientName: p.clientName || p.client?.companyName || p.client?.name || '',
@@ -298,10 +348,38 @@ export default function CandidatesPage({ setActiveTab }) {
           description: p.description || p.jobDescription || '',
           skills: p.skills || p.requiredSkills || []
         }));
-        setPositions(mappedPositions);
+        
+        // Cache for future use in other tabs
+        localStorage.setItem('recruitment_jobs_cache', JSON.stringify(finalPositions));
+        localStorage.setItem('recruitment_jobs_cache_time', Date.now().toString());
+      } else {
+        // Fallback to cache if API returns empty
+        const cached = localStorage.getItem('recruitment_jobs_cache');
+        if (cached) {
+          try {
+            finalPositions = JSON.parse(cached);
+            console.log('[POSITIONS_DEBUG] Using cached positions:', finalPositions.length);
+          } catch (e) {
+            console.error('[POSITIONS_DEBUG] Cache parse failed');
+          }
+        }
       }
+
+      console.log('[POSITIONS_DEBUG] Final positions set:', finalPositions.length);
+      setPositions(finalPositions);
     } catch (error) {
       console.error('Failed to fetch positions:', error);
+      // Fallback to cache even on error
+      const cached = localStorage.getItem('recruitment_jobs_cache');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setPositions(parsed);
+          toast.info("Using cached job openings.");
+        } catch (e) {}
+      } else {
+        toast.error("Failed to load Job Openings. Please check your connection.");
+      }
     }
 
     // 2. Fetch Clients
@@ -751,10 +829,17 @@ export default function CandidatesPage({ setActiveTab }) {
         notes, location, noticePeriod, source, rating
       } = editCandidate;
 
+      const finalLocation = editCandidate.city === "Other" 
+        ? `${editCandidate.otherCity}, ${editCandidate.state}`
+        : (editCandidate.city ? `${editCandidate.city}, ${editCandidate.state}` : editCandidate.location);
+
       const sanitizedPayload = {
         name, email, phone, positionId, clientId,
         skills, experience, currentSalary, expectedSalary,
-        notes, location, noticePeriod, source, rating
+        notes, location: finalLocation || "", 
+        city: editCandidate.city === "Other" ? editCandidate.otherCity : editCandidate.city || "",
+        state: editCandidate.state || "",
+        noticePeriod, source, rating
       };
 
       const response = await updateCandidate(id, sanitizedPayload);
@@ -833,16 +918,15 @@ export default function CandidatesPage({ setActiveTab }) {
     // When position changes, clear previous data to avoid contamination
     // especially after AI parsing for a specific JD
     if (pos) {
-      setCandidateForm({
-        name: "", email: "", phone: "", location: "",
-        experience: "", noticePeriod: "", currentSalary: "",
-        expectedSalary: "", skills: "", source: "", resume: null,
+      setCandidateForm(prev => ({
+        ...prev,
         positionId: posId,
         clientId: pos.clientId || "",
         clientName: pos.clientName || "",
         displayJobTitle: pos.title || ""
-      });
+      }));
       setSuggestedCandidates([]);
+      toast.info(`Switched to: ${pos.title}`);
     } else {
       setCandidateForm(prev => ({ ...prev, positionId: posId }));
     }
@@ -858,17 +942,31 @@ export default function CandidatesPage({ setActiveTab }) {
     try {
       setIsCreating(true);
       const formData = new FormData();
+      
+      // Construct location string
+      const location = candidateForm.city === "Other" 
+        ? `${candidateForm.otherCity}, ${candidateForm.state}`
+        : (candidateForm.city ? `${candidateForm.city}, ${candidateForm.state}` : candidateForm.location);
+
       Object.keys(candidateForm).forEach(key => {
         if (key === 'resume') {
           if (candidateForm.resume) formData.append("resume", candidateForm.resume);
         } else if (key === 'skills') {
-          // Send as comma-separated string that the backend now parses robustly
           const skillsArray = candidateForm.skills ? (typeof candidateForm.skills === 'string' ? candidateForm.skills.split(',').map(s => s.trim()).filter(Boolean) : []) : [];
           formData.append("skills", skillsArray.join(', '));
+        } else if (key === 'location') {
+          formData.append("location", location || "");
+          formData.append("city", candidateForm.city === "Other" ? candidateForm.otherCity : candidateForm.city || "");
+          formData.append("state", candidateForm.state || "");
+        } else if (['state', 'city', 'otherCity'].includes(key)) {
+          // Skip these as they are handled above
         } else {
           formData.append(key, candidateForm[key] || "");
         }
       });
+      
+      // Ensure location is added if not present in candidateForm
+      if (!formData.has('location')) formData.append('location', location || "");
 
       // Default metadata
       formData.append("stage", "Screening");
@@ -1635,14 +1733,41 @@ Mabicons Recruitment Team`);
                         onChange={(e) => setEditCandidate({ ...editCandidate, phone: e.target.value })}
                       />
                     </div>
-                    <div className="space-y-2 col-span-2 font-black">
-                      <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 font-black">Location</label>
-                      <input
-                        className="w-full bg-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none border-2 border-transparent focus:border-[#1B4DA0]/20 transition-all"
-                        value={editCandidate.location}
-                        onChange={(e) => setEditCandidate({ ...editCandidate, location: e.target.value })}
-                      />
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 font-black">State</label>
+                      <select
+                        className="w-full bg-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none border-2 border-transparent focus:border-[#1B4DA0]/20 transition-all appearance-none"
+                        value={editCandidate.state || ""}
+                        onChange={(e) => setEditCandidate({ ...editCandidate, state: e.target.value, city: "", otherCity: "" })}
+                      >
+                        <option value="">Select State</option>
+                        {Object.keys(STATES_CITIES).map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest pl-1 font-black">City</label>
+                      <select
+                        className="w-full bg-[#F4F3EF] rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none border-2 border-transparent focus:border-[#1B4DA0]/20 transition-all appearance-none"
+                        value={editCandidate.city || ""}
+                        onChange={(e) => setEditCandidate({ ...editCandidate, city: e.target.value, otherCity: e.target.value === "Other" ? "" : editCandidate.otherCity })}
+                        disabled={!editCandidate.state}
+                      >
+                        <option value="">Select City</option>
+                        {editCandidate.state && STATES_CITIES[editCandidate.state].map(c => <option key={c} value={c}>{c}</option>)}
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    {editCandidate.city === "Other" && (
+                      <div className="space-y-2 col-span-2 animate-in fade-in slide-in-from-left-4">
+                        <label className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest pl-1 font-black">Specify City</label>
+                        <input
+                          className="w-full bg-[#F4F3EF] border-2 border-[#1B4DA0]/20 rounded-2xl px-5 py-3.5 text-sm font-bold text-[#1A1A2E] outline-none focus:bg-white focus:border-[#1B4DA0] transition-all"
+                          placeholder="Enter city name"
+                          value={editCandidate.otherCity || ""}
+                          onChange={(e) => setEditCandidate({ ...editCandidate, otherCity: e.target.value })}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-[#F4F3EF] font-black">
@@ -2237,18 +2362,60 @@ Mabicons Recruitment Team`);
 
                 <div className="space-y-1.5 md:col-span-2 text-left">
                   <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">
-                    Location
+                    State
                   </label>
                   <div className="relative group">
-                    <input
-                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] focus:ring-2 focus:ring-[#1B4DA0]/10"
-                      placeholder="City, State"
-                      value={candidateForm.location}
-                      onChange={(e) => setCandidateForm({ ...candidateForm, location: e.target.value })}
-                    />
-                    <MapPin size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9B9BAD] opacity-50" />
+                    <select
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                      value={candidateForm.state || ""}
+                      onChange={(e) => {
+                        const state = e.target.value;
+                        setCandidateForm({ ...candidateForm, state, city: "", otherCity: "" });
+                      }}
+                    >
+                      <option value="">Select State</option>
+                      {Object.keys(STATES_CITIES).map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
                   </div>
                 </div>
+
+                <div className="space-y-1.5 text-left">
+                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">
+                    City
+                  </label>
+                  <div className="relative group">
+                    <select
+                      className="w-full bg-[#F4F3EF] border-0 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-[#EEF2FB] appearance-none pr-10"
+                      value={candidateForm.city || ""}
+                      onChange={(e) => {
+                        const city = e.target.value;
+                        setCandidateForm({ ...candidateForm, city, otherCity: city === "Other" ? "" : candidateForm.otherCity });
+                      }}
+                      disabled={!candidateForm.state}
+                    >
+                      <option value="">Select City</option>
+                      {candidateForm.state && STATES_CITIES[candidateForm.state].map(c => <option key={c} value={c}>{c}</option>)}
+                      <option value="Other">Other</option>
+                    </select>
+                    <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] rotate-90 pointer-events-none opacity-50" />
+                  </div>
+                </div>
+
+                {candidateForm.city === "Other" && (
+                  <div className="space-y-1.5 text-left animate-in fade-in slide-in-from-left-4">
+                    <label className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest pl-1 block w-full text-left">
+                      Specify City
+                    </label>
+                    <input
+                      className="w-full bg-[#F4F3EF] border-2 border-[#1B4DA0]/20 rounded-2xl px-6 py-4 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:bg-white focus:border-[#1B4DA0]"
+                      placeholder="Enter city name"
+                      value={candidateForm.otherCity}
+                      onChange={(e) => setCandidateForm({ ...candidateForm, otherCity: e.target.value })}
+                      required
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-1.5 text-left">
                   <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1 block w-full text-left">

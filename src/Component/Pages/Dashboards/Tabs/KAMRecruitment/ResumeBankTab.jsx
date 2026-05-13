@@ -361,6 +361,34 @@ const ResumeDetailDrawer = ({ resume, isDarkMode, onClose, onRefresh }) => {
               )}
             </div>
           </div>
+          {/* Assigned Position & JD Section */}
+          {resume.position && (
+            <div className={`p-8 rounded-[32px] border ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-blue-50/30 border-blue-100/50'}`}>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className={`text-[10px] font-black uppercase tracking-[3px] mb-1 ${isDarkMode ? 'text-blue-400' : 'text-[#1B4DA0]'}`}>Assigned Position</p>
+                  <h4 className="text-xl font-bold font-syne">{resume.position.title}</h4>
+                  <p className="text-[11px] font-bold text-slate-500 mt-1 uppercase tracking-wider">
+                    {resume.position.client?.companyName || resume.position.client?.name || 'Internal Hiring'}
+                  </p>
+                </div>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDarkMode ? 'bg-slate-700' : 'bg-white shadow-sm text-[#1B4DA0]'}`}>
+                  <Briefcase size={20} />
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <FileText size={14} className="text-slate-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Roles & Responsibilities (JD)</span>
+                </div>
+                <div className={`text-sm leading-relaxed whitespace-pre-wrap p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-slate-300' : 'bg-white border-blue-100/30 text-slate-600'}`}>
+                  {resume.position.description || "No specific roles and responsibilities defined for this position."}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             <h3 className={`text-xs font-bold uppercase tracking-[2px] ${isDarkMode ? 'text-white' : 'text-[#1A1A2E]'}`}>Expertise Stack</h3>
             <div className="flex flex-wrap gap-2">

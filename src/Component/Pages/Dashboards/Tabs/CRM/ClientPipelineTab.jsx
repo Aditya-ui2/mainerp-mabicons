@@ -583,6 +583,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
               spocPhone: newClientData.spocPhone,
               industry: newClientData.industry,
               location: newClientData.state,
+              state: newClientData.state,
               city: newClientData.city === 'Other' ? newClientData.otherCity : newClientData.city,
               serviceType: newClientData.serviceType,
               stage: 'Lead Stage',
@@ -617,6 +618,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
             const payload = {
               ...completeData,
               location: completeData.state,
+              state: completeData.state,
               city: completeData.city === 'Other' ? completeData.otherCity : completeData.city,
               clientId: finalizingClient.id,
               stage: 'Onboarding Complete',

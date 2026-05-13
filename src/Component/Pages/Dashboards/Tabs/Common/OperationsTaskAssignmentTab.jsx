@@ -17,6 +17,7 @@ import {
   FiUser,
   FiMoreHorizontal,
   FiCheck,
+  FiLoader,
 } from 'react-icons/fi';
 import {
   getDepartmentTasks,
