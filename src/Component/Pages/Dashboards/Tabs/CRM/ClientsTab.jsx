@@ -10,47 +10,65 @@ import { Plus } from 'lucide-react';
 import { getAllClients, deleteClient, editClient } from '../../../service/api';
 import { toast } from 'react-hot-toast';
 
-const Toggle = ({ active, onChange, label }) => (
-  <div className="flex items-center gap-3">
-    {label && (
-      <span 
-        style={{ color: active ? '#10B981' : '#94A3B8' }} 
-        className="text-[10px] font-black uppercase tracking-widest"
+const StatusDropdown = ({ active, onChange, clientId }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const currentStatus = active ? 'Active' : 'Inactive';
+  
+  return (
+    <div className="relative inline-block" onClick={e => e.stopPropagation()}>
+      <button
+        id={`status-btn-${clientId}`}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-[11px] uppercase tracking-widest font-black transition-all min-w-[110px] ${
+          active 
+            ? 'bg-[#10B981]/10 text-[#10B981] hover:bg-[#10B981]/20 border border-[#10B981]/20' 
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+        }`}
       >
-        {label}
-      </span>
-    )}
+        <div className="flex items-center gap-2">
+          <div className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-[#10B981] animate-pulse' : 'bg-slate-400'}`} />
+          <span className="truncate">{currentStatus}</span>
+        </div>
+        <FiChevronDown size={14} className={`transition-transform opacity-60 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
 
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange(!active);
-      }}
-      style={{ 
-        backgroundColor: active ? '#10B981' : '#E2E8F0',
-        borderColor: active ? '#34D399' : '#CBD5E1',
-        boxShadow: active ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'inset 0 2px 4px rgba(0,0,0,0.05)'
-      }}
-      className="relative w-12 h-6 rounded-full transition-all duration-500 border-2"
-    >
-      <motion.div
-        initial={false}
-        animate={{
-          x: active ? 26 : 2,
-          scale: active ? 1 : 0.9
-        }}
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        style={{ 
-          backgroundColor: active ? '#FFFFFF' : '#FFFFFF',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}
-        className="absolute top-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300"
-      >
-        {active && <div style={{ backgroundColor: '#10B981' }} className="w-1.5 h-1.5 rounded-full animate-pulse" />}
-      </motion.div>
-    </button>
-  </div>
-);
+      {isOpen && createPortal(
+        <>
+          <div className="fixed inset-0 z-[1100] bg-transparent" onClick={() => setIsOpen(false)} />
+          <div
+            className="fixed z-[1101] w-36 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.12)] border border-[#F4F3EF] py-2 flex flex-col"
+            style={(() => {
+              const btn = document.getElementById(`status-btn-${clientId}`);
+              if (!btn) return { top: 0, left: 0 };
+              const rect = btn.getBoundingClientRect();
+              const spaceBelow = window.innerHeight - rect.bottom;
+              if (spaceBelow < 120) {
+                return { bottom: window.innerHeight - rect.top + 6, left: rect.left };
+              }
+              return { top: rect.bottom + 6, left: rect.left };
+            })()}
+          >
+            <button
+              onClick={() => { onChange(true); setIsOpen(false); }}
+              className={`w-full text-left px-4 py-3 text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all hover:bg-[#10B981]/10 text-[#10B981] ${active ? 'bg-[#10B981]/10' : 'hover:text-[#10B981] text-slate-600'}`}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+              Active
+            </button>
+            <button
+              onClick={() => { onChange(false); setIsOpen(false); }}
+              className={`w-full text-left px-4 py-3 text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all hover:bg-slate-100 text-slate-600 ${!active ? 'bg-slate-100' : 'hover:text-slate-600 text-slate-600'}`}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              Inactive
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+    </div>
+  );
+};
 
 const ClientsTab = () => {
   const [clients, setClients] = useState([]);
@@ -221,7 +239,8 @@ const ClientsTab = () => {
                         <p className="text-[12px] font-bold text-[#6B6B7E]">{client.city || 'N/A'}</p>
                       </td>
                       <td className="px-8 py-4 text-left">
-                        <Toggle 
+                        <StatusDropdown 
+                          clientId={client.id || client._id}
                           active={['active', 'accepted'].includes((client.status || 'Active').toLowerCase().trim())} 
                           onChange={(val) => handleToggleStatus(client, val)} 
                         />
