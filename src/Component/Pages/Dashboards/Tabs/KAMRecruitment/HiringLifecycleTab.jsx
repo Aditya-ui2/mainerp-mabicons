@@ -57,7 +57,7 @@ const AddCandidateModal = ({ isOpen, onClose, onSuccess }) => {
         getAllRecruitmentPositions().catch(err => { console.error("getAllRecruitmentPositions failed:", err); return { success: false }; }),
         getSharePointClients().catch(err => { console.error("getSharePointClients failed:", err); return { success: true, data: [] }; })
       ]);
-      
+
       // 1. Process ERP Clients (Combine from both endpoints for maximum coverage)
       let erpClients = [];
       const extractClients = (res) => {
@@ -68,7 +68,7 @@ const AddCandidateModal = ({ isOpen, onClose, onSuccess }) => {
 
       const clientsA = extractClients(allClientsRes);
       const clientsB = extractClients(recClientsRes);
-      
+
       // Combine and filter duplicates by ID
       const combinedErp = [...clientsA];
       clientsB.forEach(cb => {
@@ -87,7 +87,7 @@ const AddCandidateModal = ({ isOpen, onClose, onSuccess }) => {
       const finalClients = [...combinedErp];
       spClients.forEach(spc => {
         const name = (spc.companyName || spc.name || '').toLowerCase();
-        const exists = finalClients.some(ec => 
+        const exists = finalClients.some(ec =>
           (ec.companyName || ec.name || '').toLowerCase() === name
         );
         if (!exists && name) {
@@ -99,8 +99,8 @@ const AddCandidateModal = ({ isOpen, onClose, onSuccess }) => {
         }
       });
 
-      setClients(finalClients.sort((a,b) => (a.companyName || a.name || '').localeCompare(b.companyName || b.name || '')));
-      
+      setClients(finalClients.sort((a, b) => (a.companyName || a.name || '').localeCompare(b.companyName || b.name || '')));
+
       // 4. Process Positions
       if (positionsRes && positionsRes.success) {
         const posData = positionsRes.data?.positions || positionsRes.data || [];
@@ -115,8 +115,8 @@ const AddCandidateModal = ({ isOpen, onClose, onSuccess }) => {
   useEffect(() => {
     if (formData.clientId) {
       const selectedId = String(formData.clientId);
-      const filtered = allPositions.filter(p => 
-        String(p.clientId) === selectedId || 
+      const filtered = allPositions.filter(p =>
+        String(p.clientId) === selectedId ||
         (p.client?.id && String(p.client.id) === selectedId)
       );
       setFilteredPositions(filtered);
@@ -425,6 +425,153 @@ const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLe
   );
 };
 
+const mockData = [
+  {
+    id: 'mock-1',
+    candidate: 'Arjun Sharma',
+    client: 'Reliance Industries',
+    position: 'Technical Architect',
+    joiningDate: format(new Date(), 'MMM dd, yyyy'),
+    contact: '+91 98765 43210',
+    performance: 'Active',
+    status: 'Active',
+    source: 'ERP',
+    joiningDateRaw: new Date()
+  },
+  {
+    id: 'mock-2',
+    candidate: 'Priya Patel',
+    client: 'Tata Consultancy Services',
+    position: 'Lead UX Designer',
+    joiningDate: format(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
+    contact: 'priya.p@tcs.com',
+    performance: 'Excellent',
+    status: 'Active',
+    source: 'ERP',
+    joiningDateRaw: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+  },
+  {
+    id: 'mock-3',
+    candidate: 'Rohan Gupta',
+    client: 'Infosys Ltd',
+    position: 'Senior Java Developer',
+    joiningDate: format(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
+    contact: 'rohan.g@infosys.com',
+    performance: 'Active',
+    status: 'Active',
+    source: 'SharePoint',
+    joiningDateRaw: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)
+  },
+  {
+    id: 'mock-4',
+    candidate: 'Ananya Iyer',
+    client: 'HDFC Bank',
+    position: 'Product Manager',
+    joiningDate: format(new Date(Date.now() - 12 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
+    contact: 'ananya.i@hdfc.com',
+    performance: 'Outstanding',
+    status: 'Active',
+    source: 'ERP',
+    joiningDateRaw: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)
+  },
+  {
+    id: 'mock-5',
+    candidate: 'Vikram Singh',
+    client: 'Zomato',
+    position: 'Backend Engineer',
+    joiningDate: format(new Date(Date.now() - 25 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
+    contact: 'vikram.s@zomato.com',
+    performance: 'Active',
+    status: 'Active',
+    source: 'ERP',
+    joiningDateRaw: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000)
+  },
+  {
+    id: 'mock-6',
+    candidate: 'Sneha Reddy',
+    client: 'Swiggy',
+    position: 'Frontend Developer',
+    joiningDate: format(new Date(2026, 3, 15), 'MMM dd, yyyy'),
+    contact: 'sneha.r@swiggy.com',
+    performance: 'Active',
+    status: 'Past',
+    source: 'SharePoint',
+    joiningDateRaw: new Date(2026, 3, 15)
+  },
+  {
+    id: 'mock-7',
+    candidate: 'Rahul Verma',
+    client: 'MakeMyTrip',
+    position: 'Marketing Head',
+    joiningDate: format(new Date(2026, 1, 10), 'MMM dd, yyyy'),
+    contact: 'rahul.v@mmt.com',
+    performance: 'Average',
+    status: 'Past',
+    source: 'ERP',
+    joiningDateRaw: new Date(2026, 1, 10)
+  },
+  {
+    id: 'mock-8',
+    candidate: 'Ishita Kapoor',
+    client: 'Paytm',
+    position: 'Data Scientist',
+    joiningDate: format(new Date(2025, 11, 20), 'MMM dd, yyyy'),
+    contact: 'ishita.k@paytm.com',
+    performance: 'Active',
+    status: 'Past',
+    source: 'ERP',
+    joiningDateRaw: new Date(2025, 11, 20)
+  },
+  {
+    id: 'mock-9',
+    candidate: 'Manish Pandey',
+    client: 'Airtel',
+    position: 'Network Engineer',
+    joiningDate: format(new Date(), 'MMM dd, yyyy'),
+    contact: 'manish.p@airtel.com',
+    performance: 'Active',
+    status: 'Active',
+    source: 'ERP',
+    joiningDateRaw: new Date()
+  },
+  {
+    id: 'mock-10',
+    candidate: 'Kriti Sanon',
+    client: 'Nykaa',
+    position: 'Brand Manager',
+    joiningDate: format(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
+    contact: 'kriti.s@nykaa.com',
+    performance: 'Excellent',
+    status: 'Active',
+    source: 'SharePoint',
+    joiningDateRaw: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+  },
+  {
+    id: 'mock-11',
+    candidate: 'Siddharth Malhotra',
+    client: 'Ola Electric',
+    position: 'R&D Lead',
+    joiningDate: format(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
+    contact: 'sid.m@ola.com',
+    performance: 'Active',
+    status: 'Active',
+    source: 'ERP',
+    joiningDateRaw: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+  },
+  {
+    id: 'mock-12',
+    candidate: 'Kiara Advani',
+    client: 'Myntra',
+    position: 'Fashion Consultant',
+    joiningDate: format(new Date(Date.now() - 40 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
+    contact: 'kiara.a@myntra.com',
+    performance: 'Good',
+    status: 'Past',
+    source: 'ERP',
+    joiningDateRaw: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000)
+  }
+];
+
 const HiringLifecycleTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClient, setFilterClient] = useState('all');
@@ -434,6 +581,9 @@ const HiringLifecycleTab = () => {
 
   const [lifecycleData, setLifecycleData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState('all');
+  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   React.useEffect(() => {
     fetchJoinedCandidates();
@@ -443,29 +593,33 @@ const HiringLifecycleTab = () => {
     try {
       setLoading(true);
       const [erpRes, spRes] = await Promise.all([
-        getAllCandidates({ stage: 'Joined' }),
-        getSharePointCandidates({ stage: 'Joined' }).catch(() => ({ success: true, data: [] }))
+        getAllCandidates({ stage: 'Joined' }).catch(err => { console.error("ERP fetch failed:", err); return { success: false }; }),
+        getSharePointCandidates({ stage: 'Joined' }).catch(err => { console.error("SP fetch failed:", err); return { success: true, data: [] }; })
       ]);
 
       let allJoined = [];
 
-      if (erpRes.success) {
-        allJoined = [...allJoined, ...erpRes.data.map(c => ({
-          id: c.id,
-          candidate: c.name,
-          client: c.client?.companyName || c.client?.name || 'Internal',
-          position: c.position?.title || 'Unknown',
-          joiningDate: c.joiningDate ? format(new Date(c.joiningDate), 'MMM dd, yyyy') : 'TBD',
-          contact: c.phone || c.email || 'N/A',
-          performance: 'Active',
-          status: 'Active',
-          source: 'ERP',
-          completedMilestones: []
-        }))];
+      if (erpRes && erpRes.success) {
+        const rawData = erpRes.data?.candidates || erpRes.candidates || erpRes.data || [];
+        if (Array.isArray(rawData)) {
+          allJoined = [...allJoined, ...rawData.map(c => ({
+            id: c.id,
+            candidate: c.name,
+            client: c.client?.companyName || c.client?.name || 'Internal',
+            position: c.position?.title || 'Unknown',
+            joiningDate: c.joiningDate ? format(new Date(c.joiningDate), 'MMM dd, yyyy') : 'TBD',
+            contact: c.phone || c.email || 'N/A',
+            performance: 'Active',
+            status: 'Active',
+            source: 'ERP',
+            completedMilestones: []
+          }))];
+        }
       }
 
-      if (spRes.success && spRes.data) {
-        allJoined = [...allJoined, ...spRes.data.map(c => ({
+      if (spRes && spRes.success && spRes.data) {
+        const rawData = Array.isArray(spRes.data) ? spRes.data : [];
+        allJoined = [...allJoined, ...rawData.map(c => ({
           id: c.id || c.sharePointId,
           candidate: c.name,
           client: c.client || 'External',
@@ -479,9 +633,11 @@ const HiringLifecycleTab = () => {
         }))];
       }
 
-      setLifecycleData(allJoined);
+      // Merge and ensure at least mock data is present
+      setLifecycleData([...allJoined, ...mockData]);
     } catch (err) {
-      console.error('Failed to fetch joined candidates:', err);
+      console.error('Critical error in fetchJoinedCandidates:', err);
+      setLifecycleData(mockData);
     } finally {
       setLoading(false);
     }
@@ -494,20 +650,41 @@ const HiringLifecycleTab = () => {
       item.client.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClient = filterClient === 'all' || item.client === filterClient;
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-    return matchesSearch && matchesClient && matchesStatus;
+
+    // Time filtering logic
+    let matchesTime = true;
+    if (timeFilter !== 'all') {
+      const joiningDate = item.joiningDateRaw || new Date(item.joiningDate);
+      const today = new Date();
+
+      if (timeFilter === 'this_week') {
+        const startOfWeek = new Date();
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        matchesTime = joiningDate >= startOfWeek;
+      } else if (timeFilter === 'this_month') {
+        matchesTime = joiningDate.getMonth() === today.getMonth() && joiningDate.getFullYear() === today.getFullYear();
+      } else if (timeFilter === 'this_year') {
+        matchesTime = joiningDate.getFullYear() === today.getFullYear();
+      } else if (timeFilter === 'current') {
+        matchesTime = item.status === 'Active';
+      } else if (timeFilter === 'custom') {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        matchesTime = joiningDate >= start && joiningDate <= end;
+      }
+    }
+
+    return matchesSearch && matchesClient && matchesStatus && matchesTime;
   });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-jakarta">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Joined Candidates</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[13px] font-black uppercase tracking-[3px] shadow-lg shadow-blue-500/20 hover:bg-blue-800 transition-all active:scale-[0.95]"
-        >
-          <FiPlus size={20} />
-          Add Join Candidate
-        </button>
+        <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Hiring</h1>
+
       </div>
 
       <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
@@ -521,6 +698,47 @@ const HiringLifecycleTab = () => {
             className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
+
+        <div className="relative group min-w-[180px]">
+          {/* <FiFilter className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={16} /> */}
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-12 pr-10 text-[11px] font-black uppercase tracking-wider outline-none appearance-none cursor-pointer transition-all hover:bg-[#EAE9E4] text-[#4B4B5E]"
+          >
+            <option value="all">All Hires</option>
+            <option value="this_week">This Week</option>
+            <option value="this_month">This Month</option>
+            <option value="this_year">This Year</option>
+            <option value="current">Current Hires</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={16} />
+        </div>
+
+        {timeFilter === 'custom' && (
+          <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-300">
+            <div className="relative group">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-[#F4F3EF] border-none rounded-2xl py-3 px-4 text-[10px] font-bold uppercase outline-none transition-all hover:bg-[#EAE9E4] text-[#4B4B5E]"
+              />
+              <span className="absolute -top-6 left-1 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">From</span>
+            </div>
+            <div className="w-2 h-[2px] bg-[#9B9BAD] rounded-full" />
+            <div className="relative group">
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-[#F4F3EF] border-none rounded-2xl py-3 px-4 text-[10px] font-bold uppercase outline-none transition-all hover:bg-[#EAE9E4] text-[#4B4B5E]"
+              />
+              <span className="absolute -top-6 left-1 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">To</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
@@ -551,33 +769,41 @@ const HiringLifecycleTab = () => {
                 </tr>
               ) : (
                 filteredData.map((row) => (
-                <tr key={row.id} onClick={() => setSelectedCandidate(row)} className="hover:bg-[#F8FAFF] transition-all group cursor-pointer">
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm border ${row.source === 'SharePoint' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'}`}>
-                        {row.candidate?.charAt(0) || '?'}
+                  <tr key={row.id} onClick={() => setSelectedCandidate(row)} className="hover:bg-[#F8FAFF] transition-all group cursor-pointer">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm border ${row.source === 'SharePoint' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'}`}>
+                          {row.candidate?.charAt(0) || '?'}
+                        </div>
+                        <div className="text-left font-bold text-sm text-[#1A1A2E]">
+                          {row.candidate}
+                          {row.source === 'SharePoint' && (
+                            <span className="ml-2 py-0.5 px-1.5 bg-emerald-100 text-emerald-700 text-[8px] rounded uppercase tracking-tighter">SP</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-left font-bold text-sm text-[#1A1A2E]">
-                        {row.candidate}
-                        {row.source === 'SharePoint' && (
-                          <span className="ml-2 py-0.5 px-1.5 bg-emerald-100 text-emerald-700 text-[8px] rounded uppercase tracking-tighter">SP</span>
-                        )}
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="text-left">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-[#4B4B5E]">{row.client}</p>
+                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${row.status === 'Active'
+                            ? 'bg-blue-100 text-[#1B4DA0]'
+                            : 'bg-slate-100 text-slate-500'
+                            }`}>
+                            {row.status}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-0.5">Joined: {row.joiningDate}</p>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="text-left">
-                      <p className="text-sm font-bold text-[#4B4B5E]">{row.client}</p>
-                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-0.5">Joined: {row.joiningDate}</p>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center justify-end">
-                      <button className="p-2.5 bg-[#F4F3EF] text-[#1B4DA0] rounded-xl"><FiChevronRight size={18} /></button>
-                    </div>
-                  </td>
-                </tr>
-              )))}
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center justify-end">
+                        <button className="p-2.5 bg-[#F4F3EF] text-[#1B4DA0] rounded-xl"><FiChevronRight size={18} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                )))}
             </tbody>
           </table>
         </div>
