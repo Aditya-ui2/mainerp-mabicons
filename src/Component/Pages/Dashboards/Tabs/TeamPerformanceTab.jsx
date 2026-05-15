@@ -14,6 +14,8 @@ import {
   FiRefreshCw,
   FiUsers
 } from 'react-icons/fi';
+import { fetchTeamPerformanceData } from '../../service/api';
+import { toast } from 'react-hot-toast';
 
 /* ── Mock Data ── */
 const MOCK_TEAM_DATA = [
@@ -107,7 +109,8 @@ const MOCK_CLIENTS = [
 ];
 
 const TeamPerformanceTab = () => {
-  const [loading, setLoading] = useState(false);
+  const [teamData, setTeamData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeMetric, setActiveMetric] = useState('callsDone');
   const [clientFilter, setClientFilter] = useState('All Client');
   const [deptFilter, setDeptFilter] = useState('All Departments');
@@ -124,6 +127,41 @@ const TeamPerformanceTab = () => {
 
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const years = [2024, 2025, 2026];
+
+  const fetchPerformance = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchTeamPerformanceData(deptFilter);
+      if (res.success) {
+        const mapped = res.members.map(m => ({
+          id: m.id,
+          name: m.name,
+          role: m.role,
+          avatar: m.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+          department: m.department,
+          stats: m.stats || {
+            activePositions: 0,
+            candidatesPipeline: 0,
+            interviewsScheduled: 0,
+            offersExtended: 0,
+            thisWeekHires: 0,
+            profilesShared: 0,
+            callsDone: 0
+          }
+        }));
+        setTeamData(mapped);
+      }
+    } catch (err) {
+      console.error('Performance fetch error:', err);
+      toast.error('Failed to load live performance data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPerformance();
+  }, [deptFilter]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -153,7 +191,7 @@ const TeamPerformanceTab = () => {
   const clientNames = ['All Client', ...MOCK_CLIENTS.map(c => c.name)];
   const departments = ['All Departments', 'Recruitment', 'Operations'];
 
-  const filteredData = MOCK_TEAM_DATA.filter(kam => {
+  const filteredData = teamData.filter(kam => {
     const matchesSearch = (kam.name || '').toLowerCase().includes(perfSearchQuery.toLowerCase()) ||
       (kam.role || '').toLowerCase().includes(perfSearchQuery.toLowerCase());
     
@@ -202,6 +240,15 @@ const TeamPerformanceTab = () => {
   const topKAMs = [...filteredData].sort((a, b) => (b.stats?.thisWeekHires || 0) - (a.stats?.thisWeekHires || 0));
   const fullTopKAMs = [...topKAMs];
   while (fullTopKAMs.length < 3) fullTopKAMs.push({ name: '---', stats: { thisWeekHires: 0 }, avatar: '?' });
+
+  if (loading && teamData.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <FiRefreshCw className="animate-spin text-[#1B4DA0] w-10 h-10" />
+        <p className="text-[#9B9BAD] font-bold animate-pulse">Fetching Live Performance Data...</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div

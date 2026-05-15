@@ -44,8 +44,36 @@ const CRMTeamTab = ({ department = '' }) => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignment, setAssignment] = useState({ title: '', type: 'client', notes: '' });
   const [roleFilter, setRoleFilter] = useState('all');
-  const [newMember, setNewMember] = useState({ name: '', role: 'employee', leader: '', department: 'Operations', otherRole: '', otherDepartment: '', email: '', phone: '' });
+  const [newMember, setNewMember] = useState({ 
+    name: '', 
+    role: 'employee', 
+    leader: '', 
+    department: 'Operations', 
+    otherRole: '', 
+    otherDepartment: '', 
+    email: '', 
+    phone: '',
+    documents: {} 
+  });
   const [modalStep, setModalStep] = useState(1);
+
+  const handleFileChange = (e, docId) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('File size must be less than 2MB');
+        return;
+      }
+      setNewMember(prev => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          [docId]: file
+        }
+      }));
+      toast.success(`${file.name} selected`);
+    }
+  };
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -649,7 +677,10 @@ const CRMTeamTab = ({ department = '' }) => {
                               type="tel"
                               placeholder="+91 XXXXX XXXXX"
                               value={newMember.phone}
-                              onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setNewMember({ ...newMember, phone: val });
+                              }}
                               className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl py-3.5 px-5 text-[13px] font-medium text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all placeholder:text-[#BDBDC7]"
                             />
                           </div>
@@ -786,6 +817,20 @@ const CRMTeamTab = ({ department = '' }) => {
                             </div>
                           ))}
                         </div>
+
+                        {Object.keys(newMember.documents).length > 0 && (
+                          <div className="pt-6 border-t border-[#F4F3EF]">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[#9B9BAD] mb-4 text-left ml-1">Uploaded Documents</p>
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(newMember.documents).map(([id, file]) => (
+                                <div key={id} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100 text-[11px] font-bold">
+                                  <FiCheckCircle className="text-emerald-500" size={14} />
+                                  <span className="max-w-[120px] truncate">{file.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )}

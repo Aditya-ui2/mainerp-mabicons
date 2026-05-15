@@ -101,7 +101,7 @@ const SelectField = ({ label, name, value, onChange, options, skippable = false,
           disabled={isFilled}
           className={`w-full ${isFilled ? 'bg-emerald-50/50 border-emerald-200' : 'bg-[#F4F3EF] border-transparent'} border rounded-xl py-3 pl-5 pr-10 text-[13px] font-bold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all appearance-none cursor-pointer placeholder:text-[#9B9BAD]`}
         >
-          <option value="">{label.includes('State') ? 'Select State' : 'Select Services'}</option>
+          <option value="">{label.includes('State') ? 'Select State' : 'Select City'}</option>
           {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
         <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] pointer-events-none opacity-50" size={16} />
@@ -440,19 +440,16 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                               <SectionHeader num="1" title="Company Identity" />
                               <div className="grid grid-cols-1 gap-5">
                                 <InputField label="Company name" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="Registered company name" clientMode={clientMode} />
-                                <div className="grid grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 gap-5">
                                   <InputField label="GST number" name="gstNumber" value={formData.gstNumber} onChange={handleInputChange} placeholder="27AABCU9603R1ZX" clientMode={clientMode} />
-                                  <InputField label="PIN code" name="pinCode" value={formData.pinCode} onChange={handleInputChange} placeholder="400001" clientMode={clientMode} />
                                 </div>
                               </div>
                             </div>
 
                             <div>
                               <SectionHeader num="2" title="Address Details" />
-                              <div className="grid grid-cols-2 gap-5">
-                                <div className="col-span-full">
-                                  <InputField label="Registered address" name="registeredAddress" value={formData.registeredAddress} onChange={handleInputChange} placeholder="Full address" clientMode={clientMode} />
-                                </div>
+                              <div className="grid grid-cols-1 gap-5">
+                                <InputField label="Registered address" name="registeredAddress" value={formData.registeredAddress} onChange={handleInputChange} placeholder="Full address" clientMode={clientMode} />
                                 <SelectField
                                   label="State"
                                   name="state"
@@ -472,17 +469,16 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, mode = "minimal", i
                                   options={formData.state ? [...(STATES_CITIES[formData.state] || []), "Other"] : []}
                                   clientMode={clientMode}
                                 />
+                                <InputField label="PIN code" name="pinCode" value={formData.pinCode} onChange={handleInputChange} placeholder="400001" clientMode={clientMode} />
                                 {formData.city === 'Other' && (
-                                  <div className="col-span-full">
-                                    <InputField
-                                      label="Other City"
-                                      name="otherCity"
-                                      value={formData.otherCity}
-                                      onChange={handleInputChange}
-                                      placeholder="Enter city name"
-                                      clientMode={clientMode}
-                                    />
-                                  </div>
+                                  <InputField
+                                    label="Other City"
+                                    name="otherCity"
+                                    value={formData.otherCity}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter city name"
+                                    clientMode={clientMode}
+                                  />
                                 )}
                               </div>
                             </div>

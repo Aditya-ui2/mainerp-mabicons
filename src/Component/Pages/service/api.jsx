@@ -783,6 +783,24 @@ export const getClientRequestedTasks = async (clientId) => {
   }
 };
 
+// Team Performance API
+export const fetchTeamPerformanceData = async (department = '') => {
+  try {
+    const token = getStoredAuthToken();
+    const response = await axiosInstance.get('/department/members', {
+      params: { 
+        department: department === 'All Departments' ? '' : department,
+        includeStats: 'true' 
+      },
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch team performance:', error);
+    throw error.response?.data || { message: 'Failed to fetch team performance.' };
+  }
+};
+
 // Function to get user profile image
 export const getUserProfileImage = async (role, adminId) => {
   try {

@@ -284,6 +284,33 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
     dragOverStage.current = null;
   };
 
+  const handleStageChange = async (clientId, newStage) => {
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    if (newStage === 'Onboarding Complete') {
+      setFinalizingClient(client);
+      setIsFinalizeOpen(true);
+      return;
+    }
+
+    const newProb = newStage === 'Finalize' ? 50 : 25;
+
+    // Optimistically update local state
+    setClients(prev => prev.map(c =>
+      c.id === clientId ? { ...c, stage: newStage, probability: newProb } : c
+    ));
+
+    try {
+      await editClient({ clientId: clientId, stage: newStage, probability: newProb });
+      toast.success(`Moved to ${newStage}`);
+    } catch (error) {
+      toast.error(`Failed to update stage`);
+      // Rollback on failure
+      fetchClients();
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Header */}
@@ -509,18 +536,26 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                   <p className="text-[13px] font-medium text-[#64748b] truncate">{c.contactPerson}</p>
                   <p className="text-[11px] text-[#9B9BAD] truncate">{c.email}</p>
                 </div>
-                <div className="text-left min-w-[140px] space-y-1">
+                <div className="text-left min-w-[140px] relative group/stage">
                   {(() => {
                     const sName = c.stage === 'All Clients' ? 'Onboarding Complete' : c.stage;
                     const stageStyle = STAGE_STYLE[sName] || STAGE_STYLE["Onboarding Complete"];
                     const isLead = sName === 'Lead Stage';
                     const isFinalize = sName === 'Finalize';
+                    
                     return (
-                      <div className="flex flex-col gap-1">
-                        <span className={`inline-flex items-center gap-1.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${(isLead || isFinalize) ? (isLead ? 'text-amber-600' : 'text-blue-600') + ' bg-transparent border-none' : stageStyle.badge} !pl-0`}>
-                          {stageStyle.label || sName}
-                          {stageStyle.icon && <FiCheck size={12} className="shrink-0" />}
-                        </span>
+                      <div className="relative inline-flex items-center">
+                        <select
+                          value={sName}
+                          onChange={(e) => handleStageChange(c.id, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`appearance-none bg-transparent py-1 pr-6 rounded-full text-[11px] font-bold cursor-pointer outline-none transition-all z-10 ${(isLead || isFinalize) ? (isLead ? 'text-amber-600' : 'text-blue-600') : stageStyle.badge + ' !bg-transparent'}`}
+                        >
+                          {PIPELINE_STAGES.map(s => (
+                            <option key={s} value={s} className="text-[#1A1A2E] font-bold bg-white">{s}</option>
+                          ))}
+                        </select>
+                        <FiChevronDown className={`absolute right-1 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none z-0 ${(isLead || isFinalize) ? (isLead ? 'text-amber-600' : 'text-blue-600') : 'text-purple-600'}`} size={12} />
                       </div>
                     );
                   })()}
@@ -861,11 +896,18 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
                         <p className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-[3px] mt-1">{selectedClient.industry}</p>
                       </>
                     )}
-                    <span className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).badge}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).dot}`} />
-                      {(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).label || selectedClient.stage}
-                      {(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).icon && <FiCheck size={14} className="shrink-0" />}
-                    </span>
+                    <div className="relative mt-3 inline-flex items-center group/stage">
+                      <select
+                        value={selectedClient.stage}
+                        onChange={(e) => handleStageChange(selectedClient.id, e.target.value)}
+                        className={`appearance-none bg-transparent py-1.5 pl-3 pr-8 rounded-full text-xs font-bold cursor-pointer outline-none transition-all z-10 ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).badge}`}
+                      >
+                        {PIPELINE_STAGES.map(s => (
+                          <option key={s} value={s} className="text-[#1A1A2E] font-bold bg-white">{s}</option>
+                        ))}
+                      </select>
+                      <FiChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none z-0 ${(STAGE_STYLE[selectedClient.stage] || STAGE_STYLE['Onboarding Complete']).dot.replace('bg-', 'text-')}`} size={14} />
+                    </div>
                   </div>
 
                   {/* Info Table */}

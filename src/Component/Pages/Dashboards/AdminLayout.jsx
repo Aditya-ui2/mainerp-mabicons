@@ -59,10 +59,12 @@ const AdminLayout = ({
   const [expandedMenus, setExpandedMenus] = useState({});
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
+  const megaMenuRef = useRef(null);
   const contentRef = useRef(null);
 
   // Close dropdowns when clicking outside
@@ -72,7 +74,10 @@ const AdminLayout = ({
         setShowProfileMenu(false);
       }
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setShowNotifications(false);
+        setNotificationsOpen(false);
+      }
+      if (megaMenuRef.current && !megaMenuRef.current.contains(event.target)) {
+        setMegaMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -156,20 +161,22 @@ const AdminLayout = ({
         {/* Sidebar Nav Hub */}
         <nav className="flex-1 overflow-y-auto pt-6 custom-scrollbar pr-1">
           {/* Dashboard Item (Always First) */}
-          <button
-            onClick={() => { setActiveTab && setActiveTab(dashboardTabName); setMobileSidebarOpen(false); }}
-            title={sidebarCollapsed ? dashboardTabName : undefined}
-            className={`
-              w-[calc(100%-16px)] flex items-center gap-3 px-3.5 py-3 mx-2 rounded-2xl transition-all duration-200 text-left relative group
-              ${activeTab === dashboardTabName ? "bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
-            `}
-          >
-            <LayoutDashboard size={20} className="flex-shrink-0" />
-            {!sidebarCollapsed && <span className="text-sm font-semibold">{dashboardTabName}</span>}
-            {activeTab === dashboardTabName && sidebarCollapsed && (
-              <div className="absolute left-[-8px] w-1.5 h-6 bg-[#1B4DA0] rounded-r-full" />
-            )}
-          </button>
+          {dashboardTabName && (
+            <button
+              onClick={() => { setActiveTab && setActiveTab(dashboardTabName); setMobileSidebarOpen(false); }}
+              title={sidebarCollapsed ? dashboardTabName : undefined}
+              className={`
+                w-[calc(100%-16px)] flex items-center gap-3 px-3.5 py-3 mx-2 rounded-2xl transition-all duration-200 text-left relative group
+                ${activeTab === dashboardTabName ? "bg-[#1B4DA0] text-white shadow-lg shadow-blue-500/20" : "text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF]"}
+              `}
+            >
+              <LayoutDashboard size={20} className="flex-shrink-0" />
+              {!sidebarCollapsed && <span className="text-sm font-semibold">{dashboardTabName}</span>}
+              {activeTab === dashboardTabName && sidebarCollapsed && (
+                <div className="absolute left-[-8px] w-1.5 h-6 bg-[#1B4DA0] rounded-r-full" />
+              )}
+            </button>
+          )}
 
           {/* Dynamic Sidebar Items */}
           {sidebarItems.map((section, sectionIdx) => (
@@ -315,12 +322,88 @@ const AdminLayout = ({
               >
                 <Menu size={20} />
               </button>
+              {/* Desktop Toggle */}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="hidden lg:flex p-2 -ml-2 text-[#6B6B7E] hover:text-[#1A1A2E] transition-colors"
+              >
+                <Menu size={20} />
+              </button>
               <h2 className="text-lg font-bold text-[#1A1A2E] dark:text-white tracking-tight">
                 {activeTab || dashboardTitle}
               </h2>
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Mega Menu / App Launcher */}
+              <div className="relative" ref={megaMenuRef}>
+                <button
+                  onClick={() => {
+                    setMegaMenuOpen(!megaMenuOpen);
+                    setNotificationsOpen(false);
+                  }}
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${megaMenuOpen ? 'bg-[#1B4DA0] text-white shadow-lg' : 'bg-[#F8FAFF] dark:bg-gray-800 text-[#6B6B7E] hover:text-[#1B4DA0]'}`}
+                  title="App Launcher"
+                >
+                  <Grid size={18} />
+                </button>
+
+                <AnimatePresence>
+                  {megaMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 12, scale: 0.95 }}
+                      className="absolute left-0 mt-3 w-[480px] bg-white dark:bg-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[#F4F3EF] dark:border-gray-700 overflow-hidden z-50 p-6"
+                    >
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xs font-bold text-[#1A1A2E] dark:text-white uppercase tracking-widest">Main Modules</h3>
+                        <button 
+                          onClick={() => setMegaMenuOpen(false)}
+                          className="text-[#9B9BAD] hover:text-rose-500"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4">
+                        {/* Always include Dashboard */}
+                        <button
+                          onClick={() => { setActiveTab && setActiveTab(dashboardTabName || 'Dashboard'); setMegaMenuOpen(false); }}
+                          className="flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-[#F8FAFF] dark:hover:bg-gray-700/50 transition-all group"
+                        >
+                          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <LayoutDashboard size={24} />
+                          </div>
+                          <span className="text-[11px] font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider">{dashboardTabName || 'Dashboard'}</span>
+                        </button>
+
+                        {/* Dynamic Sidebar Items */}
+                        {sidebarItems.flatMap(section => section.items || []).map((item) => {
+                          const Icon = item.icon || Grid;
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => { setActiveTab && setActiveTab(item.title); setMegaMenuOpen(false); }}
+                              className="flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-[#F8FAFF] dark:hover:bg-gray-700/50 transition-all group"
+                            >
+                              <div className="w-12 h-12 rounded-2xl bg-[#FAFAFA] dark:bg-gray-700 text-[#6B6B7E] dark:text-gray-400 flex items-center justify-center group-hover:bg-[#1B4DA0]/10 group-hover:text-[#1B4DA0] group-hover:scale-110 transition-all">
+                                <Icon size={24} />
+                              </div>
+                              <span className="text-[11px] font-bold text-[#1A1A2E] dark:text-white uppercase tracking-wider text-center">{item.title}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="mt-6 pt-4 border-t border-[#F4F3EF] dark:border-gray-700 flex justify-center">
+                        <button className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest hover:underline">View All Apps</button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {headerActions}
               {/* Search - Subtle */}
               {showSearch && (
