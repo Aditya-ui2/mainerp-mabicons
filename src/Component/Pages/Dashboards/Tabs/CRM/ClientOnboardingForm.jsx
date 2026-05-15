@@ -7,7 +7,7 @@ import {
   FiArrowLeft, FiSave, FiAlertCircle, FiUserPlus, FiUpload, FiCheckCircle
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
-import { onboardClient, editClient } from '../../../../service/api';
+import { onboardClient, editClient } from '../../../service/api';
 
 const STATES_INDIA = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
