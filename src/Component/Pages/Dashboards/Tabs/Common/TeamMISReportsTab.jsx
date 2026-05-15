@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Phone, Eye, Share2, Calendar, Clock, MessageSquare, CheckCircle2, 
   RefreshCw, Smile, Meh, Frown, Star, X, Send, AlertCircle, BarChart2, 
-  Download, Activity, ShieldCheck, MoreVertical, ChevronDown, Paperclip, FileText
+  Download, Activity, ShieldCheck, MoreVertical, ChevronDown, Paperclip, FileText, Plus
 } from 'lucide-react';
 import { getMISReports, addHeadComment } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
@@ -113,7 +113,7 @@ const CommentModal = ({ report, onClose, onSaved }) => {
   );
 };
 
-const ReportRow = ({ report }) => {
+const ReportRow = ({ report, onComment }) => {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 relative group text-left mb-4">
       <div className="p-4 lg:p-5 relative z-10">
@@ -152,6 +152,14 @@ const ReportRow = ({ report }) => {
               </div>
             )}
 
+            <button
+              onClick={() => onComment(report)}
+              className="p-3 rounded-xl bg-[#FAFAFA] dark:bg-slate-800 text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50 transition-all border border-[#F4F3EF] dark:border-slate-700 shadow-sm active:scale-95"
+              title="Add Intel/Comment"
+            >
+              <MessageSquare size={18} />
+            </button>
+
             {/* Attachment Link */}
             {report.attachmentUrl && (
               <a 
@@ -167,9 +175,91 @@ const ReportRow = ({ report }) => {
             )}
           </div>
         </div>
+
+        {/* Dossier Intelligence Content */}
+        <div className="mt-6 pt-6 border-t border-[#F4F3EF] dark:border-slate-800 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <div>
+              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <FileText size={12} /> Execution Summary
+              </p>
+              <p className="text-[13px] font-bold text-[#4B4B5E] dark:text-slate-300 leading-relaxed italic">
+                "{report.summary || 'No summary provided'}"
+              </p>
+            </div>
+
+            {/* Task Breakdown */}
+            <div className="grid grid-cols-2 gap-4">
+              {report.tasksCompleted?.length > 0 && (
+                <div>
+                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                    <CheckCircle2 size={10} /> Completed
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {report.tasksCompleted.map((t, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded-md border border-emerald-100 uppercase tracking-tight">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {report.tasksPlanned?.length > 0 && (
+                <div>
+                  <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                    <Plus size={10} /> Planned
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {report.tasksPlanned.map((t, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold rounded-md border border-blue-100 uppercase tracking-tight">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {report.blockers && (
+              <div className="p-3.5 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+                <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <AlertCircle size={10} /> Operational Blockers
+                </p>
+                <p className="text-[12px] font-bold text-amber-800 dark:text-amber-400 leading-tight">
+                  {report.blockers}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {report.headComment && (
+              <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
+                <p className="text-[9px] font-black text-[#1B4DA0] dark:text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <ShieldCheck size={10} /> Head Command Intelligence
+                </p>
+                <p className="text-[12px] font-bold text-[#1B4DA0] dark:text-blue-300 italic leading-relaxed">
+                  "{report.headComment}"
+                </p>
+                <div className="mt-2 flex items-center justify-between text-[8px] font-black uppercase tracking-widest opacity-40">
+                   <span>By {report.headCommentBy || 'Head'}</span>
+                   <span>{report.headCommentAt ? new Date(report.headCommentAt).toLocaleDateString() : ''}</span>
+                </div>
+              </div>
+            )}
+            {!report.headComment && (
+              <div className="h-full flex items-center justify-center border-2 border-dashed border-[#F4F3EF] dark:border-slate-800 rounded-2xl p-4">
+                <button 
+                  onClick={() => onComment(report)}
+                  className="text-[10px] font-bold text-[#9B9BAD] hover:text-[#1B4DA0] uppercase tracking-widest transition-colors flex items-center gap-2"
+                >
+                  <Plus size={12} /> Add Command Insight
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
-
 
       {/* Atmospheric Hover Glow (Behind everything) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#1B4DA0]/0 rounded-full blur-[80px] group-hover:bg-[#1B4DA0]/5 transition-colors duration-1000 pointer-events-none -z-10" />
@@ -177,55 +267,7 @@ const ReportRow = ({ report }) => {
   );
 };
 
-const MOCK_REPORTS = [
-  {
-    id: 'mock-0',
-    date: new Date().toISOString().split('T')[0], // Today
-    memberName: 'Priyanshi Sharma',
-    checkInTime: '09:00',
-    checkOutTime: '11:58',
-    workHours: 2.9,
-    callsCount: 15,
-    profilesVisited: 40,
-    profilesShared: 3,
-    candidatesContacted: 10,
-    interviewsArranged: 1,
-    summary: 'Focused on Senior Developer roles for TechCorp. Screening in progress.',
-    headCommentBy: 'Sachin'
-  },
-  {
-    id: 'mock-mj-1',
-    date: new Date().toISOString().split('T')[0], // Today
-    memberName: 'Manju Sharma',
-    checkInTime: '09:10',
-    checkOutTime: '18:15',
-    workHours: 8.5,
-    callsCount: 35,
-    profilesVisited: 85,
-    profilesShared: 7,
-    candidatesContacted: 15,
-    interviewsArranged: 2,
-    summary: 'Focusing on Finance roles today. Good candidate pipeline.',
-    headCommentBy: 'Sachin'
-  },
-  {
-    id: 'mock-jy-1',
-    date: new Date().toISOString().split('T')[0], // Today
-    memberName: 'Jyoti Sharma',
-    checkInTime: '09:05',
-    checkOutTime: '18:00',
-    workHours: 8.0,
-    callsCount: 42,
-    profilesVisited: 110,
-    profilesShared: 10,
-    candidatesContacted: 25,
-    interviewsArranged: 3,
-    summary: 'Productive day with LinkedIn sourcing. Multiple interviews set for tomorrow.',
-    headCommentBy: 'Sachin'
-  }
-];
-
-const TeamMISReportsTab = () => {
+const TeamMISReportsTab = ({ department = 'HR Recruitment' }) => {
   const [reports, setReports]         = useState([]);
   const [loading, setLoading]         = useState(true);
   const [selectedDate, setSelectedDate] = useState('All Dates');
@@ -243,36 +285,26 @@ const TeamMISReportsTab = () => {
   const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
-      let apiReports = [];
-      try {
-        const params = { department: 'HR Recruitment' };
-        if (selectedDate !== 'All Dates') {
-          params.date = selectedDate;
-        }
-        const res = await getMISReports(params);
-        apiReports = res.reports || [];
-      } catch (err) {
-        if (err?.message?.toLowerCase().includes('authorization') || err?.message?.toLowerCase().includes('token') || err?.status === 401) {
-          showToast('Session expired. Please login again.', 'error');
-        } else {
-          showToast(err.message || 'Failed to fetch MIS reports', 'error');
-        }
+      const params = { department };
+      if (selectedDate !== 'All Dates') {
+        params.date = selectedDate;
       }
+      const res = await getMISReports(params);
+      const apiReports = res.reports || [];
       
-      const mockReportsForDate = selectedDate === 'All Dates' ? MOCK_REPORTS : MOCK_REPORTS.filter(r => r.date === selectedDate);
-      const combined = [...apiReports];
-      mockReportsForDate.forEach(mock => {
-        if (!combined.some(r => r.id === mock.id || r.memberName === mock.memberName && r.date === mock.date)) {
-          combined.push(mock);
-        }
-      });
-      // Sort combined by date descending
-      combined.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
-      setReports(combined);
+      // Sort by date descending
+      apiReports.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+      setReports(apiReports);
+    } catch (err) {
+      if (err?.message?.toLowerCase().includes('authorization') || err?.message?.toLowerCase().includes('token') || err?.status === 401) {
+        showToast('Session expired. Please login again.', 'error');
+      } else {
+        showToast(err.message || 'Failed to fetch MIS reports', 'error');
+      }
     } finally {
       setLoading(false);
     }
-  }, [selectedDate, showToast]);
+  }, [selectedDate, showToast, department]);
 
   useEffect(() => { fetchReports(); }, [fetchReports]);
 
@@ -360,7 +392,6 @@ const TeamMISReportsTab = () => {
         <div className="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 text-left">
           <div>
             <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight leading-none mb-1">Team MIS Reports</h1>
-
           </div>
 
           <div className="flex items-center gap-3">
@@ -374,7 +405,7 @@ const TeamMISReportsTab = () => {
                 className="bg-[#FAFAFA] dark:bg-slate-900 border border-[#F4F3EF] dark:border-slate-800 rounded-xl pl-10 pr-10 py-3 text-[10px] font-bold uppercase tracking-widest text-[#1A1A2E] dark:text-white outline-none cursor-pointer shadow-sm hover:bg-[#F8FAFF] hover:border-[#1B4DA0]/20 transition-all appearance-none"
               >
                 <option value="all">All Members</option>
-                {[...new Set(['Manju', 'Jyoti', ...reports.map(r => r.memberName)])].filter(Boolean).map(name => (
+                {[...new Set(reports.map(r => r.memberName))].filter(Boolean).sort().map(name => (
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
@@ -412,8 +443,6 @@ const TeamMISReportsTab = () => {
         {/* Main Timeline Container */}
         <div className="bg-[#FFFFFF] dark:bg-slate-900 rounded-[32px] border border-[#F4F3EF] dark:border-slate-800 shadow-sm relative overflow-hidden text-left">
           
-
-
           {/* Vertical Bridge Line */}
           <div className="absolute left-[88px] lg:left-[108px] top-[200px] bottom-[40px] w-px bg-[#F4F3EF] dark:bg-slate-800 pointer-events-none hidden sm:block" />
 
@@ -439,7 +468,6 @@ const TeamMISReportsTab = () => {
               <AnimatePresence>
                 {filteredReports.map((report, idx) => {
                   const mc = moodConfig[report.mood] || moodConfig.Good;
-                  const MoodIcon = mc.icon;
 
                   return (
                     <motion.div
@@ -451,9 +479,14 @@ const TeamMISReportsTab = () => {
                     >
                       {/* Time Column */}
                       <div className="w-20 lg:w-28 flex-shrink-0 pt-5 text-right pr-6 lg:pr-8 hidden sm:block">
-                        <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
+                        <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none block">
                           {formatTime(report.checkInTime)}
                         </span>
+                        {selectedDate === 'All Dates' && (
+                           <span className="text-[8px] font-black text-[#1B4DA0] uppercase tracking-tighter mt-1 block">
+                             {report.date}
+                           </span>
+                        )}
                       </div>
 
                       {/* Avatar Marker */}

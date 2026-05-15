@@ -89,53 +89,8 @@ const DonutChart = ({ segments, size = 120, strokeWidth = 14, isDarkMode }) => {
 };
 
 /* ── Mock data (temporary until API is fully implemented) ── */
-const MOCK_DASHBOARD_DATA = {
-  client: {
-    companyName: 'Mabicons Client',
-    name: 'Client',
-    kam: { name: 'Recruitment Team', email: 'recruitment.mabicons@gmail.com', phone: '+91 9876543210' },
-  },
-  allowedServices: ['recruitment', 'operations'],
-  recruitment: {
-    summary: { totalPositions: 3, openPositions: 2, totalCandidates: 12, inPipeline: 8, hired: 2, completedInterviews: 5, scheduledInterviews: 3 },
-    positions: [
-      { id: '1', title: 'Senior React Developer', status: 'Open', priority: 'High', openings: 3, filled: 1, candidates: [
-        { id: 'c1', name: 'Rahul Sharma', stage: 'Technical Round', status: 'Shortlisted', rating: 4 },
-        { id: 'c2', name: 'Priya Patel', stage: 'HR Round', status: 'Interview', rating: 5 },
-        { id: 'c3', name: 'Amit Kumar', stage: 'Screening', status: 'Submitted', rating: 3 },
-      ]},
-      { id: '2', title: 'Node.js Backend Engineer', status: 'Open', priority: 'Medium', openings: 2, filled: 1, candidates: [
-        { id: 'c4', name: 'Sneha Gupta', stage: 'Client Interview', status: 'Shortlisted', rating: 5 },
-        { id: 'c5', name: 'Vikram Singh', stage: 'Offer Sent', status: 'Selected', rating: 4 },
-      ]},
-      { id: '3', title: 'UI/UX Designer', status: 'Hold', priority: 'Low', openings: 1, filled: 0, candidates: [
-        { id: 'c6', name: 'Ananya Reddy', stage: 'Phone Interview', status: 'Shared', rating: 3 },
-      ]},
-    ],
-    funnel: { screening: 3, phoneInterview: 2, technical: 2, hrRound: 1, clientInterview: 1, offerSent: 1, joined: 2, rejected: 1 },
-    upcomingInterviews: [
-      { id: 'i1', candidateName: 'Priya Patel', positionTitle: 'Senior React Developer', interviewDate: new Date(Date.now() + 86400000).toISOString(), interviewType: 'HR Round', status: 'Scheduled' },
-      { id: 'i2', candidateName: 'Sneha Gupta', positionTitle: 'Node.js Backend Engineer', interviewDate: new Date(Date.now() + 172800000).toISOString(), interviewType: 'Client Interview', status: 'Scheduled' },
-    ],
-    candidates: [],
-  },
-  operations: {
-    taskSummary: { total: 15, active: 5, wip: 3, completed: 8, pending: 2, resolved: 8, review: 1, overdue: 0, completionRate: 53 },
-    recentTasks: [
-      { id: 't1', title: 'Monthly Payroll Processing', status: 'Active', priority: 'High', dueDate: new Date(Date.now() + 259200000).toISOString(), assignedTo: 'HR Team' },
-      { id: 't2', title: 'Employee Compliance Audit', status: 'Work in Progress', priority: 'Medium', dueDate: new Date(Date.now() + 604800000).toISOString(), assignedTo: 'Compliance Team' },
-      { id: 't3', title: 'Leave Policy Update', status: 'Review', priority: 'Low', dueDate: new Date(Date.now() + 432000000).toISOString(), assignedTo: 'HR Team' },
-    ],
-    overdueTasks: [],
-    requestedTasks: [
-      { id: 'rt1', title: 'New Employee Onboarding', status: 'Pending', priority: 'High', createdAt: new Date(Date.now() - 86400000).toISOString() },
-    ],
-    recurringTasks: [
-      { id: 'rc1', title: 'Weekly Attendance Report', frequency: 'Weekly', status: 'Active', nextDue: new Date(Date.now() + 172800000).toISOString() },
-    ],
-    agreement: { title: 'HR Services Agreement', status: 'Active', startDate: '2026-01-01', endDate: '2026-12-31', allowedScopes: ['Payroll', 'Compliance', 'Recruitment'] },
-  },
-};
+// MOCK_DASHBOARD_DATA removed for live database integration
+const MOCK_DASHBOARD_DATA = null;
 
 /* ══════════════════ CLIENT OVERVIEW TAB ═══════════════════ */
 export default function ClientOverviewTab({ isDarkMode, clientData }) {

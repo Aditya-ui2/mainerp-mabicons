@@ -18,95 +18,11 @@ import { fetchTeamPerformanceData } from '../../service/api';
 import { toast } from 'react-hot-toast';
 
 /* ── Mock Data ── */
-const MOCK_TEAM_DATA = [
-  {
-    id: '1',
-    name: 'Ashish Kumar',
-    role: 'Senior KAM',
-    avatar: 'AK',
-    department: 'Recruitment',
-    stats: {
-      activePositions: 12,
-      candidatesPipeline: 45,
-      interviewsScheduled: 18,
-      offersExtended: 6,
-      thisWeekHires: 4,
-      profilesShared: 85,
-      callsDone: 142
-    }
-  },
-  {
-    id: '2',
-    name: 'Priya Sharma',
-    role: 'Account Manager',
-    avatar: 'PS',
-    department: 'Recruitment',
-    stats: {
-      activePositions: 8,
-      candidatesPipeline: 32,
-      interviewsScheduled: 12,
-      offersExtended: 4,
-      thisWeekHires: 3,
-      profilesShared: 60,
-      callsDone: 98
-    }
-  },
-  {
-    id: '3',
-    name: 'Rahul Verma',
-    role: 'Recruitment Specialist',
-    avatar: 'RV',
-    department: 'Operations',
-    stats: {
-      activePositions: 15,
-      candidatesPipeline: 58,
-      interviewsScheduled: 25,
-      offersExtended: 8,
-      thisWeekHires: 2,
-      profilesShared: 110,
-      callsDone: 185
-    }
-  },
-  {
-    id: '4',
-    name: 'Sonal Singh',
-    role: 'KAM',
-    avatar: 'SS',
-    department: 'Operations',
-    stats: {
-      activePositions: 10,
-      candidatesPipeline: 28,
-      interviewsScheduled: 9,
-      offersExtended: 3,
-      thisWeekHires: 1,
-      profilesShared: 45,
-      callsDone: 76
-    }
-  },
-  {
-    id: '5',
-    name: 'Deepak Raj',
-    role: 'Talent Acquisition',
-    avatar: 'DR',
-    department: 'Recruitment',
-    stats: {
-      activePositions: 6,
-      candidatesPipeline: 20,
-      interviewsScheduled: 5,
-      offersExtended: 2,
-      thisWeekHires: 0,
-      profilesShared: 30,
-      callsDone: 54
-    }
-  }
-];
+// MOCK_TEAM_DATA removed for live database integration
+const MOCK_TEAM_DATA = [];
 
-const MOCK_CLIENTS = [
-  { id: '1', name: 'Google' },
-  { id: '2', name: 'Microsoft' },
-  { id: '3', name: 'Amazon' },
-  { id: '4', name: 'Meta' }
-];
+// MOCK_CLIENTS removed for live database integration
+const MOCK_CLIENTS = [];
 
 const TeamPerformanceTab = () => {
   const [teamData, setTeamData] = useState([]);
@@ -188,7 +104,7 @@ const TeamPerformanceTab = () => {
     return 'Select Period';
   };
 
-  const clientNames = ['All Client', ...MOCK_CLIENTS.map(c => c.name)];
+  const clientNames = ['All Client', ...(MOCK_CLIENTS?.map(c => c.name) || [])];
   const departments = ['All Departments', 'Recruitment', 'Operations'];
 
   const filteredData = teamData.filter(kam => {
