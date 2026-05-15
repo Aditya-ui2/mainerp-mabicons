@@ -4,11 +4,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiSearch, FiFilter, FiDownload, FiPlus, FiChevronRight, FiChevronDown,
   FiMail, FiPhone, FiMapPin, FiActivity, FiBriefcase, FiUsers, FiTrash,
-  FiX, FiUser, FiDollarSign, FiClock, FiZap, FiCheckSquare, FiDatabase, FiEdit3, FiTrendingUp, FiTarget
+  FiX, FiUser, FiDollarSign, FiClock, FiZap, FiCheckSquare, FiDatabase, FiEdit3, FiTrendingUp, FiTarget, FiCheckCircle, FiCheck,
+  FiEdit2, FiFileText, FiEye, FiUpload
 } from 'react-icons/fi';
+
+const InfoItem = ({ label, value, subValue, fullWidth = false }) => (
+  <div className={`space-y-1.5 ${fullWidth ? 'col-span-full' : ''}`}>
+    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{label}</label>
+    <div className="bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">
+      <p className="text-sm font-bold text-[#1A1A2E]">{value || 'N/A'}</p>
+      {subValue && <p className="text-[10px] font-medium text-[#6B6B7E] mt-0.5">{subValue}</p>}
+    </div>
+  </div>
+);
 import { Plus } from 'lucide-react';
 import { getAllClients, deleteClient, editClient } from '../../../service/api';
 import { toast } from 'react-hot-toast';
+import ClientOnboardingForm from './ClientOnboardingForm';
 
 const StatusDropdown = ({ active, onChange, clientId }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -76,6 +88,12 @@ const ClientsTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedClientDetail, setSelectedClientDetail] = useState(null);
+  const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
+  const [clientToEdit, setClientToEdit] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -137,6 +155,67 @@ const ClientsTab = () => {
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!clientToDelete) return;
+    try {
+      setLoading(true);
+      await deleteClient(clientToDelete._id || clientToDelete.id);
+      toast.success('Client deleted successfully');
+      setIsDeleteModalOpen(false);
+      setClientToDelete(null);
+      setSelectedClientDetail(null);
+      await fetchClients();
+    } catch (err) {
+      toast.error('Failed to delete client');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status) => {
+    const loadingToast = toast.loading(`Updating ${selectedIds.length} clients...`);
+    try {
+      await Promise.all(selectedIds.map(async (id) => {
+        if (!id.toString().startsWith('mock')) {
+          return editClient({ clientId: id, status });
+        }
+        return Promise.resolve();
+      }));
+
+      setClients(prev => prev.map(c => {
+        const cid = c._id || c.id;
+        return selectedIds.includes(cid) ? { ...c, status } : c;
+      }));
+      
+      setSelectedIds([]);
+      toast.success(`${selectedIds.length} clients updated to ${status}`, { id: loadingToast });
+    } catch (err) {
+      toast.error('Failed to update some clients', { id: loadingToast });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const loadingToast = toast.loading(`Deleting ${selectedIds.length} clients...`);
+    try {
+      await Promise.all(selectedIds.map(async (id) => {
+        if (!id.toString().startsWith('mock')) {
+          return deleteClient(id);
+        }
+        return Promise.resolve();
+      }));
+
+      setClients(prev => prev.filter(c => {
+        const cid = c._id || c.id;
+        return !selectedIds.includes(cid);
+      }));
+      
+      setSelectedIds([]);
+      toast.success(`${selectedIds.length} clients removed`, { id: loadingToast });
+    } catch (err) {
+      toast.error('Failed to delete some clients', { id: loadingToast });
+    }
+  };
+
   const filteredClients = clients.filter(c => {
     const matchesSearch = (c.companyName || c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.spocName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -154,6 +233,13 @@ const ClientsTab = () => {
               Clients
             </h1>
           </div>
+          <button
+            onClick={() => setIsOnboardModalOpen(true)}
+            className="w-full sm:w-auto flex items-center justify-center px-6 py-3 rounded-2xl bg-[#1B4DA0] hover:bg-[#153D80] text-white transition-all duration-300 shadow-xl shadow-blue-500/20 active:scale-95 group"
+          >
+            <FiPlus className="mr-2 text-lg transition-transform" />
+            <span className="font-bold uppercase tracking-widest text-[11px]">Add Client</span>
+          </button>
         </div>
 
         {/* Filter Bar */}
@@ -210,6 +296,24 @@ const ClientsTab = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#F4F3EF] bg-transparent">
+                        <th className="pl-8 pr-4 py-4 w-10">
+                      <div 
+                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center cursor-pointer transition-all ${
+                          selectedIds.length === filteredClients.length && filteredClients.length > 0
+                            ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white shadow-lg' 
+                            : 'bg-white border-[#E2E8F0] hover:border-gray-400'
+                        }`}
+                        onClick={() => {
+                          if (selectedIds.length === filteredClients.length) {
+                            setSelectedIds([]);
+                          } else {
+                            setSelectedIds(filteredClients.map(c => c.id || c._id));
+                          }
+                        }}
+                      >
+                        {selectedIds.length === filteredClients.length && filteredClients.length > 0 && <FiCheck size={14} strokeWidth={4} />}
+                      </div>
+                    </th>
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Company</th>
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">SPOC</th>
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Location</th>
@@ -218,44 +322,133 @@ const ClientsTab = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F4F3EF]">
-                  {filteredClients.map((client) => (
-                    <tr
-                      key={client.id || client._id}
-                      onClick={() => setSelectedClientDetail(client)}
-                      className="hover:bg-[#F8FAFF] transition-all group cursor-pointer"
-                    >
-                      <td className="px-8 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] text-[#1B4DA0] flex items-center justify-center font-black">
-                            {(client.companyName || client.name || 'C').substring(0, 2).toUpperCase()}
+                  {filteredClients.map((client) => {
+                    const clientId = client.id || client._id;
+                    const isSelected = selectedIds.includes(clientId);
+                    return (
+                      <tr
+                        key={clientId}
+                        onClick={() => setSelectedClientDetail(client)}
+                        className={`hover:bg-[#F8FAFF] transition-all group cursor-pointer ${isSelected ? 'bg-blue-50/50' : ''}`}
+                      >
+                        <td className="pl-8 pr-4 py-4">
+                          <div 
+                            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center cursor-pointer transition-all ${
+                              isSelected 
+                                ? 'bg-[#1B4DA0] border-[#1B4DA0] text-white' 
+                                : 'bg-white border-[#E2E8F0] hover:border-gray-400'
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isSelected) {
+                                setSelectedIds(prev => prev.filter(id => id !== clientId));
+                              } else {
+                                setSelectedIds(prev => [...prev, clientId]);
+                              }
+                            }}
+                          >
+                            {isSelected && <FiCheck size={14} strokeWidth={4} />}
                           </div>
-                          <p className="text-[14px] font-bold text-[#1A1A2E]">{client.companyName || client.name}</p>
-                        </div>
-                      </td>
-                      <td className="px-8 py-4 text-left">
-                        <p className="text-[13px] font-bold text-[#1A1A2E]">{client.spocName || 'N/A'}</p>
-                      </td>
-                      <td className="px-8 py-4 text-left">
-                        <p className="text-[12px] font-bold text-[#6B6B7E]">{client.city || 'N/A'}</p>
-                      </td>
-                      <td className="px-8 py-4 text-left">
-                        <StatusDropdown 
-                          clientId={client.id || client._id}
-                          active={['active', 'accepted'].includes((client.status || 'Active').toLowerCase().trim())} 
-                          onChange={(val) => handleToggleStatus(client, val)} 
-                        />
-                      </td>
-                      <td className="px-8 py-4 text-right">
-                        <FiChevronRight className="inline-block text-[#9B9BAD]" size={18} />
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-8 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-[#EEF2FB] text-[#1B4DA0] flex items-center justify-center font-black">
+                              {(client.companyName || client.name || 'C').substring(0, 2).toUpperCase()}
+                            </div>
+                            <p className="text-[14px] font-bold text-[#1A1A2E]">{client.companyName || client.name}</p>
+                          </div>
+                        </td>
+                        <td className="px-8 py-4 text-left">
+                          <p className="text-[13px] font-bold text-[#1A1A2E]">{client.spocName || 'N/A'}</p>
+                        </td>
+                        <td className="px-8 py-4 text-left">
+                          <p className="text-[12px] font-bold text-[#6B6B7E]">{client.city || 'N/A'}</p>
+                        </td>
+                        <td className="px-8 py-4 text-left">
+                          <StatusDropdown 
+                            clientId={clientId}
+                            active={['active', 'accepted'].includes((client.status || 'Active').toLowerCase().trim())} 
+                            onChange={(val) => handleToggleStatus(client, val)} 
+                          />
+                        </td>
+                        <td className="px-8 py-4 text-right">
+                          <FiChevronRight className="inline-block text-[#9B9BAD]" size={18} />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
           </div>
         </div>
       </motion.div>
+
+      {/* Bulk Selection Bar */}
+      {createPortal(
+        <AnimatePresence>
+          {selectedIds.length > 0 && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="fixed bottom-10 left-[100px] bg-[#1A1A2E] text-white px-8 py-5 rounded-[28px] shadow-2xl flex items-center gap-10 z-[1000] border border-white/10"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center font-black text-sm">
+                  {selectedIds.length}
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest">Clients Selected</p>
+                  <button 
+                    onClick={() => setSelectedIds([])}
+                    className="text-[10px] font-bold text-red-400 hover:text-red-300 uppercase tracking-widest mt-0.5"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              </div>
+
+              <div className="h-10 w-[1px] bg-white/10" />
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => handleBulkStatusUpdate('Active')}
+                  className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                >
+                  <FiCheckCircle size={16} className="text-emerald-400 group-hover:text-white" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Mark Active</span>
+                </button>
+
+                <button
+                  onClick={() => handleBulkStatusUpdate('Inactive')}
+                  className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                >
+                  <FiX size={16} className="text-amber-400 group-hover:text-white" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Mark Inactive</span>
+                </button>
+
+                <button
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all hover:bg-white/5 active:scale-95"
+                >
+                  <FiTrash size={16} className="text-red-400 group-hover:text-white" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Delete</span>
+                </button>
+              </div>
+
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedIds([])}
+                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white transition-all text-[#9B9BAD]"
+              >
+                <FiX size={20} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {createPortal(
         <AnimatePresence>
@@ -265,62 +458,157 @@ const ClientsTab = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200000]"
+                className="fixed inset-0 bg-[#1A1A2E]/40 backdrop-blur-md z-[200000]"
                 onClick={() => setSelectedClientDetail(null)}
               />
               <motion.div
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ type: "spring", damping: 35, stiffness: 250 }}
+                transition={{ type: "spring", damping: 30, stiffness: 200 }}
                 className="fixed inset-y-0 right-0 w-full max-w-[698px] bg-white shadow-2xl border-l border-[#F4F3EF] flex flex-col z-[200001] overflow-hidden"
               >
-                {/* Detail Header */}
-                <div className="p-6 border-b border-[#F4F3EF] bg-gradient-to-r from-blue-50/30 to-white flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] text-white flex items-center justify-center font-bold text-lg">
-                      {selectedClientDetail.companyName ? selectedClientDetail.companyName.slice(0, 1).toUpperCase() : (selectedClientDetail.name ? selectedClientDetail.name.slice(0, 1).toUpperCase() : 'C')}
-                    </div>
-                    <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
+                {/* Drawer Header */}
+                <div className="p-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white">
+                  <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => {
+                        setClientToEdit(selectedClientDetail);
+                        setIsOnboardModalOpen(true);
+                        setSelectedClientDetail(null);
+                      }}
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50 transition-all duration-300"
+                      title="Edit Client"
+                    >
+                      <FiEdit2 size={18} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setClientToDelete(selectedClientDetail);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+                      title="Delete Client"
+                    >
+                      <FiTrash size={18} />
+                    </button>
+                    <button onClick={() => setSelectedClientDetail(null)} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300">
+                      <FiX size={20} />
+                    </button>
                   </div>
-                  <button onClick={() => setSelectedClientDetail(null)} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm">
-                    <FiX size={20} />
-                  </button>
                 </div>
 
-                {/* Detail Content */}
-                <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
-
-                  {/* Identity Section */}
+                {/* Drawer Content */}
+                <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar text-left">
+                  
+                  {/* Profile Header (Centered) */}
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-24 h-24 rounded-[32px] bg-[#F8FAFC] text-[#475569] flex items-center justify-center text-3xl font-extrabold shadow-xl border border-[#F1F5F9] mb-6">
-                      {selectedClientDetail.companyName ? selectedClientDetail.companyName.slice(0, 2).toUpperCase() : (selectedClientDetail.name ? selectedClientDetail.name.slice(0, 2).toUpperCase() : 'C')}
+                    <div className="relative mb-6">
+                      <div className="w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden"
+                           style={{ background: 'linear-gradient(135deg, #1B4DA0 0%, #0D47A1 100%)' }}>
+                        <span>{(selectedClientDetail.companyName || selectedClientDetail.name || 'C').substring(0, 2).toUpperCase()}</span>
+                      </div>
+                      {/* Status Dot */}
+                      <div className="absolute top-0 right-0 w-5 h-5 bg-[#00D26A] border-[3px] border-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15),0_0_15px_rgba(0,210,106,0.4)] z-10 translate-x-1 -translate-y-1" />
                     </div>
                     <div className="space-y-1.5">
-                      <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{selectedClientDetail.companyName || selectedClientDetail.name}</h4>
-                      <p className="text-[14px] font-bold text-[#1B4DA0] tracking-tight uppercase tracking-[3px]">{selectedClientDetail.industry || 'Enterprise'} Sector</p>
+                      <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne">{selectedClientDetail.companyName || selectedClientDetail.name}</h4>
+                      <p className="text-[11px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedClientDetail.industry || 'Enterprise'} Sector</p>
                     </div>
                   </div>
 
-                  {/* Information Card */}
-                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-10 space-y-8 shadow-sm">
-                    <div className="flex items-center justify-between border-b border-[#F4F3EF] pb-4">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Location HQ</span>
-                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClientDetail.city || selectedClientDetail.location || 'Bangalore / Remote'}</span>
+                  {/* Information Grid */}
+                  <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-10 shadow-sm">
+                    
+                    {/* Company Identity */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                        <FiBriefcase className="text-[#1B4DA0]" size={18} />
+                        <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Company Identity</h5>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <InfoItem label="GST Number" value={selectedClientDetail.gstNumber} />
+                        <InfoItem label="PAN Number" value={selectedClientDetail.panNumber} />
+                        <InfoItem label="CIN Number" value={selectedClientDetail.cinNumber} />
+                        <InfoItem label="Company Website" value={selectedClientDetail.website} />
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between border-b border-[#F4F3EF] pb-4">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Active Openings</span>
-                      <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100">{selectedClientDetail.jobCount || 0} Positions</span>
+
+                    {/* Address Details */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                        <FiMapPin className="text-[#1B4DA0]" size={18} />
+                        <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Location & Address</h5>
+                      </div>
+                      <div className="grid grid-cols-1 gap-y-6">
+                        <InfoItem label="Corporate Address" value={selectedClientDetail.corporateAddress} fullWidth />
+                        <div className="grid grid-cols-3 gap-6">
+                          <InfoItem label="City" value={selectedClientDetail.city} />
+                          <InfoItem label="State" value={selectedClientDetail.state} />
+                          <InfoItem label="Pin Code" value={selectedClientDetail.pinCode} />
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between border-b border-[#F4F3EF] pb-4">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Total Hires</span>
-                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClientDetail.totalHired || '0'} Placements</span>
+
+                    {/* Contact Persons */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                        <FiUsers className="text-[#1B4DA0]" size={18} />
+                        <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Contact Persons</h5>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <InfoItem label="Primary SPOC" value={selectedClientDetail.spocName} subValue={selectedClientDetail.spocContact} />
+                        <InfoItem label="Authorized Signatory" value={selectedClientDetail.authorizedSignatory?.name} subValue={selectedClientDetail.authorizedSignatory?.email} />
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#9B9BAD]">Hiring SPOC</span>
-                      <span className="text-sm font-bold text-[#1A1A2E]">{selectedClientDetail.spocName || selectedClientDetail.hiringManager || 'N/A'}</span>
+
+                    {/* Commercial Terms */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                        <FiDollarSign className="text-[#1B4DA0]" size={18} />
+                        <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Commercial Terms</h5>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <InfoItem label="Agreement Type" value={selectedClientDetail.agreementType} />
+                        <InfoItem label="Payment Terms" value={selectedClientDetail.paymentTerms} />
+                        <InfoItem label="Fee Structure" value={selectedClientDetail.feeStructure} />
+                        <InfoItem label="Notice Period" value={selectedClientDetail.noticePeriod ? `${selectedClientDetail.noticePeriod} Days` : 'N/A'} />
+                      </div>
                     </div>
+
+                    {/* Operational Data */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                        <FiActivity className="text-[#1B4DA0]" size={18} />
+                        <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Operational Data</h5>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <InfoItem label="Total Employees" value={selectedClientDetail.totalEmployees} />
+                        <InfoItem label="Working Model" value={selectedClientDetail.workingModel} />
+                        <InfoItem label="PF Applicable" value={selectedClientDetail.pfApplicable} />
+                        <InfoItem label="ESI Applicable" value={selectedClientDetail.esicApplicable} />
+                      </div>
+                    </div>
+
                   </div>
+
+                  {/* Documents Section */}
+                  <div className="space-y-4 pt-6 border-t border-[#F4F3EF]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FiFileText className="text-[#1B4DA0]" size={20} />
+                        <h4 className="text-[15px] font-bold text-[#1A1A2E] uppercase tracking-tight">Agreements & Licenses</h4>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsDocsModalOpen(true)}
+                      className="w-full py-4 bg-white border-2 border-[#1B4DA0]/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white hover:border-[#1B4DA0] transition-all flex items-center justify-center gap-3 shadow-sm group"
+                    >
+                      <FiEye className="group-hover:scale-110 transition-transform" /> View Signed Documents
+                    </button>
+                  </div>
+
                 </div>
               </motion.div>
             </React.Fragment>
@@ -329,6 +617,164 @@ const ClientsTab = () => {
         document.body
       )}
 
+
+      <ClientOnboardingForm 
+        isOpen={isOnboardModalOpen} 
+        initialData={clientToEdit}
+        onClose={() => {
+          setIsOnboardModalOpen(false);
+          setClientToEdit(null);
+        }}
+        onComplete={async () => {
+          await fetchClients();
+          setIsOnboardModalOpen(false);
+          setClientToEdit(null);
+        }}
+      />
+
+      {/* Client Documents Modal */}
+      {createPortal(
+        <AnimatePresence>
+          {isDocsModalOpen && selectedClientDetail && (
+            <React.Fragment>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl z-[300000]"
+                onClick={() => setIsDocsModalOpen(false)}
+              />
+              <div className="fixed inset-0 flex items-center justify-center z-[300001] p-4">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF] relative"
+                >
+                  {/* Modal Header */}
+                  <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white">
+                    <div>
+                      <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">Documents Cabinet</h3>
+                      <p className="text-[11px] font-bold text-[#1B4DA0] uppercase tracking-widest mt-1">Manage compliance files for {selectedClientDetail.companyName}</p>
+                    </div>
+                    <button 
+                      onClick={() => setIsDocsModalOpen(false)}
+                      className="w-12 h-12 rounded-2xl bg-[#F8FAFC] text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 flex items-center justify-center shadow-sm"
+                    >
+                      <FiX size={24} />
+                    </button>
+                  </div>
+
+                  {/* Modal Content */}
+                  <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-1 gap-4">
+                      {[
+                        { key: 'panCard', label: 'PAN Card Copy' },
+                        { key: 'gstCert', label: 'GST Registration Certificate' },
+                        { key: 'cinCert', label: 'Incorporation Certificate (CIN)' },
+                        { key: 'msmeCert', label: 'MSME Certificate' },
+                        { key: 'agreement', label: 'Signed Service Agreement' },
+                        { key: 'shopsLicense', label: 'Shop Act / Factory License' },
+                        { key: 'signatoryID', label: 'Authorized Signatory ID Proof' }
+                      ].map((doc) => {
+                        const hasDoc = selectedClientDetail.documents?.[doc.key];
+                        return (
+                          <div key={doc.key} className="flex items-center justify-between p-5 bg-[#FAFAF8] rounded-3xl border border-[#F4F3EF] hover:border-blue-200 transition-all group">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] shadow-sm group-hover:scale-110 transition-transform">
+                                <FiFileText size={20} />
+                              </div>
+                              <div>
+                                <p className="text-[13px] font-bold text-[#1A1A2E]">{doc.label}</p>
+                                <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${hasDoc ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                  {hasDoc ? 'Already Uploaded' : 'Missing Document'}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              {hasDoc ? (
+                                <button className="px-5 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white transition-all shadow-sm">
+                                  View File
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={() => toast.error('Upload feature coming soon')}
+                                  className="px-5 py-2.5 bg-[#1B4DA0] rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-[#0D47A1] transition-all shadow-lg flex items-center gap-2"
+                                >
+                                  <FiUpload size={14} /> Upload Now
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="p-8 bg-[#F8FAFC] border-t border-[#F4F3EF] flex justify-end">
+                    <button 
+                      onClick={() => setIsDocsModalOpen(false)}
+                      className="px-8 py-4 bg-white border border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] hover:bg-gray-50 transition-all shadow-sm"
+                    >
+                      Close Cabinet
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            </React.Fragment>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+      {/* Delete Confirmation Modal */}
+      {createPortal(
+        <AnimatePresence>
+          {isDeleteModalOpen && (
+            <React.Fragment>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl z-[400000]"
+                onClick={() => setIsDeleteModalOpen(false)}
+              />
+              <div className="fixed inset-0 flex items-center justify-center z-[400001] p-4">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="w-full max-w-md bg-white rounded-[40px] shadow-2xl p-10 text-center border border-[#F4F3EF]"
+                >
+                  <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center text-red-500 mx-auto mb-6 shadow-sm">
+                    <FiTrash size={36} />
+                  </div>
+                  <h3 className="text-2xl font-bold text-[#1A1A2E] mb-2 font-syne">Delete Client?</h3>
+                  <p className="text-sm text-[#6B6B7E] mb-8 leading-relaxed">
+                    Are you sure you want to delete <span className="font-bold text-[#1A1A2E]">{clientToDelete?.companyName || clientToDelete?.name}</span>? This action cannot be undone.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={() => setIsDeleteModalOpen(false)}
+                      className="py-4 bg-[#F8FAFC] border border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] hover:bg-gray-50 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeleteConfirm}
+                      className="py-4 bg-red-500 rounded-2xl text-[11px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all shadow-lg shadow-red-500/20"
+                    >
+                      Delete Forever
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            </React.Fragment>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
