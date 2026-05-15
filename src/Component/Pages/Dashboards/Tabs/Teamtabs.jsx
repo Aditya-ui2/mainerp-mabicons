@@ -30,14 +30,14 @@ const TeamTabs = ({ isDarkMode }) => {
   const [orgChart, setOrgChart] = useState({ name: '', children: [] });
   const [selectedMember, setSelectedMember] = useState(null);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
-  const [newMember, setNewMember] = useState({ 
-    name: '', 
-    role: 'employee', 
-    leader: '', 
-    department: 'Operations', 
-    otherRole: '', 
+  const [newMember, setNewMember] = useState({
+    name: '',
+    role: 'employee',
+    leader: '',
+    department: 'Operations',
+    otherRole: '',
     otherDepartment: '',
-    documents: {} 
+    documents: {}
   });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState(null);
@@ -49,10 +49,10 @@ const TeamTabs = ({ isDarkMode }) => {
   const [currentUserName, setCurrentUserName] = useState('');
   const [modalStep, setModalStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeRoleFilter, setActiveRoleFilter] = useState('all');
+  const [activeDeptFilter, setActiveDeptFilter] = useState('all');
   const [activeStatusFilter, setActiveStatusFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState([]);
-  
+
   const [isEditingInDetail, setIsEditingInDetail] = useState(false);
   const [isSavingDetail, setIsSavingDetail] = useState(false);
   const [editableMember, setEditableMember] = useState(null);
@@ -190,6 +190,7 @@ const TeamTabs = ({ isDarkMode }) => {
               id: 'mock_crm',
               email: 'ashwin@mabicons.com',
               role: 'CRM Head',
+              department: 'CRM',
               children: []
             },
             {
@@ -197,6 +198,7 @@ const TeamTabs = ({ isDarkMode }) => {
               id: 'mock_hrops',
               email: 'ramesh@mabicons.com',
               role: 'HR Operations Head',
+              department: 'Operations',
               children: []
             },
             {
@@ -204,10 +206,11 @@ const TeamTabs = ({ isDarkMode }) => {
               id: 'mock_hrrec',
               email: 'sachin@mabicons.com',
               role: 'HR Recruitment Head',
+              department: 'Recruitment',
               children: [
-                { name: 'Priyanshi', id: 'mock_kam1', email: 'priyanshi@mabicons.com', role: 'KAM' },
-                { name: 'Manju', id: 'mock_kam2', email: 'manju@mabicons.com', role: 'KAM' },
-                { name: 'Jyoti', id: 'mock_kam3', email: 'jyoti@mabicons.com', role: 'KAM' }
+                { name: 'Priyanshi', id: 'mock_kam1', email: 'priyanshi@mabicons.com', role: 'KAM', department: 'Recruitment' },
+                { name: 'Manju', id: 'mock_kam2', email: 'manju@mabicons.com', role: 'KAM', department: 'Recruitment' },
+                { name: 'Jyoti', id: 'mock_kam3', email: 'jyoti@mabicons.com', role: 'KAM', department: 'Recruitment' }
               ]
             }
           ]
@@ -563,14 +566,15 @@ const TeamTabs = ({ isDarkMode }) => {
   const filteredMembers = flattenedMembers.filter(member => {
     const matchesSearch = member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.role?.toLowerCase().includes(searchTerm.toLowerCase());
+      member.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.department?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesRole = activeRoleFilter === 'all' || member.role === activeRoleFilter;
+    const matchesDept = activeDeptFilter === 'all' || member.department === activeDeptFilter;
 
     const memberStatus = (member.status || 'Active').toLowerCase();
     const matchesStatus = activeStatusFilter === 'all' || memberStatus === activeStatusFilter.toLowerCase();
 
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesDept && matchesStatus;
   });
 
   return (
@@ -578,7 +582,7 @@ const TeamTabs = ({ isDarkMode }) => {
       {/* Header Section */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4 text-left">
         <div className="text-left">
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>All Employees</h1>
         </div>
         <div className="flex items-center gap-2">
           {/* Add Button - ONLY for Ashish */}
@@ -610,17 +614,17 @@ const TeamTabs = ({ isDarkMode }) => {
           />
         </div>
 
-        {/* Role Filter Placeholder */}
+        {/* Department Filter */}
         <div className="relative">
           <select
-            value={activeRoleFilter}
-            onChange={(e) => setActiveRoleFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[150px]"
+            value={activeDeptFilter}
+            onChange={(e) => setActiveDeptFilter(e.target.value)}
+            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-2.5 outline-none border-0 cursor-pointer appearance-none min-w-[170px]"
           >
-            <option value="all">All Roles</option>
-            {uniqueRoles.map(role => (
-              <option key={role} value={role}>{role}</option>
-            ))}
+            <option value="all">All Department</option>
+            <option value="CRM">CRM</option>
+            <option value="Operations">Operations</option>
+            <option value="Recruitment">Recruitment</option>
           </select>
           <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
         </div>
