@@ -62,6 +62,7 @@ const sidebarConfig = [
     items: [
       { id: 0, title: 'My Tasks', icon: FiCheckSquare },
       { id: 1, title: 'Activity Feed', icon: FiActivity },
+      { id: 15, title: 'Announcements', icon: FiBell },
     ]
   },
   {

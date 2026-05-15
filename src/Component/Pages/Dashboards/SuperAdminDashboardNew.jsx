@@ -46,6 +46,7 @@ import ClientPipelineTab from './Tabs/CRM/ClientPipelineTab';
 import MyProfileTab from './Tabs/Common/MyProfileTab';
 import HiringLifecycleTab from './Tabs/KAMRecruitment/HiringLifecycleTab';
 import TeamPerformanceTab from './Tabs/TeamPerformanceTab';
+import AnnouncementsTab from './Tabs/Common/AnnouncementsTab';
 import { getAllClients, getAllTasks, getAllNotifications, logout } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
@@ -459,13 +460,7 @@ const SuperAdminDashboard = () => {
         );
 
       case 'Announcements':
-        return (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <FiBell size={64} className="text-orange-500 mb-4 opacity-20" />
-            <h2 className="text-2xl font-bold text-slate-800">Announcements</h2>
-            <p className="text-slate-500 max-w-md mt-2">Stay updated with the latest company-wide news, alerts, and official announcements.</p>
-          </div>
-        );
+        return <AnnouncementsTab department="All" isHead={true} />;
 
       case 'Settings':
       case 'My Profile':

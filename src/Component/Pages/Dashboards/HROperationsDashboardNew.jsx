@@ -22,6 +22,7 @@ import {
   FiActivity,
   FiBriefcase,
   FiUser,
+  FiBell,
 } from 'react-icons/fi';
 import { FaIndianRupeeSign } from 'react-icons/fa6';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
@@ -51,6 +52,7 @@ const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
 const TeamManagementTab = lazy(() => import('./Tabs/Common/TeamManagementTab'));
 const ActivityFeedTab = lazy(() => import('./Tabs/Common/OperationsActivityFeedTab'));
 const TaskAssignmentTab = lazy(() => import('./Tabs/Common/OperationsTaskAssignmentTab'));
+const AnnouncementsTab = lazy(() => import('./Tabs/Common/AnnouncementsTab'));
 
 // Tab Loader Skeleton
 const TabLoader = () => (
@@ -134,6 +136,7 @@ const sidebarConfig = [
       { id: 21, title: 'Task Assignment', icon: FiCheckSquare },
       { id: 19, title: 'Team Member', icon: FiUsers },
       { id: 20, title: 'Activity Feed', icon: FiActivity },
+      { id: 23, title: 'Announcements', icon: FiBell },
     ]
   },
 ];
@@ -283,6 +286,8 @@ const HROperationsDashboard = () => {
               return <TeamManagementTab department="HR Operations" />;
             case 'Activity Feed':
               return <ActivityFeedTab department="HR Operations" />;
+            case 'Announcements':
+              return <AnnouncementsTab department="HR Operations" isHead={true} />;
 
             // Legacy mappings (for safety)
             case 'Attendance':

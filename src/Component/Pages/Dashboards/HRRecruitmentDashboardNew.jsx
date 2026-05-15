@@ -16,6 +16,7 @@ import {
   FiActivity,
   FiCheckSquare,
   FiDatabase,
+  FiBell,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { getAllNotifications, markNotificationRead, getRecruitmentStats, getAllRecruitmentPositions, getAllInterviews } from '../service/api';
@@ -35,6 +36,7 @@ const TeamManagementTab = lazy(() => import('./Tabs/Common/TeamManagementTab'));
 const ActivityFeedTab = lazy(() => import('./Tabs/Common/ActivityFeedTab'));
 const TaskAssignmentTab = lazy(() => import('./Tabs/Common/TaskAssignmentTab'));
 const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
+const AnnouncementsTab = lazy(() => import('./Tabs/Common/AnnouncementsTab'));
 
 // Tab Loader Skeleton
 const TabLoader = () => (
@@ -85,6 +87,7 @@ const sidebarConfig = [
       { id: 8, title: 'Team Members', icon: FiUsers },
       { id: 9, title: 'Activity Feed', icon: FiActivity },
       { id: 10, title: 'Task Assignment', icon: FiCheckSquare },
+      { id: 11, title: 'Announcements', icon: FiBell },
     ]
   },
 ];
@@ -236,6 +239,8 @@ const HRRecruitmentDashboard = () => {
               return <TaskAssignmentTab department="HR Recruitment" />;
             case 'Notes Hub':
               return <NotesTab department="HR Recruitment" />;
+            case 'Announcements':
+              return <AnnouncementsTab department="HR Recruitment" isHead={true} />;
             default:
               // Dashboard Overview
               return (
