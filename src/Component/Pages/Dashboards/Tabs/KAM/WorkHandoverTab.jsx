@@ -92,29 +92,9 @@ export default function WorkHandoverTab({ isDarkMode = false }) {
           const hierarchy = await getAdminHierarchy(decoded.id, decoded.role === 'Admin' ? 'Admin' : 'TeamLeader');
           const fetchedTLs = hierarchy?.adminHierarchy?.teamLeaders || [];
           
-          // Adding requested names (Manju, Jyoti, Priyanshi) to the options
-          const manualTLs = [
-            { id: 'manju-mock', name: 'Manju' },
-            { id: 'jyoti-mock', name: 'Jyoti' },
-            { id: 'priyanshi-mock', name: 'Priyanshi' }
-          ];
-          
-          // Combine fetched and manual TLs, ensuring no duplicates by name
-          const combined = [...fetchedTLs];
-          manualTLs.forEach(m => {
-            if (!combined.some(c => c.name.toLowerCase() === m.name.toLowerCase())) {
-              combined.push(m);
-            }
-          });
-          
-          setTeamLeaders(combined);
+          setTeamLeaders(fetchedTLs);
         } catch {
-          setTeamLeaders([
-            { id: decoded.id, name: decoded.name || 'Me', email: '' },
-            { id: 'manju-mock', name: 'Manju' },
-            { id: 'jyoti-mock', name: 'Jyoti' },
-            { id: 'priyanshi-mock', name: 'Priyanshi' }
-          ]);
+          setTeamLeaders([]);
         }
       }
     } catch (e) {

@@ -25,61 +25,8 @@ const EMPTY_FORM = {
   blockers: '',
 };
 
-const MOCK_REPORTS = [
-  {
-    id: 'mock-0',
-    date: new Date().toISOString().split('T')[0], // Today
-    checkInTime: '09:00',
-    checkOutTime: '11:58',
-    workHours: 2.9,
-    callsCount: 15,
-    profilesVisited: 40,
-    profilesShared: 3,
-    candidatesContacted: 10,
-    interviewsArranged: 1,
-    summary: 'Morning progress: Focused on interview scheduling and initial candidate screening.',
-    tasksCompleted: ['Scheduled 2 interviews', 'Initial resume screening'],
-    tasksPlanned: ['Follow up with hiring managers'],
-    blockers: '',
-    headCommentBy: 'Manju'
-  },
-  {
-    id: 'mock-1',
-    date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
-    checkInTime: '09:05',
-    checkOutTime: '18:45',
-    workHours: 9.6,
-    callsCount: 45,
-    profilesVisited: 120,
-    profilesShared: 12,
-    candidatesContacted: 28,
-    interviewsArranged: 4,
-    summary: 'Productive day focusing on the Senior React Developer role. Shortlisted 5 solid candidates.',
-    tasksCompleted: ['Screened 15 candidates', ' for JD sync', 'Updated Recruitment Tracker'],
-    tasksPlanned: ['Focus on Backend roles', 'Interview scheduling for tomorrow'],
-    blockers: 'None',
-    headComment: 'Excellent performance today, keep it up!',
-    headCommentBy: 'Manju'
-  },
-  {
-    id: 'mock-2',
-    date: new Date(Date.now() - 172800000).toISOString().split('T')[0], // 2 days ago
-    checkInTime: '09:15',
-    checkOutTime: '18:15',
-    workHours: 9.0,
-    callsCount: 38,
-    profilesVisited: 95,
-    profilesShared: 8,
-    candidatesContacted: 22,
-    interviewsArranged: 2,
-    summary: 'Focused on sourcing for the Python lead role. Good traction on LinkedIn.',
-    tasksCompleted: ['LinkedIn Sourcing', 'Resume screening', 'Feedback sync with KAM'],
-    tasksPlanned: ['Sourcing for Java roles', 'Follow up with shortlisted candidates'],
-    blockers: 'Portal access was slow in the morning',
-    headComment: 'Good effort, try to increase candidate outreach tomorrow.',
-    headCommentBy: 'Manju'
-  }
-];
+// MOCK_REPORTS removed for live database integration
+const MOCK_REPORTS = [];
 
 const calcWorkHours = (checkIn, checkOut) => {
   if (!checkIn || !checkOut) return 0;

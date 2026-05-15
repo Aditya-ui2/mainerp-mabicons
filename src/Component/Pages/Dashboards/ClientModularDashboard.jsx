@@ -72,43 +72,8 @@ const ClientFinalizedTab = lazy(() => import('./Tabs/Client/recruitment/ClientFi
 const ClientProfileTab = lazy(() => import('./Tabs/Client/ClientProfileTab'));
 
 /* ── Mock dashboard data ─────────────────────────────── */
-const MOCK_DASHBOARD = {
-  kpis: {
-    activeRoles: 250, activeRolesChange: '+12', activeRolesUp: true,
-    totalApplications: '1,2k', totalApplicationsChange: 'Stable', totalApplicationsUp: null,
-    interviewsDone: 38, interviewsDoneChange: '+4', interviewsDoneUp: true,
-    departments: 8, departmentsChange: 'Static', departmentsUp: null,
-  },
-  applicationData: [
-    { name: 'Pending', value: 100, color: '#8b5cf6' },
-    { name: 'Approved', value: 60, color: '#f59e0b' },
-    { name: 'Rejected', value: 40, color: '#f43f5e' },
-  ],
-  annualSummaryData: [
-    { name: 'Screening', count: 40, color: '#f59e0b' },
-    { name: 'Phone', count: 30, color: '#f43f5e' },
-    { name: 'Technical', count: 20, color: '#8b5cf6' },
-    { name: 'Final Rounds', count: 50, color: '#1B4DA0' },
-    { name: 'Hired', count: 45, color: '#10b981' },
-  ],
-  totalAcquisitionData: [
-    { name: '30 Sep', value: 2000000 },
-    { name: '10 Oct', value: 5000000 },
-    { name: '20 Oct', value: 4000000 },
-    { name: '30 Oct', value: 8000000 },
-    { name: '10 Nov', value: 11800000 },
-  ],
-  recentApplicants: [
-    { name: 'Sarah Jenkins', date: '25/11/2024', status: 'Pending' },
-    { name: 'Michael Ross', date: '24/11/2024', status: 'Approved' },
-    { name: 'Emily Blunt', date: '23/11/2024', status: 'Rejected' },
-  ],
-  jobProgress: [
-    { name: 'Frontend Lead', date: '142', status: 'Approved' },
-    { name: 'Product Org', date: '85', status: 'Pending' },
-    { name: 'System Design', date: '42', status: 'Approved' },
-  ],
-};
+// MOCK_DASHBOARD removed for live database integration
+const MOCK_DASHBOARD = null;
 
 /* ── Table Row ───────────────────────────────────────── */
 const TableItem = ({ name, date, status }) => (

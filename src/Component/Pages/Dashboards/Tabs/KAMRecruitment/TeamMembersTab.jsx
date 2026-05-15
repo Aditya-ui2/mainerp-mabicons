@@ -68,14 +68,9 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
       const res = await getDepartmentTeamMembers('HR Recruitment');
       let teamData = res?.data || [];
       
-      // Fallback mock data if API returns empty to keep UI premium
+      // Removed fallback mock data for live database integration
       if (!teamData || (Array.isArray(teamData) && teamData.length === 0)) {
-        teamData = [
-          { _id: 'mock_tm1', name: 'Priyanshi', email: 'priyanshi@mabicons.com', phone: '9876543210', role: 'KAM (Recruitment)', status: 'Active', joinDate: '2024-01-15', tasksAssigned: 12, tasksCompleted: 8 },
-          { _id: 'mock_tm2', name: 'Manju', email: 'manju@mabicons.com', phone: '9876543211', role: 'KAM (Recruitment)', status: 'Active', joinDate: '2024-02-10', tasksAssigned: 8, tasksCompleted: 5 },
-          { _id: 'mock_tm3', name: 'Jyoti', email: 'jyoti@mabicons.com', phone: '9876543212', role: 'KAM (Recruitment)', status: 'Active', joinDate: '2024-03-01', tasksAssigned: 6, tasksCompleted: 2 },
-          { _id: 'mock_tm4', name: 'Sachin', email: 'sachin@mabicons.com', phone: '9876543213', role: 'HR Recruitment Head', status: 'Active', joinDate: '2024-01-01', tasksAssigned: 15, tasksCompleted: 10 }
-        ];
+        teamData = [];
       }
 
       const mapped = (Array.isArray(teamData) ? teamData : []).map(m => ({
@@ -147,7 +142,18 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
           
           let bridgedClients = [];
           const bridgeData = localStorage.getItem('mabicons_client_assignments');
-          const assignments = bridgeData ? JSON.parse(bridgeData) : [];
+          let assignments = [];
+          try {
+            const parsed = bridgeData ? JSON.parse(bridgeData) : [];
+            // Handle if bridgeData is an object instead of array
+            assignments = Array.isArray(parsed) ? parsed : Object.entries(parsed).map(([key, val]) => ({
+               clientId: key.replace('idmatch_', ''),
+               memberId: val
+            }));
+          } catch (e) {
+            assignments = [];
+          }
+
           const currentUserName = (localStorage.getItem('userName') || '').toLowerCase();
           
           const allRes = await getRecruitmentClients();
@@ -155,7 +161,7 @@ const TeamMembersTab = ({ isDarkMode, userRole = 'KAM' }) => {
           
           bridgedClients = allGlobal.filter(c => {
              const clientName = (c.name || c.companyName || '').toLowerCase();
-             const inBridge = assignments.some(a => 
+             const inBridge = Array.isArray(assignments) && assignments.some(a => 
                (a.memberId?.toString()?.trim() === userId || (a.memberName && currentUserName.includes(a.memberName.toLowerCase()))) && 
                (a.clientId?.toString()?.trim() === (c.id || c._id)?.toString()?.trim() || (a.clientName && clientName.includes(a.clientName.toLowerCase())))
              );

@@ -51,11 +51,8 @@ const ActivityIcon = ({ type }) => {
   );
 };
 
-const MOCK_ACTIVITIES_OPERATIONS = [
-  { _id: 'a4', action: 'Payroll Processed', description: 'March 2024 payroll has been successfully processed for 50 employees.', performedByName: 'Priya Sharma', actionType: 'payroll', createdAt: new Date(Date.now() - 1800000).toISOString() },
-  { _id: 'a5', action: 'Compliance Update', description: 'PF and ESI contribution reports generated for Q1.', performedByName: 'Sameer Khan', actionType: 'compliance', createdAt: new Date(Date.now() - 5400000).toISOString() },
-  { _id: 'a6', action: 'Policy Updated', description: 'New Remote Work Policy has been published to all staff.', performedByName: 'Priya Sharma', actionType: 'policy', createdAt: new Date(Date.now() - 14400000).toISOString() },
-];
+// MOCK_ACTIVITIES_OPERATIONS removed for live database integration
+const MOCK_ACTIVITIES_OPERATIONS = [];
 
 const OperationsActivityFeedTab = () => {
   const department = 'HR Operations';
@@ -70,7 +67,7 @@ const OperationsActivityFeedTab = () => {
       setLoading(true);
       const response = await getDepartmentActivityLogs(department, 50);
       const apiActivities = response.activities || [];
-      setActivities([...MOCK_ACTIVITIES_OPERATIONS, ...apiActivities]);
+      setActivities(apiActivities);
     } catch (error) {
       console.error('Error fetching activities:', error);
       setActivities(MOCK_ACTIVITIES_OPERATIONS);

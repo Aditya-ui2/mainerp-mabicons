@@ -32,6 +32,7 @@ import {
   FiMapPin,
   FiChevronRight,
   FiMail,
+  FiShare2,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -123,6 +124,7 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [industryFilter, setIndustryFilter] = useState('all');
+  const [selectedClientIds, setSelectedClientIds] = useState([]);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -139,6 +141,20 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
 
   const industries = [...new Set(distribution.map(item => item.industry).filter(Boolean))];
 
+  const toggleClientSelection = (clientId) => {
+    setSelectedClientIds(prev =>
+      prev.includes(clientId) ? prev.filter(id => id !== clientId) : [...prev, clientId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedClientIds.length === filteredDistribution.length) {
+      setSelectedClientIds([]);
+    } else {
+      setSelectedClientIds(filteredDistribution.map(item => item.id));
+    }
+  };
+
   return (
     <div className="space-y-8" style={{ fontFamily: "'Calibri', sans-serif" }}>
       {/* Header */}
@@ -147,8 +163,21 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
             My Clients
           </h1>
+          {selectedClientIds.length > 0 && (
+            <p className="text-[10px] font-black text-blue-600 uppercase tracking-[3px] mt-1 animate-pulse">
+              {selectedClientIds.length} Clients Selected for Action
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
+          {selectedClientIds.length > 0 && (
+            <button
+              onClick={() => setSelectedClientIds([])}
+              className="flex items-center gap-2 px-4 py-2 text-[11px] font-black uppercase tracking-widest text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-all border border-red-100"
+            >
+              Clear Selection
+            </button>
+          )}
           <button
             onClick={handleSync}
             disabled={isSyncing}
@@ -190,7 +219,12 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
       <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
         <div className="grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_40px] gap-4 px-8 py-4 border-b border-[#F4F3EF] bg-transparent">
           <div className="flex items-center">
-            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]" />
+            <input
+              type="checkbox"
+              checked={selectedClientIds.length === filteredDistribution.length && filteredDistribution.length > 0}
+              onChange={handleSelectAll}
+              className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+            />
           </div>
           {["Client Portfolio", "Industry", "Status", "Last Active", "Jobs", ""].map((h, i) => (
             <div key={i} className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left flex items-start justify-start">
@@ -209,10 +243,15 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
               <div
                 key={item.id}
                 onClick={() => onViewClient(item)}
-                className="grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative"
+                className={`grid grid-cols-[40px_2fr_1.5fr_120px_130px_100px_40px] gap-4 items-center px-8 py-3 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative ${selectedClientIds.includes(item.id) ? 'bg-blue-50/40' : ''}`}
               >
                 <div className="flex items-center" onClick={e => e.stopPropagation()}>
-                  <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0]" />
+                  <input
+                    type="checkbox"
+                    checked={selectedClientIds.includes(item.id)}
+                    onChange={() => toggleClientSelection(item.id)}
+                    className="w-4 h-4 rounded border-gray-300 text-[#1B4DA0] focus:ring-[#1B4DA0] cursor-pointer"
+                  />
                 </div>
                 <div className="flex flex-col justify-center items-start min-w-0 py-1">
                   <div className="flex items-center gap-3">
@@ -269,11 +308,60 @@ const ClientsTab = ({ distribution, handovers, onViewClient, onSync }) => {
           )}
         </div>
       </div>
+
+      {/* Floating Selection Bar (Pop-up Bar) */}
+      <AnimatePresence>
+        {selectedClientIds.length > 0 && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0, x: '-50%' }}
+            animate={{ y: 0, opacity: 1, x: '-50%' }}
+            exit={{ y: 100, opacity: 0, x: '-50%' }}
+            className="fixed bottom-10 left-1/2 z-[1000] w-max max-w-[90vw]"
+          >
+            <div className="bg-[#1A1A2E] text-white px-8 py-4 rounded-[32px] shadow-[0_32px_64px_rgba(0,0,0,0.5)] flex items-center gap-8 border border-white/10 backdrop-blur-3xl">
+              <div className="flex items-center gap-4 pr-8 border-r border-white/10">
+                <div className="w-12 h-12 bg-[#1B4DA0] rounded-2xl flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-500/30">
+                  {selectedClientIds.length}
+                </div>
+                <div>
+                  <p className="text-sm font-black text-white leading-none">Clients Selected</p>
+                  <p className="text-[9px] text-white/40 font-black uppercase tracking-[2px] mt-1">Batch Protocols Active</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={() => {
+                    toast.info(`Initiating bulk handover for ${selectedClientIds.length} clients...`);
+                  }}
+                  className="px-6 py-3 bg-[#1B4DA0] hover:bg-blue-600 rounded-2xl text-[11px] font-black uppercase tracking-[2px] transition-all flex items-center gap-2.5 shadow-lg shadow-blue-500/20 active:scale-95"
+                >
+                  <FiShare2 size={16} /> Bulk Handover
+                </button>
+                
+                <button
+                  onClick={() => setSelectedClientIds([])}
+                  className="px-6 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-[11px] font-black uppercase tracking-[2px] transition-all border border-white/5 active:scale-95"
+                >
+                  Clear Selection
+                </button>
+
+                <button
+                  onClick={() => setSelectedClientIds([])}
+                  className="w-10 h-10 flex items-center justify-center text-white/30 hover:text-white transition-colors"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-const ClientDetailsDrawer = ({ client, onClose }) => {
+const ClientDetailsModal = ({ client, onClose }) => {
   if (!client) return null;
   return (
     <>
@@ -281,28 +369,39 @@ const ClientDetailsDrawer = ({ client, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1001]"
+        className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[1001]"
         onClick={onClose}
       />
-      <motion.div
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: "spring", damping: 35, stiffness: 250 }}
-        className="fixed inset-y-0 right-0 w-full max-w-[698px] bg-white shadow-2xl border-l border-[#F4F3EF] flex flex-col z-[1002] overflow-hidden"
-      >
-        <div className="p-6 border-b border-[#F4F3EF] bg-gradient-to-r from-blue-50/30 to-white flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#0D47A1] text-white flex items-center justify-center font-bold text-lg">
-              {client.name?.slice(0, 1).toUpperCase()}
+      <div className="fixed inset-0 z-[1002] flex items-center justify-center p-4 pointer-events-none">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="w-full max-w-[750px] max-h-[90vh] bg-white rounded-[40px] shadow-2xl flex flex-col overflow-hidden pointer-events-auto border border-white/20"
+        >
+          {/* Modal Header */}
+          <div className="p-8 border-b border-[#F4F3EF] bg-gradient-to-br from-blue-50/50 to-white flex items-center justify-between relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
+            <div className="flex items-center gap-6 relative z-10">
+              <div className="w-16 h-16 rounded-3xl bg-[#1B4DA0] text-white flex items-center justify-center font-bold text-2xl shadow-xl shadow-blue-500/20">
+                {client.name?.slice(0, 1).toUpperCase()}
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-[#1A1A2E] leading-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  {client.name}
+                </h3>
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-[3px] mt-1">Client Profile Protocol</p>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
+            <button
+              onClick={onClose}
+              className="w-12 h-12 rounded-2xl bg-white border border-[#F4F3EF] flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm group relative z-10"
+            >
+              <FiX size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+            </button>
           </div>
-          <button onClick={onClose} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm">
-            <FiX size={20} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar pointer-events-auto">
           <div className="flex flex-col items-center text-center">
             <div className="w-24 h-24 rounded-[32px] bg-[#F8FAFC] text-[#475569] flex items-center justify-center text-3xl font-extrabold shadow-xl border border-[#F1F5F9] mb-6">
               {client.name?.slice(0, 2).toUpperCase()}
@@ -330,8 +429,9 @@ const ClientDetailsDrawer = ({ client, onClose }) => {
               <FiCalendar size={16} /> Schedule Call
             </button>
           </div>
-        </div>
-      </motion.div>
+          </div>
+        </motion.div>
+      </div>
     </>
   );
 };
@@ -739,14 +839,6 @@ const KAMMemberDashboard = () => {
           location: 'Remote',
           lastActive: 'Active'
         }));
-      } else {
-        // High-fidelity fallback data for demo
-        allClients = [
-          { id: '0f9713bc-64c2-480e-8ff1-6faf6bf09b01', name: 'Airtel HR', companyName: 'Airtel', industry: 'Telecommunications', jobCount: 4, location: 'Delhi', lastActive: 'Active' },
-          { id: '939af100-b8ab-4942-82e9-72f0446f4c6e', name: 'Flipkart HR', companyName: 'Flipkart', industry: 'Ecommerce', jobCount: 7, location: 'Bangalore', lastActive: 'Active' },
-          { id: '0507a188-733c-4007-8d46-6ab78caebf4c', name: 'Infosys HR', companyName: 'Infosys', industry: 'Technology', jobCount: 3, location: 'Mysore', lastActive: 'Active' },
-          { id: 'a2be8eb4-25e8-49da-a5f3-609f71507b00', name: 'Zomato HR', companyName: 'Zomato', industry: 'FoodTech', jobCount: 12, location: 'Gurugram', lastActive: 'Active' },
-        ];
       }
 
       // Filter by assignment from localStorage
@@ -782,11 +874,6 @@ const KAMMemberDashboard = () => {
               return true;
             }
           }
-        }
-
-        // 4. Ultimate Demo Fallback for Manju
-        if (currentUserName.includes('manju') && ['zomato', 'airtel', 'flipkart'].some(n => clientName.includes(n))) {
-          return true;
         }
 
         return false;
@@ -1256,10 +1343,10 @@ const KAMMemberDashboard = () => {
     >
       {renderContent()}
 
-      {/* Client Details Drawer */}
+      {/* Client Details Modal */}
       <AnimatePresence>
         {selectedClientForDrawer && (
-          <ClientDetailsDrawer
+          <ClientDetailsModal
             client={selectedClientForDrawer}
             onClose={() => setSelectedClientForDrawer(null)}
           />

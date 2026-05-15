@@ -38,113 +38,7 @@ import {
   getWorkHandovers
 } from '../../../service/api';
 
-const MOCK_MEMBERS = [
-  {
-    _id: 'mock-1',
-    name: 'Aravind Swamy',
-    email: 'aravind.s@mabicons.com',
-    phone: '+91 98765 43210',
-    employeeId: 'MAB-1012',
-    department: 'HR Recruitment',
-    joiningDate: '2023-01-15',
-    profilePhoto: null,
-    role: 'Lead Recruiter',
-    status: 'Active',
-    stats: {
-      activePositions: 12,
-      candidatesPipeline: 45,
-      interviewsScheduled: 8,
-      offersExtended: 3,
-      thisWeekHires: 2,
-      profilesShared: 24,
-      callsDone: 156
-    }
-  },
-  {
-    _id: 'mock-2',
-    name: 'Priya Sharma',
-    email: 'priya.sharma@mabicons.com',
-    phone: '+91 87654 32109',
-    employeeId: 'MAB-1045',
-    department: 'HR Operations',
-    joiningDate: '2023-05-20',
-    profilePhoto: null,
-    role: 'Operations Expert',
-    status: 'Active',
-    stats: {
-      activePositions: 0,
-      candidatesPipeline: 12,
-      interviewsScheduled: 15,
-      offersExtended: 5,
-      thisWeekHires: 4,
-      profilesShared: 8,
-      callsDone: 42
-    }
-  },
-  {
-    _id: 'mock-3',
-    name: 'Rahul Kapoor',
-    email: 'rahul.k@mabicons.com',
-    phone: '+91 76543 21098',
-    employeeId: 'MAB-1028',
-    department: 'HR Recruitment',
-    joiningDate: '2023-08-10',
-    profilePhoto: null,
-    role: 'Tech Recruiter',
-    status: 'On Leave',
-    stats: {
-      activePositions: 8,
-      candidatesPipeline: 32,
-      interviewsScheduled: 4,
-      offersExtended: 1,
-      thisWeekHires: 0,
-      profilesShared: 15,
-      callsDone: 89
-    }
-  },
-  {
-    _id: 'mock-4',
-    name: 'Sameer Khan',
-    email: 'sameer.k@mabicons.com',
-    phone: '+91 99887 76655',
-    employeeId: 'MAB-1102',
-    department: 'HR Operations',
-    joiningDate: '2023-11-01',
-    profilePhoto: null,
-    role: 'Compliance Lead',
-    status: 'Active',
-    stats: {
-      activePositions: 0,
-      candidatesPipeline: 8,
-      interviewsScheduled: 2,
-      offersExtended: 0,
-      thisWeekHires: 0,
-      profilesShared: 0,
-      callsDone: 12
-    }
-  },
-  {
-    _id: 'mock-5',
-    name: 'Neha Gupta',
-    email: 'neha.g@mabicons.com',
-    phone: '+91 99112 23344',
-    employeeId: 'MAB-1089',
-    department: 'HR Operations',
-    joiningDate: '2024-01-10',
-    profilePhoto: null,
-    role: 'Payroll Executive',
-    status: 'Active',
-    stats: {
-      activePositions: 0,
-      candidatesPipeline: 5,
-      interviewsScheduled: 0,
-      offersExtended: 0,
-      thisWeekHires: 0,
-      profilesShared: 0,
-      callsDone: 5
-    }
-  }
-];
+// MOCK_MEMBERS removed for live database integration
 
 const StatusBadge = ({ status }) => {
   const config = {
@@ -162,7 +56,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const TeamManagementTab = ({ department = 'HR Operations' }) => {
-  const [members, setMembers] = useState(MOCK_MEMBERS.filter(m => m.department === department));
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMemberForDetail, setSelectedMemberForDetail] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -237,12 +131,11 @@ const TeamManagementTab = ({ department = 'HR Operations' }) => {
         getWorkHandovers({ status: 'Active' })
       ]);
       const apiMembers = response.members || [];
-      const filteredMocks = MOCK_MEMBERS.filter(m => m.department === department);
-      setMembers([...filteredMocks, ...apiMembers]);
+      setMembers(apiMembers);
       if (hRes?.success) setActiveHandovers(hRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
-      setMembers(MOCK_MEMBERS.filter(m => m.department === department));
+      setMembers([]);
     } finally {
       setLoading(false);
     }

@@ -2692,14 +2692,6 @@ const RecruitmentHeadDashboard = () => {
       let clientList = [];
       if (res.success && res.data && res.data.length > 0) {
         clientList = res.data;
-      } else {
-        // High-fidelity fallback data for demo
-        clientList = [
-          { id: '0f9713bc-64c2-480e-8ff1-6faf6bf09b01', name: 'Airtel HR', companyName: 'Airtel', industry: 'Telecommunications', location: 'Delhi', contactPerson: 'Rahul Sharma' },
-          { id: '939af100-b8ab-4942-82e9-72f0446f4c6e', name: 'Flipkart HR', companyName: 'Flipkart', industry: 'Ecommerce', location: 'Bangalore', contactPerson: 'Sneha Gupta' },
-          { id: '0507a188-733c-4007-8d46-6ab78caebf4c', name: 'Infosys HR', companyName: 'Infosys', industry: 'Technology', location: 'Mysore', contactPerson: 'Amit Verma' },
-          { id: 'a2be8eb4-25e8-49da-a5f3-609f71507b00', name: 'Zomato HR', companyName: 'Zomato', industry: 'FoodTech', location: 'Gurugram', contactPerson: 'Anjali Singh' },
-        ];
       }
       setClients(clientList);
       fetchClientJobDistribution(clientList);
@@ -3420,7 +3412,7 @@ const RecruitmentHeadDashboard = () => {
             case 'Activity Feed':
               return <ActivityFeedTab department="HR Recruitment" />;
             case 'Team MIS Reports':
-              return <TeamMISReportsTab />;
+              return <TeamMISReportsTab department="HR Recruitment" />;
             case 'Notes':
             case 'notes':
               return <NotesTab isDarkMode={false} department="HR Recruitment" />;
@@ -3614,7 +3606,7 @@ const RecruitmentHeadDashboard = () => {
                       title="Active Positions"
                       value={stats.activePositions || 0}
                       icon={FiBriefcase}
-                      trend="+2 this week"
+                      trend={`${stats.activePositions > 0 ? 'Active Jobs' : 'No Active Jobs'}`}
                       color="white"
                       onClick={() => setActiveTab('Job Openings')}
                     />
@@ -3623,7 +3615,7 @@ const RecruitmentHeadDashboard = () => {
                       title="Interviews Scheduled"
                       value={stats.interviewsScheduled || 0}
                       icon={FiCalendar}
-                      trend="4 today"
+                      trend={`${stats.interviewsScheduled > 0 ? 'Upcoming' : 'No Schedule'}`}
                       color="white"
                       onClick={() => setActiveTab('Interview Schedule')}
                     />
@@ -3631,7 +3623,7 @@ const RecruitmentHeadDashboard = () => {
                       title="Monthly Hires"
                       value={stats.thisMonthHires || 0}
                       icon={FiAward}
-                      trend="On track"
+                      trend="Monthly"
                       color="white"
                       onClick={() => setActiveTab('KAM Performance')}
                     />
