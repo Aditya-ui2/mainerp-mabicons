@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import Tree from 'react-d3-tree';
 import Modal from '../../../Utilities/Modal';
 import { createTeamLeader, createEmployee, getAdminHierarchy, deleteEmployee, deleteTeamLeader, deleteTeamLeaderWithReassignment, deleteTeamLeaderAndPromoteEmployee } from '../../service/api';
@@ -56,6 +56,15 @@ const TeamTabs = ({ isDarkMode }) => {
   const [isEditingInDetail, setIsEditingInDetail] = useState(false);
   const [isSavingDetail, setIsSavingDetail] = useState(false);
   const [editableMember, setEditableMember] = useState(null);
+  const [isViewDocsModalOpen, setIsViewDocsModalOpen] = useState(false);
+  const [isResetPassModalOpen, setIsResetPassModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdatingPass, setIsUpdatingPass] = useState(false);
+  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+  const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false);
+  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [attendanceMonth, setAttendanceMonth] = useState(new Date().getMonth());
+  const [attendanceYear, setAttendanceYear] = useState(new Date().getFullYear());
 
   const handleFileChange = (e, docId) => {
     const file = e.target.files[0];
@@ -188,29 +197,44 @@ const TeamTabs = ({ isDarkMode }) => {
             {
               name: 'Ashwin',
               id: 'mock_crm',
+              employeeId: 'MAB-001',
               email: 'ashwin@mabicons.com',
               role: 'CRM Head',
+              designation: 'Senior Vice President',
               department: 'CRM',
+              status: 'Active',
+              joiningDate: '2022-05-15',
+              phone: '+91 9876543210',
               children: []
             },
             {
               name: 'Ramesh',
               id: 'mock_hrops',
+              employeeId: 'MAB-002',
               email: 'ramesh@mabicons.com',
               role: 'HR Operations Head',
+              designation: 'Operations Director',
               department: 'Operations',
+              status: 'Active',
+              joiningDate: '2022-06-20',
+              phone: '+91 8765432109',
               children: []
             },
             {
               name: 'Sachin',
               id: 'mock_hrrec',
+              employeeId: 'MAB-003',
               email: 'sachin@mabicons.com',
               role: 'HR Recruitment Head',
+              designation: 'Recruitment Lead',
               department: 'Recruitment',
+              status: 'Active',
+              joiningDate: '2022-08-10',
+              phone: '+91 7654321098',
               children: [
-                { name: 'Priyanshi', id: 'mock_kam1', email: 'priyanshi@mabicons.com', role: 'KAM', department: 'Recruitment' },
-                { name: 'Manju', id: 'mock_kam2', email: 'manju@mabicons.com', role: 'KAM', department: 'Recruitment' },
-                { name: 'Jyoti', id: 'mock_kam3', email: 'jyoti@mabicons.com', role: 'KAM', department: 'Recruitment' }
+                { name: 'Priyanshi', id: 'mock_kam1', employeeId: 'MAB-004', email: 'priyanshi@mabicons.com', role: 'KAM', designation: 'KAM Associate', department: 'Recruitment', status: 'Active', joiningDate: '2023-01-15', phone: '+91 6543210987' },
+                { name: 'Manju', id: 'mock_kam2', employeeId: 'MAB-005', email: 'manju@mabicons.com', role: 'KAM', designation: 'KAM Associate', department: 'Recruitment', status: 'Active', joiningDate: '2023-02-20', phone: '+91 5432109876' },
+                { name: 'Jyoti', id: 'mock_kam3', employeeId: 'MAB-006', email: 'jyoti@mabicons.com', role: 'KAM', designation: 'KAM Associate', department: 'Recruitment', status: 'Active', joiningDate: '2023-03-25', phone: '+91 4321098765' }
               ]
             }
           ]
@@ -542,13 +566,16 @@ const TeamTabs = ({ isDarkMode }) => {
     if (node && node.id && node.name !== 'Ashish') {
       result.push({
         _id: node.id,
+        employeeId: node.employeeId || `MAB-${String(Math.floor(100 + Math.random() * 900))}`,
         name: node.name,
         email: node.email,
         role: node.role || (node.children && node.children.length > 0 ? 'Team Leader' : 'Employee'),
+        designation: node.designation || (node.children && node.children.length > 0 ? 'Lead Executive' : 'Associate'),
         department: node.department || 'N/A',
         status: node.status || 'Active',
         phone: node.phone || '+91 0000000000',
         joiningDate: node.joiningDate || '2023-01-01',
+        documents: node.documents || {}
       });
     }
     if (node && node.children) {
@@ -867,6 +894,16 @@ const TeamTabs = ({ isDarkMode }) => {
                           <FiEdit2 size={18} />
                         </button>
                         <button
+                          onClick={() => {
+                            setMemberToDelete(selectedMember);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+                          title="Delete Member"
+                        >
+                          <FiTrash size={18} />
+                        </button>
+                        <button
                           onClick={() => setSelectedMember(null)}
                           className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
                         >
@@ -891,6 +928,10 @@ const TeamTabs = ({ isDarkMode }) => {
                             <FiCamera className="text-white w-6 h-6 mb-1" />
                             <span className="text-[8px] font-black text-white uppercase tracking-widest">Change</span>
                           </div>
+                        )}
+                        {/* Status Dot */}
+                        {!isEditingInDetail && (
+                          <div className="absolute top-0 right-0 w-5 h-5 bg-[#00D26A] border-[3px] border-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15),0_0_15px_rgba(0,210,106,0.4)] z-10 translate-x-1 -translate-y-1" />
                         )}
                       </div>
                     </div>
@@ -918,18 +959,96 @@ const TeamTabs = ({ isDarkMode }) => {
                         <p className="text-[11px] font-bold text-[#0D47A1] uppercase tracking-[2px]">{selectedMember.role}</p>
                       )}
 
-                      {!isEditingInDetail && (
-                        <div className="flex items-center justify-center gap-2 mt-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{selectedMember.status || 'Active'}</span>
-                        </div>
-                      )}
+
                     </div>
                   </div>
 
                   {/* Member Information Form */}
                   <div className="space-y-6 bg-[#FAFAF8] p-8 rounded-[32px] border border-[#F4F3EF]">
                     <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Employee ID</label>
+                        {isEditingInDetail ? (
+                          <input
+                            type="text"
+                            className="w-full text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-2.5 rounded-xl border border-[#F4F3EF] focus:outline-none"
+                            value={editableMember?.employeeId || ''}
+                            onChange={(e) => setEditableMember({ ...editableMember, employeeId: e.target.value })}
+                          />
+                        ) : (
+                          <div className="text-sm font-bold text-[#1B4DA0] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.employeeId || 'N/A'}</div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Status</label>
+                        {isEditingInDetail ? (
+                          <select
+                            className="w-full text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-2.5 rounded-xl border border-[#F4F3EF] focus:outline-none"
+                            value={editableMember?.status || 'Active'}
+                            onChange={(e) => setEditableMember({ ...editableMember, status: e.target.value })}
+                          >
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                          </select>
+                        ) : (
+                          <div className="flex items-center bg-white px-4 py-3 rounded-xl border border-[#F4F3EF] gap-2">
+                            <span className={`w-2 h-2 rounded-full ${selectedMember.status === 'Inactive' ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
+                            <span className="text-sm font-semibold text-[#1A1A2E]">{selectedMember.status || 'Active'}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Department</label>
+                        {isEditingInDetail ? (
+                          <input
+                            type="text"
+                            className="w-full text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-2.5 rounded-xl border border-[#F4F3EF] focus:outline-none"
+                            value={editableMember?.department || ''}
+                            onChange={(e) => setEditableMember({ ...editableMember, department: e.target.value })}
+                          />
+                        ) : (
+                          <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.department || 'N/A'}</div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Role</label>
+                        {isEditingInDetail ? (
+                          <input
+                            type="text"
+                            className="w-full text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-2.5 rounded-xl border border-[#F4F3EF] focus:outline-none"
+                            value={editableMember?.role || ''}
+                            onChange={(e) => setEditableMember({ ...editableMember, role: e.target.value })}
+                          />
+                        ) : (
+                          <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.role || 'N/A'}</div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Designation</label>
+                        {isEditingInDetail ? (
+                          <input
+                            type="text"
+                            className="w-full text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-2.5 rounded-xl border border-[#F4F3EF] focus:outline-none"
+                            value={editableMember?.designation || ''}
+                            onChange={(e) => setEditableMember({ ...editableMember, designation: e.target.value })}
+                          />
+                        ) : (
+                          <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.designation || 'N/A'}</div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Joining Date</label>
+                        {isEditingInDetail ? (
+                          <input
+                            type="date"
+                            className="w-full text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-2 rounded-xl border border-[#F4F3EF] focus:outline-none"
+                            value={editableMember?.joiningDate || ''}
+                            onChange={(e) => setEditableMember({ ...editableMember, joiningDate: e.target.value })}
+                          />
+                        ) : (
+                          <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.joiningDate || 'N/A'}</div>
+                        )}
+                      </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Email Address</label>
                         {isEditingInDetail ? (
@@ -971,37 +1090,66 @@ const TeamTabs = ({ isDarkMode }) => {
                           </div>
                         )}
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Department</label>
-                        {isEditingInDetail ? (
-                          <input
-                            type="text"
-                            className="w-full text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-2.5 rounded-xl border border-[#F4F3EF] focus:outline-none"
-                            value={editableMember?.department || ''}
-                            onChange={(e) => setEditableMember({ ...editableMember, department: e.target.value })}
-                          />
-                        ) : (
-                          <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.department || 'N/A'}</div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Joining Date</label>
-                        {isEditingInDetail ? (
-                          <input
-                            type="date"
-                            className="w-full text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-2 rounded-xl border border-[#F4F3EF] focus:outline-none"
-                            value={editableMember?.joiningDate || ''}
-                            onChange={(e) => setEditableMember({ ...editableMember, joiningDate: e.target.value })}
-                          />
-                        ) : (
-                          <div className="text-sm font-semibold text-[#1A1A2E] bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">{selectedMember.joiningDate || 'N/A'}</div>
-                        )}
-                      </div>
                     </div>
                   </div>
 
-                  {/* Team Info */}
+                  {/* Documents Section */}
+                  <div className="space-y-4 pt-6 border-t border-[#F4F3EF]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FiFileText className="text-[#1B4DA0]" size={20} />
+                        <h4 className="text-[15px] font-bold text-[#1A1A2E] uppercase tracking-tight">Documents Cabinet</h4>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600">
+                        {Object.keys(selectedMember.documents || {}).length} Files Attached
+                      </span>
+                    </div>
 
+                    <button
+                      onClick={() => setIsViewDocsModalOpen(true)}
+                      className="w-full py-4 bg-white border-2 border-[#1B4DA0]/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1B4DA0] hover:bg-[#1B4DA0] hover:text-white hover:border-[#1B4DA0] transition-all flex items-center justify-center gap-3 shadow-sm group"
+                    >
+                      <FiEye className="group-hover:scale-110 transition-transform" /> View & Manage Documents
+                    </button>
+                  </div>
+
+                  {/* Quick View Buttons */}
+                  <div className="grid grid-cols-2 gap-4 pt-6 border-t border-[#F4F3EF]">
+                    <button
+                      onClick={() => setIsPerformanceModalOpen(true)}
+                      className="py-4 bg-[#F8FAFF] border border-blue-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      <FiTarget size={14} /> Performance
+                    </button>
+                    <button
+                      onClick={() => setIsSalaryModalOpen(true)}
+                      className="py-4 bg-[#F8FAFF] border border-blue-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      <FiZap size={14} /> Salary Structure
+                    </button>
+                    <button
+                      onClick={() => setIsAttendanceModalOpen(true)}
+                      className="col-span-2 py-4 bg-[#F8FAFF] border border-blue-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      <FiUsers size={14} /> View Attendance Calendar
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 pt-6 border-t border-[#F4F3EF]">
+                    <div className="flex items-center gap-3 mb-2">
+                      <FiZap className="text-[#1B4DA0]" size={20} />
+                      <h4 className="text-[15px] font-bold text-[#1A1A2E] uppercase tracking-tight">Administrative Actions</h4>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setNewPassword('');
+                        setIsResetPassModalOpen(true);
+                      }}
+                      className="w-full py-4 bg-[#F8FAFF] border border-[#1B4DA0]/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center gap-3"
+                    >
+                      <FiRefreshCw size={16} />Password Reset
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </React.Fragment>
@@ -1422,8 +1570,8 @@ const TeamTabs = ({ isDarkMode }) => {
                     type="button"
                     onClick={() => {
                       if (modalStep === 1) {
-                        if (!newMember.name || !newMember.email) {
-                          toast.error('Please fill required information');
+                        if (!newMember.name || !newMember.email || !newMember.department || !newMember.role) {
+                          toast.error('Please fill all mandatory fields (Name, Email, Dept, Role)');
                           return;
                         }
                         // Email validation
@@ -1437,7 +1585,8 @@ const TeamTabs = ({ isDarkMode }) => {
                           toast.error('Phone number must be exactly 10 digits');
                           return;
                         }
-                        if (newMember.role === 'employee' && !newMember.leader) {
+                        // Reporting Head is mandatory for everyone except Department Heads
+                        if (newMember.role !== 'leader' && !newMember.leader) {
                           toast.error('Please select a Reporting Head');
                           return;
                         }
@@ -1473,59 +1622,590 @@ const TeamTabs = ({ isDarkMode }) => {
         </div>,
         document.body
       )}
-      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-          <h3 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Confirm Deletion</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Are you sure you want to delete {memberToDelete?.name}?
-          </p>
 
-          {memberToDelete?.children && memberToDelete.children.length > 0 && (
-            <div className="mb-6">
-              <p className="text-red-500 mb-2">
-                Warning: This team leader has {memberToDelete.children.length} team members.
-              </p>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Reassign team members to another leader (optional):
-                </label>
-                <select
-                  value={promotedEmployee}
-                  onChange={(e) => setPromotedEmployee(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
-                >
-                  <option value="">Select a team leader</option>
-                  {orgChart.children
-                    .filter(leader => leader.id !== memberToDelete.id) // Exclude current TL
-                    .map((leader) => (
-                      <option key={leader.id} value={leader.id}>
-                        {leader.name}
-                      </option>
+      {/* View/Upload Documents Modal */}
+      {isViewDocsModalOpen && createPortal(
+        <div className="fixed inset-0 z-[1000000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsViewDocsModalOpen(false)}
+            className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            className="relative w-full max-w-[900px] bg-white rounded-[40px] shadow-2xl border border-[#F4F3EF] flex flex-col overflow-hidden max-h-[85vh]"
+          >
+            {/* Modal Header */}
+            <div className="px-10 py-6 border-b border-[#F4F3EF] flex items-center justify-between bg-white sticky top-0 z-10">
+              <div className="flex flex-col text-left">
+                <h2 className="text-[18px] font-bold text-[#1A1A2E] tracking-tight font-syne">
+                  Employee Documents
+                </h2>
+                <p className="text-[11px] font-medium text-[#9B9BAD]">Member: <span className="text-[#1B4DA0] font-bold">{selectedMember?.name}</span></p>
+              </div>
+              <button
+                onClick={() => setIsViewDocsModalOpen(false)}
+                className="w-10 h-10 rounded-full bg-[#F4F3EF] text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white">
+              <div className="space-y-12">
+                {/* Mandatory Documents */}
+                <div className="space-y-6 text-left">
+                  <div className="flex items-center justify-between border-b border-[#F4F3EF] pb-4">
+                    <h3 className="text-[14px] font-black text-[#1A1A2E] uppercase tracking-wider flex items-center gap-2">
+                      <FiCheckCircle className="text-emerald-500" /> Mandatory Documents
+                    </h3>
+                    <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest italic">Verification Required</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[
+                      { label: 'PAN Card (Front)', id: 'pan_front' },
+                      { label: 'PAN Card (Back)', id: 'pan_back' },
+                      { label: 'Aadhaar Card (Front)', id: 'aadhaar_front' },
+                      { label: 'Aadhaar Card (Back)', id: 'aadhaar_back' },
+                      { label: '10th Marksheet', id: '10th_marksheet' },
+                      { label: '12th Marksheet', id: '12th_marksheet' }
+                    ].map((doc) => (
+                      <div key={doc.id} className="p-4 bg-[#F8FAFF] rounded-2xl border border-[#E2E8F0] flex items-center justify-between group hover:border-[#1B4DA0]/30 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${selectedMember?.documents?.[doc.id] ? 'bg-emerald-100 text-emerald-600' : 'bg-white text-[#C5C5D2] shadow-sm'}`}>
+                            <FiFileText size={24} />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[12px] font-bold text-[#1A1A2E]">{doc.label}</p>
+                            <p className="text-[10px] font-medium text-[#9B9BAD]">
+                              {selectedMember?.documents?.[doc.id] ? 'File Uploaded' : 'No file chosen'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {selectedMember?.documents?.[doc.id] && (
+                            <button className="w-9 h-9 rounded-lg bg-white text-[#1B4DA0] hover:bg-blue-50 transition-all flex items-center justify-center shadow-sm border border-blue-100">
+                              <FiEye size={16} />
+                            </button>
+                          )}
+                          <label className="w-9 h-9 rounded-lg bg-[#1B4DA0] text-white hover:bg-[#0D47A1] transition-all flex items-center justify-center shadow-md cursor-pointer">
+                            <FiUpload size={16} />
+                            <input type="file" className="hidden" onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) toast.success(`${doc.label} Uploaded Successfully`);
+                            }} />
+                          </label>
+                        </div>
+                      </div>
                     ))}
-                </select>
+                  </div>
+                </div>
+
+                {/* Optional Documents */}
+                <div className="space-y-6 text-left pt-6 border-t border-[#F4F3EF]">
+                  <div className="flex items-center justify-between border-b border-[#F4F3EF] pb-4">
+                    <h3 className="text-[14px] font-black text-[#1A1A2E] uppercase tracking-wider flex items-center gap-2">
+                      <FiZap className="text-amber-500" /> Optional Documents
+                    </h3>
+                    <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-widest italic">Optional for records</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[
+                      { label: 'Graduation Marksheets', id: 'grad_marksheet' },
+                      { label: 'Degree Certificate', id: 'degree_cert' },
+                      { label: 'Pay Slips (3M)', id: 'pay_slips' },
+                      { label: 'Experience Letter', id: 'exp_letter' }
+                    ].map((doc) => (
+                      <div key={doc.id} className="p-4 bg-[#FAFAFA] rounded-2xl border border-[#E2E8F0] flex items-center justify-between group hover:border-[#9B9BAD]/30 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${selectedMember?.documents?.[doc.id] ? 'bg-emerald-100 text-emerald-600' : 'bg-white text-[#C5C5D2] shadow-sm'}`}>
+                            <FiFileText size={24} />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[12px] font-bold text-[#1A1A2E]">{doc.label}</p>
+                            <p className="text-[10px] font-medium text-[#9B9BAD]">
+                              {selectedMember?.documents?.[doc.id] ? 'File Uploaded' : 'No file chosen'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="w-9 h-9 rounded-lg bg-[#F4F3EF] text-[#6B6B7E] hover:bg-[#E2E8F0] transition-all flex items-center justify-center shadow-sm cursor-pointer border border-[#E2E8F0]">
+                            <FiUpload size={16} />
+                            <input type="file" className="hidden" />
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          )}
 
-          <div className="flex justify-end space-x-2">
-            <button
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setPromotedEmployee('');
-              }}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded-md"
+            {/* Modal Footer */}
+            <div className="px-10 py-6 bg-[#FAFBFF] border-t border-[#F4F3EF] flex items-center justify-end gap-4">
+              <button
+                onClick={() => setIsViewDocsModalOpen(false)}
+                className="px-8 py-3 bg-white text-[#6B6B7E] font-black uppercase tracking-widest text-[11px] border border-[#F4F3EF] rounded-2xl hover:bg-gray-50 transition-all"
+              >
+                Close Cabinet
+              </button>
+              <button
+                onClick={() => {
+                  toast.success('Document changes saved locally');
+                  setIsViewDocsModalOpen(false);
+                }}
+                className="px-10 py-3 bg-[#1B4DA0] text-white font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-[#0D47A1] shadow-lg shadow-blue-500/10 transition-all"
+              >
+                Save Changes
+              </button>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
+      {/* Manual Password Reset Modal */}
+      {isResetPassModalOpen && createPortal(
+        <div className="fixed inset-0 z-[2000000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsResetPassModalOpen(false)}
+            className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="relative bg-white rounded-[32px] shadow-2xl p-10 w-full max-w-md border border-[#F4F3EF] text-left"
+          >
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-blue-50 text-[#1B4DA0] rounded-2xl flex items-center justify-center">
+                  <FiZap size={28} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-[#1A1A2E] tracking-tight font-syne">Manual Reset</h3>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-[#6B6B7E] uppercase tracking-widest ml-1">New Password</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Enter new secure password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full bg-[#F8F9FA] border border-[#E5E7EB] rounded-2xl py-4 px-6 text-sm font-bold text-[#1A1A2E] outline-none focus:border-[#1B4DA0] transition-all"
+                  />
+                  <button
+                    onClick={() => setNewPassword(Math.random().toString(36).slice(-8).toUpperCase())}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#1B4DA0] uppercase tracking-widest hover:underline"
+                  >
+                    Auto-Gen
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={() => setIsResetPassModalOpen(false)}
+                  className="flex-1 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#6B6B7E] bg-white border border-[#F4F3EF] hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (!newPassword) {
+                      toast.error('Please enter a password');
+                      return;
+                    }
+                    setIsUpdatingPass(true);
+                    setTimeout(() => {
+                      setIsUpdatingPass(false);
+                      setIsResetPassModalOpen(false);
+                      toast.success('Password updated successfully!');
+                    }, 1000);
+                  }}
+                  disabled={isUpdatingPass}
+                  className="flex-1 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#0D47A1] shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50"
+                >
+                  {isUpdatingPass ? 'Updating...' : 'Update Now'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
+      {/* Existing Delete Modal Update with Blur */}
+      <AnimatePresence>
+        {isDeleteModalOpen && createPortal(
+          <div className="fixed inset-0 z-[2000000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white rounded-[32px] shadow-2xl p-10 w-full max-w-md border border-[#F4F3EF] text-center"
             >
-              Cancel
-            </button>
-            <button
-              onClick={handleDeleteMember}
-              className="px-4 py-2 bg-red-600 text-white rounded-md"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </Modal>
+              <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FiTrash size={40} />
+              </div>
+              <h3 className="text-2xl font-black text-[#1A1A2E] tracking-tight font-syne mb-2">Delete Member?</h3>
+              <p className="text-sm font-medium text-[#6B6B7E] mb-8">
+                Are you sure you want to remove <span className="font-bold text-[#1A1A2E]">{memberToDelete?.name}</span>? This action cannot be undone.
+              </p>
+
+              {memberToDelete?.children && memberToDelete.children.length > 0 && (
+                <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-left">
+                  <p className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <FiZap size={14} /> Team Warning
+                  </p>
+                  <p className="text-[12px] font-bold text-amber-900 leading-relaxed">
+                    This member is a leader for {memberToDelete.children.length} employees. Please reassign them before deletion.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="flex-1 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#6B6B7E] bg-white border border-[#F4F3EF] hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteMember}
+                  className="flex-1 py-4 bg-red-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all"
+                >
+                  Confirm Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>,
+          document.body
+        )}
+        )}
+      </AnimatePresence>
+
+      {/* Performance Modal */}
+      {isPerformanceModalOpen && createPortal(
+        <div className="fixed inset-0 z-[2000000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsPerformanceModalOpen(false)}
+            className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="relative bg-white rounded-[40px] shadow-2xl p-10 w-full max-w-2xl border border-[#F4F3EF] text-left"
+          >
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                    <FiTarget size={28} />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-[#1A1A2E] tracking-tight font-syne">Member Performance</h3>
+                    <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Analytics for {selectedMember?.name}</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsPerformanceModalOpen(false)} className="w-10 h-10 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all">
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                {[
+                  { label: 'Attendance', value: '98%', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                  { label: 'Tasks Done', value: '142', color: 'text-blue-600', bg: 'bg-blue-50' },
+                  { label: 'Efficiency', value: '94%', color: 'text-purple-600', bg: 'bg-purple-50' }
+                ].map((stat, i) => (
+                  <div key={i} className={`${stat.bg} p-6 rounded-3xl border border-white shadow-sm`}>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#6B6B7E] mb-2">{stat.label}</p>
+                    <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[13px] font-black text-[#1A1A2E] uppercase tracking-wider">Skill Assessment</h4>
+                  <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full italic">Top Performer</span>
+                </div>
+                <div className="space-y-4">
+                  {[
+                    { skill: 'Communication', level: 90 },
+                    { skill: 'Project Management', level: 85 },
+                    { skill: 'Technical Skills', level: 95 }
+                  ].map((s, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex justify-between items-center px-1">
+                        <span className="text-[11px] font-bold text-[#6B6B7E]">{s.skill}</span>
+                        <span className="text-[11px] font-black text-[#1B4DA0]">{s.level}%</span>
+                      </div>
+                      <div className="h-2 bg-[#F4F3EF] rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${s.level}%` }}
+                          transition={{ duration: 1, delay: i * 0.1 }}
+                          className="h-full bg-[#1B4DA0] rounded-full"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsPerformanceModalOpen(false)}
+                className="w-full py-4 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#0D47A1] transition-all shadow-lg shadow-blue-500/10"
+              >
+                Close Performance View
+              </button>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
+      {/* Salary Modal */}
+      {isSalaryModalOpen && createPortal(
+        <div className="fixed inset-0 z-[2000000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSalaryModalOpen(false)}
+            className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="relative bg-white rounded-[40px] shadow-2xl p-10 w-full max-w-2xl border border-[#F4F3EF] text-left"
+          >
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+                    <FiZap size={28} />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-[#1A1A2E] tracking-tight font-syne">Salary Structure</h3>
+                    <p className="text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest">Financial details for {selectedMember?.name}</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsSalaryModalOpen(false)} className="w-10 h-10 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all">
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              <div className="bg-[#FAFAF8] rounded-[32px] p-8 space-y-6 border border-[#F4F3EF]">
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-black text-[#9B9BAD] uppercase tracking-widest border-b border-gray-200 pb-2">Earnings (Monthly)</h4>
+                  {[
+                    { label: 'Basic Salary', amount: '₹ 45,000' },
+                    { label: 'House Rent Allowance (HRA)', amount: '₹ 18,000' },
+                    { label: 'Special Allowance', amount: '₹ 12,000' },
+                    { label: 'Performance Bonus', amount: '₹ 5,000' }
+                  ].map((item, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="text-[13px] font-bold text-[#6B6B7E]">{item.label}</span>
+                      <span className="text-[13px] font-black text-[#1A1A2E]">{item.amount}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-black text-red-400 uppercase tracking-widest border-b border-red-50 pb-2">Deductions</h4>
+                  {[
+                    { label: 'Provident Fund (PF)', amount: '₹ 1,800' },
+                    { label: 'Professional Tax', amount: '₹ 200' },
+                    { label: 'Income Tax (TDS)', amount: '₹ 4,500' }
+                  ].map((item, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="text-[13px] font-bold text-[#6B6B7E]">{item.label}</span>
+                      <span className="text-[13px] font-black text-red-500">-{item.amount}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-6 mt-6 border-t-2 border-dashed border-gray-200 flex justify-between items-center">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-widest">Net Take Home</p>
+                    <p className="text-[9px] font-bold text-[#9B9BAD] italic">Paid on 1st of every month</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-black text-[#1A1A2E]">₹ 73,500</p>
+                    <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg inline-block">CTC: ₹ 12.5 LPA</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  className="flex-1 py-4 bg-white border border-[#F4F3EF] text-[#6B6B7E] rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                >
+                  <FiFileText size={16} /> Download Payslip
+                </button>
+                <button
+                  onClick={() => setIsSalaryModalOpen(false)}
+                  className="flex-1 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#0D47A1] transition-all shadow-lg shadow-blue-500/10"
+                >
+                  Close Salary View
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
+
+      {/* Attendance Calendar Modal */}
+      {isAttendanceModalOpen && createPortal(
+        <div className="fixed inset-0 z-[2000000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsAttendanceModalOpen(false)}
+            className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="relative bg-white rounded-[40px] shadow-2xl p-10 w-full max-w-[500px] border border-[#F4F3EF] flex flex-col"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4 text-left">
+                <div className="w-12 h-12 bg-blue-50 text-[#1B4DA0] rounded-2xl flex items-center justify-center">
+                  <FiUsers size={24} />
+                </div>
+                <div>
+                  <h3 className="text-[18px] font-black text-[#1A1A2E] tracking-tight font-syne uppercase">Attendance</h3>
+                  <p className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-widest">Tracking for {selectedMember?.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setIsAttendanceModalOpen(false)} className="w-10 h-10 rounded-full bg-[#F4F3EF] flex items-center justify-center text-[#9B9BAD] hover:bg-red-50 hover:text-red-500 transition-all">
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {/* Filters */}
+            <div className="flex gap-3 mb-8">
+              <div className="flex-1 relative">
+                <select
+                  value={attendanceMonth}
+                  onChange={(e) => setAttendanceMonth(parseInt(e.target.value))}
+                  className="w-full bg-[#FAFAFA] border border-[#E5E7EB] rounded-2xl py-3 px-4 text-xs font-bold text-[#1A1A2E] appearance-none cursor-pointer outline-none focus:border-[#1B4DA0]"
+                >
+                  {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
+                    <option key={m} value={i}>{m}</option>
+                  ))}
+                </select>
+                <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+              </div>
+              <div className="w-32 relative">
+                <select
+                  value={attendanceYear}
+                  onChange={(e) => setAttendanceYear(parseInt(e.target.value))}
+                  className="w-full bg-[#FAFAFA] border border-[#E5E7EB] rounded-2xl py-3 px-4 text-xs font-bold text-[#1A1A2E] appearance-none cursor-pointer outline-none focus:border-[#1B4DA0]"
+                >
+                  {[2024, 2025, 2026].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-7 gap-2">
+                {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
+                  <div key={d} className="text-[9px] font-black text-[#9B9BAD] text-center uppercase py-2 tracking-widest">{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-2">
+                {(() => {
+                  const daysInMonth = new Date(attendanceYear, attendanceMonth + 1, 0).getDate();
+                  const firstDayOfMonth = new Date(attendanceYear, attendanceMonth, 1).getDay();
+                  const days = [];
+
+                  // Empty slots for previous month
+                  for (let i = 0; i < firstDayOfMonth; i++) {
+                    days.push(<div key={`empty-${i}`} className="aspect-square" />);
+                  }
+
+                  // Actual days
+                  for (let d = 1; d <= daysInMonth; d++) {
+                    const date = new Date(attendanceYear, attendanceMonth, d);
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                    // Mock logic for attendance
+                    const isPresent = !isWeekend && d < 22;
+                    const isAbsent = !isWeekend && d >= 22 && d < 26;
+
+                    days.push(
+                      <div
+                        key={d}
+                        className={`relative aspect-square rounded-2xl flex flex-col items-center justify-center transition-all border ${isWeekend ? 'bg-[#FAFAFA] text-[#D1D1D1] border-transparent' :
+                            isPresent ? 'bg-[#E8F5E9] text-[#2E7D32] border-[#C8E6C9]' :
+                              isAbsent ? 'bg-[#FFEBEE] text-[#C62828] border-[#FFCDD2]' :
+                                'bg-white text-[#9B9BAD] border-[#F4F3EF]'
+                          }`}
+                      >
+                        <span className="text-[12px] font-black">{d}</span>
+                        {isPresent && (
+                          <span className="text-[7px] font-bold opacity-80 mt-0.5">
+                            {8 + (d % 2)}h {(d * 7) % 60}m
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }
+                  return days;
+                })()}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="mt-8 pt-8 border-t border-[#F4F3EF] flex justify-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#4CAF50] shadow-[0_0_8px_rgba(76,175,80,0.3)]" />
+                <span className="text-[10px] font-bold text-[#6B6B7E] uppercase">Present</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#F44336] shadow-[0_0_8px_rgba(244,67,54,0.3)]" />
+                <span className="text-[10px] font-bold text-[#6B6B7E] uppercase">Absent</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#EEEEEE]" />
+                <span className="text-[10px] font-bold text-[#6B6B7E] uppercase">Weekend</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
       <style>{`
         .custom-link {
           stroke: #95a5a6;
