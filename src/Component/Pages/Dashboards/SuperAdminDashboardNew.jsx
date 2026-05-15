@@ -58,119 +58,66 @@ const sidebarConfig = [
         id: 'Dashboard',
         title: 'Dashboard',
         icon: FiHome,
-        submenu: [
-          { id: 'Total Revenue', title: 'Total Revenue' },
-          { id: 'Total Clients', title: 'Total Clients' },
-          { id: 'Active Employees', title: 'Active Employees' },
-          { id: 'Open Positions', title: 'Open Positions' },
-          { id: 'Closures', title: 'Closures' },
-          { id: 'Attendance Snapshot', title: 'Attendance Snapshot' },
-          { id: 'Pending Invoices', title: 'Pending Invoices' },
-          { id: 'Alerts', title: 'Alerts' },
-        ]
       },
-      { id: 'Company Overview', title: 'Company Overview', icon: FiPieChart },
       {
-        id: 'Employees',
-        title: 'Employees',
+        id: 'All Employees',
+        title: 'All Employees',
         icon: FiUsers,
-        submenu: [
-          { id: 'All Employees', title: 'All Employees' },
-          { id: 'Departments', title: 'Departments' },
-          { id: 'Designations', title: 'Designations' },
-          { id: 'Attendance', title: 'Attendance' },
-          { id: 'Leave Management', title: 'Leave Management' },
-          { id: 'Performance', title: 'Performance' },
-          { id: 'Assets', title: 'Assets' },
-          { id: 'Exit Management', title: 'Exit Management' },
-        ]
       },
       {
-        id: 'Recruitment',
-        title: 'Recruitment',
+        id: 'All Clients',
+        title: 'All Clients',
+        icon: FiUserPlus,
+      },
+      {
+        id: 'Billing & Accounts',
+        title: 'Billing & Accounts',
+        icon: FiCreditCard,
+      },
+      {
+        id: 'Announcements',
+        title: 'Announcements',
+        icon: FiBell,
+      },
+      {
+        id: 'Recruitment Management',
+        title: 'Recruitment Management',
         icon: FiBriefcase,
         submenu: [
-          { id: 'All Requirements', title: 'All Requirements' },
-          { id: 'Recruiters', title: 'Recruiters' },
-          { id: 'Candidate Database', title: 'Candidate Database' },
+          { id: 'Total Open Positions', title: 'Total Open Positions' },
+          { id: 'Shortlisted Candidates', title: 'Shortlisted Candidates' },
           { id: 'Interviews', title: 'Interviews' },
-          { id: 'Offer Rollout', title: 'Offer Rollout' },
-          { id: 'Joining Tracker', title: 'Joining Tracker' },
-          { id: 'Recruiter KPIs', title: 'Recruiter KPIs' },
+          { id: 'Joined Candidates', title: 'Joined Candidates' },
         ]
       },
       {
-        id: 'Operations',
-        title: 'Operations',
+        id: 'Operations Management',
+        title: 'Operations Management',
         icon: FiActivity,
         submenu: [
-          { id: 'Active Clients', title: 'Active Clients' },
-          { id: 'HR Operations', title: 'HR Operations' },
-          { id: 'Attendance Monitoring', title: 'Attendance Monitoring' },
-          { id: 'Payroll Status', title: 'Payroll Status' },
-          { id: 'Compliance Tracker', title: 'Compliance Tracker' },
-          { id: 'Escalations', title: 'Escalations' },
+          { id: 'Performance Tracking', title: 'Performance Tracking' },
+          { id: 'Resource Allocation', title: 'Resource Allocation' },
         ]
       },
       {
-        id: 'CRM & Sales',
-        title: 'CRM & Sales',
+        id: 'CRM Management',
+        title: 'CRM Management',
         icon: FiTarget,
         submenu: [
-          { id: 'Leads', title: 'Leads' },
-          { id: 'Sales Pipeline', title: 'Sales Pipeline' },
-          { id: 'Meetings', title: 'Meetings' },
-          { id: 'Proposals', title: 'Proposals' },
-          { id: 'Follow Ups', title: 'Follow Ups' },
-          { id: 'Won/Lost Deals', title: 'Won/Lost Deals' },
+          { id: 'Client Meeting', title: 'Client Meeting' },
+          { id: 'Client Pipeline', title: 'Client Pipeline' },
+          { id: 'Client Onboarding', title: 'Client Onboarding' },
         ]
       },
       {
-        id: 'Clients',
-        title: 'Clients',
-        icon: FiUserPlus,
+        id: 'Help & Support',
+        title: 'Help & Support',
+        icon: FiHelpCircle,
         submenu: [
-          { id: 'Client Profiles', title: 'Client Profiles' },
-          { id: 'Contracts', title: 'Contracts' },
-          { id: 'SLA', title: 'SLA' },
-          { id: 'Renewals', title: 'Renewals' },
-          { id: 'Documents', title: 'Documents' },
+          { id: 'Internal', title: 'Internal' },
+          { id: 'External', title: 'External' },
         ]
       },
-      {
-        id: 'Payroll',
-        title: 'Payroll',
-        icon: FiDollarSign,
-        submenu: [
-          { id: 'Salary Processing', title: 'Salary Processing' },
-          { id: 'Payslips', title: 'Payslips' },
-          { id: 'PF/ESI/TDS', title: 'PF/ESI/TDS' },
-          { id: 'Incentives', title: 'Incentives' },
-          { id: 'Bonus', title: 'Bonus' },
-        ]
-      },
-      { id: 'Billing & Accounts', title: 'Billing & Accounts', icon: FiCreditCard },
-      { id: 'Compliance', title: 'Compliance', icon: FiShield },
-      {
-        id: 'Reports',
-        title: 'Reports',
-        icon: FiClipboard,
-        submenu: [
-          { id: 'MIS Reports', title: 'MIS Reports' },
-          { id: 'Revenue Reports', title: 'Revenue Reports' },
-          { id: 'Recruitment Reports', title: 'Recruitment Reports' },
-          { id: 'Attendance Reports', title: 'Attendance Reports' },
-          { id: 'Payroll Reports', title: 'Payroll Reports' },
-        ]
-      },
-      { id: 'Analytics', title: 'Analytics', icon: FiBarChart2 },
-      { id: 'Documents', title: 'Documents', icon: FiDatabase },
-      { id: 'Helpdesk', title: 'Helpdesk', icon: FiHelpCircle },
-      { id: 'Roles & Permissions', title: 'Roles & Permissions', icon: FiLock },
-      { id: 'Activity Logs', title: 'Activity Logs', icon: FiList },
-      { id: 'Settings', title: 'Settings', icon: FiSettings },
-      { id: 'Notifications', title: 'Notifications', icon: FiBell },
-      { id: 'My Profile', title: 'My Profile', icon: FiUser },
     ]
   }
 ];
@@ -423,22 +370,26 @@ const SuperAdminDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'Clients':
+      case 'All Clients':
         return <ClientsTab />;
 
-      case 'Hiring':
+      case 'Recruitment Management':
+      case 'Total Open Positions':
+      case 'Shortlisted Candidates':
+      case 'Interviews':
+      case 'Joined Candidates':
         return <HiringLifecycleTab />;
 
       case 'Team Performance':
         return <TeamPerformanceTab />;
 
-      case 'Billing':
+      case 'Billing & Accounts':
         return (
           <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header Section */}
             <div className="flex items-center justify-between mb-8 text-left">
               <div className="flex flex-col text-left">
-                <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">Billing</h1>
+                <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">Billing & Accounts</h1>
               </div>
             </div>
 
@@ -476,64 +427,43 @@ const SuperAdminDashboard = () => {
           </div>
         );
 
-      case 'Employees':
       case 'All Employees':
-      case 'Departments':
-      case 'Designations':
         return <TeamTabs />;
 
-      case 'Recruitment':
-      case 'All Requirements':
-      case 'Candidate Database':
-        return <HiringLifecycleTab />;
+      case 'Operations Management':
+      case 'Performance Tracking':
+      case 'Resource Allocation':
+        return (
+          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+            <FiActivity size={64} className="text-blue-500 mb-4 opacity-20" />
+            <h2 className="text-2xl font-bold text-slate-800">Operations Management</h2>
+            <p className="text-slate-500 max-w-md mt-2">Resource allocation, performance tracking, and operational efficiency modules are being prepared.</p>
+          </div>
+        );
 
-      case 'Operations':
-      case 'Active Clients':
-        return <ClientsTab />;
-
-      case 'CRM & Sales':
-      case 'Leads':
-      case 'Sales Pipeline':
+      case 'CRM Management':
+      case 'Client Meeting':
+      case 'Client Pipeline':
+      case 'Client Onboarding':
         return <ClientPipelineTab />;
 
-      case 'Payroll':
-      case 'Salary Processing':
-      case 'Payslips':
+      case 'Help & Support':
+      case 'Internal':
+      case 'External':
         return (
           <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <FiDollarSign size={64} className="text-emerald-500 mb-4 opacity-20" />
-            <h2 className="text-2xl font-bold text-slate-800">Payroll Management</h2>
-            <p className="text-slate-500 max-w-md mt-2">Salary processing, payslips, and compliance tracking modules.</p>
+            <FiHelpCircle size={64} className="text-purple-500 mb-4 opacity-20" />
+            <h2 className="text-2xl font-bold text-slate-800">Help & Support</h2>
+            <p className="text-slate-500 max-w-md mt-2">Access internal and external support resources, documentation, and helpdesk services.</p>
           </div>
         );
 
-      case 'Reports':
-      case 'MIS Reports':
-      case 'Revenue Reports':
+      case 'Announcements':
         return (
           <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <FiClipboard size={64} className="text-indigo-500 mb-4 opacity-20" />
-            <h2 className="text-2xl font-bold text-slate-800">Reports Central</h2>
-            <p className="text-slate-500 max-w-md mt-2">Access all MIS, Revenue, and Recruitment reports from this centralized hub.</p>
-          </div>
-        );
-
-      case 'Documents':
-        return (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <FiDatabase size={64} className="text-amber-500 mb-4 opacity-20" />
-            <h2 className="text-2xl font-bold text-slate-800">Document Management</h2>
-            <p className="text-slate-500 max-w-md mt-2">Securely store and manage company-wide documentation and client contracts.</p>
-          </div>
-        );
-
-      case 'Roles & Permissions':
-      case 'Activity Logs':
-        return (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <FiShield size={64} className="text-rose-500 mb-4 opacity-20" />
-            <h2 className="text-2xl font-bold text-slate-800">Security & Access</h2>
-            <p className="text-slate-500 max-w-md mt-2">Manage user roles, system permissions, and audit logs.</p>
+            <FiBell size={64} className="text-orange-500 mb-4 opacity-20" />
+            <h2 className="text-2xl font-bold text-slate-800">Announcements</h2>
+            <p className="text-slate-500 max-w-md mt-2">Stay updated with the latest company-wide news, alerts, and official announcements.</p>
           </div>
         );
 
@@ -684,7 +614,7 @@ const SuperAdminDashboard = () => {
       isLoading={loading}
       dashboardTabName={null}
       showBottomTab={false}
-      showGlobalHeader={true}
+      showGlobalHeader={false}
     >
       {renderContent()}
       {/* Clients List Modal - PORTAL Component Match */}

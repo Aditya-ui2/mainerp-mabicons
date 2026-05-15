@@ -146,20 +146,36 @@ const AdminLayout = ({
         `}
       >
         {/* Superior Logo Header */}
-        <div className={`h-20 flex items-center px-6 ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+        <div className={`h-20 flex items-center ${sidebarCollapsed ? 'px-2 justify-center' : 'px-4 justify-between gap-4'}`}>
           {!sidebarCollapsed ? (
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="Mabicons" className="h-10 w-auto object-contain" />
-            </div>
+            <>
+              <div className="flex items-center gap-3">
+                <img src={logo} alt="Mabicons" className="h-10 w-auto object-contain" />
+              </div>
+              <button
+                onClick={() => {
+                  setSidebarCollapsed(!sidebarCollapsed);
+                  if (mobileSidebarOpen) setMobileSidebarOpen(false);
+                }}
+                className="p-2 text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF] rounded-xl transition-all"
+                title="Collapse Sidebar"
+              >
+                <Menu size={20} />
+              </button>
+            </>
           ) : (
-            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#F8FAFF] dark:bg-gray-800">
-              <img src={logo} alt="M" className="h-6 w-auto" />
-            </div>
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-2 text-[#6B6B7E] hover:text-[#1A1A2E] hover:bg-[#F8FAFF] rounded-xl transition-all"
+              title="Expand Sidebar"
+            >
+              <Menu size={20} />
+            </button>
           )}
         </div>
 
         {/* Sidebar Nav Hub */}
-        <nav className="flex-1 overflow-y-auto pt-6 custom-scrollbar pr-1">
+        <nav className="flex-1 overflow-y-auto pt-6 custom-scrollbar">
           {/* Dashboard Item (Always First) */}
           {dashboardTabName && (
             <button
@@ -322,13 +338,7 @@ const AdminLayout = ({
               >
                 <Menu size={20} />
               </button>
-              {/* Desktop Toggle */}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="hidden lg:flex p-2 -ml-2 text-[#6B6B7E] hover:text-[#1A1A2E] transition-colors"
-              >
-                <Menu size={20} />
-              </button>
+              {/* Desktop Toggle moved to Sidebar */}
               <h2 className="text-lg font-bold text-[#1A1A2E] dark:text-white tracking-tight">
                 {activeTab || dashboardTitle}
               </h2>
