@@ -121,13 +121,13 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
   const [selectedSuggestedIds, setSelectedSuggestedIds] = useState(new Set());
   const [isDiscovering, setIsDiscovering] = useState(false);
 
-  const fetchResumeBankMatches = async (jobTitle) => {
+  const fetchResumeBankMatches = async (jobTitle, requiredSkills = '') => {
     try {
       setResumeBankLoading(true);
 
       // 1. FORCE FETCH EVERYTHING: Get full pool from all sources at once
       const [bankRes, spRes] = await Promise.all([
-        getResumeBankResumes({ limit: 500 }).catch(() => ({ data: [] })), // Fetch a large chunk
+        getResumeBankResumes({ limit: 1000 }).catch(() => ({ data: [] })), // Fetch a larger chunk
         getSharePointCandidates().catch(() => ({ success: true, data: [] }))
       ]);
 
@@ -166,17 +166,21 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
 
       // 3. Client-Side Smart Ranking (Fast & Reliable)
       const query = (jobTitle || '').toLowerCase();
-      const terms = query.split(/\s+/).filter(t => t.length > 2);
+      const skillsQuery = (requiredSkills || '').toLowerCase();
+      
+      const titleTerms = query.split(/\s+/).filter(t => t.length > 2);
+      const skillTerms = skillsQuery.split(/[\s,]+/).filter(t => t.length > 1);
+      const allTerms = [...new Set([...titleTerms, ...skillTerms])];
 
       const rankedMatches = fullPool.map(c => {
         const text = `${c.name} ${c.role} ${c.skills.join(' ')}`.toLowerCase();
         let score = 0;
-        if (text.includes(query)) score += 10; // Exact phrase match
-        terms.forEach(t => { if (text.includes(t)) score += 2; }); // Keyword match
+        if (text.includes(query)) score += 10; // Exact title phrase match
+        allTerms.forEach(t => { if (text.includes(t)) score += 2; }); // Keyword match
         return { ...c, score };
       })
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 15); // Show top 15 results
+        .filter(c => c.score > 0) // Only include items with a positive score
+        .sort((a, b) => b.score - a.score);
 
       setSuggestedCandidates(rankedMatches);
 
@@ -308,7 +312,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
         if (response.success && Array.isArray(response.data)) {
           const positions = response.data.map(p => ({
             id: p.id, title: p.title, client: p.clientName || 'Unknown Client',
-            clientId: p.clientId, openings: p.openings || 1, filled: p.filled || 0, roleType: p.roleType
+            clientId: p.clientId, openings: p.openings || 1, filled: p.filled || 0, roleType: p.roleType,
+            skills: Array.isArray(p.skills) ? p.skills.join(', ') : p.skills || ''
           }));
           setJobOpenings(positions);
           localStorage.setItem('kamJobOpenings', JSON.stringify(positions));
@@ -1246,7 +1251,8 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                             positionId: e.target.value,
                             jobTitle: pos?.title || '',
                             clientId: pos?.clientId || '',
-                            client: pos?.client || ''
+                            client: pos?.client || '',
+                            jobSkills: pos?.skills || ''
                           });
                         }} 
                         className="w-full bg-[#F4F3EF] border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer"
@@ -1282,7 +1288,7 @@ const CandidatePipelineTab = ({ isDarkMode, setActiveTab, quickAction, onQuickAc
                         toast.error("Please enter a Target Job Title first");
                         return;
                       }
-                      fetchResumeBankMatches(newCandidate.jobTitle);
+                      fetchResumeBankMatches(newCandidate.jobTitle, newCandidate.jobSkills || newCandidate.skills);
                     }}
                     disabled={resumeBankLoading}
                     className="flex items-center gap-2 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-[#153e82] transition-all disabled:opacity-50 group-hover:scale-[1.02] active:scale-95"

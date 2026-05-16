@@ -1736,16 +1736,14 @@ export const deleteTeamLeaderAndPromoteEmployee = async ({ oldTeamLeaderId, empl
 export const createRecruitmentRequest = async (requestData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axiosInstance.post('/recruitment/request', {
-      name: requestData.name,
-      position: requestData.position,
-      keywords: requestData.keywords,
-      experience: requestData.experience,
-      currentLocation: requestData.currLocation,
-      preferredLocation: requestData.preferredLocation,
+    const response = await axiosInstance.post('/recruitment/create-request', {
+      title: requestData.position || requestData.name,
+      description: `Qualifications: ${requestData.qualification || ''}, Notice Period: ${requestData.noticePeriod || ''}`,
+      location: `${requestData.currLocation || requestData.currentLocation || ''} ${requestData.preferredLocation ? `/ ${requestData.preferredLocation}` : ''}`.trim(),
+      type: 'Full-time',
       salary: requestData.salary,
-      noticePeriod: requestData.noticePeriod,
-      qualification: requestData.qualification,
+      skills: requestData.keywords ? requestData.keywords.split(',').map(s => s.trim()) : [],
+      experience: requestData.experience,
       teamLeaderId: requestData.teamLeaderId,
       clientId: requestData.clientId
     }, {
@@ -1940,8 +1938,8 @@ export const acceptCandidate = async (acceptData) => {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/accept', {
       reason: acceptData.reason,
-      recruitmentId: acceptData.recruitmentId,
-      fileId: acceptData.fileId
+      candidateId: acceptData.fileId || acceptData.candidateId || acceptData.recruitmentId, // Map frontend's fileId/recruitmentId to candidateId
+      clientId: acceptData.clientId
     }, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1961,8 +1959,8 @@ export const rejectCandidate = async (rejectData) => {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/reject', {
       reason: rejectData.reason,
-      recruitmentId: rejectData.recruitmentId,
-      fileId: rejectData.fileId
+      candidateId: rejectData.fileId || rejectData.candidateId || rejectData.recruitmentId, // Map frontend's fileId/recruitmentId to candidateId
+      clientId: rejectData.clientId
     }, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1982,7 +1980,7 @@ export const getRecruitmentStatus = async (payload) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axiosInstance.post('/recruitment/status', {
-      recruitmentId: payload.recruitmentId,
+      positionId: payload.recruitmentId || payload.positionId,
       clientId: payload.clientId,
       teamLeaderId: payload.teamLeaderId
     }, {
