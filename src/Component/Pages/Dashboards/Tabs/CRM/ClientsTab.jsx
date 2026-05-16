@@ -5,15 +5,26 @@ import {
   FiSearch, FiFilter, FiDownload, FiPlus, FiChevronRight, FiChevronDown,
   FiMail, FiPhone, FiMapPin, FiActivity, FiBriefcase, FiUsers, FiTrash,
   FiX, FiUser, FiDollarSign, FiClock, FiZap, FiCheckSquare, FiDatabase, FiEdit3, FiTrendingUp, FiTarget, FiCheckCircle, FiCheck,
-  FiEdit2, FiFileText, FiEye, FiUpload
+  FiEdit2, FiFileText, FiEye, FiUpload, FiRefreshCw, FiCamera
 } from 'react-icons/fi';
 
-const InfoItem = ({ label, value, subValue, fullWidth = false }) => (
+const InfoItem = ({ label, value, subValue, fullWidth = false, isEditing, onChange, type = "text" }) => (
   <div className={`space-y-1.5 ${fullWidth ? 'col-span-full' : ''}`}>
     <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{label}</label>
     <div className="bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">
-      <p className="text-sm font-bold text-[#1A1A2E]">{value || 'N/A'}</p>
-      {subValue && <p className="text-[10px] font-medium text-[#6B6B7E] mt-0.5">{subValue}</p>}
+      {isEditing ? (
+        <input
+          type={type}
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full text-sm font-bold text-[#1A1A2E] bg-transparent border-none focus:outline-none"
+        />
+      ) : (
+        <>
+          <p className="text-sm font-bold text-[#1A1A2E]">{value || 'N/A'}</p>
+          {subValue && <p className="text-[10px] font-medium text-[#6B6B7E] mt-0.5">{subValue}</p>}
+        </>
+      )}
     </div>
   </div>
 );
@@ -94,6 +105,9 @@ const ClientsTab = () => {
   const [clientToEdit, setClientToEdit] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState(null);
+  const [isEditingInDetail, setIsEditingInDetail] = useState(false);
+  const [isSavingDetail, setIsSavingDetail] = useState(false);
+  const [editableClient, setEditableClient] = useState(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -131,6 +145,32 @@ const ClientsTab = () => {
   useEffect(() => {
     fetchClients();
   }, []);
+
+  const handleSaveClientDetails = async () => {
+    setIsSavingDetail(true);
+    try {
+      const clientId = selectedClientDetail._id || selectedClientDetail.id;
+      const payload = {
+        clientId,
+        ...editableClient
+      };
+      await editClient(payload);
+      
+      const updatedClient = { ...selectedClientDetail, ...editableClient };
+      setSelectedClientDetail(updatedClient);
+      setClients(prev => prev.map(c => 
+        (c._id === clientId || c.id === clientId) ? updatedClient : c
+      ));
+      
+      setIsEditingInDetail(false);
+      toast.success('Client details updated successfully');
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error('Failed to update client details');
+    } finally {
+      setIsSavingDetail(false);
+    }
+  };
 
   const handleToggleStatus = async (client, newStatus) => {
     const statusLabel = newStatus ? 'Active' : 'Inactive';
@@ -472,30 +512,50 @@ const ClientsTab = () => {
                 <div className="p-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white">
                   <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Client Portfolio</h3>
                   <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => {
-                        setClientToEdit(selectedClientDetail);
-                        setIsOnboardModalOpen(true);
-                        setSelectedClientDetail(null);
-                      }}
-                      className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50 transition-all duration-300"
-                      title="Edit Client"
-                    >
-                      <FiEdit2 size={18} />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setClientToDelete(selectedClientDetail);
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
-                      title="Delete Client"
-                    >
-                      <FiTrash size={18} />
-                    </button>
-                    <button onClick={() => setSelectedClientDetail(null)} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300">
-                      <FiX size={20} />
-                    </button>
+                    {isEditingInDetail ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setIsEditingInDetail(false)}
+                          className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#6B6B7E] bg-[#F4F3EF] hover:bg-[#E8E7E2] transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          disabled={isSavingDetail}
+                          onClick={handleSaveClientDetails}
+                          className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#1B4DA0] hover:bg-[#153D80] transition-all flex items-center gap-2 shadow-md shadow-blue-500/10"
+                        >
+                          {isSavingDetail ? <FiRefreshCw className="animate-spin w-3.5 h-3.5" /> : <FiCheck className="w-3.5 h-3.5" />}
+                          {isSavingDetail ? 'Saving...' : 'Save Changes'}
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={() => {
+                            setEditableClient(selectedClientDetail);
+                            setIsEditingInDetail(true);
+                          }}
+                          className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-blue-50 transition-all duration-300"
+                          title="Edit Client"
+                        >
+                          <FiEdit2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setClientToDelete(selectedClientDetail);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+                          title="Delete Client"
+                        >
+                          <FiTrash size={18} />
+                        </button>
+                        <button onClick={() => setSelectedClientDetail(null)} className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300">
+                          <FiX size={20} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -505,16 +565,39 @@ const ClientsTab = () => {
                   {/* Profile Header (Centered) */}
                   <div className="flex flex-col items-center text-center">
                     <div className="relative mb-6">
-                      <div className="w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden"
+                      <div className={`w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden ${isEditingInDetail ? 'cursor-pointer hover:scale-105 transition-all' : ''}`}
                            style={{ background: 'linear-gradient(135deg, #1B4DA0 0%, #0D47A1 100%)' }}>
                         <span>{(selectedClientDetail.companyName || selectedClientDetail.name || 'C').substring(0, 2).toUpperCase()}</span>
+                        {isEditingInDetail && (
+                          <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex flex-col items-center justify-center opacity-100 transition-opacity cursor-pointer border-2 border-white/20 rounded-[32px]">
+                            <FiCamera className="text-white w-6 h-6 mb-1" />
+                            <span className="text-[8px] font-black text-white uppercase tracking-widest">Change</span>
+                          </div>
+                        )}
                       </div>
-                      {/* Status Dot */}
-                      <div className="absolute top-0 right-0 w-5 h-5 bg-[#00D26A] border-[3px] border-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15),0_0_15px_rgba(0,210,106,0.4)] z-10 translate-x-1 -translate-y-1" />
                     </div>
-                    <div className="space-y-1.5">
-                      <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne">{selectedClientDetail.companyName || selectedClientDetail.name}</h4>
-                      <p className="text-[11px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedClientDetail.industry || 'Enterprise'} Sector</p>
+                    <div className="space-y-1.5 w-full flex flex-col items-center">
+                      {isEditingInDetail ? (
+                        <input
+                          type="text"
+                          className="w-full max-w-[320px] text-2xl font-bold text-[#1A1A2E] bg-[#FAFAF8] border-none rounded-2xl py-2 px-4 text-center focus:outline-none transition-all font-syne"
+                          value={editableClient?.companyName || ''}
+                          onChange={(e) => setEditableClient({ ...editableClient, companyName: e.target.value })}
+                        />
+                      ) : (
+                        <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne">{selectedClientDetail.companyName || selectedClientDetail.name}</h4>
+                      )}
+                      
+                      {isEditingInDetail ? (
+                        <input
+                          type="text"
+                          className="w-full max-w-[240px] text-[11px] font-bold text-[#0D47A1] bg-[#FAFAF8] border-none rounded-xl py-1 px-3 text-center focus:outline-none mt-1 mx-auto uppercase tracking-[3px]"
+                          value={editableClient?.industry || ''}
+                          onChange={(e) => setEditableClient({ ...editableClient, industry: e.target.value })}
+                        />
+                      ) : (
+                        <p className="text-[11px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedClientDetail.industry || 'Enterprise'} Sector</p>
+                      )}
                     </div>
                   </div>
 
@@ -528,10 +611,30 @@ const ClientsTab = () => {
                         <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Company Identity</h5>
                       </div>
                       <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                        <InfoItem label="GST Number" value={selectedClientDetail.gstNumber} />
-                        <InfoItem label="PAN Number" value={selectedClientDetail.panNumber} />
-                        <InfoItem label="CIN Number" value={selectedClientDetail.cinNumber} />
-                        <InfoItem label="Company Website" value={selectedClientDetail.website} />
+                        <InfoItem 
+                          label="GST Number" 
+                          value={isEditingInDetail ? editableClient?.gstNumber : selectedClientDetail.gstNumber} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, gstNumber: val })}
+                        />
+                        <InfoItem 
+                          label="PAN Number" 
+                          value={isEditingInDetail ? editableClient?.panNumber : selectedClientDetail.panNumber} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, panNumber: val })}
+                        />
+                        <InfoItem 
+                          label="CIN Number" 
+                          value={isEditingInDetail ? editableClient?.cinNumber : selectedClientDetail.cinNumber} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, cinNumber: val })}
+                        />
+                        <InfoItem 
+                          label="Company Website" 
+                          value={isEditingInDetail ? editableClient?.website : selectedClientDetail.website} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, website: val })}
+                        />
                       </div>
                     </div>
 
@@ -542,11 +645,32 @@ const ClientsTab = () => {
                         <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Location & Address</h5>
                       </div>
                       <div className="grid grid-cols-1 gap-y-6">
-                        <InfoItem label="Corporate Address" value={selectedClientDetail.corporateAddress} fullWidth />
+                        <InfoItem 
+                          label="Corporate Address" 
+                          value={isEditingInDetail ? editableClient?.corporateAddress : selectedClientDetail.corporateAddress} 
+                          fullWidth 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, corporateAddress: val })}
+                        />
                         <div className="grid grid-cols-3 gap-6">
-                          <InfoItem label="City" value={selectedClientDetail.city} />
-                          <InfoItem label="State" value={selectedClientDetail.state} />
-                          <InfoItem label="Pin Code" value={selectedClientDetail.pinCode} />
+                          <InfoItem 
+                            label="City" 
+                            value={isEditingInDetail ? editableClient?.city : selectedClientDetail.city} 
+                            isEditing={isEditingInDetail}
+                            onChange={(val) => setEditableClient({ ...editableClient, city: val })}
+                          />
+                          <InfoItem 
+                            label="State" 
+                            value={isEditingInDetail ? editableClient?.state : selectedClientDetail.state} 
+                            isEditing={isEditingInDetail}
+                            onChange={(val) => setEditableClient({ ...editableClient, state: val })}
+                          />
+                          <InfoItem 
+                            label="Pin Code" 
+                            value={isEditingInDetail ? editableClient?.pinCode : selectedClientDetail.pinCode} 
+                            isEditing={isEditingInDetail}
+                            onChange={(val) => setEditableClient({ ...editableClient, pinCode: val })}
+                          />
                         </div>
                       </div>
                     </div>
@@ -558,8 +682,42 @@ const ClientsTab = () => {
                         <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Contact Persons</h5>
                       </div>
                       <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                        <InfoItem label="Primary SPOC" value={selectedClientDetail.spocName} subValue={selectedClientDetail.spocContact} />
-                        <InfoItem label="Authorized Signatory" value={selectedClientDetail.authorizedSignatory?.name} subValue={selectedClientDetail.authorizedSignatory?.email} />
+                        <InfoItem 
+                          label="Primary SPOC" 
+                          value={isEditingInDetail ? editableClient?.spocName : selectedClientDetail.spocName} 
+                          subValue={!isEditingInDetail && selectedClientDetail.spocContact} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, spocName: val })}
+                        />
+                        {isEditingInDetail && (
+                          <InfoItem 
+                            label="SPOC Contact" 
+                            value={editableClient?.spocContact} 
+                            isEditing={isEditingInDetail}
+                            onChange={(val) => setEditableClient({ ...editableClient, spocContact: val })}
+                          />
+                        )}
+                        <InfoItem 
+                          label="Authorized Signatory" 
+                          value={isEditingInDetail ? editableClient?.authorizedSignatory?.name : selectedClientDetail.authorizedSignatory?.name} 
+                          subValue={!isEditingInDetail && selectedClientDetail.authorizedSignatory?.email} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ 
+                            ...editableClient, 
+                            authorizedSignatory: { ...editableClient.authorizedSignatory, name: val } 
+                          })}
+                        />
+                        {isEditingInDetail && (
+                          <InfoItem 
+                            label="Signatory Email" 
+                            value={editableClient?.authorizedSignatory?.email} 
+                            isEditing={isEditingInDetail}
+                            onChange={(val) => setEditableClient({ 
+                              ...editableClient, 
+                              authorizedSignatory: { ...editableClient.authorizedSignatory, email: val } 
+                            })}
+                          />
+                        )}
                       </div>
                     </div>
 
@@ -570,10 +728,31 @@ const ClientsTab = () => {
                         <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Commercial Terms</h5>
                       </div>
                       <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                        <InfoItem label="Agreement Type" value={selectedClientDetail.agreementType} />
-                        <InfoItem label="Payment Terms" value={selectedClientDetail.paymentTerms} />
-                        <InfoItem label="Fee Structure" value={selectedClientDetail.feeStructure} />
-                        <InfoItem label="Notice Period" value={selectedClientDetail.noticePeriod ? `${selectedClientDetail.noticePeriod} Days` : 'N/A'} />
+                        <InfoItem 
+                          label="Agreement Type" 
+                          value={isEditingInDetail ? editableClient?.agreementType : selectedClientDetail.agreementType} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, agreementType: val })}
+                        />
+                        <InfoItem 
+                          label="Payment Terms" 
+                          value={isEditingInDetail ? editableClient?.paymentTerms : selectedClientDetail.paymentTerms} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, paymentTerms: val })}
+                        />
+                        <InfoItem 
+                          label="Fee Structure" 
+                          value={isEditingInDetail ? editableClient?.feeStructure : selectedClientDetail.feeStructure} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, feeStructure: val })}
+                        />
+                        <InfoItem 
+                          label="Notice Period (Days)" 
+                          value={isEditingInDetail ? editableClient?.noticePeriod : selectedClientDetail.noticePeriod} 
+                          isEditing={isEditingInDetail}
+                          type="number"
+                          onChange={(val) => setEditableClient({ ...editableClient, noticePeriod: val })}
+                        />
                       </div>
                     </div>
 
@@ -584,10 +763,31 @@ const ClientsTab = () => {
                         <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Operational Data</h5>
                       </div>
                       <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                        <InfoItem label="Total Employees" value={selectedClientDetail.totalEmployees} />
-                        <InfoItem label="Working Model" value={selectedClientDetail.workingModel} />
-                        <InfoItem label="PF Applicable" value={selectedClientDetail.pfApplicable} />
-                        <InfoItem label="ESI Applicable" value={selectedClientDetail.esicApplicable} />
+                        <InfoItem 
+                          label="Total Employees" 
+                          value={isEditingInDetail ? editableClient?.totalEmployees : selectedClientDetail.totalEmployees} 
+                          isEditing={isEditingInDetail}
+                          type="number"
+                          onChange={(val) => setEditableClient({ ...editableClient, totalEmployees: val })}
+                        />
+                        <InfoItem 
+                          label="Working Model" 
+                          value={isEditingInDetail ? editableClient?.workingModel : selectedClientDetail.workingModel} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, workingModel: val })}
+                        />
+                        <InfoItem 
+                          label="PF Applicable" 
+                          value={isEditingInDetail ? editableClient?.pfApplicable : selectedClientDetail.pfApplicable} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, pfApplicable: val })}
+                        />
+                        <InfoItem 
+                          label="ESI Applicable" 
+                          value={isEditingInDetail ? editableClient?.esicApplicable : selectedClientDetail.esicApplicable} 
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, esicApplicable: val })}
+                        />
                       </div>
                     </div>
 

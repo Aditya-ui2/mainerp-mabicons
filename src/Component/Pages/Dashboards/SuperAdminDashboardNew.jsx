@@ -271,9 +271,125 @@ const ClientsExplorerModal = ({ isOpen, onClose, clientsList }) => {
   );
 };
 
+// Mock Data for KPI Popups
+const kpiMockData = {
+  'Outstanding': {
+    title: 'Outstanding Payments',
+    total: '₹4.2L',
+    details: [
+      { name: 'Zomato', amount: '₹1.5L', status: 'Pending', dueDate: 'Due in 5 days' },
+      { name: 'TCS', amount: '₹0.8L', status: 'Overdue', dueDate: '5 days ago' },
+      { name: 'Infosys', amount: '₹1.9L', status: 'Pending', dueDate: 'Due in 12 days' },
+    ]
+  },
+  'Monthly MRR': {
+    title: 'Monthly Recurring Revenue',
+    total: '₹8.5L',
+    details: [
+      { name: 'Active Subscriptions', count: 42, amount: '₹6.2L' },
+      { name: 'New MRR (This Month)', count: 5, amount: '₹1.5L' },
+      { name: 'Expansion MRR', count: 3, amount: '₹0.8L' },
+    ]
+  },
+  'Projected ARR': {
+    title: 'Projected Annual Revenue',
+    total: '₹1.2Cr',
+    details: [
+      { category: 'Contracted ARR', amount: '₹85L' },
+      { category: 'Pipeline Potential', amount: '₹35L' },
+      { category: 'Expected Renewals', amount: '₹10L' },
+    ]
+  },
+  'Salaries': {
+    title: 'Employee Salaries',
+    total: '₹12.8L',
+    details: [
+      { department: 'Operations', count: 40, amount: '₹4.5L' },
+      { department: 'Recruitment', count: 35, amount: '₹3.8L' },
+      { department: 'Admin', count: 15, amount: '₹2.5L' },
+      { department: 'Management', count: 5, amount: '₹2.0L' },
+    ]
+  },
+  'Rent': {
+    title: 'Office Rent & Maintenance',
+    total: '₹1.5L',
+    details: [
+      { location: 'Gurgaon HQ', amount: '₹85K', type: 'Main Branch' },
+      { location: 'Bangalore Hub', amount: '₹45K', type: 'Satellite Office' },
+      { location: 'Maintenance/Utils', amount: '₹20K', type: 'Facility Costs' },
+    ]
+  }
+};
+
+const KpiDetailModal = ({ isOpen, onClose, kpiType }) => {
+  const data = kpiMockData[kpiType];
+  if (!data) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[200000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF] z-[200001]"
+          >
+            <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/20 to-white">
+              <div className="text-left">
+                <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">{data.title}</h3>
+                <p className="text-[11px] font-black text-[#1B4DA0] uppercase tracking-widest mt-1">Detailed Breakdown</p>
+              </div>
+              <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] hover:text-red-500 transition-all flex items-center justify-center">
+                <FiX size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              <div className="bg-[#FAFAF8] rounded-3xl p-6 border border-[#F4F3EF] text-center">
+                <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Total Value</p>
+                <p className="text-4xl font-black text-[#1A1A2E] tracking-tight">{data.total}</p>
+              </div>
+              
+              <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                {data.details.map((item, idx) => (
+                   <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-[#F4F3EF] hover:border-blue-100 transition-all group text-left">
+                      <div>
+                        <p className="text-sm font-bold text-[#1A1A2E]">{item.name || item.department || item.category || item.location}</p>
+                        <p className="text-[10px] font-medium text-[#9B9BAD]">
+                          {item.status || item.dueDate || (item.count ? `${item.count} Units` : item.type) || ''}
+                        </p>
+                      </div>
+                      <p className="text-sm font-black text-[#1B4DA0] group-hover:scale-110 transition-transform">{item.amount}</p>
+                   </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-8 bg-[#F8FAFC] border-t border-[#F4F3EF] flex justify-end">
+              <button onClick={onClose} className="px-8 py-4 bg-white border border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] hover:bg-gray-50 transition-all shadow-sm">
+                Close Report
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+};
+
 const SuperAdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('superadmin_active_tab') || 'Dashboard');
+  const [selectedKpi, setSelectedKpi] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('superadmin_active_tab', activeTab);
@@ -395,11 +511,11 @@ const SuperAdminDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-              <StatCard title="Outstanding" value={summaryData.outstandingPayment} icon={FiCreditCard} color="white" onClick={() => {}} />
-              <StatCard title="Monthly MRR" value={summaryData.totalMRR} icon={FiTrendingUp} color="white" onClick={() => {}} />
-              <StatCard title="Projected ARR" value={summaryData.projectedARR} icon={FiDollarSign} color="white" onClick={() => {}} />
-              <StatCard title="Salaries" value={summaryData.totalSalaries} icon={FiUsers} color="white" onClick={() => {}} />
-              <StatCard title="Rent" value={summaryData.totalRent} icon={FiHome} color="white" onClick={() => {}} />
+              <StatCard title="Outstanding" value={summaryData.outstandingPayment} icon={FiCreditCard} color="white" onClick={() => setSelectedKpi('Outstanding')} />
+              <StatCard title="Monthly MRR" value={summaryData.totalMRR} icon={FiTrendingUp} color="white" onClick={() => setSelectedKpi('Monthly MRR')} />
+              <StatCard title="Projected ARR" value={summaryData.projectedARR} icon={FiDollarSign} color="white" onClick={() => setSelectedKpi('Projected ARR')} />
+              <StatCard title="Salaries" value={summaryData.totalSalaries} icon={FiUsers} color="white" onClick={() => setSelectedKpi('Salaries')} />
+              <StatCard title="Rent" value={summaryData.totalRent} icon={FiHome} color="white" onClick={() => setSelectedKpi('Rent')} />
             </div>
 
             <div className="bg-white rounded-[32px] p-8 border border-[#F4F3EF] shadow-sm">
@@ -617,6 +733,13 @@ const SuperAdminDashboard = () => {
         isOpen={showClientsModal}
         onClose={() => setShowClientsModal(false)}
         clientsList={clientsList}
+      />
+      
+      {/* KPI Detail Modal */}
+      <KpiDetailModal 
+        isOpen={!!selectedKpi}
+        onClose={() => setSelectedKpi(null)}
+        kpiType={selectedKpi}
       />
     </AdminLayout>
   );

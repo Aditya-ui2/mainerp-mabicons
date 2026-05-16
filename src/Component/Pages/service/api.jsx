@@ -4122,6 +4122,18 @@ export const deleteAnnouncement = async (id) => {
   }
 };
 
+export const editAnnouncement = async (id, data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put(`/department/announcements/${id}`, data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to update announcement' };
+  }
+};
+
 export const uploadDeptDocument = async (data) => {
   try {
     const token = localStorage.getItem('token');
@@ -4434,6 +4446,7 @@ const api = {
   getAnnouncements,
   createAnnouncement,
   deleteAnnouncement,
+  editAnnouncement,
   uploadDeptDocument,
   deleteDeptDocument,
   getMyTrainings,
