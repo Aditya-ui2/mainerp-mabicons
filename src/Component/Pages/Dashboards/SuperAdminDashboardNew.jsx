@@ -47,6 +47,8 @@ import MyProfileTab from './Tabs/Common/MyProfileTab';
 import HiringLifecycleTab from './Tabs/KAMRecruitment/HiringLifecycleTab';
 import TeamPerformanceTab from './Tabs/TeamPerformanceTab';
 import AnnouncementsTab from './Tabs/Common/AnnouncementsTab';
+import SuperAdminTotalOpenPositionsTab from './Tabs/Common/SuperAdminTotalOpenPositionsTab';
+import SuperAdminInterviewsTab from './Tabs/Common/SuperAdminInterviewsTab';
 import { getAllClients, getAllTasks, getAllNotifications, logout } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
@@ -491,9 +493,12 @@ const SuperAdminDashboard = () => {
         return <ClientsTab />;
 
       case 'Recruitment Management':
+        return <HiringLifecycleTab />;
       case 'Total Open Positions':
-      case 'Shortlisted Candidates':
+        return <SuperAdminTotalOpenPositionsTab />;
       case 'Interviews':
+        return <SuperAdminInterviewsTab />;
+      case 'Shortlisted Candidates':
       case 'Joined Candidates':
         return <HiringLifecycleTab />;
 
