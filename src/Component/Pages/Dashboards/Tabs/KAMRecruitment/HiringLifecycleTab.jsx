@@ -591,7 +591,7 @@ const mockData = [
   }
 ];
 
-const HiringLifecycleTab = () => {
+const HiringLifecycleTab = ({ notificationBell }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClient, setFilterClient] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -705,7 +705,9 @@ const HiringLifecycleTab = () => {
     <div className="space-y-8 animate-in fade-in duration-500 font-jakarta">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Joined Candidates</h1>
-
+        <div className="flex items-center gap-3">
+          {notificationBell}
+        </div>
       </div>
 
       <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">

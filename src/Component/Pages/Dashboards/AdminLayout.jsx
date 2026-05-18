@@ -69,22 +69,71 @@ const AdminLayout = ({
       notifications.forEach(n => {
         if (!n.read && !n.isRead) {
           const msg = String(n.message || '').toLowerCase();
-          if (msg.includes('employee') || msg.includes('joined') || msg.includes('staff') || msg.includes('onboarded')) {
+          
+          // Employees
+          if (msg.includes('employee') || msg.includes('staff') || msg.includes('team') || msg.includes('member')) {
             updates['All Employees'] = true;
           }
-          if (msg.includes('client') || msg.includes('signup') || msg.includes('company')) {
+          
+          // Clients & CRM Management
+          if (msg.includes('client') || msg.includes('company') || msg.includes('customer')) {
             updates['All Clients'] = true;
             updates['Client Pipeline'] = true;
+            updates['Client Onboarding'] = true;
           }
-          if (msg.includes('report') || msg.includes('analytics') || msg.includes('deliverable')) {
-            updates['Reports'] = true;
+          if (msg.includes('pipeline') || msg.includes('lead') || msg.includes('deal') || msg.includes('crm')) {
+            updates['Client Pipeline'] = true;
+            updates['CRM Management'] = true;
           }
-          if (msg.includes('ticket') || msg.includes('support') || msg.includes('complaint') || msg.includes('laptop')) {
+          if (msg.includes('meeting') || msg.includes('demo') || msg.includes('discussion') || msg.includes('call')) {
+            updates['Client Meeting'] = true;
+          }
+          if (msg.includes('onboard') || msg.includes('onboarding') || msg.includes('onboarded')) {
+            updates['Client Onboarding'] = true;
+          }
+
+          // Recruitment Management
+          if (msg.includes('position') || msg.includes('job') || msg.includes('vacancy') || msg.includes('opening')) {
+            updates['Total Open Positions'] = true;
+          }
+          if (msg.includes('shortlist') || msg.includes('candidate') || msg.includes('applied') || msg.includes('cv') || msg.includes('resume')) {
+            updates['Shortlisted Candidates'] = true;
+          }
+          if (msg.includes('interview') || msg.includes('schedule') || msg.includes('scheduled') || msg.includes('round')) {
+            updates['Interviews'] = true;
+          }
+          if (msg.includes('joined') || msg.includes('hired') || msg.includes('placed') || msg.includes('joining')) {
+            updates['Joined Candidates'] = true;
+          }
+
+          // Operations Management
+          if (msg.includes('task') || msg.includes('allocation') || msg.includes('assign') || msg.includes('assigned') || msg.includes('project')) {
+            updates['Resource Allocation'] = true;
+          }
+          if (msg.includes('performance') || msg.includes('target') || msg.includes('kpi') || msg.includes('metric')) {
+            updates['Team Performance'] = true;
+            updates['Performance Tracking'] = true;
+          }
+
+          // Help & Support
+          if (msg.includes('ticket') || msg.includes('support') || msg.includes('complaint') || msg.includes('laptop') || msg.includes('issue')) {
             updates['Help & Support'] = true;
             updates['Internal'] = true;
             updates['External'] = true;
           }
-          if (msg.includes('policy') || msg.includes('directive')) {
+
+          // Announcements
+          if (msg.includes('announcement') || msg.includes('broadcast') || msg.includes('notice') || msg.includes('update') || msg.includes('announc')) {
+            updates['Announcements'] = true;
+          }
+
+          // Billing & Accounts
+          if (msg.includes('bill') || msg.includes('invoice') || msg.includes('payment') || msg.includes('outstanding') || msg.includes('fee') || msg.includes('subscription') || msg.includes('revenue') || msg.includes('account')) {
+            updates['Billing & Accounts'] = true;
+          }
+
+          // HR Policy & Notes
+          if (msg.includes('policy') || msg.includes('directive') || msg.includes('rules')) {
             updates['HR Policy'] = true;
           }
           if (msg.includes('note')) {
@@ -102,17 +151,57 @@ const AdminLayout = ({
       if (activeTab === 'Internal' || activeTab === 'External') {
         setTabUpdates(prev => ({ ...prev, 'Help & Support': false }));
       }
+      if (['Total Open Positions', 'Shortlisted Candidates', 'Interviews', 'Joined Candidates'].includes(activeTab)) {
+        setTabUpdates(prev => ({ ...prev, 'Recruitment Management': false }));
+      }
+      if (['Performance Tracking', 'Resource Allocation'].includes(activeTab)) {
+        setTabUpdates(prev => ({ ...prev, 'Operations Management': false }));
+      }
+      if (['Client Meeting', 'Client Pipeline', 'Client Onboarding'].includes(activeTab)) {
+        setTabUpdates(prev => ({ ...prev, 'CRM Management': false }));
+      }
     }
   }, [activeTab]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const tabsPool = ['All Employees', 'All Clients', 'Client Pipeline', 'Reports', 'Internal', 'External', 'HR Policy', 'Notes'];
+      const tabsPool = [
+        'All Employees',
+        'All Clients',
+        'Client Pipeline',
+        'Client Meeting',
+        'Client Onboarding',
+        'Reports',
+        'Internal',
+        'External',
+        'HR Policy',
+        'Notes',
+        'Total Open Positions',
+        'Shortlisted Candidates',
+        'Interviews',
+        'Joined Candidates',
+        'Team Performance',
+        'Performance Tracking',
+        'Resource Allocation',
+        'Announcements',
+        'Billing & Accounts'
+      ];
       const randomTab = tabsPool[Math.floor(Math.random() * tabsPool.length)];
       if (randomTab !== activeTab) {
         setTabUpdates(prev => ({ ...prev, [randomTab]: true }));
+        
+        // Parent tab highlights
         if (randomTab === 'Internal' || randomTab === 'External') {
           setTabUpdates(prev => ({ ...prev, 'Help & Support': true }));
+        }
+        if (['Total Open Positions', 'Shortlisted Candidates', 'Interviews', 'Joined Candidates'].includes(randomTab)) {
+          setTabUpdates(prev => ({ ...prev, 'Recruitment Management': true }));
+        }
+        if (['Performance Tracking', 'Resource Allocation'].includes(randomTab)) {
+          setTabUpdates(prev => ({ ...prev, 'Operations Management': true }));
+        }
+        if (['Client Meeting', 'Client Pipeline', 'Client Onboarding'].includes(randomTab)) {
+          setTabUpdates(prev => ({ ...prev, 'CRM Management': true }));
         }
       }
     }, 35000);

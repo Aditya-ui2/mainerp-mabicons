@@ -730,7 +730,7 @@ const CACHE_KEY_JOBS = 'cache_kamJobOpenings';
 const CACHE_KEY_ROLES = 'cache_kamRoleTypes';
 const CACHE_KEY_CLIENTS = 'cache_kamClients';
 
-const SuperAdminTotalOpenPositionsTab = ({ isDarkMode }) => {
+const SuperAdminTotalOpenPositionsTab = ({ isDarkMode, notificationBell }) => {
   // Start with cached data or empty arrays - will fetch real data from API
   const [jobs, setJobs] = useState(() => {
     try { const c = localStorage.getItem(CACHE_KEY_JOBS); return c ? JSON.parse(c) : []; } catch { return []; }
@@ -2175,6 +2175,7 @@ const SuperAdminTotalOpenPositionsTab = ({ isDarkMode }) => {
 
           </div>
           <div className="flex gap-2">
+            {notificationBell}
             {/* Buttons removed for Super Admin */}
           </div>
         </div>

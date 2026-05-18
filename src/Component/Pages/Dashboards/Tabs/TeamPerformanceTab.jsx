@@ -24,7 +24,7 @@ const MOCK_TEAM_DATA = [];
 // MOCK_CLIENTS removed for live database integration
 const MOCK_CLIENTS = [];
 
-const TeamPerformanceTab = ({ fixedDepartment }) => {
+const TeamPerformanceTab = ({ fixedDepartment, notificationBell }) => {
   const [teamData, setTeamData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeMetric, setActiveMetric] = useState('callsDone');
@@ -195,6 +195,7 @@ const TeamPerformanceTab = ({ fixedDepartment }) => {
         </div>
 
         <motion.div variants={itemVariants} className="flex items-center gap-3 flex-wrap relative z-[100]">
+          {notificationBell}
           {/* Client Filter */}
           <div className="relative" ref={clientDropdownRef}>
             <button

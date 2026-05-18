@@ -153,7 +153,7 @@ const groupedOptions = frequencyOptions.map(group => ({
   options: group.options
 }));
 
-const TaskTab = ({ isDarkMode }) => {
+const TaskTab = ({ isDarkMode, notificationBell }) => {
   const [activeId, setActiveId] = useState(null);
   const [newTaskText, setNewTaskText] = useState('');
   const [addingToColumn, setAddingToColumn] = useState(null);
@@ -1216,26 +1216,29 @@ Format:
           </div>
         </div>
 
-        {/* Right Side - Add Task Button */}
-        {userRole !== 'employee' && (
-          <div className="flex items-center gap-4">
-            <button
-              onClick={openAddTaskModal}
-              className="px-6 py-2.5 bg-[#1A1A2E] text-white rounded-xl text-sm font-bold hover:bg-[#2A2A3E] transition-all shadow-lg shadow-slate-200 flex items-center gap-2 active:scale-95"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Add Task
-            </button>
+        {/* Right Side - Add Task Button & Notification Bell */}
+        <div className="flex items-center gap-4">
+          {notificationBell}
+          {userRole !== 'employee' && (
+            <>
+              <button
+                onClick={openAddTaskModal}
+                className="px-6 py-2.5 bg-[#1A1A2E] text-white rounded-xl text-sm font-bold hover:bg-[#2A2A3E] transition-all shadow-lg shadow-slate-200 flex items-center gap-2 active:scale-95"
+              >
+                <PlusIcon className="w-5 h-5" />
+                Add Task
+              </button>
 
-            {/* Button to open Recurring Tasks Modal */}
-            <button
-              onClick={openRecurringTasksModal}
-              className="px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-sm font-bold hover:border-[#E8E7E2] transition-all shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>View Recurring Tasks</span>
-            </button>
-          </div>
-        )}
+              {/* Button to open Recurring Tasks Modal */}
+              <button
+                onClick={openRecurringTasksModal}
+                className="px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-sm font-bold hover:border-[#E8E7E2] transition-all shadow-sm flex items-center gap-2 active:scale-95"
+              >
+                <span>View Recurring Tasks</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Updated Global Add Task Modal */}

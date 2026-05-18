@@ -26,7 +26,7 @@ const getNodeColor = (node) => {
   return '#34495e'; // Employee
 };
 
-const TeamTabs = ({ isDarkMode }) => {
+const TeamTabs = ({ isDarkMode, notificationBell }) => {
   const [orgChart, setOrgChart] = useState({ name: '', children: [] });
   const [selectedMember, setSelectedMember] = useState(null);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -612,6 +612,7 @@ const TeamTabs = ({ isDarkMode }) => {
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>All Employees</h1>
         </div>
         <div className="flex items-center gap-2">
+          {notificationBell}
           {/* Add Button - ONLY for Ashish */}
           {(currentUserName?.toLowerCase()?.includes('ashish')) && (
             <button

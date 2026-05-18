@@ -11,7 +11,7 @@ const priorityConfig = {
   urgent: { color: '#dc2626', bg: '#fff1f2', icon: FiAlertTriangle, label: 'Urgent' },
 };
 
-const AnnouncementsTab = ({ department, isHead = false }) => {
+const AnnouncementsTab = ({ department, isHead = false, notificationBell }) => {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -159,18 +159,21 @@ const AnnouncementsTab = ({ department, isHead = false }) => {
         <div className="flex flex-col text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">Announcements</h1>
         </div>
-        {isHead && (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-bold shadow-lg shadow-blue-500/20 transition-all"
-            style={{ background: '#1B4DA0' }}
-          >
-            <FiPlus size={20} />
-            Post New Alert
-          </motion.button>
-        )}
+        <div className="flex items-center gap-3">
+          {notificationBell}
+          {isHead && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-bold shadow-lg shadow-blue-500/20 transition-all"
+              style={{ background: '#1B4DA0' }}
+            >
+              <FiPlus size={20} />
+              Post New Alert
+            </motion.button>
+          )}
+        </div>
       </div>
 
       {/* Content Section */}

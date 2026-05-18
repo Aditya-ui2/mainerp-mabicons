@@ -109,7 +109,7 @@ const CandidateDetailDrawer = ({ candidate, onClose }) => {
   );
 };
 
-const SuperAdminShortlistedCandidatesTab = () => {
+const SuperAdminShortlistedCandidatesTab = ({ notificationBell }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [timeFilter, setTimeFilter] = useState('all');
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -160,6 +160,9 @@ const SuperAdminShortlistedCandidatesTab = () => {
     <div className="space-y-8 animate-in fade-in duration-500 font-jakarta">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Shortlisted Candidates</h1>
+        <div className="flex items-center gap-3">
+          {notificationBell}
+        </div>
       </div>
 
       <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
