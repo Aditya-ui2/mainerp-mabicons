@@ -52,7 +52,7 @@ const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 const ClientReportingTab = lazy(() => import('./Tabs/CRM/ClientReportingTab'));
 const CompleteOnboardingTab = lazy(() => import('./Tabs/CRM/CompleteOnboardingTab'));
 const ClientsTab = lazy(() => import('./Tabs/CRM/ClientsTab'));
-const SuperAdminInternalSupportTab = lazy(() => import('./Tabs/Common/SuperAdminInternalSupportTab'));
+const EmployeeHelpSupportTab = lazy(() => import('./Tabs/Common/EmployeeHelpSupportTab'));
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -1125,7 +1125,7 @@ const CRMDashboard = () => {
                 transition={{ duration: 0.2 }}
               >
                 <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
-                  <SuperAdminInternalSupportTab />
+                  <EmployeeHelpSupportTab />
                 </Suspense>
               </motion.div>
             )}
@@ -1156,35 +1156,7 @@ const CRMDashboard = () => {
               </motion.div>
             )}
 
-            {activeTab === 'Reports' && (
-              <motion.div
-                key="reports"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="bg-white rounded-[32px] p-12 text-center border border-[#F4F3EF]"
-              >
-                <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                  <FiTrendingUp className="w-10 h-10" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Advanced Reports</h3>
-                <p className="text-[#9B9BAD] max-w-md mx-auto mt-2">Comprehensive CRM analytics and reporting module is being prepared for your account.</p>
-              </motion.div>
-            )}
 
-            {activeTab === 'Notes' && (
-              <motion.div
-                key="notes"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
-              >
-                <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Notes...</div>}>
-                  <NotesTab department="CRM" />
-                </Suspense>
-              </motion.div>
-            )}
 
             {activeTab === 'Leads' && (
               <motion.div
