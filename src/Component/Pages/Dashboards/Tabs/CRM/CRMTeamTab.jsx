@@ -33,7 +33,7 @@ import { toast } from 'react-hot-toast';
 
 import { getDepartmentTeamMembers, deleteDepartmentTeamMember } from '../../../service/api';
 
-const CRMTeamTab = ({ department = '' }) => {
+const CRMTeamTab = ({ department = '', notificationBell }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -157,7 +157,8 @@ const CRMTeamTab = ({ department = '' }) => {
         <div className="text-left">
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>All Employees</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {notificationBell}
           <button
             onClick={() => { setShowInviteModal(true); setModalStep(1); }}
             className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"

@@ -133,7 +133,7 @@ const CircularProgress = ({ progress }) => {
   );
 };
 
-const ClientsTab = () => {
+const ClientsTab = ({ notificationBell }) => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -313,13 +313,16 @@ const ClientsTab = () => {
               Clients
             </h1>
           </div>
-          <button
-            onClick={() => setIsOnboardModalOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center px-6 py-3 rounded-2xl bg-[#1B4DA0] hover:bg-[#153D80] text-white transition-all duration-300 shadow-xl shadow-blue-500/20 active:scale-95 group"
-          >
-            <FiPlus className="mr-2 text-lg transition-transform" />
-            <span className="font-bold uppercase tracking-widest text-[11px]">Add Client</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {notificationBell}
+            <button
+              onClick={() => setIsOnboardModalOpen(true)}
+              className="w-full sm:w-auto flex items-center justify-center px-6 py-3 rounded-2xl bg-[#1B4DA0] hover:bg-[#153D80] text-white transition-all duration-300 shadow-xl shadow-blue-500/20 active:scale-95 group"
+            >
+              <FiPlus className="mr-2 text-lg transition-transform" />
+              <span className="font-bold uppercase tracking-widest text-[11px]">Add Client</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter Bar */}

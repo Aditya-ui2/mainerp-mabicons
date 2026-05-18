@@ -1899,7 +1899,6 @@ const TeamTabs = ({ isDarkMode }) => {
           </div>,
           document.body
         )}
-        )}
       </AnimatePresence>
 
       {/* Performance Modal */}

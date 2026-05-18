@@ -10,7 +10,7 @@ import {
 import { getNotes, createNote, updateNote, deleteNote } from '../../../service/api';
 
 
-const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) => {
+const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment, notificationBell }) => {
   // Use prop if provided, otherwise fallback to localStorage, finally default to Operations
   const department = propDepartment || localStorage.getItem('department') || 'HR Operations';
 
@@ -294,6 +294,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment }) =>
               </div>
 
               <div className="flex items-center gap-3">
+                {notificationBell}
                 <motion.button
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   onClick={() => setView('add')}

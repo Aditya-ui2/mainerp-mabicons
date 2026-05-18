@@ -31,7 +31,8 @@ import {
   FiHelpCircle,
   FiLock,
   FiList,
-  FiBell
+  FiBell,
+  FiFileText
 } from 'react-icons/fi';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -46,6 +47,8 @@ import ClientPipelineTab from './Tabs/CRM/ClientPipelineTab';
 import MyProfileTab from './Tabs/Common/MyProfileTab';
 import HiringLifecycleTab from './Tabs/KAMRecruitment/HiringLifecycleTab';
 import TeamPerformanceTab from './Tabs/TeamPerformanceTab';
+import PolicyTab from './Tabs/KAM/PolicyTab';
+import NotesTab from './Tabs/KAM/NotesTab';
 import AnnouncementsTab from './Tabs/Common/AnnouncementsTab';
 import SuperAdminTotalOpenPositionsTab from './Tabs/Common/SuperAdminTotalOpenPositionsTab';
 import SuperAdminInterviewsTab from './Tabs/Common/SuperAdminInterviewsTab';
@@ -123,6 +126,16 @@ const sidebarConfig = [
           { id: 'Internal', title: 'Internal' },
           { id: 'External', title: 'External' },
         ]
+      },
+      {
+        id: 'HR Policy',
+        title: 'HR Policy',
+        icon: FiClipboard,
+      },
+      {
+        id: 'Notes',
+        title: 'Notes',
+        icon: FiFileText,
       },
       {
         id: 'My Profile',
@@ -573,6 +586,12 @@ const SuperAdminDashboard = () => {
 
       case 'Announcements':
         return <AnnouncementsTab department="All" isHead={true} />;
+
+      case 'HR Policy':
+        return <PolicyTab isDarkMode={false} />;
+
+      case 'Notes':
+        return <NotesTab department="Super Admin" />;
 
       case 'Settings':
       case 'My Profile':

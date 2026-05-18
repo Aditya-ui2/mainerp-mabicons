@@ -152,7 +152,7 @@ const CreateReportModal = ({ isOpen, onClose, clients, onSuccess }) => {
   );
 };
 
-const ClientReportingTab = ({ clients = [] }) => {
+const ClientReportingTab = ({ clients = [], notificationBell }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState([]);
@@ -246,8 +246,8 @@ const ClientReportingTab = ({ clients = [] }) => {
         <div>
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>Client Performance Reports</h1>
         </div>
-        <div className="flex gap-4">
-
+        <div className="flex items-center gap-4">
+          {notificationBell}
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center justify-center gap-3 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[11px] font-black uppercase tracking-[2px] shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"

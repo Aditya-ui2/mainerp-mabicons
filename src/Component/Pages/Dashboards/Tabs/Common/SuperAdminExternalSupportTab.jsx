@@ -38,7 +38,7 @@ const InfoItem = ({ label, value }) => (
   </div>
 );
 
-const SuperAdminExternalSupportTab = () => {
+const SuperAdminExternalSupportTab = ({ notificationBell }) => {
   const [tickets, setTickets] = useState(mockExternalTickets);
   const [searchTerm, setSearchTerm] = useState('');
   const [clientFilter, setClientFilter] = useState('all');
@@ -64,6 +64,7 @@ const SuperAdminExternalSupportTab = () => {
     <div className="space-y-8 animate-in fade-in duration-500 font-jakarta">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">External Support</h1>
+        {notificationBell}
       </div>
 
       <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">

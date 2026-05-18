@@ -36,11 +36,12 @@ import {
   FiMapPin,
   FiClock,
   FiHelpCircle,
+  FiBell,
 } from 'react-icons/fi';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import AdminLayout, { StatCard, StatsBar, DataTable } from './AdminLayout';
-import { getAllClients, getAllLeads, getBDMetrics, clientSignup } from '../service/api';
+import { getAllClients, getAllLeads, getBDMetrics, clientSignup, getAllNotifications, markNotificationRead, markAllNotificationsRead } from '../service/api';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import ClientPipelineTab from './Tabs/CRM/ClientPipelineTab';
@@ -53,6 +54,9 @@ const ClientReportingTab = lazy(() => import('./Tabs/CRM/ClientReportingTab'));
 const CompleteOnboardingTab = lazy(() => import('./Tabs/CRM/CompleteOnboardingTab'));
 const ClientsTab = lazy(() => import('./Tabs/CRM/ClientsTab'));
 const EmployeeHelpSupportTab = lazy(() => import('./Tabs/Common/EmployeeHelpSupportTab'));
+const PolicyTab = lazy(() => import('./Tabs/KAM/PolicyTab'));
+const SuperAdminInternalSupportTab = lazy(() => import('./Tabs/Common/SuperAdminInternalSupportTab'));
+const SuperAdminExternalSupportTab = lazy(() => import('./Tabs/Common/SuperAdminExternalSupportTab'));
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -138,7 +142,16 @@ const sidebarConfig = [
       { id: 12, title: 'All Clients', icon: FiBriefcase },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
       { id: 5, title: 'Reports', icon: FiClipboard },
-      { id: 7, title: 'Help & Support', icon: FiHelpCircle },
+      {
+        id: 'Help & Support',
+        title: 'Help & Support',
+        icon: FiHelpCircle,
+        submenu: [
+          { id: 'Internal', title: 'Internal' },
+          { id: 'External', title: 'External' },
+        ]
+      },
+      { id: 'HR Policy', title: 'HR Policy', icon: FiClipboard },
       { id: 8, title: 'Notes', icon: FiFileText },
     ]
   }
@@ -196,6 +209,134 @@ const CRMDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('crm_active_tab') || 'Dashboard');
   const [loading, setLoading] = useState(true);
+
+  // Notifications State & Logic
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationRef = useRef(null);
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        const userId = decoded.id || decoded.userId;
+        if (userId) {
+          const res = await getAllNotifications(userId);
+          setNotifications(res?.notifications || res || []);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch notifications:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleMarkRead = async (id) => {
+    try {
+      await markNotificationRead(id);
+      setNotifications(prev => prev.map(n => n._id === id || n.id === id ? { ...n, isRead: true, read: true } : n));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        const userId = decoded.id || decoded.userId;
+        if (userId) {
+          await markAllNotificationsRead(userId);
+          setNotifications(prev => prev.map(n => ({ ...n, isRead: true, read: true })));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead && !n.read).length;
+
+  const renderNotificationBell = () => {
+    return (
+      <div className="relative" ref={notificationRef}>
+        <button
+          onClick={() => setNotificationsOpen(!notificationsOpen)}
+          className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FFFDF9] to-[#FFF9E6] border border-[#F5E6C4] shadow-sm hover:shadow-[0_4px_20px_rgba(212,175,55,0.25)] text-[#D4AF37] hover:scale-105 active:scale-95 transition-all relative outline-none"
+          title="Notifications"
+        >
+          <FiBell className="w-5 h-5 animate-pulse" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 bg-rose-500 text-white text-[10px] font-black rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+
+        <AnimatePresence>
+          {notificationsOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 15, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 mt-3 w-80 bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-[#F4F3EF] overflow-hidden z-[99999]"
+            >
+              <div className="p-4 border-b border-[#F4F3EF] bg-[#FFFDF9] flex items-center justify-between">
+                <h3 className="text-[11px] font-black text-[#D4AF37] uppercase tracking-[3px]">Notifications</h3>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={handleMarkAllRead}
+                    className="text-[9px] font-black text-[#1B4DA0] uppercase tracking-wider hover:underline"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-[#F4F3EF] custom-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-[#9B9BAD]">
+                    <FiBell size={32} className="mx-auto mb-3 opacity-20 text-[#D4AF37]" />
+                    <p className="text-xs font-bold">No new alerts</p>
+                  </div>
+                ) : (
+                  notifications.map((n, idx) => (
+                    <div
+                      key={n._id || n.id || idx}
+                      onClick={() => handleMarkRead(n._id || n.id)}
+                      className={`p-4 hover:bg-[#FFFDF9]/40 cursor-pointer transition-colors text-left ${(!n.isRead && !n.read) ? 'bg-[#FFFDF9]/70' : ''}`}
+                    >
+                      <p className={`text-[12px] text-[#1A1A2E] leading-tight ${(!n.isRead && !n.read) ? 'font-bold' : 'font-medium'}`}>{n.message}</p>
+                      <p className="text-[9px] text-[#9B9BAD] mt-1.5 font-bold uppercase tracking-wider">
+                        {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : n.time || 'JUST NOW'}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
 
   useEffect(() => {
     localStorage.setItem('crm_active_tab', activeTab);
@@ -779,6 +920,7 @@ const CRMDashboard = () => {
                     </h1>
                   </div>
                   <div className="flex items-center flex-wrap md:flex-nowrap gap-3">
+                    {renderNotificationBell()}
                     {/* Date Filter Component */}
                     <div className="relative" ref={mainDateFilterRef}>
                       <button
@@ -1072,7 +1214,7 @@ const CRMDashboard = () => {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                <ClientPipelineTab clients={pipelineClients} setClients={setPipelineClients} />
+                <ClientPipelineTab clients={pipelineClients} setClients={setPipelineClients} notificationBell={renderNotificationBell()} />
               </motion.div>
             )}
 
@@ -1085,7 +1227,7 @@ const CRMDashboard = () => {
                 transition={{ duration: 0.2 }}
               >
                 <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
-                  <ClientsTab />
+                  <ClientsTab notificationBell={renderNotificationBell()} />
                 </Suspense>
               </motion.div>
             )}
@@ -1098,7 +1240,7 @@ const CRMDashboard = () => {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                <CRMTeamTab department="" />
+                <CRMTeamTab department="" notificationBell={renderNotificationBell()} />
               </motion.div>
             )}
 
@@ -1111,21 +1253,49 @@ const CRMDashboard = () => {
                 transition={{ duration: 0.2 }}
               >
                 <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Preparing Analytics...</div>}>
-                  <ClientReportingTab clients={clients} />
+                  <ClientReportingTab clients={clients} notificationBell={renderNotificationBell()} />
                 </Suspense>
               </motion.div>
             )}
 
-            {activeTab === 'Help & Support' && (
+            {(activeTab === 'Help & Support' || activeTab === 'Internal') && (
               <motion.div
-                key="support"
+                key="internal-support"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
                 <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
-                  <EmployeeHelpSupportTab />
+                  <SuperAdminInternalSupportTab notificationBell={renderNotificationBell()} />
+                </Suspense>
+              </motion.div>
+            )}
+
+            {activeTab === 'External' && (
+              <motion.div
+                key="external-support"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
+                  <SuperAdminExternalSupportTab notificationBell={renderNotificationBell()} />
+                </Suspense>
+              </motion.div>
+            )}
+
+            {activeTab === 'HR Policy' && (
+              <motion.div
+                key="hr-policy"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
+                  <PolicyTab isDarkMode={false} notificationBell={renderNotificationBell()} />
                 </Suspense>
               </motion.div>
             )}
@@ -1139,7 +1309,7 @@ const CRMDashboard = () => {
                 transition={{ duration: 0.2 }}
               >
                 <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
-                  <NotesTab />
+                  <NotesTab notificationBell={renderNotificationBell()} />
                 </Suspense>
               </motion.div>
             )}
@@ -1963,6 +2133,69 @@ const CRMDashboard = () => {
               document.body
             )}
           </AnimatePresence>
+
+          {/* Floating Notification Bell */}
+          {!['Dashboard', 'Client Pipeline', 'All Clients', 'All Employees', 'Reports', 'Help & Support', 'Internal', 'External', 'HR Policy', 'Notes', 'My Profile'].includes(activeTab) && (
+            <div className="fixed top-5 right-5 lg:right-6 z-[9999]" ref={notificationRef}>
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FFFDF9] to-[#FFF9E6] border border-[#F5E6C4] shadow-sm hover:shadow-[0_4px_20px_rgba(212,175,55,0.25)] text-[#D4AF37] hover:scale-105 active:scale-95 transition-all relative outline-none"
+                title="Notifications"
+              >
+                <FiBell className="w-5 h-5 animate-pulse" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 bg-rose-500 text-white text-[10px] font-black rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {notificationsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 mt-3 w-80 bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-[#F4F3EF] overflow-hidden z-[99999]"
+                  >
+                    <div className="p-4 border-b border-[#F4F3EF] bg-[#FFFDF9] flex items-center justify-between">
+                      <h3 className="text-[11px] font-black text-[#D4AF37] uppercase tracking-[3px]">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={handleMarkAllRead}
+                          className="text-[9px] font-black text-[#1B4DA0] uppercase tracking-wider hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-[#F4F3EF] custom-scrollbar">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center text-[#9B9BAD]">
+                          <FiBell size={32} className="mx-auto mb-3 opacity-20 text-[#D4AF37]" />
+                          <p className="text-xs font-bold">No new alerts</p>
+                        </div>
+                      ) : (
+                        notifications.map((n, idx) => (
+                          <div
+                            key={n._id || n.id || idx}
+                            onClick={() => handleMarkRead(n._id || n.id)}
+                            className={`p-4 hover:bg-[#FFFDF9]/40 cursor-pointer transition-colors text-left ${(!n.isRead && !n.read) ? 'bg-[#FFFDF9]/70' : ''}`}
+                          >
+                            <p className={`text-[12px] text-[#1A1A2E] leading-tight ${(!n.isRead && !n.read) ? 'font-bold' : 'font-medium'}`}>{n.message}</p>
+                            <p className="text-[9px] text-[#9B9BAD] mt-1.5 font-bold uppercase tracking-wider">
+                              {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : n.time || 'JUST NOW'}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>

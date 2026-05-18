@@ -51,7 +51,7 @@ const DetailCard = ({ label, value }) => (
   </div>
 );
 
-export default function ClientPipelineTab({ clients: propClients = [], setClients: setPropClients }) {
+export default function ClientPipelineTab({ clients: propClients = [], setClients: setPropClients, notificationBell }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -349,6 +349,7 @@ export default function ClientPipelineTab({ clients: propClients = [], setClient
             Sync Data
           </button>
 
+          {notificationBell}
           <button
             onClick={() => setIsAddOpen(true)}
             className="flex items-center gap-2.5 px-8 py-4 bg-[#1B4DA0] text-white rounded-2xl text-[14px] font-bold hover:bg-[#153e82] transition-all duration-300 shadow-[0_10px_25px_rgba(27,77,160,0.25)] hover:shadow-[0_15px_35px_rgba(27,77,160,0.35)] active:scale-95"

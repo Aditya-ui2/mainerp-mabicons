@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { FiBook, FiPlus, FiEdit2, FiTrash2, FiDownload, FiEye, FiCalendar, FiAlertCircle, FiCheckCircle, FiSearch, FiChevronDown, FiX, FiFileText, FiLayers, FiArrowLeft, FiTarget, FiUser } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const PolicyTab = ({ isDarkMode, selectedClient }) => {
+const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,15 +87,18 @@ const PolicyTab = ({ isDarkMode, selectedClient }) => {
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setView('add')}
-                className="flex items-center justify-center gap-2.5 px-6 py-3 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[1.2rem] font-black shadow-xl shadow-blue-500/30 transition-all text-[11px] font-[Outfit]"
-              >
-                <FiPlus className="w-4 h-4" />
-                Add New Policy
-              </motion.button>
+              <div className="flex items-center gap-4">
+                {notificationBell}
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setView('add')}
+                  className="flex items-center justify-center gap-2.5 px-6 py-3 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[1.2rem] font-black shadow-xl shadow-blue-500/30 transition-all text-[11px] font-[Outfit]"
+                >
+                  <FiPlus className="w-4 h-4" />
+                  Add New Policy
+                </motion.button>
+              </div>
             </div>
 
             {/* Premium Stat Cards */}
