@@ -44,16 +44,16 @@ const CRMTeamTab = ({ department = '' }) => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignment, setAssignment] = useState({ title: '', type: 'client', notes: '' });
   const [roleFilter, setRoleFilter] = useState('all');
-  const [newMember, setNewMember] = useState({ 
-    name: '', 
-    role: 'employee', 
-    leader: '', 
-    department: 'Operations', 
-    otherRole: '', 
-    otherDepartment: '', 
-    email: '', 
+  const [newMember, setNewMember] = useState({
+    name: '',
+    role: 'employee',
+    leader: '',
+    department: 'Operations',
+    otherRole: '',
+    otherDepartment: '',
+    email: '',
     phone: '',
-    documents: {} 
+    documents: {}
   });
   const [modalStep, setModalStep] = useState(1);
 
@@ -155,7 +155,7 @@ const CRMTeamTab = ({ department = '' }) => {
       {/* Header Section */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4 text-left">
         <div className="text-left">
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
+          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>All Employees</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
