@@ -1,18 +1,91 @@
-
-
-import { useState, useEffect } from 'react';
-import { FiBook, FiPlus, FiEdit2, FiTrash2, FiDownload, FiEye, FiCalendar, FiAlertCircle, FiCheckCircle, FiSearch, FiChevronDown, FiX, FiFileText, FiLayers, FiArrowLeft, FiTarget, FiUser } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FiBook,
+  FiPlus,
+  FiEdit2,
+  FiEdit3,
+  FiTrash,
+  FiTrash2,
+  FiDownload,
+  FiCalendar,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiSearch,
+  FiChevronDown,
+  FiChevronRight,
+  FiX,
+  FiFileText,
+  FiLayers,
+  FiArrowLeft,
+  FiUser,
+  FiCheck,
+  FiDatabase,
+  FiShield,
+  FiActivity,
+  FiInfo
+} from 'react-icons/fi';
+
+const InfoItem = ({ label, value, subValue, fullWidth = false, isEditing, onChange, type = "text" }) => (
+  <div className={`space-y-1.5 ${fullWidth ? 'col-span-full' : ''}`}>
+    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{label}</label>
+    <div className="bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">
+      {isEditing ? (
+        <input
+          type={type}
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full text-sm font-bold text-[#1A1A2E] bg-transparent border-none focus:outline-none"
+        />
+      ) : (
+        <>
+          <p className="text-sm font-bold text-[#1A1A2E]">{value || 'N/A'}</p>
+          {subValue && <p className="text-[10px] font-medium text-[#6B6B7E] mt-0.5">{subValue}</p>}
+        </>
+      )}
+    </div>
+  </div>
+);
 
 const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [view, setView] = useState('list');
-  const [selectedPolicy, setSelectedPolicy] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedIds, setSelectedIds] = useState([]);
 
-  const categories = ['HR Management', 'Leave Management', 'Attendance Protocol', 'Code Of Conduct', 'IT Security', 'Travel & Expense', 'Health & Safety', 'Compliance Hub'];
+  // Modals & Panels State
+  const [selectedPolicyDetail, setSelectedPolicyDetail] = useState(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [policyToDelete, setPolicyToDelete] = useState(null);
+
+  // Editing state inside Detail view
+  const [isEditingDetail, setIsEditingDetail] = useState(false);
+  const [editablePolicy, setEditablePolicy] = useState(null);
+
+  // Form State for New Policy
+  const [newPolicy, setNewPolicy] = useState({
+    title: '',
+    category: 'HR Management',
+    description: '',
+    version: '1.0',
+    effectiveFrom: new Date().toISOString().split('T')[0],
+    status: 'active',
+    updatedBy: 'HR Manager'
+  });
+
+  const categories = [
+    'HR Management',
+    'Leave Management',
+    'Attendance Protocol',
+    'Code Of Conduct',
+    'IT Security',
+    'Travel & Expense',
+    'Health & Safety',
+    'Compliance Hub'
+  ];
 
   useEffect(() => {
     const mockData = [
@@ -23,363 +96,672 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
       { id: 5, title: 'Travel & Expense Policy', category: 'Travel & Expense', description: 'Business travel guidelines, expense claims, and reimbursement procedures.', version: '1.8', effectiveFrom: '2025-04-01', status: 'under-review', lastUpdated: '2026-02-10', updatedBy: 'Finance Team' },
       { id: 6, title: 'Attendance Policy', category: 'Attendance Protocol', description: 'Working hours, punctuality expectations, overtime rules, and attendance tracking.', version: '2.2', effectiveFrom: '2026-01-01', status: 'active', lastUpdated: '2025-12-20', updatedBy: 'HR Manager' },
     ];
-    setTimeout(() => {
+
+    setLoading(true);
+    const timer = setTimeout(() => {
       setPolicies(mockData);
       setLoading(false);
     }, 500);
+    return () => clearTimeout(timer);
   }, [selectedClient]);
 
-  const statCards = [
-    { key: 'total', label: 'Policy Collection', value: policies.length, icon: FiBook, gradient: 'from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1]' },
-    { key: 'active', label: 'Active Directives', value: policies.filter(p => p.status === 'active').length, icon: FiCheckCircle, gradient: 'from-[#81C784] via-[#66BB6A] to-[#43A047]' },
-    { key: 'review', label: 'Audit Required', value: policies.filter(p => p.status === 'under-review').length, icon: FiAlertCircle, gradient: 'from-[#FFB300] to-[#F57C00]' },
-    { key: 'cats', label: 'Registry Units', value: [...new Set(policies.map(p => p.category))].length, icon: FiLayers, gradient: 'from-[#6366F1] to-[#4F46E5]' },
-  ];
-
-  const filteredPolicies = policies.filter(policy => {
-    const matchesSearch = policy.title.toLowerCase().includes(searchTerm.toLowerCase()) || policy.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || policy.category === filterCategory;
+  // Filtering Logic
+  const filteredPolicies = policies.filter(p => {
+    const matchesSearch =
+      (p.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.updatedBy || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'ALL' || p.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  if (loading) {
-    return (
-      <div className="space-y-6 text-left">
-        <div className={`h-8 w-64 rounded-lg animate-pulse ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className={`h-28 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
-          ))}
-        </div>
-        <div className={`h-96 rounded-2xl animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
-      </div>
-    );
-  }
+  const handleToggleStatus = (policyId) => {
+    setPolicies(prev => prev.map(p => {
+      if (p.id === policyId) {
+        const nextStatus = p.status === 'active' ? 'under-review' : 'active';
+        return { ...p, status: nextStatus };
+      }
+      return p;
+    }));
+  };
+
+  const handleCreatePolicy = (e) => {
+    e.preventDefault();
+    if (!newPolicy.title || !newPolicy.description) return;
+
+    const created = {
+      ...newPolicy,
+      id: Date.now(),
+      lastUpdated: new Date().toISOString().split('T')[0]
+    };
+
+    setPolicies(prev => [created, ...prev]);
+    setIsAddModalOpen(false);
+
+    // Reset Form
+    setNewPolicy({
+      title: '',
+      category: 'HR Management',
+      description: '',
+      version: '1.0',
+      effectiveFrom: new Date().toISOString().split('T')[0],
+      status: 'active',
+      updatedBy: 'HR Manager'
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (policyToDelete) {
+      setPolicies(prev => prev.filter(p => p.id !== policyToDelete.id));
+      setSelectedIds(prev => prev.filter(id => id !== policyToDelete.id));
+      if (selectedPolicyDetail && selectedPolicyDetail.id === policyToDelete.id) {
+        setSelectedPolicyDetail(null);
+      }
+      setIsDeleteModalOpen(false);
+      setPolicyToDelete(null);
+    }
+  };
+
+  const handleSaveDetailEdits = () => {
+    if (editablePolicy) {
+      setPolicies(prev => prev.map(p => p.id === editablePolicy.id ? { ...editablePolicy, lastUpdated: new Date().toISOString().split('T')[0] } : p));
+      setSelectedPolicyDetail({ ...editablePolicy, lastUpdated: new Date().toISOString().split('T')[0] });
+      setIsEditingDetail(false);
+    }
+  };
+
+  const startEditingDetail = () => {
+    setEditablePolicy({ ...selectedPolicyDetail });
+    setIsEditingDetail(true);
+  };
 
   return (
-    <div className={`relative min-h-[600px] ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-      <AnimatePresence mode="wait">
-        {view === 'list' && (
-          <motion.div
-            key="list"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="space-y-10"
-          >
-            {/* Premium Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-12">
-              <div className="flex items-center gap-4 text-left">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-xl shadow-blue-500/20">
-                  <FiBook className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-3xl lg:text-4xl font-black text-[#1E88E5] tracking-tight mb-1 font-[Outfit]">
-                    Policy Management
-                  </h2>
-                  <div className="flex items-center gap-2 text-slate-600 font-bold font-[Outfit]">
-                    <FiCalendar className="w-4 h-4" />
-                    <span className="text-sm">
-                      Company Directives • {policies.length} Assets Registered
-                    </span>
-                  </div>
-                </div>
-              </div>
+    <>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 text-left font-[Outfit]">
 
-              <div className="flex items-center gap-4">
-                {notificationBell}
-                <motion.button
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setView('add')}
-                  className="flex items-center justify-center gap-2.5 px-6 py-3 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[1.2rem] font-black shadow-xl shadow-blue-500/30 transition-all text-[11px] font-[Outfit]"
-                >
-                  <FiPlus className="w-4 h-4" />
-                  Add New Policy
-                </motion.button>
-              </div>
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 text-left">
+          <div className="flex flex-col text-left">
+            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Policy Management
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            {notificationBell}
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="w-full sm:w-auto flex items-center justify-center px-6 py-3 rounded-2xl bg-[#1B4DA0] hover:bg-[#153D80] text-white transition-all duration-300 shadow-xl shadow-blue-500/20 active:scale-95 group"
+            >
+              <FiPlus className="mr-2 text-lg" />
+              <span className="font-bold uppercase tracking-widest text-[11px]">Add Policy</span>
+            </button>
+          </div>
+        </div>
 
-            {/* Premium Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {statCards.map((stat, index) => (
-                <motion.div
-                  key={stat.key}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`relative overflow-hidden rounded-3xl p-8 border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-[#edf3ff] border-white shadow-lg shadow-blue-500/5'}`}
-                >
-                  <div className="relative z-10 flex flex-col h-full gap-4 text-left font-[Outfit]">
-                    <div className={`p-2.5 rounded-xl bg-gradient-to-br ${stat.gradient} w-fit shadow-lg shadow-blue-500/10`}>
-                      <stat.icon className="w-4 h-4 text-white" />
-                    </div>
-                    <p className={`text-[13px] font-black ${isDarkMode ? 'text-slate-400' : 'text-slate-800'}`}>
-                      {stat.label}
-                    </p>
-                    <div className="flex items-baseline gap-2">
-                      <span className={`text-4xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                        {stat.value}
-                      </span>
-                    </div>
-                    <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-white/50'}`}>
-                      <motion.div initial={{ width: 0 }} animate={{ width: '80%' }} className={`h-full bg-gradient-to-r ${stat.gradient}`} />
-                    </div>
-                  </div>
-                </motion.div>
+        {/* Filter Bar */}
+        <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap mb-8">
+          <div className="relative flex-1 group min-w-[200px]">
+            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search policies by title or description..."
+              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3.5 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#F4F3EF] outline-none transition-all placeholder:text-[#9B9BAD]"
+            />
+          </div>
+
+          <div className="relative group">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="bg-[#F4F3EF] text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[180px] hover:bg-[#EEF2FB] transition-all"
+            >
+              <option value="ALL">GLOBAL RESOURCE HUB</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat.toUpperCase()}</option>
               ))}
-            </div>
+            </select>
+            <FiChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1B4DA0] opacity-50 group-hover:opacity-100 transition-all pointer-events-none" />
+          </div>
+        </div>
 
-            {/* Filter Hub */}
-            <div className="flex flex-col sm:flex-row gap-6 font-[Outfit]">
-              <div className="relative flex-1 group">
-                <FiSearch className={`absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 transition-colors group-focus-within:text-blue-500 ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`} />
-                <input
-                  type="text"
-                  placeholder="Search Active Directives..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full rounded-[1.5rem] border-2 px-6 py-4 pl-14 transition-all focus:ring-4 focus:ring-blue-500/10 outline-none font-bold text-[11px] ${isDarkMode ? 'bg-slate-900/60 border-slate-800 text-white' : 'bg-white border-slate-100 shadow-sm'}`}
-                />
+        {/* Data Table */}
+        <div className="bg-white rounded-[24px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+          <div className="overflow-x-auto min-h-[400px] flex flex-col">
+            {loading ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-20">
+                <div className="w-12 h-12 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-[#6B6B7E] font-medium">Loading directives...</p>
               </div>
-              <div className="relative group">
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className={`appearance-none rounded-[1.5rem] border-2 px-10 py-4 pr-16 font-black text-[11px] cursor-pointer transition-all outline-none ${isDarkMode ? 'bg-slate-900/60 border-slate-800 text-white' : 'bg-white border-slate-100 shadow-sm'}`}
+            ) : filteredPolicies.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-8">
+                <div className="w-20 h-20 bg-[#F4F3EF] rounded-full flex items-center justify-center mb-6 text-[#1B4DA0]">
+                  <FiDatabase size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1A1A2E] mb-2">No directives found</h3>
+                <p className="text-[#6B6B7E] max-w-xs mx-auto mb-8">
+                  {searchQuery ? `No policies match your search "${searchQuery}"` : "We couldn't find any policies registered in the database."}
+                </p>
+                <button
+                  onClick={() => { setSearchQuery(''); setSelectedCategory('ALL'); }}
+                  className="px-6 py-3 bg-[#1B4DA0] text-white rounded-xl font-bold text-sm hover:bg-[#153a7a] transition-all shadow-lg"
                 >
-                  <option value="all">Global Resource Hub</option>
-                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
-                <FiChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-slate-400" />
+                  Clear Filters
+                </button>
               </div>
-            </div>
-
-            {/* Policy Collection Board - Horizontal List Layout */}
-            <div className="flex flex-col gap-6 pb-12 max-w-6xl mx-auto font-[Outfit]">
-              {filteredPolicies.map((policy, index) => (
-                <motion.div
-                  key={policy.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => { setSelectedPolicy(policy); setView('details'); }}
-                  className={`group relative overflow-hidden rounded-[2rem] border transition-all duration-300 cursor-pointer ${isDarkMode ? 'bg-slate-900 border-slate-800 hover:border-[#1E88E5]' : 'bg-[#f8fbff] border-white shadow-sm hover:shadow-md hover:border-blue-500/20'
-                    }`}
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between p-6 px-10 gap-6">
-                    <div className="flex items-center gap-8 min-w-[300px] text-left">
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] flex items-center justify-center text-white font-black text-2xl shadow-lg shrink-0">
-                        <FiFileText className="w-8 h-8" />
-                      </div>
-                      <div className="flex flex-col text-left">
-                        <h3 className="font-black text-xl text-slate-900 dark:text-white leading-tight capitalize">{policy.title}</h3>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-[#1E88E5] rounded-full text-[10px] font-black uppercase tracking-[0.1em] border border-blue-100 dark:border-blue-800">
+            ) : (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-[#F4F3EF]">
+                    <th className="px-6 py-4 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Directive Identification</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Classification</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Effective From</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-[#9B9BAD] uppercase tracking-widest text-left">Status</th>
+                    <th className="px-6 py-4 w-12"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPolicies.map((policy) => {
+                    const isSelected = selectedIds.includes(policy.id);
+                    return (
+                      <tr
+                        key={policy.id}
+                        onClick={() => { setSelectedPolicyDetail(policy); setIsEditingDetail(false); }}
+                        className={`hover:bg-[#F8FAFF] transition-all duration-300 group cursor-pointer ${isSelected ? 'bg-blue-50/50' : ''}`}
+                      >
+                        <td className="px-6 py-6 text-left whitespace-nowrap">
+                          <div className="flex flex-col text-left">
+                            <span className="text-sm font-bold text-[#1A1A2E] leading-tight">{policy.title}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-6 text-left whitespace-nowrap">
+                          <span className="px-3 py-1.5 bg-[#EEF2FB] text-[#1B4DA0] rounded-full text-[10px] font-black uppercase tracking-widest border border-[#D0DFFA]">
                             {policy.category}
                           </span>
-                          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 line-clamp-1">
-                            {policy.description.substring(0, 60)}...
+                        </td>
+                        <td className="px-6 py-6 text-left whitespace-nowrap">
+                          <span className="text-[12px] font-bold text-[#6B6B7E]">
+                            {new Date(policy.effectiveFrom).toLocaleDateString('en-IN')}
                           </span>
-                        </div>
-                      </div>
-                    </div>
+                        </td>
+                        <td className="px-6 py-6 text-left whitespace-nowrap">
+                          <div className="flex items-center">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleStatus(policy.id);
+                              }}
+                              className={`px-4 py-1.5 rounded-full flex items-center gap-2 border transition-all ${
+                                policy.status === 'active'
+                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
+                                  : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100'
+                              }`}
+                            >
+                              <div className={`w-2 h-2 rounded-full ${policy.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                              <span className="text-[10px] font-black uppercase tracking-wider">{policy.status}</span>
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-6 py-6 text-right whitespace-nowrap">
+                          <FiChevronRight className="inline-block text-[#9B9BAD] group-hover:text-blue-600 transition-colors" size={18} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
-                    <div className="hidden lg:flex items-center gap-12 text-left shrink-0">
-                      <div className="flex flex-col">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Version</p>
-                        <p className="text-sm font-black text-slate-700 dark:text-slate-200">Revision {policy.version}</p>
-                      </div>
-                      <div className="flex flex-col">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Effective</p>
-                        <p className="text-sm font-black text-slate-700 dark:text-slate-200">{new Date(policy.effectiveFrom).toLocaleDateString('en-IN')}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 shrink-0">
-                      <div className={`px-5 py-2.5 rounded-full flex items-center gap-2.5 border ${policy.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                        <div className={`w-2 h-2 rounded-full ${policy.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
-                        <span className="text-[11px] font-black uppercase tracking-widest">{policy.status}</span>
-                      </div>
-                      <motion.button className="p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-xl hover:text-[#1E88E5] transition-colors border border-slate-100 dark:border-slate-700">
-                        <FiDownload className="w-5 h-5" />
-                      </motion.button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {view === 'add' && (
+      {/* Bulk Action Bar */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
           <motion.div
-            key="add"
-            initial={{ x: '100%', opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="space-y-10 font-[Outfit]"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-10 left-[100px] bg-[#1A1A2E] text-white px-8 py-5 rounded-[28px] shadow-2xl flex items-center gap-10 z-[1000] border border-white/10"
           >
-            <div className="flex flex-col gap-8">
-              <motion.button
-                whileHover={{ x: -10 }}
-                onClick={() => setView('list')}
-                className="flex items-center gap-2.5 self-start px-6 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-black text-[11px]"
-              >
-                <FiArrowLeft className="w-4 h-4" />
-                Return To Registry
-              </motion.button>
-              <div className="flex items-center gap-6 text-left">
-                <div className="p-6 rounded-[2.5rem] bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] shadow-2xl shadow-blue-500/20">
-                  <FiPlus className="w-12 h-12 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tight">Create New directive</h2>
-                  <p className="text-sm font-bold text-[#1E88E5] mt-3 ml-1">Company Policy Architecture</p>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center font-black text-sm">
+                {selectedIds.length}
               </div>
-            </div>
-
-            <div className={`p-16 rounded-[4rem] border-2 ${isDarkMode ? 'bg-slate-900 border-slate-800 shadow-2xl' : 'bg-white border-slate-100 shadow-2xl shadow-blue-500/10'}`}>
-              <form className="space-y-12 text-left">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <div className="space-y-4">
-                    <label className="block text-[11px] font-black text-[#1E88E5] ml-2">Policy Title Identification</label>
-                    <input type="text" placeholder="Enter Reference Title" className={`w-full rounded-2xl border-2 px-6 py-5 transition-all outline-none font-bold text-base ${isDarkMode ? 'bg-slate-800/50 border-slate-700 focus:border-blue-500' : 'bg-slate-50 border-slate-100 focus:border-blue-500'}`} />
-                  </div>
-                  <div className="space-y-4">
-                    <label className="block text-[11px] font-black text-[#1E88E5] ml-2">Classification category</label>
-                    <select className={`w-full rounded-2xl border-2 px-6 py-5 transition-all outline-none font-black text-[11px] uppercase tracking-widest cursor-pointer ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                      {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                  </div>
-                  <div className="col-span-1 md:col-span-2 space-y-4">
-                    <label className="block text-[11px] font-black text-[#1E88E5] ml-2">Policy Operational Guidelines</label>
-                    <textarea rows={5} placeholder="Define policy description and scope..." className={`w-full rounded-[2rem] border-2 px-8 py-6 outline-none font-bold text-sm ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100 focus:border-blue-500'}`} />
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -5 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setView('list')}
-                    className="px-12 py-6 bg-gradient-to-r from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] text-white rounded-[2rem] font-black text-[13px] shadow-2xl shadow-blue-500/40 uppercase tracking-widest"
-                  >
-                    Authenticate & Publish
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    onClick={() => setView('list')}
-                    className="px-12 py-6 bg-transparent border-2 border-slate-100 dark:border-slate-800 text-slate-400 rounded-[2rem] font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-[Outfit]"
-                  >
-                    Discard Draft
-                  </motion.button>
-                </div>
-              </form>
-            </div>
-          </motion.div>
-        )}
-
-        {view === 'details' && selectedPolicy && (
-          <motion.div
-            key="details"
-            initial={{ x: '100%', opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="space-y-10 font-[Outfit]"
-          >
-            <div className="flex flex-col gap-8">
-              <motion.button
-                whileHover={{ x: -10 }}
-                onClick={() => setView('list')}
-                className="flex items-center gap-2.5 self-start px-6 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-black text-[11px]"
-              >
-                <FiArrowLeft className="w-4 h-4" />
-                Return To Registry
-              </motion.button>
-              <div className="flex items-center gap-8 text-left">
-                <div className="w-32 h-32 rounded-[2.5rem] bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] flex items-center justify-center text-white font-black text-5xl shadow-2xl shadow-blue-500/30">
-                  <FiBook className="w-16 h-16" />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tight capitalize leading-none">{selectedPolicy.title}</h2>
-                  <div className="flex items-center gap-3 mt-4">
-                    <span className="px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-[#1E88E5] rounded-full text-[11px] font-black">{selectedPolicy.category}</span>
-                    <span className={`px-4 py-1.5 rounded-full text-[11px] font-black capitalize ${selectedPolicy.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>Audit {selectedPolicy.status}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
-              <div className={`col-span-1 lg:col-span-2 p-12 rounded-[3.5rem] border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-2xl shadow-blue-500/5'}`}>
-                <div className="space-y-10">
-                  <div className="border-b border-slate-100 dark:border-slate-800 pb-8 space-y-4">
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">Directive Operational Framework</h3>
-                    <p className="text-base font-bold text-slate-500 dark:text-slate-400 leading-relaxed">{selectedPolicy.description}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800">
-                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Registry Version</p>
-                      <p className="text-xl font-extrabold text-slate-800 dark:text-white">Revision {selectedPolicy.version}</p>
-                    </div>
-                    <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800">
-                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Effective Timeline</p>
-                      <p className="text-xl font-extrabold text-slate-800 dark:text-white">{new Date(selectedPolicy.effectiveFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                    </div>
-                  </div>
-                  <div className="p-8 rounded-[2.5rem] border-2 border-[#1E88E5]/20 bg-blue-50/20 dark:bg-blue-900/10 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-lg font-black text-[#1E88E5]">Full Digital Documentation</h4>
-                      <p className="text-xs font-bold text-slate-400 mt-1">Acquire technical PDF formatting for reference.</p>
-                    </div>
-                    <motion.button whileHover={{ scale: 1.1 }} className="p-5 bg-gradient-to-br from-[#3FA9F5] via-[#1E88E5] to-[#0D47A1] rounded-2xl text-white shadow-xl shadow-blue-500/30">
-                      <FiDownload className="w-6 h-6" />
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-8">
-                <div className={`p-10 rounded-[3rem] border ${isDarkMode ? 'bg-slate-900 border-slate-800 shadow-2xl' : 'bg-gradient-to-br from-[#1E88E5] to-[#0D47A1] border-blue-500 shadow-2xl shadow-blue-500/20'}`}>
-                  <div className="space-y-6 text-white text-left">
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Audit Matrix</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-black">Fully Certified</span>
-                      <FiCheckCircle className="w-8 h-8 text-emerald-400" />
-                    </div>
-                    <div className="w-full h-2 rounded-full overflow-hidden bg-white/20">
-                      <div className="w-full h-full bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.5)]"></div>
-                    </div>
-                    <div className="space-y-4 pt-4 border-t border-white/10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-black text-sm">HR</div>
-                        <div>
-                          <p className="text-xs font-black opacity-60 uppercase">Registry Auditor</p>
-                          <p className="text-sm font-black">{selectedPolicy.updatedBy}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02, y: -5 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setView('list')}
-                  className="w-full px-12 py-6 bg-slate-900 dark:bg-slate-800 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-[0.3em] shadow-2xl flex items-center justify-center gap-3 border border-slate-800 dark:border-slate-700"
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest">Policies Selected</p>
+                <button
+                  onClick={() => setSelectedIds([])}
+                  className="text-[10px] font-bold text-red-400 hover:text-red-300 uppercase tracking-widest mt-0.5"
                 >
-                  Return To Registry
-                </motion.button>
+                  Deselect All
+                </button>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setPolicies(prev => prev.filter(p => !selectedIds.includes(p.id)));
+                  setSelectedIds([]);
+                }}
+                className="px-6 py-3.5 bg-red-500 hover:bg-red-600 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg flex items-center gap-2"
+              >
+                <FiTrash size={14} /> Delete Selected
+              </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+
+      {/* Policy Details Modal */}
+      {selectedPolicyDetail && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[200000]">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl"
+              onClick={() => { setSelectedPolicyDetail(null); setIsEditingDetail(false); }}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 30, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 w-full max-w-[698px] bg-white shadow-2xl border-l border-[#F4F3EF] flex flex-col z-[200001] overflow-hidden font-[Outfit]"
+            >
+              {/* Drawer Header - Sticky Style */}
+              <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20 text-left">
+                <div className="flex-1 mr-4">
+                  <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne outline-none">
+                    {isEditingDetail ? 'Edit Policy Directive' : selectedPolicyDetail.title}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
+                    <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-[3px] outline-none truncate">
+                      {isEditingDetail ? 'Modify reference parameters' : selectedPolicyDetail.category}
+                    </span>
+                    {!isEditingDetail && (
+                      <>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E8E7E2] flex-shrink-0" />
+                        <span className={`text-[10px] font-bold uppercase tracking-[3px] outline-none ${
+                          selectedPolicyDetail.status === 'active' ? 'text-emerald-600' : 'text-amber-600'
+                        }`}>
+                          {selectedPolicyDetail.status}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {!isEditingDetail && (
+                    <>
+                      <button
+                        onClick={startEditingDetail}
+                        className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-blue-50 hover:text-[#1B4DA0] transition-all border border-[#E8E7E2] hover:border-blue-100 shadow-sm"
+                        title="Edit Policy"
+                      >
+                        <FiEdit2 size={20} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPolicyToDelete(selectedPolicyDetail);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] hover:border-red-100 shadow-sm"
+                        title="Delete Policy"
+                      >
+                        <FiTrash2 size={20} />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => { setSelectedPolicyDetail(null); setIsEditingDetail(false); }}
+                    className="w-12 h-12 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-[#E8E7E2] hover:border-red-100 shadow-sm"
+                    title="Close"
+                  >
+                    <FiX size={22} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Drawer Content */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-8 space-y-10 text-left">
+                
+                {/* Big Avatar Branding */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-24 h-24 rounded-[32px] bg-[#F8FAFC] text-[#475569] flex items-center justify-center text-3xl font-extrabold shadow-xl border border-[#F1F5F9] mb-6">
+                    {(selectedPolicyDetail.title || 'P').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+                      {isEditingDetail ? (
+                        <input
+                          type="text"
+                          value={editablePolicy?.title}
+                          onChange={(e) => setEditablePolicy({ ...editablePolicy, title: e.target.value })}
+                          className="w-full text-center border-b-2 border-[#1B4DA0] focus:outline-none py-1 font-bold text-2xl bg-transparent"
+                        />
+                      ) : (
+                        selectedPolicyDetail.title
+                      )}
+                    </h4>
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="px-4 py-1.5 bg-blue-50 text-[#1B4DA0] rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                        {isEditingDetail ? (
+                          <select
+                            value={editablePolicy?.category}
+                            onChange={(e) => setEditablePolicy({ ...editablePolicy, category: e.target.value })}
+                            className="bg-transparent border-none text-[#1B4DA0] outline-none font-bold"
+                          >
+                            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                          </select>
+                        ) : (
+                          selectedPolicyDetail.category
+                        )}
+                      </span>
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${selectedPolicyDetail.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                        {selectedPolicyDetail.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Information Grid */}
+                <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-10 shadow-sm">
+                  
+                  {/* Identity parameters */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                      <FiShield className="text-[#1B4DA0]" size={18} />
+                      <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Directive Identity</h5>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                      <InfoItem
+                        label="Registry Version"
+                        value={isEditingDetail ? editablePolicy?.version : `Revision ${selectedPolicyDetail.version}`}
+                        isEditing={isEditingDetail}
+                        onChange={(val) => setEditablePolicy({ ...editablePolicy, version: val })}
+                      />
+                      <InfoItem
+                        label="Updated By / Auditor"
+                        value={isEditingDetail ? editablePolicy?.updatedBy : selectedPolicyDetail.updatedBy}
+                        isEditing={isEditingDetail}
+                        onChange={(val) => setEditablePolicy({ ...editablePolicy, updatedBy: val })}
+                      />
+                      <InfoItem
+                        label="Effective From"
+                        value={isEditingDetail ? editablePolicy?.effectiveFrom : new Date(selectedPolicyDetail.effectiveFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        isEditing={isEditingDetail}
+                        type="date"
+                        onChange={(val) => setEditablePolicy({ ...editablePolicy, effectiveFrom: val })}
+                      />
+                      <InfoItem
+                        label="Last Audited"
+                        value={selectedPolicyDetail.lastUpdated ? new Date(selectedPolicyDetail.lastUpdated).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
+                        isEditing={false}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Operational guidelines */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                      <FiFileText className="text-[#1B4DA0]" size={18} />
+                      <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Guidelines & Scope</h5>
+                    </div>
+                    <div className="col-span-full">
+                      {isEditingDetail ? (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Directive Description</label>
+                          <textarea
+                            value={editablePolicy?.description}
+                            onChange={(e) => setEditablePolicy({ ...editablePolicy, description: e.target.value })}
+                            rows={4}
+                            className="w-full text-sm font-bold text-[#1A1A2E] bg-white border border-[#F4F3EF] p-4 rounded-xl focus:outline-none"
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-[13px] font-bold text-slate-500 leading-relaxed bg-white border border-[#F4F3EF] p-5 rounded-2xl shadow-sm">
+                          {selectedPolicyDetail.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* PDF download banner */}
+                {!isEditingDetail && (
+                  <div className="p-6 rounded-[2.5rem] border border-[#1B4DA0]/20 bg-blue-50/20 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-[14px] font-black text-[#1B4DA0]">Certified Documentation</h4>
+                      <p className="text-[10px] font-bold text-slate-400 mt-1">Acquire technical PDF formatting for reference.</p>
+                    </div>
+                    <button className="p-4 bg-gradient-to-br from-[#1B4DA0] to-[#0D47A1] rounded-2xl text-white shadow-xl hover:scale-105 active:scale-95 transition-all">
+                      <FiDownload className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Actions Grid */}
+                {isEditingDetail && (
+                  <div className="flex gap-4 pt-4 border-t border-[#F4F3EF]">
+                    <button
+                      onClick={handleSaveDetailEdits}
+                      className="flex-1 py-4 bg-[#1B4DA0] hover:bg-[#153D80] rounded-2xl text-[11px] font-black uppercase tracking-widest text-white transition-all shadow-lg"
+                    >
+                      Save Modifications
+                    </button>
+                    <button
+                      onClick={() => setIsEditingDetail(false)}
+                      className="flex-1 py-4 bg-transparent border-2 border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-[#FAFAF8] transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+              </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Add Policy Modal */}
+      {isAddModalOpen && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[200000] flex items-center justify-center p-4 md:p-6 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl"
+              onClick={() => setIsAddModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden border border-[#F4F3EF] z-[200001] font-[Outfit]"
+            >
+              {/* Modal Header */}
+              <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white text-left">
+                <div>
+                  <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">Authenticate Directive</h3>
+                  <p className="text-[11px] font-bold text-[#1B4DA0] uppercase tracking-widest mt-1">Publish new corporate guidelines</p>
+                </div>
+                <button
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center shadow-sm"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              {/* Modal Body Form */}
+              <form onSubmit={handleCreatePolicy} className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar text-left space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                  <div className="space-y-1.5 col-span-full">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Policy Reference Title</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter Reference Title (e.g. Leave Policy 2026)"
+                      value={newPolicy.title}
+                      onChange={(e) => setNewPolicy({ ...newPolicy, title: e.target.value })}
+                      className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3.5 px-5 text-sm font-medium focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none transition-all placeholder:text-[#9B9BAD]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Classification Category</label>
+                    <select
+                      value={newPolicy.category}
+                      onChange={(e) => setNewPolicy({ ...newPolicy, category: e.target.value })}
+                      className="w-full bg-[#F4F3EF] text-sm font-bold text-[#1A1A2E] rounded-2xl px-4 py-3.5 outline-none border-0 cursor-pointer"
+                    >
+                      {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Revision Code</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 1.0"
+                      value={newPolicy.version}
+                      onChange={(e) => setNewPolicy({ ...newPolicy, version: e.target.value })}
+                      className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3.5 px-5 text-sm font-medium focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none transition-all placeholder:text-[#9B9BAD]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Effective Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={newPolicy.effectiveFrom}
+                      onChange={(e) => setNewPolicy({ ...newPolicy, effectiveFrom: e.target.value })}
+                      className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3.5 px-5 text-sm font-medium focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Auditor / Updated By</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. HR Manager"
+                      value={newPolicy.updatedBy}
+                      onChange={(e) => setNewPolicy({ ...newPolicy, updatedBy: e.target.value })}
+                      className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3.5 px-5 text-sm font-medium focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none transition-all placeholder:text-[#9B9BAD]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 col-span-full">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Policy Operational Guidelines & Scope</label>
+                    <textarea
+                      required
+                      placeholder="Define policy description, criteria, and compliance scope..."
+                      value={newPolicy.description}
+                      onChange={(e) => setNewPolicy({ ...newPolicy, description: e.target.value })}
+                      rows={4}
+                      className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3.5 px-5 text-sm font-medium focus:ring-2 focus:ring-[#1B4DA0]/20 outline-none transition-all placeholder:text-[#9B9BAD]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 col-span-full">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Initial Audit Status</label>
+                    <select
+                      value={newPolicy.status}
+                      onChange={(e) => setNewPolicy({ ...newPolicy, status: e.target.value })}
+                      className="w-full bg-[#F4F3EF] text-sm font-bold text-[#1A1A2E] rounded-2xl px-4 py-3.5 outline-none border-0 cursor-pointer"
+                    >
+                      <option value="active">Active</option>
+                      <option value="under-review">Under Review</option>
+                    </select>
+                  </div>
+
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4 pt-4 border-t border-[#F4F3EF]">
+                  <button
+                    type="submit"
+                    className="flex-1 py-4 bg-[#1B4DA0] hover:bg-[#153D80] rounded-2xl text-[11px] font-black uppercase tracking-widest text-white transition-all shadow-lg"
+                  >
+                    Publish Directive
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="flex-1 py-4 bg-transparent border-2 border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-[#FAFAF8] transition-all"
+                  >
+                    Discard Draft
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[210000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#1A1A2E]/60 backdrop-blur-xl"
+              onClick={() => setIsDeleteModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl p-10 text-center border border-[#F4F3EF] z-[210001] font-[Outfit]"
+            >
+              <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center text-red-500 mx-auto mb-6 shadow-sm">
+                <FiTrash size={36} />
+              </div>
+              <h3 className="text-2xl font-bold text-[#1A1A2E] mb-2 font-syne">Delete Directive?</h3>
+              <p className="text-sm text-[#6B6B7E] mb-8 leading-relaxed">
+                Are you sure you want to delete <span className="font-bold text-[#1A1A2E]">{policyToDelete?.title}</span>? This action cannot be undone.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="py-4 bg-[#F8FAFC] border border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="py-4 bg-red-500 rounded-2xl text-[11px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all shadow-lg shadow-red-500/20"
+                >
+                  Delete Forever
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>,
+        document.body
+      )}
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 20px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+      `}</style>
+    </>
   );
 };
 
