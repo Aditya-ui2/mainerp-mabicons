@@ -110,6 +110,20 @@ export const superAdminLogin = async (credentials) => {
   }
 };
 
+export const getSuperAdminDashboardStats = async () => {
+  try {
+    const token = getStoredAuthToken();
+    const response = await axiosInstance.get('/superAdmin/dashboard-stats', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || {
+      message: 'Failed to fetch dashboard stats. Please try again.'
+    };
+  }
+};
+
 // Similar updates for other login functions
 export const adminLogin = async (credentials) => {
   try {

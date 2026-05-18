@@ -52,8 +52,8 @@ const AnnouncementsTab = ({ department, isHead = false }) => {
       ]);
       setTargetOptions(prev => ({
         ...prev,
-        clients: clientsRes.data || [],
-        employees: adminsRes.data || []
+        clients: clientsRes.data?.clients || [],
+        employees: adminsRes.admins || []
       }));
     } catch (err) {
       console.error("Failed to fetch target options", err);
@@ -64,21 +64,14 @@ const AnnouncementsTab = ({ department, isHead = false }) => {
     try {
       setLoading(true);
       const res = await getAnnouncements(department);
-      if (res.announcements && res.announcements.length > 0) {
+      if (res.announcements) {
         setAnnouncements(res.announcements);
       } else {
-        // Mock data for UI fixing
-        setAnnouncements([
-          { id: 'mock1', _id: 'mock1', title: 'System Maintenance Scheduled', content: 'Our servers will be undergoing scheduled maintenance this Sunday from 2 AM to 4 AM EST. Expect brief interruptions.', priority: 'high', department: 'All', targetType: 'All', createdAt: new Date().toISOString(), postedByName: 'IT Admin' },
-          { id: 'mock2', _id: 'mock2', title: 'Welcome to the New Dashboard', content: 'We are excited to launch our new and improved admin dashboard. Explore the new features and let us know your feedback.', priority: 'medium', department: 'CRM', targetType: 'Department', createdAt: new Date(Date.now() - 86400000).toISOString(), postedByName: 'Super Admin' }
-        ]);
+        setAnnouncements([]);
       }
-    } catch {
-      showToast('Using mock data', 'info');
-      setAnnouncements([
-        { id: 'mock1', _id: 'mock1', title: 'System Maintenance Scheduled', content: 'Our servers will be undergoing scheduled maintenance this Sunday from 2 AM to 4 AM EST. Expect brief interruptions.', priority: 'high', department: 'All', targetType: 'All', createdAt: new Date().toISOString(), postedByName: 'IT Admin' },
-        { id: 'mock2', _id: 'mock2', title: 'Welcome to the New Dashboard', content: 'We are excited to launch our new and improved admin dashboard. Explore the new features and let us know your feedback.', priority: 'medium', department: 'CRM', targetType: 'Department', createdAt: new Date(Date.now() - 86400000).toISOString(), postedByName: 'Super Admin' }
-      ]);
+    } catch (err) {
+      showToast('Failed to load announcements', 'error');
+      setAnnouncements([]);
     } finally {
       setLoading(false);
     }

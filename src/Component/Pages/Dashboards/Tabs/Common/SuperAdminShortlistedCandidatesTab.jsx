@@ -3,36 +3,7 @@ import { createPortal } from 'react-dom';
 import { FiSearch, FiChevronDown, FiChevronRight, FiX, FiUser, FiPhone, FiMail, FiBriefcase } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const mockData = [
-  {
-    id: 'mock-1',
-    candidate: 'Arjun Sharma',
-    client: 'Reliance Industries',
-    position: 'Technical Architect',
-    department: 'Engineering',
-    phone: '+91 98765 43210',
-    email: 'arjun.sharma@example.com',
-    shortlistedDate: 'May 18, 2026',
-    status: 'Shortlisted',
-    source: 'ERP',
-    experience: '8 Years',
-    currentCTC: '32 LPA'
-  },
-  {
-    id: 'mock-2',
-    candidate: 'Priya Patel',
-    client: 'Tata Consultancy Services',
-    position: 'Lead UX Designer',
-    department: 'Design',
-    phone: '+91 98765 12345',
-    email: 'priya.patel@example.com',
-    shortlistedDate: 'May 17, 2026',
-    status: 'Shortlisted',
-    source: 'SharePoint',
-    experience: '6 Years',
-    currentCTC: '24 LPA'
-  }
-];
+import { getShortlistedCandidates } from '../../../service/api';
 
 const InfoItem = ({ label, value }) => (
   <div>
@@ -148,16 +119,40 @@ const SuperAdminShortlistedCandidatesTab = () => {
   const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
-    // Simulate API fetch delay
-    setTimeout(() => {
-      setLifecycleData(mockData);
-      setLoading(false);
-    }, 800);
+    fetchCandidates();
   }, []);
 
+  const fetchCandidates = async () => {
+    try {
+      setLoading(true);
+      const res = await getShortlistedCandidates({});
+      if (res && res.data) {
+        const formattedData = res.data.map(item => ({
+          id: item.id,
+          candidate: item.name,
+          client: item.client?.companyName || 'N/A',
+          position: item.position?.title || 'N/A',
+          department: item.position?.department || 'N/A',
+          phone: item.phone,
+          email: item.email,
+          shortlistedDate: new Date(item.createdAt).toLocaleDateString(),
+          status: item.status,
+          source: item.source || 'ERP',
+          experience: item.experience || 'N/A',
+          currentCTC: item.currentSalary ? `${item.currentSalary} LPA` : 'N/A'
+        }));
+        setLifecycleData(formattedData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch shortlisted candidates", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredData = lifecycleData.filter(item => {
-    const matchesSearch = item.candidate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.client.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (item.candidate || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.client || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 

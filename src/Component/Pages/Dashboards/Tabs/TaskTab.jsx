@@ -1189,23 +1189,20 @@ Format:
   };
 
   return (
-    <div className="p-2 sm:p-4">
+    <div className="space-y-8 animate-in fade-in duration-500">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         {/* Left Side */}
-        <div className="flex items-center gap-4">
-          <h2 className={`text-lg sm:text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-            Task Board
-          </h2>
+        <div className="flex flex-col text-left gap-4">
+          <div className="flex flex-col text-left">
+            <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight font-syne">Resource Allocation</h1>
+          </div>
           
           {/* Filter Button and Dropdown */}
-          <div className="relative">
+          <div className="relative mt-2">
             <button
               onClick={() => setFilterOpen(!filterOpen)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200
-                ${isDarkMode 
-                  ? 'hover:bg-gray-700 text-gray-200' 
-                  : 'hover:bg-gray-100 text-gray-600'}`}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-sm font-bold hover:border-[#E8E7E2] transition-all shadow-sm active:scale-95"
             >
               <FunnelIcon className="w-5 h-5" />
               <span className="text-sm font-medium">Filter</span>
@@ -1224,9 +1221,7 @@ Format:
           <div className="flex items-center gap-4">
             <button
               onClick={openAddTaskModal}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg 
-                ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} 
-                text-white transition-colors duration-200`}
+              className="px-6 py-2.5 bg-[#1A1A2E] text-white rounded-xl text-sm font-bold hover:bg-[#2A2A3E] transition-all shadow-lg shadow-slate-200 flex items-center gap-2 active:scale-95"
             >
               <PlusIcon className="w-5 h-5" />
               Add Task
@@ -1235,9 +1230,7 @@ Format:
             {/* Button to open Recurring Tasks Modal */}
             <button
               onClick={openRecurringTasksModal}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg 
-                ${isDarkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} 
-                text-white transition-colors duration-200`}
+              className="px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-sm font-bold hover:border-[#E8E7E2] transition-all shadow-sm flex items-center gap-2 active:scale-95"
             >
               <span>View Recurring Tasks</span>
             </button>

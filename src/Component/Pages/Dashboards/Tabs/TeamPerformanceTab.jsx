@@ -24,12 +24,12 @@ const MOCK_TEAM_DATA = [];
 // MOCK_CLIENTS removed for live database integration
 const MOCK_CLIENTS = [];
 
-const TeamPerformanceTab = () => {
+const TeamPerformanceTab = ({ fixedDepartment }) => {
   const [teamData, setTeamData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeMetric, setActiveMetric] = useState('callsDone');
   const [clientFilter, setClientFilter] = useState('All Client');
-  const [deptFilter, setDeptFilter] = useState('All Departments');
+  const [deptFilter, setDeptFilter] = useState(fixedDepartment || 'All Departments');
   const [perfSearchQuery, setPerfSearchQuery] = useState('');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
@@ -236,47 +236,49 @@ const TeamPerformanceTab = () => {
             </AnimatePresence>
           </div>
 
-          {/* Department Filter */}
-          <div className="relative" ref={deptDropdownRef}>
-            <button
-              onClick={() => {
-                setShowDeptDropdown(prev => !prev);
-                setShowClientDropdown(false);
-                setShowDateFilter(false);
-              }}
-              className="px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-sm font-bold hover:border-[#E8E7E2] transition-all shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <FiUsers size={15} className="text-[#1B4DA0]" />
-              <span className="whitespace-nowrap">{deptFilter}</span>
-              <svg className={`w-3.5 h-3.5 ml-1 text-[#9B9BAD] transition-transform ${showDeptDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+          {/* Department Filter - Only show if no fixedDepartment is provided */}
+          {!fixedDepartment && (
+            <div className="relative" ref={deptDropdownRef}>
+              <button
+                onClick={() => {
+                  setShowDeptDropdown(prev => !prev);
+                  setShowClientDropdown(false);
+                  setShowDateFilter(false);
+                }}
+                className="px-4 py-2.5 bg-white border border-[#F4F3EF] text-[#1A1A2E] rounded-xl text-sm font-bold hover:border-[#E8E7E2] transition-all shadow-sm flex items-center gap-2 active:scale-95"
+              >
+                <FiUsers size={15} className="text-[#1B4DA0]" />
+                <span className="whitespace-nowrap">{deptFilter}</span>
+                <svg className={`w-3.5 h-3.5 ml-1 text-[#9B9BAD] transition-transform ${showDeptDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-            <AnimatePresence>
-              {showDeptDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 5 }}
-                  className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden py-1.5"
-                >
-                  {departments.map((dept) => (
-                    <button
-                      key={dept}
-                      onClick={() => {
-                        setDeptFilter(dept);
-                        setShowDeptDropdown(false);
-                      }}
-                      className={`w-full px-5 py-2.5 text-left text-[13px] transition-colors ${deptFilter === dept ? 'bg-[#1B4DA0]/5 text-[#1B4DA0] font-bold' : 'text-[#4B4B5E] hover:bg-[#FAFAF8] font-medium'}`}
-                    >
-                      {dept}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+              <AnimatePresence>
+                {showDeptDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-[#F4F3EF] z-[9999] overflow-hidden py-1.5"
+                  >
+                    {departments.map((dept) => (
+                      <button
+                        key={dept}
+                        onClick={() => {
+                          setDeptFilter(dept);
+                          setShowDeptDropdown(false);
+                        }}
+                        className={`w-full px-5 py-2.5 text-left text-[13px] transition-colors ${deptFilter === dept ? 'bg-[#1B4DA0]/5 text-[#1B4DA0] font-bold' : 'text-[#4B4B5E] hover:bg-[#FAFAF8] font-medium'}`}
+                      >
+                        {dept}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
           {/* Date Filter */}
           <div className="relative" ref={dateDropdownRef}>

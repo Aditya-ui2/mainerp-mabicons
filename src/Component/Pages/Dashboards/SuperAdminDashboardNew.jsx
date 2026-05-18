@@ -52,7 +52,7 @@ import SuperAdminInterviewsTab from './Tabs/Common/SuperAdminInterviewsTab';
 import SuperAdminShortlistedCandidatesTab from './Tabs/Common/SuperAdminShortlistedCandidatesTab';
 import SuperAdminInternalSupportTab from './Tabs/Common/SuperAdminInternalSupportTab';
 import SuperAdminExternalSupportTab from './Tabs/Common/SuperAdminExternalSupportTab';
-import { getAllClients, getAllTasks, getAllNotifications, logout } from '../service/api';
+import { getAllClients, getAllTasks, getAllNotifications, logout, getSuperAdminDashboardStats } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -285,49 +285,28 @@ const ClientsExplorerModal = ({ isOpen, onClose, clientsList }) => {
 const kpiMockData = {
   'Outstanding': {
     title: 'Outstanding Payments',
-    total: '₹4.2L',
-    details: [
-      { name: 'Zomato', amount: '₹1.5L', status: 'Pending', dueDate: 'Due in 5 days' },
-      { name: 'TCS', amount: '₹0.8L', status: 'Overdue', dueDate: '5 days ago' },
-      { name: 'Infosys', amount: '₹1.9L', status: 'Pending', dueDate: 'Due in 12 days' },
-    ]
+    total: '₹0',
+    details: []
   },
   'Monthly MRR': {
     title: 'Monthly Recurring Revenue',
-    total: '₹8.5L',
-    details: [
-      { name: 'Active Subscriptions', count: 42, amount: '₹6.2L' },
-      { name: 'New MRR (This Month)', count: 5, amount: '₹1.5L' },
-      { name: 'Expansion MRR', count: 3, amount: '₹0.8L' },
-    ]
+    total: '₹0',
+    details: []
   },
   'Projected ARR': {
     title: 'Projected Annual Revenue',
-    total: '₹1.2Cr',
-    details: [
-      { category: 'Contracted ARR', amount: '₹85L' },
-      { category: 'Pipeline Potential', amount: '₹35L' },
-      { category: 'Expected Renewals', amount: '₹10L' },
-    ]
+    total: '₹0',
+    details: []
   },
   'Salaries': {
     title: 'Employee Salaries',
-    total: '₹12.8L',
-    details: [
-      { department: 'Operations', count: 40, amount: '₹4.5L' },
-      { department: 'Recruitment', count: 35, amount: '₹3.8L' },
-      { department: 'Admin', count: 15, amount: '₹2.5L' },
-      { department: 'Management', count: 5, amount: '₹2.0L' },
-    ]
+    total: '₹0',
+    details: []
   },
   'Rent': {
     title: 'Office Rent & Maintenance',
-    total: '₹1.5L',
-    details: [
-      { location: 'Gurgaon HQ', amount: '₹85K', type: 'Main Branch' },
-      { location: 'Bangalore Hub', amount: '₹45K', type: 'Satellite Office' },
-      { location: 'Maintenance/Utils', amount: '₹20K', type: 'Facility Costs' },
-    ]
+    total: '₹0',
+    details: []
   }
 };
 
@@ -361,28 +340,28 @@ const KpiDetailModal = ({ isOpen, onClose, kpiType }) => {
                 <FiX size={20} />
               </button>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <div className="bg-[#FAFAF8] rounded-3xl p-6 border border-[#F4F3EF] text-center">
                 <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1">Total Value</p>
                 <p className="text-4xl font-black text-[#1A1A2E] tracking-tight">{data.total}</p>
               </div>
-              
+
               <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
                 {data.details.map((item, idx) => (
-                   <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-[#F4F3EF] hover:border-blue-100 transition-all group text-left">
-                      <div>
-                        <p className="text-sm font-bold text-[#1A1A2E]">{item.name || item.department || item.category || item.location}</p>
-                        <p className="text-[10px] font-medium text-[#9B9BAD]">
-                          {item.status || item.dueDate || (item.count ? `${item.count} Units` : item.type) || ''}
-                        </p>
-                      </div>
-                      <p className="text-sm font-black text-[#1B4DA0] group-hover:scale-110 transition-transform">{item.amount}</p>
-                   </div>
+                  <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-[#F4F3EF] hover:border-blue-100 transition-all group text-left">
+                    <div>
+                      <p className="text-sm font-bold text-[#1A1A2E]">{item.name || item.department || item.category || item.location}</p>
+                      <p className="text-[10px] font-medium text-[#9B9BAD]">
+                        {item.status || item.dueDate || (item.count ? `${item.count} Units` : item.type) || ''}
+                      </p>
+                    </div>
+                    <p className="text-sm font-black text-[#1B4DA0] group-hover:scale-110 transition-transform">{item.amount}</p>
+                  </div>
                 ))}
               </div>
             </div>
-            
+
             <div className="p-8 bg-[#F8FAFC] border-t border-[#F4F3EF] flex justify-end">
               <button onClick={onClose} className="px-8 py-4 bg-white border border-[#F4F3EF] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1A1A2E] hover:bg-gray-50 transition-all shadow-sm">
                 Close Report
@@ -411,18 +390,18 @@ const SuperAdminDashboard = () => {
   const [customMonth, setCustomMonth] = useState('');
   const [customYear, setCustomYear] = useState('');
   const [summaryData, setSummaryData] = useState({
-    totalRevenue: '₹24.5L',
-    activeClients: 156,
-    totalHiring: 42,
-    activeEmployees: 128,
-    totalAdmins: 5,
-    totalKAMs: 12,
-    retentionRate: '94%',
-    outstandingPayment: '₹4.2L',
-    totalMRR: '₹8.5L',
-    projectedARR: '₹1.2Cr',
-    totalSalaries: '₹12.8L',
-    totalRent: '₹1.5L'
+    totalRevenue: '₹0',
+    activeClients: 0,
+    totalHiring: 0,
+    activeEmployees: 0,
+    totalAdmins: 0,
+    totalKAMs: 0,
+    retentionRate: '0%',
+    outstandingPayment: '₹0',
+    totalMRR: '₹0',
+    projectedARR: '₹0',
+    totalSalaries: '₹0',
+    totalRent: '₹0'
   });
 
   const [showClientsModal, setShowClientsModal] = useState(false);
@@ -452,23 +431,29 @@ const SuperAdminDashboard = () => {
           const response = await getAllClients();
           if (response && response.success) {
             setClientsList(response.data || []);
-            setSummaryData(prev => ({
-              ...prev,
-              activeClients: response.data?.length || 0
-            }));
           }
         } catch (error) {
           console.error("Failed to fetch clients:", error);
-          // Fallback mockup data if API fails to keep UI premium
-          setClientsList([
-            { id: 1, name: 'Zomato', industry: 'Food Tech', location: 'Gurgaon', jobCount: 7 },
-            { id: 2, name: 'TCS', industry: 'IT Services', location: 'Mumbai', jobCount: 15 },
-            { id: 3, name: 'Infosys', industry: 'IT Services', location: 'Bangalore', jobCount: 12 },
-            { id: 4, name: 'Wipro', industry: 'IT Services', location: 'Pune', jobCount: 8 }
-          ]);
+          setClientsList([]);
         }
       };
       fetchClients();
+
+      // Fetch Dashboard Stats
+      const fetchStats = async () => {
+        try {
+          const statsResponse = await getSuperAdminDashboardStats();
+          if (statsResponse && statsResponse.success) {
+            setSummaryData(prev => ({
+              ...prev,
+              ...statsResponse.data
+            }));
+          }
+        } catch (error) {
+          console.error("Failed to fetch dashboard stats:", error);
+        }
+      };
+      fetchStats();
     }, 800);
   }, []);
 
@@ -478,7 +463,7 @@ const SuperAdminDashboard = () => {
     datasets: [
       {
         label: 'Revenue',
-        data: [12, 15, 18, 14, 22, 24.5],
+        data: [0, 0, 0, 0, 0, 0],
         borderColor: '#3D37F1',
         backgroundColor: 'rgba(61, 55, 241, 0.1)',
         fill: true,
@@ -486,7 +471,7 @@ const SuperAdminDashboard = () => {
       },
       {
         label: 'Expenses',
-        data: [8, 9, 10, 9, 11, 14.3],
+        data: [0, 0, 0, 0, 0, 0],
         borderColor: '#EF4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         fill: true,
@@ -512,7 +497,7 @@ const SuperAdminDashboard = () => {
         return <HiringLifecycleTab />;
 
       case 'Team Performance':
-        return <TeamPerformanceTab />;
+        return <TeamPerformanceTab fixedDepartment="HR Recruitment" />;
 
       case 'Billing & Accounts':
         return (
@@ -562,15 +547,17 @@ const SuperAdminDashboard = () => {
         return <TeamTabs />;
 
       case 'Operations Management':
-      case 'Performance Tracking':
-      case 'Resource Allocation':
         return (
           <div className="flex flex-col items-center justify-center h-[60vh] text-center">
             <FiActivity size={64} className="text-blue-500 mb-4 opacity-20" />
             <h2 className="text-2xl font-bold text-slate-800">Operations Management</h2>
-            <p className="text-slate-500 max-w-md mt-2">Resource allocation, performance tracking, and operational efficiency modules are being prepared.</p>
+            <p className="text-slate-500 max-w-md mt-2">Operational efficiency modules are being prepared.</p>
           </div>
         );
+      case 'Resource Allocation':
+        return <TaskTab isDarkMode={false} />;
+      case 'Performance Tracking':
+        return <TeamPerformanceTab fixedDepartment="HR Operations" />;
 
       case 'CRM Management':
       case 'Client Meeting':
@@ -673,7 +660,7 @@ const SuperAdminDashboard = () => {
                       )}
                     </AnimatePresence>
                     <div className="relative">
-                      <select 
+                      <select
                         value={revenueFilter}
                         onChange={(e) => setRevenueFilter(e.target.value)}
                         className="bg-gray-50 border border-gray-100 rounded-xl pl-4 pr-8 py-2 text-xs font-bold text-gray-600 outline-none cursor-pointer appearance-none shadow-sm hover:bg-gray-100 transition-colors"
@@ -708,7 +695,7 @@ const SuperAdminDashboard = () => {
                     data={{
                       labels: ['Ops', 'Recruitment', 'Admin', 'BD'],
                       datasets: [{
-                        data: [40, 35, 15, 10],
+                        data: [0, 0, 0, 0],
                         backgroundColor: ['#3D37F1', '#10B981', '#F59E0B', '#6366F1'],
                         borderWidth: 0,
                         cutout: '75%'
@@ -743,9 +730,9 @@ const SuperAdminDashboard = () => {
         onClose={() => setShowClientsModal(false)}
         clientsList={clientsList}
       />
-      
+
       {/* KPI Detail Modal */}
-      <KpiDetailModal 
+      <KpiDetailModal
         isOpen={!!selectedKpi}
         onClose={() => setSelectedKpi(null)}
         kpiType={selectedKpi}
