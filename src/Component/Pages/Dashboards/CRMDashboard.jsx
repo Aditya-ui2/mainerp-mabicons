@@ -896,6 +896,7 @@ const CRMDashboard = () => {
       showGlobalHeader={false}
       isLoading={loading}
       bottomTabName="My Profile"
+      notifications={notifications}
     >
       <div style={{ fontFamily: "'Calibri', sans-serif" }}>
         <style>{dashboardStyles}</style>

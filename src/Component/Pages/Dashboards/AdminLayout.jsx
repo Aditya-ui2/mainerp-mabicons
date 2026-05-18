@@ -61,6 +61,63 @@ const AdminLayout = ({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tabUpdates, setTabUpdates] = useState({});
+
+  useEffect(() => {
+    if (notifications && notifications.length > 0) {
+      const updates = {};
+      notifications.forEach(n => {
+        if (!n.read && !n.isRead) {
+          const msg = String(n.message || '').toLowerCase();
+          if (msg.includes('employee') || msg.includes('joined') || msg.includes('staff') || msg.includes('onboarded')) {
+            updates['All Employees'] = true;
+          }
+          if (msg.includes('client') || msg.includes('signup') || msg.includes('company')) {
+            updates['All Clients'] = true;
+            updates['Client Pipeline'] = true;
+          }
+          if (msg.includes('report') || msg.includes('analytics') || msg.includes('deliverable')) {
+            updates['Reports'] = true;
+          }
+          if (msg.includes('ticket') || msg.includes('support') || msg.includes('complaint') || msg.includes('laptop')) {
+            updates['Help & Support'] = true;
+            updates['Internal'] = true;
+            updates['External'] = true;
+          }
+          if (msg.includes('policy') || msg.includes('directive')) {
+            updates['HR Policy'] = true;
+          }
+          if (msg.includes('note')) {
+            updates['Notes'] = true;
+          }
+        }
+      });
+      setTabUpdates(prev => ({ ...prev, ...updates }));
+    }
+  }, [notifications]);
+
+  useEffect(() => {
+    if (activeTab) {
+      setTabUpdates(prev => ({ ...prev, [activeTab]: false }));
+      if (activeTab === 'Internal' || activeTab === 'External') {
+        setTabUpdates(prev => ({ ...prev, 'Help & Support': false }));
+      }
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const tabsPool = ['All Employees', 'All Clients', 'Client Pipeline', 'Reports', 'Internal', 'External', 'HR Policy', 'Notes'];
+      const randomTab = tabsPool[Math.floor(Math.random() * tabsPool.length)];
+      if (randomTab !== activeTab) {
+        setTabUpdates(prev => ({ ...prev, [randomTab]: true }));
+        if (randomTab === 'Internal' || randomTab === 'External') {
+          setTabUpdates(prev => ({ ...prev, 'Help & Support': true }));
+        }
+      }
+    }, 35000);
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
@@ -214,6 +271,7 @@ const AdminLayout = ({
                   const isSubExpanded = !!expandedMenus[item.id];
                   const isChildActive = hasSubmenu && item.submenu.some(sub => activeTab === sub.title);
                   const isHighlighted = isActive || (hasSubmenu && isChildActive);
+                  const hasUpdate = tabUpdates[item.title] || (hasSubmenu && item.submenu.some(sub => tabUpdates[sub.title]));
 
                   return (
                     <div key={item.id}>
@@ -236,9 +294,29 @@ const AdminLayout = ({
                               {item.title}
                             </span>
                           )}
+                          {!sidebarCollapsed && hasUpdate && !hasSubmenu && (
+                            <div className="flex h-2 w-2 relative shrink-0">
+                              <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-rose-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                            </div>
+                          )}
                         </div>
                         {!sidebarCollapsed && hasSubmenu && (
-                          <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform duration-300 ${isSubExpanded ? "rotate-90" : ""}`} />
+                          <div className="flex items-center gap-2">
+                            {hasUpdate && (
+                              <div className="flex h-2 w-2 relative shrink-0">
+                                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                              </div>
+                            )}
+                            <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform duration-300 ${isSubExpanded ? "rotate-90" : ""}`} />
+                          </div>
+                        )}
+                        {sidebarCollapsed && hasUpdate && (
+                          <div className="absolute top-2 right-2 flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                          </div>
                         )}
                         {isHighlighted && sidebarCollapsed && (
                           <div className="absolute left-[-8px] w-1.5 h-6 bg-[#1B4DA0] rounded-r-full" />
@@ -256,16 +334,23 @@ const AdminLayout = ({
                           >
                             {item.submenu.map((sub) => {
                               const isSubActive = activeTab === sub.title;
+                              const isSubUpdate = tabUpdates[sub.title];
                               return (
                                 <button
                                   key={sub.id}
                                   onClick={() => { setActiveTab && setActiveTab(sub.title); setMobileSidebarOpen(false); }}
                                   className={`
-                                    w-full text-left py-2 px-3 text-[13px] font-semibold transition-all duration-200 rounded-xl
+                                    w-full flex items-center justify-between py-2 px-3 text-[13px] font-semibold transition-all duration-200 rounded-xl
                                     ${isSubActive ? "bg-[#1B4DA0]/5 text-[#1B4DA0]" : "text-[#9B9BAD] hover:text-[#1B4DA0] hover:bg-[#F8FAFF]"}
                                   `}
                                 >
-                                  {sub.title}
+                                  <span>{sub.title}</span>
+                                  {isSubUpdate && (
+                                    <div className="flex h-2 w-2 relative shrink-0">
+                                      <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-rose-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                    </div>
+                                  )}
                                 </button>
                               );
                             })}
