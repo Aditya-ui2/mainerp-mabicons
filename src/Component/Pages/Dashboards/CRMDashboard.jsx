@@ -35,6 +35,7 @@ import {
   FiCheckSquare,
   FiMapPin,
   FiClock,
+  FiHelpCircle,
 } from 'react-icons/fi';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -51,6 +52,7 @@ const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 const ClientReportingTab = lazy(() => import('./Tabs/CRM/ClientReportingTab'));
 const CompleteOnboardingTab = lazy(() => import('./Tabs/CRM/CompleteOnboardingTab'));
 const ClientsTab = lazy(() => import('./Tabs/CRM/ClientsTab'));
+const SuperAdminInternalSupportTab = lazy(() => import('./Tabs/Common/SuperAdminInternalSupportTab'));
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -132,13 +134,12 @@ const INITIAL_PIPELINE_CLIENTS = [
 const sidebarConfig = [
   {
     items: [
-      { id: 6, title: 'My Team', icon: FiUserPlus },
-      { id: 12, title: 'All Clients', icon: FiUsers },
+      { id: 6, title: 'All Employees', icon: FiUsers },
+      { id: 12, title: 'All Clients', icon: FiBriefcase },
       { id: 3, title: 'Client Pipeline', icon: FiActivity },
-      { id: 11, title: 'Client Onboarding', icon: FiCheckSquare },
-      { id: 9, title: 'Accounts', icon: FiBriefcase },
-      { id: 5, title: 'Report to Client', icon: FiClipboard },
-      { id: 10, title: 'Meeting with client', icon: FiCalendar },
+      { id: 5, title: 'Reports', icon: FiClipboard },
+      { id: 7, title: 'Help & Support', icon: FiHelpCircle },
+      { id: 8, title: 'Notes', icon: FiFileText },
     ]
   }
 ];
@@ -1089,9 +1090,9 @@ const CRMDashboard = () => {
               </motion.div>
             )}
 
-            {activeTab === 'My Team' && (
+            {activeTab === 'All Employees' && (
               <motion.div
-                key="my-team"
+                key="all-employees"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -1101,65 +1102,9 @@ const CRMDashboard = () => {
               </motion.div>
             )}
 
-            {activeTab === 'Accounts' && (
+            {activeTab === 'Reports' && (
               <motion.div
-                key="accounts"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AccountsTab />
-              </motion.div>
-            )}
-
-            {activeTab === 'Meeting with client' && (
-              <motion.div
-                key="meetings"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Loading Meetings...</div>}>
-                  <MeetingWithClientTab clients={clients} />
-                </Suspense>
-              </motion.div>
-            )}
-
-            {activeTab === 'Client Onboarding' && (
-              <motion.div
-                key="onboarding"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Suspense fallback={<div className="py-20 text-center"><FiRefreshCw className="animate-spin mx-auto w-8 h-8 text-[#1B4DA0]" /></div>}>
-                  <CompleteOnboardingTab />
-                </Suspense>
-              </motion.div>
-            )}
-
-            {activeTab === 'Work Handover' && (
-              <motion.div
-                key="handover"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="bg-white rounded-[32px] p-12 text-center border border-[#F4F3EF]"
-              >
-                <div className="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                  <FiShare2 className="w-10 h-10" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>Work Handover</h3>
-                <p className="text-[#9B9BAD] max-w-md mx-auto mt-2">Manage project transitions and handover documentation.</p>
-              </motion.div>
-            )}
-
-            {activeTab === 'Report to Client' && (
-              <motion.div
-                key="reporting"
+                key="reports"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -1167,6 +1112,34 @@ const CRMDashboard = () => {
               >
                 <Suspense fallback={<div className="p-12 text-center text-[#9B9BAD]">Preparing Analytics...</div>}>
                   <ClientReportingTab clients={clients} />
+                </Suspense>
+              </motion.div>
+            )}
+
+            {activeTab === 'Help & Support' && (
+              <motion.div
+                key="support"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
+                  <SuperAdminInternalSupportTab />
+                </Suspense>
+              </motion.div>
+            )}
+
+            {activeTab === 'Notes' && (
+              <motion.div
+                key="notes"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
+                  <NotesTab />
                 </Suspense>
               </motion.div>
             )}

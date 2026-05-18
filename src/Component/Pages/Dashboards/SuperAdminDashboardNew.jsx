@@ -49,6 +49,9 @@ import TeamPerformanceTab from './Tabs/TeamPerformanceTab';
 import AnnouncementsTab from './Tabs/Common/AnnouncementsTab';
 import SuperAdminTotalOpenPositionsTab from './Tabs/Common/SuperAdminTotalOpenPositionsTab';
 import SuperAdminInterviewsTab from './Tabs/Common/SuperAdminInterviewsTab';
+import SuperAdminShortlistedCandidatesTab from './Tabs/Common/SuperAdminShortlistedCandidatesTab';
+import SuperAdminInternalSupportTab from './Tabs/Common/SuperAdminInternalSupportTab';
+import SuperAdminExternalSupportTab from './Tabs/Common/SuperAdminExternalSupportTab';
 import { getAllClients, getAllTasks, getAllNotifications, logout } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
@@ -120,6 +123,11 @@ const sidebarConfig = [
           { id: 'Internal', title: 'Internal' },
           { id: 'External', title: 'External' },
         ]
+      },
+      {
+        id: 'My Profile',
+        title: 'My Profile',
+        icon: FiUser,
       },
     ]
   }
@@ -499,6 +507,7 @@ const SuperAdminDashboard = () => {
       case 'Interviews':
         return <SuperAdminInterviewsTab />;
       case 'Shortlisted Candidates':
+        return <SuperAdminShortlistedCandidatesTab />;
       case 'Joined Candidates':
         return <HiringLifecycleTab />;
 
@@ -571,14 +580,9 @@ const SuperAdminDashboard = () => {
 
       case 'Help & Support':
       case 'Internal':
+        return <SuperAdminInternalSupportTab />;
       case 'External':
-        return (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <FiHelpCircle size={64} className="text-purple-500 mb-4 opacity-20" />
-            <h2 className="text-2xl font-bold text-slate-800">Help & Support</h2>
-            <p className="text-slate-500 max-w-md mt-2">Access internal and external support resources, documentation, and helpdesk services.</p>
-          </div>
-        );
+        return <SuperAdminExternalSupportTab />;
 
       case 'Announcements':
         return <AnnouncementsTab department="All" isHead={true} />;

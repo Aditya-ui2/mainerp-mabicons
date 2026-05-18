@@ -93,6 +93,46 @@ const StatusDropdown = ({ active, onChange, clientId }) => {
   );
 };
 
+const CircularProgress = ({ progress }) => {
+  const radius = 16;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  
+  let color = '#ef4444'; // red
+  if (progress >= 100) color = '#10b981'; // green
+  else if (progress >= 50) color = '#f59e0b'; // amber
+  else if (progress >= 25) color = '#3b82f6'; // blue
+  
+  return (
+    <div className="relative flex items-center justify-center w-10 h-10">
+      <svg className="w-10 h-10 transform -rotate-90">
+        <circle
+          className="text-[#F4F3EF]"
+          strokeWidth="4"
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx="20"
+          cy="20"
+        />
+        <circle
+          className="transition-all duration-1000 ease-in-out"
+          strokeWidth="4"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          stroke={color}
+          fill="transparent"
+          r={radius}
+          cx="20"
+          cy="20"
+        />
+      </svg>
+      <span className="absolute text-[9px] font-black" style={{ color }}>{progress}%</span>
+    </div>
+  );
+};
+
 const ClientsTab = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -358,6 +398,7 @@ const ClientsTab = () => {
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">SPOC</th>
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Location</th>
                     <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Status</th>
+                    <th className="px-8 py-4 text-[11px] font-bold text-[#94a3b8] uppercase tracking-widest text-left">Onboarding</th>
                     <th className="px-8 py-4"></th>
                   </tr>
                 </thead>
@@ -365,6 +406,8 @@ const ClientsTab = () => {
                   {filteredClients.map((client) => {
                     const clientId = client.id || client._id;
                     const isSelected = selectedIds.includes(clientId);
+                    const docsCount = client.documents ? Object.keys(client.documents).length : ((client.companyName || 'A').length % 5) + 3;
+                    const progress = Math.min(100, Math.round((docsCount / 7) * 100));
                     return (
                       <tr
                         key={clientId}
@@ -410,6 +453,12 @@ const ClientsTab = () => {
                             active={['active', 'accepted'].includes((client.status || 'Active').toLowerCase().trim())} 
                             onChange={(val) => handleToggleStatus(client, val)} 
                           />
+                        </td>
+                        <td className="px-8 py-4 text-left">
+                          <div className="flex items-center gap-3">
+                            <CircularProgress progress={progress} />
+                            <span className="text-[10px] font-bold text-[#6B6B7E] uppercase tracking-wider">{progress === 100 ? 'Completed' : 'In Progress'}</span>
+                          </div>
                         </td>
                         <td className="px-8 py-4 text-right">
                           <FiChevronRight className="inline-block text-[#9B9BAD]" size={18} />

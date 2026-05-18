@@ -5,22 +5,11 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getAllInterviews,
-  updateInterview,
-  updateInterviewStatus,
-  cancelInterview,
-  scheduleNewInterview,
-  getAllCandidates,
-  updateCandidateStatus,
-  rejectPipelineCandidate,
-  submitInterviewFeedback,
-  getDepartmentTeamMembers,
-  getAllAdmins,
-  getAllKAMMembers,
   getSharePointInterviews,
   syncSharePointAll
 } from "../../../service/api";
 import InterviewFeedbackModal from "../KAMRecruitment/InterviewFeedbackModal";
-import { FiDatabase, FiRefreshCw } from 'react-icons/fi';
+import { FiDatabase, FiRefreshCw, FiChevronDown, FiX, FiVideo, FiChevronRight } from 'react-icons/fi';
 
 const STATUS_COLORS = {
   "Scheduled": "bg-blue-50 text-blue-600 border-blue-100",
@@ -30,6 +19,15 @@ const STATUS_COLORS = {
 };
 
 const CACHE_KEY_INTERVIEWS = 'cache_superAdminInterviews';
+
+const InfoItem = ({ label, value, valueNode }) => (
+  <div>
+    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1.5">{label}</p>
+    <div className="bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 min-h-[44px] flex items-center">
+      {valueNode ? valueNode : <span className="text-[13px] font-bold text-[#1A1A2E]">{value || 'N/A'}</span>}
+    </div>
+  </div>
+);
 
 const SuperAdminInterviewsTab = ({ isDarkMode }) => {
   const [interviews, setInterviews] = useState(() => {
@@ -86,20 +84,6 @@ const SuperAdminInterviewsTab = ({ isDarkMode }) => {
 
   const [loading, setLoading] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isShortlisting, setIsShortlisting] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
-  const [editableInterview, setEditableInterview] = useState({
-    date: "",
-    time: "",
-    type: "Video",
-    meetingLink: "",
-    interviewer: "",
-    interviewerId: "",
-    status: "",
-    duration: "60"
-  });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
@@ -119,23 +103,6 @@ const SuperAdminInterviewsTab = ({ isDarkMode }) => {
   useEffect(() => {
     fetchInterviews();
   }, []);
-
-  useEffect(() => {
-    if (!selectedInterview) {
-      setIsEditing(false);
-      return;
-    }
-    setEditableInterview({
-      date: selectedInterview.date || "",
-      time: selectedInterview.time || "",
-      type: selectedInterview.type || "Video",
-      meetingLink: selectedInterview.meetingLink || "",
-      interviewer: selectedInterview.interviewer || "",
-      interviewerId: selectedInterview.interviewerId || "",
-      status: selectedInterview.status || "Scheduled",
-      duration: String(selectedInterview.duration || "60")
-    });
-  }, [selectedInterview]);
 
   const fetchInterviews = async () => {
     try {
@@ -205,7 +172,6 @@ const SuperAdminInterviewsTab = ({ isDarkMode }) => {
 
       setFeedbackData(newFeedbackData);
 
-      // Merge with mock data if needed or just replace
       if (allMerged.length > 0) {
         setInterviews(allMerged);
         localStorage.setItem(CACHE_KEY_INTERVIEWS, JSON.stringify(allMerged));
@@ -214,67 +180,6 @@ const SuperAdminInterviewsTab = ({ isDarkMode }) => {
       console.error("Failed to load interviews", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSharePointSync = async () => {
-    try {
-      setIsSyncing(true);
-      const res = await syncSharePointAll();
-      if (res.success) {
-        toast.success("SharePoint data synced!");
-        fetchInterviews();
-      }
-    } catch (error) {
-      toast.error("Sync failed");
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const handleSaveInterviewChanges = async () => {
-    if (!selectedInterview) return;
-    try {
-      setIsSaving(true);
-      const response = await updateInterview(selectedInterview.id, {
-        interviewDate: editableInterview.date,
-        startTime: editableInterview.time,
-        meetingType: editableInterview.type,
-        meetingLink: editableInterview.meetingLink,
-        interviewerName: editableInterview.interviewer,
-        interviewerId: editableInterview.interviewerId,
-        status: editableInterview.status,
-        duration: parseInt(editableInterview.duration)
-      });
-
-      if (response.success) {
-        toast.success("Interview updated successfully");
-        fetchInterviews();
-        setIsEditing(false);
-        setSelectedInterview(prev => ({
-          ...prev,
-          ...editableInterview
-        }));
-      }
-    } catch (error) {
-      toast.error("Failed to update interview");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancelInterview = async (id) => {
-    if (window.confirm("Are you sure you want to cancel this interview?")) {
-      try {
-        const response = await cancelInterview(id, "Cancelled by Super Admin");
-        if (response.success) {
-          toast.success("Interview cancelled");
-          fetchInterviews();
-          setSelectedInterview(null);
-        }
-      } catch (error) {
-        toast.error("Failed to cancel interview");
-      }
     }
   };
 
@@ -305,8 +210,6 @@ const SuperAdminInterviewsTab = ({ isDarkMode }) => {
     });
   }, [interviews, searchTerm, statusFilter, dateFilter, customStartDate, customEndDate]);
 
-
-
   const formatTime = (time) => {
     if (!time) return "N/A";
     if (time.includes("AM") || time.includes("PM")) return time;
@@ -335,164 +238,159 @@ const SuperAdminInterviewsTab = ({ isDarkMode }) => {
   };
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "'Calibri', sans-serif" }}>
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="text-left">
-          <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Interviews
-          </h1>
-
-        </div>
-
+    <div className="space-y-8 animate-in fade-in duration-500 font-jakarta">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Interviews</h1>
       </div>
 
-      {/* Filter Bar */}
       <div className="bg-white rounded-[24px] p-2 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 group min-w-[200px]">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD]" size={18} />
           <input
             type="text"
+            placeholder="Search by candidate, role or host..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by candidate, role or host..."
-            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3.5 pl-14 pr-5 text-sm font-bold text-[#1A1A2E] focus:ring-2 focus:ring-[#1B4DA0]/10 outline-none transition-all placeholder:text-[#9B9BAD]/50"
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD]"
           />
         </div>
 
-        <div className="relative">
+        <div className="relative group min-w-[150px]">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-10 pr-10 text-[11px] font-black uppercase tracking-wider outline-none appearance-none cursor-pointer transition-all hover:bg-[#EAE9E4] text-[#4B4B5E]"
           >
-            <option value="all">All Status</option>
-            <option value="Scheduled">Scheduled</option>
-            <option value="In-Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
+            <option value="all">ALL STATUS</option>
+            <option value="Scheduled">SCHEDULED</option>
+            <option value="In-Progress">IN PROGRESS</option>
+            <option value="Completed">COMPLETED</option>
+            <option value="Cancelled">CANCELLED</option>
           </select>
-          <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
+          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={16} />
         </div>
 
-        <div className="relative">
+        <div className="relative group min-w-[150px]">
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold uppercase tracking-wider text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[140px]"
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-10 pr-10 text-[11px] font-black uppercase tracking-wider outline-none appearance-none cursor-pointer transition-all hover:bg-[#EAE9E4] text-[#4B4B5E]"
           >
-            <option value="all">All Dates</option>
-            <option value="today">Today</option>
-            <option value="custom">Custom Range</option>
+            <option value="all">ALL DATES</option>
+            <option value="today">TODAY</option>
+            <option value="custom">CUSTOM RANGE</option>
           </select>
-          <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] rotate-90 pointer-events-none opacity-50" />
+          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={16} />
         </div>
-      </div>
 
-      {dateFilter === 'custom' && (
-        <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
-          <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-4 py-2.5 outline-none border-0" />
-          <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest">to</span>
-          <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)}
-            className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl px-4 py-2.5 outline-none border-0" />
-        </div>
-      )}
-
-      {/* Table Interface */}
-      <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
-        <div className="grid grid-cols-[120px_2fr_1.5fr_1.5fr_120px_40px] gap-4 px-8 py-5 border-b border-[#F4F3EF] bg-transparent">
-          {["Time & Date", "Candidate", "Client", "Position", "Host", ""].map((h, i) => (
-            <div key={i} className="text-[11px] font-black text-[#94a3b8] uppercase tracking-[2px] text-center flex items-center justify-center">
-              {h}
+        {dateFilter === 'custom' && (
+          <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-300">
+            <div className="relative group">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="bg-[#F4F3EF] border-none rounded-2xl py-3 px-4 text-[10px] font-bold uppercase outline-none transition-all hover:bg-[#EAE9E4] text-[#4B4B5E]"
+              />
+              <span className="absolute -top-6 left-1 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">From</span>
             </div>
-          ))}
-        </div>
-
-        {loading ? (
-          <div className="py-24 text-center">
-            <div className="w-10 h-10 border-4 border-[#1B4DA0]/20 border-t-[#1B4DA0] rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">Loading Interviews...</p>
+            <div className="w-2 h-[2px] bg-[#9B9BAD] rounded-full" />
+            <div className="relative group">
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="bg-[#F4F3EF] border-none rounded-2xl py-3 px-4 text-[10px] font-bold uppercase outline-none transition-all hover:bg-[#EAE9E4] text-[#4B4B5E]"
+              />
+              <span className="absolute -top-6 left-1 text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest">To</span>
+            </div>
           </div>
-        ) : filteredInterviews.length === 0 ? (
-          <div className="py-24 text-center">
-            <AlertCircle className="w-12 h-12 text-[#F4F3EF] mx-auto mb-4" />
-            <p className="text-[#9B9BAD] text-sm font-bold uppercase tracking-widest">No interviews found</p>
-          </div>
-        ) : (
-          filteredInterviews.map((interview) => {
-            const isLive = interview.status === "In-Progress";
-            const joinable = isJoinable(interview);
-            const isReviewed = feedbackData[interview.id];
-
-            return (
-              <div
-                key={interview.id}
-                onClick={() => setSelectedInterview(interview)}
-                className={`grid grid-cols-[120px_2fr_1.5fr_1.5fr_120px_40px] gap-4 items-center px-8 py-4 border-b border-[#F4F3EF] last:border-0 hover:bg-[#F8FAFF] cursor-pointer transition-all group relative ${isLive ? 'bg-amber-50/30' : ''}`}
-              >
-
-
-                {/* Time & Date */}
-                <div className="flex flex-col justify-center items-center">
-                  <p className="text-[13px] font-black text-[#1A1A2E] text-center">{formatTime(interview.time)}</p>
-                  <div className="flex items-center justify-center gap-1 mt-1 opacity-60">
-                    <Calendar size={10} className="text-[#9B9BAD]" />
-                    <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-wider text-center">
-                      {interview.date ? new Date(interview.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'N/A'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Candidate */}
-                <div className="flex items-center justify-center min-w-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#1B4DA0] to-[#3FA9F5] flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-blue-500/20">
-                      {interview.candidateAvatar}
-                    </div>
-                    <p className="text-[14px] font-black text-[#1A1A2E] truncate group-hover:text-[#1B4DA0] transition-colors text-center flex items-center gap-2">
-                      {interview.candidateName}
-                      {interview.source === 'sharepoint' && (
-                        <Database size={10} className="text-emerald-500" title="Source: SharePoint" />
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Client */}
-                <div className="flex items-center justify-center text-[13px] font-bold text-[#64748b] truncate text-center uppercase tracking-tight">
-                  {interview.clientName}
-                </div>
-
-                {/* Position */}
-                <div className="flex flex-col justify-center items-center min-w-0">
-                  <p className="text-[13px] font-black text-[#1A1A2E] truncate text-center">{interview.role}</p>
-                  <div className="flex items-center justify-center gap-1 mt-1 opacity-50">
-                    <Video size={10} className="text-[#9B9BAD]" />
-                    <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-widest text-center">{interview.type}</span>
-                  </div>
-                </div>
-
-                {/* Host */}
-                <div className="flex items-center justify-center">
-                  <p className="text-[13px] font-bold text-[#1A1A2E] text-center">{interview.interviewer}</p>
-                </div>
-
-
-
-                {/* Chevron */}
-                <div className="flex justify-end">
-                  <div className="w-8 h-8 rounded-xl bg-transparent group-hover:bg-[#1B4DA0]/5 flex items-center justify-center transition-all">
-                    <ChevronRight size={18} className="text-[#C5C5D2] group-hover:text-[#1B4DA0] transition-all" />
-                  </div>
-                </div>
-              </div>
-            );
-          })
         )}
       </div>
 
-      {/* Detail Drawer */}
+      <div className="bg-white rounded-[32px] border border-[#F4F3EF] overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-white border-b border-[#F4F3EF]">
+                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Candidate</th>
+                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Client & Position</th>
+                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Time & Date</th>
+                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-left">Host</th>
+                <th className="px-8 py-5 text-[11px] font-black text-[#9B9BAD] uppercase tracking-[2px] text-right">Details</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F4F3EF]">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-8 py-24 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest">Loading interviews...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredInterviews.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-8 py-24 text-center">
+                    <AlertCircle className="w-12 h-12 text-[#F4F3EF] mx-auto mb-4" />
+                    <p className="text-sm font-bold text-[#9B9BAD] uppercase tracking-widest">No interviews found</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredInterviews.map((interview) => (
+                  <tr key={interview.id} onClick={() => setSelectedInterview(interview)} className="hover:bg-[#F8FAFF] transition-all group cursor-pointer">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm border ${interview.source === 'sharepoint' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-[#0D47A1] border-blue-100'}`}>
+                          {interview.candidateAvatar || '?'}
+                        </div>
+                        <div className="text-left font-bold text-sm text-[#1A1A2E]">
+                          {interview.candidateName}
+                          {interview.source === 'sharepoint' && (
+                            <Database size={10} className="inline ml-2 text-emerald-500" title="Source: SharePoint" />
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="text-left">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-[#4B4B5E]">{interview.clientName}</p>
+                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${STATUS_COLORS[interview.status] || 'bg-gray-100 text-gray-500'}`}>
+                            {interview.status}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-0.5">Role: {interview.role}</p>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="text-left flex flex-col justify-center">
+                        <p className="text-[13px] font-black text-[#1A1A2E]">{formatTime(interview.time)}</p>
+                        <div className="flex items-center gap-1 mt-1 opacity-60">
+                          <Calendar size={10} className="text-[#9B9BAD]" />
+                          <span className="text-[9px] font-black text-[#9B9BAD] uppercase tracking-wider">
+                            {interview.date ? new Date(interview.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-left">
+                      <p className="text-[13px] font-bold text-[#1A1A2E]">{interview.interviewer}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center justify-end">
+                        <button className="p-2.5 bg-[#F4F3EF] text-[#1B4DA0] rounded-xl"><FiChevronRight size={18} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {selectedInterview && (
@@ -501,111 +399,82 @@ const SuperAdminInterviewsTab = ({ isDarkMode }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998]"
-                onClick={() => { setSelectedInterview(null); setIsEditing(false); }}
+                className="fixed inset-0 bg-[#1A1A2E66] backdrop-blur-md transition-opacity pointer-events-auto z-[200000]"
+                onClick={() => setSelectedInterview(null)}
               />
+
               <motion.div
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed inset-y-0 right-0 w-full sm:w-[550px] md:w-[650px] bg-white shadow-2xl z-[9999] border-l border-[#F4F3EF] flex flex-col overflow-hidden"
+                transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+                className="fixed inset-y-0 right-0 w-full max-w-[698px] bg-white shadow-2xl border-l border-[#F4F3EF] flex flex-col z-[200001] overflow-hidden pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
               >
-                {/* Drawer Header */}
-                <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-8 py-6 flex items-center justify-between z-20">
-                  <div className="flex-1 mr-4 text-left">
-                    <h2 className="text-2xl font-black text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      {selectedInterview?.candidateName || 'Unknown Candidate'}
-                    </h2>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[10px] font-black text-[#1B4DA0] uppercase tracking-[3px]">{selectedInterview?.role || 'Unknown Position'}</span>
-                      <span className="w-1 h-1 rounded-full bg-[#E8E7E2]" />
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">{selectedInterview?.type}</span>
+              <div className="p-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white">
+                <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Profile</h3>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setSelectedInterview(null)}
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar text-left">
+                
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden"
+                         style={{ background: 'linear-gradient(135deg, #1B4DA0 0%, #0D47A1 100%)' }}>
+                      <span>{(selectedInterview.candidateAvatar || 'C')}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => { setSelectedInterview(null); setIsEditing(false); }}
-                      className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-500 hover:text-white transition-all active:scale-90 shadow-sm"
-                    >
-                      <X size={20} />
-                    </button>
+                  <div className="space-y-1.5 w-full flex flex-col items-center">
+                    <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne">{selectedInterview.candidateName}</h4>
+                    <p className="text-[11px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{selectedInterview.clientName}</p>
                   </div>
                 </div>
 
-                <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 bg-[#FAFAF8] rounded-[24px] border border-[#F4F3EF]">
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Schedule Date</span>
-                      {isEditing ? (
-                        <input type="date" value={editableInterview.date} onChange={e => setEditableInterview(p => ({ ...p, date: e.target.value }))}
-                          className="w-full mt-2 bg-white border border-[#1B4DA0]/10 rounded-xl px-4 py-2 text-sm font-bold outline-none" />
-                      ) : (
-                        <p className="text-lg font-black text-[#1A1A2E] mt-1">{selectedInterview?.date}</p>
-                      )}
+                <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-10 shadow-sm">
+                  
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                      <User className="text-[#1B4DA0]" size={18} />
+                      <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Interview Details</h5>
                     </div>
-                    <div className="p-6 bg-[#FAFAF8] rounded-[24px] border border-[#F4F3EF]">
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Start Time</span>
-                      {isEditing ? (
-                        <input type="time" value={editableInterview.time} onChange={e => setEditableInterview(p => ({ ...p, time: e.target.value }))}
-                          className="w-full mt-2 bg-white border border-[#1B4DA0]/10 rounded-xl px-4 py-2 text-sm font-bold outline-none" />
-                      ) : (
-                        <p className="text-lg font-black text-[#1A1A2E] mt-1">{formatTime(selectedInterview?.time)}</p>
-                      )}
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                      <InfoItem label="Position" value={selectedInterview.role} />
+                      <InfoItem label="Assigned Host" value={selectedInterview.interviewer} />
+                      <InfoItem label="Schedule Date" value={selectedInterview.date} />
+                      <InfoItem label="Start Time" value={formatTime(selectedInterview.time)} />
+                      <InfoItem label="Meeting Type" value={selectedInterview.type} />
+                      <InfoItem label="Status" value={selectedInterview.status} />
                     </div>
                   </div>
 
-                  {/* Interviewer */}
-                  <div className="p-6 bg-[#FAFAF8] rounded-[24px] border border-[#F4F3EF]">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Assigned Host</span>
+                  {selectedInterview.meetingLink && (
+                    <div className="pt-2">
+                      <button
+                        onClick={() => window.open(selectedInterview.meetingLink, '_blank')}
+                        className="w-full py-4 bg-[#1B4DA0] text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 hover:bg-[#153D80] transition-colors"
+                      >
+                        <FiVideo size={20} /> Join Meeting Now
+                      </button>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-[#1B4DA0] text-white flex items-center justify-center font-black text-lg shadow-lg">
-                        {selectedInterview?.interviewerAvatar}
-                      </div>
-                      <div>
-                        <p className="text-base font-black text-[#1A1A2E]">{selectedInterview?.interviewer}</p>
-                        <p className="text-xs font-bold text-[#9B9BAD] uppercase tracking-widest">{selectedInterview?.interviewerRole || 'Host'}</p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
 
-                  {/* Meeting Details */}
-                  <div className="p-6 bg-[#FAFAF8] rounded-[24px] border border-[#F4F3EF]">
-                    <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">Meeting Details</span>
-                    <div className="mt-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 text-[#1B4DA0] rounded-lg">
-                            <Video size={18} />
-                          </div>
-                          <span className="text-sm font-bold text-[#1A1A2E]">Meeting Type</span>
-                        </div>
-                        <span className="text-sm font-black text-[#1B4DA0] uppercase tracking-widest">{selectedInterview?.type}</span>
-                      </div>
-                      {selectedInterview?.meetingLink && (
-                        <div className="pt-4 border-t border-[#F4F3EF]">
-                          <button
-                            onClick={() => window.open(selectedInterview.meetingLink, '_blank')}
-                            className="w-full py-4 bg-[#1B4DA0] text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3"
-                          >
-                            <Video size={20} /> Join Meeting Now
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>,
+      document.body
+    )}
 
-      {/* Feedback Modal */}
       {showFeedbackModal && (
         <InterviewFeedbackModal
           isOpen={showFeedbackModal}

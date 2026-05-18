@@ -353,9 +353,17 @@ const AddCandidateModal = ({ isOpen, onClose, onSuccess }) => {
 };
 
 // Sub-component defined above to avoid any hoisting confusion
+const InfoItem = ({ label, value, valueNode }) => (
+  <div>
+    <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest mb-1.5">{label}</p>
+    <div className="bg-white border border-[#F4F3EF] rounded-xl px-4 py-3 min-h-[44px] flex items-center">
+      {valueNode ? valueNode : <span className="text-[13px] font-bold text-[#1A1A2E]">{value || 'N/A'}</span>}
+    </div>
+  </div>
+);
+
 const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLeft }) => {
   if (!candidate) return null;
-
 
   return createPortal(
     <div className="fixed inset-0 z-[10001] flex justify-end font-jakarta pointer-events-none">
@@ -371,55 +379,66 @@ const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLe
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-[520px] fixed right-0 top-0 bottom-0 flex flex-col z-[10002] shadow-[-12px_0_40px_rgba(0,0,0,0.15)] overflow-hidden bg-white text-slate-900 pointer-events-auto"
+        transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+        className="fixed inset-y-0 right-0 w-full max-w-[698px] bg-white shadow-2xl border-l border-[#F4F3EF] flex flex-col z-[200001] overflow-hidden pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-8 border-b border-[#F4F3EF] bg-white">
-          <div className="text-left font-jakarta">
-            <h2 className="text-[32px] font-bold leading-tight text-[#1A1A2E] font-syne">
-              {candidate.candidate}
-            </h2>
-            <div className="flex items-center gap-2 mt-2">
-              <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#9B9BAD]">
-                {candidate.client} • {candidate.position}
-              </p>
-            </div>
-          </div>
+        <div className="p-6 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white">
+          <h3 className="text-xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>Candidate Profile</h3>
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-xl flex items-center justify-center border border-[#F4F3EF] text-[#6B6B7E] hover:text-red-500 hover:bg-red-50 transition-all duration-300 shadow-sm pointer-events-auto"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
             >
               <FiX size={20} />
             </button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 p-10 space-y-12 overflow-y-auto custom-scrollbar text-left font-jakarta pointer-events-auto">
-          {/* Information Grid */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-12">
-            <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Primary Contact</p>
-              <p className="text-[15px] font-black text-[#1A1A2E]">{candidate.contact}</p>
+        <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 custom-scrollbar text-left">
+          
+          <div className="flex flex-col items-center text-center">
+            <div className="relative mb-6">
+              <div className="w-24 h-24 rounded-[32px] bg-[#1B4DA0] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/20 overflow-hidden"
+                   style={{ background: 'linear-gradient(135deg, #1B4DA0 0%, #0D47A1 100%)' }}>
+                <span>{(candidate.candidate || 'C').substring(0, 2).toUpperCase()}</span>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Joining Date</p>
-              <p className="text-[15px] font-black text-[#1A1A2E]">{candidate.joiningDate}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[0.2em] mb-2">Performance Score</p>
-              <p className="text-[15px] font-black text-emerald-600">{candidate.performance}</p>
+            <div className="space-y-1.5 w-full flex flex-col items-center">
+              <h4 className="text-2xl font-bold text-[#1A1A2E] tracking-tight font-syne">{candidate.candidate}</h4>
+              <p className="text-[11px] font-bold text-[#0D47A1] uppercase tracking-[3px]">{candidate.client}</p>
             </div>
           </div>
 
-          <div className="border-t border-[#F4F3EF] pt-8" />
+          <div className="bg-[#FAFAF8] rounded-[32px] border border-[#F4F3EF] p-8 space-y-10 shadow-sm">
+            
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                <FiUser className="text-[#1B4DA0]" size={18} />
+                <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Professional Info</h5>
+              </div>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                <InfoItem label="Position" value={candidate.position} />
+                <InfoItem label="Client" value={candidate.client} />
+                <InfoItem label="Joining Date" value={candidate.joiningDate} />
+                <InfoItem label="Primary Contact" value={candidate.contact} />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 border-b border-[#F4F3EF] pb-4">
+                <FiBriefcase className="text-[#1B4DA0]" size={18} />
+                <h5 className="text-[12px] font-black text-[#1A1A2E] uppercase tracking-wider">Status & Performance</h5>
+              </div>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                <InfoItem label="Status" value={candidate.status} />
+                <InfoItem label="Performance Score" value={candidate.performance} />
+              </div>
+            </div>
+
+          </div>
         </div>
       </motion.div>
-
-
     </div>,
     document.body
   );
@@ -680,10 +699,12 @@ const HiringLifecycleTab = () => {
     return matchesSearch && matchesClient && matchesStatus && matchesTime;
   });
 
+  const uniqueClients = [...new Set(lifecycleData.map(item => item.client))].filter(Boolean).sort();
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-jakarta">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Hiring</h1>
+        <h1 className="text-3xl font-bold text-[#1A1A2E] font-syne">Joined Candidates</h1>
 
       </div>
 
@@ -697,6 +718,18 @@ const HiringLifecycleTab = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium outline-none transition-all placeholder:text-[#9B9BAD]"
           />
+        </div>
+
+        <div className="relative group min-w-[180px]">
+          <select
+            value={filterClient}
+            onChange={(e) => setFilterClient(e.target.value)}
+            className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-12 pr-10 text-[11px] font-black uppercase tracking-wider outline-none appearance-none cursor-pointer transition-all hover:bg-[#EAE9E4] text-[#4B4B5E]"
+          >
+            <option value="all">ALL CLIENTS</option>
+            {uniqueClients.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <FiChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={16} />
         </div>
 
         <div className="relative group min-w-[180px]">
