@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiBook,
+    FiBook,
   FiPlus,
   FiEdit2,
   FiEdit3,
@@ -24,7 +24,11 @@ import {
   FiDatabase,
   FiShield,
   FiActivity,
-  FiInfo
+  FiInfo,
+  FiUpload,
+  FiPaperclip,
+  FiFile,
+  FiEye
 } from 'react-icons/fi';
 
 const InfoItem = ({ label, value, subValue, fullWidth = false, isEditing, onChange, type = "text" }) => (
@@ -73,8 +77,17 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
     version: '1.0',
     effectiveFrom: new Date().toISOString().split('T')[0],
     status: 'active',
-    updatedBy: 'HR Manager'
+    updatedBy: 'HR Manager',
+    fileName: '',
+    fileSize: ''
   });
+
+  // Document Upload States
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [editSelectedFile, setEditSelectedFile] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isEditDragOver, setIsEditDragOver] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
 
   const categories = [
     'HR Management',
@@ -87,14 +100,71 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
     'Compliance Hub'
   ];
 
+  // Drag & Drop handlers for Create Form
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+  };
+
+  // Drag & Drop handlers for Edit Form
+  const handleEditDragOver = (e) => {
+    e.preventDefault();
+    setIsEditDragOver(true);
+  };
+
+  const handleEditDragLeave = () => {
+    setIsEditDragOver(false);
+  };
+
+  const handleEditDrop = (e) => {
+    e.preventDefault();
+    setIsEditDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setEditSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleEditFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setEditSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleEditRemoveFile = () => {
+    setEditSelectedFile(null);
+    setEditablePolicy(prev => ({ ...prev, fileName: '', fileSize: '' }));
+  };
+
   useEffect(() => {
     const mockData = [
-      { id: 1, title: 'Leave Policy 2026', category: 'Leave Management', description: 'Comprehensive leave policy covering all types of leaves including sick, casual, earned, and special leaves.', version: '2.0', effectiveFrom: '2026-01-01', status: 'active', lastUpdated: '2025-12-15', updatedBy: 'HR Manager' },
-      { id: 2, title: 'Remote Work Policy', category: 'HR Management', description: 'Guidelines for work from home arrangements, eligibility, and productivity expectations.', version: '1.5', effectiveFrom: '2025-06-01', status: 'active', lastUpdated: '2025-05-20', updatedBy: 'HR Director' },
-      { id: 3, title: 'Code of Conduct', category: 'Code Of Conduct', description: 'Professional behavior standards, ethics guidelines, and workplace conduct expectations.', version: '3.0', effectiveFrom: '2024-01-01', status: 'active', lastUpdated: '2024-01-01', updatedBy: 'Legal Team' },
-      { id: 4, title: 'Data Security Policy', category: 'IT Security', description: 'Information security guidelines, data handling procedures, and compliance requirements.', version: '2.1', effectiveFrom: '2025-09-01', status: 'active', lastUpdated: '2025-08-25', updatedBy: 'IT Security' },
-      { id: 5, title: 'Travel & Expense Policy', category: 'Travel & Expense', description: 'Business travel guidelines, expense claims, and reimbursement procedures.', version: '1.8', effectiveFrom: '2025-04-01', status: 'under-review', lastUpdated: '2026-02-10', updatedBy: 'Finance Team' },
-      { id: 6, title: 'Attendance Policy', category: 'Attendance Protocol', description: 'Working hours, punctuality expectations, overtime rules, and attendance tracking.', version: '2.2', effectiveFrom: '2026-01-01', status: 'active', lastUpdated: '2025-12-20', updatedBy: 'HR Manager' },
+      { id: 1, title: 'Leave Policy 2026', category: 'Leave Management', description: 'Comprehensive leave policy covering all types of leaves including sick, casual, earned, and special leaves.', version: '2.0', effectiveFrom: '2026-01-01', status: 'active', lastUpdated: '2025-12-15', updatedBy: 'HR Manager', fileName: 'Leave_Policy_2026.pdf', fileSize: '1.2 MB' },
+      { id: 2, title: 'Remote Work Policy', category: 'HR Management', description: 'Guidelines for work from home arrangements, eligibility, and productivity expectations.', version: '1.5', effectiveFrom: '2025-06-01', status: 'active', lastUpdated: '2025-05-20', updatedBy: 'HR Director', fileName: 'Remote_Work_Guidelines.pdf', fileSize: '850 KB' },
+      { id: 3, title: 'Code of Conduct', category: 'Code Of Conduct', description: 'Professional behavior standards, ethics guidelines, and workplace conduct expectations.', version: '3.0', effectiveFrom: '2024-01-01', status: 'active', lastUpdated: '2024-01-01', updatedBy: 'Legal Team', fileName: 'Code_of_Conduct_v3.pdf', fileSize: '2.4 MB' },
+      { id: 4, title: 'Data Security Policy', category: 'IT Security', description: 'Information security guidelines, data handling procedures, and compliance requirements.', version: '2.1', effectiveFrom: '2025-09-01', status: 'active', lastUpdated: '2025-08-25', updatedBy: 'IT Security', fileName: 'Data_Security_Standards.pdf', fileSize: '1.8 MB' },
+      { id: 5, title: 'Travel & Expense Policy', category: 'Travel & Expense', description: 'Business travel guidelines, expense claims, and reimbursement procedures.', version: '1.8', effectiveFrom: '2025-04-01', status: 'under-review', lastUpdated: '2026-02-10', updatedBy: 'Finance Team', fileName: 'Travel_Reimbursement_Policy.pdf', fileSize: '950 KB' },
+      { id: 6, title: 'Attendance Policy', category: 'Attendance Protocol', description: 'Working hours, punctuality expectations, overtime rules, and attendance tracking.', version: '2.2', effectiveFrom: '2026-01-01', status: 'active', lastUpdated: '2025-12-20', updatedBy: 'HR Manager', fileName: 'Attendance_Rules_2026.pdf', fileSize: '1.1 MB' },
     ];
 
     setLoading(true);
@@ -129,14 +199,27 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
     e.preventDefault();
     if (!newPolicy.title || !newPolicy.description) return;
 
+    let fileName = '';
+    let fileSize = '';
+    if (selectedFile) {
+      fileName = selectedFile.name;
+      const sizeInMB = selectedFile.size / (1024 * 1024);
+      fileSize = sizeInMB >= 1 
+        ? `${sizeInMB.toFixed(1)} MB` 
+        : `${(selectedFile.size / 1024).toFixed(0)} KB`;
+    }
+
     const created = {
       ...newPolicy,
+      fileName,
+      fileSize,
       id: Date.now(),
       lastUpdated: new Date().toISOString().split('T')[0]
     };
 
     setPolicies(prev => [created, ...prev]);
     setIsAddModalOpen(false);
+    setSelectedFile(null);
 
     // Reset Form
     setNewPolicy({
@@ -146,7 +229,9 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
       version: '1.0',
       effectiveFrom: new Date().toISOString().split('T')[0],
       status: 'active',
-      updatedBy: 'HR Manager'
+      updatedBy: 'HR Manager',
+      fileName: '',
+      fileSize: ''
     });
   };
 
@@ -164,9 +249,27 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
 
   const handleSaveDetailEdits = () => {
     if (editablePolicy) {
-      setPolicies(prev => prev.map(p => p.id === editablePolicy.id ? { ...editablePolicy, lastUpdated: new Date().toISOString().split('T')[0] } : p));
-      setSelectedPolicyDetail({ ...editablePolicy, lastUpdated: new Date().toISOString().split('T')[0] });
+      let fileName = editablePolicy.fileName || '';
+      let fileSize = editablePolicy.fileSize || '';
+      if (editSelectedFile) {
+        fileName = editSelectedFile.name;
+        const sizeInMB = editSelectedFile.size / (1024 * 1024);
+        fileSize = sizeInMB >= 1 
+          ? `${sizeInMB.toFixed(1)} MB` 
+          : `${(editSelectedFile.size / 1024).toFixed(0)} KB`;
+      }
+      
+      const updatedPolicy = {
+        ...editablePolicy,
+        fileName,
+        fileSize,
+        lastUpdated: new Date().toISOString().split('T')[0]
+      };
+
+      setPolicies(prev => prev.map(p => p.id === editablePolicy.id ? updatedPolicy : p));
+      setSelectedPolicyDetail(updatedPolicy);
       setIsEditingDetail(false);
+      setEditSelectedFile(null);
     }
   };
 
@@ -513,14 +616,74 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
                     </div>
                     <div className="col-span-full">
                       {isEditingDetail ? (
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Directive Description</label>
-                          <textarea
-                            value={editablePolicy?.description}
-                            onChange={(e) => setEditablePolicy({ ...editablePolicy, description: e.target.value })}
-                            rows={4}
-                            className="w-full text-sm font-bold text-[#1A1A2E] bg-white border border-[#F4F3EF] p-4 rounded-xl focus:outline-none"
-                          />
+                        <div className="space-y-6">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Directive Description</label>
+                            <textarea
+                              value={editablePolicy?.description}
+                              onChange={(e) => setEditablePolicy({ ...editablePolicy, description: e.target.value })}
+                              rows={4}
+                              className="w-full text-sm font-bold text-[#1A1A2E] bg-white border border-[#F4F3EF] p-4 rounded-xl focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Attached Document</label>
+                            <div
+                              onDragOver={handleEditDragOver}
+                              onDragLeave={handleEditDragLeave}
+                              onDrop={handleEditDrop}
+                              className={`border-2 border-dashed rounded-3xl p-5 text-center transition-all duration-300 ${
+                                isEditDragOver 
+                                  ? 'border-[#1B4DA0] bg-blue-50/30' 
+                                  : (editSelectedFile || editablePolicy?.fileName) 
+                                    ? 'border-emerald-300 bg-emerald-50/5' 
+                                    : 'border-[#F4F3EF] hover:border-[#1B4DA0]/40 bg-white'
+                              }`}
+                            >
+                              {(editSelectedFile || editablePolicy?.fileName) ? (
+                                <div className="flex items-center justify-between text-left">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                      <FiFileText size={20} />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-bold text-[#1A1A2E] max-w-[240px] truncate">
+                                        {editSelectedFile ? editSelectedFile.name : editablePolicy.fileName}
+                                      </p>
+                                      <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                        {editSelectedFile 
+                                          ? ((editSelectedFile.size / (1024 * 1024)) >= 1 
+                                            ? `${(editSelectedFile.size / (1024 * 1024)).toFixed(1)} MB` 
+                                            : `${(editSelectedFile.size / 1024).toFixed(0)} KB`)
+                                          : editablePolicy.fileSize}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={handleEditRemoveFile}
+                                    className="p-2.5 bg-red-50 hover:bg-red-100 rounded-xl text-red-500 transition-all active:scale-95"
+                                  >
+                                    <FiTrash2 size={14} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <label className="cursor-pointer flex flex-col items-center justify-center py-2">
+                                  <div className="w-10 h-10 rounded-xl bg-[#F4F3EF] flex items-center justify-center text-[#1B4DA0] mb-2">
+                                    <FiUpload size={16} />
+                                  </div>
+                                  <span className="text-xs font-bold text-[#1A1A2E]">Drag & drop new file, or <span className="text-[#1B4DA0] underline">browse</span></span>
+                                  <input
+                                    type="file"
+                                    onChange={handleEditFileChange}
+                                    className="hidden"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                  />
+                                </label>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ) : (
                         <p className="text-[13px] font-bold text-slate-500 leading-relaxed bg-white border border-[#F4F3EF] p-5 rounded-2xl shadow-sm">
@@ -532,17 +695,53 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
 
                 </div>
 
-                {/* PDF download banner */}
+                {/* Attached document / download banner */}
                 {!isEditingDetail && (
-                  <div className="p-6 rounded-[2.5rem] border border-[#1B4DA0]/20 bg-blue-50/20 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-[14px] font-black text-[#1B4DA0]">Certified Documentation</h4>
-                      <p className="text-[10px] font-bold text-slate-400 mt-1">Acquire technical PDF formatting for reference.</p>
+                  selectedPolicyDetail.fileName ? (
+                    <div className="p-6 rounded-[2.5rem] border border-[#1B4DA0]/20 bg-[#1B4DA0]/5 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-[#1B4DA0]">
+                          <FiFileText className="w-6 h-6" />
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-[13px] font-bold text-[#1A1A2E] max-w-[200px] sm:max-w-[320px] truncate">{selectedPolicyDetail.fileName}</h4>
+                          <p className="text-[10px] font-bold text-[#9B9BAD] mt-0.5">{selectedPolicyDetail.fileSize || 'Certified Documentation'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => {
+                            setPreviewFile(selectedPolicyDetail);
+                          }}
+                          className="p-4 bg-white border border-[#E8E7E2] hover:bg-slate-50 rounded-2xl text-[#1B4DA0] shadow-sm hover:scale-105 active:scale-95 transition-all"
+                          title="View Document"
+                        >
+                          <FiEye className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => {
+                            alert(`Downloading document: ${selectedPolicyDetail.fileName}`);
+                          }}
+                          className="p-4 bg-gradient-to-br from-[#1B4DA0] to-[#0D47A1] rounded-2xl text-white shadow-xl hover:scale-105 active:scale-95 transition-all"
+                          title="Download Document"
+                        >
+                          <FiDownload className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
-                    <button className="p-4 bg-gradient-to-br from-[#1B4DA0] to-[#0D47A1] rounded-2xl text-white shadow-xl hover:scale-105 active:scale-95 transition-all">
-                      <FiDownload className="w-5 h-5" />
-                    </button>
-                  </div>
+                  ) : (
+                    <div className="p-6 rounded-[2.5rem] border border-[#F4F3EF] bg-slate-50/50 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                          <FiFileText className="w-6 h-6" />
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-[13px] font-bold text-[#1A1A2E]">No Certified Documentation</h4>
+                          <p className="text-[10px] font-bold text-[#9B9BAD] mt-0.5">There is no file attached to this directive.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
                 )}
 
                 {/* Actions Grid */}
@@ -590,9 +789,8 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
               {/* Modal Header */}
               <div className="p-8 border-b border-[#F4F3EF] flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-white text-left">
                 <div>
-                  <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">Authenticate Directive</h3>
-                  <p className="text-[11px] font-bold text-[#1B4DA0] uppercase tracking-widest mt-1">Publish new corporate guidelines</p>
-                </div>
+                  <h3 className="text-xl font-bold text-[#1A1A2E] font-syne">New Policy</h3>
+                                  </div>
                 <button
                   onClick={() => setIsAddModalOpen(false)}
                   className="w-12 h-12 rounded-2xl bg-[#F4F3EF] text-[#9B9BAD] hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center shadow-sm"
@@ -674,6 +872,61 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
                   </div>
 
                   <div className="space-y-1.5 col-span-full">
+                    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Upload Policy Document</label>
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      className={`border-2 border-dashed rounded-3xl p-6 text-center transition-all duration-300 ${
+                        isDragOver 
+                          ? 'border-[#1B4DA0] bg-blue-50/30' 
+                          : selectedFile 
+                            ? 'border-emerald-300 bg-emerald-50/10' 
+                            : 'border-[#F4F3EF] hover:border-[#1B4DA0]/40 bg-[#F4F3EF]/50'
+                      }`}
+                    >
+                      {selectedFile ? (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 text-left">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                              <FiFileText size={24} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-[#1A1A2E] max-w-[300px] truncate">{selectedFile.name}</p>
+                              <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                {(selectedFile.size / (1024 * 1024)) >= 1 
+                                  ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB` 
+                                  : `${(selectedFile.size / 1024).toFixed(0)} KB`}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveFile}
+                            className="p-3 bg-red-50 hover:bg-red-100 rounded-xl text-red-500 transition-all active:scale-95"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer flex flex-col items-center justify-center py-4">
+                          <div className="w-12 h-12 rounded-2xl bg-white border border-[#E8E7E2] flex items-center justify-center text-[#1B4DA0] shadow-sm mb-3">
+                            <FiUpload size={20} />
+                          </div>
+                          <span className="text-sm font-bold text-[#1A1A2E]">Drag & drop policy document, or <span className="text-[#1B4DA0] underline">browse</span></span>
+                          <span className="text-[10px] font-medium text-slate-400 mt-1">Supports PDF, DOCX, XLSX or Images (Max 10MB)</span>
+                          <input
+                            type="file"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 col-span-full">
                     <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">Initial Audit Status</label>
                     <select
                       value={newPolicy.status}
@@ -749,6 +1002,145 @@ const PolicyTab = ({ isDarkMode, selectedClient, notificationBell }) => {
                   Delete Forever
                 </button>
               </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* File Preview Modal */}
+      {previewFile && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[300000] flex items-center justify-center p-4 md:p-10">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#1A1A2E]/80 backdrop-blur-xl"
+              onClick={() => setPreviewFile(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-4xl h-[85vh] bg-white rounded-[32px] shadow-2xl overflow-hidden border border-[#F4F3EF] z-[300001] flex flex-col font-[Outfit]"
+            >
+              {/* Viewer Header */}
+              <div className="bg-[#1A1A2E] text-white px-8 py-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                    <FiFileText size={20} />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="text-sm font-bold truncate max-w-[300px] md:max-w-[500px]">{previewFile.fileName}</h4>
+                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">{previewFile.fileSize || 'Certified Documentation'} • Dynamic PDF Preview</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => alert(`Downloading document: ${previewFile.fileName}`)}
+                    className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all active:scale-95"
+                    title="Download File"
+                  >
+                    <FiDownload size={18} />
+                  </button>
+                  <button 
+                    onClick={() => setPreviewFile(null)}
+                    className="p-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-all active:scale-95"
+                    title="Close Preview"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Viewer Body (A4 Styled Document) */}
+              <div className="flex-1 bg-[#2C2C35] overflow-y-auto p-8 md:p-12 flex justify-center custom-scrollbar">
+                <div className="w-full max-w-[800px] bg-white shadow-xl min-h-[1000px] rounded-sm p-12 md:p-16 relative text-left border border-gray-300 font-[Outfit] text-slate-800 leading-relaxed">
+                  
+                  {/* Decorative Letterhead Watermark / Header */}
+                  <div className="border-b-2 border-[#1B4DA0] pb-6 mb-8 flex justify-between items-start">
+                    <div>
+                      <h2 className="text-xl font-bold tracking-tight text-[#1B4DA0] uppercase font-syne">MABICONS ERP</h2>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Global Human Resource Portal</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="px-3 py-1 bg-blue-50 text-[#1B4DA0] text-[9px] font-black uppercase tracking-widest rounded-full border border-blue-100">
+                        {previewFile.category || 'CORPORATE POLICY'}
+                      </span>
+                      <p className="text-[10px] font-bold text-slate-400 mt-2">REF: MAB/POL/{previewFile.version || '1.0'}</p>
+                    </div>
+                  </div>
+
+                  {/* Certified Watermark Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03]">
+                    <div className="text-[5rem] font-black text-[#1B4DA0] rotate-[-30deg] border-[12px] border-dashed border-[#1B4DA0] p-10 rounded-[40px]">
+                      MABICONS CERTIFIED
+                    </div>
+                  </div>
+
+                  {/* Document Title */}
+                  <div className="mb-10 text-center">
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-[#1A1A2E] uppercase font-syne tracking-tight leading-tight">
+                      {previewFile.title || 'Corporate Guideline'}
+                    </h1>
+                    <p className="text-xs text-slate-400 font-bold mt-2 uppercase tracking-wider">
+                      Effective Date: {new Date(previewFile.effectiveFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+
+                  {/* Document Content */}
+                  <div className="space-y-8 text-sm text-slate-700">
+                    <div>
+                      <h3 className="text-xs font-black text-[#1A1A2E] uppercase tracking-wider mb-2 border-l-4 border-[#1B4DA0] pl-3">1. Objective & Scope</h3>
+                      <p className="pl-4">
+                        This official document outlines the rules, guidelines, and compliance expectations regarding the <strong className="text-[#1A1A2E]">{previewFile.title}</strong> at Mabicons. 
+                        It applies to all employees, executives, contract partners, and stakeholders of the corporate registry under the {previewFile.category} classification.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xs font-black text-[#1A1A2E] uppercase tracking-wider mb-2 border-l-4 border-[#1B4DA0] pl-3">2. Detailed Guidelines</h3>
+                      <p className="pl-4 leading-relaxed font-medium text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-line">
+                        {previewFile.description || 'No additional scope details provided. Please review the corporate guidelines index for more information.'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xs font-black text-[#1A1A2E] uppercase tracking-wider mb-2 border-l-4 border-[#1B4DA0] pl-3">3. Compliance & Enforcement</h3>
+                      <p className="pl-4">
+                        Failure to comply with the stipulations set forth in this directive may lead to audit reviews and corrective disciplinary measures. 
+                        Mabicons reserves the absolute right to amend, suspend, or update these terms at any time.
+                      </p>
+                    </div>
+
+                    {/* Signature Block */}
+                    <div className="pt-16 grid grid-cols-2 gap-8 border-t border-slate-100 mt-16">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prepared & Audited By</p>
+                        <div className="h-16 flex items-end">
+                          <span className="font-syne text-[#1A1A2E] font-bold text-sm underline decoration-[#1B4DA0] decoration-2 underline-offset-4">
+                            {previewFile.updatedBy || 'HR Management'}
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-500 mt-1">Authorized Auditor</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Office Verification Stamp</p>
+                        <div className="h-16 flex items-end justify-end">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-500 bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest rounded-lg">
+                            <FiCheckCircle size={12} /> APPROVED DIGITAL REGISTER
+                          </div>
+                        </div>
+                        <p className="text-xs font-bold text-slate-500 mt-1">Mabicons Corporate Hub</p>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
             </motion.div>
           </div>
         </AnimatePresence>,

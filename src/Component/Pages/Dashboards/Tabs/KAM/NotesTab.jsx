@@ -433,9 +433,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment, noti
                           <h3 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: "'Syne', sans-serif" }}>
                             {view === 'edit' ? 'Update Note' : 'Create Note'}
                           </h3>
-                          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] mt-1">
-                            Strategy Protocol Entry
-                          </p>
+
                         </div>
                         <button onClick={() => { setView('list'); setEditNote(null); setNewNote({ title: '', content: '' }); }}
                           className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shadow-sm">
@@ -458,7 +456,7 @@ const NotesTab = ({ isDarkMode, selectedClient, department: propDepartment, noti
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Content *</label>
+                          <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-widest pl-1">Description *</label>
                           <textarea
                             rows={6}
                             value={newNote.content}
