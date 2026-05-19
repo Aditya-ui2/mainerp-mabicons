@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiPlus, 
-  FiAlertCircle, 
-  FiCheckCircle, 
-  FiClock, 
-  FiSearch, 
-  FiMessageSquare, 
-  FiX, 
-  FiCheck, 
-  FiChevronDown, 
-  FiChevronRight, 
-  FiTrash2, 
-  FiEye, 
-  FiBriefcase, 
-  FiCalendar, 
-  FiUser 
+import {
+  FiPlus,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiClock,
+  FiSearch,
+  FiMessageSquare,
+  FiX,
+  FiCheck,
+  FiChevronDown,
+  FiChevronRight,
+  FiTrash2,
+  FiEye,
+  FiBriefcase,
+  FiCalendar,
+  FiUser
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
@@ -60,14 +60,14 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
   const [problems, setProblems] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState('My Problems'); // 'My Problems', 'Team Problems'
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('ALL PRIORITIES');
   const [statusFilter, setStatusFilter] = useState('ALL STATUS');
-  
+
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-  
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectedProblemForDetail, setSelectedProblemForDetail] = useState(null);
 
@@ -85,7 +85,7 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
   const isSuperAdmin = normalizedRole.includes('super') || normalizedRole.includes('admin');
   const isCRM = normalizedRole.includes('crm');
   const isRecruitmentHead = normalizedRole.includes('recruitment head') || normalizedRole.includes('head');
-  
+
   // Can resolve team problems if Head, CRM, or Admin
   const canResolveTeam = isSuperAdmin || isCRM || isRecruitmentHead;
 
@@ -231,9 +231,9 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
   // Filter logic
   const filteredProblems = problems.filter(p => {
     // Search match
-    const searchMatch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        p.raisedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        p.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchMatch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.raisedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.id.toLowerCase().includes(searchQuery.toLowerCase());
     if (!searchMatch) return false;
 
     // Priority filter
@@ -264,49 +264,44 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-jakarta text-left">
-      
+
       {/* Header */}
       <div className="flex items-center justify-between gap-4 mb-2">
         <div className="flex flex-col gap-1">
           <h2 className="text-2xl font-bold leading-tight text-[#1A1A2E] font-syne">
-            Help & Support
-          </h2>
-          <p className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px]">
-            {activeTab === 'My Problems' ? 'Track your issues' : 'Manage team reported issues'}
-          </p>
+            Help & Support</h2>
+
         </div>
         <div className="flex items-center gap-3">
           {/* Tabs */}
-          <div className="flex bg-[#F4F3EF] p-1 rounded-full shadow-sm">
-            <button
-              onClick={() => {
-                setActiveTab('My Problems');
-                setSelectedIds([]);
-              }}
-              className={`px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${
-                activeTab === 'My Problems' 
-                  ? 'bg-[#1B4DA0] text-white shadow-md' 
+          {canResolveTeam && (
+            <div className="flex bg-[#F4F3EF] p-1 rounded-full shadow-sm">
+              <button
+                onClick={() => {
+                  setActiveTab('My Problems');
+                  setSelectedIds([]);
+                }}
+                className={`px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${activeTab === 'My Problems'
+                  ? 'bg-[#1B4DA0] text-white shadow-md'
                   : 'text-[#6B6B7E] hover:text-[#1B4DA0]'
-              }`}
-            >
-              My Problems
-            </button>
-            {canResolveTeam && (
+                  }`}
+              >
+                My Problems
+              </button>
               <button
                 onClick={() => {
                   setActiveTab('Team Problems');
                   setSelectedIds([]);
                 }}
-                className={`px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${
-                  activeTab === 'Team Problems' 
-                    ? 'bg-[#1B4DA0] text-white shadow-md' 
-                    : 'text-[#6B6B7E] hover:text-[#1B4DA0]'
-                }`}
+                className={`px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${activeTab === 'Team Problems'
+                  ? 'bg-[#1B4DA0] text-white shadow-md'
+                  : 'text-[#6B6B7E] hover:text-[#1B4DA0]'
+                  }`}
               >
                 Team Problems
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {notificationBell}
 
@@ -341,10 +336,10 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
 
         {/* Custom Filter Dropdowns */}
         <div className="flex items-center gap-3 relative">
-          
+
           {/* Priority dropdown */}
           <div className="relative" ref={priorityRef}>
-            <button 
+            <button
               onClick={() => {
                 setShowPriorityDropdown(!showPriorityDropdown);
                 setShowStatusDropdown(false);
@@ -354,7 +349,7 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
               {priorityFilter}
               <FiChevronDown size={14} className="text-[#1B4DA0] opacity-50" />
             </button>
-            
+
             <AnimatePresence>
               {showPriorityDropdown && (
                 <motion.div
@@ -370,9 +365,8 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
                         setPriorityFilter(item);
                         setShowPriorityDropdown(false);
                       }}
-                      className={`w-full px-5 py-3 text-[11px] font-black text-left uppercase tracking-wider hover:bg-slate-50 transition-colors ${
-                        priorityFilter === item ? 'text-[#1B4DA0] bg-blue-50/50' : 'text-[#4B4B5E]'
-                      }`}
+                      className={`w-full px-5 py-3 text-[11px] font-black text-left uppercase tracking-wider hover:bg-slate-50 transition-colors ${priorityFilter === item ? 'text-[#1B4DA0] bg-blue-50/50' : 'text-[#4B4B5E]'
+                        }`}
                     >
                       {item}
                     </button>
@@ -384,7 +378,7 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
 
           {/* Status dropdown */}
           <div className="relative" ref={statusRef}>
-            <button 
+            <button
               onClick={() => {
                 setShowStatusDropdown(!showStatusDropdown);
                 setShowPriorityDropdown(false);
@@ -410,9 +404,8 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
                         setStatusFilter(item);
                         setShowStatusDropdown(false);
                       }}
-                      className={`w-full px-5 py-3 text-[11px] font-black text-left uppercase tracking-wider hover:bg-slate-50 transition-colors ${
-                        statusFilter === item ? 'text-[#1B4DA0] bg-blue-50/50' : 'text-[#4B4B5E]'
-                      }`}
+                      className={`w-full px-5 py-3 text-[11px] font-black text-left uppercase tracking-wider hover:bg-slate-50 transition-colors ${statusFilter === item ? 'text-[#1B4DA0] bg-blue-50/50' : 'text-[#4B4B5E]'
+                        }`}
                     >
                       {item}
                     </button>
@@ -476,9 +469,9 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
                         type="checkbox"
                         checked={selectedIds.includes(problem.id)}
                         onChange={() => {
-                          setSelectedIds(prev => 
-                            prev.includes(problem.id) 
-                              ? prev.filter(id => id !== problem.id) 
+                          setSelectedIds(prev =>
+                            prev.includes(problem.id)
+                              ? prev.filter(id => id !== problem.id)
                               : [...prev, problem.id]
                           );
                         }}
@@ -614,7 +607,7 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                 className="fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[1101] flex flex-col"
               >
-                
+
                 {/* Header */}
                 <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#F4F3EF] px-10 py-10 flex items-center justify-between z-20">
                   <div className="flex-1 mr-4 text-left">
@@ -629,7 +622,7 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
                       <StatusBadge status={selectedProblemForDetail.status} />
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 shrink-0">
                     <button
                       onClick={() => setSelectedProblemForDetail(null)}
@@ -643,7 +636,7 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8 text-left">
-                  
+
                   {/* Detailed Description */}
                   <div className="bg-[#FAFAF9] rounded-[32px] p-8 border border-[#F4F3EF] space-y-4">
                     <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] block">
@@ -807,9 +800,8 @@ const HelpSupportTab = ({ userRole = '', userName = 'Current User', notification
                           key={p}
                           type="button"
                           onClick={() => setFormData({ ...formData, priority: p })}
-                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                            formData.priority === p ? 'bg-white text-[#1A1A2E] shadow-sm' : 'text-[#9B9BAD] hover:text-[#64748b]'
-                          }`}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.priority === p ? 'bg-white text-[#1A1A2E] shadow-sm' : 'text-[#9B9BAD] hover:text-[#64748b]'
+                            }`}
                         >
                           {p}
                         </button>
