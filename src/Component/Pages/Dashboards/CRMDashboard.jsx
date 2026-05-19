@@ -55,6 +55,7 @@ const CompleteOnboardingTab = lazy(() => import('./Tabs/CRM/CompleteOnboardingTa
 const ClientsTab = lazy(() => import('./Tabs/CRM/ClientsTab'));
 const EmployeeHelpSupportTab = lazy(() => import('./Tabs/Common/EmployeeHelpSupportTab'));
 const PolicyTab = lazy(() => import('./Tabs/KAM/PolicyTab'));
+const HelpSupportTab = lazy(() => import('./Tabs/Common/HelpSupportTab'));
 const SuperAdminInternalSupportTab = lazy(() => import('./Tabs/Common/SuperAdminInternalSupportTab'));
 const SuperAdminExternalSupportTab = lazy(() => import('./Tabs/Common/SuperAdminExternalSupportTab'));
 
@@ -1268,7 +1269,7 @@ const CRMDashboard = () => {
                 transition={{ duration: 0.2 }}
               >
                 <Suspense fallback={<div className="py-20 text-center"><div className="w-8 h-8 border-4 border-[#1B4DA0] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
-                  <SuperAdminInternalSupportTab notificationBell={renderNotificationBell()} />
+                  <HelpSupportTab userRole={userInfo.role} userName={userInfo.name} />
                 </Suspense>
               </motion.div>
             )}

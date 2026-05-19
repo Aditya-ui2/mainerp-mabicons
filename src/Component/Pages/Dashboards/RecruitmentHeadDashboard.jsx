@@ -50,6 +50,8 @@ import {
   FiCamera,
   FiMapPin,
   FiUpload,
+  FiHelpCircle,
+  FiBell,
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import AdminLayout, { StatCard } from './AdminLayout';
@@ -59,6 +61,7 @@ import { getLocalISODate } from '../Utilities/dateUtils';
 import {
   getAllNotifications,
   markNotificationRead,
+  markAllNotificationsRead,
   getRecruitmentStats,
   getAllRecruitmentPositions,
   getAllInterviews,
@@ -95,6 +98,7 @@ const SettingsTab = lazy(() => import('./Tabs/SettingsTab'));
 const SelectionMISTab = lazy(() => import('./Tabs/KAMRecruitment/SelectionMISTab'));
 const MyProfileTab = lazy(() => import('./Tabs/Common/MyProfileTab'));
 const HiringLifecycleTab = lazy(() => import('./Tabs/KAMRecruitment/HiringLifecycleTab'));
+const HelpSupportTab = lazy(() => import('./Tabs/Common/HelpSupportTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -1214,7 +1218,7 @@ const KAMPerformanceContent = ({
 };
 
 /* ── Clients Tab Unification ── */
-const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssignments = {}, onAssignClient }) => {
+const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssignments = {}, onAssignClient, notificationBell }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [industryFilter, setIndustryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -1255,7 +1259,7 @@ const ClientsTab = ({ distribution, onViewClient, teamMembers = [], clientAssign
           </h1>
         </div>
         <div className="flex gap-2">
-          {/* Action buttons removed as requested */}
+          {notificationBell}
         </div>
       </div>
 
@@ -2207,6 +2211,8 @@ const RecruitmentHeadDashboard = () => {
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
   const [upcomingJoinings, setUpcomingJoinings] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationRef = useRef(null);
   const [selectedKAM, setSelectedKAM] = useState(null);
   const [showKAMModal, setShowKAMModal] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
@@ -2935,6 +2941,98 @@ const RecruitmentHeadDashboard = () => {
     }
   };
 
+  const handleMarkAllRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        const userId = decoded.id || decoded.userId;
+        if (userId) {
+          await markAllNotificationsRead(userId);
+          setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const renderNotificationBell = () => {
+    return (
+      <div className="relative inline-block text-left animate-in fade-in duration-300" ref={notificationRef}>
+        <button
+          onClick={() => setNotificationsOpen(!notificationsOpen)}
+          className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FFFDF9] to-[#FFF9E6] border border-[#F5E6C4] shadow-sm hover:shadow-[0_4px_20px_rgba(212,175,55,0.25)] text-[#D4AF37] hover:scale-105 active:scale-95 transition-all relative outline-none"
+          title="Notifications"
+        >
+          <FiBell className="w-5 h-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 bg-rose-500 text-white text-[10px] font-black rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+
+        <AnimatePresence>
+          {notificationsOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 15, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 mt-3 w-80 bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-[#F4F3EF] overflow-hidden z-[99999]"
+            >
+              <div className="p-4 border-b border-[#F4F3EF] bg-[#FFFDF9] flex items-center justify-between">
+                <h3 className="text-[11px] font-black text-[#D4AF37] uppercase tracking-[3px]">Notifications</h3>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={handleMarkAllRead}
+                    className="text-[9px] font-black text-[#1B4DA0] uppercase tracking-wider hover:underline bg-transparent border-none p-0 cursor-pointer text-left font-syne"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-[#F4F3EF] custom-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-[#9B9BAD]">
+                    <FiBell size={32} className="mx-auto mb-3 opacity-20 text-[#D4AF37]" />
+                    <p className="text-xs font-bold">No new alerts</p>
+                  </div>
+                ) : (
+                  notifications.map((n, idx) => (
+                    <div
+                      key={n.id || idx}
+                      onClick={() => handleNotificationClick(n)}
+                      className={`p-4 hover:bg-[#FFFDF9]/40 cursor-pointer transition-colors text-left ${!n.read ? 'bg-[#FFFDF9]/70' : ''}`}
+                    >
+                      <p className={`text-[12px] text-[#1A1A2E] leading-tight ${!n.read ? 'font-bold' : 'font-medium'}`}>{n.text}</p>
+                      <p className="text-[9px] text-[#9B9BAD] mt-1.5 font-bold uppercase tracking-wider">
+                        {n.time || 'JUST NOW'}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
   const handleViewKAM = async (kam) => {
     // Set basic data first for immediate UI response
     const memberData = {
@@ -3321,6 +3419,7 @@ const RecruitmentHeadDashboard = () => {
       { id: 'resume-bank', title: 'Resume Bank', icon: FiDatabase },
       { id: 'activity-feed', title: 'Activity Feed', icon: FiActivity },
       { id: 'mis-reports', title: 'Team MIS Reports', icon: FiBarChart2 },
+      { id: 'help-support', title: 'Help & Support', icon: FiHelpCircle },
       { id: 'notes', title: 'Notes', icon: FiEdit2 },
       { id: 'document-verification', title: 'Document Verification', icon: FiShield }
     );
@@ -3368,25 +3467,26 @@ const RecruitmentHeadDashboard = () => {
                 clients={clients}
                 fetchDashboardData={fetchDashboardData}
                 fetchKAMTeam={fetchKAMTeam}
+                notificationBell={renderNotificationBell()}
               />;
             case 'Task Assignment':
-              return <TaskAssignmentTab department="HR Recruitment" />;
+              return <TaskAssignmentTab department="HR Recruitment" notificationBell={renderNotificationBell()} />;
             case 'Job Openings':
-              return <JobOpeningsTab isDarkMode={false} />;
+              return <JobOpeningsTab isDarkMode={false} notificationBell={renderNotificationBell()} />;
             case 'Candidate Pipeline':
-              return <CandidatePipelineTab setActiveTab={setActiveTab} />;
+              return <CandidatePipelineTab setActiveTab={setActiveTab} notificationBell={renderNotificationBell()} />;
             case 'Interview Schedule':
-              return <InterviewScheduleTab isDarkMode={false} />;
+              return <InterviewScheduleTab isDarkMode={false} notificationBell={renderNotificationBell()} />;
             case 'Screening & Assessment':
-              return <ScreeningTab isDarkMode={false} />;
+              return <ScreeningTab isDarkMode={false} notificationBell={renderNotificationBell()} />;
             case 'Offer Management':
-              return <OfferManagementTab isDarkMode={false} />;
+              return <OfferManagementTab isDarkMode={false} notificationBell={renderNotificationBell()} />;
             case 'Recruitment Analytics':
-              return <RecruitmentAnalyticsTab isDarkMode={false} />;
+              return <RecruitmentAnalyticsTab isDarkMode={false} notificationBell={renderNotificationBell()} />;
             case 'Resume Bank':
-              return <ResumeBankTab isDarkMode={false} />;
+              return <ResumeBankTab isDarkMode={false} notificationBell={renderNotificationBell()} />;
             case 'Selection MIS':
-              return <SelectionMISTab />;
+              return <SelectionMISTab notificationBell={renderNotificationBell()} />;
             case 'Clients':
               return (
                 <ClientsTab
@@ -3407,27 +3507,31 @@ const RecruitmentHeadDashboard = () => {
                     });
                   }}
                   onViewClient={(client) => setSelectedClientForDrawer(client)}
+                  notificationBell={renderNotificationBell()}
                 />
               );
             case 'Activity Feed':
-              return <ActivityFeedTab department="HR Recruitment" />;
+              return <ActivityFeedTab department="HR Recruitment" notificationBell={renderNotificationBell()} />;
             case 'Team MIS Reports':
-              return <TeamMISReportsTab department="HR Recruitment" />;
+              return <TeamMISReportsTab department="HR Recruitment" notificationBell={renderNotificationBell()} />;
+            case 'Help & Support':
+            case 'help-support':
+              return <HelpSupportTab userRole={userInfo.role} userName={userInfo.name} notificationBell={renderNotificationBell()} />;
             case 'Notes':
             case 'notes':
-              return <NotesTab isDarkMode={false} department="HR Recruitment" />;
+              return <NotesTab isDarkMode={false} department="HR Recruitment" notificationBell={renderNotificationBell()} />;
             case 'Settings':
-              return <SettingsTab />;
+              return <SettingsTab notificationBell={renderNotificationBell()} />;
             case 'My Profile':
-              return <MyProfileTab onProfileUpdate={refreshUserInfo} />;
+              return <MyProfileTab onProfileUpdate={refreshUserInfo} notificationBell={renderNotificationBell()} />;
             case 'Document Verification':
             case 'document-verification':
-              return <DocumentVerifyTab isDarkMode={false} />;
+              return <DocumentVerifyTab isDarkMode={false} notificationBell={renderNotificationBell()} />;
             case 'Hiring':
             case 'Hiring Lifecycle':
             case 'hiring-lifecycle':
             case 'Joined Candidates':
-              return <HiringLifecycleTab />;
+              return <HiringLifecycleTab notificationBell={renderNotificationBell()} />;
             default:
               return (
                 <>
@@ -3576,6 +3680,7 @@ const RecruitmentHeadDashboard = () => {
                         )}
                       </div>
 
+                      {renderNotificationBell()}
                       <button
                         onClick={() => setActiveTab('Team Overview')}
                         className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] hover:bg-[#0a3a82] text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-bold whitespace-nowrap"

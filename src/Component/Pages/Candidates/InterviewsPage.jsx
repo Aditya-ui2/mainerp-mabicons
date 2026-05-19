@@ -30,7 +30,7 @@ const STATUS_COLORS = {
   "Cancelled": "bg-rose-50 text-rose-600 border-rose-100",
 };
 
-export default function InterviewsPage() {
+export default function InterviewsPage({ notificationBell }) {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedInterview, setSelectedInterview] = useState(null);
@@ -722,6 +722,9 @@ export default function InterviewsPage() {
             )}
             {isSyncing ? 'Syncing...' : 'Sync Data'}
           </button>
+          
+          {notificationBell}
+
           <button
             onClick={() => setIsScheduleModalOpen(true)}
             className="flex items-center gap-2 px-6 py-3 bg-[#0D47A1] text-white rounded-xl text-sm font-bold hover:bg-[#0a3a82] transition-all shadow-lg shadow-[#0D47A1]/20 active:scale-95"
