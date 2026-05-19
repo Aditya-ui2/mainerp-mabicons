@@ -70,9 +70,10 @@ const AdminLayout = ({
         if (!n.read && !n.isRead) {
           const msg = String(n.message || '').toLowerCase();
           
-          // Employees
+          // Employees / My Team
           if (msg.includes('employee') || msg.includes('staff') || msg.includes('team') || msg.includes('member')) {
             updates['All Employees'] = true;
+            updates['My Team'] = true;
           }
           
           // Clients & CRM Management
@@ -80,6 +81,7 @@ const AdminLayout = ({
             updates['All Clients'] = true;
             updates['Client Pipeline'] = true;
             updates['Client Onboarding'] = true;
+            updates['Clients'] = true;
           }
           if (msg.includes('pipeline') || msg.includes('lead') || msg.includes('deal') || msg.includes('crm')) {
             updates['Client Pipeline'] = true;
@@ -95,20 +97,26 @@ const AdminLayout = ({
           // Recruitment Management
           if (msg.includes('position') || msg.includes('job') || msg.includes('vacancy') || msg.includes('opening')) {
             updates['Total Open Positions'] = true;
+            updates['Job Openings'] = true;
           }
           if (msg.includes('shortlist') || msg.includes('candidate') || msg.includes('applied') || msg.includes('cv') || msg.includes('resume')) {
             updates['Shortlisted Candidates'] = true;
+            updates['Candidate Pipeline'] = true;
+            updates['Resume Bank'] = true;
           }
           if (msg.includes('interview') || msg.includes('schedule') || msg.includes('scheduled') || msg.includes('round')) {
             updates['Interviews'] = true;
+            updates['Interview Schedule'] = true;
           }
           if (msg.includes('joined') || msg.includes('hired') || msg.includes('placed') || msg.includes('joining')) {
             updates['Joined Candidates'] = true;
           }
 
-          // Operations Management
+          // Operations Management & Tasks
           if (msg.includes('task') || msg.includes('allocation') || msg.includes('assign') || msg.includes('assigned') || msg.includes('project')) {
             updates['Resource Allocation'] = true;
+            updates['Task Assignment'] = true;
+            updates['My Tasks'] = true;
           }
           if (msg.includes('performance') || msg.includes('target') || msg.includes('kpi') || msg.includes('metric')) {
             updates['Team Performance'] = true;
@@ -139,6 +147,23 @@ const AdminLayout = ({
           if (msg.includes('note')) {
             updates['Notes'] = true;
           }
+
+          // Document Verification
+          if (msg.includes('document') || msg.includes('verification') || msg.includes('verify') || msg.includes('aadhaar') || msg.includes('pan') || msg.includes('shield')) {
+            updates['Document Verification'] = true;
+          }
+
+          // Activity Feed
+          if (msg.includes('activity') || msg.includes('feed') || msg.includes('log') || msg.includes('recent') || msg.includes('history')) {
+            updates['Activity Feed'] = true;
+          }
+
+          // Reports / Team MIS Reports
+          if (msg.includes('report') || msg.includes('mis') || msg.includes('chart') || msg.includes('stats') || msg.includes('analysis')) {
+            updates['Reports'] = true;
+            updates['Team MIS Reports'] = true;
+            updates['Team MIS Report'] = true;
+          }
         }
       });
       setTabUpdates(prev => ({ ...prev, ...updates }));
@@ -151,13 +176,37 @@ const AdminLayout = ({
       if (activeTab === 'Internal' || activeTab === 'External') {
         setTabUpdates(prev => ({ ...prev, 'Help & Support': false }));
       }
-      if (['Total Open Positions', 'Shortlisted Candidates', 'Interviews', 'Joined Candidates'].includes(activeTab)) {
+      if (activeTab === 'Total Open Positions' || activeTab === 'Job Openings') {
+        setTabUpdates(prev => ({ ...prev, 'Total Open Positions': false, 'Job Openings': false }));
+      }
+      if (activeTab === 'Shortlisted Candidates' || activeTab === 'Candidate Pipeline' || activeTab === 'Resume Bank') {
+        setTabUpdates(prev => ({ ...prev, 'Shortlisted Candidates': false, 'Candidate Pipeline': false, 'Resume Bank': false }));
+      }
+      if (activeTab === 'Interviews' || activeTab === 'Interview Schedule') {
+        setTabUpdates(prev => ({ ...prev, 'Interviews': false, 'Interview Schedule': false }));
+      }
+      if (activeTab === 'All Employees' || activeTab === 'My Team') {
+        setTabUpdates(prev => ({ ...prev, 'All Employees': false, 'My Team': false }));
+      }
+      if (activeTab === 'Team Performance' || activeTab === 'Performance Tracking') {
+        setTabUpdates(prev => ({ ...prev, 'Team Performance': false, 'Performance Tracking': false }));
+      }
+      if (activeTab === 'Task Assignment' || activeTab === 'Resource Allocation' || activeTab === 'My Tasks') {
+        setTabUpdates(prev => ({ ...prev, 'Task Assignment': false, 'Resource Allocation': false, 'My Tasks': false }));
+      }
+      if (activeTab === 'Reports' || activeTab === 'Team MIS Reports' || activeTab === 'Team MIS Report') {
+        setTabUpdates(prev => ({ ...prev, 'Reports': false, 'Team MIS Reports': false, 'Team MIS Report': false }));
+      }
+      if (activeTab === 'All Clients' || activeTab === 'Clients') {
+        setTabUpdates(prev => ({ ...prev, 'All Clients': false, 'Clients': false }));
+      }
+      if (['Total Open Positions', 'Job Openings', 'Shortlisted Candidates', 'Candidate Pipeline', 'Resume Bank', 'Interviews', 'Interview Schedule', 'Joined Candidates'].includes(activeTab)) {
         setTabUpdates(prev => ({ ...prev, 'Recruitment Management': false }));
       }
-      if (['Performance Tracking', 'Resource Allocation'].includes(activeTab)) {
+      if (['Performance Tracking', 'Team Performance', 'Resource Allocation', 'Task Assignment', 'My Tasks'].includes(activeTab)) {
         setTabUpdates(prev => ({ ...prev, 'Operations Management': false }));
       }
-      if (['Client Meeting', 'Client Pipeline', 'Client Onboarding'].includes(activeTab)) {
+      if (['Client Meeting', 'Client Pipeline', 'Client Onboarding', 'Clients'].includes(activeTab)) {
         setTabUpdates(prev => ({ ...prev, 'CRM Management': false }));
       }
     }
@@ -167,22 +216,34 @@ const AdminLayout = ({
     const interval = setInterval(() => {
       const tabsPool = [
         'All Employees',
+        'My Team',
         'All Clients',
+        'Clients',
         'Client Pipeline',
         'Client Meeting',
         'Client Onboarding',
         'Reports',
+        'Team MIS Reports',
+        'Team MIS Report',
         'Internal',
         'External',
         'HR Policy',
         'Notes',
         'Total Open Positions',
+        'Job Openings',
         'Shortlisted Candidates',
+        'Candidate Pipeline',
+        'Resume Bank',
         'Interviews',
+        'Interview Schedule',
         'Joined Candidates',
         'Team Performance',
         'Performance Tracking',
         'Resource Allocation',
+        'Task Assignment',
+        'My Tasks',
+        'Activity Feed',
+        'Document Verification',
         'Announcements',
         'Billing & Accounts'
       ];
@@ -190,17 +251,45 @@ const AdminLayout = ({
       if (randomTab !== activeTab) {
         setTabUpdates(prev => ({ ...prev, [randomTab]: true }));
         
+        // Map alternate tab highlights
+        if (randomTab === 'Total Open Positions') setTabUpdates(prev => ({ ...prev, 'Job Openings': true }));
+        if (randomTab === 'Job Openings') setTabUpdates(prev => ({ ...prev, 'Total Open Positions': true }));
+        
+        if (randomTab === 'Shortlisted Candidates') setTabUpdates(prev => ({ ...prev, 'Candidate Pipeline': true, 'Resume Bank': true }));
+        if (randomTab === 'Candidate Pipeline') setTabUpdates(prev => ({ ...prev, 'Shortlisted Candidates': true, 'Resume Bank': true }));
+        if (randomTab === 'Resume Bank') setTabUpdates(prev => ({ ...prev, 'Shortlisted Candidates': true, 'Candidate Pipeline': true }));
+        
+        if (randomTab === 'Interviews') setTabUpdates(prev => ({ ...prev, 'Interview Schedule': true }));
+        if (randomTab === 'Interview Schedule') setTabUpdates(prev => ({ ...prev, 'Interviews': true }));
+        
+        if (randomTab === 'All Employees') setTabUpdates(prev => ({ ...prev, 'My Team': true }));
+        if (randomTab === 'My Team') setTabUpdates(prev => ({ ...prev, 'All Employees': true }));
+        
+        if (randomTab === 'Team Performance') setTabUpdates(prev => ({ ...prev, 'Performance Tracking': true }));
+        if (randomTab === 'Performance Tracking') setTabUpdates(prev => ({ ...prev, 'Team Performance': true }));
+        
+        if (randomTab === 'Resource Allocation') setTabUpdates(prev => ({ ...prev, 'Task Assignment': true, 'My Tasks': true }));
+        if (randomTab === 'Task Assignment') setTabUpdates(prev => ({ ...prev, 'Resource Allocation': true, 'My Tasks': true }));
+        if (randomTab === 'My Tasks') setTabUpdates(prev => ({ ...prev, 'Resource Allocation': true, 'Task Assignment': true }));
+        
+        if (randomTab === 'Reports') setTabUpdates(prev => ({ ...prev, 'Team MIS Reports': true, 'Team MIS Report': true }));
+        if (randomTab === 'Team MIS Reports') setTabUpdates(prev => ({ ...prev, 'Reports': true, 'Team MIS Report': true }));
+        if (randomTab === 'Team MIS Report') setTabUpdates(prev => ({ ...prev, 'Reports': true, 'Team MIS Reports': true }));
+        
+        if (randomTab === 'All Clients') setTabUpdates(prev => ({ ...prev, 'Clients': true }));
+        if (randomTab === 'Clients') setTabUpdates(prev => ({ ...prev, 'All Clients': true }));
+
         // Parent tab highlights
         if (randomTab === 'Internal' || randomTab === 'External') {
           setTabUpdates(prev => ({ ...prev, 'Help & Support': true }));
         }
-        if (['Total Open Positions', 'Shortlisted Candidates', 'Interviews', 'Joined Candidates'].includes(randomTab)) {
+        if (['Total Open Positions', 'Job Openings', 'Shortlisted Candidates', 'Candidate Pipeline', 'Resume Bank', 'Interviews', 'Interview Schedule', 'Joined Candidates'].includes(randomTab)) {
           setTabUpdates(prev => ({ ...prev, 'Recruitment Management': true }));
         }
-        if (['Performance Tracking', 'Resource Allocation'].includes(randomTab)) {
+        if (['Performance Tracking', 'Team Performance', 'Resource Allocation', 'Task Assignment', 'My Tasks'].includes(randomTab)) {
           setTabUpdates(prev => ({ ...prev, 'Operations Management': true }));
         }
-        if (['Client Meeting', 'Client Pipeline', 'Client Onboarding'].includes(randomTab)) {
+        if (['Client Meeting', 'Client Pipeline', 'Client Onboarding', 'Clients'].includes(randomTab)) {
           setTabUpdates(prev => ({ ...prev, 'CRM Management': true }));
         }
       }

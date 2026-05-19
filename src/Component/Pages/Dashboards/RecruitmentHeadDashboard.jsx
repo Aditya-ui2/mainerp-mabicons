@@ -333,7 +333,7 @@ const KAMCard = ({ kam, onViewDetails, onAssignTask, onMessage, index = 0 }) => 
 };
 
 // Team Overview Tab Content
-const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, onDeleteMultiple, onToggleStatusMultiple, globalStats, onViewCallsBreakdown, userRole }) => {
+const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMessage, onRefresh, onAddKAM, onEditKAM, onDeleteMultiple, onToggleStatusMultiple, globalStats, onViewCallsBreakdown, userRole, notificationBell }) => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedKAMs, setSelectedKAMs] = useState([]);
@@ -392,6 +392,7 @@ const TeamOverviewContent = ({ teamData, loading, onViewKAM, onAssignTask, onMes
           <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight" style={{ fontFamily: '"Syne", sans-serif' }}>My Team</h1>
         </div>
         <div className="flex items-center gap-2">
+          {notificationBell}
           {onAddKAM && canAddMember && (
             <button
               onClick={onAddKAM}
@@ -654,7 +655,8 @@ const KAMPerformanceContent = ({
   setClientFilter,
   clients,
   fetchDashboardData,
-  fetchKAMTeam
+  fetchKAMTeam,
+  notificationBell
 }) => {
   const [activeMetric, setActiveMetric] = useState('callsDone');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
@@ -786,6 +788,7 @@ const KAMPerformanceContent = ({
         </div>
 
         <motion.div variants={itemVariants} className="flex items-center gap-3 flex-wrap relative z-[100]">
+          {notificationBell}
           {/* Client Filter */}
           <div className="relative" ref={clientDropdownRef}>
             <button
@@ -3448,6 +3451,7 @@ const RecruitmentHeadDashboard = () => {
                   globalStats={stats}
                   onViewCallsBreakdown={handleViewCallsBreakdown}
                   userRole={userInfo.role}
+                  notificationBell={renderNotificationBell()}
                 />
               );
             case 'Team Performance':

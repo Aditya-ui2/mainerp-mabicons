@@ -465,7 +465,7 @@ const AssignPositionModal = ({ isOpen, onClose, positions, onConfirm, isAssignin
 
 // --- Main Page Component ---
 
-const ResumeBankTab = () => {
+const ResumeBankTab = ({ isDarkMode: initialIsDarkMode, notificationBell }) => {
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
 
@@ -860,6 +860,7 @@ const ResumeBankTab = () => {
 
         </div>
         <div className="flex items-center gap-3">
+          {notificationBell}
           <button
             onClick={() => setShowSyncMenu(!showSyncMenu)}
             disabled={syncing}

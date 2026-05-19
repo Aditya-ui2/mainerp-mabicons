@@ -267,7 +267,7 @@ const ReportRow = ({ report, onComment }) => {
   );
 };
 
-const TeamMISReportsTab = ({ department = 'HR Recruitment' }) => {
+const TeamMISReportsTab = ({ department = 'HR Recruitment', notificationBell }) => {
   const [reports, setReports]         = useState([]);
   const [loading, setLoading]         = useState(true);
   const [selectedDate, setSelectedDate] = useState('All Dates');
@@ -395,6 +395,7 @@ const TeamMISReportsTab = ({ department = 'HR Recruitment' }) => {
           </div>
 
           <div className="flex items-center gap-3">
+            {notificationBell}
             <div className="relative group/filter">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9B9BAD] group-hover/filter:text-[#1B4DA0] transition-colors pointer-events-none">
                 <Users size={14} />
