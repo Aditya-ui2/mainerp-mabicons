@@ -2112,7 +2112,7 @@ const JobOpeningsTab = ({ isDarkMode, notificationBell }) => {
                 <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-8">
                   <div className="flex items-center gap-4 bg-emerald-50 p-6 rounded-[32px] border border-emerald-100">
                     <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 animate-bounce">
-                      <FiCheckCircle size={28} />
+                      <CheckCircle size={28} />
                     </div>
                     <div>
                       <p className="text-lg font-bold text-emerald-900 leading-tight">Position Created Successfully</p>
