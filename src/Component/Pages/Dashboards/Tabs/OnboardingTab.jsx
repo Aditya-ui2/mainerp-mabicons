@@ -209,7 +209,8 @@ const OnboardingTab = ({ isDarkMode }) => {
 
   // Updated sendEmail function to handle attachments
   const sendEmail = async (emailContent, emailSubject, recipientEmail, recipientName, pdfFile) => {
-    const BREVO_API_KEY = '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'; // Replace with your API key
+    const BREVO_API_KEY = import.meta.env.VITE_BREVO_API_KEY; // Loaded from environment variables
+
     const API_URL = 'https://api.brevo.com/v3/smtp/email';
 
     // Prepare email data
