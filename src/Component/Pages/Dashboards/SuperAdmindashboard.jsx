@@ -137,7 +137,7 @@ const Dashboard = () => {
         if (userId) {
           try {
             const notificationsRes = await getAllNotifications(userId);
-            setNotifications(notificationsRes.notifications || notificationsRes || []);
+            setNotifications(notificationsRes?.data || []);
           } catch (err) {
             console.log('No notifications found');
             setNotifications([]);
