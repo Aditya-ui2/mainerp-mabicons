@@ -49,6 +49,12 @@ const getStoredAuthToken = () => {
 // Add request interceptor to always use fresh token from localStorage
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Central switch to disable file uploads temporarily due to database size constraints
+    if (config.data instanceof FormData || (config.headers && config.headers['Content-Type'] === 'multipart/form-data')) {
+      const uploadError = new Error('File uploads are temporarily disabled due to database storage limits (500MB). We will reopen this feature in the future.');
+      toast.error('File uploads are temporarily disabled due to database storage limits (500MB).');
+      return Promise.reject(uploadError);
+    }
     const token = getStoredAuthToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -221,23 +227,8 @@ export const clientSignup = async (clientData) => {
 };
 
 export const uploadAdminImage = async (adminId, image) => {
-  const formData = new FormData();
-  formData.append("adminId", adminId);
-  formData.append("image", image);
-
-  const token = localStorage.getItem('token');
-
-  try {
-    const response = await axios.post(`${BASE_URL}/admin/uploadDP`, formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to upload image' };
-  }
+  toast.error('File uploads are temporarily disabled due to storage limits (500MB).');
+  throw new Error('File uploads are temporarily disabled due to storage limits (500MB).');
 };
 
 
@@ -668,31 +659,8 @@ export const getAllTasks = async () => {
 
 // Add this new function to handle document uploads
 export const uploadClientDocuments = async (formData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.post(
-      `${BASE_URL}/client/upload-documents`,
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          // You can emit this progress to your component if needed
-          console.log('Upload progress:', percentCompleted);
-        }
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Upload error:', error);
-    throw error.response?.data || {
-      message: 'Failed to upload documents. Please try again.'
-    };
-  }
+  toast.error('File uploads are temporarily disabled due to storage limits (500MB).');
+  throw new Error('File uploads are temporarily disabled due to storage limits (500MB).');
 };
 
 // Add new function for creating task by Team Leader

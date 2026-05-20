@@ -23,14 +23,8 @@ export default function App() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    const formData = new FormData();
-    formData.append("clientId", clientId);
-    Object.entries(files).forEach(([key, file]) => {
-      if (file) {
-        formData.append(key, file);
-      }
-    });
+    alert("File uploads are temporarily disabled due to database storage limits (500MB). We will reopen this feature in the future.");
+    return;
 
     try {
       console.log("Attempting to connect to:", "https://erp-backend-d8tz.onrender.com/upload-documents");
