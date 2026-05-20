@@ -406,7 +406,7 @@ const SuperAdminDashboard = () => {
         const userId = decoded.id || decoded.userId;
         if (userId) {
           const res = await getAllNotifications(userId);
-          setNotifications(res?.notifications || res || []);
+          setNotifications(res?.data || []);
         }
       }
     } catch (e) {
