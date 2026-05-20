@@ -55,6 +55,7 @@ import SuperAdminInterviewsTab from './Tabs/Common/SuperAdminInterviewsTab';
 import SuperAdminShortlistedCandidatesTab from './Tabs/Common/SuperAdminShortlistedCandidatesTab';
 import SuperAdminInternalSupportTab from './Tabs/Common/SuperAdminInternalSupportTab';
 import SuperAdminExternalSupportTab from './Tabs/Common/SuperAdminExternalSupportTab';
+import HelpSupportTab from './Tabs/Common/HelpSupportTab';
 import { getAllClients, getAllTasks, getAllNotifications, markNotificationRead, markAllNotificationsRead, logout, getSuperAdminDashboardStats } from '../service/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
@@ -726,7 +727,7 @@ const SuperAdminDashboard = () => {
 
       case 'Help & Support':
       case 'Internal':
-        return <SuperAdminInternalSupportTab notificationBell={renderNotificationBell()} />;
+        return <HelpSupportTab userRole={userInfo.role} userName={userInfo.name} />;
       case 'External':
         return <SuperAdminExternalSupportTab notificationBell={renderNotificationBell()} />;
 

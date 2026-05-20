@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -33,12 +33,16 @@ import {
   FiChevronRight,
   FiMail,
   FiShare2,
+  FiHelpCircle,
+  FiEdit2,
+  FiBell,
 } from 'react-icons/fi';
 import AdminLayout, { StatCard, StatsBar } from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   getAllNotifications,
   markNotificationRead,
+  markAllNotificationsRead,
   getRecruitmentStats,
   getAllRecruitmentPositions,
   getAllInterviews,
@@ -69,6 +73,8 @@ const WorkHandoverTab = lazy(() => import('./Tabs/KAM/WorkHandoverTab'));
 const DocumentVerifyTab = lazy(() => import('./Tabs/KAM/DocumentVerifyTab'));
 const HiringLifecycleTab = lazy(() => import('./Tabs/KAMRecruitment/HiringLifecycleTab'));
 const TeamMembersTab = lazy(() => import('./Tabs/KAMRecruitment/TeamMembersTab'));
+const HelpSupportTab = lazy(() => import('./Tabs/Common/HelpSupportTab'));
+const NotesTab = lazy(() => import('./Tabs/KAM/NotesTab'));
 
 // Tab Loader
 const TabLoader = () => (
@@ -109,6 +115,8 @@ const getSidebarConfig = (name = '') => {
     { id: 11, title: 'Activity Feed', icon: FiActivity },
     { id: 12, title: 'Document Verification', icon: FiShield },
     { id: 13, title: 'Clients', icon: FiBriefcase },
+    { id: 14, title: 'Notes', icon: FiEdit2 },
+    { id: 15, title: 'Help & Support', icon: FiHelpCircle },
   ];
 
   return [
@@ -478,6 +486,103 @@ const KAMMemberDashboard = () => {
   const [clientJobDistribution, setClientJobDistribution] = useState([]);
   const [activeHandovers, setActiveHandovers] = useState([]);
   const [selectedClientForDrawer, setSelectedClientForDrawer] = useState(null);
+
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        const userId = decoded.id || decoded.userId || decoded._id;
+        if (userId) {
+          await markAllNotificationsRead(userId);
+          setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const renderNotificationBell = () => {
+    return (
+      <div className="relative inline-block text-left animate-in fade-in duration-300" ref={notificationRef}>
+        <button
+          onClick={() => setNotificationsOpen(!notificationsOpen)}
+          className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gradient-to-tr from-[#FFFDF9] to-[#FFF9E6] border border-[#F5E6C4] shadow-sm hover:shadow-[0_4px_20px_rgba(212,175,55,0.25)] text-[#D4AF37] hover:scale-105 active:scale-95 transition-all relative outline-none"
+          title="Notifications"
+        >
+          <FiBell className="w-5 h-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 bg-rose-500 text-white text-[10px] font-black rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+
+        <AnimatePresence>
+          {notificationsOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 15, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 mt-3 w-80 bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-[#F4F3EF] overflow-hidden z-[99999]"
+            >
+              <div className="p-4 border-b border-[#F4F3EF] bg-[#FFFDF9] flex items-center justify-between">
+                <h3 className="text-[11px] font-black text-[#D4AF37] uppercase tracking-[3px]">Notifications</h3>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={handleMarkAllRead}
+                    className="text-[9px] font-black text-[#1B4DA0] uppercase tracking-wider hover:underline bg-transparent border-none p-0 cursor-pointer text-left font-syne"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-[#F4F3EF] custom-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-[#9B9BAD]">
+                    <FiBell size={32} className="mx-auto mb-3 opacity-20 text-[#D4AF37]" />
+                    <p className="text-xs font-bold">No new alerts</p>
+                  </div>
+                ) : (
+                  notifications.map((n, idx) => (
+                    <div
+                      key={n.id || idx}
+                      onClick={() => handleNotificationClick(n)}
+                      className={`p-4 hover:bg-[#FFFDF9]/40 cursor-pointer transition-colors text-left ${!n.read ? 'bg-[#FFFDF9]/70' : ''}`}
+                    >
+                      <p className={`text-[13px] leading-snug ${!n.read ? 'font-bold text-slate-800' : 'text-slate-500 font-medium'}`}>
+                        {n.text || n.message}
+                      </p>
+                      <p className="text-[9px] font-bold text-[#9B9BAD] mt-1.5 uppercase tracking-wider">
+                        {n.time}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -948,6 +1053,10 @@ const KAMMemberDashboard = () => {
                   onSync={fetchClients}
                 />
               );
+            case 'Notes':
+              return <NotesTab isDarkMode={false} department="HR Recruitment" notificationBell={renderNotificationBell()} />;
+            case 'Help & Support':
+              return <HelpSupportTab userRole={userInfo.role} userName={userInfo.name} notificationBell={renderNotificationBell()} />;
             default:
               // Dashboard
               return (

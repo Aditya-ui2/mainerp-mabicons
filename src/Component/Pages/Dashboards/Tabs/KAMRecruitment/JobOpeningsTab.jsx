@@ -767,7 +767,7 @@ const CACHE_KEY_JOBS = 'cache_kamJobOpenings';
 const CACHE_KEY_ROLES = 'cache_kamRoleTypes';
 const CACHE_KEY_CLIENTS = 'cache_kamClients';
 
-const JobOpeningsTab = ({ isDarkMode }) => {
+const JobOpeningsTab = ({ isDarkMode, notificationBell }) => {
   // Start with cached data or empty arrays - will fetch real data from API
   const [jobs, setJobs] = useState(() => {
     try { const c = localStorage.getItem(CACHE_KEY_JOBS); return c ? JSON.parse(c) : []; } catch { return []; }
@@ -2211,7 +2211,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
             </h1>
 
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <input
               type="file"
               ref={fileInputRef}
@@ -2247,7 +2247,7 @@ const JobOpeningsTab = ({ isDarkMode }) => {
               <span className="tracking-tight">{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
             </button>
 
-
+            {notificationBell}
 
             <button
               onClick={() => { setShowFullPageForm(true); setEditingJob(null); resetModal(); }}

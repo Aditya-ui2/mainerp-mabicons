@@ -396,7 +396,7 @@ const normalizeUserType = (type = '') => {
   return value;
 };
 
-const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
+const TaskAssignmentTab = ({ department = 'HR Operations', userRole, notificationBell }) => {
   const [tasks, setTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -674,6 +674,7 @@ const TaskAssignmentTab = ({ department = 'HR Operations', userRole }) => {
 
         </div>
         <div className="flex items-center gap-3">
+          {notificationBell}
           <button
             onClick={async () => {
               try {

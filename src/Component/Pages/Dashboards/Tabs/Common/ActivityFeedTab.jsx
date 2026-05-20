@@ -54,7 +54,7 @@ const ActivityIcon = ({ type }) => {
 
 
 
-const ActivityFeedTab = ({ department = 'HR Operations' }) => {
+const ActivityFeedTab = ({ department = 'HR Operations', notificationBell }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -232,12 +232,11 @@ const ActivityFeedTab = ({ department = 'HR Operations' }) => {
       )}
 
       <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
-        {/* Structural Header (Match Screenshot exactly) */}
         <div className="mb-10 flex justify-between items-center text-left">
           <div>
             <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] dark:text-white tracking-tight">Activity Feed</h1>
-
           </div>
+          {notificationBell}
         </div>
 
         {/* Unified Filter Bar */}

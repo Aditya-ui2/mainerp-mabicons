@@ -110,7 +110,7 @@ const EditIconCustom = (props) => (
 
 const Pencil = EditIconCustom;
 
-export default function CandidatesPage({ setActiveTab }) {
+export default function CandidatesPage({ setActiveTab, notificationBell }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -1184,6 +1184,8 @@ Mabicons Recruitment Team`);
             )}
             <span className="tracking-tight">{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
           </button>
+
+          {notificationBell}
 
           <button
             onClick={() => setIsCreateModalOpen(true)}

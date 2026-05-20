@@ -116,7 +116,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const DocumentVerifyTab = ({ isDarkMode = false }) => {
+const DocumentVerifyTab = ({ isDarkMode = false, notificationBell }) => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -440,6 +440,7 @@ const DocumentVerifyTab = ({ isDarkMode = false }) => {
           </h1>
         </div>
         <div className="flex gap-3">
+          {notificationBell}
           <button
             onClick={async () => {
               try {
