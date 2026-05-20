@@ -444,152 +444,7 @@ const CandidateDetailDrawer = ({ candidate, onClose, onUpdateMilestone, onMarkLe
   );
 };
 
-const mockData = [
-  {
-    id: 'mock-1',
-    candidate: 'Arjun Sharma',
-    client: 'Reliance Industries',
-    position: 'Technical Architect',
-    joiningDate: format(new Date(), 'MMM dd, yyyy'),
-    contact: '+91 98765 43210',
-    performance: 'Active',
-    status: 'Active',
-    source: 'ERP',
-    joiningDateRaw: new Date()
-  },
-  {
-    id: 'mock-2',
-    candidate: 'Priya Patel',
-    client: 'Tata Consultancy Services',
-    position: 'Lead UX Designer',
-    joiningDate: format(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
-    contact: 'priya.p@tcs.com',
-    performance: 'Excellent',
-    status: 'Active',
-    source: 'ERP',
-    joiningDateRaw: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 'mock-3',
-    candidate: 'Rohan Gupta',
-    client: 'Infosys Ltd',
-    position: 'Senior Java Developer',
-    joiningDate: format(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
-    contact: 'rohan.g@infosys.com',
-    performance: 'Active',
-    status: 'Active',
-    source: 'SharePoint',
-    joiningDateRaw: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 'mock-4',
-    candidate: 'Ananya Iyer',
-    client: 'HDFC Bank',
-    position: 'Product Manager',
-    joiningDate: format(new Date(Date.now() - 12 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
-    contact: 'ananya.i@hdfc.com',
-    performance: 'Outstanding',
-    status: 'Active',
-    source: 'ERP',
-    joiningDateRaw: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 'mock-5',
-    candidate: 'Vikram Singh',
-    client: 'Zomato',
-    position: 'Backend Engineer',
-    joiningDate: format(new Date(Date.now() - 25 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
-    contact: 'vikram.s@zomato.com',
-    performance: 'Active',
-    status: 'Active',
-    source: 'ERP',
-    joiningDateRaw: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 'mock-6',
-    candidate: 'Sneha Reddy',
-    client: 'Swiggy',
-    position: 'Frontend Developer',
-    joiningDate: format(new Date(2026, 3, 15), 'MMM dd, yyyy'),
-    contact: 'sneha.r@swiggy.com',
-    performance: 'Active',
-    status: 'Past',
-    source: 'SharePoint',
-    joiningDateRaw: new Date(2026, 3, 15)
-  },
-  {
-    id: 'mock-7',
-    candidate: 'Rahul Verma',
-    client: 'MakeMyTrip',
-    position: 'Marketing Head',
-    joiningDate: format(new Date(2026, 1, 10), 'MMM dd, yyyy'),
-    contact: 'rahul.v@mmt.com',
-    performance: 'Average',
-    status: 'Past',
-    source: 'ERP',
-    joiningDateRaw: new Date(2026, 1, 10)
-  },
-  {
-    id: 'mock-8',
-    candidate: 'Ishita Kapoor',
-    client: 'Paytm',
-    position: 'Data Scientist',
-    joiningDate: format(new Date(2025, 11, 20), 'MMM dd, yyyy'),
-    contact: 'ishita.k@paytm.com',
-    performance: 'Active',
-    status: 'Past',
-    source: 'ERP',
-    joiningDateRaw: new Date(2025, 11, 20)
-  },
-  {
-    id: 'mock-9',
-    candidate: 'Manish Pandey',
-    client: 'Airtel',
-    position: 'Network Engineer',
-    joiningDate: format(new Date(), 'MMM dd, yyyy'),
-    contact: 'manish.p@airtel.com',
-    performance: 'Active',
-    status: 'Active',
-    source: 'ERP',
-    joiningDateRaw: new Date()
-  },
-  {
-    id: 'mock-10',
-    candidate: 'Kriti Sanon',
-    client: 'Nykaa',
-    position: 'Brand Manager',
-    joiningDate: format(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
-    contact: 'kriti.s@nykaa.com',
-    performance: 'Excellent',
-    status: 'Active',
-    source: 'SharePoint',
-    joiningDateRaw: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 'mock-11',
-    candidate: 'Siddharth Malhotra',
-    client: 'Ola Electric',
-    position: 'R&D Lead',
-    joiningDate: format(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
-    contact: 'sid.m@ola.com',
-    performance: 'Active',
-    status: 'Active',
-    source: 'ERP',
-    joiningDateRaw: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 'mock-12',
-    candidate: 'Kiara Advani',
-    client: 'Myntra',
-    position: 'Fashion Consultant',
-    joiningDate: format(new Date(Date.now() - 40 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy'),
-    contact: 'kiara.a@myntra.com',
-    performance: 'Good',
-    status: 'Past',
-    source: 'ERP',
-    joiningDateRaw: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000)
-  }
-];
+const mockData = [];
 
 const HiringLifecycleTab = ({ notificationBell }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -652,11 +507,10 @@ const HiringLifecycleTab = ({ notificationBell }) => {
         }))];
       }
 
-      // Merge and ensure at least mock data is present
-      setLifecycleData([...allJoined, ...mockData]);
+      setLifecycleData(allJoined);
     } catch (err) {
       console.error('Critical error in fetchJoinedCandidates:', err);
-      setLifecycleData(mockData);
+      setLifecycleData([]);
     } finally {
       setLoading(false);
     }
