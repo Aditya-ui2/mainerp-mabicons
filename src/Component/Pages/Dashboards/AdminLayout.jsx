@@ -592,7 +592,7 @@ const AdminLayout = ({
       {/* Main Content Hub */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Modern Top Header */}
-        {showGlobalHeader && (
+        {showGlobalHeader ? (
           <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6 border-b border-[#F4F3EF] dark:border-gray-800">
             <div className="flex items-center gap-4">
               <button
@@ -738,6 +738,24 @@ const AdminLayout = ({
                   </AnimatePresence>
                 </div>
               )}
+            </div>
+          </header>
+        ) : (
+          <header className="lg:hidden h-14 bg-white dark:bg-gray-900 border-b border-[#F4F3EF] dark:border-gray-800 flex items-center justify-between px-4 sticky top-0 z-30 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="p-2 -ml-2 text-[#6B6B7E] hover:text-[#1A1A2E] dark:hover:text-white rounded-lg transition-all"
+                title="Open Menu"
+              >
+                <Menu size={20} />
+              </button>
+              <span className="text-sm font-bold text-[#1A1A2E] dark:text-white tracking-tight">
+                {activeTab || dashboardTitle}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <img src={logo} alt="Mabicons" className="h-6 w-auto object-contain" />
             </div>
           </header>
         )}

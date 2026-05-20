@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiUsers, FiMail, FiPhone, FiMapPin, FiCalendar, FiChevronRight, FiChevronDown, FiFilter, FiUser, FiBriefcase, FiX, FiDownload, FiClock, FiTag } from 'react-icons/fi';
 import { FaRupeeSign } from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
-import { getClientDashboardOverview } from '../../../../service/api';
+import { getClientDashboardOverview, getShortlistedCandidates } from '../../../../service/api';
 
 const STAGE_CONFIG = {
   screening: { label: 'Screening', bg: 'bg-slate-100 text-slate-600' },
@@ -19,7 +19,7 @@ const STAGE_CONFIG = {
 
 const stageKeys = Object.keys(STAGE_CONFIG);
 
-export default function ClientCandidatesTab() {
+export default function ClientCandidatesTab({ shortlistedOnly = false }) {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,15 +32,37 @@ export default function ClientCandidatesTab() {
         const token = localStorage.getItem('token');
         if (!token) return;
         const decoded = jwtDecode(token);
-        const res = await getClientDashboardOverview(decoded.id);
-        if (res?.success && res.data?.recruitment) setCandidates(res.data.recruitment.candidates || []);
+        
+        if (shortlistedOnly) {
+          const res = await getShortlistedCandidates({ clientId: decoded.id });
+          if (res && res.data) {
+            const normalized = res.data.map(item => ({
+              id: item._id || item.id,
+              name: item.name,
+              positionTitle: item.position?.title || item.positionTitle || item.position || '—',
+              stage: item.stage || item.status || 'Shortlisted',
+              experience: item.experience,
+              location: item.location,
+              skills: item.skills,
+              currentSalary: item.currentSalary,
+              expectedSalary: item.expectedSalary,
+              ...item
+            }));
+            setCandidates(normalized);
+          }
+        } else {
+          const res = await getClientDashboardOverview(decoded.id);
+          if (res?.success && res.data?.recruitment) {
+            setCandidates(res.data.recruitment.candidates || []);
+          }
+        }
       } catch (err) {
         console.error('Failed to load candidates:', err);
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [shortlistedOnly]);
 
   const filtered = (candidates || [])
     .filter(c => stageFilter === 'all' || c.stage === STAGE_CONFIG[stageFilter]?.label)
