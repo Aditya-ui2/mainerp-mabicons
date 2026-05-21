@@ -6,7 +6,7 @@ import {
   RefreshCw, Smile, Meh, Frown, Star, X, Send, AlertCircle, BarChart2, 
   Download, Activity, ShieldCheck, MoreVertical, ChevronDown, Paperclip, FileText, Plus
 } from 'lucide-react';
-import { getMISReports, addHeadComment } from '../../../service/api';
+import { getMISReports, addHeadComment, BASE_URL } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const moodConfig = {
@@ -163,7 +163,7 @@ const ReportRow = ({ report, onComment }) => {
             {/* Attachment Link */}
             {report.attachmentUrl && (
               <a 
-                href={report.attachmentUrl.startsWith('http') ? report.attachmentUrl : `http://localhost:3000${report.attachmentUrl}`}
+                href={report.attachmentUrl.startsWith('http') ? report.attachmentUrl : `${BASE_URL}${report.attachmentUrl}`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition-all border border-green-200"

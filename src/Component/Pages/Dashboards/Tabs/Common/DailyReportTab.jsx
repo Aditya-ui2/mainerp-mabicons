@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, ChevronDown, Plus, Send, Phone, Eye, Share2, Users, Calendar, Clock, X, FileText, CheckCircle, AlertCircle, Paperclip, ChevronRight
 } from "lucide-react";
-import { submitDailyReport, getMyReports, uploadMISAttachment } from '../../../service/api';
+import { submitDailyReport, getMyReports, uploadMISAttachment, BASE_URL } from '../../../service/api';
 import { getLocalISODate } from '../../../Utilities/dateUtils';
 
 const SHIFT_START = '09:00';
@@ -504,7 +504,7 @@ const DailyReportTab = () => {
                         <div className="flex items-center gap-2">
                           {report.attachmentUrl && (
                             <a 
-                              href={report.attachmentUrl.startsWith('http') ? report.attachmentUrl : `http://localhost:3000${report.attachmentUrl}`}
+                              href={report.attachmentUrl.startsWith('http') ? report.attachmentUrl : `${BASE_URL}${report.attachmentUrl}`}
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"

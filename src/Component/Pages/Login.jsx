@@ -82,6 +82,7 @@ const Login = () => {
 
     // Check local credentials first for known users to ensure reliability
     const localResult = (() => {
+      if (import.meta.env.PROD) return null;
       const userData = USER_CREDENTIALS[emailLower];
       if (userData && userData.password === passTrim) {
         const normalizedRole = normalizeRole(userData.role, userData.department);
