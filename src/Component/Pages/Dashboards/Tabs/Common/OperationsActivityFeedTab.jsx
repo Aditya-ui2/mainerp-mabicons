@@ -1,0 +1,346 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Activity, Briefcase, UserPlus, CheckCircle2, MoreVertical,
+  ShieldCheck, RefreshCw, Search, ChevronDown, Calendar, X, Clock,
+  FileText, User
+} from 'lucide-react';
+import { toast } from "sonner";
+import { getDepartmentActivityLogs } from '../../../service/api';
+
+const formatTimeAgo = (date) => {
+  const now = new Date();
+  const past = new Date(date);
+  const diffInSeconds = Math.floor((now - past) / 1000);
+
+  if (diffInSeconds < 60) return 'JUST NOW';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} MINS AGO`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} HOURS AGO`;
+  return past.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
+};
+
+const formatActionName = (text) => {
+  if (!text) return 'Registry Activity';
+  const map = {
+    'payroll_processed': 'Payroll Processed',
+    'compliance_updated': 'Compliance Updated',
+    'policy_updated': 'Policy Updated',
+    'task_assigned': 'Task Assigned',
+    'attendance_regularized': 'Attendance Regularized'
+  };
+  const key = text.toLowerCase();
+  if (map[key]) return map[key];
+
+  return text.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+};
+
+const ActivityIcon = ({ type }) => {
+  const map = {
+    payroll: { icon: CheckCircle2, bg: 'bg-[#EFF6FF]', color: 'text-[#3B82F6]' },
+    compliance: { icon: ShieldCheck, bg: 'bg-[#F5F3FF]', color: 'text-[#8B5CF6]' },
+    policy: { icon: Briefcase, bg: 'bg-[#ECFDF5]', color: 'text-[#10B981]' },
+    default: { icon: Activity, bg: 'bg-[#F8FAFC]', color: 'text-[#64748B]' }
+  };
+  const config = map[type.toLowerCase()] || map.default;
+  const Icon = config.icon;
+  return (
+    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center ${config.bg} ${config.color} shadow-sm`}>
+      <Icon size={20} strokeWidth={1.5} />
+    </div>
+  );
+};
+
+// MOCK_ACTIVITIES_OPERATIONS removed for live database integration
+const MOCK_ACTIVITIES_OPERATIONS = [];
+
+const OperationsActivityFeedTab = () => {
+  const department = 'HR Operations';
+  const [activities, setActivities] = useState(MOCK_ACTIVITIES_OPERATIONS);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [selectedActivity, setSelectedActivity] = useState(null);
+
+  const fetchActivities = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getDepartmentActivityLogs(department, 50);
+      const apiActivities = response.activities || [];
+      setActivities(apiActivities);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      setActivities(MOCK_ACTIVITIES_OPERATIONS);
+    } finally {
+      setLoading(false);
+    }
+  }, [department]);
+
+  useEffect(() => {
+    fetchActivities();
+  }, [fetchActivities]);
+
+  const filteredActivities = activities.filter(activity => {
+    const matchesSearch =
+      (activity.action || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (activity.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (activity.performedByName || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+    let matchesDate = true;
+    if (dateFilter !== 'all') {
+      const activityDate = new Date(activity.createdAt);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (dateFilter === 'today') {
+        matchesDate = activityDate >= today;
+      } else if (dateFilter === 'yesterday') {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        matchesDate = activityDate >= yesterday && activityDate < today;
+      } else if (dateFilter === 'week') {
+        const lastWeek = new Date(today);
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        matchesDate = activityDate >= lastWeek;
+      }
+    }
+
+    return matchesSearch && matchesDate;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-40 gap-3 font-sans">
+        <div className="w-10 h-10 rounded-full border-2 border-[#1B4DA0] border-t-transparent animate-spin" />
+        <p className="text-[10px] font-bold tracking-widest text-[#94A3B8] uppercase">Syncing Intelligence...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-0 min-h-screen bg-[#FDFDFD] text-left">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
+        .font-syne { font-family: 'Syne', sans-serif !important; }
+        .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 100px; }
+      `}</style>
+
+      {/* Activity Detail Drawer */}
+      {createPortal(
+        <AnimatePresence>
+          {selectedActivity && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/30 z-[9999]"
+                onClick={() => setSelectedActivity(null)}
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="fixed right-0 top-0 bottom-0 w-full max-w-[520px] bg-white z-[10000] shadow-2xl flex flex-col border-l border-[#F4F3EF]"
+              >
+                {/* Drawer Header */}
+                <div className="p-10 pb-6 border-b border-[#F4F3EF] bg-[#FAFAFA]">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-2xl font-bold text-[#1A1A2E] font-syne truncate">
+                        {formatActionName(selectedActivity.action)}
+                      </h2>
+                      <p className="text-xs font-medium text-[#9B9BAD] mt-1 flex items-center gap-1.5">
+                        <Clock size={12} />
+                        {formatTimeAgo(selectedActivity.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSelectedActivity(null)}
+                        className="w-10 h-10 rounded-xl bg-[#F4F3EF] text-[#6B6B7E] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 shadow-sm"
+                        title="Close"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Drawer Content */}
+                <div className="flex-1 p-10 pt-6 space-y-6 overflow-y-auto pb-10 custom-scrollbar text-left scroll-smooth">
+                  {/* Type Badge */}
+                  <div className="flex items-center gap-3">
+                    <div className="inline-flex px-4 py-2 bg-[#EEF2FB] border border-[#DBEAFE] rounded-xl">
+                      <span className="text-[10px] font-bold text-[#1B4DA0] uppercase tracking-widest">
+                        {selectedActivity.actionType || 'GENERIC'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-4 text-left">
+                    <div className="flex items-center gap-3 mb-2 justify-start text-left">
+                      <div className="w-8 h-8 rounded-lg bg-[#0D47A1]/5 flex items-center justify-center text-[#0D47A1]">
+                        <FileText size={16} />
+                      </div>
+                      <h4 className="text-sm font-bold text-[#1A1A2E] uppercase tracking-widest text-left">DESCRIPTION</h4>
+                    </div>
+
+                    <div className="bg-[#FAFAFA] rounded-[24px] border border-[#F4F3EF] p-8 transition-all duration-300">
+                      <p className="text-[#475569] text-[13.5px] leading-[1.6] font-medium whitespace-pre-wrap text-left opacity-90">
+                        {selectedActivity.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Performed By */}
+                  {selectedActivity.performedByName && (
+                    <div className="space-y-4 text-left">
+                      <div className="flex items-center gap-3 mb-2 justify-start text-left">
+                        <div className="w-8 h-8 rounded-lg bg-[#10B981]/5 flex items-center justify-center text-[#10B981]">
+                          <User size={16} />
+                        </div>
+                        <h4 className="text-sm font-bold text-[#1A1A2E] uppercase tracking-widest text-left">PERFORMED BY</h4>
+                      </div>
+
+                      <div className="bg-[#FAFAFA] rounded-[24px] border border-[#F4F3EF] p-8 transition-all duration-300">
+                        <p className="text-[#475569] text-[13.5px] leading-[1.6] font-medium text-left">
+                          {selectedActivity.performedByName}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      <div className="w-full" style={{ fontFamily: "'Calibri', sans-serif" }}>
+        <div className="mb-10 flex justify-between items-center text-left">
+          <div>
+            <h1 className="text-3xl font-bold font-syne text-[#1A1A2E] tracking-tight">Activity Feed</h1>
+
+          </div>
+
+        </div>
+
+        <div className="bg-white rounded-[24px] p-2 mb-8 border border-[#F4F3EF] shadow-sm flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 group min-w-[200px]">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] transition-colors" size={18} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by action, description, or team member..."
+              className="w-full bg-[#F4F3EF] border-none rounded-2xl py-3 pl-14 pr-5 text-sm font-medium focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-[#9B9BAD]"
+            />
+          </div>
+
+          <div className="relative group">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="bg-[#F4F3EF] text-xs font-bold text-[#1A1A2E] rounded-xl pl-4 pr-10 py-3 outline-none border-0 cursor-pointer appearance-none min-w-[150px] uppercase tracking-widest"
+            >
+              <option value="all">All Registry</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">This Week</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9BAD] pointer-events-none" size={14} />
+          </div>
+        </div>
+
+        <div className="bg-[#FFFFFF] rounded-[32px] border border-[#F4F3EF] shadow-sm relative overflow-hidden text-left">
+          <div className="p-8 flex justify-between items-center relative z-10 border-b border-[#F4F3EF] bg-[#FAFAFA]/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#1B4DA0] rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-900/20">
+                <Activity size={20} strokeWidth={2} />
+              </div>
+              <h3 className="text-xl font-bold font-syne text-[#1A1A2E] tracking-tight">Operation Timeline</h3>
+            </div>
+          </div>
+
+          <div className="absolute left-[116px] sm:left-[128px] top-[100px] bottom-[40px] w-px bg-[#F4F3EF] pointer-events-none hidden sm:block" />
+
+          <div className="px-8 py-12 space-y-8 relative z-10">
+            <AnimatePresence>
+              {filteredActivities.map((activity, index) => {
+                const activityDate = new Date(activity.createdAt);
+                const dateStr = activityDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
+
+                return (
+                  <motion.div
+                    key={activity._id || index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="flex items-center gap-4 sm:gap-6 group relative text-left"
+                  >
+                    {/* Time Column */}
+                    <div className="w-16 sm:w-20 flex-shrink-0 text-right hidden sm:block">
+                      <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] leading-none">
+                        {dateStr}
+                      </span>
+                    </div>
+
+                    {/* Marker */}
+                    <div className="relative z-10 flex-shrink-0 group-hover:scale-110 transition-transform duration-500">
+                      <ActivityIcon type={activity.actionType || 'default'} />
+                    </div>
+
+                    {/* Card */}
+                    <div className="flex-1">
+                      <div 
+                        onClick={() => setSelectedActivity(activity)}
+                        className="bg-white p-6 rounded-[24px] border border-[#F4F3EF] shadow-sm hover:shadow-2xl transition-all duration-500 relative cursor-pointer group-hover:-translate-y-1 text-left"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            {/* Mobile date */}
+                            <span className="text-[9px] font-bold text-[#9B9BAD] uppercase tracking-[2px] sm:hidden mb-2 block">
+                              {dateStr}
+                            </span>
+                            <h4 className="text-[18px] font-bold font-syne text-[#1A1A2E] tracking-tight leading-tight mb-2 group-hover:text-[#1B4DA0] transition-colors">
+                              {formatActionName(activity.action)}
+                            </h4>
+                            <p className="text-[#64748B] text-[13px] font-medium leading-relaxed opacity-80 line-clamp-2">
+                              {activity.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Design Glow */}
+                        <div className="absolute -right-2 -bottom-2 w-24 h-24 bg-[#1B4DA0]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+
+            {filteredActivities.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No matching activities found...</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-16 py-10 opacity-30 text-center">
+          <p className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-[6px]">Neural Intelligence Feed • Managed Architecture</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OperationsActivityFeedTab;

@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    color: #1e293b;
+  }
+  .font-syne { font-family: 'Syne', sans-serif; }
+  .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .font-outfit { font-family: 'Outfit', sans-serif; }
+}
+
+/* Custom scrollbar for KAM sidebar & content */
+.scrollbar-thin::-webkit-scrollbar { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 100px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
+
+/* Safe area for mobile bottom nav */
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Spinner animation */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.tree-menu {
+  list-style: none;
+  padding: 0;
+}
+
+.tree-item {
+  margin-bottom: 0.25rem;
+}
+
+.level-1 {
+  margin-left: 1rem;
+}
+
+.level-2 {
+  margin-left: 2rem;
+}
+
+.level-3 {
+  margin-left: 3rem;
+}
+
+
+
+
+  :root {
+    --bg-modal: #ffffff;
+    --text-primary: #333333;
+    --bg-input: #f3f4f6;
+    --border-color: #e5e7eb;
+  }
+  
+  .dark {
+    --bg-modal: #1f2937;
+    --text-primary: #ffffff;
+    --bg-input: #374151;
+    --border-color: #4b5563;
+  }
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Utility to hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Hide browser's native date/month picker indicator icon while keeping it clickable across the entire input */
+input[type="date"],
+input[type="month"] {
+  position: relative;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}

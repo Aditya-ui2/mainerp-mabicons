@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" fill="none">
+  <!-- "mabicons" text in brand blue -->
+  <text x="2" y="42" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="46" fill="#1B3A6B" letter-spacing="-1">mabicons</text>
+  <!-- Small icon top-right: arrow with gear -->
+  <g transform="translate(232, 0)">
+    <path d="M0 28L22 0L44 28L36 28L36 8L8 8L8 28Z" fill="#1B3A6B"/>
+    <circle cx="36" cy="20" r="6" fill="#1B3A6B" stroke="white" stroke-width="1.5"/>
+    <circle cx="36" cy="20" r="2.5" fill="white"/>
+    <!-- gear teeth -->
+    <rect x="34.5" y="12.5" width="3" height="2" rx="0.5" fill="white"/>
+    <rect x="34.5" y="25.5" width="3" height="2" rx="0.5" fill="white"/>
+    <rect x="28.5" y="18.5" width="2" height="3" rx="0.5" fill="white"/>
+    <rect x="41.5" y="18.5" width="2" height="3" rx="0.5" fill="white"/>
+    <!-- person silhouette -->
+    <circle cx="30" cy="14" r="3" fill="white"/>
+    <path d="M24 24C24 20 27 18 30 18C33 18 36 20 36 24" fill="white"/>
+  </g>
+  <!-- "digitalHRsolutions" tagline -->
+  <text x="120" y="56" font-family="Arial, Helvetica, sans-serif" font-style="italic" font-weight="400" font-size="11" fill="#3366AA" letter-spacing="0.5">digitalHRsolutions</text>
+</svg>

@@ -1,0 +1,441 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiCheck, FiArrowRight } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
+import loginMockup from '../../assets/login-mockup.png';
+import mabiconsLogo from '../../assets/images/mabicons logo blue.png';
+
+// Predefined user credentials (kept from original)
+const USER_CREDENTIALS = {
+  'mabicons@gmail.com': { id: '3624251a-6e4b-4600-9d83-dbbfbfce67a1', password: 'Mabicons@123', role: 'superAdmin', department: null, name: 'Ashish Tondon (Super Admin)' },
+  'superadmin.mabicons@gmail.com': { id: '3624251a-6e4b-4600-9d83-dbbfbfce67a1', password: 'Mabicons@123', role: 'superAdmin', department: null, name: 'Ashish Tondon (Super Admin)' },
+  'ashish.mabicons@gmail.com': { id: '3624251a-6e4b-4600-9d83-dbbfbfce67a1', password: 'Ashish@123', role: 'superAdmin', department: null, name: 'Ashish Tondon (Super Admin)' },
+  'admin.mabicons@gmail.com': { password: 'Mabicons@123', role: 'admin', department: null, name: 'Admin' },
+  'ashwin.mabicons@gmail.com': { id: '8a85b8ea-7a84-414e-9f89-b540a194f66d', password: 'Ashwin@123', role: 'Manager', department: 'CRM', name: 'Ashwin (Manager)' },
+  'operation.mabicons@gmail.com': { id: '2562abca-f250-4e3c-a1c2-fd212b44ab04', password: 'Mabicons@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
+  'ramesh.mabicons@gmail.com': { id: '2562abca-f250-4e3c-a1c2-fd212b44ab04', password: 'Ramesh@123', role: 'hrOperations', department: 'HR Operations', name: 'Ramesh (HR Operations Head)' },
+  'recruitment.mabicons@gmail.com': { id: '1e2cfcc6-a91d-4037-95db-88cb7b04d376', password: 'Mabicons@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
+  'sachin.mabicons@gmail.com': { id: '1e2cfcc6-a91d-4037-95db-88cb7b04d376', password: 'Sachin@123', role: 'recruitmentHead', department: 'HR Recruitment', name: 'Sachin (Recruitment Head)' },
+  'priyanshi.recruitment@gmail.com': { id: 'ffd606f2-459c-4bc1-8f4b-52b88663fed3', password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
+  'priyanshi.mabicons@gmail.com': { id: 'ffd606f2-459c-4bc1-8f4b-52b88663fed3', password: 'Priyanshi@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Priyanshi Sharma', supervisor: 'Sachin' },
+  'manju.recruitment@gmail.com': { id: 'bdcdd80c-4812-45f0-9862-39594bfe7475', password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
+  'manju.mabicons@gmail.com': { id: 'bdcdd80c-4812-45f0-9862-39594bfe7475', password: 'Manju@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Manju', supervisor: 'Sachin' },
+  'jyoti.recruitment@gmail.com': { id: '13b9f804-91ea-4d5a-afc0-8a9da6e27e0f', password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
+  'jyoti.mabicons@gmail.com': { id: '13b9f804-91ea-4d5a-afc0-8a9da6e27e0f', password: 'Jyoti@123', role: 'kamRecruitment', department: 'HR Recruitment', name: 'Jyoti', supervisor: 'Sachin' },
+  'employee.mabicons@gmail.com': { password: 'Employee@123', role: 'employee', department: null, name: 'Employee' },
+  'teamleader.mabicons@gmail.com': { password: 'TeamLeader@123', role: 'teamLeader', department: null, name: 'Team Leader' },
+  'bd.mabicons@gmail.com': { password: 'BD@123', role: 'bdExecutive', department: null, name: 'BD Executive' },
+  'crm@mabicons.com': { password: 'Crm@123', role: 'bd', department: null, name: 'CRM Executive' },
+  'client.mabicons@gmail.com': { password: 'Client@123', role: 'client', department: null, name: 'Client User' },
+  'accounts.mabicons@gmail.com': { password: 'Account@123', role: 'accounts', department: 'Accounts', name: 'Accounts Manager' },
+  'tech.mabicons@gmail.com': { id: 'a03d337c-b159-40fb-b0a9-45ede35181cd', password: 'Tech@123', role: 'tech', department: 'Tech', name: 'Tech User' },
+  'sales.mabicons@gmail.com': { id: '2b243df6-e056-4e89-a620-aad6aab63cf1', password: 'Sales@123', role: 'sales', department: 'Sales', name: 'Sales User' },
+  'saleskam.mabicons@gmail.com': { id: '5b9902e6-f042-47a3-a9a1-5992986d8857', password: 'Mabicons@123', role: 'salesKam', department: 'Sales', name: 'Sales KAM' }
+};
+
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const normalizeRole = (role, department = '') => {
+    const value = String(role || '').trim().toLowerCase();
+    if (['superadmin', 'super_admin', 'super admin'].includes(value)) return 'superadmin';
+    if (['admin'].includes(value)) return 'admin';
+    if (['teamleader', 'team_leader', 'team leader'].includes(value)) return 'teamleader';
+    if (['employee'].includes(value)) return 'employee';
+    if (['bdexecutive', 'bd_executive', 'bd executive', 'bd'].includes(value)) return 'bd';
+    if (['hroperations', 'hr_operations', 'hr operations', 'operations', 'ops_kam', 'operations_kam'].includes(value)) return 'hrOperations';
+    if (['recruitmenthead', 'recruitment_head', 'recruitment head', 'recruitment'].includes(value)) return 'recruitmentHead';
+    if (['kamrecruitment', 'kam_recruitment', 'kam recruitment', 'kam', 'recruitment_kam', 'recruitmentkam'].includes(value)) return 'kamRecruitment';
+    if (['client', 'customer'].includes(value)) return 'client';
+    if (['accounts', 'accountsmanager', 'accounts manager'].includes(value)) return 'accounts';
+    if (['tech'].includes(value)) return 'tech';
+    if (['sales'].includes(value)) return 'sales';
+    if (['saleskam', 'sales_kam', 'sales kam'].includes(value)) return 'salesKam';
+    if (['candidate'].includes(value)) return 'candidate';
+    return value;
+  };
+
+  const navigateByRole = (role, emailLower, user) => {
+    if (emailLower === 'crm@mabicons.com' || emailLower.includes('ashwin')) {
+      navigate('/crm-dashboard'); return;
+    }
+    const isRecruitmentHead = role === 'recruitmentHead' || emailLower.includes('sachin') || emailLower.includes('recruitment.mabicons');
+    const isKAM = role === 'kamRecruitment' || emailLower.includes('priyanshi') || emailLower.includes('manju') || emailLower.includes('jyoti');
+    const isOperations = role === 'hrOperations' || emailLower.includes('operation') || emailLower.includes('ramesh');
+
+    if (isRecruitmentHead) navigate('/recruitment-head-dashboard');
+    else if (isKAM) navigate('/kam-member-dashboard');
+    else if (isOperations) navigate('/kam-operations-dashboard');
+    else if (role === 'client') navigate('/client-dashboard');
+    else if (role === 'superAdmin' || role === 'manager') navigate('/superadmin-dashboard');
+    else if (role === 'admin') navigate('/admin-dashboard');
+    else if (role === 'accounts') navigate('/accounts-dashboard');
+    else if (role === 'teamLeader') navigate('/teamleader-dashboard');
+    else if (role === 'bdExecutive') navigate('/bd-dashboard');
+    else if (role === 'tech') navigate('/tech-dashboard');
+    else if (role === 'sales') navigate('/sales-dashboard');
+    else if (role === 'salesKam') navigate('/sales-kam-dashboard');
+    else if (role === 'candidate') navigate('/candidate-dashboard');
+    else navigate('/employee-dashboard');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const emailLower = email.toLowerCase().trim();
+    const passTrim = password.trim();
+
+    // Check local credentials first for known users to ensure reliability
+    const localResult = (() => {
+      const blockedEmails = JSON.parse(localStorage.getItem('blocked_emails') || '[]');
+      if (blockedEmails.includes(emailLower)) {
+        return { blocked: true };
+      }
+
+      // Find matching credentials by first normalizing the first-name prefix (e.g. "priyanshi", "manju", "jyoti")
+      const emailPrefix = emailLower.split('@')[0].split('.')[0];
+      const matchingKey = Object.keys(USER_CREDENTIALS).find(k => k.split('@')[0].split('.')[0] === emailPrefix);
+      const userData = matchingKey ? USER_CREDENTIALS[matchingKey] : undefined;
+
+      if (userData) {
+        // Read custom password overrides from localStorage
+        const customPasswords = JSON.parse(localStorage.getItem('custom_passwords') || '{}');
+        let expectedPassword = userData.password;
+
+        // Find matching key using normalized first-name prefix (e.g. "priyanshi", "manju", "jyoti")
+        const matchingCustomKey = Object.keys(customPasswords).find(k => k.split('@')[0].split('.')[0] === emailPrefix);
+
+        if (matchingCustomKey) {
+          expectedPassword = customPasswords[matchingCustomKey];
+        } else {
+          expectedPassword = customPasswords[emailLower] || userData.password;
+        }
+
+        if (expectedPassword === passTrim) {
+          const normalizedRole = normalizeRole(userData.role, userData.department);
+
+          // Generate a valid-format mock JWT so jwt-decode doesn't throw in ProtectedRoute
+          const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+          const payload = btoa(JSON.stringify({
+            id: userData.id || '00000000-0000-0000-0000-000000000000', // Ensure ID is present
+            role: userData.role, // Use original role from credentials
+            email: emailLower,
+            name: userData.name,
+            department: userData.department || 'HR Recruitment',
+            iat: Math.floor(Date.now() / 1000),
+            exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
+          }));
+          const mockToken = `${header}.${payload}.mock-signature`;
+
+          localStorage.setItem('token', mockToken);
+          localStorage.setItem('userType', normalizedRole);
+          localStorage.setItem('userRole', normalizedRole);
+          localStorage.setItem('userName', userData.name);
+          localStorage.setItem('userId', userData.id || '00000000-0000-0000-0000-000000000000');
+          localStorage.setItem('userEmail', emailLower);
+          if (userData.department) localStorage.setItem('department', userData.department);
+          ['admin_active_tab', 'crm_active_tab', 'hroperations_active_tab', 'rh_active_tab', 'superadmin_active_tab'].forEach(key => localStorage.removeItem(key));
+          return { success: true, user: userData, userType: normalizedRole };
+        }
+      }
+      return null;
+    })();
+
+    if (localResult) {
+      if (localResult.blocked) {
+        setError('Your account has been deleted/disabled. Please contact the administrator.');
+        setLoading(false);
+        return;
+      }
+      setTimeout(() => {
+        navigateByRole(localResult.userType, emailLower, localResult.user);
+        setLoading(false);
+      }, 800);
+      return;
+    }
+
+    try {
+      const {
+        superAdminLogin, adminLogin, teamLeaderLogin, employeeLogin, departmentTeamLogin, clientLogin, salesLogin, candidateLogin
+      } = await import('./service/api');
+
+      let response;
+      if (!emailLower.includes('@')) {
+        response = await candidateLogin({ email: emailLower, username: emailLower, password });
+      } else if (emailLower.includes('superadmin') || emailLower.includes('ashish') || emailLower === 'mabicons@gmail.com') {
+        response = await superAdminLogin({ email: emailLower, password });
+      } else if (emailLower.includes('ashwin')) {
+        response = await departmentTeamLogin({ email: emailLower, password });
+      } else if (emailLower.includes('admin.')) {
+        response = await adminLogin({ email: emailLower, password });
+      } else if (emailLower.includes('teamleader')) {
+        response = await teamLeaderLogin({ email: emailLower, password });
+      } else if (emailLower.includes('employee')) {
+        try {
+          response = await employeeLogin({ email: emailLower, password });
+        } catch (empErr) {
+          try {
+            response = await clientLogin({ email: emailLower, password });
+          } catch (clientErr) {
+            throw empErr;
+          }
+        }
+      } else if (emailLower.includes('recruitment') || emailLower.includes('operation') ||
+        emailLower.includes('sachin') || emailLower.includes('ramesh') ||
+        emailLower.includes('priyanshi') || emailLower.includes('manju') || emailLower.includes('jyoti')) {
+        try {
+          response = await departmentTeamLogin({ email: emailLower, password });
+          if (!response || (!response.success && !response.token)) {
+            response = await employeeLogin({ email: emailLower, password });
+          }
+        } catch (e) {
+          try {
+            response = await employeeLogin({ email: emailLower, password });
+          } catch (empErr) {
+            try {
+              response = await clientLogin({ email: emailLower, password });
+            } catch (clientErr) {
+              throw e;
+            }
+          }
+        }
+      } else if (emailLower.includes('client')) {
+        response = await clientLogin({ email: emailLower, password });
+      } else if (emailLower.includes('sales')) {
+        try {
+          response = await salesLogin({ email: emailLower, password });
+        } catch (salesErr) {
+          try {
+            response = await clientLogin({ email: emailLower, password });
+          } catch (clientErr) {
+            throw salesErr;
+          }
+        }
+      } else {
+        try {
+          response = await departmentTeamLogin({ email: emailLower, password });
+        } catch (deptErr) {
+          try {
+            response = await employeeLogin({ email: emailLower, password });
+          } catch (empErr) {
+            try {
+              response = await teamLeaderLogin({ email: emailLower, password });
+            } catch (tlErr) {
+              try {
+                response = await adminLogin({ email: emailLower, password });
+              } catch (adminErr) {
+                try {
+                  response = await clientLogin({ email: emailLower, password });
+                } catch (clientErr) {
+                  response = await candidateLogin({ email: emailLower, username: emailLower, password });
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (response && (response.success || response.token)) {
+        const user = response.user || response.client || response.superAdmin || response.admin || response.data;
+        let role = response.userType || (user && (user.role || user.userType));
+        if (!role) {
+          if (response.client) {
+            role = 'client';
+          } else if (emailLower.includes('client')) {
+            role = 'client';
+          } else {
+            role = '';
+          }
+        }
+        const normalizedRole = normalizeRole(role, user?.department);
+
+        if (response.token) localStorage.setItem('token', response.token);
+        localStorage.setItem('userType', normalizedRole);
+        localStorage.setItem('userRole', normalizedRole);
+        if (user?.name) localStorage.setItem('userName', user.name);
+        if (user?.id || user?._id) localStorage.setItem('userId', user?.id || user?._id);
+        localStorage.setItem('userEmail', emailLower);
+        if (user?.department) localStorage.setItem('department', user.department);
+        if (user?.avatar || user?.picture) localStorage.setItem('userPicture', user.avatar || user.picture);
+
+        ['admin_active_tab', 'crm_active_tab', 'hroperations_active_tab', 'rh_active_tab', 'superadmin_active_tab'].forEach(key => localStorage.removeItem(key));
+
+        setTimeout(() => navigateByRole(normalizedRole, emailLower, user), 800);
+        return;
+      }
+
+      throw new Error(response?.message || 'Login failed');
+    } catch (err) {
+      setError(err.message || 'Invalid email or password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-white overflow-hidden font-inter">
+      {/* Left Side - Auth Form */}
+      <div className="w-full lg:w-[45%] flex flex-col p-8 lg:p-12 relative overflow-hidden">
+        {/* Logo */}
+        <div className="absolute top-8 left-6 md:top-10 md:left-10 z-20">
+          <img src={mabiconsLogo} alt="Mabicons Logo" className="h-8 md:h-10 object-contain" />
+        </div>
+        {/* Spacer for logo */}
+        <div className="shrink-0 h-10 md:h-12 lg:mb-6" />
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="max-w-[420px] w-full mx-auto flex flex-col flex-1"
+        >
+          <div className="flex-1 flex flex-col justify-center">
+            <div className="mb-12 lg:mb-16 text-center">
+              <h1 className="text-[38px] font-bold text-[#1A1A2E] mb-3 font-syne tracking-tight">Welcome Back</h1>
+              <p className="text-[15px] font-medium text-[#4B5563]">Enter your email and password to access your account.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-1.5">
+                <label className="block text-left text-[13px] font-bold text-[#1A1A2E]">Email / User ID</label>
+                <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white border border-[#E5E7EB] rounded-xl py-4 px-5 text-sm font-medium text-[#1A1A2E] outline-none transition-all focus:border-[#3D37F1] focus:ring-4 focus:ring-[#3D37F1]/5 placeholder:text-[#9B9BAD]"
+                  placeholder="Enter email or User ID"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-left text-[13px] font-bold text-[#1A1A2E]">Password</label>
+                <div className="relative group">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white border border-[#E5E7EB] rounded-xl py-4 px-5 text-sm font-medium text-[#1A1A2E] outline-none transition-all focus:border-[#3D37F1] focus:ring-4 focus:ring-[#3D37F1]/5 placeholder:text-[#9B9BAD]"
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9B9BAD] hover:text-[#3D37F1] transition-colors"
+                  >
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between px-1">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <div className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center transition-colors ${rememberMe ? 'bg-[#3D37F1] border-[#3D37F1]' : 'bg-white border-[#D1D5DB]'}`} onClick={() => setRememberMe(!rememberMe)}>
+                    {rememberMe && <FiCheck className="text-white text-[12px] stroke-[3px]" />}
+                  </div>
+                  <span className="text-[14px] font-medium text-[#9CA3AF]">Remember Me</span>
+                </label>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.005 }}
+                whileTap={{ scale: 0.995 }}
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#3D37F1] text-white rounded-xl py-4 text-[16px] font-bold shadow-lg shadow-[#3D37F1]/20 hover:bg-[#312BC7] transition-all disabled:opacity-70 flex items-center justify-center gap-3"
+              >
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Log In"}
+              </motion.button>
+
+
+              {/* Error Message */}
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-500 text-[13px] font-bold text-center"
+                >
+                  {error}
+                </motion.p>
+              )}
+
+            </form>
+          </div>
+
+        </motion.div>
+
+        {/* Footer Copyright */}
+        <div className="mt-auto pt-6 flex items-center justify-between border-t border-[#F3F4F6] shrink-0 w-full z-10">
+          <p className="text-[11px] font-medium text-[#9CA3AF]">Copyright © 2026 Mabicons Technosoft Pvt Ltd.</p>
+          <Link to="/privacy" className="text-[11px] font-medium text-[#9CA3AF] hover:text-[#1A1A2E]">Privacy Policy</Link>
+        </div>
+      </div>
+
+      {/* Right Side - Brand Showcase */}
+      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-[#3D37F1] to-[#5937F1] relative overflow-hidden flex-col justify-center p-10 lg:p-16 2xl:p-20">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-white/10 blur-[100px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-white/5 blur-[80px] rounded-full -ml-20 -mb-20 pointer-events-none" />
+
+        <div className="relative z-10 w-full max-w-2xl mx-auto flex flex-col items-start text-left">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mb-8 lg:mb-10"
+          >
+            <h2 className="text-[32px] lg:text-[38px] font-bold text-white mb-4 leading-[1.2] font-syne tracking-tight">
+              Effortlessly manage your team and operations.
+            </h2>
+            <p className="text-[15px] text-white/80 font-medium leading-relaxed max-w-lg">
+              Log in to access your CRM dashboard and manage your team.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, delay: 0.4 }}
+            className="relative w-full"
+          >
+            <div className="p-3 bg-white/10 backdrop-blur-md rounded-[28px] border border-white/20 shadow-2xl">
+              <div className="overflow-hidden rounded-[20px] bg-white flex items-center justify-center">
+                <img
+                  src={loginMockup}
+                  alt="Dashboard Preview"
+                  className="w-full h-auto max-h-[45vh] object-contain"
+                />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #F3F4F6;
+          border-radius: 10px;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default Login;
