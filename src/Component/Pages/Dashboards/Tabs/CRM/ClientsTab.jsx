@@ -8,26 +8,35 @@ import {
   FiEdit2, FiFileText, FiEye, FiUpload, FiRefreshCw, FiCamera, FiEyeOff, FiKey
 } from 'react-icons/fi';
 
-const InfoItem = ({ label, value, subValue, fullWidth = false, isEditing, onChange, type = "text" }) => (
-  <div className={`space-y-1.5 ${fullWidth ? 'col-span-full' : ''}`}>
-    <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{label}</label>
-    <div className="bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">
-      {isEditing ? (
-        <input
-          type={type}
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full text-sm font-bold text-[#1A1A2E] bg-transparent border-none focus:outline-none"
-        />
-      ) : (
-        <>
-          <p className="text-sm font-bold text-[#1A1A2E]">{value || 'N/A'}</p>
-          {subValue && <p className="text-[10px] font-medium text-[#6B6B7E] mt-0.5">{subValue}</p>}
-        </>
-      )}
+const InfoItem = ({ label, value, subValue, fullWidth = false, isEditing, onChange, type = "text" }) => {
+  const isLink = value && (String(value).startsWith('http://') || String(value).startsWith('https://'));
+  return (
+    <div className={`space-y-1.5 ${fullWidth ? 'col-span-full' : ''}`}>
+      <label className="text-[10px] font-bold text-[#9B9BAD] uppercase tracking-[2px]">{label}</label>
+      <div className="bg-white px-4 py-3 rounded-xl border border-[#F4F3EF]">
+        {isEditing ? (
+          <input
+            type={type}
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full text-sm font-bold text-[#1A1A2E] bg-transparent border-none focus:outline-none"
+          />
+        ) : (
+          <>
+            {isLink ? (
+              <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#1B4DA0] hover:underline block break-all">
+                {value}
+              </a>
+            ) : (
+              <p className="text-sm font-bold text-[#1A1A2E]">{value || 'N/A'}</p>
+            )}
+            {subValue && <p className="text-[10px] font-medium text-[#6B6B7E] mt-0.5">{subValue}</p>}
+          </>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 import { Plus } from 'lucide-react';
 import { getAllClients, deleteClient, editClient } from '../../../service/api';
 import { toast } from 'react-hot-toast';
@@ -933,6 +942,14 @@ const ClientsTab = ({ notificationBell }) => {
                             onChange={(val) => setEditableClient({ ...editableClient, pinCode: val })}
                           />
                         </div>
+                        <InfoItem
+                          label="Company Google Location (URL)"
+                          value={isEditingInDetail ? editableClient?.googleLocationUrl : selectedClientDetail.googleLocationUrl}
+                          fullWidth
+                          isLink={true}
+                          isEditing={isEditingInDetail}
+                          onChange={(val) => setEditableClient({ ...editableClient, googleLocationUrl: val })}
+                        />
                       </div>
                     </div>
 

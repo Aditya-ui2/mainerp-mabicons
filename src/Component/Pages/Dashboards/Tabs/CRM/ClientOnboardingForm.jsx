@@ -135,7 +135,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, initialData = null 
   const isEdit = !!initialData;
 
   const initialFormState = {
-    companyName: '', cin: '', pan: '', clientType: 'Startup', industry: 'IT & Software', website: '', yearIncorporation: '',
+    companyName: '', cin: '', pan: '', clientType: 'Startup', industry: 'IT & Software', website: '', googleLocationUrl: '', yearIncorporation: '',
     address: '', city: '', state: '', pinCode: '', country: 'India', sameAsRegistered: false,
     owner1Name: '', owner1Phone: '', owner1Email: '', owner1Designation: '', owner1LinkedIn: '',
     owner2Name: '', owner2Phone: '', owner2Email: '',
@@ -170,6 +170,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, initialData = null 
         feeValue: initialData.feeAmount || initialData.feeValue || '',
         agreementStartDate: initialData.agreementEffectiveDate || initialData.agreementStartDate || '',
         payrollFrequency: initialData.payrollCycle || initialData.payrollFrequency || 'Monthly',
+        googleLocationUrl: initialData.googleLocationUrl || '',
         // Ensure ID is preserved for editing
         clientId: initialData._id || initialData.id,
         confirmOnboarding: true // Pre-confirm for edits usually
@@ -370,6 +371,7 @@ const ClientOnboardingForm = ({ isOpen, onClose, onComplete, initialData = null 
                         <SelectField label="Client Type" name="clientType" value={formData.clientType} onChange={handleInputChange} options={['Startup', 'SME', 'Enterprise', 'Multinational']} required />
                         <SelectField label="Industry / Sector" name="industry" value={formData.industry} onChange={handleInputChange} options={['IT & Software', 'Healthcare', 'Manufacturing', 'Finance', 'Retail', 'Education']} required />
                         <InputField label="Company Website" name="website" value={formData.website} onChange={handleInputChange} placeholder="https://www.company.com" />
+                        <InputField label="Company Google Location (URL)" name="googleLocationUrl" value={formData.googleLocationUrl} onChange={handleInputChange} placeholder="https://maps.google.com/..." />
                         <InputField label="Year of Incorporation" name="yearIncorporation" value={formData.yearIncorporation} onChange={handleInputChange} placeholder="2023" />
                       </div>
                     </div>

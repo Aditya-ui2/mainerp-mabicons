@@ -175,6 +175,7 @@ export const clientSignup = async (clientData) => {
       spocName: clientData.spocName,
       spocContact: clientData.spocContact,
       website: clientData.website,
+      googleLocationUrl: clientData.googleLocationUrl,
       authorizedSignatory: {
         name: clientData.authorizedSignatory.name,
         email: clientData.authorizedSignatory.email,
@@ -1292,7 +1293,8 @@ export const editClient = async (clientData) => {
         email: clientData.authorizedSignatory.email,
         contact: clientData.authorizedSignatory.contact
       },
-      ownerDirectorDetails: clientData.ownerDirectorDetails
+      ownerDirectorDetails: clientData.ownerDirectorDetails,
+      googleLocationUrl: clientData.googleLocationUrl
     }, {
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -622,6 +622,7 @@ const CRMDashboard = () => {
     gstNumber: '',
     numberOfCompanies: '',
     website: '',
+    googleLocationUrl: '',
     logoUrl: '',
     spocName: '',
     spocEmail: '',
@@ -945,6 +946,7 @@ const CRMDashboard = () => {
         cinNumber: newClient.cinNumber,
         numberOfCompanies: newClient.numberOfCompanies,
         website: newClient.website || null,
+        googleLocationUrl: newClient.googleLocationUrl || null,
         authorizedSignatory: {
           name: newClient.authorizedSignatoryName,
           email: newClient.authorizedSignatoryEmail,
@@ -1808,6 +1810,10 @@ const CRMDashboard = () => {
                                 <div className="space-y-3">
                                   <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] pl-1">Digital Website</label>
                                   <input name="website" value={newClient.website} onChange={handleClientInput} className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[24px] px-8 py-5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:border-[#0D47A1]/10 focus:bg-white focus:shadow-inner" placeholder="https://..." />
+                                </div>
+                                <div className="space-y-3">
+                                  <label className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[3px] pl-1">Company Google Location (URL)</label>
+                                  <input name="googleLocationUrl" value={newClient.googleLocationUrl} onChange={handleClientInput} className="w-full bg-[#F4F3EF] border-2 border-transparent rounded-[24px] px-8 py-5 text-sm font-bold text-[#1A1A2E] outline-none transition-all focus:border-[#0D47A1]/10 focus:bg-white focus:shadow-inner" placeholder="https://maps.google.com/..." />
                                 </div>
                               </div>
                               <div className="space-y-3">
