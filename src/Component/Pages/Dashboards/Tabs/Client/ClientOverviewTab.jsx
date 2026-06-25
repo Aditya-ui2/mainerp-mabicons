@@ -1092,11 +1092,11 @@ export default function ClientOverviewTab({ isDarkMode, clientData }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <a href={selectedCandidate.cvUrl} target="_blank" rel="noopener noreferrer" 
+                        <a href={`${selectedCandidate.cvUrl}?token=${localStorage.getItem('token')}`} target="_blank" rel="noopener noreferrer" 
                           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:shadow-lg hover:shadow-violet-200/50 transition-all">
                           <FiExternalLink className="w-4 h-4" /> View Resume
                         </a>
-                        <a href={selectedCandidate.cvUrl} download 
+                        <a href={`${selectedCandidate.cvUrl}?token=${localStorage.getItem('token')}`} download 
                           className={`p-2.5 rounded-xl border ${bdr} ${card} hover:shadow-md transition-all`} title="Download">
                           <FiDownload className={`w-4 h-4 ${tSub}`} />
                         </a>

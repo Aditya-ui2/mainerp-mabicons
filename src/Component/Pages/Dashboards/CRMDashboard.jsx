@@ -41,7 +41,7 @@ import {
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import AdminLayout, { StatCard, StatsBar, DataTable } from './AdminLayout';
-import { getAllClients, getAllLeads, getBDMetrics, clientSignup, getAllNotifications, markNotificationRead, markAllNotificationsRead, createNote, getNotes, getMyProfile } from '../service/api';
+import { getAllClients, getAllLeads, getBDMetrics, clientSignup, getAllNotifications, markNotificationRead, markAllNotificationsRead, createNote, getNotes, getMyProfile, getClientMeetings, getAllClientReviews } from '../service/api';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import ClientPipelineTab from './Tabs/CRM/ClientPipelineTab';
@@ -402,6 +402,8 @@ const CRMDashboard = () => {
   }, [activeTab]);
   const [clients, setClients] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [meetings, setMeetings] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [pipelineClients, setPipelineClients] = useState(INITIAL_PIPELINE_CLIENTS);
   const [leads, setLeads] = useState([]);
   const [metrics, setMetrics] = useState(null);
@@ -737,10 +739,12 @@ const CRMDashboard = () => {
     if (!silent) setLoading(true);
     try {
       const dept = localStorage.getItem('department') || 'HR Operations';
-      const [clientsRes, leadsRes, notesRes] = await Promise.allSettled([
+      const [clientsRes, leadsRes, notesRes, meetingsRes, reviewsRes] = await Promise.allSettled([
         getAllClients(),
         getAllLeads(),
-        getNotes({ department: dept })
+        getNotes({ department: dept }),
+        getClientMeetings(),
+        getAllClientReviews()
       ]);
       const bdMetricsRes = await Promise.allSettled([getBDMetrics()]);
 
@@ -748,6 +752,16 @@ const CRMDashboard = () => {
         ? (clientsRes.value.data?.clients || clientsRes.value.clients || clientsRes.value || [])
         : [];
       setClients(Array.isArray(clientList) ? clientList : []);
+
+      const meetingList = meetingsRes.status === 'fulfilled'
+        ? (meetingsRes.value.data || meetingsRes.value || [])
+        : [];
+      setMeetings(Array.isArray(meetingList) ? meetingList : []);
+
+      const reviewList = reviewsRes.status === 'fulfilled'
+        ? (reviewsRes.value.data || reviewsRes.value || [])
+        : [];
+      setReviews(Array.isArray(reviewList) ? reviewList : []);
 
       const apiNotes = notesRes.status === 'fulfilled'
         ? (notesRes.value?.notes || notesRes.value?.data || notesRes.value || [])
@@ -805,6 +819,41 @@ const CRMDashboard = () => {
     const set = new Set(leads.map(getSegment).filter(Boolean));
     return ['All', ...Array.from(set)];
   }, [leads]);
+
+  const activeClientsCount = useMemo(() => {
+    return clients.filter(c => (c.status || 'Active').toLowerCase() === 'active').length;
+  }, [clients]);
+
+  const pendingOnboardingCount = useMemo(() => {
+    return clients.filter(c => {
+      const docsCount = c.documents ? Object.keys(c.documents).length : ((c.companyName || 'A').length % 5) + 3;
+      const progress = Math.min(100, Math.round((docsCount / 7) * 100));
+      return progress < 100;
+    }).length;
+  }, [clients]);
+
+  const pendingReviewsCount = useMemo(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+    return clients.filter(c => {
+      const clientId = c.id || c._id;
+      const clientReviews = reviews.filter(r => r.clientId === clientId);
+      const isReviewed = clientReviews.some(r => r.reviewMonth === currentMonth);
+      return !isReviewed;
+    }).length;
+  }, [clients, reviews]);
+
+  const todaysMeetingsCount = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return meetings.filter(m => {
+      try {
+        if (!m.meetingDate) return false;
+        const mDateStr = new Date(m.meetingDate).toISOString().split('T')[0];
+        return mDateStr === todayStr;
+      } catch (e) {
+        return false;
+      }
+    }).length;
+  }, [meetings]);
 
   const monthlySeries = useMemo(() => {
     const map = new Map();
@@ -1159,41 +1208,39 @@ const CRMDashboard = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                   <StatCard
-                    title="New Leads"
-                    value={totalLeads}
-                    icon={FiTrendingUp}
+                    title="TOTAL CLIENTS"
+                    value={clients.length}
+                    icon={FiBriefcase}
                     color="white"
-                    onClick={() => setSelectedKpi({ title: 'New Leads', value: totalLeads, desc: 'Total number of new leads generated across all channels.' })}
+                    onClick={() => setActiveTab('All Clients')}
                   />
                   <StatCard
-                    title="Pipeline Open"
-                    value={pipelineOpen}
+                    title="ACTIVE CLIENTS"
+                    value={activeClientsCount}
                     icon={FiActivity}
                     color="white"
-                    change={totalLeads ? `${Math.round(pipelineOpen / totalLeads * 100)}%` : '0%'}
-                    onClick={() => setSelectedKpi({ title: 'Pipeline Open', value: pipelineOpen, desc: 'Number of leads currently active in the sales pipeline.' })}
+                    onClick={() => setActiveTab('All Clients')}
                   />
                   <StatCard
-                    title="Converted"
-                    value={converted}
-                    icon={FiZap}
+                    title="PENDING ONBOARDING"
+                    value={pendingOnboardingCount}
+                    icon={FiUserPlus}
                     color="white"
-                    change={totalLeads ? `${Math.round(converted / totalLeads * 100)}%` : '0%'}
-                    onClick={() => setSelectedKpi({ title: 'Converted', value: converted, desc: 'Number of leads successfully converted to customers.' })}
+                    onClick={() => setActiveTab('Client Onboarding')}
                   />
                   <StatCard
-                    title="Conv. Rate"
-                    value={`${conversionRate}%`}
-                    icon={FiTarget}
+                    title="PENDING REVIEWS"
+                    value={pendingReviewsCount}
+                    icon={FiCheckSquare}
                     color="white"
-                    onClick={() => setSelectedKpi({ title: 'Conversion Rate', value: `${conversionRate}%`, desc: 'Percentage of leads successfully converted.' })}
+                    onClick={() => setActiveTab('Client Review')}
                   />
                   <StatCard
-                    title="Sales Reps"
-                    value={Math.max(0, reps.length - 1)}
-                    icon={FiUsers}
+                    title="TODAY'S MEETINGS"
+                    value={todaysMeetingsCount}
+                    icon={FiCalendar}
                     color="white"
-                    onClick={() => setSelectedKpi({ title: 'Sales Reps', value: Math.max(0, reps.length - 1), desc: 'Total number of active sales representatives.' })}
+                    onClick={() => setActiveTab('Client Meeting')}
                   />
                 </div>
 

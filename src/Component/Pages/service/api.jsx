@@ -5077,6 +5077,29 @@ export const getClientReviews = async (clientId) => {
   }
 };
 
+// Get all client reviews
+export const getAllClientReviews = async () => {
+  try {
+    const token = getStoredAuthToken();
+    const response = await axiosInstance.get('/client-reviews', {
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.warn('Backend all client reviews fetch failed, falling back to local storage:', error);
+    try {
+      const localReviews = JSON.parse(localStorage.getItem('local_client_reviews') || '[]');
+      return { success: true, data: localReviews };
+    } catch (e) {
+      console.error('Local storage reviews fetch failed:', e);
+      return { success: true, data: [] };
+    }
+  }
+};
+
 // Update an existing client review
 export const updateClientReview = async (reviewId, updateData) => {
   try {
@@ -5185,6 +5208,7 @@ export const saveEmployeeAttendance = async (payload) => {
 // Add to default api object
 api.createClientReview = createClientReview;
 api.getClientReviews = getClientReviews;
+api.getAllClientReviews = getAllClientReviews;
 api.getFinancePayroll = getFinancePayroll;
 api.getEmployeeAttendance = getEmployeeAttendance;
 api.saveEmployeeAttendance = saveEmployeeAttendance;

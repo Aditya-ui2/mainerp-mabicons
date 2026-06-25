@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiUsers, FiMail, FiPhone, FiMapPin, FiCalendar, FiChevronRight, FiChevronDown, FiFilter, FiUser, FiBriefcase, FiX, FiDownload, FiClock, FiTag } from 'react-icons/fi';
+import { FiSearch, FiUsers, FiMail, FiPhone, FiMapPin, FiCalendar, FiChevronRight, FiChevronDown, FiFilter, FiUser, FiBriefcase, FiX, FiDownload, FiClock, FiTag, FiFileText, FiExternalLink } from 'react-icons/fi';
 import { FaRupeeSign } from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
 import { getClientDashboardOverview, getShortlistedCandidates } from '../../../../service/api';
@@ -315,6 +315,44 @@ export default function ClientCandidatesTab({ shortlistedOnly = false }) {
                         <p className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
                           <FiCalendar className="text-[#1B4DA0]" /> {selectedCandidate.joiningDate ? new Date(selectedCandidate.joiningDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Pending'}
                         </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resume Section */}
+                  {selectedCandidate.cvUrl && (
+                    <div className="pt-8 border-t border-[#F4F3EF]">
+                      <span className="text-[10px] font-black text-[#9B9BAD] uppercase tracking-[2px] block mb-4">Resume</span>
+                      <div className="p-4 rounded-xl bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200">
+                        <div className="flex items-center justify-between gap-4 flex-wrap">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#1B4DA0] to-indigo-600 text-white">
+                              <FiFileText className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-800">{selectedCandidate.cvFileName || 'Candidate_CV.pdf'}</p>
+                              <p className="text-xs text-slate-500">Click to view or download</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`${selectedCandidate.cvUrl}?token=${localStorage.getItem('token')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#1B4DA0] rounded-xl hover:bg-[#153e82] transition-all"
+                            >
+                              <FiExternalLink className="w-4 h-4" /> View
+                            </a>
+                            <a
+                              href={`${selectedCandidate.cvUrl}?token=${localStorage.getItem('token')}`}
+                              download
+                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:shadow-md transition-all"
+                              title="Download"
+                            >
+                              <FiDownload className="w-4 h-4 text-slate-600" />
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
